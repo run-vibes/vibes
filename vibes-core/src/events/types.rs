@@ -350,7 +350,7 @@ mod tests {
 
     #[test]
     fn vibes_event_session_id_works_for_all_session_event_types() {
-        let events = vec![
+        let events = [
             VibesEvent::Claude {
                 session_id: "s1".to_string(),
                 event: ClaudeEvent::TurnStart,
