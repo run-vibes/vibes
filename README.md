@@ -22,9 +22,15 @@ vibes claude "refactor the auth module"
 # All claude flags work
 vibes claude -c                          # Continue last session
 vibes claude --model claude-opus-4-5     # Model override
+vibes claude --system-prompt "Be terse"  # Custom system prompt
 
 # Vibes additions
 vibes claude --session-name "auth-work"  # Human-friendly session names
+vibes claude --no-serve                  # Disable background server
+
+# Configuration
+vibes config show                        # Display merged configuration
+vibes config path                        # Show config file locations
 
 # Access from any device on your network
 # Web UI available at http://localhost:7432
@@ -48,9 +54,45 @@ vibes is under active development. See [PROGRESS.md](docs/PROGRESS.md) for detai
 | Milestone | Description | Status |
 |-----------|-------------|--------|
 | 1.1 Core Proxy | Session management, event bus, Claude subprocess | ✅ Complete |
-| 1.2 CLI | `vibes claude` pass-through, config, server auto-start | ⏳ Next |
-| 1.3 Plugin Foundation | Plugin trait, dynamic loading, CLI commands | ⏳ Planned |
+| 1.2 CLI | `vibes claude` pass-through, config, server auto-start | ✅ Complete |
+| 1.3 Plugin Foundation | Plugin trait, dynamic loading, CLI commands | ⏳ Next |
 | 1.4 Server + Web UI | axum server, TanStack UI, permission flows | ⏳ Planned |
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      vibes (single binary)                       │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │                      vibes-core                            │  │
+│  │  SessionManager ─── Session ─── ClaudeBackend             │  │
+│  │        │                              │                    │  │
+│  │        └──────── EventBus ────────────┘                    │  │
+│  │               (MemoryEventBus)                             │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                              │                                   │
+│         ┌────────────────────┼────────────────────┐             │
+│         ▼                    ▼                    ▼             │
+│  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐       │
+│  │  CLI Mode   │     │  GUI Mode   │     │ Server Mode │       │
+│  │  (default)  │     │  (future)   │     │ (HTTP/WS)   │       │
+│  └─────────────┘     └─────────────┘     └─────────────┘       │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+                    ┌─────────────────┐
+                    │   Claude Code   │
+                    │  (subprocess)   │
+                    └─────────────────┘
+```
+
+**Key components:**
+
+- **SessionManager** - Orchestrates Claude Code sessions
+- **EventBus** - Real-time pub/sub for events with late-joiner replay
+- **ClaudeBackend** - Adapter pattern for Claude interaction (print mode, PTY, etc.)
+- **CLI/Server/GUI** - Thin shells consuming vibes-core
 
 ## Documentation
 
@@ -63,6 +105,7 @@ vibes is under active development. See [PROGRESS.md](docs/PROGRESS.md) for detai
 | Milestone | Design | Implementation |
 |-----------|--------|----------------|
 | 1.1 Core Proxy | [design.md](docs/plans/01-core-proxy/design.md) | [implementation.md](docs/plans/01-core-proxy/implementation.md) |
+| 1.2 CLI | [design.md](docs/plans/02-cli/design.md) | [implementation.md](docs/plans/02-cli/implementation.md) |
 
 ## License
 

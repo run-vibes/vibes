@@ -17,6 +17,12 @@ A utility application that proxies Claude Code with remote access capabilities, 
 
 ### Current State
 
+**Milestone 1.2 (CLI) is complete.** The vibes-cli crate provides:
+- `vibes claude` command that proxies Claude Code with all common flags
+- Layered configuration system (user config → project config → CLI flags)
+- `vibes config show` and `vibes config path` commands
+- Server stub for port binding (foundation for web UI)
+
 **Milestone 1.1 (Core proxy) is complete.** The vibes-core crate provides:
 - Session and SessionManager for managing Claude Code interactions
 - EventBus trait with MemoryEventBus for real-time event distribution
@@ -116,8 +122,21 @@ When starting a new milestone:
 2. **Write each feature**: Use `superpowers:test-driven-development` - write tests first, then implementation
 3. **Fix issues**: Use `superpowers:systematic-debugging` - never guess at fixes, investigate first
 4. **Review before commit**: Run `just pre-commit` and address any issues
+5. **Complete with PR**: When implementation is complete, always push and create a Pull Request
 
 **This is mandatory.** Do not skip these skills or try to implement without following this workflow.
+
+## Completing Implementation Work
+
+**REQUIRED:** When implementation is complete, always create a Pull Request:
+
+1. Verify all tests pass: `just test`
+2. Run pre-commit checks: `just pre-commit`
+3. Commit changes with conventional commit message
+4. Push to origin: `git push -u origin <branch-name>`
+5. Create PR: `gh pr create --title "<type>: <description>" --body "..."`
+
+**Never leave completed work uncommitted or unpushed.** All implementation work should result in a PR for review.
 
 ## Testing Philosophy (TDD)
 

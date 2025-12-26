@@ -1,0 +1,120 @@
+//! End-to-end integration tests for vibes-cli
+//!
+//! These tests require Claude CLI to be installed and are gated behind
+//! the `integration` feature flag. Run with:
+//!
+//! ```sh
+//! cargo test -p vibes-cli --features integration
+//! ```
+
+#![cfg(feature = "integration")]
+
+use std::process::Command;
+
+/// Test that vibes --help works
+#[test]
+fn vibes_help_works() {
+    let output = Command::new("cargo")
+        .args(["run", "-p", "vibes-cli", "--", "--help"])
+        .output()
+        .expect("Failed to run vibes --help");
+
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("Remote control for Claude Code"));
+    assert!(stdout.contains("claude"));
+    assert!(stdout.contains("config"));
+}
+
+/// Test that vibes claude --help shows all flags
+#[test]
+fn vibes_claude_help_shows_all_flags() {
+    let output = Command::new("cargo")
+        .args(["run", "-p", "vibes-cli", "--", "claude", "--help"])
+        .output()
+        .expect("Failed to run vibes claude --help");
+
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("--session-name"));
+    assert!(stdout.contains("--no-serve"));
+    assert!(stdout.contains("--continue-session"));
+    assert!(stdout.contains("--resume"));
+    assert!(stdout.contains("--model"));
+    assert!(stdout.contains("--allowedTools"));
+    assert!(stdout.contains("--system-prompt"));
+}
+
+/// Test that vibes config show works without config file
+#[test]
+fn vibes_config_show_works_without_config() {
+    let output = Command::new("cargo")
+        .args(["run", "-p", "vibes-cli", "--", "config", "show"])
+        .output()
+        .expect("Failed to run vibes config show");
+
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    // Should show defaults
+    assert!(stdout.contains("[server]"));
+    assert!(stdout.contains("port = 7432"));
+    assert!(stdout.contains("auto_start = true"));
+}
+
+/// Test that vibes config path shows paths
+#[test]
+fn vibes_config_path_shows_paths() {
+    let output = Command::new("cargo")
+        .args(["run", "-p", "vibes-cli", "--", "config", "path"])
+        .output()
+        .expect("Failed to run vibes config path");
+
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("User config:"));
+    assert!(stdout.contains("Project config:"));
+    assert!(stdout.contains(".vibes/config.toml"));
+}
+
+/// Test that vibes claude without prompt shows error
+#[test]
+fn vibes_claude_without_prompt_shows_error() {
+    let output = Command::new("cargo")
+        .args(["run", "-p", "vibes-cli", "--", "claude"])
+        .output()
+        .expect("Failed to run vibes claude");
+
+    // Should fail because no prompt provided
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("No prompt provided") || stderr.contains("error"));
+}
+
+// Note: Tests that actually call Claude require Claude CLI to be installed
+// and a valid API key. These tests are intentionally kept separate.
+
+#[cfg(feature = "integration_claude")]
+mod claude_tests {
+    use super::*;
+
+    /// Test that vibes claude produces output
+    /// Requires Claude CLI and API key
+    #[test]
+    fn vibes_claude_hello_produces_output() {
+        let output = Command::new("cargo")
+            .args([
+                "run",
+                "-p",
+                "vibes-cli",
+                "--",
+                "claude",
+                "respond with only the word 'hello'",
+            ])
+            .output()
+            .expect("Failed to run vibes claude");
+
+        assert!(output.status.success());
+        let stdout = String::from_utf8_lossy(&output.stdout).to_lowercase();
+        assert!(stdout.contains("hello"));
+    }
+}

@@ -1,0 +1,33 @@
+[package]
+name = "vibes-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "CLI for vibes - Claude Code proxy with remote access"
+
+[[bin]]
+name = "vibes"
+path = "src/main.rs"
+
+[dependencies]
+vibes-core = { path = "../vibes-core" }
+clap = { version = "4", features = ["derive"] }
+tokio = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+directories = "5"
+toml = "0.8"
+serde = { workspace = true }
+uuid = { workspace = true }
+anyhow = "1"
+
+[dev-dependencies]
+tempfile = "3"
+
+[features]
+default = []
+# Basic integration tests (help, config, etc.)
+integration = []
+# Integration tests that require Claude CLI and API key
+integration_claude = ["integration"]

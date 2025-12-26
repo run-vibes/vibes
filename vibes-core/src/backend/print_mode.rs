@@ -26,6 +26,10 @@ pub struct PrintModeConfig {
     pub allowed_tools: Vec<String>,
     /// Working directory for the Claude process
     pub working_dir: Option<String>,
+    /// Model to use (e.g., "claude-sonnet-4-20250514")
+    pub model: Option<String>,
+    /// System prompt to use
+    pub system_prompt: Option<String>,
 }
 
 /// Backend that spawns Claude Code in print mode
@@ -88,6 +92,16 @@ impl PrintModeBackend {
         if !self.config.allowed_tools.is_empty() {
             cmd.arg("--allowedTools")
                 .arg(self.config.allowed_tools.join(","));
+        }
+
+        // Model (if specified)
+        if let Some(ref model) = self.config.model {
+            cmd.arg("--model").arg(model);
+        }
+
+        // System prompt (if specified)
+        if let Some(ref system_prompt) = self.config.system_prompt {
+            cmd.arg("--system-prompt").arg(system_prompt);
         }
 
         // Working directory
@@ -360,6 +374,52 @@ mod tests {
 
         let args: Vec<_> = cmd.get_args().collect();
         assert!(!args.contains(&std::ffi::OsStr::new("--allowedTools")));
+    }
+
+    #[test]
+    fn build_command_includes_model() {
+        let config = PrintModeConfig {
+            model: Some("claude-opus-4-5".to_string()),
+            ..Default::default()
+        };
+        let backend = PrintModeBackend::new(config);
+        let cmd = backend.build_command("Hello");
+
+        let args: Vec<_> = cmd.get_args().collect();
+        assert!(args.contains(&std::ffi::OsStr::new("--model")));
+        assert!(args.contains(&std::ffi::OsStr::new("claude-opus-4-5")));
+    }
+
+    #[test]
+    fn build_command_omits_model_when_none() {
+        let backend = PrintModeBackend::new(PrintModeConfig::default());
+        let cmd = backend.build_command("Hello");
+
+        let args: Vec<_> = cmd.get_args().collect();
+        assert!(!args.contains(&std::ffi::OsStr::new("--model")));
+    }
+
+    #[test]
+    fn build_command_includes_system_prompt() {
+        let config = PrintModeConfig {
+            system_prompt: Some("You are a helpful assistant.".to_string()),
+            ..Default::default()
+        };
+        let backend = PrintModeBackend::new(config);
+        let cmd = backend.build_command("Hello");
+
+        let args: Vec<_> = cmd.get_args().collect();
+        assert!(args.contains(&std::ffi::OsStr::new("--system-prompt")));
+        assert!(args.contains(&std::ffi::OsStr::new("You are a helpful assistant.")));
+    }
+
+    #[test]
+    fn build_command_omits_system_prompt_when_none() {
+        let backend = PrintModeBackend::new(PrintModeConfig::default());
+        let cmd = backend.build_command("Hello");
+
+        let args: Vec<_> = cmd.get_args().collect();
+        assert!(!args.contains(&std::ffi::OsStr::new("--system-prompt")));
     }
 
     #[test]
