@@ -1,0 +1,24 @@
+[package]
+name = "vibes-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Core library for vibes - Claude Code proxy with remote access"
+
+[features]
+default = []
+integration = []
+
+[dependencies]
+tokio.workspace = true
+tokio-stream.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+async-trait.workspace = true
+tracing.workspace = true
+uuid.workspace = true
+
+[dev-dependencies]
+tokio-test = "0.4"
