@@ -61,14 +61,16 @@ pub async fn run(args: ClaudeArgs) -> Result<()> {
         .prompt
         .ok_or_else(|| anyhow!("No prompt provided. Usage: vibes claude \"your prompt\""))?;
 
-    // Determine Claude session ID for resume/continue
-    let claude_session_id = if args.continue_session {
-        // For continue, we don't pass a session ID - Claude handles --continue flag separately
-        // But our backend doesn't support that yet, so this is a placeholder
-        None
-    } else {
-        args.resume.clone()
-    };
+    // Explicitly error if continue_session is requested, since the backend does not support it yet
+    if args.continue_session {
+        return Err(anyhow!(
+            "The --continue / -c flag is not yet supported.\n\
+             Please use --resume <SESSION_ID> to resume a specific session instead."
+        ));
+    }
+
+    // Determine Claude session ID for resume
+    let claude_session_id = args.resume.clone();
 
     // Create backend directly (simpler for CLI use case)
     let factory = PrintModeBackendFactory::new(backend_config);

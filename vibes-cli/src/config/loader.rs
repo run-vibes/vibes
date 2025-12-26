@@ -1,4 +1,6 @@
-use super::types::VibesConfig;
+use super::types::{
+    DEFAULT_PORT, RawServerConfig, RawVibesConfig, ServerConfig, SessionConfig, VibesConfig,
+};
 use anyhow::Result;
 use directories::ProjectDirs;
 use std::path::PathBuf;
@@ -8,26 +10,27 @@ pub struct ConfigLoader;
 impl ConfigLoader {
     /// Load merged configuration (user + project)
     pub fn load() -> Result<VibesConfig> {
-        let mut config = VibesConfig::default();
+        let mut raw = RawVibesConfig::default();
 
         // Layer 1: User config
         if let Some(user_path) = Self::user_config_path()
             && user_path.exists()
         {
             let contents = std::fs::read_to_string(&user_path)?;
-            let user_config: VibesConfig = toml::from_str(&contents)?;
-            config = Self::merge(config, user_config);
+            let user_config: RawVibesConfig = toml::from_str(&contents)?;
+            raw = Self::merge_raw(raw, user_config);
         }
 
         // Layer 2: Project config
         let project_path = Self::project_config_path();
         if project_path.exists() {
             let contents = std::fs::read_to_string(&project_path)?;
-            let project_config: VibesConfig = toml::from_str(&contents)?;
-            config = Self::merge(config, project_config);
+            let project_config: RawVibesConfig = toml::from_str(&contents)?;
+            raw = Self::merge_raw(raw, project_config);
         }
 
-        Ok(config)
+        // Convert to final config with defaults applied
+        Ok(Self::finalize(raw))
     }
 
     /// Get user config path (platform-specific)
@@ -40,14 +43,14 @@ impl ConfigLoader {
         PathBuf::from(".vibes/config.toml")
     }
 
-    /// Merge two configs (overlay values override base)
-    fn merge(base: VibesConfig, overlay: VibesConfig) -> VibesConfig {
-        VibesConfig {
-            server: super::types::ServerConfig {
-                port: overlay.server.port,
-                auto_start: overlay.server.auto_start,
+    /// Merge two raw configs (overlay values override base only if explicitly set)
+    fn merge_raw(base: RawVibesConfig, overlay: RawVibesConfig) -> RawVibesConfig {
+        RawVibesConfig {
+            server: RawServerConfig {
+                port: overlay.server.port.or(base.server.port),
+                auto_start: overlay.server.auto_start.or(base.server.auto_start),
             },
-            session: super::types::SessionConfig {
+            session: SessionConfig {
                 default_model: overlay.session.default_model.or(base.session.default_model),
                 default_allowed_tools: overlay
                     .session
@@ -55,6 +58,17 @@ impl ConfigLoader {
                     .or(base.session.default_allowed_tools),
                 working_dir: overlay.session.working_dir.or(base.session.working_dir),
             },
+        }
+    }
+
+    /// Convert raw config to final config with defaults applied
+    fn finalize(raw: RawVibesConfig) -> VibesConfig {
+        VibesConfig {
+            server: ServerConfig {
+                port: raw.server.port.unwrap_or(DEFAULT_PORT),
+                auto_start: raw.server.auto_start.unwrap_or(true),
+            },
+            session: raw.session,
         }
     }
 
@@ -129,35 +143,36 @@ default_model = "claude-sonnet-4"
     }
 
     #[test]
-    fn test_merge_overlay_overrides_base() {
-        let base = VibesConfig {
-            server: super::super::types::ServerConfig {
-                port: 7432,
-                auto_start: true,
+    fn test_merge_raw_overlay_overrides_base() {
+        // Test that overlay values override base, but None in overlay preserves base
+        let base = RawVibesConfig {
+            server: RawServerConfig {
+                port: Some(7432),
+                auto_start: Some(true),
             },
-            session: super::super::types::SessionConfig {
+            session: SessionConfig {
                 default_model: Some("base-model".to_string()),
                 default_allowed_tools: Some(vec!["Read".to_string()]),
                 working_dir: None,
             },
         };
 
-        let overlay = VibesConfig {
-            server: super::super::types::ServerConfig {
-                port: 8080,
-                auto_start: false,
+        let overlay = RawVibesConfig {
+            server: RawServerConfig {
+                port: Some(8080),
+                auto_start: Some(false),
             },
-            session: super::super::types::SessionConfig {
+            session: SessionConfig {
                 default_model: Some("overlay-model".to_string()),
-                default_allowed_tools: None,
+                default_allowed_tools: None, // Should preserve base value
                 working_dir: Some(PathBuf::from("/custom")),
             },
         };
 
-        let merged = ConfigLoader::merge(base, overlay);
+        let merged = ConfigLoader::merge_raw(base, overlay);
 
-        assert_eq!(merged.server.port, 8080);
-        assert!(!merged.server.auto_start);
+        assert_eq!(merged.server.port, Some(8080));
+        assert_eq!(merged.server.auto_start, Some(false));
         assert_eq!(
             merged.session.default_model,
             Some("overlay-model".to_string())
@@ -168,6 +183,32 @@ default_model = "claude-sonnet-4"
             Some(vec!["Read".to_string()])
         );
         assert_eq!(merged.session.working_dir, Some(PathBuf::from("/custom")));
+    }
+
+    #[test]
+    fn test_merge_raw_none_preserves_base() {
+        // Test that None values in overlay don't override base values
+        let base = RawVibesConfig {
+            server: RawServerConfig {
+                port: Some(9000),
+                auto_start: Some(false),
+            },
+            session: SessionConfig::default(),
+        };
+
+        let overlay = RawVibesConfig {
+            server: RawServerConfig {
+                port: None,       // Should preserve base
+                auto_start: None, // Should preserve base
+            },
+            session: SessionConfig::default(),
+        };
+
+        let merged = ConfigLoader::merge_raw(base, overlay);
+
+        // Base values preserved when overlay has None
+        assert_eq!(merged.server.port, Some(9000));
+        assert_eq!(merged.server.auto_start, Some(false));
     }
 
     #[test]

@@ -1,6 +1,27 @@
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
+/// Configuration as stored in TOML files (with optional fields for merging)
+#[derive(Debug, Clone, Deserialize, Default)]
+pub struct RawVibesConfig {
+    #[serde(default)]
+    pub server: RawServerConfig,
+
+    #[serde(default)]
+    pub session: SessionConfig,
+}
+
+/// Server config as stored in TOML (optional fields for proper merging)
+#[derive(Debug, Clone, Deserialize, Default)]
+pub struct RawServerConfig {
+    /// Port for the vibes server
+    pub port: Option<u16>,
+
+    /// Auto-start server with vibes claude
+    pub auto_start: Option<bool>,
+}
+
+/// Final configuration with defaults applied
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct VibesConfig {
     #[serde(default)]
@@ -13,19 +34,17 @@ pub struct VibesConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServerConfig {
     /// Port for the vibes server
-    #[serde(default = "default_port")]
     pub port: u16,
 
     /// Auto-start server with vibes claude
-    #[serde(default = "default_true")]
     pub auto_start: bool,
 }
 
 impl Default for ServerConfig {
     fn default() -> Self {
         Self {
-            port: default_port(),
-            auto_start: default_true(),
+            port: DEFAULT_PORT,
+            auto_start: true,
         }
     }
 }
@@ -42,13 +61,8 @@ pub struct SessionConfig {
     pub working_dir: Option<PathBuf>,
 }
 
-fn default_port() -> u16 {
-    7432
-}
-
-fn default_true() -> bool {
-    true
-}
+/// Default port for the vibes server
+pub const DEFAULT_PORT: u16 = 7432;
 
 #[cfg(test)]
 mod tests {
@@ -57,7 +71,7 @@ mod tests {
     #[test]
     fn test_default_values() {
         let config = VibesConfig::default();
-        assert_eq!(config.server.port, 7432);
+        assert_eq!(config.server.port, DEFAULT_PORT);
         assert!(config.server.auto_start);
         assert!(config.session.default_model.is_none());
         assert!(config.session.default_allowed_tools.is_none());
@@ -94,23 +108,25 @@ mod tests {
     }
 
     #[test]
-    fn test_partial_config_with_defaults() {
+    fn test_raw_config_partial_parsing() {
         let toml_str = r#"
 [server]
 port = 9000
 "#;
-        let config: VibesConfig = toml::from_str(toml_str).unwrap();
+        let raw: RawVibesConfig = toml::from_str(toml_str).unwrap();
 
-        assert_eq!(config.server.port, 9000);
-        assert!(config.server.auto_start); // default
-        assert!(config.session.default_model.is_none()); // default
+        // Only port was set, auto_start should be None
+        assert_eq!(raw.server.port, Some(9000));
+        assert!(raw.server.auto_start.is_none());
+        assert!(raw.session.default_model.is_none());
     }
 
     #[test]
-    fn test_empty_config_uses_all_defaults() {
-        let config: VibesConfig = toml::from_str("").unwrap();
+    fn test_raw_config_empty_uses_none() {
+        let raw: RawVibesConfig = toml::from_str("").unwrap();
 
-        assert_eq!(config.server.port, 7432);
-        assert!(config.server.auto_start);
+        // Empty config should have all None values
+        assert!(raw.server.port.is_none());
+        assert!(raw.server.auto_start.is_none());
     }
 }
