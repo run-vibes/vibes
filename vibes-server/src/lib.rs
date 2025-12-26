@@ -7,9 +7,62 @@ mod error;
 pub mod http;
 mod state;
 
+use std::sync::Arc;
+
+use tokio::net::TcpListener;
+
 pub use error::ServerError;
 pub use http::create_router;
 pub use state::AppState;
+
+/// The main vibes server
+pub struct VibesServer {
+    config: ServerConfig,
+    state: Arc<AppState>,
+}
+
+impl VibesServer {
+    /// Create a new server with default state
+    pub fn new(config: ServerConfig) -> Self {
+        Self {
+            config,
+            state: Arc::new(AppState::new()),
+        }
+    }
+
+    /// Create a server with custom state (for testing)
+    pub fn with_state(config: ServerConfig, state: Arc<AppState>) -> Self {
+        Self { config, state }
+    }
+
+    /// Get the server configuration
+    pub fn config(&self) -> &ServerConfig {
+        &self.config
+    }
+
+    /// Get the shared application state
+    pub fn state(&self) -> Arc<AppState> {
+        Arc::clone(&self.state)
+    }
+
+    /// Run the server, binding to the configured address
+    pub async fn run(self) -> Result<(), ServerError> {
+        let addr = self.config.addr();
+        let listener = TcpListener::bind(&addr).await.map_err(|e| ServerError::Bind {
+            addr: addr.clone(),
+            source: e,
+        })?;
+
+        tracing::info!("vibes server listening on {}", addr);
+
+        let router = create_router(self.state);
+        axum::serve(listener, router)
+            .await
+            .map_err(|e| ServerError::Internal(e.to_string()))?;
+
+        Ok(())
+    }
+}
 
 /// Server configuration
 #[derive(Debug, Clone)]
@@ -47,6 +100,7 @@ impl ServerConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::Arc;
 
     #[test]
     fn test_server_config_default() {
@@ -59,5 +113,20 @@ mod tests {
     fn test_server_config_addr() {
         let config = ServerConfig::new("127.0.0.1", 8080);
         assert_eq!(config.addr(), "127.0.0.1:8080");
+    }
+
+    #[test]
+    fn test_vibes_server_new() {
+        let config = ServerConfig::default();
+        let server = VibesServer::new(config.clone());
+        assert_eq!(server.config().addr(), config.addr());
+    }
+
+    #[test]
+    fn test_vibes_server_with_state() {
+        let config = ServerConfig::new("127.0.0.1", 9000);
+        let state = Arc::new(AppState::new());
+        let server = VibesServer::with_state(config.clone(), state);
+        assert_eq!(server.config().port, 9000);
     }
 }
