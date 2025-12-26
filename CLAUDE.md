@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**vibes** - Vibe coding swiss army knife of enhancements
+**vibes** - Remote control for your Claude Code sessions
 
 A utility application that proxies Claude Code with remote access capabilities, plugin system, and cross-platform support (CLI, native GUI, web UI). See [docs/PRD.md](docs/PRD.md) for full product requirements.
 
@@ -56,6 +56,24 @@ just fmt          # Format code
 just pre-commit   # Run all checks before committing
 just mutants      # Mutation testing
 just build        # Build the project
+```
+
+## Continuous Integration
+
+CI runs on GitHub Actions for all PRs and pushes to main. The workflow uses **Nix** to ensure the CI environment matches local development exactly.
+
+**CI checks** (same as `just pre-commit`):
+- `just fmt-check` — Formatting
+- `just clippy` — Linting
+- `just test` — Unit tests
+
+### Integration Tests
+
+Integration tests (`just test-integration`) require **Claude CLI installed** and are **not run in CI**. Run them locally before submitting changes that affect Claude interaction:
+
+```bash
+just test-integration    # Requires Claude CLI
+just test-all            # Unit + integration tests
 ```
 
 ## Milestone Plans
