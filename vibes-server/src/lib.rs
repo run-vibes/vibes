@@ -4,8 +4,10 @@
 //! EventBus, and PluginHost. Both CLI and Web UI connect as WebSocket clients.
 
 mod error;
+mod state;
 
 pub use error::ServerError;
+pub use state::AppState;
 
 /// Server configuration
 #[derive(Debug, Clone)]
