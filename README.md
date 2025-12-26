@@ -61,30 +61,45 @@ vibes is under active development. See [PROGRESS.md](docs/PROGRESS.md) for detai
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                      vibes (single binary)                       │
-├─────────────────────────────────────────────────────────────────┤
-│  ┌───────────────────────────────────────────────────────────┐  │
-│  │                      vibes-core                            │  │
-│  │  SessionManager ─── Session ─── ClaudeBackend             │  │
-│  │        │                              │                    │  │
-│  │        └──────── EventBus ────────────┘                    │  │
-│  │               (MemoryEventBus)                             │  │
-│  └───────────────────────────────────────────────────────────┘  │
-│                              │                                   │
-│         ┌────────────────────┼────────────────────┐             │
-│         ▼                    ▼                    ▼             │
-│  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐       │
-│  │  CLI Mode   │     │  GUI Mode   │     │ Server Mode │       │
-│  │  (default)  │     │  (future)   │     │ (HTTP/WS)   │       │
-│  └─────────────┘     └─────────────┘     └─────────────┘       │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-                    ┌─────────────────┐
-                    │   Claude Code   │
-                    │  (subprocess)   │
-                    └─────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              vibes binary                                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────────────────────────────────────────────────────────────┐│
+│  │                           vibes-core                                     ││
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐                   ││
+│  │  │   Session    │  │   EventBus   │  │ PluginHost   │◄──────────────┐   ││
+│  │  │   Manager    │  │  (memory)    │  │              │               │   ││
+│  │  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘               │   ││
+│  │         │                 │                 │                        │   ││
+│  │         │    ┌────────────┴────────────┐    │                        │   ││
+│  │         │    │      Event Flow         │    │                        │   ││
+│  │         │    │  ┌─────────────────┐    │    │                        │   ││
+│  │         └────┼─►│   VibesEvent    │────┼────┘                        │   ││
+│  │              │  └─────────────────┘    │                             │   ││
+│  │              └─────────────────────────┘                             │   ││
+│  └─────────────────────────────────────────────────────────────────────────┘│
+│                                    │                                         │
+│         ┌──────────────────────────┼──────────────────────────┐             │
+│         ▼                          ▼                          ▼             │
+│  ┌─────────────┐           ┌─────────────┐           ┌─────────────┐       │
+│  │  CLI Mode   │           │ Server Mode │           │  GUI Mode   │       │
+│  │  (vibes-cli)│           │   (axum)    │           │  (future)   │       │
+│  └─────────────┘           └─────────────┘           └─────────────┘       │
+└─────────────────────────────────────────────────────────────────────────────┘
+         │                          │
+         │ spawns                   │ loads
+         ▼                          ▼
+┌─────────────────┐    ┌─────────────────────────────────────────────────────┐
+│   Claude Code   │    │              ~/.config/vibes/plugins/                │
+│  (subprocess)   │    ├─────────────────────────────────────────────────────┤
+└─────────────────┘    │  ┌───────────────┐  ┌───────────────┐               │
+                       │  │  analytics/   │  │   history/    │  ...          │
+                       │  │  .0.1.0.so    │  │  .0.2.0.so    │               │
+                       │  │  .so ────────►│  │  .so ────────►│               │
+                       │  │  config.toml  │  │  config.toml  │               │
+                       │  └───────────────┘  └───────────────┘               │
+                       │  registry.toml ─── enabled: [analytics, history]    │
+                       └─────────────────────────────────────────────────────┘
 ```
 
 **Key components:**
@@ -92,6 +107,7 @@ vibes is under active development. See [PROGRESS.md](docs/PROGRESS.md) for detai
 - **SessionManager** - Orchestrates Claude Code sessions
 - **EventBus** - Real-time pub/sub for events with late-joiner replay
 - **ClaudeBackend** - Adapter pattern for Claude interaction (print mode, PTY, etc.)
+- **PluginHost** - Loads and manages native Rust plugins with panic/timeout isolation
 - **CLI/Server/GUI** - Thin shells consuming vibes-core
 
 ## Documentation
@@ -106,6 +122,7 @@ vibes is under active development. See [PROGRESS.md](docs/PROGRESS.md) for detai
 |-----------|--------|----------------|
 | 1.1 Core Proxy | [design.md](docs/plans/01-core-proxy/design.md) | [implementation.md](docs/plans/01-core-proxy/implementation.md) |
 | 1.2 CLI | [design.md](docs/plans/02-cli/design.md) | [implementation.md](docs/plans/02-cli/implementation.md) |
+| 1.3 Plugin Foundation | [design.md](docs/plans/03-plugin-foundation/design.md) | TBD |
 
 ## License
 
