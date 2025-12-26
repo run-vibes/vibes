@@ -6,6 +6,7 @@
 mod error;
 pub mod http;
 mod state;
+pub mod ws;
 
 use std::sync::Arc;
 

@@ -10,7 +10,7 @@ pub struct Usage {
 }
 
 /// Events emitted by Claude backends (normalized across backends)
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ClaudeEvent {
     /// Text content being streamed
