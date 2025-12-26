@@ -1934,6 +1934,7 @@ dependencies = [
  "tracing-subscriber",
  "uuid",
  "vibes-core",
+ "vibes-server",
 ]
 
 [[package]]

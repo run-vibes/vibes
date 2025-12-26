@@ -12,6 +12,7 @@ path = "src/main.rs"
 
 [dependencies]
 vibes-core = { path = "../vibes-core" }
+vibes-server = { path = "../vibes-server" }
 clap = { version = "4", features = ["derive"] }
 tokio = { workspace = true }
 tracing = { workspace = true }
