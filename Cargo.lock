@@ -423,6 +423,15 @@ dependencies = [
 
 [[package]]
 name = "dirs"
+version = "5.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "44c45a9d03d6676652bcb5e724c7e988de1acad23a711b5217ab9cbecbec2225"
+dependencies = [
+ "dirs-sys 0.4.1",
+]
+
+[[package]]
+name = "dirs"
 version = "6.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c3e8aa94d75141228480295a7d0e7feb620b1a5ad9f12bc40be62411e38cce4e"
@@ -1924,9 +1933,13 @@ name = "vibes-cli"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "chrono",
  "clap",
  "directories",
+ "dirs 5.0.1",
+ "libc",
  "serde",
+ "serde_json",
  "tempfile",
  "tokio",
  "toml",
@@ -1942,7 +1955,7 @@ name = "vibes-core"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "dirs",
+ "dirs 6.0.0",
  "libloading",
  "serde",
  "serde_json",

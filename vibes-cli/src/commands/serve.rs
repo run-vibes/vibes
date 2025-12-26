@@ -10,6 +10,10 @@ use clap::{Args, Subcommand};
 use tracing::info;
 use vibes_server::{ServerConfig, VibesServer};
 
+use crate::daemon::{
+    clear_daemon_state, is_process_alive, read_daemon_state, write_daemon_state, DaemonState,
+};
+
 /// Default port for the vibes server
 pub const DEFAULT_PORT: u16 = 7743;
 /// Default host for the vibes server
@@ -63,10 +67,22 @@ async fn run_foreground(args: &ServeArgs) -> Result<()> {
 
     info!("Starting vibes server on {}:{}", config.host, config.port);
 
-    let server = VibesServer::new(config);
-    server.run().await?;
+    // Write daemon state file
+    let state = DaemonState::new(args.port);
+    if let Err(e) = write_daemon_state(&state) {
+        tracing::warn!("Failed to write daemon state file: {}", e);
+    }
 
-    Ok(())
+    // Run the server
+    let server = VibesServer::new(config);
+    let result = server.run().await;
+
+    // Clear daemon state file on exit
+    if let Err(e) = clear_daemon_state() {
+        tracing::warn!("Failed to clear daemon state file: {}", e);
+    }
+
+    result.map_err(Into::into)
 }
 
 /// Start the daemon in the background (stub)
@@ -86,11 +102,29 @@ async fn stop_daemon() -> Result<()> {
     anyhow::bail!("Daemon stop not yet implemented")
 }
 
-/// Show the daemon status (stub)
+/// Show the daemon status
 async fn show_status() -> Result<()> {
-    // TODO: Implement in Task 3.3
-    info!("Checking daemon status (not yet implemented)");
-    anyhow::bail!("Daemon status not yet implemented")
+    match read_daemon_state() {
+        Some(state) => {
+            if is_process_alive(state.pid) {
+                let uptime = chrono::Utc::now() - state.started_at;
+                println!("Vibes daemon is running");
+                println!("  PID:     {}", state.pid);
+                println!("  Port:    {}", state.port);
+                println!("  Uptime:  {}s", uptime.num_seconds());
+                Ok(())
+            } else {
+                println!("Vibes daemon is not running (stale state file)");
+                // Clean up stale state file
+                let _ = clear_daemon_state();
+                Ok(())
+            }
+        }
+        None => {
+            println!("Vibes daemon is not running");
+            Ok(())
+        }
+    }
 }
 
 #[cfg(test)]
