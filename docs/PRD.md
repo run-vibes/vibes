@@ -576,6 +576,97 @@ full = ["cli", "server", "gui"]
 
 ---
 
+### ADR-007: Event Bus Architecture
+
+**Status:** Decided
+
+**Context:** The EventBus needs to support real-time broadcasting, late-joiner replay, and future extensibility (persistence, distribution).
+
+**Decision:** Adapter pattern separating the EventBus trait from implementations. MVP uses in-memory implementation; can swap to persistent or distributed backends later.
+
+**Architecture:**
+```
+EventBus (trait)
+├── publish(event)
+├── subscribe() -> Stream<Event>
+├── subscribe_from(seq) -> Stream<Event>  // replay from sequence number
+└── get_events(session_id) -> Vec<Event>
+
+Implementations:
+├── MemoryEventBus (MVP)
+│   ├── Vec<Event> for replay
+│   └── tokio::broadcast for real-time
+├── SqliteEventBus (future - persistence)
+└── DistributedEventBus (future - Redis Streams, NATS, Iggy)
+```
+
+**Rationale:**
+- Late joiner support is essential (web UI opens mid-session)
+- Adapter pattern allows swapping implementations without API changes
+- Opens path to distributed vibes (multiple machines sharing events)
+- In-memory MVP is simple; persistence can wait until needed
+
+**Alternatives considered:**
+- Pure tokio::broadcast: No replay, late joiners miss events
+- Iggy/Kafka from day one: Overkill for single-machine tool, adds operational complexity
+- SQLite from day one: Reasonable, but adds complexity before we need persistence
+
+**Revisit trigger:** When crash recovery or cross-machine distribution becomes a requirement.
+
+---
+
+### ADR-008: Claude Backend Abstraction
+
+**Status:** Decided
+
+**Context:** ADR-001 chose `-p` mode for MVP but preserved alternatives (PTY, hooks, stream-json bidirectional). We need to swap interaction backends without rewriting Session/EventBus logic.
+
+**Decision:** Abstract Claude interaction behind a `ClaudeBackend` trait. Each backend handles its own process lifecycle, output parsing, and input mechanism, emitting normalized events.
+
+**Architecture:**
+```rust
+#[async_trait]
+pub trait ClaudeBackend: Send + Sync {
+    async fn send(&mut self, input: &str) -> Result<()>;
+    fn events(&self) -> broadcast::Receiver<ClaudeEvent>;
+    async fn respond_permission(&mut self, request_id: &str, approved: bool) -> Result<()>;
+    fn claude_session_id(&self) -> &str;
+    fn state(&self) -> BackendState;
+    async fn shutdown(&mut self) -> Result<()>;
+}
+
+pub enum BackendState {
+    Idle,                              // Ready for input
+    Processing,                        // Claude working
+    WaitingPermission(PermissionRequest),
+    Finished,
+    Failed(String),
+}
+```
+
+**Implementations:**
+| Backend | Process Model | Output Format | MVP? |
+|---------|---------------|---------------|------|
+| PrintModeBackend | Per-turn spawn | stream-json | ✓ |
+| PtyBackend | Long-running | Terminal codes | Future |
+| StreamJsonBackend | Long-running | stream-json bidirectional | Investigate |
+
+**Key design points:**
+- Backend parses its native format → normalized `ClaudeEvent`
+- Session never sees raw stream-json or terminal codes
+- "Turns" are internal to PrintModeBackend, not exposed in trait
+- Consistent adapter pattern with EventBus (ADR-007)
+
+**Rationale:**
+- Enables backend swapping without API changes
+- Mock backend for testing
+- Future API-direct backend possible
+- A/B testing backends for performance
+
+**Revisit trigger:** When investigating PTY mode (Phase F1) or if stream-json bidirectional proves viable.
+
+---
+
 ## Technical Notes
 
 ### Claude Code Integration
