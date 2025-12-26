@@ -97,6 +97,39 @@ When starting a new milestone:
 
 **This is mandatory.** Do not skip these skills or try to implement without following this workflow.
 
+## Testing Philosophy (TDD)
+
+**REQUIRED:** Use the `superpowers:test-driven-development` skill when implementing any feature or fix. Invoke it with the Skill tool before writing implementation code.
+
+We follow Test-Driven Development for component and utility code:
+
+1. **Write the failing test first** — Define expected behavior before implementation
+2. **Run the test to verify it fails** — Confirms the test is actually testing something
+3. **Write minimal code to pass** — Only implement what's needed to make the test green
+4. **Run tests to verify they pass** — Confirm implementation is correct
+5. **Commit** — Small, frequent commits after each passing test
+
+**What to test:**
+- Component rendering and variants
+- User interactions (clicks, input)
+- Conditional rendering
+- Props pass-through and className merging
+
+**What NOT to test:**
+- Implementation details (internal state, private methods)
+- Styling (covered by visual review in Ladle)
+- Third-party library behavior
+
+## Verification Before Completing Work
+
+**REQUIRED:** Always run these verification steps before marking work complete:
+
+1. **`just check`** — Run all code quality checks:
+
+2. **`just test`** — Run all unit tests:
+
+All checks must pass before work is considered done.
+
 ## Progress Tracking
 
 When completing work that corresponds to a roadmap item:
@@ -104,10 +137,75 @@ When completing work that corresponds to a roadmap item:
 2. Change `[ ]` to `[x]` for completed items, or `[~]` for in-progress items
 3. Add an entry to the Changelog table at the bottom with the date and change
 
-## Git Conventions
+## Git Commit Conventions
 
-**Commit messages:**
-- Use imperative mood: "Add feature" not "Added feature"
-- First line: concise summary (50 chars or less ideal)
-- Body: explain what and why, not how
-- No "Generated with Claude Code" or "Co-Authored-By" footers
+Follow [Conventional Commits](https://www.conventionalcommits.org/) format:
+
+```
+<type>: <description>
+
+[optional body]
+```
+
+**Types:**
+- `feat:` — New feature or functionality
+- `fix:` — Bug fix
+- `docs:` — Documentation changes only
+- `style:` — Formatting, whitespace (no code change)
+- `refactor:` — Code restructuring (no behavior change)
+- `test:` — Adding or updating tests
+- `chore:` — Build, tooling, dependencies
+
+**Guidelines:**
+- Use imperative mood: "add feature" not "added feature"
+- Keep subject line under 72 characters
+- No period at end of subject line
+- Separate subject from body with blank line
+- Body explains *what* and *why*, not *how*
+
+**Do NOT include:**
+- "Generated with Claude Code" footers
+- "Co-Authored-By" trailers
+
+**Examples:**
+```
+feat: add user authentication flow
+
+fix: prevent form submission on empty input
+
+refactor: extract validation logic to shared utility
+```
+
+## Pull Request Conventions
+
+**Title format:** Same as commit message (`<type>: <description>`)
+
+**Body structure:**
+```markdown
+## Summary
+- Bullet points describing what changed (2-4 items)
+
+## Test Plan
+- [ ] Verification steps as checklist
+```
+
+**Guidelines:**
+- Title should describe the overall change, not individual commits
+- Summary bullets focus on *what* changed, not *how*
+- Test plan includes both automated checks and manual verification
+- Link related issues with "Fixes #123" or "Closes #123"
+
+**Example:**
+```markdown
+## Summary
+- Add login form with email/password validation
+- Implement session persistence with secure cookies
+- Add logout button to navigation
+
+## Test Plan
+- [x] All unit tests passing (`just test`)
+- [x] Lint checks pass (`just check`, `just clippy`, `just fmt-check`)
+- [ ] Manual test: login flow works end-to-end
+- [ ] Manual test: session persists across page refresh
+```
+
