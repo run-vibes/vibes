@@ -19,6 +19,11 @@ thiserror.workspace = true
 async-trait.workspace = true
 tracing.workspace = true
 uuid.workspace = true
+toml.workspace = true
+libloading = "0.8"
+dirs = "6"
+vibes-plugin-api = { path = "../vibes-plugin-api" }
 
 [dev-dependencies]
 tokio-test = "0.4"
+tempfile = "3"

@@ -667,6 +667,41 @@ pub enum BackendState {
 
 ---
 
+### ADR-009: Plugin API Versioning Strategy
+
+**Status:** Decided
+
+**Context:** Rust plugins are compiled against specific struct layouts and trait definitions. ABI changes between vibes versions can cause plugins to crash or behave incorrectly. We need a versioning strategy that protects users from incompatible plugins.
+
+**Decision:** Start with strict version matching; migrate to semver once API stabilizes.
+
+**Phase 1 (MVP):** Strict matching
+- Plugin declares `api_version: u32` in manifest
+- vibes refuses to load plugins where `api_version != vibes_plugin_api::API_VERSION`
+- Any API change increments the version, requiring plugin rebuild
+- Clear error message: "Plugin 'foo' requires API v2, but vibes has v3. Please rebuild."
+
+**Phase 2 (Post-stabilization):** Semver compatibility
+- Switch to `api_version: "1.2.0"` (semver string)
+- Major version must match
+- Minor version additions are backwards-compatible
+- Plugins built against 1.2.0 work with vibes 1.3.0, not 2.0.0
+
+**Migration trigger:** When the plugin API has been stable for 3+ releases and we have confidence in backwards compatibility guarantees.
+
+**Rationale:**
+- ABI breakage causes hard-to-debug crashes
+- Strict matching is simple to implement and reason about
+- Plugin authors get clear "rebuild needed" signals
+- Semver adds complexity we don't need until API stabilizes
+
+**Alternatives considered:**
+- Semver from day one: Harder to maintain ABI stability during rapid iteration
+- No versioning: Poor UX when plugins crash mysteriously
+- abi_stable crate: Adds dependency, learning curve; overkill for MVP
+
+---
+
 ## Technical Notes
 
 ### Claude Code Integration

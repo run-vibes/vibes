@@ -3,7 +3,10 @@ use crate::server;
 use anyhow::{Result, anyhow};
 use clap::Args;
 use std::io::Write;
-use vibes_core::{BackendFactory, ClaudeEvent, PrintModeBackendFactory, PrintModeConfig};
+use vibes_core::{
+    BackendFactory, ClaudeEvent, PluginHost, PluginHostConfig, PrintModeBackendFactory,
+    PrintModeConfig, VibesEvent,
+};
 
 #[derive(Args)]
 pub struct ClaudeArgs {
@@ -56,6 +59,12 @@ pub async fn run(args: ClaudeArgs) -> Result<()> {
         tokio::spawn(server::start_stub(config.server.port));
     }
 
+    // Load plugins
+    let mut plugin_host = PluginHost::new(PluginHostConfig::default());
+    if let Err(e) = plugin_host.load_all() {
+        tracing::warn!("Failed to load plugins: {}", e);
+    }
+
     // Build prompt (required)
     let prompt = args
         .prompt
@@ -79,14 +88,26 @@ pub async fn run(args: ClaudeArgs) -> Result<()> {
     // Subscribe before sending
     let mut rx = backend.subscribe();
 
+    // Generate a session ID for plugin events
+    let session_id = args
+        .session_name
+        .clone()
+        .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
+
+    // Notify plugins of session creation
+    plugin_host.dispatch_event(&VibesEvent::SessionCreated {
+        session_id: session_id.clone(),
+        name: args.session_name.clone(),
+    });
+
     // Send the prompt
     backend
         .send(&prompt)
         .await
         .map_err(|e| anyhow!("Failed to send prompt: {}", e))?;
 
-    // Stream output to terminal
-    stream_output(&mut rx).await
+    // Stream output to terminal, dispatching events to plugins
+    stream_output(&mut rx, &mut plugin_host, &session_id).await
 }
 
 fn build_backend_config(args: &ClaudeArgs, config: &VibesConfig) -> PrintModeConfig {
@@ -119,27 +140,40 @@ fn build_backend_config(args: &ClaudeArgs, config: &VibesConfig) -> PrintModeCon
     }
 }
 
-async fn stream_output(rx: &mut tokio::sync::broadcast::Receiver<ClaudeEvent>) -> Result<()> {
+async fn stream_output(
+    rx: &mut tokio::sync::broadcast::Receiver<ClaudeEvent>,
+    plugin_host: &mut PluginHost,
+    session_id: &str,
+) -> Result<()> {
     loop {
         match rx.recv().await {
-            Ok(event) => match event {
-                ClaudeEvent::TextDelta { text } => {
-                    print!("{}", text);
-                    std::io::stdout().flush()?;
+            Ok(event) => {
+                // Dispatch event to plugins (wrapped in VibesEvent::Claude)
+                plugin_host.dispatch_event(&VibesEvent::Claude {
+                    session_id: session_id.to_string(),
+                    event: event.clone(),
+                });
+
+                // Handle event for terminal output
+                match event {
+                    ClaudeEvent::TextDelta { text } => {
+                        print!("{}", text);
+                        std::io::stdout().flush()?;
+                    }
+                    ClaudeEvent::TurnComplete { .. } => {
+                        // Don't print extra newline - match claude's output exactly
+                        break;
+                    }
+                    ClaudeEvent::Error { message, .. } => {
+                        eprintln!("Error: {}", message);
+                        break;
+                    }
+                    _ => {
+                        // Ignore other events (ThinkingDelta, ToolUseStart, etc.)
+                        // Output should be identical to raw claude command
+                    }
                 }
-                ClaudeEvent::TurnComplete { .. } => {
-                    // Don't print extra newline - match claude's output exactly
-                    break;
-                }
-                ClaudeEvent::Error { message, .. } => {
-                    eprintln!("Error: {}", message);
-                    break;
-                }
-                _ => {
-                    // Ignore other events (ThinkingDelta, ToolUseStart, etc.)
-                    // Output should be identical to raw claude command
-                }
-            },
+            }
             Err(tokio::sync::broadcast::error::RecvError::Closed) => {
                 break;
             }
