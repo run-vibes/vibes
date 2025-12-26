@@ -23,6 +23,8 @@ enum Commands {
     Claude(commands::claude::ClaudeArgs),
     /// Manage configuration
     Config(commands::config::ConfigArgs),
+    /// Manage plugins
+    Plugin(commands::plugin::PluginArgs),
 }
 
 #[tokio::main]
@@ -35,5 +37,6 @@ async fn main() -> Result<()> {
     match cli.command {
         Commands::Claude(args) => commands::claude::run(args).await,
         Commands::Config(args) => commands::config::run(args),
+        Commands::Plugin(args) => commands::plugin::run(args),
     }
 }

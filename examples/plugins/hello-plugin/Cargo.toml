@@ -1,0 +1,11 @@
+[package]
+name = "hello-plugin"
+version = "0.1.0"
+edition = "2024"
+description = "A simple example plugin for vibes"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+vibes-plugin-api = { path = "../../../vibes-plugin-api" }

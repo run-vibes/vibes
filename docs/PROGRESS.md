@@ -27,11 +27,11 @@ This document tracks the implementation progress of vibes against the roadmap de
 - [x] Server auto-start (stub)
 
 ### Milestone 1.3: Plugin foundation
-- [ ] Plugin trait and API crate (vibes-plugin-api)
-- [ ] Dynamic library loading
-- [ ] Plugin lifecycle (load, unload, enable, disable)
-- [ ] vibes plugin CLI commands
-- [ ] Event subscription system
+- [x] Plugin trait and API crate (vibes-plugin-api)
+- [x] Dynamic library loading
+- [x] Plugin lifecycle (load, unload, enable, disable)
+- [x] vibes plugin CLI commands
+- [x] Event subscription system
 
 ### Milestone 1.4: Server + Web UI
 - [ ] axum HTTP/WebSocket server
@@ -131,3 +131,4 @@ These phases are planned but not yet scheduled.
 | 2025-12-26 | Initial progress tracker created |
 | 2025-12-26 | Milestone 1.1 (Core proxy) complete - vibes-core crate with Session, EventBus, PrintModeBackend, stream-json parser |
 | 2025-12-26 | Milestone 1.2 (CLI) complete - vibes-cli crate with claude command, config system, server stub |
+| 2025-12-26 | Milestone 1.3 (Plugin foundation) complete - vibes-plugin-api crate with Plugin trait, PluginHost, CLI commands, event dispatch |

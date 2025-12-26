@@ -1,0 +1,20 @@
+[package]
+name = "vibes-plugin-api"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Plugin API for vibes - define plugins for Claude Code proxy"
+
+[lib]
+crate-type = ["rlib", "dylib"]
+
+[dependencies]
+serde.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+toml.workspace = true
+
+[dev-dependencies]
+tempfile = "3"
+serde_json.workspace = true
