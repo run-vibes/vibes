@@ -11,7 +11,8 @@ use tracing::info;
 use vibes_server::{ServerConfig, VibesServer};
 
 use crate::daemon::{
-    clear_daemon_state, is_process_alive, read_daemon_state, write_daemon_state, DaemonState,
+    clear_daemon_state, is_process_alive, read_daemon_state, terminate_process, write_daemon_state,
+    DaemonState,
 };
 
 /// Default port for the vibes server
@@ -95,11 +96,40 @@ async fn start_daemon(args: &ServeArgs) -> Result<()> {
     anyhow::bail!("Daemon mode not yet implemented. Run without --daemon for foreground mode.")
 }
 
-/// Stop the running daemon (stub)
+/// Stop the running daemon
 async fn stop_daemon() -> Result<()> {
-    // TODO: Implement in Task 3.3
-    info!("Stopping daemon (not yet implemented)");
-    anyhow::bail!("Daemon stop not yet implemented")
+    match read_daemon_state() {
+        Some(state) => {
+            if is_process_alive(state.pid) {
+                println!("Stopping vibes daemon (PID: {})", state.pid);
+                if terminate_process(state.pid) {
+                    // Wait briefly for process to terminate
+                    tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+
+                    // Check if it actually stopped
+                    if is_process_alive(state.pid) {
+                        println!("Daemon still running after SIGTERM");
+                    } else {
+                        println!("Daemon stopped successfully");
+                    }
+
+                    // Clean up state file
+                    let _ = clear_daemon_state();
+                    Ok(())
+                } else {
+                    anyhow::bail!("Failed to send SIGTERM to daemon")
+                }
+            } else {
+                println!("Daemon is not running (stale state file)");
+                let _ = clear_daemon_state();
+                Ok(())
+            }
+        }
+        None => {
+            println!("No daemon is running");
+            Ok(())
+        }
+    }
 }
 
 /// Show the daemon status

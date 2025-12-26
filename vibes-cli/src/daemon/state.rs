@@ -104,6 +104,22 @@ pub fn is_process_alive(_pid: u32) -> bool {
     false
 }
 
+/// Send SIGTERM to a process
+///
+/// Returns true if the signal was sent successfully
+#[cfg(unix)]
+pub fn terminate_process(pid: u32) -> bool {
+    // SAFETY: SIGTERM is a standard signal that requests graceful termination
+    unsafe { libc::kill(pid as libc::pid_t, libc::SIGTERM) == 0 }
+}
+
+/// Send SIGTERM to a process (Windows stub)
+#[cfg(not(unix))]
+pub fn terminate_process(_pid: u32) -> bool {
+    // TODO: Implement Windows process termination
+    false
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

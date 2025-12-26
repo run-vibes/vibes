@@ -8,5 +8,6 @@
 mod state;
 
 pub use state::{
-    clear_daemon_state, is_process_alive, read_daemon_state, write_daemon_state, DaemonState,
+    clear_daemon_state, is_process_alive, read_daemon_state, terminate_process, write_daemon_state,
+    DaemonState,
 };
