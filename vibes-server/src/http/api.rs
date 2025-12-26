@@ -34,6 +34,40 @@ pub async fn health(State(state): State<Arc<AppState>>) -> Json<HealthResponse> 
     })
 }
 
+/// Summary of a session for list views
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SessionSummary {
+    /// Session ID
+    pub id: String,
+    /// Session name
+    pub name: Option<String>,
+    /// Current state
+    pub state: String,
+}
+
+/// Response for listing sessions
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SessionListResponse {
+    /// List of sessions
+    pub sessions: Vec<SessionSummary>,
+}
+
+/// List all Claude sessions
+pub async fn list_sessions(State(state): State<Arc<AppState>>) -> Json<SessionListResponse> {
+    let sessions_full = state.session_manager.list_sessions_full().await;
+
+    let sessions = sessions_full
+        .into_iter()
+        .map(|(id, name, session_state)| SessionSummary {
+            id,
+            name,
+            state: format!("{:?}", session_state),
+        })
+        .collect();
+
+    Json(SessionListResponse { sessions })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -44,6 +78,7 @@ mod tests {
         let state = Arc::new(AppState::new());
         Router::new()
             .route("/api/health", get(health))
+            .route("/api/claude/sessions", get(list_sessions))
             .with_state(state)
     }
 
@@ -59,5 +94,16 @@ mod tests {
         assert_eq!(body.version, env!("CARGO_PKG_VERSION"));
         assert!(body.uptime_seconds >= 0);
         assert_eq!(body.active_sessions, 0);
+    }
+
+    #[tokio::test]
+    async fn test_list_sessions_empty() {
+        let server = TestServer::new(create_test_app()).unwrap();
+
+        let response = server.get("/api/claude/sessions").await;
+        response.assert_status_ok();
+
+        let body: SessionListResponse = response.json();
+        assert!(body.sessions.is_empty());
     }
 }

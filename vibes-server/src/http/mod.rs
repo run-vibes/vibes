@@ -8,12 +8,13 @@ use axum::{routing::get, Router};
 
 use crate::AppState;
 
-pub use api::HealthResponse;
+pub use api::{HealthResponse, SessionListResponse, SessionSummary};
 
 /// Create the HTTP router with all routes configured
 pub fn create_router(state: Arc<AppState>) -> Router {
     Router::new()
         .route("/api/health", get(api::health))
+        .route("/api/claude/sessions", get(api::list_sessions))
         .with_state(state)
 }
 

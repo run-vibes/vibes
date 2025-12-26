@@ -126,6 +126,22 @@ impl SessionManager {
             .collect()
     }
 
+    /// List sessions with ID, name, and state
+    pub async fn list_sessions_full(&self) -> Vec<(String, Option<String>, SessionState)> {
+        self.sessions
+            .read()
+            .await
+            .iter()
+            .map(|(id, session)| {
+                (
+                    id.clone(),
+                    session.name().map(|s| s.to_string()),
+                    session.state(),
+                )
+            })
+            .collect()
+    }
+
     /// Remove a session
     pub async fn remove_session(&self, id: &str) -> Result<(), SessionError> {
         let mut sessions = self.sessions.write().await;
