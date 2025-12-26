@@ -4,10 +4,10 @@ mod api;
 
 use std::sync::Arc;
 
-use axum::{routing::get, Router};
+use axum::{Router, routing::get};
 
-use crate::ws::ws_handler;
 use crate::AppState;
+use crate::ws::ws_handler;
 
 pub use api::{HealthResponse, SessionListResponse, SessionSummary};
 

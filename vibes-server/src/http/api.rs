@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use axum::{extract::State, Json};
+use axum::{Json, extract::State};
 use serde::{Deserialize, Serialize};
 
 use crate::AppState;
@@ -71,7 +71,7 @@ pub async fn list_sessions(State(state): State<Arc<AppState>>) -> Json<SessionLi
 #[cfg(test)]
 mod tests {
     use super::*;
-    use axum::{routing::get, Router};
+    use axum::{Router, routing::get};
     use axum_test::TestServer;
 
     fn create_test_app() -> Router {

@@ -49,10 +49,12 @@ impl VibesServer {
     /// Run the server, binding to the configured address
     pub async fn run(self) -> Result<(), ServerError> {
         let addr = self.config.addr();
-        let listener = TcpListener::bind(&addr).await.map_err(|e| ServerError::Bind {
-            addr: addr.clone(),
-            source: e,
-        })?;
+        let listener = TcpListener::bind(&addr)
+            .await
+            .map_err(|e| ServerError::Bind {
+                addr: addr.clone(),
+                source: e,
+            })?;
 
         tracing::info!("vibes server listening on {}", addr);
 
