@@ -4,9 +4,11 @@
 //! EventBus, and PluginHost. Both CLI and Web UI connect as WebSocket clients.
 
 mod error;
+pub mod http;
 mod state;
 
 pub use error::ServerError;
+pub use http::create_router;
 pub use state::AppState;
 
 /// Server configuration
