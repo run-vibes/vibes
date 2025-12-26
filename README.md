@@ -122,7 +122,7 @@ vibes is under active development. See [PROGRESS.md](docs/PROGRESS.md) for detai
 |-----------|--------|----------------|
 | 1.1 Core Proxy | [design.md](docs/plans/01-core-proxy/design.md) | [implementation.md](docs/plans/01-core-proxy/implementation.md) |
 | 1.2 CLI | [design.md](docs/plans/02-cli/design.md) | [implementation.md](docs/plans/02-cli/implementation.md) |
-| 1.3 Plugin Foundation | [design.md](docs/plans/03-plugin-foundation/design.md) | TBD |
+| 1.3 Plugin Foundation | [design.md](docs/plans/03-plugin-foundation/design.md) | [implementation.md](docs/plans/03-plugin-foundation/implementation.md) |
 
 ## License
 
