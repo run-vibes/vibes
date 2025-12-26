@@ -15,10 +15,10 @@ This document tracks the implementation progress of vibes against the roadmap de
 **Goal:** `vibes claude` works, plugin system functional, local web UI accessible
 
 ### Milestone 1.1: Core proxy
-- [ ] vibes-core crate with Session, EventBus
-- [ ] Claude Code subprocess management
-- [ ] Stream-json parsing and event broadcasting
-- [ ] Basic error handling and recovery
+- [x] vibes-core crate with Session, EventBus
+- [x] Claude Code subprocess management
+- [x] Stream-json parsing and event broadcasting
+- [x] Basic error handling and recovery
 
 ### Milestone 1.2: CLI
 - [ ] vibes claude pass-through (all claude flags work)
@@ -129,3 +129,4 @@ These phases are planned but not yet scheduled.
 | Date | Change |
 |------|--------|
 | 2025-12-26 | Initial progress tracker created |
+| 2025-12-26 | Milestone 1.1 (Core proxy) complete - vibes-core crate with Session, EventBus, PrintModeBackend, stream-json parser |

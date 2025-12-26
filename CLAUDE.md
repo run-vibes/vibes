@@ -17,8 +17,12 @@ A utility application that proxies Claude Code with remote access capabilities, 
 
 ### Current State
 
-This project is in its initial state with no source code yet. As development begins, update this file with:
-- Module organization as it takes shape
+**Milestone 1.1 (Core proxy) is complete.** The vibes-core crate provides:
+- Session and SessionManager for managing Claude Code interactions
+- EventBus trait with MemoryEventBus for real-time event distribution
+- ClaudeBackend trait with PrintModeBackend (spawns `claude -p`) and MockBackend implementations
+- Stream-JSON parser for Claude Code's output format
+- ClaudeEvent and VibesEvent types for typed event handling
 
 ## Development Environment
 

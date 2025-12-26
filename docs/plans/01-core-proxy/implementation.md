@@ -18,7 +18,7 @@
 Create `flake.nix` with Rust toolchain, cargo-nextest, cargo-mutants, cargo-watch, just, and direnv.
 
 **Files:**
-- [ ] `flake.nix`
+- [x] `flake.nix`
 
 **Validation:**
 ```bash
@@ -31,7 +31,7 @@ nix develop  # Should enter shell with all tools
 Create `.envrc` for automatic shell loading.
 
 **Files:**
-- [ ] `.envrc`
+- [x] `.envrc`
 
 **Validation:**
 ```bash
@@ -44,7 +44,7 @@ just --version     # Should work
 Set up task runner with common commands.
 
 **Files:**
-- [ ] `justfile`
+- [x] `justfile`
 
 **Validation:**
 ```bash
@@ -60,9 +60,9 @@ just  # Should list available commands
 Initialize Cargo workspace with vibes-core member.
 
 **Files:**
-- [ ] `Cargo.toml` (workspace root)
-- [ ] `vibes-core/Cargo.toml`
-- [ ] `vibes-core/src/lib.rs`
+- [x] `Cargo.toml` (workspace root)
+- [x] `vibes-core/Cargo.toml`
+- [x] `vibes-core/src/lib.rs`
 
 **Validation:**
 ```bash
@@ -74,20 +74,20 @@ just check  # cargo check should pass
 Create empty module files with TODO placeholders.
 
 **Files:**
-- [ ] `vibes-core/src/error.rs`
-- [ ] `vibes-core/src/events/mod.rs`
-- [ ] `vibes-core/src/events/types.rs`
-- [ ] `vibes-core/src/events/bus.rs`
-- [ ] `vibes-core/src/events/memory.rs`
-- [ ] `vibes-core/src/backend/mod.rs`
-- [ ] `vibes-core/src/backend/traits.rs`
-- [ ] `vibes-core/src/backend/mock.rs`
-- [ ] `vibes-core/src/backend/print_mode.rs`
-- [ ] `vibes-core/src/parser/mod.rs`
-- [ ] `vibes-core/src/parser/stream_json.rs`
-- [ ] `vibes-core/src/session/mod.rs`
-- [ ] `vibes-core/src/session/session.rs`
-- [ ] `vibes-core/src/session/manager.rs`
+- [x] `vibes-core/src/error.rs`
+- [x] `vibes-core/src/events/mod.rs`
+- [x] `vibes-core/src/events/types.rs`
+- [x] `vibes-core/src/events/bus.rs`
+- [x] `vibes-core/src/events/memory.rs`
+- [x] `vibes-core/src/backend/mod.rs`
+- [x] `vibes-core/src/backend/traits.rs`
+- [x] `vibes-core/src/backend/mock.rs`
+- [x] `vibes-core/src/backend/print_mode.rs`
+- [x] `vibes-core/src/parser/mod.rs`
+- [x] `vibes-core/src/parser/stream_json.rs`
+- [x] `vibes-core/src/session/mod.rs`
+- [x] `vibes-core/src/session/state.rs`
+- [x] `vibes-core/src/session/manager.rs`
 
 **Validation:**
 ```bash
@@ -103,11 +103,11 @@ just check  # Should compile (even with empty modules)
 Implement all error types using thiserror.
 
 **Files:**
-- [ ] `vibes-core/src/error.rs`
+- [x] `vibes-core/src/error.rs`
 
 **Tests:**
-- [ ] Error Display implementations work
-- [ ] Error conversions (From) work
+- [x] Error Display implementations work
+- [x] Error conversions (From) work
 
 **Validation:**
 ```bash
@@ -123,27 +123,27 @@ just test
 Define ClaudeEvent enum with all variants.
 
 **Files:**
-- [ ] `vibes-core/src/events/types.rs`
+- [x] `vibes-core/src/events/types.rs`
 
 **Tests:**
-- [ ] Serialization round-trip
-- [ ] Clone and Debug work
+- [x] Serialization round-trip
+- [x] Clone and Debug work
 
 ### Step 4.2: Implement VibesEvent
 
 Define VibesEvent enum wrapping ClaudeEvent and client events.
 
 **Files:**
-- [ ] `vibes-core/src/events/types.rs` (extend)
+- [x] `vibes-core/src/events/types.rs` (extend)
 
 **Tests:**
-- [ ] Serialization round-trip
-- [ ] Session ID extraction works
+- [x] Serialization round-trip
+- [x] Session ID extraction works
 
 ### Step 4.3: Implement Usage and other supporting types
 
 **Files:**
-- [ ] `vibes-core/src/events/types.rs` (extend)
+- [x] `vibes-core/src/events/types.rs` (extend)
 
 **Validation:**
 ```bash
@@ -159,34 +159,34 @@ just test
 Implement serde-tagged enum for Claude's stream-json format.
 
 **Files:**
-- [ ] `vibes-core/src/parser/stream_json.rs`
+- [x] `vibes-core/src/parser/stream_json.rs`
 
 **Tests:**
-- [ ] Parse real stream-json samples
-- [ ] Unknown message types deserialize to Unknown variant
+- [x] Parse real stream-json samples
+- [x] Unknown message types deserialize to Unknown variant
 
 ### Step 5.2: Implement parse_line function
 
 Parse single line with resilient error handling.
 
 **Files:**
-- [ ] `vibes-core/src/parser/stream_json.rs` (extend)
+- [x] `vibes-core/src/parser/stream_json.rs` (extend)
 
 **Tests:**
-- [ ] Empty lines return None
-- [ ] Invalid JSON logs warning, returns None
-- [ ] Valid JSON parses correctly
+- [x] Empty lines return None
+- [x] Invalid JSON logs warning, returns None
+- [x] Valid JSON parses correctly
 
 ### Step 5.3: Implement to_claude_event conversion
 
 Convert StreamMessage to ClaudeEvent.
 
 **Files:**
-- [ ] `vibes-core/src/parser/stream_json.rs` (extend)
+- [x] `vibes-core/src/parser/stream_json.rs` (extend)
 
 **Tests:**
-- [ ] Each StreamMessage variant converts correctly
-- [ ] Unknown returns None
+- [x] Each StreamMessage variant converts correctly
+- [x] Unknown returns None
 
 **Validation:**
 ```bash
@@ -202,21 +202,21 @@ just test
 Create the trait with publish, subscribe, subscribe_from, get_session_events.
 
 **Files:**
-- [ ] `vibes-core/src/events/bus.rs`
+- [x] `vibes-core/src/events/bus.rs`
 
 ### Step 6.2: Implement MemoryEventBus
 
 Implement the trait with Vec storage and broadcast channel.
 
 **Files:**
-- [ ] `vibes-core/src/events/memory.rs`
+- [x] `vibes-core/src/events/memory.rs`
 
 **Tests:**
-- [ ] Publish increments sequence number
-- [ ] Subscribe receives new events
-- [ ] subscribe_from replays historical events
-- [ ] get_session_events filters by session_id
-- [ ] Concurrent publish/subscribe works
+- [x] Publish increments sequence number
+- [x] Subscribe receives new events
+- [x] subscribe_from replays historical events
+- [x] get_session_events filters by session_id
+- [x] Concurrent publish/subscribe works
 
 **Validation:**
 ```bash
@@ -232,30 +232,30 @@ just test
 Create the trait with send, subscribe, respond_permission, etc.
 
 **Files:**
-- [ ] `vibes-core/src/backend/traits.rs`
+- [x] `vibes-core/src/backend/traits.rs`
 
 ### Step 7.2: Define BackendState enum
 
 **Files:**
-- [ ] `vibes-core/src/backend/traits.rs` (extend)
+- [x] `vibes-core/src/backend/traits.rs` (extend)
 
 ### Step 7.3: Define BackendFactory trait
 
 **Files:**
-- [ ] `vibes-core/src/backend/traits.rs` (extend)
+- [x] `vibes-core/src/backend/traits.rs` (extend)
 
 ### Step 7.4: Implement MockBackend
 
 Implement backend that emits scripted events.
 
 **Files:**
-- [ ] `vibes-core/src/backend/mock.rs`
+- [x] `vibes-core/src/backend/mock.rs`
 
 **Tests:**
-- [ ] queue_response works
-- [ ] send() emits queued events
-- [ ] State transitions correctly
-- [ ] Multiple sends work with queue
+- [x] queue_response works
+- [x] send() emits queued events
+- [x] State transitions correctly
+- [x] Multiple sends work with queue
 
 **Validation:**
 ```bash
@@ -269,32 +269,32 @@ just test
 ### Step 8.1: Define SessionState enum
 
 **Files:**
-- [ ] `vibes-core/src/session/session.rs`
+- [x] `vibes-core/src/session/state.rs`
 
 ### Step 8.2: Implement Session struct
 
 Implement session with backend, event bus, state machine.
 
 **Files:**
-- [ ] `vibes-core/src/session/session.rs` (extend)
+- [x] `vibes-core/src/session/state.rs` (extend)
 
 **Tests:**
-- [ ] New session starts in Idle state
-- [ ] send() transitions to Processing
-- [ ] Events forwarded to EventBus
-- [ ] Error transitions to Failed
-- [ ] retry() resets Failed to Idle
+- [x] New session starts in Idle state
+- [x] send() transitions to Processing
+- [x] Events forwarded to EventBus
+- [x] Error transitions to Failed
+- [x] retry() resets Failed to Idle
 
 ### Step 8.3: Implement event forwarding
 
 Background task that forwards ClaudeEvents to VibesEvents on bus.
 
 **Files:**
-- [ ] `vibes-core/src/session/session.rs` (extend)
+- [x] `vibes-core/src/session/state.rs` (extend)
 
 **Tests:**
-- [ ] ClaudeEvents appear as VibesEvent::Claude on bus
-- [ ] State changes published
+- [x] ClaudeEvents appear as VibesEvent::Claude on bus
+- [x] State changes published
 
 **Validation:**
 ```bash
@@ -310,13 +310,13 @@ just test
 Manage multiple sessions with create, get, list.
 
 **Files:**
-- [ ] `vibes-core/src/session/manager.rs`
+- [x] `vibes-core/src/session/manager.rs`
 
 **Tests:**
-- [ ] create_session returns unique ID
-- [ ] get_session retrieves by ID
-- [ ] list_sessions returns all
-- [ ] Sessions use injected BackendFactory
+- [x] create_session returns unique ID
+- [x] get_session retrieves by ID
+- [x] list_sessions returns all
+- [x] Sessions use injected BackendFactory
 
 **Validation:**
 ```bash
@@ -332,35 +332,35 @@ just test
 Spawn `claude -p` with correct arguments.
 
 **Files:**
-- [ ] `vibes-core/src/backend/print_mode.rs`
+- [x] `vibes-core/src/backend/print_mode.rs`
 
 **Tests (unit with mock process):**
-- [ ] Command built with correct args
-- [ ] --session-id passed correctly
-- [ ] --allowedTools passed when configured
+- [x] Command built with correct args
+- [x] --session-id passed correctly
+- [x] --allowedTools passed when configured
 
 ### Step 10.2: Implement stdout streaming
 
 Read stdout lines, parse stream-json, emit events.
 
 **Files:**
-- [ ] `vibes-core/src/backend/print_mode.rs` (extend)
+- [x] `vibes-core/src/backend/print_mode.rs` (extend)
 
 **Tests (unit):**
-- [ ] Lines parsed and emitted as events
-- [ ] Parse errors logged, not fatal
+- [x] Lines parsed and emitted as events
+- [x] Parse errors logged, not fatal
 
 ### Step 10.3: Implement process lifecycle
 
 Handle process exit, errors, state transitions.
 
 **Files:**
-- [ ] `vibes-core/src/backend/print_mode.rs` (extend)
+- [x] `vibes-core/src/backend/print_mode.rs` (extend)
 
 **Tests (unit):**
-- [ ] Clean exit transitions to Idle
-- [ ] Crash transitions to Failed
-- [ ] Exit code captured
+- [x] Clean exit transitions to Idle
+- [x] Crash transitions to Failed
+- [x] Exit code captured
 
 **Validation:**
 ```bash
@@ -376,15 +376,15 @@ just test
 Set up tests that spawn real Claude process.
 
 **Files:**
-- [ ] `vibes-core/tests/integration/mod.rs`
-- [ ] `vibes-core/tests/integration/print_mode_test.rs`
+- [x] `vibes-core/tests/integration.rs`
+- [x] `vibes-core/tests/print_mode_test.rs`
 
 ### Step 11.2: Test real Claude interaction
 
 **Tests:**
-- [ ] Simple prompt returns text
-- [ ] Session ID continuity works
-- [ ] Tool use events parsed correctly
+- [x] Simple prompt returns text
+- [x] Session ID continuity works
+- [x] Tool use events parsed correctly
 
 **Validation:**
 ```bash
@@ -400,14 +400,14 @@ just test-all  # Requires Claude CLI
 Export public API surface.
 
 **Files:**
-- [ ] `vibes-core/src/lib.rs`
+- [x] `vibes-core/src/lib.rs`
 
 ### Step 12.2: Add rustdoc comments
 
 Document public types and functions.
 
 **Files:**
-- [ ] All public items
+- [x] All public items
 
 **Validation:**
 ```bash
@@ -442,19 +442,19 @@ Mark Milestone 1.1 items as complete.
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| 1 | Development Environment | [ ] |
-| 2 | Project Scaffolding | [ ] |
-| 3 | Error Types | [ ] |
-| 4 | Event Types | [ ] |
-| 5 | Stream-JSON Parser | [ ] |
-| 6 | EventBus | [ ] |
-| 7 | Backend Abstraction | [ ] |
-| 8 | Session | [ ] |
-| 9 | SessionManager | [ ] |
-| 10 | PrintModeBackend | [ ] |
-| 11 | Integration Tests | [ ] |
-| 12 | Public API & Docs | [ ] |
-| 13 | Final Validation | [ ] |
+| 1 | Development Environment | [x] |
+| 2 | Project Scaffolding | [x] |
+| 3 | Error Types | [x] |
+| 4 | Event Types | [x] |
+| 5 | Stream-JSON Parser | [x] |
+| 6 | EventBus | [x] |
+| 7 | Backend Abstraction | [x] |
+| 8 | Session | [x] |
+| 9 | SessionManager | [x] |
+| 10 | PrintModeBackend | [x] |
+| 11 | Integration Tests | [x] |
+| 12 | Public API & Docs | [x] |
+| 13 | Final Validation | [x] |
 
 ---
 
