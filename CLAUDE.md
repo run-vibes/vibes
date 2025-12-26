@@ -77,6 +77,26 @@ When starting a new milestone:
 3. Write `implementation.md` with step-by-step tasks
 4. Reference any new ADRs added to `docs/PRD.md`
 
+## Development Workflow
+
+**Always use these superpowers skills when developing:**
+
+| Skill | When to Use |
+|-------|-------------|
+| `superpowers:executing-plans` | When implementing a milestone plan |
+| `superpowers:test-driven-development` | Before writing any implementation code |
+| `superpowers:systematic-debugging` | When encountering bugs, test failures, or unexpected behavior |
+| `superpowers:brainstorming` | When designing new features or making architecture decisions |
+
+**Workflow for implementing a milestone:**
+
+1. **Start implementation**: Use `superpowers:executing-plans` skill with the `implementation.md` plan
+2. **Write each feature**: Use `superpowers:test-driven-development` - write tests first, then implementation
+3. **Fix issues**: Use `superpowers:systematic-debugging` - never guess at fixes, investigate first
+4. **Review before commit**: Run `just pre-commit` and address any issues
+
+**This is mandatory.** Do not skip these skills or try to implement without following this workflow.
+
 ## Progress Tracking
 
 When completing work that corresponds to a roadmap item:
