@@ -86,14 +86,15 @@ async fn run_foreground(args: &ServeArgs) -> Result<()> {
     result.map_err(Into::into)
 }
 
-/// Start the daemon in the background (stub)
+/// Start the daemon in the background
 async fn start_daemon(args: &ServeArgs) -> Result<()> {
-    // TODO: Implement in Task 3.4
-    info!(
-        "Starting daemon on {}:{} (not yet implemented)",
-        args.host, args.port
-    );
-    anyhow::bail!("Daemon mode not yet implemented. Run without --daemon for foreground mode.")
+    use crate::daemon::ensure_daemon_running;
+
+    // Use the auto-start machinery to spawn a detached daemon
+    ensure_daemon_running(args.port).await?;
+
+    println!("Vibes daemon started on {}:{}", args.host, args.port);
+    Ok(())
 }
 
 /// Stop the running daemon
