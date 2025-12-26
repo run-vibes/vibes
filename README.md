@@ -52,6 +52,42 @@ vibes is under active development. See [PROGRESS.md](docs/PROGRESS.md) for detai
 | 1.3 Plugin Foundation | Plugin trait, dynamic loading, CLI commands | ⏳ Planned |
 | 1.4 Server + Web UI | axum server, TanStack UI, permission flows | ⏳ Planned |
 
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      vibes (single binary)                       │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │                      vibes-core                            │  │
+│  │  SessionManager ─── Session ─── ClaudeBackend             │  │
+│  │        │                              │                    │  │
+│  │        └──────── EventBus ────────────┘                    │  │
+│  │               (MemoryEventBus)                             │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                              │                                   │
+│         ┌────────────────────┼────────────────────┐             │
+│         ▼                    ▼                    ▼             │
+│  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐       │
+│  │  CLI Mode   │     │  GUI Mode   │     │ Server Mode │       │
+│  │  (default)  │     │  (future)   │     │ (HTTP/WS)   │       │
+│  └─────────────┘     └─────────────┘     └─────────────┘       │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+                    ┌─────────────────┐
+                    │   Claude Code   │
+                    │  (subprocess)   │
+                    └─────────────────┘
+```
+
+**Key components:**
+
+- **SessionManager** - Orchestrates Claude Code sessions
+- **EventBus** - Real-time pub/sub for events with late-joiner replay
+- **ClaudeBackend** - Adapter pattern for Claude interaction (print mode, PTY, etc.)
+- **CLI/Server/GUI** - Thin shells consuming vibes-core
+
 ## Documentation
 
 - [Product Requirements Document](docs/PRD.md) - Full design, architecture, and roadmap
@@ -63,6 +99,7 @@ vibes is under active development. See [PROGRESS.md](docs/PROGRESS.md) for detai
 | Milestone | Design | Implementation |
 |-----------|--------|----------------|
 | 1.1 Core Proxy | [design.md](docs/plans/01-core-proxy/design.md) | [implementation.md](docs/plans/01-core-proxy/implementation.md) |
+| 1.2 CLI | [design.md](docs/plans/02-cli/design.md) | [implementation.md](docs/plans/02-cli/implementation.md) |
 
 ## License
 
