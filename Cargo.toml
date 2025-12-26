@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["vibes-core", "vibes-cli", "vibes-plugin-api"]
+members = ["vibes-core", "vibes-cli", "vibes-plugin-api", "vibes-server"]
 exclude = ["examples/plugins/hello-plugin"]
 
 [workspace.package]
