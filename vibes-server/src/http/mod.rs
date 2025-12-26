@@ -6,6 +6,7 @@ use std::sync::Arc;
 
 use axum::{routing::get, Router};
 
+use crate::ws::ws_handler;
 use crate::AppState;
 
 pub use api::{HealthResponse, SessionListResponse, SessionSummary};
@@ -15,6 +16,7 @@ pub fn create_router(state: Arc<AppState>) -> Router {
     Router::new()
         .route("/api/health", get(api::health))
         .route("/api/claude/sessions", get(api::list_sessions))
+        .route("/ws", get(ws_handler))
         .with_state(state)
 }
 

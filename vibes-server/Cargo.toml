@@ -18,6 +18,7 @@ tracing.workspace = true
 uuid.workspace = true
 thiserror.workspace = true
 chrono = { version = "0.4", features = ["serde"] }
+futures = "0.3"
 
 [dev-dependencies]
 axum-test = "16"
