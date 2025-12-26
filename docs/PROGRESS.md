@@ -21,10 +21,10 @@ This document tracks the implementation progress of vibes against the roadmap de
 - [x] Basic error handling and recovery
 
 ### Milestone 1.2: CLI
-- [ ] vibes claude pass-through (all claude flags work)
-- [ ] --session-name support
-- [ ] vibes config basics
-- [ ] Server auto-start
+- [x] vibes claude pass-through (all claude flags work)
+- [x] --session-name support
+- [x] vibes config basics (show, path commands)
+- [x] Server auto-start (stub)
 
 ### Milestone 1.3: Plugin foundation
 - [ ] Plugin trait and API crate (vibes-plugin-api)
@@ -130,3 +130,4 @@ These phases are planned but not yet scheduled.
 |------|--------|
 | 2025-12-26 | Initial progress tracker created |
 | 2025-12-26 | Milestone 1.1 (Core proxy) complete - vibes-core crate with Session, EventBus, PrintModeBackend, stream-json parser |
+| 2025-12-26 | Milestone 1.2 (CLI) complete - vibes-cli crate with claude command, config system, server stub |
