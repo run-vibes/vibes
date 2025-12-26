@@ -1,8 +1,8 @@
 # vibes
 
-Vibe coding swiss army knife of enhancements.
+Remote control for your Claude Code sessions.
 
-**vibes** supercharges your vibe coding workflow by wrapping Claude Code with remote access, session management, and a plugin ecosystem.
+**vibes** wraps Claude Code with remote access, session management, and a plugin ecosystem — control your AI coding sessions from anywhere.
 
 ## Features
 
@@ -30,19 +30,37 @@ vibes claude --session-name "auth-work"  # Human-friendly session names
 
 ## Status
 
-vibes is under active development. See the [Product Requirements Document](docs/PRD.md) for the full design and roadmap.
+vibes is under active development. See [PROGRESS.md](docs/PROGRESS.md) for detailed tracking.
 
-### Planned Phases
+### Roadmap
 
-1. **Foundation** - Claude Code proxy, plugin system, local web UI
-2. **Remote Access** - Cloudflare Tunnel integration, authentication
-3. **Ecosystem** - Default plugins, multi-session support
-4. **Future** - Native mobile apps (iOS/Android), native desktop GUIs, licensing
+| Phase | Description | Status |
+|-------|-------------|--------|
+| **1. Foundation** | Claude Code proxy, plugin system, local web UI | 🔨 In Progress |
+| **2. Remote Access** | Cloudflare Tunnel integration, authentication | ⏳ Planned |
+| **3. Ecosystem** | Default plugins, multi-session support | ⏳ Planned |
+| **4. Future** | Mobile apps, native GUIs, licensing | 📋 Future |
+
+### Phase 1 Progress
+
+| Milestone | Description | Status |
+|-----------|-------------|--------|
+| 1.1 Core Proxy | Session management, event bus, Claude subprocess | ✅ Complete |
+| 1.2 CLI | `vibes claude` pass-through, config, server auto-start | ⏳ Next |
+| 1.3 Plugin Foundation | Plugin trait, dynamic loading, CLI commands | ⏳ Planned |
+| 1.4 Server + Web UI | axum server, TanStack UI, permission flows | ⏳ Planned |
 
 ## Documentation
 
 - [Product Requirements Document](docs/PRD.md) - Full design, architecture, and roadmap
+- [Progress Tracker](docs/PROGRESS.md) - Implementation status and changelog
 - [CLAUDE.md](CLAUDE.md) - Development guidance for contributors
+
+### Implementation Plans
+
+| Milestone | Design | Implementation |
+|-----------|--------|----------------|
+| 1.1 Core Proxy | [design.md](docs/plans/01-core-proxy/design.md) | [implementation.md](docs/plans/01-core-proxy/implementation.md) |
 
 ## License
 
