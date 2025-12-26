@@ -86,10 +86,11 @@ pub struct Usage {
 }
 
 /// Session state
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
 #[serde(tag = "state", rename_all = "snake_case")]
 pub enum SessionState {
     /// Session is idle, waiting for input
+    #[default]
     Idle,
     /// Session is processing a request
     Processing,
@@ -109,12 +110,6 @@ pub enum SessionState {
         /// Error message
         message: String,
     },
-}
-
-impl Default for SessionState {
-    fn default() -> Self {
-        Self::Idle
-    }
 }
 
 #[cfg(test)]
