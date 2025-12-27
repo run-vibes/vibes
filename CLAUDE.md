@@ -10,25 +10,29 @@ A utility application that proxies Claude Code with remote access capabilities, 
 
 ### Key Architecture
 
-- **vibes-core**: Shared Rust library (sessions, events, plugins, server)
-- **vibes-cli**: CLI binary consuming vibes-core
+- **vibes-core**: Shared Rust library (sessions, events, plugins, auth, tunnel, notifications)
+- **vibes-server**: HTTP/WebSocket server (axum-based)
+- **vibes-cli**: CLI binary consuming vibes-core, connects to daemon via WebSocket
 - **vibes-plugin-api**: Published crate for plugin authors
-- **web-ui**: TanStack frontend embedded in binary
+- **web-ui**: TanStack frontend embedded in binary via rust-embed
 
 ### Current State
 
-**Milestone 1.2 (CLI) is complete.** The vibes-cli crate provides:
-- `vibes claude` command that proxies Claude Code with all common flags
-- Layered configuration system (user config → project config → CLI flags)
-- `vibes config show` and `vibes config path` commands
-- Server stub for port binding (foundation for web UI)
+**Phases 1 & 2 are complete** (7 of 11 milestones). See [docs/PROGRESS.md](docs/PROGRESS.md) for details.
 
-**Milestone 1.1 (Core proxy) is complete.** The vibes-core crate provides:
-- Session and SessionManager for managing Claude Code interactions
-- EventBus trait with MemoryEventBus for real-time event distribution
-- ClaudeBackend trait with PrintModeBackend (spawns `claude -p`) and MockBackend implementations
-- Stream-JSON parser for Claude Code's output format
-- ClaudeEvent and VibesEvent types for typed event handling
+Key capabilities:
+- `vibes claude` proxies Claude Code with session management and remote access
+- Daemon architecture: server owns state, CLI + Web UI are WebSocket clients
+- Plugin system with dynamic native Rust library loading
+- Cloudflare Tunnel integration for remote access
+- Cloudflare Access JWT authentication with localhost bypass
+- Web Push notifications for session events
+
+**Next: Phase 3 (Multi-Client Experience)** focusing on:
+- Persistent chat history
+- Multi-session support
+- CLI ↔ Web UI mirroring
+- Setup wizards for Tunnel and Auth
 
 ## Development Environment
 

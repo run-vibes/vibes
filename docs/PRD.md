@@ -71,15 +71,32 @@ vibes/
 ├── vibes-core/             # Core library
 │   └── src/
 │       ├── lib.rs
-│       ├── session/        # Claude Code subprocess management
+│       ├── session/        # Session management & state machine
+│       ├── backend/        # Claude Code interaction (PrintModeBackend, MockBackend)
 │       ├── events/         # Pub/sub event system
 │       ├── plugins/        # Plugin loading & lifecycle
-│       ├── server/         # HTTP/WebSocket server
-│       └── config/         # Configuration management
-├── vibes-plugin-api/       # Published crate for plugin authors
+│       ├── parser/         # Stream-JSON parser
+│       ├── auth/           # Cloudflare Access JWT validation
+│       ├── tunnel/         # Cloudflare Tunnel integration
+│       ├── notifications/  # Web Push support
+│       └── error.rs        # Error types
+├── vibes-server/           # HTTP/WebSocket server (axum)
+│   └── src/
+│       ├── lib.rs
+│       ├── http/           # REST API routes
+│       ├── ws/             # WebSocket protocol
+│       ├── middleware/     # Auth middleware
+│       └── state.rs        # Shared AppState
 ├── vibes-cli/              # CLI binary
-├── web-ui/                 # TanStack frontend (embedded)
-└── plugins/                # Default plugins
+│   └── src/
+│       ├── main.rs
+│       ├── commands/       # CLI commands (auth, claude, config, plugin, serve, tunnel)
+│       ├── client/         # WebSocket client to daemon
+│       ├── daemon/         # Auto-start logic
+│       └── config/         # Configuration loading
+├── vibes-plugin-api/       # Published crate for plugin authors
+├── web-ui/                 # TanStack frontend (embedded via rust-embed)
+└── examples/plugins/       # Example plugins
 ```
 
 ---
@@ -409,25 +426,65 @@ pub struct DevicePairingAuth;         // Future: QR code pairing
 
 ---
 
-### Phase 3: Polish & Ecosystem
+### Phase 3: Multi-Client Experience
+
+**Goal:** Full multi-client support with setup wizards for remote access
+
+#### Milestone 3.1: Chat History
+- Persistent session history storage (SQLite or file-based)
+- Session search and filtering
+- Replay previous sessions from any client
+- History pagination for large session counts
+
+#### Milestone 3.2: Multi-Session Support
+- Multiple concurrent Claude sessions on same server
+- Session list view in Web UI with status indicators
+- Session isolation (events/input per session)
+- Graceful session cleanup on disconnect
+
+#### Milestone 3.3: CLI ↔ Web Mirroring
+- Real-time bidirectional sync between CLI and Web UI
+- Any connected client can send input to active session
+- Late-joiner catches up with full session history
+- Input source attribution (show who typed what)
+
+#### Milestone 3.4: Cloudflare Tunnel Wizard
+- Interactive `vibes tunnel setup` wizard
+- Guide user through cloudflared installation check
+- Tunnel mode selection (quick vs named)
+- DNS configuration assistance for named tunnels
+- Test connectivity and display public URL
+
+#### Milestone 3.5: Cloudflare Auth Wizard
+- Interactive `vibes auth setup` wizard
+- Auto-detect team/AUD from existing tunnel config
+- Manual configuration fallback
+- Test JWT validation with sample request
+- Display identity information on success
+
+**Deliverable:** Multiple clients share sessions in real-time with guided setup
+
+---
+
+### Phase 4: Polish & Ecosystem
 
 **Goal:** Production-ready with default plugins
 
-#### Milestone 3.1: Default plugins
+#### Milestone 4.1: Default plugins
 - analytics (session stats, token usage)
 - history (searchable session history)
 - templates (prompt templates/snippets)
 - export (session export to markdown/JSON)
 
-#### Milestone 3.2: Multiple sessions
-- Run multiple Claude sessions concurrently
-- Session switcher in UI
-- Per-session notification settings
-
-#### Milestone 3.3: CLI enhancements
+#### Milestone 4.2: CLI enhancements
 - vibes sessions list/switch/kill
 - Tab completion
 - Interactive session picker
+
+#### Milestone 4.3: Advanced permissions
+- Per-session notification settings
+- First-responder policy for permission requests
+- Permission request timeout handling
 
 **Deliverable:** Feature-rich vibes with useful default plugins
 
@@ -435,14 +492,15 @@ pub struct DevicePairingAuth;         // Future: QR code pairing
 
 ### Future Phases
 
-#### Phase F1: Alternative Claude Code Interaction
+#### Phase F1: Alternative Claude Code Backends
 
-Revisit the Claude Code interaction model for better performance or capabilities.
+Investigation phase - revisit the Claude Code interaction model for better performance or capabilities.
 
-- Option B: PTY wrapper for interactive mode
-- Option C: Hook-based permission routing
-- Option D: stream-json bidirectional (if supported)
-- Benchmark and migrate if beneficial
+- **Option B:** PTY wrapper for interactive mode (real-time permissions)
+- **Option C:** Hook-based permission routing (custom hook integration)
+- **Option D:** stream-json bidirectional (long-running process)
+- Benchmark current PrintModeBackend vs alternatives
+- Migrate if significant benefits proven
 
 #### Phase F2: Mobile Apps
 
