@@ -84,6 +84,58 @@ pub async fn list_sessions(State(state): State<Arc<AppState>>) -> Json<SessionLi
     Json(SessionListResponse { sessions })
 }
 
+/// Tunnel status response
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TunnelStatusResponse {
+    /// Current tunnel state
+    pub state: String,
+    /// Tunnel mode (quick or named)
+    pub mode: Option<String>,
+    /// Public URL when connected
+    pub url: Option<String>,
+    /// Tunnel name for named tunnels
+    pub tunnel_name: Option<String>,
+    /// Error message if failed
+    pub error: Option<String>,
+}
+
+/// GET /api/tunnel/status - Get tunnel status
+pub async fn get_tunnel_status(
+    State(state): State<Arc<AppState>>,
+) -> Json<TunnelStatusResponse> {
+    let manager = state.tunnel_manager.read().await;
+    let tunnel_state = manager.state().await;
+
+    let (status, url, error) = match &tunnel_state {
+        vibes_core::TunnelState::Disabled => ("disabled", None, None),
+        vibes_core::TunnelState::Starting => ("starting", None, None),
+        vibes_core::TunnelState::Connected { url, .. } => ("connected", Some(url.clone()), None),
+        vibes_core::TunnelState::Reconnecting { last_error, .. } => {
+            ("reconnecting", None, Some(last_error.clone()))
+        }
+        vibes_core::TunnelState::Failed { error, .. } => ("failed", None, Some(error.clone())),
+        vibes_core::TunnelState::Stopped => ("stopped", None, None),
+    };
+
+    let mode = if manager.is_enabled() {
+        if manager.config().is_quick() {
+            Some("quick")
+        } else {
+            Some("named")
+        }
+    } else {
+        None
+    };
+
+    Json(TunnelStatusResponse {
+        state: status.to_string(),
+        mode: mode.map(|s| s.to_string()),
+        url,
+        tunnel_name: manager.config().tunnel_name().map(|s| s.to_string()),
+        error,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -95,6 +147,7 @@ mod tests {
         Router::new()
             .route("/api/health", get(health))
             .route("/api/claude/sessions", get(list_sessions))
+            .route("/api/tunnel/status", get(get_tunnel_status))
             .with_state(state)
     }
 
@@ -121,5 +174,20 @@ mod tests {
 
         let body: SessionListResponse = response.json();
         assert!(body.sessions.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_get_tunnel_status_disabled() {
+        let server = TestServer::new(create_test_app()).unwrap();
+
+        let response = server.get("/api/tunnel/status").await;
+        response.assert_status_ok();
+
+        let body: TunnelStatusResponse = response.json();
+        assert_eq!(body.state, "disabled");
+        assert!(body.mode.is_none());
+        assert!(body.url.is_none());
+        assert!(body.tunnel_name.is_none());
+        assert!(body.error.is_none());
     }
 }
