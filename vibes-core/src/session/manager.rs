@@ -13,6 +13,7 @@ use crate::backend::traits::BackendFactory;
 use crate::error::SessionError;
 use crate::events::EventBus;
 
+use super::ownership::ClientId;
 use super::state::{Session, SessionState};
 
 /// Manages multiple vibes sessions
@@ -43,11 +44,28 @@ impl SessionManager {
 
     /// Create a new session with an optional name
     ///
-    /// Returns the session ID.
+    /// Uses the default "system" owner. Returns the session ID.
     pub async fn create_session(&self, name: Option<String>) -> String {
+        self.create_session_with_owner(name, None).await
+    }
+
+    /// Create a new session with an optional name and owner
+    ///
+    /// If owner_id is None, uses the default "system" owner.
+    /// Returns the session ID.
+    pub async fn create_session_with_owner(
+        &self,
+        name: Option<String>,
+        owner_id: Option<ClientId>,
+    ) -> String {
         let id = Uuid::new_v4().to_string();
         let backend = self.backend_factory.create(None);
-        let session = Session::new(id.clone(), name, backend, self.event_bus.clone());
+        let session = match owner_id {
+            Some(owner) => {
+                Session::new_with_owner(id.clone(), name, owner, backend, self.event_bus.clone())
+            }
+            None => Session::new(id.clone(), name, backend, self.event_bus.clone()),
+        };
 
         self.sessions.write().await.insert(id.clone(), session);
         id
@@ -230,6 +248,24 @@ mod tests {
         let name = manager.get_session_name(&id).await.unwrap();
 
         assert_eq!(name, Some("My Session".to_string()));
+    }
+
+    #[tokio::test]
+    async fn create_session_with_owner_sets_owner() {
+        let manager = create_test_manager();
+
+        let id = manager
+            .create_session_with_owner(None, Some("client-abc".to_string()))
+            .await;
+
+        let is_owner = manager
+            .with_session(&id, |session| {
+                session.ownership().is_owner(&"client-abc".to_string())
+            })
+            .await
+            .unwrap();
+
+        assert!(is_owner);
     }
 
     #[tokio::test]
