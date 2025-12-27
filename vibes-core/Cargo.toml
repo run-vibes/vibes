@@ -26,6 +26,9 @@ reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"
 libloading = "0.8"
 dirs = "6"
 which = "7"
+web-push-native = { version = "0.4", features = ["vapid"] }
+p256 = { version = "0.13", features = ["ecdsa"] }
+base64ct = { version = "1", features = ["std"] }
 vibes-plugin-api = { path = "../vibes-plugin-api" }
 
 [dev-dependencies]
