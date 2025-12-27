@@ -7,6 +7,7 @@ import {
 } from '@tanstack/react-router'
 import { ClaudeSessions } from './pages/ClaudeSessions'
 import { ClaudeSession } from './pages/ClaudeSession'
+import { StatusPage } from './pages/Status'
 
 // Root layout component
 function RootLayout() {
@@ -61,8 +62,14 @@ const sessionRoute = createRoute({
   component: ClaudeSession,
 })
 
+const statusRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/status',
+  component: StatusPage,
+})
+
 // Create route tree and router
-const routeTree = rootRoute.addChildren([indexRoute, claudeRoute, sessionRoute])
+const routeTree = rootRoute.addChildren([indexRoute, claudeRoute, sessionRoute, statusRoute])
 
 export const router = createRouter({ routeTree })
 
