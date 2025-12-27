@@ -3,10 +3,10 @@
 use std::sync::Arc;
 
 use chrono::{DateTime, Utc};
-use tokio::sync::broadcast;
+use tokio::sync::{broadcast, RwLock};
 use vibes_core::{
     BackendFactory, MemoryEventBus, PluginHost, PluginHostConfig, PrintModeBackendFactory,
-    PrintModeConfig, SessionManager, VibesEvent,
+    PrintModeConfig, SessionManager, TunnelConfig, TunnelManager, VibesEvent,
 };
 
 /// Default capacity for the event broadcast channel
@@ -21,6 +21,8 @@ pub struct AppState {
     pub plugin_host: Arc<PluginHost>,
     /// Event bus for publishing/subscribing to events
     pub event_bus: Arc<MemoryEventBus>,
+    /// Tunnel manager for remote access
+    pub tunnel_manager: Arc<RwLock<TunnelManager>>,
     /// When the server started
     pub started_at: DateTime<Utc>,
     /// Broadcast channel for WebSocket event distribution
@@ -35,12 +37,17 @@ impl AppState {
             Arc::new(PrintModeBackendFactory::new(PrintModeConfig::default()));
         let session_manager = Arc::new(SessionManager::new(factory, event_bus.clone()));
         let plugin_host = Arc::new(PluginHost::new(PluginHostConfig::default()));
+        let tunnel_manager = Arc::new(RwLock::new(TunnelManager::new(
+            TunnelConfig::default(),
+            7432,
+        )));
         let (event_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
 
         Self {
             session_manager,
             plugin_host,
             event_bus,
+            tunnel_manager,
             started_at: Utc::now(),
             event_broadcaster,
         }
@@ -51,6 +58,7 @@ impl AppState {
         session_manager: Arc<SessionManager>,
         plugin_host: Arc<PluginHost>,
         event_bus: Arc<MemoryEventBus>,
+        tunnel_manager: Arc<RwLock<TunnelManager>>,
     ) -> Self {
         let (event_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
 
@@ -58,9 +66,15 @@ impl AppState {
             session_manager,
             plugin_host,
             event_bus,
+            tunnel_manager,
             started_at: Utc::now(),
             event_broadcaster,
         }
+    }
+
+    /// Get a reference to the tunnel manager
+    pub fn tunnel_manager(&self) -> &Arc<RwLock<TunnelManager>> {
+        &self.tunnel_manager
     }
 
     /// Subscribe to events broadcast to WebSocket clients
@@ -115,9 +129,21 @@ mod tests {
             Arc::new(PrintModeBackendFactory::new(PrintModeConfig::default()));
         let session_manager = Arc::new(SessionManager::new(factory, event_bus.clone()));
         let plugin_host = Arc::new(PluginHost::new(PluginHostConfig::default()));
+        let tunnel_manager = Arc::new(RwLock::new(TunnelManager::new(
+            TunnelConfig::default(),
+            7432,
+        )));
 
-        let state = AppState::with_components(session_manager, plugin_host, event_bus);
+        let state =
+            AppState::with_components(session_manager, plugin_host, event_bus, tunnel_manager);
         assert!(state.uptime_seconds() >= 0);
+    }
+
+    #[tokio::test]
+    async fn test_app_state_has_tunnel_manager() {
+        let state = AppState::new();
+        let tunnel = state.tunnel_manager.read().await;
+        assert!(!tunnel.is_enabled());
     }
 
     // ==================== Event Broadcasting Tests ====================
