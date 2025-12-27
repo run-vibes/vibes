@@ -5,9 +5,12 @@ use std::sync::Arc;
 use chrono::{DateTime, Utc};
 use tokio::sync::{RwLock, broadcast};
 use vibes_core::{
-    BackendFactory, MemoryEventBus, PluginHost, PluginHostConfig, PrintModeBackendFactory,
-    PrintModeConfig, SessionManager, TunnelConfig, TunnelManager, VibesEvent,
+    AccessConfig, BackendFactory, MemoryEventBus, PluginHost, PluginHostConfig,
+    PrintModeBackendFactory, PrintModeConfig, SessionManager, TunnelConfig, TunnelManager,
+    VibesEvent,
 };
+
+use crate::middleware::AuthLayer;
 
 /// Default capacity for the event broadcast channel
 const DEFAULT_BROADCAST_CAPACITY: usize = 1000;
@@ -23,6 +26,8 @@ pub struct AppState {
     pub event_bus: Arc<MemoryEventBus>,
     /// Tunnel manager for remote access
     pub tunnel_manager: Arc<RwLock<TunnelManager>>,
+    /// Authentication layer
+    pub auth_layer: AuthLayer,
     /// When the server started
     pub started_at: DateTime<Utc>,
     /// Broadcast channel for WebSocket event distribution
@@ -48,9 +53,16 @@ impl AppState {
             plugin_host,
             event_bus,
             tunnel_manager,
+            auth_layer: AuthLayer::disabled(),
             started_at: Utc::now(),
             event_broadcaster,
         }
+    }
+
+    /// Configure authentication for this state
+    pub fn with_auth(mut self, config: AccessConfig) -> Self {
+        self.auth_layer = AuthLayer::new(config);
+        self
     }
 
     /// Create AppState with custom components (for testing)
@@ -67,6 +79,7 @@ impl AppState {
             plugin_host,
             event_bus,
             tunnel_manager,
+            auth_layer: AuthLayer::disabled(),
             started_at: Utc::now(),
             event_broadcaster,
         }
