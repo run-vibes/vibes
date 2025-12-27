@@ -1,7 +1,8 @@
 # vibes
 
 [![CI](https://github.com/run-vibes/vibes/actions/workflows/ci.yml/badge.svg)](https://github.com/run-vibes/vibes/actions/workflows/ci.yml)
-[![Progress](https://img.shields.io/badge/progress-6%2F11%20milestones-blue)](docs/PROGRESS.md)
+[![Progress](https://img.shields.io/badge/progress-7%2F11%20milestones-blue)](docs/PROGRESS.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Remote control for your Claude Code sessions.
 
@@ -121,7 +122,7 @@ export_plugin!(MyPlugin);
 | 1.3 Plugin Foundation | Plugin trait, dynamic loading, CLI commands | ✅ Complete |
 | 1.4 Server + Web UI | axum server, TanStack UI, permission flows, daemon architecture | ✅ Complete |
 | 2.1 Cloudflare Tunnel | Tunnel management, quick/named modes, status UI | ✅ Complete |
-| 2.2 Cloudflare Access | JWT validation, auth middleware, identity display | 📋 Designed |
+| 2.2 Cloudflare Access | JWT validation, auth middleware, identity display | ✅ Complete |
 
 ## Architecture
 
@@ -188,8 +189,8 @@ vibes uses a **daemon-first architecture** where a background server owns all se
 | 1.3 Plugin Foundation | [design.md](docs/plans/03-plugin-foundation/design.md) | [implementation.md](docs/plans/03-plugin-foundation/implementation.md) |
 | 1.4 Server + Web UI | [design.md](docs/plans/04-server-web-ui/design.md) | [implementation.md](docs/plans/04-server-web-ui/implementation.md) |
 | 2.1 Cloudflare Tunnel | [design.md](docs/plans/05-cloudflare-tunnel/design.md) | [implementation.md](docs/plans/05-cloudflare-tunnel/implementation.md) |
-| 2.2 Cloudflare Access | [design.md](docs/plans/06-cloudflare-access/design.md) | - |
+| 2.2 Cloudflare Access | [design.md](docs/plans/06-cloudflare-access/design.md) | [implementation.md](docs/plans/06-cloudflare-access/implementation.md) |
 
 ## License
 
-TBD
+MIT License - see [LICENSE](LICENSE) for details.
