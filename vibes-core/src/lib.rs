@@ -67,11 +67,11 @@ pub use backend::{
     BackendFactory, BackendState, ClaudeBackend, MockBackend, PrintModeBackend,
     PrintModeBackendFactory, PrintModeConfig,
 };
-pub use error::{BackendError, EventBusError, SessionError, VibesError};
+pub use error::{BackendError, EventBusError, NotificationError, SessionError, VibesError};
 pub use events::{ClaudeEvent, EventBus, MemoryEventBus, Usage, VibesEvent};
 pub use notifications::{
     NotificationConfig, NotificationData, NotificationEvent, PushNotification, PushSubscription,
-    SubscriptionKeys,
+    SubscriptionKeys, VapidKeyManager, VapidKeys,
 };
 pub use plugins::{PluginHost, PluginHostConfig, PluginHostError, PluginInfo, PluginState};
 pub use session::{Session, SessionManager, SessionState};
