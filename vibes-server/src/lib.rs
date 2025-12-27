@@ -10,10 +10,13 @@ mod state;
 pub mod ws;
 
 use std::net::SocketAddr;
+use std::path::PathBuf;
 use std::sync::Arc;
 
 use tokio::net::TcpListener;
-use vibes_core::EventBus;
+use vibes_core::{
+    EventBus, NotificationConfig, NotificationService, SubscriptionStore, VapidKeyManager,
+};
 
 pub use error::ServerError;
 pub use http::create_router;
@@ -24,6 +27,7 @@ pub use state::AppState;
 pub struct VibesServer {
     config: ServerConfig,
     state: Arc<AppState>,
+    notification_service: Option<Arc<NotificationService>>,
 }
 
 impl VibesServer {
@@ -32,12 +36,55 @@ impl VibesServer {
         Self {
             config,
             state: Arc::new(AppState::new()),
+            notification_service: None,
         }
+    }
+
+    /// Create a new server with push notifications enabled
+    pub async fn with_notifications(config: ServerConfig) -> Result<Self, ServerError> {
+        let config_dir = get_vibes_config_dir()?;
+
+        // Initialize VAPID keys
+        let vapid = VapidKeyManager::load_or_generate(&config_dir)
+            .await
+            .map_err(|e| {
+                ServerError::Internal(format!("Failed to initialize VAPID keys: {}", e))
+            })?;
+        let vapid = Arc::new(vapid);
+
+        // Initialize subscription store
+        let subscriptions = SubscriptionStore::load(&config_dir)
+            .await
+            .map_err(|e| ServerError::Internal(format!("Failed to load subscriptions: {}", e)))?;
+        let subscriptions = Arc::new(subscriptions);
+
+        // Create state with push notification components
+        let state = Arc::new(AppState::new().with_push(vapid.clone(), subscriptions.clone()));
+
+        // Create notification service
+        let notification_config = NotificationConfig::default();
+        let notification_service = Arc::new(NotificationService::new(
+            vapid,
+            subscriptions,
+            notification_config,
+        ));
+
+        tracing::info!("Push notifications initialized");
+
+        Ok(Self {
+            config,
+            state,
+            notification_service: Some(notification_service),
+        })
     }
 
     /// Create a server with custom state (for testing)
     pub fn with_state(config: ServerConfig, state: Arc<AppState>) -> Self {
-        Self { config, state }
+        Self {
+            config,
+            state,
+            notification_service: None,
+        }
     }
 
     /// Get the server configuration
@@ -64,6 +111,11 @@ impl VibesServer {
 
         // Start event forwarding from event_bus to WebSocket broadcaster
         self.start_event_forwarding();
+
+        // Start notification service if enabled
+        if let Some(notification_service) = &self.notification_service {
+            self.start_notification_service(notification_service.clone());
+        }
 
         let router = create_router(self.state);
         axum::serve(
@@ -100,6 +152,31 @@ impl VibesServer {
             }
         });
     }
+
+    /// Start the notification service in a background task
+    fn start_notification_service(&self, notification_service: Arc<NotificationService>) {
+        let state = Arc::clone(&self.state);
+        let rx = state.event_bus.subscribe();
+
+        tokio::spawn(async move {
+            notification_service.run(rx).await;
+        });
+
+        tracing::info!("Notification service started");
+    }
+}
+
+/// Get the vibes configuration directory
+fn get_vibes_config_dir() -> Result<PathBuf, ServerError> {
+    let config_dir = dirs::config_dir()
+        .ok_or_else(|| ServerError::Internal("Could not determine config directory".to_string()))?
+        .join("vibes");
+
+    // Ensure the directory exists
+    std::fs::create_dir_all(&config_dir)
+        .map_err(|e| ServerError::Internal(format!("Failed to create config directory: {}", e)))?;
+
+    Ok(config_dir)
 }
 
 /// Server configuration
@@ -113,6 +190,8 @@ pub struct ServerConfig {
     pub tunnel_enabled: bool,
     /// Use quick tunnel mode (temporary URL)
     pub tunnel_quick: bool,
+    /// Enable push notifications
+    pub notify_enabled: bool,
 }
 
 impl Default for ServerConfig {
@@ -122,6 +201,7 @@ impl Default for ServerConfig {
             port: 7432,
             tunnel_enabled: false,
             tunnel_quick: false,
+            notify_enabled: false,
         }
     }
 }
@@ -134,6 +214,7 @@ impl ServerConfig {
             port,
             tunnel_enabled: false,
             tunnel_quick: false,
+            notify_enabled: false,
         }
     }
 

@@ -46,6 +46,10 @@ pub struct ServeArgs {
     /// Start with quick tunnel (temporary URL)
     #[arg(long, conflicts_with = "tunnel")]
     pub quick_tunnel: bool,
+
+    /// Enable push notifications
+    #[arg(long)]
+    pub notify: bool,
 }
 
 /// Subcommands for serve
@@ -74,6 +78,7 @@ async fn run_foreground(args: &ServeArgs) -> Result<()> {
         port: args.port,
         tunnel_enabled: args.tunnel,
         tunnel_quick: args.quick_tunnel,
+        notify_enabled: args.notify,
     };
 
     info!("Starting vibes server on {}:{}", config.host, config.port);
@@ -84,8 +89,12 @@ async fn run_foreground(args: &ServeArgs) -> Result<()> {
         tracing::warn!("Failed to write daemon state file: {}", e);
     }
 
-    // Run the server
-    let server = VibesServer::new(config);
+    // Create server with or without notifications
+    let server = if args.notify {
+        VibesServer::with_notifications(config).await?
+    } else {
+        VibesServer::new(config)
+    };
     let result = server.run().await;
 
     // Clear daemon state file on exit
@@ -298,5 +307,19 @@ mod tests {
         // Both flags together should fail
         let result = TestCli::try_parse_from(["test", "--tunnel", "--quick-tunnel"]);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_serve_args_notify_flag() {
+        use clap::Parser;
+
+        #[derive(Parser)]
+        struct TestCli {
+            #[command(flatten)]
+            serve: ServeArgs,
+        }
+
+        let cli = TestCli::parse_from(["test", "--notify"]);
+        assert!(cli.serve.notify);
     }
 }

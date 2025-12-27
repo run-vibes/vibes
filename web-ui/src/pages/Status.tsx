@@ -1,3 +1,4 @@
+import { NotificationSettings } from '../components/NotificationSettings';
 import { useTunnelStatus } from '../hooks/useTunnelStatus';
 
 export function StatusPage() {
@@ -6,6 +7,11 @@ export function StatusPage() {
   return (
     <div style={{ padding: '2rem' }}>
       <h1>Status</h1>
+
+      <section style={{ marginTop: '2rem' }}>
+        <h2>Notifications</h2>
+        <NotificationSettings />
+      </section>
 
       <section style={{ marginTop: '2rem' }}>
         <h2>Tunnel</h2>

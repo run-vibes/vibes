@@ -13,6 +13,22 @@ pub enum VibesError {
 
     #[error("Event bus error: {0}")]
     EventBus(#[from] EventBusError),
+
+    #[error("Notification error: {0}")]
+    Notification(#[from] NotificationError),
+}
+
+/// Errors related to push notifications
+#[derive(Error, Debug)]
+pub enum NotificationError {
+    #[error("Configuration error: {0}")]
+    Config(String),
+
+    #[error("Failed to send notification: {0}")]
+    SendFailed(String),
+
+    #[error("Storage error: {0}")]
+    Storage(String),
 }
 
 /// Errors related to session management

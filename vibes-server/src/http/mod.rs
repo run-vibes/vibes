@@ -1,11 +1,15 @@
 //! HTTP server module
 
 mod api;
+mod push;
 mod static_files;
 
 use std::sync::Arc;
 
-use axum::{Extension, Router, middleware, routing::get};
+use axum::{
+    Extension, Router, middleware,
+    routing::{delete, get, post},
+};
 
 use crate::AppState;
 use crate::middleware::auth_middleware;
@@ -14,6 +18,10 @@ use crate::ws::ws_handler;
 pub use api::{
     AuthIdentityResponse, AuthStatusResponse, HealthResponse, SessionListResponse, SessionSummary,
     TunnelStatusResponse,
+};
+pub use push::{
+    PushErrorResponse, SubscribeRequest, SubscribeResponse, SubscriptionInfo,
+    SubscriptionListResponse, VapidKeyResponse,
 };
 
 /// Create the HTTP router with all routes configured
@@ -25,6 +33,11 @@ pub fn create_router(state: Arc<AppState>) -> Router {
         .route("/api/claude/sessions", get(api::list_sessions))
         .route("/api/tunnel/status", get(api::get_tunnel_status))
         .route("/api/auth/status", get(api::get_auth_status))
+        // Push notification endpoints
+        .route("/api/push/vapid-key", get(push::get_vapid_key))
+        .route("/api/push/subscribe", post(push::subscribe))
+        .route("/api/push/subscribe/:id", delete(push::unsubscribe))
+        .route("/api/push/subscriptions", get(push::list_subscriptions))
         .route("/ws", get(ws_handler))
         .layer(middleware::from_fn(auth_middleware))
         .layer(Extension(auth_layer))
