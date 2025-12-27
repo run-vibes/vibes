@@ -5,6 +5,7 @@
 
 mod error;
 pub mod http;
+pub mod middleware;
 mod state;
 pub mod ws;
 
@@ -15,6 +16,7 @@ use vibes_core::EventBus;
 
 pub use error::ServerError;
 pub use http::create_router;
+pub use middleware::{auth_middleware, AuthLayer};
 pub use state::AppState;
 
 /// The main vibes server
