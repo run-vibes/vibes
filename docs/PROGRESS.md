@@ -13,6 +13,11 @@ This document tracks the implementation progress of vibes against the roadmap de
 | 2.1 Cloudflare Tunnel | Complete | [design](plans/05-cloudflare-tunnel/design.md) | [implementation](plans/05-cloudflare-tunnel/implementation.md) |
 | 2.2 Cloudflare Access | Complete | [design](plans/06-cloudflare-access/design.md) | [implementation](plans/06-cloudflare-access/implementation.md) |
 | 2.3 Push Notifications | Complete | [design](plans/07-push-notifications/design.md) | [implementation](plans/07-push-notifications/implementation.md) |
+| 3.1 Chat History | Not started | — | — |
+| 3.2 Multi-Session Support | Not started | — | — |
+| 3.3 CLI ↔ Web Mirroring | Not started | — | — |
+| 3.4 Cloudflare Tunnel Wizard | Not started | — | — |
+| 3.5 Cloudflare Auth Wizard | Not started | — | — |
 
 ---
 
@@ -74,9 +79,10 @@ This document tracks the implementation progress of vibes against the roadmap de
 - [x] AuthMiddleware layer for axum
 - [x] Localhost bypass logic
 - [x] vibes auth CLI commands (status, test)
-- [ ] Auto-detect team/aud from tunnel config
 - [x] Web UI identity display
 - [x] WebSocket auth_context message
+
+Note: Auto-detect team/aud moved to Milestone 3.5 (Cloudflare Auth Wizard)
 
 ### Milestone 2.3: Push notifications
 - [x] --notify flag
@@ -88,27 +94,67 @@ This document tracks the implementation progress of vibes against the roadmap de
 
 ---
 
-## Phase 3: Polish & Ecosystem
+## Phase 3: Multi-Client Experience
+
+**Goal:** Full multi-client support with setup wizards for remote access
+
+### Milestone 3.1: Chat History
+- [ ] Persistent session history storage (SQLite or file-based)
+- [ ] Session search and filtering
+- [ ] Replay previous sessions from any client
+- [ ] History pagination for large session counts
+
+### Milestone 3.2: Multi-Session Support
+- [ ] Multiple concurrent Claude sessions on same server
+- [ ] Session list view in Web UI with status indicators
+- [ ] Session isolation (events/input per session)
+- [ ] Graceful session cleanup on disconnect
+
+### Milestone 3.3: CLI ↔ Web Mirroring
+- [ ] Real-time bidirectional sync between CLI and Web UI
+- [ ] Any connected client can send input to active session
+- [ ] Late-joiner catches up with full session history
+- [ ] Input source attribution (show who typed what)
+
+### Milestone 3.4: Cloudflare Tunnel Wizard
+- [ ] Interactive `vibes tunnel setup` wizard
+- [ ] Guide user through cloudflared installation check
+- [ ] Tunnel mode selection (quick vs named)
+- [ ] DNS configuration assistance for named tunnels
+- [ ] Test connectivity and display public URL
+
+### Milestone 3.5: Cloudflare Auth Wizard
+- [ ] Interactive `vibes auth setup` wizard
+- [ ] Auto-detect team/AUD from existing tunnel config
+- [ ] Manual configuration fallback
+- [ ] Test JWT validation with sample request
+- [ ] Display identity information on success
+
+**Phase 3 Deliverable:** Multiple clients share sessions in real-time with guided setup
+
+---
+
+## Phase 4: Polish & Ecosystem
 
 **Goal:** Production-ready with default plugins
 
-### Milestone 3.1: Default plugins
+### Milestone 4.1: Default plugins
 - [ ] analytics (session stats, token usage)
 - [ ] history (searchable session history)
 - [ ] templates (prompt templates/snippets)
 - [ ] export (session export to markdown/JSON)
 
-### Milestone 3.2: Multiple sessions
-- [ ] Run multiple Claude sessions concurrently
-- [ ] Session switcher in UI
-- [ ] Per-session notification settings
-
-### Milestone 3.3: CLI enhancements
+### Milestone 4.2: CLI enhancements
 - [ ] vibes sessions list/switch/kill
 - [ ] Tab completion
 - [ ] Interactive session picker
 
-**Phase 3 Deliverable:** Feature-rich vibes with useful default plugins
+### Milestone 4.3: Advanced permissions
+- [ ] Per-session notification settings
+- [ ] First-responder policy for permission requests
+- [ ] Permission request timeout handling
+
+**Phase 4 Deliverable:** Feature-rich vibes with useful default plugins
 
 ---
 
@@ -116,11 +162,12 @@ This document tracks the implementation progress of vibes against the roadmap de
 
 These phases are planned but not yet scheduled.
 
-### Phase F1: Alternative Claude Code Interaction
+### Phase F1: Alternative Claude Code Backends
 - [ ] Investigate PTY wrapper for interactive mode
 - [ ] Investigate hook-based permission routing
 - [ ] Investigate stream-json bidirectional
-- [ ] Benchmark and decide on migration
+- [ ] Benchmark PrintModeBackend vs alternatives
+- [ ] Migrate if significant benefits proven
 
 ### Phase F2: Mobile Apps
 - [ ] iOS app (Swift)
@@ -155,3 +202,4 @@ These phases are planned but not yet scheduled.
 | 2025-12-27 | Milestone 2.2 (Cloudflare Access) design complete - AuthMiddleware, JwtValidator, localhost bypass, identity display |
 | 2025-12-27 | Milestone 2.2 (Cloudflare Access) implementation complete - JWT validation, auth middleware, CLI commands, WebSocket auth_context, Web UI identity |
 | 2025-12-27 | Milestone 2.3 (Push Notifications) complete - VAPID keys, subscription store, NotificationService, web push endpoints, service worker, usePushSubscription hook, NotificationSettings UI |
+| 2025-12-27 | Roadmap re-planned: New Phase 3 (Multi-Client Experience) with chat history, multi-session, CLI↔Web mirroring, setup wizards. Old Phase 3 becomes Phase 4. |
