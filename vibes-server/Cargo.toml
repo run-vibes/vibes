@@ -19,6 +19,8 @@ uuid.workspace = true
 thiserror.workspace = true
 chrono = { version = "0.4", features = ["serde"] }
 futures = "0.3"
+rust-embed = "8"
+mime_guess = "2"
 
 [dev-dependencies]
 axum-test = "16"

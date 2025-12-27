@@ -1,6 +1,7 @@
 //! HTTP server module
 
 mod api;
+mod static_files;
 
 use std::sync::Arc;
 
@@ -18,6 +19,8 @@ pub fn create_router(state: Arc<AppState>) -> Router {
         .route("/api/claude/sessions", get(api::list_sessions))
         .route("/ws", get(ws_handler))
         .with_state(state)
+        // Fallback serves embedded web-ui for SPA routing
+        .fallback(static_files::static_handler)
 }
 
 #[cfg(test)]
