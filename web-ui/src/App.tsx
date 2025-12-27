@@ -5,6 +5,8 @@ import {
   Outlet,
   Link,
 } from '@tanstack/react-router'
+import { ClaudeSessions } from './pages/ClaudeSessions'
+import { ClaudeSession } from './pages/ClaudeSession'
 
 // Root layout component
 function RootLayout() {
@@ -36,16 +38,6 @@ function HomePage() {
   )
 }
 
-// Claude sessions page (placeholder)
-function ClaudePage() {
-  return (
-    <div className="page">
-      <h1>Claude Sessions</h1>
-      <p>No active sessions</p>
-    </div>
-  )
-}
-
 // Define routes
 const rootRoute = createRootRoute({
   component: RootLayout,
@@ -60,11 +52,17 @@ const indexRoute = createRoute({
 const claudeRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/claude',
-  component: ClaudePage,
+  component: ClaudeSessions,
+})
+
+const sessionRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/claude/$sessionId',
+  component: ClaudeSession,
 })
 
 // Create route tree and router
-const routeTree = rootRoute.addChildren([indexRoute, claudeRoute])
+const routeTree = rootRoute.addChildren([indexRoute, claudeRoute, sessionRoute])
 
 export const router = createRouter({ routeTree })
 

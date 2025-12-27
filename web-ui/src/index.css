@@ -174,3 +174,227 @@ body {
   background-color: rgba(248, 81, 73, 0.2);
   color: var(--color-error);
 }
+
+.status-waiting_permission {
+  background-color: rgba(210, 153, 34, 0.2);
+  color: var(--color-warning);
+}
+
+/* Session grid */
+.session-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+/* Session card as link */
+.session-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s, transform 0.15s;
+}
+
+.session-card:hover {
+  border-color: var(--color-accent);
+  transform: translateY(-2px);
+}
+
+.session-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.session-card-meta {
+  display: flex;
+  gap: 1rem;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.session-id {
+  font-family: var(--font-mono);
+}
+
+/* Session detail page */
+.session-detail {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 100px);
+}
+
+.session-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.session-header h1 {
+  margin-bottom: 0;
+  flex: 1;
+}
+
+.back-link {
+  color: var(--color-text-muted);
+  text-decoration: none;
+  font-size: 0.875rem;
+}
+
+.back-link:hover {
+  color: var(--color-text);
+}
+
+/* Connection status */
+.connection-status {
+  background-color: rgba(210, 153, 34, 0.2);
+  color: var(--color-warning);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+/* Permission card */
+.permission-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-warning);
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.permission-card h3 {
+  color: var(--color-warning);
+  margin-bottom: 0.5rem;
+}
+
+.permission-card p {
+  margin-bottom: 0.5rem;
+}
+
+.permission-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.permission-actions .button {
+  flex: 1;
+  text-align: center;
+  border: none;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.permission-actions .approve {
+  background-color: var(--color-success);
+}
+
+.permission-actions .deny {
+  background-color: var(--color-error);
+}
+
+/* Conversation */
+.conversation {
+  flex: 1;
+  overflow-y: auto;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.message {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border-radius: 6px;
+}
+
+.message:last-child {
+  margin-bottom: 0;
+}
+
+.message-user {
+  background-color: rgba(88, 166, 255, 0.1);
+  border-left: 3px solid var(--color-accent);
+}
+
+.message-assistant {
+  background-color: var(--color-bg);
+  border-left: 3px solid var(--color-success);
+}
+
+.message-assistant.streaming {
+  border-left-color: var(--color-warning);
+}
+
+.message-content {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+/* Input form */
+.input-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.input-form input {
+  flex: 1;
+  padding: 0.75rem;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  color: var(--color-text);
+  font-size: 14px;
+}
+
+.input-form input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.input-form input:disabled {
+  opacity: 0.5;
+}
+
+.input-form button {
+  padding: 0.75rem 1.5rem;
+  background-color: var(--color-accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.input-form button:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.input-form button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Error message */
+.error {
+  color: var(--color-error);
+}
+
+/* Code blocks */
+code {
+  font-family: var(--font-mono);
+  background-color: var(--color-surface);
+  padding: 0.125rem 0.375rem;
+  border-radius: 4px;
+  font-size: 0.875em;
+}
