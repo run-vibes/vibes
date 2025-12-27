@@ -5,6 +5,19 @@
 use serde::{Deserialize, Serialize};
 use vibes_core::{AuthContext, ClaudeEvent};
 
+/// Information about an active session
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct SessionInfo {
+    pub id: String,
+    pub name: Option<String>,
+    pub state: String,
+    pub owner_id: String,
+    pub is_owner: bool,
+    pub subscriber_count: u32,
+    pub created_at: i64,
+    pub last_activity_at: i64,
+}
+
 /// Messages sent from client to server
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(tag = "type", rename_all = "snake_case")]
@@ -148,6 +161,28 @@ pub fn vibes_event_to_server_message(event: &VibesEvent) -> Option<ServerMessage
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // ==================== SessionInfo Tests ====================
+
+    #[test]
+    fn test_session_info_serialization() {
+        let info = SessionInfo {
+            id: "sess-1".to_string(),
+            name: Some("test".to_string()),
+            state: "Idle".to_string(),
+            owner_id: "client-1".to_string(),
+            is_owner: true,
+            subscriber_count: 2,
+            created_at: 1234567890,
+            last_activity_at: 1234567900,
+        };
+
+        let json = serde_json::to_string(&info).unwrap();
+        let parsed: SessionInfo = serde_json::from_str(&json).unwrap();
+        assert_eq!(info, parsed);
+    }
+
+    // ==================== ClientMessage Tests ====================
 
     #[test]
     fn test_client_message_subscribe_roundtrip() {
