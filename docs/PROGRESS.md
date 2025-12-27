@@ -34,11 +34,11 @@ This document tracks the implementation progress of vibes against the roadmap de
 - [x] Event subscription system
 
 ### Milestone 1.4: Server + Web UI
-- [ ] axum HTTP/WebSocket server
-- [ ] TanStack web UI with session view
-- [ ] Permission approve/deny flow
-- [ ] Simple mode + full mode toggle
-- [ ] rust-embed for bundling UI
+- [x] axum HTTP/WebSocket server
+- [x] TanStack web UI with session view
+- [x] Permission approve/deny flow
+- [x] Simple mode + full mode toggle
+- [x] rust-embed for bundling UI
 
 **Phase 1 Deliverable:** Single binary that proxies Claude Code with web UI on localhost
 
@@ -132,3 +132,4 @@ These phases are planned but not yet scheduled.
 | 2025-12-26 | Milestone 1.1 (Core proxy) complete - vibes-core crate with Session, EventBus, PrintModeBackend, stream-json parser |
 | 2025-12-26 | Milestone 1.2 (CLI) complete - vibes-cli crate with claude command, config system, server stub |
 | 2025-12-26 | Milestone 1.3 (Plugin foundation) complete - vibes-plugin-api crate with Plugin trait, PluginHost, CLI commands, event dispatch |
+| 2025-12-26 | Milestone 1.4 (Server + Web UI) complete - vibes-server crate with axum HTTP/WebSocket, TanStack web UI, daemon auto-start, CLI as WS client |
