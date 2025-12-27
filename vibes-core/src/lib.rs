@@ -55,6 +55,7 @@ pub mod auth;
 pub mod backend;
 pub mod error;
 pub mod events;
+pub mod notifications;
 pub mod parser;
 pub mod plugins;
 pub mod session;
@@ -68,6 +69,7 @@ pub use backend::{
 };
 pub use error::{BackendError, EventBusError, SessionError, VibesError};
 pub use events::{ClaudeEvent, EventBus, MemoryEventBus, Usage, VibesEvent};
+pub use notifications::NotificationConfig;
 pub use plugins::{PluginHost, PluginHostConfig, PluginHostError, PluginInfo, PluginState};
 pub use session::{Session, SessionManager, SessionState};
 pub use tunnel::{
