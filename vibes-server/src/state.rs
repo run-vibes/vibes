@@ -6,8 +6,8 @@ use chrono::{DateTime, Utc};
 use tokio::sync::{RwLock, broadcast};
 use vibes_core::{
     AccessConfig, BackendFactory, MemoryEventBus, PluginHost, PluginHostConfig,
-    PrintModeBackendFactory, PrintModeConfig, SessionManager, TunnelConfig, TunnelManager,
-    VibesEvent,
+    PrintModeBackendFactory, PrintModeConfig, SessionManager, SubscriptionStore, TunnelConfig,
+    TunnelManager, VapidKeyManager, VibesEvent,
 };
 
 use crate::middleware::AuthLayer;
@@ -32,6 +32,10 @@ pub struct AppState {
     pub started_at: DateTime<Utc>,
     /// Broadcast channel for WebSocket event distribution
     event_broadcaster: broadcast::Sender<VibesEvent>,
+    /// VAPID key manager for push notifications (optional)
+    pub vapid: Option<Arc<VapidKeyManager>>,
+    /// Push subscription store (optional)
+    pub subscriptions: Option<Arc<SubscriptionStore>>,
 }
 
 impl AppState {
@@ -56,12 +60,25 @@ impl AppState {
             auth_layer: AuthLayer::disabled(),
             started_at: Utc::now(),
             event_broadcaster,
+            vapid: None,
+            subscriptions: None,
         }
     }
 
     /// Configure authentication for this state
     pub fn with_auth(mut self, config: AccessConfig) -> Self {
         self.auth_layer = AuthLayer::new(config);
+        self
+    }
+
+    /// Configure push notifications for this state
+    pub fn with_push(
+        mut self,
+        vapid: Arc<VapidKeyManager>,
+        subscriptions: Arc<SubscriptionStore>,
+    ) -> Self {
+        self.vapid = Some(vapid);
+        self.subscriptions = Some(subscriptions);
         self
     }
 
@@ -82,6 +99,8 @@ impl AppState {
             auth_layer: AuthLayer::disabled(),
             started_at: Utc::now(),
             event_broadcaster,
+            vapid: None,
+            subscriptions: None,
         }
     }
 
