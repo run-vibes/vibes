@@ -30,6 +30,34 @@ impl SessionOwnership {
             owned_since: SystemTime::now(),
         }
     }
+
+    /// Add a subscriber to this session
+    pub fn add_subscriber(&mut self, client_id: ClientId) {
+        self.subscriber_ids.insert(client_id);
+    }
+
+    /// Remove a subscriber from this session
+    ///
+    /// Returns true if the removed client was the owner.
+    pub fn remove_subscriber(&mut self, client_id: &ClientId) -> bool {
+        self.subscriber_ids.remove(client_id);
+        &self.owner_id == client_id
+    }
+
+    /// Check if client is a subscriber
+    pub fn is_subscriber(&self, client_id: &ClientId) -> bool {
+        self.subscriber_ids.contains(client_id)
+    }
+
+    /// Check if client is the owner
+    pub fn is_owner(&self, client_id: &ClientId) -> bool {
+        &self.owner_id == client_id
+    }
+
+    /// Returns true if session should be cleaned up (no subscribers)
+    pub fn should_cleanup(&self) -> bool {
+        self.subscriber_ids.is_empty()
+    }
 }
 
 #[cfg(test)]
@@ -43,5 +71,72 @@ mod tests {
         assert_eq!(ownership.owner_id, "client-1");
         assert!(ownership.subscriber_ids.contains("client-1"));
         assert_eq!(ownership.subscriber_ids.len(), 1);
+    }
+
+    // ==================== Subscriber Management Tests ====================
+
+    #[test]
+    fn add_subscriber_adds_to_set() {
+        let mut ownership = SessionOwnership::new("client-1".to_string());
+
+        ownership.add_subscriber("client-2".to_string());
+
+        assert!(ownership.is_subscriber(&"client-2".to_string()));
+        assert_eq!(ownership.subscriber_ids.len(), 2);
+    }
+
+    #[test]
+    fn add_subscriber_is_idempotent() {
+        let mut ownership = SessionOwnership::new("client-1".to_string());
+
+        ownership.add_subscriber("client-2".to_string());
+        ownership.add_subscriber("client-2".to_string());
+
+        assert_eq!(ownership.subscriber_ids.len(), 2);
+    }
+
+    #[test]
+    fn remove_subscriber_removes_from_set() {
+        let mut ownership = SessionOwnership::new("client-1".to_string());
+        ownership.add_subscriber("client-2".to_string());
+
+        let was_owner = ownership.remove_subscriber(&"client-2".to_string());
+
+        assert!(!was_owner);
+        assert!(!ownership.is_subscriber(&"client-2".to_string()));
+        assert_eq!(ownership.subscriber_ids.len(), 1);
+    }
+
+    #[test]
+    fn remove_subscriber_returns_true_for_owner() {
+        let mut ownership = SessionOwnership::new("client-1".to_string());
+        ownership.add_subscriber("client-2".to_string());
+
+        let was_owner = ownership.remove_subscriber(&"client-1".to_string());
+
+        assert!(was_owner);
+    }
+
+    #[test]
+    fn is_owner_returns_correct_value() {
+        let ownership = SessionOwnership::new("client-1".to_string());
+
+        assert!(ownership.is_owner(&"client-1".to_string()));
+        assert!(!ownership.is_owner(&"client-2".to_string()));
+    }
+
+    #[test]
+    fn should_cleanup_when_no_subscribers() {
+        let mut ownership = SessionOwnership::new("client-1".to_string());
+        ownership.remove_subscriber(&"client-1".to_string());
+
+        assert!(ownership.should_cleanup());
+    }
+
+    #[test]
+    fn should_not_cleanup_when_subscribers_exist() {
+        let ownership = SessionOwnership::new("client-1".to_string());
+
+        assert!(!ownership.should_cleanup());
     }
 }
