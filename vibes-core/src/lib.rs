@@ -69,7 +69,10 @@ pub use backend::{
 };
 pub use error::{BackendError, EventBusError, SessionError, VibesError};
 pub use events::{ClaudeEvent, EventBus, MemoryEventBus, Usage, VibesEvent};
-pub use notifications::NotificationConfig;
+pub use notifications::{
+    NotificationConfig, NotificationData, NotificationEvent, PushNotification, PushSubscription,
+    SubscriptionKeys,
+};
 pub use plugins::{PluginHost, PluginHostConfig, PluginHostError, PluginInfo, PluginState};
 pub use session::{Session, SessionManager, SessionState};
 pub use tunnel::{
