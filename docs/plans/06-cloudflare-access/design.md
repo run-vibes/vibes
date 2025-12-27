@@ -202,9 +202,10 @@ clock_skew_seconds = 60                  # Leeway for exp/iat validation
 
 ```bash
 vibes auth status              # Show current auth configuration and state
-vibes auth setup               # Interactive setup wizard (if auto-detect fails)
 vibes auth test                # Validate configuration by fetching JWKS
 ```
+
+> **Note:** A `vibes auth setup` wizard for auto-detecting team/aud from tunnel config is planned for a future iteration.
 
 ---
 
@@ -521,17 +522,20 @@ No new dependencies required.
 
 ## Milestone 2.2 Checklist
 
-- [ ] AccessConfig type with TOML parsing
-- [ ] JwtValidator with JWKS caching
-- [ ] AuthMiddleware layer for axum
-- [ ] Localhost bypass logic
-- [ ] AuthContext request extension
-- [ ] GET /api/auth/status endpoint
-- [ ] WebSocket auth_context message
-- [ ] vibes auth status command
+- [x] AccessConfig type with TOML parsing
+- [x] JwtValidator with JWKS caching
+- [x] AuthMiddleware layer for axum
+- [x] Localhost bypass logic
+- [x] AuthContext request extension
+- [x] GET /api/auth/status endpoint
+- [x] WebSocket auth_context message
+- [x] vibes auth status command
+- [x] vibes auth test command
+- [x] Web UI identity display
+- [x] Unit tests for validator
+- [x] Integration tests for middleware
+- [x] Documentation updates
+
+**Deferred to future iteration:**
 - [ ] vibes auth setup wizard
 - [ ] Auto-detect team/aud from tunnel config
-- [ ] Web UI identity display
-- [ ] Unit tests for validator
-- [ ] Integration tests for middleware
-- [ ] Documentation updates
