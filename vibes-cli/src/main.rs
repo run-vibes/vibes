@@ -29,6 +29,8 @@ enum Commands {
     Plugin(commands::plugin::PluginArgs),
     /// Run the vibes server
     Serve(commands::serve::ServeArgs),
+    /// Manage Cloudflare Tunnel
+    Tunnel(commands::tunnel::TunnelArgs),
 }
 
 #[tokio::main]
@@ -43,5 +45,6 @@ async fn main() -> Result<()> {
         Commands::Config(args) => commands::config::run(args),
         Commands::Plugin(args) => commands::plugin::run(args),
         Commands::Serve(args) => commands::serve::run(args).await,
+        Commands::Tunnel(args) => commands::tunnel::run(args),
     }
 }
