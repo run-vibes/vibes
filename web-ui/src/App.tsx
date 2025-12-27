@@ -8,6 +8,7 @@ import {
 import { ClaudeSessions } from './pages/ClaudeSessions'
 import { ClaudeSession } from './pages/ClaudeSession'
 import { StatusPage } from './pages/Status'
+import { TunnelBadge } from './components/TunnelBadge'
 
 // Root layout component
 function RootLayout() {
@@ -17,6 +18,7 @@ function RootLayout() {
         <nav>
           <Link to="/" className="logo">vibes</Link>
           <Link to="/claude">Sessions</Link>
+          <TunnelBadge />
         </nav>
       </header>
       <main className="main">
