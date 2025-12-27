@@ -140,6 +140,32 @@ pub enum ServerMessage {
 
     /// Auth context sent on connection
     AuthContext(AuthContext),
+
+    /// Full session list response
+    SessionList {
+        /// Original request ID
+        request_id: String,
+        /// List of session info
+        sessions: Vec<SessionInfo>,
+    },
+
+    /// Session was removed
+    SessionRemoved {
+        /// Session ID that was removed
+        session_id: String,
+        /// Reason for removal
+        reason: RemovalReason,
+    },
+
+    /// Ownership transferred to a new client
+    OwnershipTransferred {
+        /// Session ID
+        session_id: String,
+        /// New owner client ID
+        new_owner_id: String,
+        /// Whether the recipient is the new owner
+        you_are_owner: bool,
+    },
 }
 
 use vibes_core::VibesEvent;
@@ -481,6 +507,52 @@ mod tests {
         let json = serde_json::to_string(&msg).unwrap();
         let parsed: ServerMessage = serde_json::from_str(&json).unwrap();
         assert_eq!(msg, parsed);
+    }
+
+    #[test]
+    fn test_server_message_session_list_roundtrip() {
+        let msg = ServerMessage::SessionList {
+            request_id: "req-1".to_string(),
+            sessions: vec![SessionInfo {
+                id: "sess-1".to_string(),
+                name: None,
+                state: "Idle".to_string(),
+                owner_id: "client-1".to_string(),
+                is_owner: true,
+                subscriber_count: 1,
+                created_at: 0,
+                last_activity_at: 0,
+            }],
+        };
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ServerMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+        assert!(json.contains(r#""type":"session_list""#));
+    }
+
+    #[test]
+    fn test_server_message_session_removed_roundtrip() {
+        let msg = ServerMessage::SessionRemoved {
+            session_id: "sess-1".to_string(),
+            reason: RemovalReason::OwnerDisconnected,
+        };
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ServerMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+        assert!(json.contains(r#""type":"session_removed""#));
+    }
+
+    #[test]
+    fn test_server_message_ownership_transferred_roundtrip() {
+        let msg = ServerMessage::OwnershipTransferred {
+            session_id: "sess-1".to_string(),
+            new_owner_id: "client-2".to_string(),
+            you_are_owner: false,
+        };
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ServerMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+        assert!(json.contains(r#""type":"ownership_transferred""#));
     }
 
     #[test]
