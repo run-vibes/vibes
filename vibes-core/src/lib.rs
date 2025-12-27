@@ -69,6 +69,6 @@ pub use events::{ClaudeEvent, EventBus, MemoryEventBus, Usage, VibesEvent};
 pub use plugins::{PluginHost, PluginHostConfig, PluginHostError, PluginInfo, PluginState};
 pub use session::{Session, SessionManager, SessionState};
 pub use tunnel::{
-    check_installation, CloudflaredInfo, LogLevel, RestartPolicy, TunnelConfig, TunnelEvent,
-    TunnelMode, TunnelState,
+    check_installation, CloudflaredInfo, LogLevel, RestartPolicy, TunnelConfig, TunnelError,
+    TunnelEvent, TunnelManager, TunnelMode, TunnelState,
 };
