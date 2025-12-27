@@ -351,8 +351,9 @@ fn dispatch_to_plugin(
         VibesEvent::UserInput { .. }
         | VibesEvent::PermissionResponse { .. }
         | VibesEvent::ClientConnected { .. }
-        | VibesEvent::ClientDisconnected { .. } => {
-            // These events are not dispatched to plugins (they're client -> server)
+        | VibesEvent::ClientDisconnected { .. }
+        | VibesEvent::TunnelStateChanged { .. } => {
+            // These events are not dispatched to plugins (they're client -> server or system events)
         }
     }
     Ok(())
