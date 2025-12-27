@@ -11,6 +11,7 @@ pub mod ws;
 use std::sync::Arc;
 
 use tokio::net::TcpListener;
+use vibes_core::EventBus;
 
 pub use error::ServerError;
 pub use http::create_router;
@@ -58,12 +59,40 @@ impl VibesServer {
 
         tracing::info!("vibes server listening on {}", addr);
 
+        // Start event forwarding from event_bus to WebSocket broadcaster
+        self.start_event_forwarding();
+
         let router = create_router(self.state);
         axum::serve(listener, router)
             .await
             .map_err(|e| ServerError::Internal(e.to_string()))?;
 
         Ok(())
+    }
+
+    /// Start a background task that forwards events from EventBus to WebSocket broadcaster
+    fn start_event_forwarding(&self) {
+        let state = Arc::clone(&self.state);
+        let mut rx = state.event_bus.subscribe();
+
+        tokio::spawn(async move {
+            loop {
+                match rx.recv().await {
+                    Ok((_seq, event)) => {
+                        let count = state.broadcast_event(event);
+                        tracing::trace!("Broadcast event to {} WebSocket clients", count);
+                    }
+                    Err(tokio::sync::broadcast::error::RecvError::Closed) => {
+                        tracing::warn!("Event bus channel closed");
+                        break;
+                    }
+                    Err(tokio::sync::broadcast::error::RecvError::Lagged(count)) => {
+                        tracing::warn!("Event forwarding lagged by {} events", count);
+                        // Continue receiving
+                    }
+                }
+            }
+        });
     }
 }
 

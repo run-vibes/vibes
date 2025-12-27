@@ -175,6 +175,10 @@ async fn handle_text_message(
         ClientMessage::CreateSession { name, request_id } => {
             let session_id = state.session_manager.create_session(name.clone()).await;
 
+            // Auto-subscribe to the newly created session
+            conn_state.subscribe(&[session_id.clone()]);
+            debug!("Auto-subscribed to new session: {}", session_id);
+
             let response = ServerMessage::SessionCreated {
                 request_id,
                 session_id,

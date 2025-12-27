@@ -1,12 +1,14 @@
-use crate::config::{ConfigLoader, VibesConfig};
-use crate::server;
-use anyhow::{Result, anyhow};
+//! Claude command - connects to vibes daemon via WebSocket
+
+use anyhow::{anyhow, Result};
 use clap::Args;
 use std::io::Write;
-use vibes_core::{
-    BackendFactory, ClaudeEvent, PluginHost, PluginHostConfig, PrintModeBackendFactory,
-    PrintModeConfig, VibesEvent,
-};
+use vibes_core::{ClaudeEvent, PluginHost, PluginHostConfig, VibesEvent};
+use vibes_server::ws::ServerMessage;
+
+use crate::client::VibesClient;
+use crate::config::ConfigLoader;
+use crate::daemon::ensure_daemon_running;
 
 #[derive(Args)]
 pub struct ClaudeArgs {
@@ -52,25 +54,13 @@ pub struct ClaudeArgs {
 
 pub async fn run(args: ClaudeArgs) -> Result<()> {
     let config = ConfigLoader::load()?;
-    let backend_config = build_backend_config(&args, &config);
-
-    // Start server stub if enabled
-    if config.server.auto_start && !args.no_serve {
-        tokio::spawn(server::start_stub(config.server.port));
-    }
-
-    // Load plugins
-    let mut plugin_host = PluginHost::new(PluginHostConfig::default());
-    if let Err(e) = plugin_host.load_all() {
-        tracing::warn!("Failed to load plugins: {}", e);
-    }
 
     // Build prompt (required)
     let prompt = args
         .prompt
         .ok_or_else(|| anyhow!("No prompt provided. Usage: vibes claude \"your prompt\""))?;
 
-    // Explicitly error if continue_session is requested, since the backend does not support it yet
+    // Explicitly error if continue_session is requested, since not yet supported
     if args.continue_session {
         return Err(anyhow!(
             "The --continue / -c flag is not yet supported.\n\
@@ -78,77 +68,57 @@ pub async fn run(args: ClaudeArgs) -> Result<()> {
         ));
     }
 
-    // Determine Claude session ID for resume
-    let claude_session_id = args.resume.clone();
+    // Ensure daemon is running (unless --no-serve is set)
+    if !args.no_serve {
+        ensure_daemon_running(config.server.port).await?;
+    }
 
-    // Create backend directly (simpler for CLI use case)
-    let factory = PrintModeBackendFactory::new(backend_config);
-    let mut backend = factory.create(claude_session_id);
+    // Connect to daemon via WebSocket
+    let url = format!("ws://127.0.0.1:{}/ws", config.server.port);
+    let mut client = VibesClient::connect(&url).await?;
 
-    // Subscribe before sending
-    let mut rx = backend.subscribe();
+    // Load plugins
+    let mut plugin_host = PluginHost::new(PluginHostConfig::default());
+    if let Err(e) = plugin_host.load_all() {
+        tracing::warn!("Failed to load plugins: {}", e);
+    }
 
-    // Generate a session ID for plugin events
-    let session_id = args
-        .session_name
-        .clone()
-        .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
+    // Create or resume session
+    let session_id = if let Some(resume_id) = args.resume.clone() {
+        // Resume existing session - just subscribe to it
+        client.subscribe(vec![resume_id.clone()]).await?;
+        resume_id
+    } else {
+        // Create new session
+        client.create_session(args.session_name.clone()).await?
+    };
 
-    // Notify plugins of session creation
+    // Notify plugins of session
     plugin_host.dispatch_event(&VibesEvent::SessionCreated {
         session_id: session_id.clone(),
         name: args.session_name.clone(),
     });
 
     // Send the prompt
-    backend
-        .send(&prompt)
-        .await
-        .map_err(|e| anyhow!("Failed to send prompt: {}", e))?;
+    client.send_input(&session_id, &prompt).await?;
 
-    // Stream output to terminal, dispatching events to plugins
-    stream_output(&mut rx, &mut plugin_host, &session_id).await
+    // Stream output to terminal
+    stream_output(&mut client, &mut plugin_host, &session_id).await
 }
 
-fn build_backend_config(args: &ClaudeArgs, config: &VibesConfig) -> PrintModeConfig {
-    // Merge CLI args with config defaults
-    let allowed_tools = args
-        .allowed_tools
-        .as_ref()
-        .map(|s| s.split(',').map(|t| t.trim().to_string()).collect())
-        .or_else(|| config.session.default_allowed_tools.clone())
-        .unwrap_or_default();
-
-    let working_dir = config
-        .session
-        .working_dir
-        .as_ref()
-        .map(|p| p.to_string_lossy().to_string());
-
-    // CLI args override config defaults
-    let model = args
-        .model
-        .clone()
-        .or_else(|| config.session.default_model.clone());
-
-    PrintModeConfig {
-        claude_path: None, // Use default "claude"
-        allowed_tools,
-        working_dir,
-        model,
-        system_prompt: args.system_prompt.clone(),
-    }
-}
-
+/// Stream events from WebSocket to terminal
 async fn stream_output(
-    rx: &mut tokio::sync::broadcast::Receiver<ClaudeEvent>,
+    client: &mut VibesClient,
     plugin_host: &mut PluginHost,
     session_id: &str,
 ) -> Result<()> {
     loop {
-        match rx.recv().await {
-            Ok(event) => {
-                // Dispatch event to plugins (wrapped in VibesEvent::Claude)
+        match client.recv().await {
+            Some(ServerMessage::Claude {
+                session_id: sid,
+                event,
+            }) if sid == session_id => {
+                // Dispatch event to plugins
                 plugin_host.dispatch_event(&VibesEvent::Claude {
                     session_id: session_id.to_string(),
                     event: event.clone(),
@@ -161,7 +131,6 @@ async fn stream_output(
                         std::io::stdout().flush()?;
                     }
                     ClaudeEvent::TurnComplete { .. } => {
-                        // Don't print extra newline - match claude's output exactly
                         break;
                     }
                     ClaudeEvent::Error { message, .. } => {
@@ -169,17 +138,31 @@ async fn stream_output(
                         break;
                     }
                     _ => {
-                        // Ignore other events (ThinkingDelta, ToolUseStart, etc.)
-                        // Output should be identical to raw claude command
+                        // Ignore other events
                     }
                 }
             }
-            Err(tokio::sync::broadcast::error::RecvError::Closed) => {
+            Some(ServerMessage::SessionState { session_id: sid, state }) if sid == session_id => {
+                tracing::debug!("Session state changed: {}", state);
+                plugin_host.dispatch_event(&VibesEvent::SessionStateChanged {
+                    session_id: session_id.to_string(),
+                    state,
+                });
+            }
+            Some(ServerMessage::Error {
+                session_id: Some(sid),
+                message,
+                ..
+            }) if sid == session_id => {
+                eprintln!("Error: {}", message);
                 break;
             }
-            Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => {
-                // Receiver lagged behind, continue receiving
-                continue;
+            Some(_) => {
+                // Ignore other messages
+            }
+            None => {
+                // Connection closed
+                break;
             }
         }
     }
@@ -190,6 +173,38 @@ async fn stream_output(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::config::VibesConfig;
+    use vibes_core::{PrintModeConfig};
+
+    fn build_backend_config(args: &ClaudeArgs, config: &VibesConfig) -> PrintModeConfig {
+        // Merge CLI args with config defaults
+        let allowed_tools = args
+            .allowed_tools
+            .as_ref()
+            .map(|s| s.split(',').map(|t| t.trim().to_string()).collect())
+            .or_else(|| config.session.default_allowed_tools.clone())
+            .unwrap_or_default();
+
+        let working_dir = config
+            .session
+            .working_dir
+            .as_ref()
+            .map(|p| p.to_string_lossy().to_string());
+
+        // CLI args override config defaults
+        let model = args
+            .model
+            .clone()
+            .or_else(|| config.session.default_model.clone());
+
+        PrintModeConfig {
+            claude_path: None,
+            allowed_tools,
+            working_dir,
+            model,
+            system_prompt: args.system_prompt.clone(),
+        }
+    }
 
     #[test]
     fn test_build_backend_config_uses_cli_args() {
