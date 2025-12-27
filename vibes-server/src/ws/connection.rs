@@ -3,13 +3,14 @@
 use std::collections::HashSet;
 use std::sync::Arc;
 
+use axum::Extension;
 use axum::extract::State;
 use axum::extract::ws::{Message, WebSocket, WebSocketUpgrade};
 use axum::response::IntoResponse;
 use futures::{SinkExt, StreamExt};
 use tokio::sync::broadcast;
 use tracing::{debug, error, info, warn};
-use vibes_core::VibesEvent;
+use vibes_core::{AuthContext, VibesEvent};
 
 use crate::AppState;
 
@@ -19,8 +20,9 @@ use super::protocol::{ClientMessage, ServerMessage, vibes_event_to_server_messag
 pub async fn ws_handler(
     ws: WebSocketUpgrade,
     State(state): State<Arc<AppState>>,
+    Extension(auth_context): Extension<AuthContext>,
 ) -> impl IntoResponse {
-    ws.on_upgrade(move |socket| handle_socket(socket, state))
+    ws.on_upgrade(move |socket| handle_socket(socket, state, auth_context))
 }
 
 /// Per-connection state
@@ -57,12 +59,21 @@ impl ConnectionState {
 }
 
 /// Handle a WebSocket connection with bidirectional event streaming
-async fn handle_socket(socket: WebSocket, state: Arc<AppState>) {
+async fn handle_socket(socket: WebSocket, state: Arc<AppState>, auth_context: AuthContext) {
     let (mut sender, mut receiver) = socket.split();
     let mut event_rx = state.subscribe_events();
     let mut conn_state = ConnectionState::new();
 
     info!("WebSocket client connected");
+
+    // Send auth context immediately on connection
+    let auth_msg = ServerMessage::AuthContext(auth_context);
+    if let Ok(json) = serde_json::to_string(&auth_msg) {
+        if sender.send(Message::Text(json)).await.is_err() {
+            warn!("Failed to send auth context to client");
+            return;
+        }
+    }
 
     loop {
         tokio::select! {
