@@ -72,6 +72,34 @@ impl SessionLifecycleManager {
 
         result
     }
+
+    /// Subscribe a client to a session
+    pub async fn subscribe_client(
+        &self,
+        session_id: &str,
+        client_id: &ClientId,
+    ) -> Result<(), crate::error::SessionError> {
+        self.session_manager
+            .with_session(session_id, |session| {
+                session.ownership_mut().add_subscriber(client_id.clone());
+            })
+            .await
+    }
+
+    /// Unsubscribe a client from a session
+    ///
+    /// Returns true if the client was the owner.
+    pub async fn unsubscribe_client(
+        &self,
+        session_id: &str,
+        client_id: &ClientId,
+    ) -> Result<bool, crate::error::SessionError> {
+        self.session_manager
+            .with_session(session_id, |session| {
+                session.ownership_mut().remove_subscriber(client_id)
+            })
+            .await
+    }
 }
 
 /// Result of handling a client disconnect
@@ -212,5 +240,57 @@ mod tests {
         // id1 should transfer, id2 should cleanup
         assert_eq!(result.transfers.len(), 1);
         assert_eq!(result.cleanups.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn subscribe_client_adds_to_session() {
+        let (lifecycle, manager) = create_test_lifecycle();
+
+        let session_id = manager
+            .create_session_with_owner(None, Some("owner".to_string()))
+            .await;
+
+        lifecycle
+            .subscribe_client(&session_id, &"new-client".to_string())
+            .await
+            .unwrap();
+
+        let is_subscribed = manager
+            .with_session(&session_id, |s| {
+                s.ownership().subscriber_ids.contains("new-client")
+            })
+            .await
+            .unwrap();
+
+        assert!(is_subscribed);
+    }
+
+    #[tokio::test]
+    async fn unsubscribe_client_removes_from_session() {
+        let (lifecycle, manager) = create_test_lifecycle();
+
+        let session_id = manager
+            .create_session_with_owner(None, Some("owner".to_string()))
+            .await;
+        lifecycle
+            .subscribe_client(&session_id, &"client".to_string())
+            .await
+            .unwrap();
+
+        let was_owner = lifecycle
+            .unsubscribe_client(&session_id, &"client".to_string())
+            .await
+            .unwrap();
+
+        assert!(!was_owner);
+
+        let is_subscribed = manager
+            .with_session(&session_id, |s| {
+                s.ownership().subscriber_ids.contains("client")
+            })
+            .await
+            .unwrap();
+
+        assert!(!is_subscribed);
     }
 }
