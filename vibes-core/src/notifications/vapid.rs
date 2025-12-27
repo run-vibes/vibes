@@ -59,9 +59,9 @@ impl VapidKeyManager {
             let public_key_base64 = Base64UrlUnpadded::encode_string(public_key_bytes.as_bytes());
 
             // Encode private key as PEM
-            let private_key_pem = signing_key
-                .to_pkcs8_pem(Default::default())
-                .map_err(|e| NotificationError::Config(format!("failed to encode private key: {}", e)))?;
+            let private_key_pem = signing_key.to_pkcs8_pem(Default::default()).map_err(|e| {
+                NotificationError::Config(format!("failed to encode private key: {}", e))
+            })?;
 
             let keys = VapidKeys {
                 private_key_pem: private_key_pem.to_string(),

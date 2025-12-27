@@ -2967,6 +2967,7 @@ dependencies = [
  "axum",
  "axum-test",
  "chrono",
+ "dirs 6.0.0",
  "futures",
  "mime_guess",
  "rust-embed",

@@ -70,9 +70,8 @@ pub use backend::{
 pub use error::{BackendError, EventBusError, NotificationError, SessionError, VibesError};
 pub use events::{ClaudeEvent, EventBus, MemoryEventBus, Usage, VibesEvent};
 pub use notifications::{
-    NotificationConfig, NotificationData, NotificationEvent, NotificationService,
-    PushNotification, PushSubscription, SubscriptionKeys, SubscriptionStore, VapidKeyManager,
-    VapidKeys,
+    NotificationConfig, NotificationData, NotificationEvent, NotificationService, PushNotification,
+    PushSubscription, SubscriptionKeys, SubscriptionStore, VapidKeyManager, VapidKeys,
 };
 pub use plugins::{PluginHost, PluginHostConfig, PluginHostError, PluginInfo, PluginState};
 pub use session::{Session, SessionManager, SessionState};

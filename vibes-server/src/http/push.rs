@@ -223,7 +223,10 @@ pub async fn list_subscriptions(State(state): State<Arc<AppState>>) -> impl Into
 #[cfg(test)]
 mod tests {
     use super::*;
-    use axum::{Router, routing::{delete, get, post}};
+    use axum::{
+        Router,
+        routing::{delete, get, post},
+    };
     use axum_test::TestServer;
 
     fn create_test_app() -> Router {

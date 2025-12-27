@@ -199,18 +199,9 @@ mod tests {
         let temp_dir = tempdir().unwrap();
         let store = SubscriptionStore::load(temp_dir.path()).await.unwrap();
 
-        store
-            .add(create_test_subscription("test-1"))
-            .await
-            .unwrap();
-        store
-            .add(create_test_subscription("test-2"))
-            .await
-            .unwrap();
-        store
-            .add(create_test_subscription("test-3"))
-            .await
-            .unwrap();
+        store.add(create_test_subscription("test-1")).await.unwrap();
+        store.add(create_test_subscription("test-2")).await.unwrap();
+        store.add(create_test_subscription("test-3")).await.unwrap();
 
         let removed = store
             .cleanup_stale(&["test-1".into(), "test-3".into()])

@@ -89,8 +89,12 @@ async fn run_foreground(args: &ServeArgs) -> Result<()> {
         tracing::warn!("Failed to write daemon state file: {}", e);
     }
 
-    // Run the server
-    let server = VibesServer::new(config);
+    // Create server with or without notifications
+    let server = if args.notify {
+        VibesServer::with_notifications(config).await?
+    } else {
+        VibesServer::new(config)
+    };
     let result = server.run().await;
 
     // Clear daemon state file on exit

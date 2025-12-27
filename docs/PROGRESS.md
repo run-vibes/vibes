@@ -12,7 +12,7 @@ This document tracks the implementation progress of vibes against the roadmap de
 | 1.4 Server + Web UI | Complete | [design](plans/04-server-web-ui/design.md) | [implementation](plans/04-server-web-ui/implementation.md) |
 | 2.1 Cloudflare Tunnel | Complete | [design](plans/05-cloudflare-tunnel/design.md) | [implementation](plans/05-cloudflare-tunnel/implementation.md) |
 | 2.2 Cloudflare Access | Complete | [design](plans/06-cloudflare-access/design.md) | [implementation](plans/06-cloudflare-access/implementation.md) |
-| 2.3 Push Notifications | Planned | - | - |
+| 2.3 Push Notifications | Complete | [design](plans/07-push-notifications/design.md) | [implementation](plans/07-push-notifications/implementation.md) |
 
 ---
 
@@ -79,10 +79,10 @@ This document tracks the implementation progress of vibes against the roadmap de
 - [x] WebSocket auth_context message
 
 ### Milestone 2.3: Push notifications
-- [ ] --notify flag
-- [ ] Web push subscription
-- [ ] Notification on completion/error/permission-needed
-- [ ] Mobile-friendly notification actions
+- [x] --notify flag
+- [x] Web push subscription
+- [x] Notification on completion/error/permission-needed
+- [x] Mobile-friendly notification actions
 
 **Phase 2 Deliverable:** Access vibes from phone anywhere with Cloudflare auth
 
@@ -154,3 +154,4 @@ These phases are planned but not yet scheduled.
 | 2025-12-26 | Milestone 2.1 (Cloudflare Tunnel) complete - TunnelManager, cloudflared CLI wrapper, tunnel CLI commands, UI status badge |
 | 2025-12-27 | Milestone 2.2 (Cloudflare Access) design complete - AuthMiddleware, JwtValidator, localhost bypass, identity display |
 | 2025-12-27 | Milestone 2.2 (Cloudflare Access) implementation complete - JWT validation, auth middleware, CLI commands, WebSocket auth_context, Web UI identity |
+| 2025-12-27 | Milestone 2.3 (Push Notifications) complete - VAPID keys, subscription store, NotificationService, web push endpoints, service worker, usePushSubscription hook, NotificationSettings UI |

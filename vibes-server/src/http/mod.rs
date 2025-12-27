@@ -6,7 +6,10 @@ mod static_files;
 
 use std::sync::Arc;
 
-use axum::{Extension, Router, middleware, routing::{delete, get, post}};
+use axum::{
+    Extension, Router, middleware,
+    routing::{delete, get, post},
+};
 
 use crate::AppState;
 use crate::middleware::auth_middleware;

@@ -4,16 +4,16 @@ use std::sync::Arc;
 
 use base64ct::{Base64UrlUnpadded, Encoding};
 use http::Uri;
-use p256::elliptic_curve::sec1::FromEncodedPoint;
 use p256::EncodedPoint;
+use p256::elliptic_curve::sec1::FromEncodedPoint;
 use tokio::sync::broadcast;
 use tracing::{debug, error, info, warn};
 use web_push_native::jwt_simple::prelude::ES256KeyPair;
 use web_push_native::{Auth, WebPushBuilder};
 
 use super::{NotificationConfig, PushNotification, SubscriptionStore, VapidKeyManager};
-use crate::events::{ClaudeEvent, VibesEvent};
 use crate::NotificationError;
+use crate::events::{ClaudeEvent, EventSeq, VibesEvent};
 
 /// Service that sends push notifications based on vibes events
 pub struct NotificationService {
@@ -39,16 +39,16 @@ impl NotificationService {
     }
 
     /// Start listening to events and sending notifications
-    pub async fn run(&self, mut event_rx: broadcast::Receiver<VibesEvent>) {
+    pub async fn run(&self, mut event_rx: broadcast::Receiver<(EventSeq, VibesEvent)>) {
         info!("NotificationService started");
 
         loop {
             match event_rx.recv().await {
-                Ok(event) => {
-                    if let Some(notification) = self.event_to_notification(&event) {
-                        if let Err(e) = self.send_to_all(notification).await {
-                            error!("Failed to send notifications: {}", e);
-                        }
+                Ok((_seq, event)) => {
+                    if let Some(notification) = self.event_to_notification(&event)
+                        && let Err(e) = self.send_to_all(notification).await
+                    {
+                        error!("Failed to send notifications: {}", e);
                     }
                 }
                 Err(broadcast::error::RecvError::Lagged(n)) => {
@@ -127,21 +127,17 @@ impl NotificationService {
         }
 
         // Clean up stale subscriptions
-        if !stale_ids.is_empty() {
-            if let Err(e) = self.subscriptions.cleanup_stale(&stale_ids).await {
-                error!("Failed to cleanup stale subscriptions: {}", e);
-            }
+        if !stale_ids.is_empty()
+            && let Err(e) = self.subscriptions.cleanup_stale(&stale_ids).await
+        {
+            error!("Failed to cleanup stale subscriptions: {}", e);
         }
 
         Ok(())
     }
 
     /// Send to a single subscription
-    async fn send_one(
-        &self,
-        sub: &super::PushSubscription,
-        payload: &str,
-    ) -> Result<(), String> {
+    async fn send_one(&self, sub: &super::PushSubscription, payload: &str) -> Result<(), String> {
         // Parse endpoint as URI
         let endpoint: Uri = sub
             .endpoint
@@ -158,8 +154,8 @@ impl NotificationService {
         let encoded_point = EncodedPoint::from_bytes(&p256dh_bytes)
             .map_err(|e| format!("invalid p256dh point: {}", e))?;
         let ua_public = p256::PublicKey::from_encoded_point(&encoded_point);
-        let ua_public = Option::from(ua_public)
-            .ok_or_else(|| "invalid p256dh public key".to_string())?;
+        let ua_public =
+            Option::from(ua_public).ok_or_else(|| "invalid p256dh public key".to_string())?;
 
         // Convert auth to Auth type (16 bytes)
         let auth_array: [u8; 16] = auth_bytes
@@ -193,10 +189,7 @@ impl NotificationService {
         }
         req = req.body(body);
 
-        let response = req
-            .send()
-            .await
-            .map_err(|e| format!("HTTP error: {}", e))?;
+        let response = req.send().await.map_err(|e| format!("HTTP error: {}", e))?;
 
         let status = response.status();
         if status.is_success() || status.as_u16() == 201 {
