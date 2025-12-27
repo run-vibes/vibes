@@ -156,17 +156,26 @@ impl<S: HistoryStore> HistoryService<S> {
     }
 }
 
-/// Parse state string to SessionState enum
+/// Parse state string to SessionState enum for history persistence.
+///
+/// Note: WaitingPermission and Failed use placeholder values for their inner fields.
+/// The event bus only sends the state variant name (e.g., "failed"), not the full state
+/// with inner details. This is acceptable because:
+/// 1. Error details are stored separately in the session's error_message column
+/// 2. For history viewing, the state category matters more than live session details
+/// 3. Active sessions with full state info are available via the session manager
 fn parse_state(state: &str) -> SessionState {
     match state {
         "idle" | "Idle" => SessionState::Idle,
         "processing" | "Processing" => SessionState::Processing,
         "waiting_permission" | "WaitingPermission" => SessionState::WaitingPermission {
+            // Placeholder - event only contains variant name, not inner fields
             request_id: String::new(),
             tool: String::new(),
         },
         "finished" | "Finished" => SessionState::Finished,
         "failed" | "Failed" => SessionState::Failed {
+            // Placeholder - error details stored in session.error_message
             message: String::new(),
             recoverable: false,
         },

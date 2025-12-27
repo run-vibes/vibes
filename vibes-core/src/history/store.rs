@@ -78,14 +78,23 @@ impl SqliteHistoryStore {
         }
     }
 
+    /// Convert database state string back to SessionState enum.
+    ///
+    /// WaitingPermission and Failed use placeholder values because the database
+    /// only stores the variant name (e.g., "Failed"), not the inner fields.
+    /// This is intentional - the database stores error details separately in
+    /// error_message column, and for history display purposes the state
+    /// category is sufficient.
     fn str_to_state(s: &str) -> SessionState {
         match s {
             "Processing" => SessionState::Processing,
             "WaitingPermission" => SessionState::WaitingPermission {
+                // Placeholder - DB only stores variant name
                 request_id: String::new(),
                 tool: String::new(),
             },
             "Failed" => SessionState::Failed {
+                // Placeholder - error details in session.error_message
                 message: String::new(),
                 recoverable: false,
             },

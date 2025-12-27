@@ -61,17 +61,25 @@ impl From<ListSessionsQuery> for SessionQuery {
     }
 }
 
-/// Parse state string to SessionState
+/// Parse state string to SessionState for filtering queries.
+///
+/// Note: WaitingPermission and Failed use placeholder values for their inner fields
+/// because these are used only for state-based filtering in list queries. The database
+/// stores only the state variant name, and actual field values are preserved separately
+/// in the session's error_message column. This allows filtering by state category
+/// (e.g., "show all failed sessions") without needing the specific error details.
 fn parse_session_state(s: &str) -> Option<SessionState> {
     match s.to_lowercase().as_str() {
         "idle" => Some(SessionState::Idle),
         "processing" => Some(SessionState::Processing),
         "waiting_permission" => Some(SessionState::WaitingPermission {
+            // Placeholder values - filtering matches on variant, not inner fields
             request_id: String::new(),
             tool: String::new(),
         }),
         "finished" => Some(SessionState::Finished),
         "failed" => Some(SessionState::Failed {
+            // Placeholder values - actual error stored in session's error_message field
             message: String::new(),
             recoverable: false,
         }),

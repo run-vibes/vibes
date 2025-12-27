@@ -15,6 +15,7 @@ export function HistoryList({ onSelectSession }: HistoryListProps) {
     order: 'desc',
   });
   const [page, setPage] = useState(0);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const limit = 20;
 
   const { data, isLoading, error, refetch } = useQuery({
@@ -34,12 +35,21 @@ export function HistoryList({ onSelectSession }: HistoryListProps) {
     setPage(0);
   };
 
-  const handleDelete = async (id: string, e: React.MouseEvent) => {
+  const handleDeleteClick = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm('Delete this session?')) {
-      await deleteSession(id);
-      refetch();
-    }
+    setDeleteConfirm(id);
+  };
+
+  const handleDeleteConfirm = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    await deleteSession(id);
+    setDeleteConfirm(null);
+    refetch();
+  };
+
+  const handleDeleteCancel = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDeleteConfirm(null);
   };
 
   const formatDate = (timestamp: number) => {
@@ -89,12 +99,30 @@ export function HistoryList({ onSelectSession }: HistoryListProps) {
                   <span>{formatDate(session.created_at)}</span>
                   <span>{session.message_count} messages</span>
                   <span>{formatTokens(session.total_tokens)} tokens</span>
-                  <button
-                    className="delete-btn"
-                    onClick={(e) => handleDelete(session.id, e)}
-                  >
-                    Delete
-                  </button>
+                  {deleteConfirm === session.id ? (
+                    <span className="delete-confirm">
+                      <span>Delete?</span>
+                      <button
+                        className="confirm-btn"
+                        onClick={(e) => handleDeleteConfirm(session.id, e)}
+                      >
+                        Yes
+                      </button>
+                      <button
+                        className="cancel-btn"
+                        onClick={handleDeleteCancel}
+                      >
+                        No
+                      </button>
+                    </span>
+                  ) : (
+                    <button
+                      className="delete-btn"
+                      onClick={(e) => handleDeleteClick(session.id, e)}
+                    >
+                      Delete
+                    </button>
+                  )}
                 </div>
               </li>
             ))}
