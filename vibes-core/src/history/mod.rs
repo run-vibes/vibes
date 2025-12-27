@@ -10,3 +10,4 @@ mod service;
 
 pub use error::HistoryError;
 pub use types::{HistoricalSession, HistoricalMessage, MessageRole, SessionSummary};
+pub use query::{SessionQuery, MessageQuery, SessionListResult, MessageListResult, SortField, SortOrder};
