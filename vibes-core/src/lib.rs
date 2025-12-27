@@ -71,7 +71,7 @@ pub use error::{BackendError, EventBusError, NotificationError, SessionError, Vi
 pub use events::{ClaudeEvent, EventBus, MemoryEventBus, Usage, VibesEvent};
 pub use notifications::{
     NotificationConfig, NotificationData, NotificationEvent, PushNotification, PushSubscription,
-    SubscriptionKeys, VapidKeyManager, VapidKeys,
+    SubscriptionKeys, SubscriptionStore, VapidKeyManager, VapidKeys,
 };
 pub use plugins::{PluginHost, PluginHostConfig, PluginHostError, PluginInfo, PluginState};
 pub use session::{Session, SessionManager, SessionState};
