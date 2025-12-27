@@ -5,6 +5,20 @@ import { RouterProvider } from '@tanstack/react-router'
 import { router } from './App'
 import './index.css'
 
+// Register service worker for push notifications
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').then(
+      (registration) => {
+        console.log('ServiceWorker registered:', registration.scope);
+      },
+      (err) => {
+        console.warn('ServiceWorker registration failed:', err);
+      }
+    );
+  });
+}
+
 // Create a React Query client for data fetching
 const queryClient = new QueryClient({
   defaultOptions: {
