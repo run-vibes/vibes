@@ -54,20 +54,20 @@ fn is_localhost(addr: &SocketAddr) -> bool {
 /// Extract JWT from request headers or cookies
 fn extract_jwt(request: &Request) -> Option<String> {
     // Try header first
-    if let Some(header) = request.headers().get(CF_ACCESS_JWT_HEADER) {
-        if let Ok(value) = header.to_str() {
-            return Some(value.to_string());
-        }
+    if let Some(header) = request.headers().get(CF_ACCESS_JWT_HEADER)
+        && let Ok(value) = header.to_str()
+    {
+        return Some(value.to_string());
     }
 
     // Fall back to cookie
-    if let Some(cookie_header) = request.headers().get("cookie") {
-        if let Ok(cookies) = cookie_header.to_str() {
-            for cookie in cookies.split(';') {
-                let cookie = cookie.trim();
-                if let Some(value) = cookie.strip_prefix(&format!("{}=", CF_AUTHORIZATION_COOKIE)) {
-                    return Some(value.to_string());
-                }
+    if let Some(cookie_header) = request.headers().get("cookie")
+        && let Ok(cookies) = cookie_header.to_str()
+    {
+        for cookie in cookies.split(';') {
+            let cookie = cookie.trim();
+            if let Some(value) = cookie.strip_prefix(&format!("{}=", CF_AUTHORIZATION_COOKIE)) {
+                return Some(value.to_string());
             }
         }
     }

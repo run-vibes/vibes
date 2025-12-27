@@ -5,7 +5,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use chrono::{DateTime, Utc};
-use jsonwebtoken::{decode, decode_header, Algorithm, DecodingKey, Validation};
+use jsonwebtoken::{Algorithm, DecodingKey, Validation, decode, decode_header};
 use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 
@@ -93,9 +93,9 @@ impl JwtValidator {
     pub async fn validate(&self, token: &str) -> Result<AccessIdentity, AuthError> {
         // Decode header to get kid
         let header = decode_header(token)?;
-        let kid = header.kid.ok_or_else(|| {
-            AuthError::InvalidFormat("missing kid in token header".to_string())
-        })?;
+        let kid = header
+            .kid
+            .ok_or_else(|| AuthError::InvalidFormat("missing kid in token header".to_string()))?;
 
         // Get the decoding key
         let key = self.get_key(&kid).await?;
@@ -110,8 +110,7 @@ impl JwtValidator {
         let claims = token_data.claims;
 
         // Build identity
-        let expires_at = DateTime::from_timestamp(claims.exp, 0)
-            .unwrap_or_else(Utc::now);
+        let expires_at = DateTime::from_timestamp(claims.exp, 0).unwrap_or_else(Utc::now);
 
         let mut identity = AccessIdentity::new(claims.email, expires_at);
 
@@ -119,10 +118,10 @@ impl JwtValidator {
             identity = identity.with_name(name);
         }
 
-        if let Some(custom) = claims.custom {
-            if let Some(provider) = custom.identity_provider {
-                identity = identity.with_provider(provider);
-            }
+        if let Some(custom) = claims.custom
+            && let Some(provider) = custom.identity_provider
+        {
+            identity = identity.with_provider(provider);
         }
 
         Ok(identity)
@@ -133,10 +132,10 @@ impl JwtValidator {
         // First, try to get from cache
         {
             let cache = self.jwks_cache.read().await;
-            if !cache.is_expired() {
-                if let Some(key) = cache.keys.get(kid) {
-                    return Ok(key.clone());
-                }
+            if !cache.is_expired()
+                && let Some(key) = cache.keys.get(kid)
+            {
+                return Ok(key.clone());
             }
         }
 

@@ -2,4 +2,4 @@
 
 mod auth;
 
-pub use auth::{auth_middleware, AuthLayer};
+pub use auth::{AuthLayer, auth_middleware};

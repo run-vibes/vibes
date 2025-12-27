@@ -68,11 +68,11 @@ async fn handle_socket(socket: WebSocket, state: Arc<AppState>, auth_context: Au
 
     // Send auth context immediately on connection
     let auth_msg = ServerMessage::AuthContext(auth_context);
-    if let Ok(json) = serde_json::to_string(&auth_msg) {
-        if sender.send(Message::Text(json)).await.is_err() {
-            warn!("Failed to send auth context to client");
-            return;
-        }
+    if let Ok(json) = serde_json::to_string(&auth_msg)
+        && sender.send(Message::Text(json)).await.is_err()
+    {
+        warn!("Failed to send auth context to client");
+        return;
     }
 
     loop {
