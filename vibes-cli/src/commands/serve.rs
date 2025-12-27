@@ -11,8 +11,8 @@ use tracing::info;
 use vibes_server::{ServerConfig, VibesServer};
 
 use crate::daemon::{
-    clear_daemon_state, is_process_alive, read_daemon_state, terminate_process, write_daemon_state,
-    DaemonState,
+    DaemonState, clear_daemon_state, is_process_alive, read_daemon_state, terminate_process,
+    write_daemon_state,
 };
 
 /// Default port for the vibes server

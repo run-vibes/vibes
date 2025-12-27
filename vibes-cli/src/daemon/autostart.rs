@@ -24,11 +24,15 @@ const HEALTH_CHECK_INTERVAL: Duration = Duration::from_millis(100);
 /// Otherwise, starts a new daemon process and waits for it to become ready.
 pub async fn ensure_daemon_running(port: u16) -> Result<()> {
     // Check if daemon is already running
-    if let Some(state) = read_daemon_state() {
-        if state.port == port && is_process_alive(state.pid) {
-            debug!("Daemon already running on port {} (PID: {})", port, state.pid);
-            return Ok(());
-        }
+    if let Some(state) = read_daemon_state()
+        && state.port == port
+        && is_process_alive(state.pid)
+    {
+        debug!(
+            "Daemon already running on port {} (PID: {})",
+            port, state.pid
+        );
+        return Ok(());
     }
 
     // Start the daemon
@@ -50,8 +54,7 @@ pub async fn ensure_daemon_running(port: u16) -> Result<()> {
 fn start_daemon_process(port: u16) -> Result<()> {
     use std::os::unix::process::CommandExt;
 
-    let current_exe =
-        std::env::current_exe().context("Failed to get current executable path")?;
+    let current_exe = std::env::current_exe().context("Failed to get current executable path")?;
 
     // Spawn a detached process running `vibes serve`
     // Using std::process::Command which is safe (no shell interpretation)

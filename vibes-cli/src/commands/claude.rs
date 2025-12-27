@@ -1,6 +1,6 @@
 //! Claude command - connects to vibes daemon via WebSocket
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use clap::Args;
 use std::io::Write;
 use vibes_core::{ClaudeEvent, PluginHost, PluginHostConfig, VibesEvent};
@@ -55,16 +55,24 @@ pub struct ClaudeArgs {
 pub async fn run(args: ClaudeArgs) -> Result<()> {
     let config = ConfigLoader::load()?;
 
-    // Build prompt (required)
-    let prompt = args
-        .prompt
-        .ok_or_else(|| anyhow!("No prompt provided. Usage: vibes claude \"your prompt\""))?;
-
     // Explicitly error if continue_session is requested, since not yet supported
     if args.continue_session {
         return Err(anyhow!(
             "The --continue / -c flag is not yet supported.\n\
              Please use --resume <SESSION_ID> to resume a specific session instead."
+        ));
+    }
+
+    // Prompt is required for new sessions, optional for resume
+    let prompt = args.prompt.clone();
+    if prompt.is_none() && args.resume.is_none() {
+        return Err(anyhow!(
+            "No prompt provided.\n\n\
+             Usage:\n\
+             - Start new session:    vibes claude \"your prompt\"\n\
+             - Resume session:       vibes claude --resume <SESSION_ID>\n\
+             - View sessions in UI:  vibes serve && open http://localhost:{}\n",
+            config.server.port
         ));
     }
 
@@ -99,8 +107,10 @@ pub async fn run(args: ClaudeArgs) -> Result<()> {
         name: args.session_name.clone(),
     });
 
-    // Send the prompt
-    client.send_input(&session_id, &prompt).await?;
+    // Send the prompt if provided
+    if let Some(prompt) = prompt {
+        client.send_input(&session_id, &prompt).await?;
+    }
 
     // Stream output to terminal
     stream_output(&mut client, &mut plugin_host, &session_id).await
@@ -142,7 +152,10 @@ async fn stream_output(
                     }
                 }
             }
-            Some(ServerMessage::SessionState { session_id: sid, state }) if sid == session_id => {
+            Some(ServerMessage::SessionState {
+                session_id: sid,
+                state,
+            }) if sid == session_id => {
                 tracing::debug!("Session state changed: {}", state);
                 plugin_host.dispatch_event(&VibesEvent::SessionStateChanged {
                     session_id: session_id.to_string(),
@@ -174,7 +187,7 @@ async fn stream_output(
 mod tests {
     use super::*;
     use crate::config::VibesConfig;
-    use vibes_core::{PrintModeConfig};
+    use vibes_core::PrintModeConfig;
 
     fn build_backend_config(args: &ClaudeArgs, config: &VibesConfig) -> PrintModeConfig {
         // Merge CLI args with config defaults

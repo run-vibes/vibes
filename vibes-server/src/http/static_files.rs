@@ -2,7 +2,7 @@
 
 use axum::{
     body::Body,
-    http::{header, StatusCode, Uri},
+    http::{StatusCode, Uri, header},
     response::{IntoResponse, Response},
 };
 use rust_embed::RustEmbed;
@@ -26,9 +26,8 @@ pub async fn static_handler(uri: Uri) -> impl IntoResponse {
 
     // For SPA: serve index.html for any non-file path
     // This enables client-side routing (TanStack Router)
-    serve_file("index.html").unwrap_or_else(|| {
-        (StatusCode::NOT_FOUND, "Web UI not found").into_response()
-    })
+    serve_file("index.html")
+        .unwrap_or_else(|| (StatusCode::NOT_FOUND, "Web UI not found").into_response())
 }
 
 /// Serve a file from embedded assets
@@ -44,4 +43,3 @@ fn serve_file(path: &str) -> Option<Response<Body>> {
         .body(Body::from(file.data.into_owned()))
         .ok()
 }
-

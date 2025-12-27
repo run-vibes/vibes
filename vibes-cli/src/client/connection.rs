@@ -50,6 +50,7 @@ impl VibesClient {
     }
 
     /// Connect to the vibes daemon on the default port
+    #[allow(dead_code)]
     pub async fn connect_default() -> Result<Self> {
         use crate::commands::serve::{DEFAULT_HOST, DEFAULT_PORT};
         let url = format!("ws://{}:{}/ws", DEFAULT_HOST, DEFAULT_PORT);
@@ -139,6 +140,7 @@ impl VibesClient {
     }
 
     /// Respond to a permission request
+    #[allow(dead_code)]
     pub async fn respond_permission(
         &self,
         session_id: &str,
@@ -154,10 +156,8 @@ impl VibesClient {
     }
 
     /// Spawn a task that forwards outgoing messages to the WebSocket
-    async fn spawn_outgoing_task<S>(
-        mut rx: mpsc::Receiver<ClientMessage>,
-        mut ws_sender: S,
-    ) where
+    async fn spawn_outgoing_task<S>(mut rx: mpsc::Receiver<ClientMessage>, mut ws_sender: S)
+    where
         S: SinkExt<Message> + Unpin,
         S::Error: std::fmt::Debug,
     {

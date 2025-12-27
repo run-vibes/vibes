@@ -176,7 +176,7 @@ async fn handle_text_message(
             let session_id = state.session_manager.create_session(name.clone()).await;
 
             // Auto-subscribe to the newly created session
-            conn_state.subscribe(&[session_id.clone()]);
+            conn_state.subscribe(std::slice::from_ref(&session_id));
             debug!("Auto-subscribed to new session: {}", session_id);
 
             let response = ServerMessage::SessionCreated {
