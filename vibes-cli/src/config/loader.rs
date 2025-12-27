@@ -5,6 +5,7 @@ use super::types::{
 use anyhow::Result;
 use directories::ProjectDirs;
 use std::path::PathBuf;
+use vibes_core::AccessConfig;
 
 pub struct ConfigLoader;
 
@@ -65,6 +66,25 @@ impl ConfigLoader {
                 name: overlay.tunnel.name.or(base.tunnel.name),
                 hostname: overlay.tunnel.hostname.or(base.tunnel.hostname),
             },
+            auth: AccessConfig {
+                enabled: overlay.auth.enabled || base.auth.enabled,
+                team: if overlay.auth.team.is_empty() {
+                    base.auth.team
+                } else {
+                    overlay.auth.team
+                },
+                aud: if overlay.auth.aud.is_empty() {
+                    base.auth.aud
+                } else {
+                    overlay.auth.aud
+                },
+                bypass_localhost: overlay.auth.bypass_localhost,
+                clock_skew_seconds: if overlay.auth.clock_skew_seconds != 60 {
+                    overlay.auth.clock_skew_seconds
+                } else {
+                    base.auth.clock_skew_seconds
+                },
+            },
         }
     }
 
@@ -77,6 +97,7 @@ impl ConfigLoader {
             },
             session: raw.session,
             tunnel: raw.tunnel,
+            auth: raw.auth,
         }
     }
 
@@ -164,6 +185,7 @@ default_model = "claude-sonnet-4"
                 working_dir: None,
             },
             tunnel: TunnelConfigSection::default(),
+            auth: AccessConfig::default(),
         };
 
         let overlay = RawVibesConfig {
@@ -177,6 +199,7 @@ default_model = "claude-sonnet-4"
                 working_dir: Some(PathBuf::from("/custom")),
             },
             tunnel: TunnelConfigSection::default(),
+            auth: AccessConfig::default(),
         };
 
         let merged = ConfigLoader::merge_raw(base, overlay);
@@ -205,6 +228,7 @@ default_model = "claude-sonnet-4"
             },
             session: SessionConfig::default(),
             tunnel: TunnelConfigSection::default(),
+            auth: AccessConfig::default(),
         };
 
         let overlay = RawVibesConfig {
@@ -214,6 +238,7 @@ default_model = "claude-sonnet-4"
             },
             session: SessionConfig::default(),
             tunnel: TunnelConfigSection::default(),
+            auth: AccessConfig::default(),
         };
 
         let merged = ConfigLoader::merge_raw(base, overlay);
