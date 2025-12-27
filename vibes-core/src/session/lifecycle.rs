@@ -136,4 +136,81 @@ mod tests {
         assert_eq!(result.transfers[0].1, "client-b");
         assert!(result.cleanups.is_empty());
     }
+
+    #[tokio::test]
+    async fn disconnect_owner_with_no_subscribers_cleans_up() {
+        let (lifecycle, manager) = create_test_lifecycle();
+
+        let session_id = manager
+            .create_session_with_owner(None, Some("client-a".to_string()))
+            .await;
+
+        let result = lifecycle
+            .handle_client_disconnect(&"client-a".to_string())
+            .await;
+
+        assert!(result.transfers.is_empty());
+        assert_eq!(result.cleanups.len(), 1);
+        assert_eq!(result.cleanups[0], session_id);
+
+        // Verify session was removed
+        assert!(manager.get_session_state(&session_id).await.is_err());
+    }
+
+    #[tokio::test]
+    async fn disconnect_subscriber_does_not_transfer() {
+        let (lifecycle, manager) = create_test_lifecycle();
+
+        let session_id = manager
+            .create_session_with_owner(None, Some("owner".to_string()))
+            .await;
+
+        manager
+            .with_session(&session_id, |s| {
+                s.ownership_mut().add_subscriber("subscriber".to_string());
+            })
+            .await
+            .unwrap();
+
+        let result = lifecycle
+            .handle_client_disconnect(&"subscriber".to_string())
+            .await;
+
+        assert!(result.transfers.is_empty());
+        assert!(result.cleanups.is_empty());
+
+        // Owner should still be owner
+        let owner = manager
+            .with_session(&session_id, |s| s.ownership().owner_id.clone())
+            .await
+            .unwrap();
+        assert_eq!(owner, "owner");
+    }
+
+    #[tokio::test]
+    async fn disconnect_handles_multiple_sessions() {
+        let (lifecycle, manager) = create_test_lifecycle();
+
+        let id1 = manager
+            .create_session_with_owner(None, Some("client".to_string()))
+            .await;
+        let _id2 = manager
+            .create_session_with_owner(None, Some("client".to_string()))
+            .await;
+
+        manager
+            .with_session(&id1, |s| {
+                s.ownership_mut().add_subscriber("other".to_string());
+            })
+            .await
+            .unwrap();
+
+        let result = lifecycle
+            .handle_client_disconnect(&"client".to_string())
+            .await;
+
+        // id1 should transfer, id2 should cleanup
+        assert_eq!(result.transfers.len(), 1);
+        assert_eq!(result.cleanups.len(), 1);
+    }
 }
