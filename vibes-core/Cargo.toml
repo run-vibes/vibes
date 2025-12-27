@@ -29,6 +29,7 @@ which = "7"
 web-push-native = { version = "0.4", features = ["vapid"] }
 p256 = { version = "0.13", features = ["ecdsa", "pem"] }
 base64ct = { version = "1", features = ["std"] }
+http = "1"
 vibes-plugin-api = { path = "../vibes-plugin-api" }
 
 [dev-dependencies]
