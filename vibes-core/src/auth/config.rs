@@ -118,8 +118,10 @@ mod tests {
 
     #[test]
     fn test_is_valid_enabled_missing_fields() {
-        let mut config = AccessConfig::default();
-        config.enabled = true;
+        let config = AccessConfig {
+            enabled: true,
+            ..Default::default()
+        };
         assert!(!config.is_valid());
     }
 
