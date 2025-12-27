@@ -11,7 +11,7 @@ This document tracks the implementation progress of vibes against the roadmap de
 | 1.3 Plugin Foundation | Complete | [design](plans/03-plugin-foundation/design.md) | [implementation](plans/03-plugin-foundation/implementation.md) |
 | 1.4 Server + Web UI | Complete | [design](plans/04-server-web-ui/design.md) | [implementation](plans/04-server-web-ui/implementation.md) |
 | 2.1 Cloudflare Tunnel | Complete | [design](plans/05-cloudflare-tunnel/design.md) | [implementation](plans/05-cloudflare-tunnel/implementation.md) |
-| 2.2 Cloudflare Access | Planned | [design](plans/06-cloudflare-access/design.md) | - |
+| 2.2 Cloudflare Access | Complete | [design](plans/06-cloudflare-access/design.md) | [implementation](plans/06-cloudflare-access/implementation.md) |
 | 2.3 Push Notifications | Planned | - | - |
 
 ---
@@ -69,14 +69,14 @@ This document tracks the implementation progress of vibes against the roadmap de
 - [x] Auto-reconnect handling
 
 ### Milestone 2.2: Cloudflare Access auth
-- [ ] AccessConfig type with TOML parsing
-- [ ] JwtValidator with JWKS caching
-- [ ] AuthMiddleware layer for axum
-- [ ] Localhost bypass logic
-- [ ] vibes auth CLI commands (status, setup)
+- [x] AccessConfig type with TOML parsing
+- [x] JwtValidator with JWKS caching
+- [x] AuthMiddleware layer for axum
+- [x] Localhost bypass logic
+- [x] vibes auth CLI commands (status, test)
 - [ ] Auto-detect team/aud from tunnel config
-- [ ] Web UI identity display
-- [ ] WebSocket auth_context message
+- [x] Web UI identity display
+- [x] WebSocket auth_context message
 
 ### Milestone 2.3: Push notifications
 - [ ] --notify flag
@@ -153,3 +153,4 @@ These phases are planned but not yet scheduled.
 | 2025-12-26 | Milestone 1.4 (Server + Web UI) complete - vibes-server crate with axum HTTP/WebSocket, TanStack web UI, daemon auto-start, CLI as WS client |
 | 2025-12-26 | Milestone 2.1 (Cloudflare Tunnel) complete - TunnelManager, cloudflared CLI wrapper, tunnel CLI commands, UI status badge |
 | 2025-12-27 | Milestone 2.2 (Cloudflare Access) design complete - AuthMiddleware, JwtValidator, localhost bypass, identity display |
+| 2025-12-27 | Milestone 2.2 (Cloudflare Access) implementation complete - JWT validation, auth middleware, CLI commands, WebSocket auth_context, Web UI identity |
