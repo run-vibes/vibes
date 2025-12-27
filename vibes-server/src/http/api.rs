@@ -43,6 +43,8 @@ pub struct SessionSummary {
     pub name: Option<String>,
     /// Current state
     pub state: String,
+    /// When the session was created (ISO 8601 format)
+    pub created_at: String,
 }
 
 /// Response for listing sessions
@@ -58,10 +60,24 @@ pub async fn list_sessions(State(state): State<Arc<AppState>>) -> Json<SessionLi
 
     let sessions = sessions_full
         .into_iter()
-        .map(|(id, name, session_state)| SessionSummary {
-            id,
-            name,
-            state: format!("{:?}", session_state),
+        .map(|(id, name, session_state, created_at)| {
+            // Convert SystemTime to ISO 8601 format
+            let created_at_str = created_at
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| {
+                    let secs = d.as_secs();
+                    let datetime = chrono::DateTime::from_timestamp(secs as i64, 0)
+                        .unwrap_or_default();
+                    datetime.to_rfc3339()
+                })
+                .unwrap_or_else(|_| "unknown".to_string());
+
+            SessionSummary {
+                id,
+                name,
+                state: format!("{:?}", session_state),
+                created_at: created_at_str,
+            }
         })
         .collect();
 

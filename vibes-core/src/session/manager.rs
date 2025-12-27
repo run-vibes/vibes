@@ -150,7 +150,9 @@ impl SessionManager {
     }
 
     /// List sessions with ID, name, and state
-    pub async fn list_sessions_full(&self) -> Vec<(String, Option<String>, SessionState)> {
+    pub async fn list_sessions_full(
+        &self,
+    ) -> Vec<(String, Option<String>, SessionState, std::time::SystemTime)> {
         self.sessions
             .read()
             .await
@@ -160,6 +162,7 @@ impl SessionManager {
                     id.clone(),
                     session.name().map(|s| s.to_string()),
                     session.state(),
+                    session.created_at(),
                 )
             })
             .collect()

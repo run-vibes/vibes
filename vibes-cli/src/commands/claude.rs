@@ -2,7 +2,7 @@
 
 use anyhow::{Result, anyhow};
 use clap::Args;
-use std::io::Write;
+use std::io::{BufRead, Write};
 use vibes_core::{ClaudeEvent, PluginHost, PluginHostConfig, VibesEvent};
 use vibes_server::ws::ServerMessage;
 
@@ -20,6 +20,10 @@ pub struct ClaudeArgs {
     /// Disable background server for this session
     #[arg(long)]
     pub no_serve: bool,
+
+    /// Start interactive mode (read prompts from stdin)
+    #[arg(short = 'i', long)]
+    pub interactive: bool,
 
     // === Common Claude flags (explicit for UX) ===
     /// Continue most recent session
@@ -63,18 +67,9 @@ pub async fn run(args: ClaudeArgs) -> Result<()> {
         ));
     }
 
-    // Prompt is required for new sessions, optional for resume
+    // Determine if we're in interactive mode
+    let interactive = args.interactive || (args.prompt.is_none() && args.resume.is_none());
     let prompt = args.prompt.clone();
-    if prompt.is_none() && args.resume.is_none() {
-        return Err(anyhow!(
-            "No prompt provided.\n\n\
-             Usage:\n\
-             - Start new session:    vibes claude \"your prompt\"\n\
-             - Resume session:       vibes claude --resume <SESSION_ID>\n\
-             - View sessions in UI:  vibes serve && open http://localhost:{}\n",
-            config.server.port
-        ));
-    }
 
     // Ensure daemon is running (unless --no-serve is set)
     if !args.no_serve {
@@ -107,13 +102,71 @@ pub async fn run(args: ClaudeArgs) -> Result<()> {
         name: args.session_name.clone(),
     });
 
-    // Send the prompt if provided
-    if let Some(prompt) = prompt {
-        client.send_input(&session_id, &prompt).await?;
+    // Interactive mode: read prompts from stdin in a loop
+    if interactive {
+        interactive_loop(&mut client, &mut plugin_host, &session_id, prompt).await
+    } else {
+        // Non-interactive: send prompt and stream single response
+        if let Some(prompt) = prompt {
+            client.send_input(&session_id, &prompt).await?;
+        }
+        stream_output(&mut client, &mut plugin_host, &session_id).await
+    }
+}
+
+/// Interactive mode: read prompts from stdin and send to session
+async fn interactive_loop(
+    client: &mut VibesClient,
+    plugin_host: &mut PluginHost,
+    session_id: &str,
+    initial_prompt: Option<String>,
+) -> Result<()> {
+    let stdin = std::io::stdin();
+    let mut reader = stdin.lock();
+
+    // Send initial prompt if provided
+    if let Some(prompt) = initial_prompt {
+        client.send_input(session_id, &prompt).await?;
+        stream_output(client, plugin_host, session_id).await?;
     }
 
-    // Stream output to terminal
-    stream_output(&mut client, &mut plugin_host, &session_id).await
+    // Interactive prompt loop
+    loop {
+        // Print prompt indicator
+        print!("\n> ");
+        std::io::stdout().flush()?;
+
+        // Read input line
+        let mut input = String::new();
+        match reader.read_line(&mut input) {
+            Ok(0) => {
+                // EOF (Ctrl+D)
+                println!("\nGoodbye!");
+                break;
+            }
+            Ok(_) => {
+                let input = input.trim();
+                if input.is_empty() {
+                    continue;
+                }
+
+                // Exit commands
+                if input == "exit" || input == "quit" || input == "/exit" || input == "/quit" {
+                    println!("Goodbye!");
+                    break;
+                }
+
+                // Send input to session
+                client.send_input(session_id, input).await?;
+                stream_output(client, plugin_host, session_id).await?;
+            }
+            Err(e) => {
+                return Err(anyhow!("Failed to read input: {}", e));
+            }
+        }
+    }
+
+    Ok(())
 }
 
 /// Stream events from WebSocket to terminal
@@ -224,6 +277,7 @@ mod tests {
         let args = ClaudeArgs {
             session_name: None,
             no_serve: false,
+            interactive: false,
             continue_session: false,
             resume: None,
             model: Some("claude-opus-4-5".to_string()),
@@ -247,6 +301,7 @@ mod tests {
         let args = ClaudeArgs {
             session_name: None,
             no_serve: false,
+            interactive: false,
             continue_session: false,
             resume: None,
             model: None,
@@ -271,6 +326,7 @@ mod tests {
         let args = ClaudeArgs {
             session_name: None,
             no_serve: false,
+            interactive: false,
             continue_session: false,
             resume: None,
             model: None,
@@ -293,6 +349,7 @@ mod tests {
         let args = ClaudeArgs {
             session_name: None,
             no_serve: false,
+            interactive: false,
             continue_session: false,
             resume: None,
             model: Some("claude-opus-4-5".to_string()),
@@ -313,6 +370,7 @@ mod tests {
         let args = ClaudeArgs {
             session_name: None,
             no_serve: false,
+            interactive: false,
             continue_session: false,
             resume: None,
             model: None,
@@ -334,6 +392,7 @@ mod tests {
         let args = ClaudeArgs {
             session_name: None,
             no_serve: false,
+            interactive: false,
             continue_session: false,
             resume: None,
             model: Some("claude-opus-4-5".to_string()),
@@ -356,6 +415,7 @@ mod tests {
         let args = ClaudeArgs {
             session_name: None,
             no_serve: false,
+            interactive: false,
             continue_session: false,
             resume: None,
             model: None,
