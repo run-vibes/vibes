@@ -398,3 +398,37 @@ code {
   border-radius: 4px;
   font-size: 0.875em;
 }
+
+/* Auth and identity styles */
+.header-auth {
+  margin-left: auto;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.badge-local {
+  background-color: var(--color-border);
+  color: var(--color-text-muted);
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.identity-email {
+  color: var(--color-text);
+}
+
+.identity-provider {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+}

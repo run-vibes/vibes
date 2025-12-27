@@ -9,9 +9,14 @@ import { ClaudeSessions } from './pages/ClaudeSessions'
 import { ClaudeSession } from './pages/ClaudeSession'
 import { StatusPage } from './pages/Status'
 import { TunnelBadge } from './components/TunnelBadge'
+import { useAuth } from './hooks/useAuth'
+import { useWebSocket } from './hooks/useWebSocket'
 
 // Root layout component
 function RootLayout() {
+  const { addMessageHandler } = useWebSocket();
+  const { identity, isLocal, isAuthenticated, isLoading } = useAuth({ addMessageHandler });
+
   return (
     <div className="app">
       <header className="header">
@@ -19,6 +24,18 @@ function RootLayout() {
           <Link to="/" className="logo">vibes</Link>
           <Link to="/claude">Sessions</Link>
           <TunnelBadge />
+          <div className="header-auth">
+            {isLoading ? null : isLocal ? (
+              <span className="badge badge-local">Local</span>
+            ) : isAuthenticated && identity ? (
+              <div className="identity">
+                <span className="identity-email">{identity.email}</span>
+                {identity.identity_provider && (
+                  <span className="identity-provider">via {identity.identity_provider}</span>
+                )}
+              </div>
+            ) : null}
+          </div>
         </nav>
       </header>
       <main className="main">
