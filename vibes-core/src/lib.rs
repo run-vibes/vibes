@@ -68,4 +68,4 @@ pub use error::{BackendError, EventBusError, SessionError, VibesError};
 pub use events::{ClaudeEvent, EventBus, MemoryEventBus, Usage, VibesEvent};
 pub use plugins::{PluginHost, PluginHostConfig, PluginHostError, PluginInfo, PluginState};
 pub use session::{Session, SessionManager, SessionState};
-pub use tunnel::{LogLevel, TunnelEvent, TunnelState};
+pub use tunnel::{LogLevel, TunnelConfig, TunnelEvent, TunnelMode, TunnelState};
