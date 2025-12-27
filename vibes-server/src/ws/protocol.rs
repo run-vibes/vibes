@@ -3,7 +3,7 @@
 //! Both CLI and Web UI use the same protocol for consistent behavior.
 
 use serde::{Deserialize, Serialize};
-use vibes_core::ClaudeEvent;
+use vibes_core::{AuthContext, ClaudeEvent};
 
 /// Messages sent from client to server
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -103,6 +103,9 @@ pub enum ServerMessage {
         /// Public URL when connected
         url: Option<String>,
     },
+
+    /// Auth context sent on connection
+    AuthContext(AuthContext),
 }
 
 use vibes_core::VibesEvent;
@@ -398,5 +401,41 @@ mod tests {
             Some(ServerMessage::TunnelState { state, url })
             if state == "connected" && url == Some("https://test.trycloudflare.com".to_string())
         ));
+    }
+
+    // ==================== Auth Context Tests ====================
+
+    #[test]
+    fn test_server_message_auth_context_local_roundtrip() {
+        let msg = ServerMessage::AuthContext(AuthContext::Local);
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ServerMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+        assert!(json.contains(r#""type":"auth_context""#));
+        assert!(json.contains(r#""source":"local""#));
+    }
+
+    #[test]
+    fn test_server_message_auth_context_anonymous_roundtrip() {
+        let msg = ServerMessage::AuthContext(AuthContext::Anonymous);
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ServerMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+        assert!(json.contains(r#""source":"anonymous""#));
+    }
+
+    #[test]
+    fn test_server_message_auth_context_authenticated_roundtrip() {
+        use chrono::Utc;
+        use vibes_core::AccessIdentity;
+
+        let identity = AccessIdentity::new("user@example.com".to_string(), Utc::now())
+            .with_name("Test User".to_string());
+        let msg = ServerMessage::AuthContext(AuthContext::Authenticated { identity });
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ServerMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+        assert!(json.contains(r#""source":"authenticated""#));
+        assert!(json.contains(r#""email":"user@example.com""#));
     }
 }

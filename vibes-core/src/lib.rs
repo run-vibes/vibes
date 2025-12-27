@@ -51,6 +51,7 @@
 //! └─────────────────────────────────────────────────┘
 //! ```
 
+pub mod auth;
 pub mod backend;
 pub mod error;
 pub mod events;
@@ -60,6 +61,7 @@ pub mod session;
 pub mod tunnel;
 
 // Re-export key types for convenience
+pub use auth::{AccessConfig, AccessIdentity, AuthContext, AuthError, JwtValidator};
 pub use backend::{
     BackendFactory, BackendState, ClaudeBackend, MockBackend, PrintModeBackend,
     PrintModeBackendFactory, PrintModeConfig,

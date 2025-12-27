@@ -5,9 +5,11 @@
 
 mod error;
 pub mod http;
+pub mod middleware;
 mod state;
 pub mod ws;
 
+use std::net::SocketAddr;
 use std::sync::Arc;
 
 use tokio::net::TcpListener;
@@ -15,6 +17,7 @@ use vibes_core::EventBus;
 
 pub use error::ServerError;
 pub use http::create_router;
+pub use middleware::{AuthLayer, auth_middleware};
 pub use state::AppState;
 
 /// The main vibes server
@@ -63,9 +66,12 @@ impl VibesServer {
         self.start_event_forwarding();
 
         let router = create_router(self.state);
-        axum::serve(listener, router)
-            .await
-            .map_err(|e| ServerError::Internal(e.to_string()))?;
+        axum::serve(
+            listener,
+            router.into_make_service_with_connect_info::<SocketAddr>(),
+        )
+        .await
+        .map_err(|e| ServerError::Internal(e.to_string()))?;
 
         Ok(())
     }

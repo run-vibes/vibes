@@ -21,6 +21,8 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Manage Cloudflare Access authentication
+    Auth(commands::auth::AuthArgs),
     /// Proxy Claude Code with vibes enhancements
     Claude(commands::claude::ClaudeArgs),
     /// Manage configuration
@@ -41,6 +43,7 @@ async fn main() -> Result<()> {
     tracing_subscriber::fmt().with_env_filter(filter).init();
 
     match cli.command {
+        Commands::Auth(args) => commands::auth::run(args).await,
         Commands::Claude(args) => commands::claude::run(args).await,
         Commands::Config(args) => commands::config::run(args),
         Commands::Plugin(args) => commands::plugin::run(args),

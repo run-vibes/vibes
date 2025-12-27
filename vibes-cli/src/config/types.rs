@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+use vibes_core::AccessConfig;
 
 /// Configuration as stored in TOML files (with optional fields for merging)
 #[derive(Debug, Clone, Deserialize, Default)]
@@ -12,6 +13,9 @@ pub struct RawVibesConfig {
 
     #[serde(default)]
     pub tunnel: TunnelConfigSection,
+
+    #[serde(default)]
+    pub auth: AccessConfig,
 }
 
 /// Server config as stored in TOML (optional fields for proper merging)
@@ -35,6 +39,9 @@ pub struct VibesConfig {
 
     #[serde(default)]
     pub tunnel: TunnelConfigSection,
+
+    #[serde(default)]
+    pub auth: AccessConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -114,6 +121,7 @@ mod tests {
                 working_dir: Some(PathBuf::from("/tmp")),
             },
             tunnel: TunnelConfigSection::default(),
+            auth: AccessConfig::default(),
         };
 
         let toml_str = toml::to_string(&config).unwrap();

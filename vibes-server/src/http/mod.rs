@@ -5,20 +5,29 @@ mod static_files;
 
 use std::sync::Arc;
 
-use axum::{Router, routing::get};
+use axum::{Extension, Router, middleware, routing::get};
 
 use crate::AppState;
+use crate::middleware::auth_middleware;
 use crate::ws::ws_handler;
 
-pub use api::{HealthResponse, SessionListResponse, SessionSummary, TunnelStatusResponse};
+pub use api::{
+    AuthIdentityResponse, AuthStatusResponse, HealthResponse, SessionListResponse, SessionSummary,
+    TunnelStatusResponse,
+};
 
 /// Create the HTTP router with all routes configured
 pub fn create_router(state: Arc<AppState>) -> Router {
+    let auth_layer = state.auth_layer.clone();
+
     Router::new()
         .route("/api/health", get(api::health))
         .route("/api/claude/sessions", get(api::list_sessions))
         .route("/api/tunnel/status", get(api::get_tunnel_status))
+        .route("/api/auth/status", get(api::get_auth_status))
         .route("/ws", get(ws_handler))
+        .layer(middleware::from_fn(auth_middleware))
+        .layer(Extension(auth_layer))
         .with_state(state)
         // Fallback serves embedded web-ui for SPA routing
         .fallback(static_files::static_handler)
@@ -28,12 +37,16 @@ pub fn create_router(state: Arc<AppState>) -> Router {
 mod tests {
     use super::*;
     use axum_test::TestServer;
+    use std::net::SocketAddr;
 
     #[tokio::test]
     async fn test_router_has_health_endpoint() {
         let state = Arc::new(AppState::new());
         let router = create_router(state);
-        let server = TestServer::new(router).unwrap();
+        // Use into_make_service_with_connect_info to provide ConnectInfo<SocketAddr>
+        // for the auth middleware (requires HTTP transport, not mock)
+        let server =
+            TestServer::new(router.into_make_service_with_connect_info::<SocketAddr>()).unwrap();
 
         let response = server.get("/api/health").await;
         response.assert_status_ok();

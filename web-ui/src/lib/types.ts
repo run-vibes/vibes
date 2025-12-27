@@ -22,7 +22,25 @@ export type ServerMessage =
   | { type: 'session_notification'; session_id: string; name?: string }
   | { type: 'claude'; session_id: string; event: ClaudeEvent }
   | { type: 'session_state'; session_id: string; state: SessionState }
-  | { type: 'error'; session_id?: string; message: string; code: string };
+  | { type: 'error'; session_id?: string; message: string; code: string }
+  | { type: 'tunnel_state'; state: string; url?: string }
+  | AuthContextMessage;
+
+// ============================================================
+// Auth Context - matches vibes-core/src/auth/context.rs
+// ============================================================
+
+export type AuthContextMessage =
+  | { type: 'auth_context'; source: 'local' }
+  | { type: 'auth_context'; source: 'anonymous' }
+  | { type: 'auth_context'; source: 'authenticated'; identity: AccessIdentity };
+
+export interface AccessIdentity {
+  email: string;
+  name?: string;
+  identity_provider?: string;
+  expires_at: string;
+}
 
 // ============================================================
 // Claude Events - matches vibes-core/src/events/types.rs
