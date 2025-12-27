@@ -95,6 +95,14 @@ pub enum ServerMessage {
         /// Error code
         code: String,
     },
+
+    /// Tunnel state update
+    TunnelState {
+        /// Current state
+        state: String,
+        /// Public URL when connected
+        url: Option<String>,
+    },
 }
 
 use vibes_core::VibesEvent;
@@ -121,6 +129,11 @@ pub fn vibes_event_to_server_message(event: &VibesEvent) -> Option<ServerMessage
                 name: name.clone(),
             })
         }
+        // Tunnel state changes are broadcast to clients
+        VibesEvent::TunnelStateChanged { state, url } => Some(ServerMessage::TunnelState {
+            state: state.clone(),
+            url: url.clone(),
+        }),
         // These events are not broadcast to clients
         VibesEvent::UserInput { .. } => None,
         VibesEvent::PermissionResponse { .. } => None,
@@ -346,5 +359,44 @@ mod tests {
 
         assert!(vibes_event_to_server_message(&connected).is_none());
         assert!(vibes_event_to_server_message(&disconnected).is_none());
+    }
+
+    // ==================== Tunnel State Tests ====================
+
+    #[test]
+    fn test_server_message_tunnel_state_serialization() {
+        let msg = ServerMessage::TunnelState {
+            state: "connected".to_string(),
+            url: Some("https://test.trycloudflare.com".to_string()),
+        };
+        let json = serde_json::to_string(&msg).unwrap();
+        assert!(json.contains("tunnel_state"));
+        assert!(json.contains("connected"));
+    }
+
+    #[test]
+    fn test_server_message_tunnel_state_roundtrip() {
+        let msg = ServerMessage::TunnelState {
+            state: "connected".to_string(),
+            url: Some("https://test.trycloudflare.com".to_string()),
+        };
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ServerMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+    }
+
+    #[test]
+    fn test_vibes_event_tunnel_state_changed_converts() {
+        let vibes_event = VibesEvent::TunnelStateChanged {
+            state: "connected".to_string(),
+            url: Some("https://test.trycloudflare.com".to_string()),
+        };
+
+        let server_msg = vibes_event_to_server_message(&vibes_event);
+        assert!(matches!(
+            server_msg,
+            Some(ServerMessage::TunnelState { state, url })
+            if state == "connected" && url == Some("https://test.trycloudflare.com".to_string())
+        ));
     }
 }

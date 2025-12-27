@@ -49,10 +49,10 @@ This document tracks the implementation progress of vibes against the roadmap de
 **Goal:** Access vibes from anywhere securely
 
 ### Milestone 2.1: Cloudflare Tunnel integration
-- [ ] vibes tunnel setup wizard
-- [ ] cloudflared process management
-- [ ] Tunnel status in UI
-- [ ] Auto-reconnect handling
+- [x] vibes tunnel setup wizard (stub)
+- [x] cloudflared process management
+- [x] Tunnel status in UI
+- [x] Auto-reconnect handling
 
 ### Milestone 2.2: Cloudflare Access auth
 - [ ] AuthAdapter implementation
@@ -133,3 +133,4 @@ These phases are planned but not yet scheduled.
 | 2025-12-26 | Milestone 1.2 (CLI) complete - vibes-cli crate with claude command, config system, server stub |
 | 2025-12-26 | Milestone 1.3 (Plugin foundation) complete - vibes-plugin-api crate with Plugin trait, PluginHost, CLI commands, event dispatch |
 | 2025-12-26 | Milestone 1.4 (Server + Web UI) complete - vibes-server crate with axum HTTP/WebSocket, TanStack web UI, daemon auto-start, CLI as WS client |
+| 2025-12-26 | Milestone 2.1 (Cloudflare Tunnel) complete - TunnelManager, cloudflared CLI wrapper, tunnel CLI commands, UI status badge |

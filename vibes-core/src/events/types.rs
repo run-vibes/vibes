@@ -83,6 +83,9 @@ pub enum VibesEvent {
 
     /// Client disconnected from server
     ClientDisconnected { client_id: String },
+
+    /// Tunnel state changed
+    TunnelStateChanged { state: String, url: Option<String> },
 }
 
 impl VibesEvent {
@@ -96,6 +99,7 @@ impl VibesEvent {
             VibesEvent::SessionStateChanged { session_id, .. } => Some(session_id),
             VibesEvent::ClientConnected { .. } => None,
             VibesEvent::ClientDisconnected { .. } => None,
+            VibesEvent::TunnelStateChanged { .. } => None,
         }
     }
 }
@@ -377,5 +381,30 @@ mod tests {
         for (i, event) in events.iter().enumerate() {
             assert_eq!(event.session_id(), Some(format!("s{}", i + 1).as_str()));
         }
+    }
+
+    // ==================== TunnelStateChanged Tests ====================
+
+    #[test]
+    fn vibes_event_tunnel_state_changed_serialization_roundtrip() {
+        let event = VibesEvent::TunnelStateChanged {
+            state: "connected".to_string(),
+            url: Some("https://test.trycloudflare.com".to_string()),
+        };
+        let json = serde_json::to_string(&event).unwrap();
+        let parsed: VibesEvent = serde_json::from_str(&json).unwrap();
+        assert!(
+            matches!(parsed, VibesEvent::TunnelStateChanged { state, url }
+            if state == "connected" && url == Some("https://test.trycloudflare.com".to_string()))
+        );
+    }
+
+    #[test]
+    fn vibes_event_tunnel_state_changed_session_id_is_none() {
+        let event = VibesEvent::TunnelStateChanged {
+            state: "starting".to_string(),
+            url: None,
+        };
+        assert_eq!(event.session_id(), None);
     }
 }

@@ -1,5 +1,6 @@
 use super::types::{
-    DEFAULT_PORT, RawServerConfig, RawVibesConfig, ServerConfig, SessionConfig, VibesConfig,
+    DEFAULT_PORT, RawServerConfig, RawVibesConfig, ServerConfig, SessionConfig,
+    TunnelConfigSection, VibesConfig,
 };
 use anyhow::Result;
 use directories::ProjectDirs;
@@ -58,6 +59,12 @@ impl ConfigLoader {
                     .or(base.session.default_allowed_tools),
                 working_dir: overlay.session.working_dir.or(base.session.working_dir),
             },
+            tunnel: TunnelConfigSection {
+                enabled: overlay.tunnel.enabled || base.tunnel.enabled,
+                mode: overlay.tunnel.mode.or(base.tunnel.mode),
+                name: overlay.tunnel.name.or(base.tunnel.name),
+                hostname: overlay.tunnel.hostname.or(base.tunnel.hostname),
+            },
         }
     }
 
@@ -69,6 +76,7 @@ impl ConfigLoader {
                 auto_start: raw.server.auto_start.unwrap_or(true),
             },
             session: raw.session,
+            tunnel: raw.tunnel,
         }
     }
 
@@ -155,6 +163,7 @@ default_model = "claude-sonnet-4"
                 default_allowed_tools: Some(vec!["Read".to_string()]),
                 working_dir: None,
             },
+            tunnel: TunnelConfigSection::default(),
         };
 
         let overlay = RawVibesConfig {
@@ -167,6 +176,7 @@ default_model = "claude-sonnet-4"
                 default_allowed_tools: None, // Should preserve base value
                 working_dir: Some(PathBuf::from("/custom")),
             },
+            tunnel: TunnelConfigSection::default(),
         };
 
         let merged = ConfigLoader::merge_raw(base, overlay);
@@ -194,6 +204,7 @@ default_model = "claude-sonnet-4"
                 auto_start: Some(false),
             },
             session: SessionConfig::default(),
+            tunnel: TunnelConfigSection::default(),
         };
 
         let overlay = RawVibesConfig {
@@ -202,6 +213,7 @@ default_model = "claude-sonnet-4"
                 auto_start: None, // Should preserve base
             },
             session: SessionConfig::default(),
+            tunnel: TunnelConfigSection::default(),
         };
 
         let merged = ConfigLoader::merge_raw(base, overlay);

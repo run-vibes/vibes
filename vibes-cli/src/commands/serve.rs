@@ -38,6 +38,14 @@ pub struct ServeArgs {
     /// Run as a background daemon
     #[arg(short, long)]
     pub daemon: bool,
+
+    /// Start with named tunnel (from config)
+    #[arg(long)]
+    pub tunnel: bool,
+
+    /// Start with quick tunnel (temporary URL)
+    #[arg(long, conflicts_with = "tunnel")]
+    pub quick_tunnel: bool,
 }
 
 /// Subcommands for serve
@@ -64,6 +72,8 @@ async fn run_foreground(args: &ServeArgs) -> Result<()> {
     let config = ServerConfig {
         host: args.host.clone(),
         port: args.port,
+        tunnel_enabled: args.tunnel,
+        tunnel_quick: args.quick_tunnel,
     };
 
     info!("Starting vibes server on {}:{}", config.host, config.port);
@@ -243,5 +253,50 @@ mod tests {
 
         let cli = TestCli::parse_from(["test", "status"]);
         assert!(matches!(cli.serve.command, Some(ServeCommand::Status)));
+    }
+
+    #[test]
+    fn test_serve_args_tunnel_flag() {
+        use clap::Parser;
+
+        #[derive(Parser)]
+        struct TestCli {
+            #[command(flatten)]
+            serve: ServeArgs,
+        }
+
+        let cli = TestCli::parse_from(["test", "--tunnel"]);
+        assert!(cli.serve.tunnel);
+        assert!(!cli.serve.quick_tunnel);
+    }
+
+    #[test]
+    fn test_serve_args_quick_tunnel_flag() {
+        use clap::Parser;
+
+        #[derive(Parser)]
+        struct TestCli {
+            #[command(flatten)]
+            serve: ServeArgs,
+        }
+
+        let cli = TestCli::parse_from(["test", "--quick-tunnel"]);
+        assert!(cli.serve.quick_tunnel);
+        assert!(!cli.serve.tunnel);
+    }
+
+    #[test]
+    fn test_serve_args_tunnel_flags_conflict() {
+        use clap::Parser;
+
+        #[derive(Parser)]
+        struct TestCli {
+            #[command(flatten)]
+            serve: ServeArgs,
+        }
+
+        // Both flags together should fail
+        let result = TestCli::try_parse_from(["test", "--tunnel", "--quick-tunnel"]);
+        assert!(result.is_err());
     }
 }

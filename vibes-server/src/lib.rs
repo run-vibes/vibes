@@ -103,6 +103,10 @@ pub struct ServerConfig {
     pub host: String,
     /// Port to listen on
     pub port: u16,
+    /// Enable tunnel
+    pub tunnel_enabled: bool,
+    /// Use quick tunnel mode (temporary URL)
+    pub tunnel_quick: bool,
 }
 
 impl Default for ServerConfig {
@@ -110,6 +114,8 @@ impl Default for ServerConfig {
         Self {
             host: "0.0.0.0".to_string(),
             port: 7432,
+            tunnel_enabled: false,
+            tunnel_quick: false,
         }
     }
 }
@@ -120,6 +126,8 @@ impl ServerConfig {
         Self {
             host: host.into(),
             port,
+            tunnel_enabled: false,
+            tunnel_quick: false,
         }
     }
 

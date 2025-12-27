@@ -7,6 +7,8 @@ import {
 } from '@tanstack/react-router'
 import { ClaudeSessions } from './pages/ClaudeSessions'
 import { ClaudeSession } from './pages/ClaudeSession'
+import { StatusPage } from './pages/Status'
+import { TunnelBadge } from './components/TunnelBadge'
 
 // Root layout component
 function RootLayout() {
@@ -16,6 +18,7 @@ function RootLayout() {
         <nav>
           <Link to="/" className="logo">vibes</Link>
           <Link to="/claude">Sessions</Link>
+          <TunnelBadge />
         </nav>
       </header>
       <main className="main">
@@ -61,8 +64,14 @@ const sessionRoute = createRoute({
   component: ClaudeSession,
 })
 
+const statusRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/status',
+  component: StatusPage,
+})
+
 // Create route tree and router
-const routeTree = rootRoute.addChildren([indexRoute, claudeRoute, sessionRoute])
+const routeTree = rootRoute.addChildren([indexRoute, claudeRoute, sessionRoute, statusRoute])
 
 export const router = createRouter({ routeTree })
 
