@@ -21,35 +21,31 @@ self.addEventListener('push', (event) => {
     try {
       const payload = event.data.json();
 
-      // Map our notification types to display info
-      switch (payload.event) {
+      // Use title and body directly from payload (matches Rust PushNotification type)
+      data.title = payload.title || data.title;
+      data.body = payload.body || data.body;
+      data.tag = payload.tag || data.tag;
+
+      // Check event_type from nested data object
+      const eventType = payload.data?.event_type;
+      switch (eventType) {
         case 'permission_needed':
-          data.title = 'Permission Required';
-          data.body = payload.data?.message || 'Claude needs your approval';
-          data.tag = `permission-${payload.data?.session_id}`;
           data.requireInteraction = true;
-          break;
-        case 'session_completed':
-          data.title = 'Session Completed';
-          data.body = payload.data?.message || 'Your Claude session has finished';
-          data.tag = `completed-${payload.data?.session_id}`;
           break;
         case 'session_error':
-          data.title = 'Session Error';
-          data.body = payload.data?.message || 'An error occurred in your session';
-          data.tag = `error-${payload.data?.session_id}`;
           data.requireInteraction = true;
           break;
-        default:
-          data.title = payload.title || data.title;
-          data.body = payload.body || data.body;
+        // session_completed and others don't require interaction
       }
 
-      // Store session_id for click handling
+      // Store session_id and event_type for click handling
       if (payload.data?.session_id) {
         data.data.session_id = payload.data.session_id;
       }
-      data.data.event = payload.event;
+      if (payload.data?.url) {
+        data.data.url = payload.data.url;
+      }
+      data.data.event_type = eventType;
     } catch (e) {
       console.warn('[SW] Failed to parse push data:', e);
       // Try to use the text directly
@@ -80,12 +76,8 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
   const data = event.notification.data || {};
-  let targetUrl = '/';
-
-  // Navigate to the relevant session if we have a session_id
-  if (data.session_id) {
-    targetUrl = `/sessions/${data.session_id}`;
-  }
+  // Use URL from notification data, or fallback to session URL, or home
+  let targetUrl = data.url || (data.session_id ? `/sessions/${data.session_id}` : '/');
 
   // Focus existing window or open new one
   event.waitUntil(

@@ -121,18 +121,20 @@ export function usePushSubscription() {
     setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      // Request notification permission if not granted
-      if (Notification.permission !== 'granted') {
-        const permission = await Notification.requestPermission();
-        if (permission !== 'granted') {
-          setState((prev) => ({
-            ...prev,
-            hasPermission: false,
-            isLoading: false,
-            error: 'Notification permission denied',
-          }));
-          return;
-        }
+      // Check permission once - only request if not already granted
+      const permission =
+        Notification.permission === 'granted'
+          ? Notification.permission
+          : await Notification.requestPermission();
+
+      if (permission !== 'granted') {
+        setState((prev) => ({
+          ...prev,
+          hasPermission: false,
+          isLoading: false,
+          error: 'Notification permission denied',
+        }));
+        return;
       }
 
       // Register service worker if not registered

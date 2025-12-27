@@ -39,16 +39,17 @@ impl NotificationService {
     }
 
     /// Start listening to events and sending notifications
+    #[allow(clippy::collapsible_if)] // Prefer readability over collapsed let chains for side effects
     pub async fn run(&self, mut event_rx: broadcast::Receiver<(EventSeq, VibesEvent)>) {
         info!("NotificationService started");
 
         loop {
             match event_rx.recv().await {
                 Ok((_seq, event)) => {
-                    if let Some(notification) = self.event_to_notification(&event)
-                        && let Err(e) = self.send_to_all(notification).await
-                    {
-                        error!("Failed to send notifications: {}", e);
+                    if let Some(notification) = self.event_to_notification(&event) {
+                        if let Err(e) = self.send_to_all(notification).await {
+                            error!("Failed to send notifications: {}", e);
+                        }
                     }
                 }
                 Err(broadcast::error::RecvError::Lagged(n)) => {
@@ -97,6 +98,7 @@ impl NotificationService {
     }
 
     /// Send a notification to all subscribed browsers
+    #[allow(clippy::collapsible_if)] // Prefer readability over collapsed let chains for side effects
     async fn send_to_all(&self, notification: PushNotification) -> Result<(), NotificationError> {
         let subscriptions = self.subscriptions.list().await;
 
@@ -127,10 +129,10 @@ impl NotificationService {
         }
 
         // Clean up stale subscriptions
-        if !stale_ids.is_empty()
-            && let Err(e) = self.subscriptions.cleanup_stale(&stale_ids).await
-        {
-            error!("Failed to cleanup stale subscriptions: {}", e);
+        if !stale_ids.is_empty() {
+            if let Err(e) = self.subscriptions.cleanup_stale(&stale_ids).await {
+                error!("Failed to cleanup stale subscriptions: {}", e);
+            }
         }
 
         Ok(())

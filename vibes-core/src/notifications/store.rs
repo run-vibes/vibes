@@ -6,6 +6,7 @@ use std::sync::Arc;
 
 use tokio::fs;
 use tokio::sync::RwLock;
+use tracing::warn;
 
 use super::PushSubscription;
 use crate::NotificationError;
@@ -28,7 +29,16 @@ impl SubscriptionStore {
             let content = fs::read_to_string(&file_path).await.map_err(|e| {
                 NotificationError::Storage(format!("failed to read subscriptions: {}", e))
             })?;
-            let subs: Vec<PushSubscription> = serde_json::from_str(&content).unwrap_or_default();
+            let subs: Vec<PushSubscription> = match serde_json::from_str(&content) {
+                Ok(subscriptions) => subscriptions,
+                Err(e) => {
+                    warn!(
+                        "Failed to deserialize subscriptions file, starting fresh: {}",
+                        e
+                    );
+                    Vec::new()
+                }
+            };
             subs.into_iter().map(|s| (s.id.clone(), s)).collect()
         } else {
             HashMap::new()

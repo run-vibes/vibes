@@ -13,6 +13,9 @@ use vibes_core::{PushSubscription, SubscriptionKeys};
 
 use crate::AppState;
 
+/// Default user agent when not provided by the client
+const DEFAULT_USER_AGENT: &str = "Unknown";
+
 /// Response for GET /api/push/vapid-key
 #[derive(Debug, Serialize, Deserialize)]
 pub struct VapidKeyResponse {
@@ -121,7 +124,9 @@ pub async fn subscribe(
             p256dh: request.keys.p256dh,
             auth: request.keys.auth,
         },
-        user_agent: request.user_agent.unwrap_or_else(|| "Unknown".to_string()),
+        user_agent: request
+            .user_agent
+            .unwrap_or_else(|| DEFAULT_USER_AGENT.to_string()),
         created_at: chrono::Utc::now(),
     };
 
