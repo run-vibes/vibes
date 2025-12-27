@@ -8,4 +8,4 @@ mod store;
 mod builder;
 mod service;
 
-// Re-exports will be added as types are implemented
+pub use error::HistoryError;
