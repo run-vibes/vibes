@@ -1,0 +1,1 @@
+//! History error types

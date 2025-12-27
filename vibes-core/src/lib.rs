@@ -55,6 +55,7 @@ pub mod auth;
 pub mod backend;
 pub mod error;
 pub mod events;
+pub mod history;
 pub mod notifications;
 pub mod parser;
 pub mod plugins;
