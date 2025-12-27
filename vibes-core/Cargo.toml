@@ -23,6 +23,7 @@ toml.workspace = true
 chrono.workspace = true
 libloading = "0.8"
 dirs = "6"
+which = "7"
 vibes-plugin-api = { path = "../vibes-plugin-api" }
 
 [dev-dependencies]
