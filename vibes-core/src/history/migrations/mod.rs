@@ -6,6 +6,7 @@ use crate::history::HistoryError;
 /// SQL for each migration version
 const MIGRATIONS: &[(&str, &str)] = &[
     ("v001_initial", include_str!("v001_initial.sql")),
+    ("v002_fts", include_str!("v002_fts.sql")),
 ];
 
 /// Runs database migrations
@@ -70,7 +71,7 @@ mod tests {
 
         assert_eq!(migrator.current_version().unwrap(), 0);
         migrator.migrate().unwrap();
-        assert_eq!(migrator.current_version().unwrap(), 1);
+        assert_eq!(migrator.current_version().unwrap(), migrator.target_version());
     }
 
     #[test]
@@ -112,5 +113,41 @@ mod tests {
             )
             .unwrap();
         assert_eq!(count, 1);
+    }
+
+    #[test]
+    fn test_fts_table_created() {
+        let conn = Connection::open_in_memory().unwrap();
+        let migrator = Migrator::new(&conn);
+        migrator.migrate().unwrap();
+
+        assert_eq!(migrator.current_version().unwrap(), 2);
+
+        // Verify FTS table exists
+        let count: i32 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='messages_fts'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap();
+        assert_eq!(count, 1);
+    }
+
+    #[test]
+    fn test_fts_triggers_created() {
+        let conn = Connection::open_in_memory().unwrap();
+        let migrator = Migrator::new(&conn);
+        migrator.migrate().unwrap();
+
+        // Count triggers
+        let count: i32 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='trigger' AND name LIKE 'messages_%'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap();
+        assert_eq!(count, 3); // ai, ad, au
     }
 }
