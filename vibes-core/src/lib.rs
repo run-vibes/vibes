@@ -61,7 +61,7 @@ pub mod session;
 pub mod tunnel;
 
 // Re-export key types for convenience
-pub use auth::AuthError;
+pub use auth::{AccessConfig, AuthError};
 pub use backend::{
     BackendFactory, BackendState, ClaudeBackend, MockBackend, PrintModeBackend,
     PrintModeBackendFactory, PrintModeConfig,
