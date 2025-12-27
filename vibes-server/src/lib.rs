@@ -16,6 +16,7 @@ use std::sync::Arc;
 use tokio::net::TcpListener;
 use vibes_core::{
     EventBus, NotificationConfig, NotificationService, SubscriptionStore, VapidKeyManager,
+    history::{HistoryService, SqliteHistoryStore},
 };
 
 pub use error::ServerError;
@@ -78,6 +79,81 @@ impl VibesServer {
         })
     }
 
+    /// Create a new server with chat history enabled
+    pub async fn with_history(config: ServerConfig) -> Result<Self, ServerError> {
+        let config_dir = get_vibes_config_dir()?;
+        let db_path = config_dir.join("history.db");
+
+        // Initialize history store
+        let store = SqliteHistoryStore::open(&db_path).map_err(|e| {
+            ServerError::Internal(format!("Failed to open history database: {}", e))
+        })?;
+        let store = Arc::new(store);
+
+        // Create history service
+        let history_service = Arc::new(HistoryService::new(store));
+
+        // Create state with history
+        let state = Arc::new(AppState::new().with_history(history_service));
+
+        tracing::info!("Chat history initialized at {:?}", db_path);
+
+        Ok(Self {
+            config,
+            state,
+            notification_service: None,
+        })
+    }
+
+    /// Create a new server with both notifications and history enabled
+    pub async fn with_all_features(config: ServerConfig) -> Result<Self, ServerError> {
+        let config_dir = get_vibes_config_dir()?;
+
+        // Initialize VAPID keys
+        let vapid = VapidKeyManager::load_or_generate(&config_dir)
+            .await
+            .map_err(|e| {
+                ServerError::Internal(format!("Failed to initialize VAPID keys: {}", e))
+            })?;
+        let vapid = Arc::new(vapid);
+
+        // Initialize subscription store
+        let subscriptions = SubscriptionStore::load(&config_dir)
+            .await
+            .map_err(|e| ServerError::Internal(format!("Failed to load subscriptions: {}", e)))?;
+        let subscriptions = Arc::new(subscriptions);
+
+        // Initialize history store
+        let db_path = config_dir.join("history.db");
+        let store = SqliteHistoryStore::open(&db_path).map_err(|e| {
+            ServerError::Internal(format!("Failed to open history database: {}", e))
+        })?;
+        let history_service = Arc::new(HistoryService::new(Arc::new(store)));
+
+        // Create state with all features
+        let state = Arc::new(
+            AppState::new()
+                .with_push(vapid.clone(), subscriptions.clone())
+                .with_history(history_service),
+        );
+
+        // Create notification service
+        let notification_config = NotificationConfig::default();
+        let notification_service = Arc::new(NotificationService::new(
+            vapid,
+            subscriptions,
+            notification_config,
+        ));
+
+        tracing::info!("All features initialized (push notifications, chat history)");
+
+        Ok(Self {
+            config,
+            state,
+            notification_service: Some(notification_service),
+        })
+    }
+
     /// Create a server with custom state (for testing)
     pub fn with_state(config: ServerConfig, state: Arc<AppState>) -> Self {
         Self {
@@ -115,6 +191,11 @@ impl VibesServer {
         // Start notification service if enabled
         if let Some(notification_service) = &self.notification_service {
             self.start_notification_service(notification_service.clone());
+        }
+
+        // Start history service if enabled
+        if self.state.history.is_some() {
+            self.start_history_service();
         }
 
         let router = create_router(self.state);
@@ -163,6 +244,38 @@ impl VibesServer {
         });
 
         tracing::info!("Notification service started");
+    }
+
+    /// Start the history service in a background task
+    fn start_history_service(&self) {
+        let history_service = self
+            .state
+            .history
+            .clone()
+            .expect("History service not configured");
+        let mut event_rx = self.state.event_bus.subscribe();
+
+        tokio::spawn(async move {
+            loop {
+                match event_rx.recv().await {
+                    Ok((_seq, event)) => {
+                        if let Err(e) = history_service.process_event(&event).await {
+                            tracing::error!("History persistence error: {}", e);
+                        }
+                    }
+                    Err(tokio::sync::broadcast::error::RecvError::Closed) => {
+                        tracing::warn!("History service: event bus closed");
+                        break;
+                    }
+                    Err(tokio::sync::broadcast::error::RecvError::Lagged(n)) => {
+                        tracing::warn!("History service lagged by {} events", n);
+                        // Continue receiving
+                    }
+                }
+            }
+        });
+
+        tracing::info!("History service started");
     }
 }
 

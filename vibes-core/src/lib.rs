@@ -55,6 +55,7 @@ pub mod auth;
 pub mod backend;
 pub mod error;
 pub mod events;
+pub mod history;
 pub mod notifications;
 pub mod parser;
 pub mod plugins;
@@ -69,6 +70,7 @@ pub use backend::{
 };
 pub use error::{BackendError, EventBusError, NotificationError, SessionError, VibesError};
 pub use events::{ClaudeEvent, EventBus, MemoryEventBus, Usage, VibesEvent};
+pub use history::HistoryError;
 pub use notifications::{
     NotificationConfig, NotificationData, NotificationEvent, NotificationService, PushNotification,
     PushSubscription, SubscriptionKeys, SubscriptionStore, VapidKeyManager, VapidKeys,

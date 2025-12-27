@@ -13,7 +13,7 @@ This document tracks the implementation progress of vibes against the roadmap de
 | 2.1 Cloudflare Tunnel | Complete | [design](plans/05-cloudflare-tunnel/design.md) | [implementation](plans/05-cloudflare-tunnel/implementation.md) |
 | 2.2 Cloudflare Access | Complete | [design](plans/06-cloudflare-access/design.md) | [implementation](plans/06-cloudflare-access/implementation.md) |
 | 2.3 Push Notifications | Complete | [design](plans/07-push-notifications/design.md) | [implementation](plans/07-push-notifications/implementation.md) |
-| 3.1 Chat History | Not started | — | — |
+| 3.1 Chat History | Complete | [design](plans/08-chat-history/design.md) | [implementation](plans/08-chat-history/implementation.md) |
 | 3.2 Multi-Session Support | Not started | — | — |
 | 3.3 CLI ↔ Web Mirroring | Not started | — | — |
 | 3.4 Cloudflare Tunnel Wizard | Not started | — | — |
@@ -99,10 +99,10 @@ Note: Auto-detect team/aud moved to Milestone 3.5 (Cloudflare Auth Wizard)
 **Goal:** Full multi-client support with setup wizards for remote access
 
 ### Milestone 3.1: Chat History
-- [ ] Persistent session history storage (SQLite or file-based)
-- [ ] Session search and filtering
-- [ ] Replay previous sessions from any client
-- [ ] History pagination for large session counts
+- [x] Persistent session history storage (SQLite with FTS5)
+- [x] Session search and filtering
+- [x] Replay previous sessions from any client
+- [x] History pagination for large session counts
 
 ### Milestone 3.2: Multi-Session Support
 - [ ] Multiple concurrent Claude sessions on same server
@@ -203,3 +203,4 @@ These phases are planned but not yet scheduled.
 | 2025-12-27 | Milestone 2.2 (Cloudflare Access) implementation complete - JWT validation, auth middleware, CLI commands, WebSocket auth_context, Web UI identity |
 | 2025-12-27 | Milestone 2.3 (Push Notifications) complete - VAPID keys, subscription store, NotificationService, web push endpoints, service worker, usePushSubscription hook, NotificationSettings UI |
 | 2025-12-27 | Roadmap re-planned: New Phase 3 (Multi-Client Experience) with chat history, multi-session, CLI↔Web mirroring, setup wizards. Old Phase 3 becomes Phase 4. |
+| 2025-12-27 | Milestone 3.1 (Chat History) complete - SQLite storage with FTS5 full-text search, HistoryService, REST API endpoints, Web UI history page with search/filter/pagination |
