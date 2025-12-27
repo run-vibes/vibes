@@ -126,6 +126,8 @@ pub fn vibes_event_to_server_message(event: &VibesEvent) -> Option<ServerMessage
         VibesEvent::PermissionResponse { .. } => None,
         VibesEvent::ClientConnected { .. } => None,
         VibesEvent::ClientDisconnected { .. } => None,
+        // TunnelStateChanged will be handled when ServerMessage::TunnelState is added
+        VibesEvent::TunnelStateChanged { .. } => None,
     }
 }
 

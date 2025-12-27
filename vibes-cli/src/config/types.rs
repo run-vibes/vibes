@@ -9,6 +9,9 @@ pub struct RawVibesConfig {
 
     #[serde(default)]
     pub session: SessionConfig,
+
+    #[serde(default)]
+    pub tunnel: TunnelConfigSection,
 }
 
 /// Server config as stored in TOML (optional fields for proper merging)
@@ -29,6 +32,9 @@ pub struct VibesConfig {
 
     #[serde(default)]
     pub session: SessionConfig,
+
+    #[serde(default)]
+    pub tunnel: TunnelConfigSection,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -61,6 +67,28 @@ pub struct SessionConfig {
     pub working_dir: Option<PathBuf>,
 }
 
+/// Tunnel configuration
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct TunnelConfigSection {
+    /// Auto-start tunnel with serve
+    #[serde(default)]
+    pub enabled: bool,
+
+    /// Tunnel mode: "quick" or "named"
+    #[serde(default = "default_tunnel_mode")]
+    pub mode: String,
+
+    /// Tunnel name (for named mode)
+    pub name: Option<String>,
+
+    /// Public hostname (for named mode)
+    pub hostname: Option<String>,
+}
+
+fn default_tunnel_mode() -> String {
+    "quick".to_string()
+}
+
 /// Default port for the vibes server
 pub const DEFAULT_PORT: u16 = 7432;
 
@@ -90,6 +118,7 @@ mod tests {
                 default_allowed_tools: Some(vec!["Read".to_string(), "Write".to_string()]),
                 working_dir: Some(PathBuf::from("/tmp")),
             },
+            tunnel: TunnelConfigSection::default(),
         };
 
         let toml_str = toml::to_string(&config).unwrap();
@@ -128,5 +157,28 @@ port = 9000
         // Empty config should have all None values
         assert!(raw.server.port.is_none());
         assert!(raw.server.auto_start.is_none());
+    }
+
+    #[test]
+    fn test_tunnel_config_defaults() {
+        let config = TunnelConfigSection::default();
+        assert!(!config.enabled);
+        assert_eq!(config.mode, "");
+        assert!(config.name.is_none());
+    }
+
+    #[test]
+    fn test_tunnel_config_parsing() {
+        let toml_str = r#"
+[tunnel]
+enabled = true
+mode = "named"
+name = "vibes-home"
+hostname = "vibes.example.com"
+"#;
+        let config: RawVibesConfig = toml::from_str(toml_str).unwrap();
+        assert!(config.tunnel.enabled);
+        assert_eq!(config.tunnel.mode, "named");
+        assert_eq!(config.tunnel.name, Some("vibes-home".to_string()));
     }
 }
