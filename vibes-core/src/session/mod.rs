@@ -1,5 +1,6 @@
 //! Session management
 
+pub mod lifecycle;
 pub mod manager;
 pub mod ownership;
 pub mod state;
