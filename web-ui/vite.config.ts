@@ -9,12 +9,12 @@ export default defineConfig({
     proxy: {
       // Proxy API requests to vibes daemon
       '/api': {
-        target: 'http://localhost:7432',
+        target: 'http://localhost:7743',
         changeOrigin: true,
       },
       // Proxy WebSocket connections
       '/ws': {
-        target: 'ws://localhost:7432',
+        target: 'ws://localhost:7743',
         ws: true,
       },
     },

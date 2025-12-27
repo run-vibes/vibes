@@ -66,8 +66,8 @@ pub async fn list_sessions(State(state): State<Arc<AppState>>) -> Json<SessionLi
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| {
                     let secs = d.as_secs();
-                    let datetime = chrono::DateTime::from_timestamp(secs as i64, 0)
-                        .unwrap_or_default();
+                    let datetime =
+                        chrono::DateTime::from_timestamp(secs as i64, 0).unwrap_or_default();
                     datetime.to_rfc3339()
                 })
                 .unwrap_or_else(|_| "unknown".to_string());

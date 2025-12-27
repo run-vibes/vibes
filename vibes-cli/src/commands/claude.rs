@@ -151,7 +151,7 @@ async fn interactive_loop(
                 }
 
                 // Exit commands
-                if input == "exit" || input == "quit" || input == "/exit" || input == "/quit" {
+                if matches!(input, "exit" | "quit" | "/exit" | "/quit") {
                     println!("Goodbye!");
                     break;
                 }
