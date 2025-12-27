@@ -113,6 +113,8 @@ pub struct ServerConfig {
     pub tunnel_enabled: bool,
     /// Use quick tunnel mode (temporary URL)
     pub tunnel_quick: bool,
+    /// Enable push notifications
+    pub notify_enabled: bool,
 }
 
 impl Default for ServerConfig {
@@ -122,6 +124,7 @@ impl Default for ServerConfig {
             port: 7432,
             tunnel_enabled: false,
             tunnel_quick: false,
+            notify_enabled: false,
         }
     }
 }
@@ -134,6 +137,7 @@ impl ServerConfig {
             port,
             tunnel_enabled: false,
             tunnel_quick: false,
+            notify_enabled: false,
         }
     }
 
