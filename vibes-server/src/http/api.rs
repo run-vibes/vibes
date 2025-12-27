@@ -100,9 +100,7 @@ pub struct TunnelStatusResponse {
 }
 
 /// GET /api/tunnel/status - Get tunnel status
-pub async fn get_tunnel_status(
-    State(state): State<Arc<AppState>>,
-) -> Json<TunnelStatusResponse> {
+pub async fn get_tunnel_status(State(state): State<Arc<AppState>>) -> Json<TunnelStatusResponse> {
     let manager = state.tunnel_manager.read().await;
     let tunnel_state = manager.state().await;
 

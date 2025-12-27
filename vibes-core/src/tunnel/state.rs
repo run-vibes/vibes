@@ -17,15 +17,9 @@ pub enum TunnelState {
         connected_at: DateTime<Utc>,
     },
     /// Tunnel lost connection, attempting to reconnect
-    Reconnecting {
-        attempt: u32,
-        last_error: String,
-    },
+    Reconnecting { attempt: u32, last_error: String },
     /// Tunnel failed to connect
-    Failed {
-        error: String,
-        can_retry: bool,
-    },
+    Failed { error: String, can_retry: bool },
     /// Tunnel was explicitly stopped
     Stopped,
 }

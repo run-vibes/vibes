@@ -85,10 +85,7 @@ pub enum VibesEvent {
     ClientDisconnected { client_id: String },
 
     /// Tunnel state changed
-    TunnelStateChanged {
-        state: String,
-        url: Option<String>,
-    },
+    TunnelStateChanged { state: String, url: Option<String> },
 }
 
 impl VibesEvent {
@@ -396,8 +393,10 @@ mod tests {
         };
         let json = serde_json::to_string(&event).unwrap();
         let parsed: VibesEvent = serde_json::from_str(&json).unwrap();
-        assert!(matches!(parsed, VibesEvent::TunnelStateChanged { state, url }
-            if state == "connected" && url == Some("https://test.trycloudflare.com".to_string())));
+        assert!(
+            matches!(parsed, VibesEvent::TunnelStateChanged { state, url }
+            if state == "connected" && url == Some("https://test.trycloudflare.com".to_string()))
+        );
     }
 
     #[test]

@@ -6,7 +6,7 @@ pub mod manager;
 pub mod restart;
 pub mod state;
 
-pub use cloudflared::{check_installation, CloudflaredInfo};
+pub use cloudflared::{CloudflaredInfo, check_installation};
 pub use config::{TunnelConfig, TunnelMode};
 pub use manager::{TunnelError, TunnelManager};
 pub use restart::RestartPolicy;

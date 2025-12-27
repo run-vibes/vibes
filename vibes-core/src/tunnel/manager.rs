@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 use tokio::process::Child;
-use tokio::sync::{broadcast, RwLock};
+use tokio::sync::{RwLock, broadcast};
 use tracing::{debug, error, info};
 
 use super::cloudflared;
@@ -86,11 +86,10 @@ impl TunnelManager {
 
     /// Spawn the cloudflared process
     async fn spawn_process(&mut self) -> Result<(), TunnelError> {
-        let child =
-            cloudflared::spawn_tunnel(&self.config.mode, self.local_port).map_err(|e| {
-                error!("Failed to spawn cloudflared: {}", e);
-                TunnelError::SpawnFailed(e.to_string())
-            })?;
+        let child = cloudflared::spawn_tunnel(&self.config.mode, self.local_port).map_err(|e| {
+            error!("Failed to spawn cloudflared: {}", e);
+            TunnelError::SpawnFailed(e.to_string())
+        })?;
 
         self.process = Some(child);
         self.restart_policy.reset();
