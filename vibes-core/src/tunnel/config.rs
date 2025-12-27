@@ -25,10 +25,11 @@ impl Default for TunnelConfig {
 }
 
 /// Tunnel operating mode
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum TunnelMode {
     /// Quick tunnel with temporary URL (no account needed)
+    #[default]
     Quick,
     /// Named tunnel with persistent hostname
     Named {
@@ -42,9 +43,13 @@ pub enum TunnelMode {
     },
 }
 
-impl Default for TunnelMode {
-    fn default() -> Self {
-        Self::Quick
+impl TunnelMode {
+    /// Get the mode name as a string
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Quick => "quick",
+            Self::Named { .. } => "named",
+        }
     }
 }
 

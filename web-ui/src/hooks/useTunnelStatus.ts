@@ -18,6 +18,13 @@ export function useTunnelStatus() {
       }
       return response.json();
     },
-    refetchInterval: 5000, // Poll every 5 seconds
+    // Adaptive polling: slower for stable states, faster for transitioning states
+    refetchInterval: (query) => {
+      const state = query.state.data?.state;
+      if (state === 'connected' || state === 'disabled' || state === 'stopped') {
+        return 30000; // Poll every 30 seconds in stable states
+      }
+      return 5000; // Poll every 5 seconds during transitions
+    },
   });
 }

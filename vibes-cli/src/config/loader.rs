@@ -61,11 +61,7 @@ impl ConfigLoader {
             },
             tunnel: TunnelConfigSection {
                 enabled: overlay.tunnel.enabled || base.tunnel.enabled,
-                mode: if overlay.tunnel.mode.is_empty() {
-                    base.tunnel.mode
-                } else {
-                    overlay.tunnel.mode
-                },
+                mode: overlay.tunnel.mode.or(base.tunnel.mode),
                 name: overlay.tunnel.name.or(base.tunnel.name),
                 hostname: overlay.tunnel.hostname.or(base.tunnel.hostname),
             },

@@ -116,11 +116,7 @@ pub async fn get_tunnel_status(State(state): State<Arc<AppState>>) -> Json<Tunne
     };
 
     let mode = if manager.is_enabled() {
-        if manager.config().is_quick() {
-            Some("quick")
-        } else {
-            Some("named")
-        }
+        Some(manager.config().mode.as_str())
     } else {
         None
     };

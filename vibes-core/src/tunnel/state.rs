@@ -4,10 +4,11 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 /// Current state of the tunnel connection
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum TunnelState {
     /// Tunnel is disabled in configuration
+    #[default]
     Disabled,
     /// Tunnel is starting up
     Starting,
@@ -22,12 +23,6 @@ pub enum TunnelState {
     Failed { error: String, can_retry: bool },
     /// Tunnel was explicitly stopped
     Stopped,
-}
-
-impl Default for TunnelState {
-    fn default() -> Self {
-        Self::Disabled
-    }
 }
 
 /// Events emitted by the tunnel manager

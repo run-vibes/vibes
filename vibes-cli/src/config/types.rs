@@ -74,19 +74,14 @@ pub struct TunnelConfigSection {
     #[serde(default)]
     pub enabled: bool,
 
-    /// Tunnel mode: "quick" or "named"
-    #[serde(default = "default_tunnel_mode")]
-    pub mode: String,
+    /// Tunnel mode: "quick" or "named" (defaults to "quick" when None)
+    pub mode: Option<String>,
 
     /// Tunnel name (for named mode)
     pub name: Option<String>,
 
     /// Public hostname (for named mode)
     pub hostname: Option<String>,
-}
-
-fn default_tunnel_mode() -> String {
-    "quick".to_string()
 }
 
 /// Default port for the vibes server
@@ -163,7 +158,7 @@ port = 9000
     fn test_tunnel_config_defaults() {
         let config = TunnelConfigSection::default();
         assert!(!config.enabled);
-        assert_eq!(config.mode, "");
+        assert!(config.mode.is_none());
         assert!(config.name.is_none());
     }
 
@@ -178,7 +173,7 @@ hostname = "vibes.example.com"
 "#;
         let config: RawVibesConfig = toml::from_str(toml_str).unwrap();
         assert!(config.tunnel.enabled);
-        assert_eq!(config.tunnel.mode, "named");
+        assert_eq!(config.tunnel.mode, Some("named".to_string()));
         assert_eq!(config.tunnel.name, Some("vibes-home".to_string()));
     }
 }

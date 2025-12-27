@@ -78,17 +78,21 @@ pub fn spawn_tunnel(mode: &TunnelMode, local_port: u16) -> std::io::Result<Child
 pub fn parse_quick_tunnel_url(line: &str) -> Option<String> {
     // cloudflared prints URL in a box like:
     // | https://random-words.trycloudflare.com |
-    if line.contains("trycloudflare.com") {
-        // Extract URL using regex-like matching
-        let start = line.find("https://")?;
-        let url_part = &line[start..];
-        // Find the end of the URL (whitespace, |, or end of string)
-        let end = url_part
-            .find(|c: char| c.is_whitespace() || c == '|')
-            .unwrap_or(url_part.len());
-        return Some(url_part[..end].to_string());
+    let start = line.find("https://")?;
+    let url_part = &line[start..];
+    // Find the end of the URL (whitespace, |, or end of string)
+    let end = url_part
+        .find(|c: char| c.is_whitespace() || c == '|')
+        .unwrap_or(url_part.len());
+
+    let candidate = &url_part[..end];
+
+    // Validate we captured a complete quick tunnel URL
+    if !candidate.starts_with("https://") || !candidate.contains("trycloudflare.com") {
+        return None;
     }
-    None
+
+    Some(candidate.to_string())
 }
 
 /// Parse log level from cloudflared output
