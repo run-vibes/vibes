@@ -68,6 +68,18 @@ pub enum ClientMessage {
         /// Whether to approve
         approved: bool,
     },
+
+    /// Request list of all active sessions
+    ListSessions {
+        /// Request ID for correlation
+        request_id: String,
+    },
+
+    /// Terminate a session
+    KillSession {
+        /// Session ID to terminate
+        session_id: String,
+    },
 }
 
 /// Messages sent from server to client
@@ -269,6 +281,30 @@ mod tests {
 
         assert!(json.contains(r#""type":"permission_response""#));
     }
+
+    #[test]
+    fn test_client_message_list_sessions_roundtrip() {
+        let msg = ClientMessage::ListSessions {
+            request_id: "req-1".to_string(),
+        };
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+        assert!(json.contains(r#""type":"list_sessions""#));
+    }
+
+    #[test]
+    fn test_client_message_kill_session_roundtrip() {
+        let msg = ClientMessage::KillSession {
+            session_id: "sess-1".to_string(),
+        };
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+        assert!(json.contains(r#""type":"kill_session""#));
+    }
+
+    // ==================== ServerMessage Tests ====================
 
     #[test]
     fn test_server_message_session_created_roundtrip() {

@@ -253,6 +253,16 @@ async fn handle_text_message(
                 sender.send(Message::Text(json)).await?;
             }
         }
+
+        ClientMessage::ListSessions { request_id } => {
+            // TODO: Implement in Task 5.3
+            debug!("ListSessions request: {}", request_id);
+        }
+
+        ClientMessage::KillSession { session_id } => {
+            // TODO: Implement in Task 5.4
+            debug!("KillSession request: {}", session_id);
+        }
     }
 
     Ok(())
