@@ -58,6 +58,32 @@ impl SessionOwnership {
     pub fn should_cleanup(&self) -> bool {
         self.subscriber_ids.is_empty()
     }
+
+    /// Transfer ownership to another subscriber
+    ///
+    /// Returns true if transfer succeeded (new_owner was a subscriber).
+    /// Updates owned_since timestamp on success.
+    pub fn transfer_to(&mut self, new_owner: &ClientId) -> bool {
+        if self.subscriber_ids.contains(new_owner) {
+            self.owner_id = new_owner.clone();
+            self.owned_since = SystemTime::now();
+            true
+        } else {
+            false
+        }
+    }
+
+    /// Pick next owner from remaining subscribers
+    ///
+    /// Returns None if no subscribers remain.
+    pub fn pick_next_owner(&self) -> Option<&ClientId> {
+        self.subscriber_ids.iter().next()
+    }
+
+    /// Get the number of subscribers
+    pub fn subscriber_count(&self) -> usize {
+        self.subscriber_ids.len()
+    }
 }
 
 #[cfg(test)]
@@ -138,5 +164,62 @@ mod tests {
         let ownership = SessionOwnership::new("client-1".to_string());
 
         assert!(!ownership.should_cleanup());
+    }
+
+    // ==================== Ownership Transfer Tests ====================
+
+    #[test]
+    fn transfer_to_subscriber_succeeds() {
+        let mut ownership = SessionOwnership::new("client-1".to_string());
+        ownership.add_subscriber("client-2".to_string());
+
+        let success = ownership.transfer_to(&"client-2".to_string());
+
+        assert!(success);
+        assert!(ownership.is_owner(&"client-2".to_string()));
+        assert!(!ownership.is_owner(&"client-1".to_string()));
+    }
+
+    #[test]
+    fn transfer_to_non_subscriber_fails() {
+        let mut ownership = SessionOwnership::new("client-1".to_string());
+
+        let success = ownership.transfer_to(&"client-2".to_string());
+
+        assert!(!success);
+        assert!(ownership.is_owner(&"client-1".to_string()));
+    }
+
+    #[test]
+    fn pick_next_owner_returns_subscriber() {
+        let mut ownership = SessionOwnership::new("client-1".to_string());
+        ownership.add_subscriber("client-2".to_string());
+
+        let next = ownership.pick_next_owner();
+
+        assert!(next.is_some());
+        assert!(ownership.is_subscriber(next.unwrap()));
+    }
+
+    #[test]
+    fn pick_next_owner_returns_none_when_empty() {
+        let mut ownership = SessionOwnership::new("client-1".to_string());
+        ownership.remove_subscriber(&"client-1".to_string());
+
+        let next = ownership.pick_next_owner();
+
+        assert!(next.is_none());
+    }
+
+    #[test]
+    fn subscriber_count_tracks_subscribers() {
+        let mut ownership = SessionOwnership::new("client-1".to_string());
+        assert_eq!(ownership.subscriber_count(), 1);
+
+        ownership.add_subscriber("client-2".to_string());
+        assert_eq!(ownership.subscriber_count(), 2);
+
+        ownership.remove_subscriber(&"client-1".to_string());
+        assert_eq!(ownership.subscriber_count(), 1);
     }
 }
