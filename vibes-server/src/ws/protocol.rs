@@ -18,6 +18,15 @@ pub struct SessionInfo {
     pub last_activity_at: i64,
 }
 
+/// Reason a session was removed
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum RemovalReason {
+    OwnerDisconnected,
+    Killed,
+    SessionFinished,
+}
+
 /// Messages sent from client to server
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(tag = "type", rename_all = "snake_case")]
@@ -180,6 +189,21 @@ mod tests {
         let json = serde_json::to_string(&info).unwrap();
         let parsed: SessionInfo = serde_json::from_str(&json).unwrap();
         assert_eq!(info, parsed);
+    }
+
+    #[test]
+    fn test_removal_reason_serialization() {
+        let reasons = vec![
+            RemovalReason::OwnerDisconnected,
+            RemovalReason::Killed,
+            RemovalReason::SessionFinished,
+        ];
+
+        for reason in reasons {
+            let json = serde_json::to_string(&reason).unwrap();
+            let parsed: RemovalReason = serde_json::from_str(&json).unwrap();
+            assert_eq!(reason, parsed);
+        }
     }
 
     // ==================== ClientMessage Tests ====================
