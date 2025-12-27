@@ -37,7 +37,10 @@ export function useAuth({ addMessageHandler }: UseAuthOptions): AuthState {
         const source = message.source;
         setAuthState({
           source,
-          identity: source === 'authenticated' ? message.identity : null,
+          identity:
+            source === 'authenticated' && 'identity' in message
+              ? message.identity
+              : null,
           isAuthenticated: source === 'authenticated',
           isLocal: source === 'local',
           isLoading: false,

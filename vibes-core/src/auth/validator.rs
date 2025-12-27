@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-use chrono::{DateTime, Utc};
+use chrono::DateTime;
 use jsonwebtoken::{Algorithm, DecodingKey, Validation, decode, decode_header};
 use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
@@ -110,7 +110,8 @@ impl JwtValidator {
         let claims = token_data.claims;
 
         // Build identity
-        let expires_at = DateTime::from_timestamp(claims.exp, 0).unwrap_or_else(Utc::now);
+        let expires_at = DateTime::from_timestamp(claims.exp, 0)
+            .ok_or_else(|| AuthError::InvalidFormat("invalid exp claim timestamp".to_string()))?;
 
         let mut identity = AccessIdentity::new(claims.email, expires_at);
 
