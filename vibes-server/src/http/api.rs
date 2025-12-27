@@ -155,12 +155,8 @@ pub struct AuthIdentityResponse {
 
 /// GET /api/auth/status - Get current auth status
 pub async fn get_auth_status(
-    auth_context: Option<Extension<AuthContext>>,
+    Extension(auth_context): Extension<AuthContext>,
 ) -> Json<AuthStatusResponse> {
-    let auth_context = auth_context
-        .map(|Extension(ctx)| ctx)
-        .unwrap_or(AuthContext::Local);
-
     let (authenticated, source, identity) = match &auth_context {
         AuthContext::Local => (false, "local", None),
         AuthContext::Authenticated { identity } => (

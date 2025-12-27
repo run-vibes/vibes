@@ -78,14 +78,14 @@ fn extract_jwt(request: &Request) -> Option<String> {
 /// Authentication middleware function
 pub async fn auth_middleware(
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    axum::Extension(auth_layer): axum::Extension<AuthLayer>,
+    axum::Extension(auth): axum::Extension<AuthLayer>,
     mut request: Request,
     next: Next,
 ) -> Result<Response, StatusCode> {
-    let auth_context = if auth_layer.config.bypass_localhost && is_localhost(&addr) {
+    let auth_context = if auth.config.bypass_localhost && is_localhost(&addr) {
         // Localhost bypass
         AuthContext::Local
-    } else if let Some(ref validator) = auth_layer.validator {
+    } else if let Some(ref validator) = auth.validator {
         // Auth is enabled, validate JWT
         match extract_jwt(&request) {
             Some(token) => match validator.validate(&token).await {

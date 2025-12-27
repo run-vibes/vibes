@@ -79,10 +79,13 @@ impl ConfigLoader {
                     overlay.auth.aud
                 },
                 bypass_localhost: overlay.auth.bypass_localhost,
-                clock_skew_seconds: if overlay.auth.clock_skew_seconds != 60 {
-                    overlay.auth.clock_skew_seconds
-                } else {
-                    base.auth.clock_skew_seconds
+                clock_skew_seconds: {
+                    let default_skew = AccessConfig::default().clock_skew_seconds;
+                    if overlay.auth.clock_skew_seconds != default_skew {
+                        overlay.auth.clock_skew_seconds
+                    } else {
+                        base.auth.clock_skew_seconds
+                    }
                 },
             },
         }

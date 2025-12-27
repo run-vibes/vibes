@@ -4,7 +4,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 /// Authentication context for a request
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "source", rename_all = "snake_case")]
 pub enum AuthContext {
     /// Request from localhost, authentication bypassed
@@ -39,7 +39,7 @@ impl AuthContext {
 }
 
 /// Identity information from Cloudflare Access JWT
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AccessIdentity {
     /// User's email address
     pub email: String,

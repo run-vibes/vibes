@@ -1600,4 +1600,4 @@ This implementation plan covers:
 4. **Web UI** (Tasks 11-12): useAuth hook and Header identity display
 5. **Documentation** (Task 13): Progress tracking updates
 
-Each task follows TDD with failing test → implementation → passing test → commit.
+Tasks follow a test-focused workflow: write or update tests around new behavior, implement the changes, then ensure tests pass before committing.
