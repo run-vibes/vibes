@@ -1,6 +1,7 @@
 # vibes
 
 [![CI](https://github.com/run-vibes/vibes/actions/workflows/ci.yml/badge.svg)](https://github.com/run-vibes/vibes/actions/workflows/ci.yml)
+[![Progress](https://img.shields.io/badge/progress-6%2F11%20milestones-blue)](docs/PROGRESS.md)
 
 Remote control for your Claude Code sessions.
 
@@ -100,18 +101,18 @@ export_plugin!(MyPlugin);
 
 ## Status
 
-**Phase 1 is complete!** vibes now provides a fully functional Claude Code proxy with web UI and plugin support. See [PROGRESS.md](docs/PROGRESS.md) for detailed tracking.
+**Phase 2 in progress!** vibes now provides a fully functional Claude Code proxy with web UI, plugin support, and Cloudflare Tunnel integration. See [PROGRESS.md](docs/PROGRESS.md) for detailed tracking.
 
 ### Roadmap
 
 | Phase | Description | Status |
 |-------|-------------|--------|
 | **1. Foundation** | Claude Code proxy, plugin system, local web UI | ✅ Complete |
-| **2. Remote Access** | Cloudflare Tunnel integration, authentication | ⏳ Planned |
+| **2. Remote Access** | Cloudflare Tunnel integration, authentication | 🔄 In Progress |
 | **3. Ecosystem** | Default plugins, multi-session support | ⏳ Planned |
 | **4. Future** | Mobile apps, native GUIs, licensing | 📋 Future |
 
-### Phase 1 Milestones
+### Current Milestones
 
 | Milestone | Description | Status |
 |-----------|-------------|--------|
@@ -119,6 +120,8 @@ export_plugin!(MyPlugin);
 | 1.2 CLI | `vibes claude` pass-through, config, server auto-start | ✅ Complete |
 | 1.3 Plugin Foundation | Plugin trait, dynamic loading, CLI commands | ✅ Complete |
 | 1.4 Server + Web UI | axum server, TanStack UI, permission flows, daemon architecture | ✅ Complete |
+| 2.1 Cloudflare Tunnel | Tunnel management, quick/named modes, status UI | ✅ Complete |
+| 2.2 Cloudflare Access | JWT validation, auth middleware, identity display | 📋 Designed |
 
 ## Architecture
 
@@ -184,6 +187,8 @@ vibes uses a **daemon-first architecture** where a background server owns all se
 | 1.2 CLI | [design.md](docs/plans/02-cli/design.md) | [implementation.md](docs/plans/02-cli/implementation.md) |
 | 1.3 Plugin Foundation | [design.md](docs/plans/03-plugin-foundation/design.md) | [implementation.md](docs/plans/03-plugin-foundation/implementation.md) |
 | 1.4 Server + Web UI | [design.md](docs/plans/04-server-web-ui/design.md) | [implementation.md](docs/plans/04-server-web-ui/implementation.md) |
+| 2.1 Cloudflare Tunnel | [design.md](docs/plans/05-cloudflare-tunnel/design.md) | [implementation.md](docs/plans/05-cloudflare-tunnel/implementation.md) |
+| 2.2 Cloudflare Access | [design.md](docs/plans/06-cloudflare-access/design.md) | - |
 
 ## License
 

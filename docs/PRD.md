@@ -735,6 +735,56 @@ pub enum BackendState {
 
 ---
 
+### ADR-011: Auth Middleware Architecture
+
+**Status:** Decided
+
+**Context:** vibes needs to authenticate requests coming through Cloudflare Tunnel while allowing unauthenticated local access for development convenience.
+
+**Decision:** Implement auth as an axum middleware layer that:
+1. Checks if request source is localhost → skip auth
+2. Otherwise, validate Cloudflare Access JWT from header/cookie
+3. Attach AuthContext (Local, Authenticated, or Anonymous) to request
+
+**Key design points:**
+- **Localhost bypass:** Requests from 127.0.0.1/localhost skip authentication entirely
+- **Cloudflare handles login:** Unauthenticated tunnel requests are redirected by CF Access before reaching vibes
+- **Identity display:** Show authenticated user's email in Web UI header (no persistence)
+
+**Rationale:**
+- Middleware pattern cleanly separates auth from business logic
+- Localhost bypass enables frictionless local development
+- Relying on Cloudflare for login redirect keeps vibes simple
+
+**Full design:** See [Milestone 2.2 Design](plans/06-cloudflare-access/design.md)
+
+---
+
+### ADR-012: JWT Validation Strategy
+
+**Status:** Decided
+
+**Context:** Cloudflare Access sends JWTs that must be validated against Cloudflare's public keys. Keys rotate every 6 weeks.
+
+**Decision:** Implement JWT validation with JWKS caching:
+1. Extract JWT from `Cf-Access-Jwt-Assertion` header or `CF_Authorization` cookie
+2. Decode header to get `kid` (key ID)
+3. Fetch JWKS from `https://<team>.cloudflareaccess.com/cdn-cgi/access/certs` (cached 1 hour)
+4. Validate signature, `aud` claim, and expiry (with 60s clock skew leeway)
+
+**Configuration:**
+- **Auto-detect:** Team name and AUD derived from tunnel config when possible
+- **Fallback:** Manual configuration via `vibes auth setup` wizard
+
+**Rationale:**
+- JWKS caching reduces latency and Cloudflare API load
+- Automatic refresh on unknown `kid` handles key rotation seamlessly
+- Clock skew leeway prevents false rejections
+
+**Full design:** See [Milestone 2.2 Design](plans/06-cloudflare-access/design.md)
+
+---
+
 ## Technical Notes
 
 ### Claude Code Integration
