@@ -785,6 +785,95 @@ pub enum BackendState {
 
 ---
 
+### ADR-013: Push Notification Architecture
+
+**Status:** Decided
+
+**Context:** Users need to be notified when Claude sessions complete, fail, or require permission approval - especially when accessing vibes remotely from a phone or when multitasking on desktop.
+
+**Decision:** Use Web Push API with auto-generated VAPID keys and deep links for notification actions.
+
+**Key choices:**
+
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| Delivery mechanism | Web Push API only | Single implementation covers mobile + desktop browsers |
+| VAPID keys | Auto-generate on first run | Zero setup friction, stored in vibes config |
+| Notification actions | Deep link to Web UI | Universal browser support, leverages existing permission UI |
+| Default behavior | All events notify | Opt-out model for remote monitoring use case |
+
+**Architecture:**
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           Push Notification Flow                          │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  ┌──────────────┐     ┌──────────────┐     ┌──────────────────────────┐ │
+│  │   Browser    │     │    vibes     │     │   Push Service           │ │
+│  │  (Web UI)    │     │   server     │     │  (FCM/Mozilla/Apple)     │ │
+│  └──────┬───────┘     └──────┬───────┘     └────────────┬─────────────┘ │
+│         │                    │                          │               │
+│         │ 1. Enable notifs   │                          │               │
+│         │ ──────────────────>│                          │               │
+│         │                    │                          │               │
+│         │ 2. Subscribe       │                          │               │
+│         │    (VAPID pubkey)  │                          │               │
+│         │<───────────────────│                          │               │
+│         │                    │                          │               │
+│         │ 3. PushSubscription│                          │               │
+│         │    {endpoint, keys}│                          │               │
+│         │ ──────────────────>│                          │               │
+│         │                    │ 4. Store subscription    │               │
+│         │                    │    (in memory + file)    │               │
+│         │                    │                          │               │
+│         │    ═══════════════ Later: Event occurs ═══════════════       │
+│         │                    │                          │               │
+│         │                    │ 5. POST to endpoint      │               │
+│         │                    │    (signed with VAPID)   │               │
+│         │                    │ ────────────────────────>│               │
+│         │                    │                          │               │
+│         │                    │                          │ 6. Push       │
+│         │<───────────────────────────────────────────────│               │
+│         │                    │                          │               │
+│         │ 7. Service Worker  │                          │               │
+│         │    shows notif     │                          │               │
+│         │                    │                          │               │
+│         │ 8. User clicks     │                          │               │
+│         │    → Open Web UI   │                          │               │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+**Components:**
+
+| Component | Location | Responsibility |
+|-----------|----------|----------------|
+| VapidKeyManager | vibes-core | Generate/load VAPID keypair |
+| SubscriptionStore | vibes-core | Store push subscriptions (file-backed) |
+| NotificationService | vibes-core | Send push notifications on events |
+| Service Worker | web-ui | Receive pushes, display notifications |
+| NotificationSettings | web-ui | UI for enabling/configuring notifications |
+
+**Notification events (all on by default):**
+- Permission needed → "Claude needs approval" with deep link to permission UI
+- Session completed → "Session finished" with deep link to session view
+- Session error → "Session failed" with deep link to error details
+
+**Rationale:**
+- Web Push is the standard, works across all modern browsers including mobile
+- Auto-generated VAPID keys eliminate setup friction for users
+- Deep links are universally supported vs. notification actions which have inconsistent browser support
+- All-on-by-default matches the "remote monitoring" use case where users want full visibility
+
+**Alternatives considered:**
+- Native OS notifications (notify-rust): Would require separate implementation, doesn't work for remote access
+- Third-party services (Pushover, ntfy): Adds external dependencies and configuration burden
+- Notification action buttons: Inconsistent mobile browser support, complex service worker logic
+
+**Full design:** See [Milestone 2.3 Design](plans/07-push-notifications/design.md)
+
+---
+
 ## Technical Notes
 
 ### Claude Code Integration
