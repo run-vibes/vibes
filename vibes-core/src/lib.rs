@@ -76,7 +76,7 @@ pub use notifications::{
     PushSubscription, SubscriptionKeys, SubscriptionStore, VapidKeyManager, VapidKeys,
 };
 pub use plugins::{PluginHost, PluginHostConfig, PluginHostError, PluginInfo, PluginState};
-pub use session::{Session, SessionManager, SessionState};
+pub use session::{ClientId, Session, SessionManager, SessionOwnership, SessionState};
 pub use tunnel::{
     CloudflaredInfo, LogLevel, RestartPolicy, TunnelConfig, TunnelError, TunnelEvent,
     TunnelManager, TunnelMode, TunnelState, check_installation,
