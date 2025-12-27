@@ -2,8 +2,9 @@
 
 use std::sync::Arc;
 
-use axum::{Json, extract::State};
+use axum::{Extension, Json, extract::State};
 use serde::{Deserialize, Serialize};
+use vibes_core::AuthContext;
 
 use crate::AppState;
 
@@ -127,6 +128,57 @@ pub async fn get_tunnel_status(State(state): State<Arc<AppState>>) -> Json<Tunne
         url,
         tunnel_name: manager.config().tunnel_name().map(|s| s.to_string()),
         error,
+    })
+}
+
+/// Auth status response
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AuthStatusResponse {
+    /// Whether the request is authenticated
+    pub authenticated: bool,
+    /// Request source
+    pub source: String,
+    /// Identity info (if authenticated)
+    pub identity: Option<AuthIdentityResponse>,
+}
+
+/// Identity in auth response
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AuthIdentityResponse {
+    /// User's email address
+    pub email: String,
+    /// User's display name
+    pub name: Option<String>,
+    /// Identity provider used
+    pub identity_provider: Option<String>,
+}
+
+/// GET /api/auth/status - Get current auth status
+pub async fn get_auth_status(
+    auth_context: Option<Extension<AuthContext>>,
+) -> Json<AuthStatusResponse> {
+    let auth_context = auth_context
+        .map(|Extension(ctx)| ctx)
+        .unwrap_or(AuthContext::Local);
+
+    let (authenticated, source, identity) = match &auth_context {
+        AuthContext::Local => (false, "local", None),
+        AuthContext::Authenticated { identity } => (
+            true,
+            "tunnel",
+            Some(AuthIdentityResponse {
+                email: identity.email.clone(),
+                name: identity.name.clone(),
+                identity_provider: identity.identity_provider.clone(),
+            }),
+        ),
+        AuthContext::Anonymous => (false, "anonymous", None),
+    };
+
+    Json(AuthStatusResponse {
+        authenticated,
+        source: source.to_string(),
+        identity,
     })
 }
 
