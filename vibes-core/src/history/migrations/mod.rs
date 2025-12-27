@@ -1,7 +1,7 @@
 //! Database migrations for chat history
 
-use rusqlite::Connection;
 use crate::history::HistoryError;
+use rusqlite::Connection;
 
 /// SQL for each migration version
 const MIGRATIONS: &[(&str, &str)] = &[
@@ -21,7 +21,9 @@ impl<'a> Migrator<'a> {
 
     /// Get current schema version
     pub fn current_version(&self) -> Result<i32, HistoryError> {
-        let version: i32 = self.conn.pragma_query_value(None, "user_version", |row| row.get(0))?;
+        let version: i32 = self
+            .conn
+            .pragma_query_value(None, "user_version", |row| row.get(0))?;
         Ok(version)
     }
 
@@ -44,9 +46,9 @@ impl<'a> Migrator<'a> {
             let version = (idx + 1) as i32;
             if version > current {
                 tracing::info!("Running migration {}: {}", version, name);
-                self.conn.execute_batch(sql).map_err(|e| {
-                    HistoryError::Migration(format!("{}: {}", name, e))
-                })?;
+                self.conn
+                    .execute_batch(sql)
+                    .map_err(|e| HistoryError::Migration(format!("{}: {}", name, e)))?;
                 self.set_version(version)?;
             }
         }
@@ -55,6 +57,7 @@ impl<'a> Migrator<'a> {
     }
 
     /// Get target version (latest migration)
+    #[allow(dead_code)]
     pub fn target_version(&self) -> i32 {
         MIGRATIONS.len() as i32
     }
@@ -71,7 +74,10 @@ mod tests {
 
         assert_eq!(migrator.current_version().unwrap(), 0);
         migrator.migrate().unwrap();
-        assert_eq!(migrator.current_version().unwrap(), migrator.target_version());
+        assert_eq!(
+            migrator.current_version().unwrap(),
+            migrator.target_version()
+        );
     }
 
     #[test]

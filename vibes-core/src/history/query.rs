@@ -1,8 +1,8 @@
 //! Query parameter types for history search
 
-use serde::{Deserialize, Serialize};
+use super::types::{HistoricalMessage, SessionSummary};
 use crate::session::SessionState;
-use super::types::{SessionSummary, HistoricalMessage};
+use serde::{Deserialize, Serialize};
 
 /// Sort field for session queries
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -16,12 +16,13 @@ pub enum SortField {
 }
 
 impl SortField {
+    /// Returns column name qualified with sessions table alias for use in JOINs
     pub fn as_column(&self) -> &'static str {
         match self {
-            Self::CreatedAt => "created_at",
-            Self::LastAccessedAt => "last_accessed_at",
-            Self::MessageCount => "message_count",
-            Self::TotalTokens => "(total_input_tokens + total_output_tokens)",
+            Self::CreatedAt => "s.created_at",
+            Self::LastAccessedAt => "s.last_accessed_at",
+            Self::MessageCount => "s.message_count",
+            Self::TotalTokens => "(s.total_input_tokens + s.total_output_tokens)",
         }
     }
 }
@@ -150,8 +151,11 @@ mod tests {
 
     #[test]
     fn test_sort_field_column() {
-        assert_eq!(SortField::CreatedAt.as_column(), "created_at");
-        assert_eq!(SortField::TotalTokens.as_column(), "(total_input_tokens + total_output_tokens)");
+        assert_eq!(SortField::CreatedAt.as_column(), "s.created_at");
+        assert_eq!(
+            SortField::TotalTokens.as_column(),
+            "(s.total_input_tokens + s.total_output_tokens)"
+        );
     }
 
     #[test]

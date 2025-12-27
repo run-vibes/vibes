@@ -1,13 +1,18 @@
 //! Chat history persistence with SQLite storage
 
-mod error;
-mod types;
-mod query;
-mod migrations;
-mod store;
 mod builder;
+mod error;
+mod migrations;
+mod query;
 mod service;
+mod store;
+mod types;
 
+pub use builder::MessageBuilder;
 pub use error::HistoryError;
-pub use types::{HistoricalSession, HistoricalMessage, MessageRole, SessionSummary};
-pub use query::{SessionQuery, MessageQuery, SessionListResult, MessageListResult, SortField, SortOrder};
+pub use query::{
+    MessageListResult, MessageQuery, SessionListResult, SessionQuery, SortField, SortOrder,
+};
+pub use service::HistoryService;
+pub use store::{HistoryStore, SqliteHistoryStore};
+pub use types::{HistoricalMessage, HistoricalSession, MessageRole, SessionSummary};

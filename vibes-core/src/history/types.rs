@@ -1,7 +1,7 @@
 //! Core history types
 
-use serde::{Deserialize, Serialize};
 use crate::session::SessionState;
+use serde::{Deserialize, Serialize};
 
 /// Role of a message in the conversation
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -25,7 +25,7 @@ impl MessageRole {
     }
 
     /// Parse from database string
-    pub fn from_str(s: &str) -> Option<Self> {
+    pub fn parse(s: &str) -> Option<Self> {
         match s {
             "user" => Some(Self::User),
             "assistant" => Some(Self::Assistant),
@@ -91,7 +91,13 @@ impl HistoricalMessage {
     }
 
     /// Create a tool use message
-    pub fn tool_use(session_id: String, tool_id: String, tool_name: String, content: String, created_at: i64) -> Self {
+    pub fn tool_use(
+        session_id: String,
+        tool_id: String,
+        tool_name: String,
+        content: String,
+        created_at: i64,
+    ) -> Self {
         Self {
             id: 0,
             session_id,
@@ -106,7 +112,13 @@ impl HistoricalMessage {
     }
 
     /// Create a tool result message
-    pub fn tool_result(session_id: String, tool_id: String, tool_name: String, content: String, created_at: i64) -> Self {
+    pub fn tool_result(
+        session_id: String,
+        tool_id: String,
+        tool_name: String,
+        content: String,
+        created_at: i64,
+    ) -> Self {
         Self {
             id: 0,
             session_id,
@@ -189,9 +201,14 @@ mod tests {
 
     #[test]
     fn test_message_role_roundtrip() {
-        for role in [MessageRole::User, MessageRole::Assistant, MessageRole::ToolUse, MessageRole::ToolResult] {
+        for role in [
+            MessageRole::User,
+            MessageRole::Assistant,
+            MessageRole::ToolUse,
+            MessageRole::ToolResult,
+        ] {
             let s = role.as_str();
-            let parsed = MessageRole::from_str(s);
+            let parsed = MessageRole::parse(s);
             assert_eq!(parsed, Some(role));
         }
     }

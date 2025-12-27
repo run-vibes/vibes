@@ -8,6 +8,7 @@ use vibes_core::{
     AccessConfig, BackendFactory, MemoryEventBus, PluginHost, PluginHostConfig,
     PrintModeBackendFactory, PrintModeConfig, SessionManager, SubscriptionStore, TunnelConfig,
     TunnelManager, VapidKeyManager, VibesEvent,
+    history::{HistoryService, SqliteHistoryStore},
 };
 
 use crate::middleware::AuthLayer;
@@ -36,6 +37,8 @@ pub struct AppState {
     pub vapid: Option<Arc<VapidKeyManager>>,
     /// Push subscription store (optional)
     pub subscriptions: Option<Arc<SubscriptionStore>>,
+    /// Chat history service (optional)
+    pub history: Option<Arc<HistoryService<SqliteHistoryStore>>>,
 }
 
 impl AppState {
@@ -62,6 +65,7 @@ impl AppState {
             event_broadcaster,
             vapid: None,
             subscriptions: None,
+            history: None,
         }
     }
 
@@ -79,6 +83,12 @@ impl AppState {
     ) -> Self {
         self.vapid = Some(vapid);
         self.subscriptions = Some(subscriptions);
+        self
+    }
+
+    /// Configure chat history for this state
+    pub fn with_history(mut self, service: Arc<HistoryService<SqliteHistoryStore>>) -> Self {
+        self.history = Some(service);
         self
     }
 
@@ -101,6 +111,7 @@ impl AppState {
             event_broadcaster,
             vapid: None,
             subscriptions: None,
+            history: None,
         }
     }
 
