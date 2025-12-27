@@ -72,6 +72,8 @@ async fn run_foreground(args: &ServeArgs) -> Result<()> {
     let config = ServerConfig {
         host: args.host.clone(),
         port: args.port,
+        tunnel_enabled: args.tunnel,
+        tunnel_quick: args.quick_tunnel,
     };
 
     info!("Starting vibes server on {}:{}", config.host, config.port);
