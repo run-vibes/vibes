@@ -86,28 +86,40 @@ just test-integration    # Requires Claude CLI
 just test-all            # Unit + integration tests
 ```
 
-## Milestone Plans
+## Planning Process
 
-Design and implementation plans are stored in `docs/plans/` following this convention:
+**See [docs/PLAN.md](docs/PLAN.md) for full planning conventions.**
+
+Plans are required for new milestones and significant features. Skip planning for bug fixes, small changes, and documentation updates.
+
+### When to Create a Plan
+
+| Create Plan | Skip Planning |
+|-------------|---------------|
+| New milestone | Bug fixes with obvious solutions |
+| New crate or module | Single-file changes |
+| Architectural changes | Documentation updates |
+| External integrations | Test additions for existing code |
+
+### Plan Directory Structure
 
 ```
 docs/plans/
-├── 01-core-proxy/
-│   ├── design.md           # Architecture and design decisions
-│   └── implementation.md   # Step-by-step implementation guide
-├── 02-cli/
-│   ├── design.md
-│   └── implementation.md
-└── ...
+├── 01-core-proxy/          # Completed milestones
+├── ...
+├── 07-push-notifications/
+└── 08-chat-history/        # Next milestone (create when starting)
+    ├── design.md
+    └── implementation.md
 ```
 
-**Naming convention:** `XX-milestone-name/` where XX is the milestone number (01, 02, etc.)
+### Planning Workflow
 
-When starting a new milestone:
-1. Create the directory under `docs/plans/`
-2. Write `design.md` first with architecture decisions
-3. Write `implementation.md` with step-by-step tasks
-4. Reference any new ADRs added to `docs/PRD.md`
+1. **Brainstorm first**: Use `superpowers:brainstorming` skill to explore options
+2. **Write design.md**: Capture architecture decisions, types, and trade-offs
+3. **Get approval**: PR or discussion before implementation
+4. **Write implementation.md**: Step-by-step tasks with TDD pattern
+5. **Execute plan**: Use `superpowers:executing-plans` skill
 
 ## Development Workflow
 
@@ -115,20 +127,29 @@ When starting a new milestone:
 
 | Skill | When to Use |
 |-------|-------------|
+| `superpowers:brainstorming` | **FIRST** - Before any new feature or architecture decision |
 | `superpowers:executing-plans` | When implementing a milestone plan |
 | `superpowers:test-driven-development` | Before writing any implementation code |
 | `superpowers:systematic-debugging` | When encountering bugs, test failures, or unexpected behavior |
-| `superpowers:brainstorming` | When designing new features or making architecture decisions |
 
-**Workflow for implementing a milestone:**
+### Workflow for New Features
 
-1. **Start implementation**: Use `superpowers:executing-plans` skill with the `implementation.md` plan
-2. **Write each feature**: Use `superpowers:test-driven-development` - write tests first, then implementation
-3. **Fix issues**: Use `superpowers:systematic-debugging` - never guess at fixes, investigate first
-4. **Review before commit**: Run `just pre-commit` and address any issues
-5. **Complete with PR**: When implementation is complete, always push and create a Pull Request
+1. **Brainstorm**: Use `superpowers:brainstorming` to explore options and trade-offs
+2. **Plan**: Write `design.md` then `implementation.md` (see [docs/PLAN.md](docs/PLAN.md))
+3. **Execute**: Use `superpowers:executing-plans` skill with the plan
+4. **Implement with TDD**: Use `superpowers:test-driven-development` for each task
+5. **Fix issues**: Use `superpowers:systematic-debugging` - never guess at fixes
+6. **Review**: Run `just pre-commit` and address any issues
+7. **Complete with PR**: Push and create a Pull Request
 
-**This is mandatory.** Do not skip these skills or try to implement without following this workflow.
+### Workflow for Bug Fixes
+
+1. **Debug**: Use `superpowers:systematic-debugging` to investigate
+2. **Fix with TDD**: Write a failing test that reproduces the bug, then fix
+3. **Verify**: Run `just pre-commit`
+4. **Commit**: Single commit with `fix:` prefix
+
+**This workflow is mandatory.** Do not skip skills or try to implement without following this process.
 
 ## Completing Implementation Work
 
@@ -155,15 +176,16 @@ We follow Test-Driven Development for component and utility code:
 5. **Commit** — Small, frequent commits after each passing test
 
 **What to test:**
-- Component rendering and variants
-- User interactions (clicks, input)
-- Conditional rendering
-- Props pass-through and className merging
+- Public API behavior (trait implementations, public functions)
+- Error conditions and edge cases
+- Serialization/deserialization (TOML, JSON)
+- Async behavior with `#[tokio::test]`
+- File persistence with `tempfile` crate
 
 **What NOT to test:**
-- Implementation details (internal state, private methods)
-- Styling (covered by visual review in Ladle)
+- Private implementation details
 - Third-party library behavior
+- Simple getters/setters without logic
 
 ## Verification Before Completing Work
 
