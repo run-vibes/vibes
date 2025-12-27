@@ -1,7 +1,7 @@
 # vibes
 
 [![CI](https://github.com/run-vibes/vibes/actions/workflows/ci.yml/badge.svg)](https://github.com/run-vibes/vibes/actions/workflows/ci.yml)
-[![Progress](https://img.shields.io/badge/progress-7%2F11%20milestones-blue)](docs/PROGRESS.md)
+[![Progress](https://img.shields.io/badge/progress-8%2F15%20milestones-blue)](docs/PROGRESS.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Remote control for your Claude Code sessions.
@@ -100,30 +100,6 @@ impl Plugin for MyPlugin {
 export_plugin!(MyPlugin);
 ```
 
-## Status
-
-**Phase 2 in progress!** vibes now provides a fully functional Claude Code proxy with web UI, plugin support, and Cloudflare Tunnel integration. See [PROGRESS.md](docs/PROGRESS.md) for detailed tracking.
-
-### Roadmap
-
-| Phase | Description | Status |
-|-------|-------------|--------|
-| **1. Foundation** | Claude Code proxy, plugin system, local web UI | ✅ Complete |
-| **2. Remote Access** | Cloudflare Tunnel integration, authentication | 🔄 In Progress |
-| **3. Ecosystem** | Default plugins, multi-session support | ⏳ Planned |
-| **4. Future** | Mobile apps, native GUIs, licensing | 📋 Future |
-
-### Current Milestones
-
-| Milestone | Description | Status |
-|-----------|-------------|--------|
-| 1.1 Core Proxy | Session management, event bus, Claude subprocess | ✅ Complete |
-| 1.2 CLI | `vibes claude` pass-through, config, server auto-start | ✅ Complete |
-| 1.3 Plugin Foundation | Plugin trait, dynamic loading, CLI commands | ✅ Complete |
-| 1.4 Server + Web UI | axum server, TanStack UI, permission flows, daemon architecture | ✅ Complete |
-| 2.1 Cloudflare Tunnel | Tunnel management, quick/named modes, status UI | ✅ Complete |
-| 2.2 Cloudflare Access | JWT validation, auth middleware, identity display | ✅ Complete |
-
 ## Architecture
 
 vibes uses a **daemon-first architecture** where a background server owns all session state. The CLI and Web UI connect as WebSocket clients.
@@ -178,18 +154,19 @@ vibes uses a **daemon-first architecture** where a background server owns all se
 
 - [Product Requirements Document](docs/PRD.md) - Full design, architecture, and roadmap
 - [Progress Tracker](docs/PROGRESS.md) - Implementation status and changelog
+- [Planning Conventions](docs/PLAN.md) - How to create design and implementation plans
 - [CLAUDE.md](CLAUDE.md) - Development guidance for contributors
 
-### Implementation Plans
+## Roadmap
 
-| Milestone | Design | Implementation |
-|-----------|--------|----------------|
-| 1.1 Core Proxy | [design.md](docs/plans/01-core-proxy/design.md) | [implementation.md](docs/plans/01-core-proxy/implementation.md) |
-| 1.2 CLI | [design.md](docs/plans/02-cli/design.md) | [implementation.md](docs/plans/02-cli/implementation.md) |
-| 1.3 Plugin Foundation | [design.md](docs/plans/03-plugin-foundation/design.md) | [implementation.md](docs/plans/03-plugin-foundation/implementation.md) |
-| 1.4 Server + Web UI | [design.md](docs/plans/04-server-web-ui/design.md) | [implementation.md](docs/plans/04-server-web-ui/implementation.md) |
-| 2.1 Cloudflare Tunnel | [design.md](docs/plans/05-cloudflare-tunnel/design.md) | [implementation.md](docs/plans/05-cloudflare-tunnel/implementation.md) |
-| 2.2 Cloudflare Access | [design.md](docs/plans/06-cloudflare-access/design.md) | [implementation.md](docs/plans/06-cloudflare-access/implementation.md) |
+| Phase | Description | Status |
+|-------|-------------|--------|
+| [**1. Foundation**](docs/PROGRESS.md#phase-1-foundation-mvp) | Claude Code proxy, plugin system, local web UI | ✅ Complete |
+| [**2. Remote Access**](docs/PROGRESS.md#phase-2-remote-access) | Cloudflare Tunnel, authentication, push notifications | ✅ Complete |
+| [**3. Multi-Client**](docs/PROGRESS.md#phase-3-multi-client-experience) | Chat history, multi-session, setup wizards | 🔄 In Progress |
+| [**4. Polish**](docs/PROGRESS.md#phase-4-polish--ecosystem) | Default plugins, CLI enhancements, advanced permissions | ⏳ Planned |
+
+See [PROGRESS.md](docs/PROGRESS.md) for detailed milestone tracking and changelog.
 
 ## License
 
