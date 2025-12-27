@@ -93,6 +93,29 @@ impl SessionManager {
         Ok(f(session))
     }
 
+    /// Send input to a session
+    pub async fn send_to_session(&self, id: &str, input: &str) -> Result<(), SessionError> {
+        let mut sessions = self.sessions.write().await;
+        let session = sessions
+            .get_mut(id)
+            .ok_or_else(|| SessionError::NotFound(id.to_string()))?;
+        session.send(input).await
+    }
+
+    /// Respond to a permission request in a session
+    pub async fn respond_permission(
+        &self,
+        session_id: &str,
+        request_id: &str,
+        approved: bool,
+    ) -> Result<(), SessionError> {
+        let mut sessions = self.sessions.write().await;
+        let session = sessions
+            .get_mut(session_id)
+            .ok_or_else(|| SessionError::NotFound(session_id.to_string()))?;
+        session.respond_permission(request_id, approved).await
+    }
+
     /// Get session state by ID
     pub async fn get_session_state(&self, id: &str) -> Result<SessionState, SessionError> {
         let sessions = self.sessions.read().await;
@@ -123,6 +146,25 @@ impl SessionManager {
             .await
             .iter()
             .map(|(id, session)| (id.clone(), session.state()))
+            .collect()
+    }
+
+    /// List sessions with ID, name, and state
+    pub async fn list_sessions_full(
+        &self,
+    ) -> Vec<(String, Option<String>, SessionState, std::time::SystemTime)> {
+        self.sessions
+            .read()
+            .await
+            .iter()
+            .map(|(id, session)| {
+                (
+                    id.clone(),
+                    session.name().map(|s| s.to_string()),
+                    session.state(),
+                    session.created_at(),
+                )
+            })
             .collect()
     }
 

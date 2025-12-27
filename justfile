@@ -43,11 +43,15 @@ mutants:
     cargo mutants
 
 # Build
-build:
+build: build-web
     cargo build
 
-build-release:
+build-release: build-web
     cargo build --release
+
+# Build web-ui (required for server)
+build-web:
+    cd web-ui && npm run build
 
 # Run all checks (pre-commit)
 pre-commit: fmt-check clippy test

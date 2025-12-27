@@ -1,12 +1,14 @@
-use crate::config::{ConfigLoader, VibesConfig};
-use crate::server;
+//! Claude command - connects to vibes daemon via WebSocket
+
 use anyhow::{Result, anyhow};
 use clap::Args;
-use std::io::Write;
-use vibes_core::{
-    BackendFactory, ClaudeEvent, PluginHost, PluginHostConfig, PrintModeBackendFactory,
-    PrintModeConfig, VibesEvent,
-};
+use std::io::{BufRead, Write};
+use vibes_core::{ClaudeEvent, PluginHost, PluginHostConfig, VibesEvent};
+use vibes_server::ws::ServerMessage;
+
+use crate::client::VibesClient;
+use crate::config::ConfigLoader;
+use crate::daemon::ensure_daemon_running;
 
 #[derive(Args)]
 pub struct ClaudeArgs {
@@ -18,6 +20,10 @@ pub struct ClaudeArgs {
     /// Disable background server for this session
     #[arg(long)]
     pub no_serve: bool,
+
+    /// Start interactive mode (read prompts from stdin)
+    #[arg(short = 'i', long)]
+    pub interactive: bool,
 
     // === Common Claude flags (explicit for UX) ===
     /// Continue most recent session
@@ -52,25 +58,8 @@ pub struct ClaudeArgs {
 
 pub async fn run(args: ClaudeArgs) -> Result<()> {
     let config = ConfigLoader::load()?;
-    let backend_config = build_backend_config(&args, &config);
 
-    // Start server stub if enabled
-    if config.server.auto_start && !args.no_serve {
-        tokio::spawn(server::start_stub(config.server.port));
-    }
-
-    // Load plugins
-    let mut plugin_host = PluginHost::new(PluginHostConfig::default());
-    if let Err(e) = plugin_host.load_all() {
-        tracing::warn!("Failed to load plugins: {}", e);
-    }
-
-    // Build prompt (required)
-    let prompt = args
-        .prompt
-        .ok_or_else(|| anyhow!("No prompt provided. Usage: vibes claude \"your prompt\""))?;
-
-    // Explicitly error if continue_session is requested, since the backend does not support it yet
+    // Explicitly error if continue_session is requested, since not yet supported
     if args.continue_session {
         return Err(anyhow!(
             "The --continue / -c flag is not yet supported.\n\
@@ -78,77 +67,121 @@ pub async fn run(args: ClaudeArgs) -> Result<()> {
         ));
     }
 
-    // Determine Claude session ID for resume
-    let claude_session_id = args.resume.clone();
+    // Determine if we're in interactive mode
+    let interactive = args.interactive || (args.prompt.is_none() && args.resume.is_none());
+    let prompt = args.prompt.clone();
 
-    // Create backend directly (simpler for CLI use case)
-    let factory = PrintModeBackendFactory::new(backend_config);
-    let mut backend = factory.create(claude_session_id);
+    // Ensure daemon is running (unless --no-serve is set)
+    if !args.no_serve {
+        ensure_daemon_running(config.server.port).await?;
+    }
 
-    // Subscribe before sending
-    let mut rx = backend.subscribe();
+    // Connect to daemon via WebSocket
+    let url = format!("ws://127.0.0.1:{}/ws", config.server.port);
+    let mut client = VibesClient::connect(&url).await?;
 
-    // Generate a session ID for plugin events
-    let session_id = args
-        .session_name
-        .clone()
-        .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
+    // Load plugins
+    let mut plugin_host = PluginHost::new(PluginHostConfig::default());
+    if let Err(e) = plugin_host.load_all() {
+        tracing::warn!("Failed to load plugins: {}", e);
+    }
 
-    // Notify plugins of session creation
+    // Create or resume session
+    let session_id = if let Some(resume_id) = args.resume.clone() {
+        // Resume existing session - just subscribe to it
+        client.subscribe(vec![resume_id.clone()]).await?;
+        resume_id
+    } else {
+        // Create new session
+        client.create_session(args.session_name.clone()).await?
+    };
+
+    // Notify plugins of session
     plugin_host.dispatch_event(&VibesEvent::SessionCreated {
         session_id: session_id.clone(),
         name: args.session_name.clone(),
     });
 
-    // Send the prompt
-    backend
-        .send(&prompt)
-        .await
-        .map_err(|e| anyhow!("Failed to send prompt: {}", e))?;
-
-    // Stream output to terminal, dispatching events to plugins
-    stream_output(&mut rx, &mut plugin_host, &session_id).await
-}
-
-fn build_backend_config(args: &ClaudeArgs, config: &VibesConfig) -> PrintModeConfig {
-    // Merge CLI args with config defaults
-    let allowed_tools = args
-        .allowed_tools
-        .as_ref()
-        .map(|s| s.split(',').map(|t| t.trim().to_string()).collect())
-        .or_else(|| config.session.default_allowed_tools.clone())
-        .unwrap_or_default();
-
-    let working_dir = config
-        .session
-        .working_dir
-        .as_ref()
-        .map(|p| p.to_string_lossy().to_string());
-
-    // CLI args override config defaults
-    let model = args
-        .model
-        .clone()
-        .or_else(|| config.session.default_model.clone());
-
-    PrintModeConfig {
-        claude_path: None, // Use default "claude"
-        allowed_tools,
-        working_dir,
-        model,
-        system_prompt: args.system_prompt.clone(),
+    // Interactive mode: read prompts from stdin in a loop
+    if interactive {
+        interactive_loop(&mut client, &mut plugin_host, &session_id, prompt).await
+    } else {
+        // Non-interactive: send prompt and stream single response
+        if let Some(prompt) = prompt {
+            client.send_input(&session_id, &prompt).await?;
+        }
+        stream_output(&mut client, &mut plugin_host, &session_id).await
     }
 }
 
+/// Interactive mode: read prompts from stdin and send to session
+async fn interactive_loop(
+    client: &mut VibesClient,
+    plugin_host: &mut PluginHost,
+    session_id: &str,
+    initial_prompt: Option<String>,
+) -> Result<()> {
+    let stdin = std::io::stdin();
+    let mut reader = stdin.lock();
+
+    // Send initial prompt if provided
+    if let Some(prompt) = initial_prompt {
+        client.send_input(session_id, &prompt).await?;
+        stream_output(client, plugin_host, session_id).await?;
+    }
+
+    // Interactive prompt loop
+    loop {
+        // Print prompt indicator
+        print!("\n> ");
+        std::io::stdout().flush()?;
+
+        // Read input line
+        let mut input = String::new();
+        match reader.read_line(&mut input) {
+            Ok(0) => {
+                // EOF (Ctrl+D)
+                println!("\nGoodbye!");
+                break;
+            }
+            Ok(_) => {
+                let input = input.trim();
+                if input.is_empty() {
+                    continue;
+                }
+
+                // Exit commands
+                if matches!(input, "exit" | "quit" | "/exit" | "/quit") {
+                    println!("Goodbye!");
+                    break;
+                }
+
+                // Send input to session
+                client.send_input(session_id, input).await?;
+                stream_output(client, plugin_host, session_id).await?;
+            }
+            Err(e) => {
+                return Err(anyhow!("Failed to read input: {}", e));
+            }
+        }
+    }
+
+    Ok(())
+}
+
+/// Stream events from WebSocket to terminal
 async fn stream_output(
-    rx: &mut tokio::sync::broadcast::Receiver<ClaudeEvent>,
+    client: &mut VibesClient,
     plugin_host: &mut PluginHost,
     session_id: &str,
 ) -> Result<()> {
     loop {
-        match rx.recv().await {
-            Ok(event) => {
-                // Dispatch event to plugins (wrapped in VibesEvent::Claude)
+        match client.recv().await {
+            Some(ServerMessage::Claude {
+                session_id: sid,
+                event,
+            }) if sid == session_id => {
+                // Dispatch event to plugins
                 plugin_host.dispatch_event(&VibesEvent::Claude {
                     session_id: session_id.to_string(),
                     event: event.clone(),
@@ -161,7 +194,6 @@ async fn stream_output(
                         std::io::stdout().flush()?;
                     }
                     ClaudeEvent::TurnComplete { .. } => {
-                        // Don't print extra newline - match claude's output exactly
                         break;
                     }
                     ClaudeEvent::Error { message, .. } => {
@@ -169,17 +201,34 @@ async fn stream_output(
                         break;
                     }
                     _ => {
-                        // Ignore other events (ThinkingDelta, ToolUseStart, etc.)
-                        // Output should be identical to raw claude command
+                        // Ignore other events
                     }
                 }
             }
-            Err(tokio::sync::broadcast::error::RecvError::Closed) => {
+            Some(ServerMessage::SessionState {
+                session_id: sid,
+                state,
+            }) if sid == session_id => {
+                tracing::debug!("Session state changed: {}", state);
+                plugin_host.dispatch_event(&VibesEvent::SessionStateChanged {
+                    session_id: session_id.to_string(),
+                    state,
+                });
+            }
+            Some(ServerMessage::Error {
+                session_id: Some(sid),
+                message,
+                ..
+            }) if sid == session_id => {
+                eprintln!("Error: {}", message);
                 break;
             }
-            Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => {
-                // Receiver lagged behind, continue receiving
-                continue;
+            Some(_) => {
+                // Ignore other messages
+            }
+            None => {
+                // Connection closed
+                break;
             }
         }
     }
@@ -190,12 +239,45 @@ async fn stream_output(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::config::VibesConfig;
+    use vibes_core::PrintModeConfig;
+
+    fn build_backend_config(args: &ClaudeArgs, config: &VibesConfig) -> PrintModeConfig {
+        // Merge CLI args with config defaults
+        let allowed_tools = args
+            .allowed_tools
+            .as_ref()
+            .map(|s| s.split(',').map(|t| t.trim().to_string()).collect())
+            .or_else(|| config.session.default_allowed_tools.clone())
+            .unwrap_or_default();
+
+        let working_dir = config
+            .session
+            .working_dir
+            .as_ref()
+            .map(|p| p.to_string_lossy().to_string());
+
+        // CLI args override config defaults
+        let model = args
+            .model
+            .clone()
+            .or_else(|| config.session.default_model.clone());
+
+        PrintModeConfig {
+            claude_path: None,
+            allowed_tools,
+            working_dir,
+            model,
+            system_prompt: args.system_prompt.clone(),
+        }
+    }
 
     #[test]
     fn test_build_backend_config_uses_cli_args() {
         let args = ClaudeArgs {
             session_name: None,
             no_serve: false,
+            interactive: false,
             continue_session: false,
             resume: None,
             model: Some("claude-opus-4-5".to_string()),
@@ -219,6 +301,7 @@ mod tests {
         let args = ClaudeArgs {
             session_name: None,
             no_serve: false,
+            interactive: false,
             continue_session: false,
             resume: None,
             model: None,
@@ -243,6 +326,7 @@ mod tests {
         let args = ClaudeArgs {
             session_name: None,
             no_serve: false,
+            interactive: false,
             continue_session: false,
             resume: None,
             model: None,
@@ -265,6 +349,7 @@ mod tests {
         let args = ClaudeArgs {
             session_name: None,
             no_serve: false,
+            interactive: false,
             continue_session: false,
             resume: None,
             model: Some("claude-opus-4-5".to_string()),
@@ -285,6 +370,7 @@ mod tests {
         let args = ClaudeArgs {
             session_name: None,
             no_serve: false,
+            interactive: false,
             continue_session: false,
             resume: None,
             model: None,
@@ -306,6 +392,7 @@ mod tests {
         let args = ClaudeArgs {
             session_name: None,
             no_serve: false,
+            interactive: false,
             continue_session: false,
             resume: None,
             model: Some("claude-opus-4-5".to_string()),
@@ -328,6 +415,7 @@ mod tests {
         let args = ClaudeArgs {
             session_name: None,
             no_serve: false,
+            interactive: false,
             continue_session: false,
             resume: None,
             model: None,

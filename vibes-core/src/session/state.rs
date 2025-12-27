@@ -4,6 +4,7 @@
 //! It manages state transitions and provides recovery (retry) on failure.
 
 use std::sync::Arc;
+use std::time::SystemTime;
 
 use serde::{Deserialize, Serialize};
 
@@ -44,6 +45,8 @@ pub struct Session {
     event_bus: Arc<dyn EventBus>,
     /// Current state
     state: SessionState,
+    /// When the session was created
+    created_at: SystemTime,
 }
 
 impl Session {
@@ -60,6 +63,7 @@ impl Session {
             backend,
             event_bus,
             state: SessionState::Idle,
+            created_at: SystemTime::now(),
         }
     }
 
@@ -81,6 +85,11 @@ impl Session {
     /// Get current session state
     pub fn state(&self) -> SessionState {
         self.state.clone()
+    }
+
+    /// Get when the session was created
+    pub fn created_at(&self) -> SystemTime {
+        self.created_at
     }
 
     /// Send user input to Claude

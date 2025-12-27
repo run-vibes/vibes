@@ -1,8 +1,10 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 
+mod client;
 mod commands;
 mod config;
+mod daemon;
 mod server;
 
 #[derive(Parser)]
@@ -25,6 +27,8 @@ enum Commands {
     Config(commands::config::ConfigArgs),
     /// Manage plugins
     Plugin(commands::plugin::PluginArgs),
+    /// Run the vibes server
+    Serve(commands::serve::ServeArgs),
 }
 
 #[tokio::main]
@@ -38,5 +42,6 @@ async fn main() -> Result<()> {
         Commands::Claude(args) => commands::claude::run(args).await,
         Commands::Config(args) => commands::config::run(args),
         Commands::Plugin(args) => commands::plugin::run(args),
+        Commands::Serve(args) => commands::serve::run(args).await,
     }
 }

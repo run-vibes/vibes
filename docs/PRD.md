@@ -700,6 +700,39 @@ pub enum BackendState {
 - No versioning: Poor UX when plugins crash mysteriously
 - abi_stable crate: Adds dependency, learning curve; overkill for MVP
 
+### ADR-010: Server + Web UI Architecture
+
+**Status:** Decided
+
+**Context:** To enable remote session monitoring (the core value prop: "start from terminal, control from phone"), we need a server architecture that can serve multiple clients. Key decisions: where does session state live, how do clients communicate, and how is the web UI served.
+
+**Decision:** Daemon-based architecture with WebSocket-first communication.
+
+**Architecture choices:**
+
+1. **Daemon owns all state:** The server process owns SessionManager, EventBus, and PluginHost. CLI becomes a client rather than directly spawning Claude processes.
+
+2. **WebSocket for CLI and Web UI:** Both use the same WebSocket protocol. This guarantees feature parity—anything the web UI can do, the CLI can do.
+
+3. **Auto-start daemon:** Running `vibes claude` automatically starts the daemon if not running. Users don't manage server lifecycle manually.
+
+4. **SPA with embedded assets:** TanStack Router/Query frontend built to static assets, embedded in binary via rust-embed. Single binary deployment.
+
+5. **Harness-prefixed URLs:** Routes like `/claude/:id` allow future extension to other AI backends (Codex, Gemini).
+
+**Rationale:**
+- Daemon model enables multiple simultaneous clients
+- Single WebSocket protocol reduces maintenance burden
+- Auto-start preserves simple CLI UX (`vibes claude "prompt"` just works)
+- Embedded assets enable single binary distribution
+- TanStack provides type-safe routing and smart data fetching
+
+**Alternatives considered:**
+- Direct Claude spawning from CLI: Can't share sessions with web UI
+- REST API for CLI: Polling less efficient than WebSocket streaming
+- Separate web server binary: Complicates deployment
+- Server-side rendering: Unnecessary complexity for this use case
+
 ---
 
 ## Technical Notes
