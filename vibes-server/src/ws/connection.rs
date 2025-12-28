@@ -613,6 +613,25 @@ async fn handle_text_message(
             // Mark this connection as attached
             conn_state.attach_pty(&session_id);
 
+            // Send scrollback replay if available
+            if let Some(handle) = pty_manager.get_handle(&session_id) {
+                let scrollback = handle.get_scrollback();
+                if !scrollback.is_empty() {
+                    let data = base64::engine::general_purpose::STANDARD.encode(&scrollback);
+                    let replay_msg = ServerMessage::PtyReplay {
+                        session_id: session_id.clone(),
+                        data,
+                    };
+                    let json = serde_json::to_string(&replay_msg)?;
+                    sender.send(Message::Text(json)).await?;
+                    debug!(
+                        "Sent {} bytes of scrollback replay for session {}",
+                        scrollback.len(),
+                        session_id
+                    );
+                }
+            }
+
             // Send AttachAck
             let ack = ServerMessage::AttachAck {
                 session_id,
