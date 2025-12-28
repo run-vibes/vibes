@@ -85,8 +85,10 @@ impl PrintModeBackend {
             .arg("--output-format")
             .arg("stream-json");
 
-        // Session ID for continuity
-        cmd.arg("--session-id").arg(&self.claude_session_id);
+        // Note: We do NOT pass --session-id to Claude CLI.
+        // Claude's --session-id flag is for resuming sessions that Claude created,
+        // not for using arbitrary UUIDs. Print mode is inherently single-turn;
+        // multi-turn conversation continuity requires the PTY wrapper (Phase F1).
 
         // Allowed tools (if specified)
         if !self.config.allowed_tools.is_empty() {
@@ -341,7 +343,9 @@ mod tests {
     }
 
     #[test]
-    fn build_command_includes_session_id() {
+    fn build_command_does_not_include_session_id() {
+        // Print mode does not use --session-id because Claude CLI only accepts
+        // session IDs from sessions it created, not arbitrary UUIDs.
         let backend = PrintModeBackend::with_session_id(
             "test-session-123".to_string(),
             PrintModeConfig::default(),
@@ -349,8 +353,7 @@ mod tests {
         let cmd = backend.build_command("Hello");
 
         let args: Vec<_> = cmd.get_args().collect();
-        assert!(args.contains(&std::ffi::OsStr::new("--session-id")));
-        assert!(args.contains(&std::ffi::OsStr::new("test-session-123")));
+        assert!(!args.contains(&std::ffi::OsStr::new("--session-id")));
     }
 
     #[test]

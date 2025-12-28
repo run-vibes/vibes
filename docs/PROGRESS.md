@@ -16,8 +16,8 @@ This document tracks the implementation progress of vibes against the roadmap de
 | 3.1 Chat History | Complete | [design](plans/08-chat-history/design.md) | [implementation](plans/08-chat-history/implementation.md) |
 | 3.2 Multi-Session Support | Complete | [design](plans/09-multi-session/design.md) | [implementation](plans/09-multi-session/implementation.md) |
 | 3.3 CLI ↔ Web Mirroring | Complete | [design](plans/10-cli-web-mirroring/design.md) | [implementation](plans/10-cli-web-mirroring/implementation.md) |
-| 3.4 Cloudflare Tunnel Wizard | Not started | — | — |
-| 3.5 Cloudflare Auth Wizard | Not started | — | — |
+| 3.4 PTY Backend | In Progress | [design](plans/12-pty-backend/design.md) | — |
+| 3.5 Setup Wizards | Not started | — | — |
 
 ---
 
@@ -120,45 +120,47 @@ Note: Auto-detect team/aud moved to Milestone 3.5 (Cloudflare Auth Wizard)
 - [x] Web UI shows source attribution on messages
 - [x] Web UI catch-up on session join
 
-### Milestone 3.4: Cloudflare Tunnel Wizard
+### Milestone 3.4: PTY Backend
+- [~] Replace PrintModeBackend with PTY wrapper for full CLI parity
+- [ ] Add `portable-pty` crate for cross-platform PTY management
+- [ ] Implement PtyManager with spawn/read/write/resize/kill
+- [ ] Refactor `vibes claude` to PTY client mode
+- [ ] Web UI terminal via xterm.js (replace chat-based UI)
+- [ ] Claude hooks integration for structured data capture
+- [ ] Auto-configure hooks on daemon start
+- [ ] Remove PrintModeBackend and stream-json parser
+
+### Milestone 3.5: Setup Wizards
 - [ ] Interactive `vibes tunnel setup` wizard
-- [ ] Guide user through cloudflared installation check
-- [ ] Tunnel mode selection (quick vs named)
-- [ ] DNS configuration assistance for named tunnels
-- [ ] Test connectivity and display public URL
-
-### Milestone 3.5: Cloudflare Auth Wizard
 - [ ] Interactive `vibes auth setup` wizard
-- [ ] Auto-detect team/AUD from existing tunnel config
-- [ ] Manual configuration fallback
-- [ ] Test JWT validation with sample request
-- [ ] Display identity information on success
+- [ ] Guide through cloudflared installation
+- [ ] Auto-detect team/AUD from tunnel config
+- [ ] Test connectivity and validation
 
-**Phase 3 Deliverable:** Multiple clients share sessions in real-time with guided setup
+**Phase 3 Deliverable:** Full CLI parity with real-time multi-client sessions
 
 ---
 
 ## Phase 4: Polish & Ecosystem
 
-**Goal:** Production-ready with default plugins
+**Goal:** Production-ready with default plugins and mobile apps
 
 ### Milestone 4.1: Default plugins
 - [ ] analytics (session stats, token usage)
-- [ ] history (searchable session history)
 - [ ] templates (prompt templates/snippets)
 - [ ] export (session export to markdown/JSON)
 
 ### Milestone 4.2: CLI enhancements
-- [ ] vibes sessions list/switch/kill
 - [ ] Tab completion
 - [ ] Interactive session picker
 
-### Milestone 4.3: Advanced permissions
-- [ ] Per-session notification settings
-- [ ] First-responder policy for permission requests
-- [ ] Permission request timeout handling
+### Milestone 4.3: iOS App
+- [ ] Swift native app with xterm.js WebView
+- [ ] Push notification integration
+- [ ] Session list and attach
+- [ ] Structured data display (from hooks)
 
-**Phase 4 Deliverable:** Feature-rich vibes with useful default plugins
+**Phase 4 Deliverable:** Feature-rich vibes with mobile access
 
 ---
 
@@ -166,20 +168,12 @@ Note: Auto-detect team/aud moved to Milestone 3.5 (Cloudflare Auth Wizard)
 
 These phases are planned but not yet scheduled.
 
-### Phase F1: Alternative Claude Code Backends
-- [ ] Investigate PTY wrapper for interactive mode
-- [ ] Investigate hook-based permission routing
-- [ ] Investigate stream-json bidirectional
-- [ ] Benchmark PrintModeBackend vs alternatives
-- [ ] Migrate if significant benefits proven
-
-### Phase F2: Mobile Apps
-- [ ] iOS app (Swift)
-- [ ] Android app (Kotlin)
+### Phase F1: Android App
+- [ ] Kotlin native app with terminal WebView
 - [ ] Push notification integration
-- [ ] App Store/Play Store distribution
+- [ ] Play Store distribution
 
-### Phase F3: Native GUIs
+### Phase F2: Native GUIs
 - [ ] macOS: Cocoa/AppKit via objc2
 - [ ] Windows: Win32/WinUI via windows-rs
 - [ ] Linux: GTK via gtk-rs
@@ -213,3 +207,5 @@ These phases are planned but not yet scheduled.
 | 2025-12-27 | Milestone 3.3 (CLI ↔ Web Mirroring) design complete - Input source attribution, paginated catch-up protocol, CLI input history with arrow keys |
 | 2025-12-27 | Milestone 3.3 (CLI ↔ Web Mirroring) implementation complete - InputSource enum, source column in messages table, SubscribeAck with history catch-up, CLI remote input display with [Web UI]: prefix, InputHistory struct for arrow key navigation, Web UI source attribution badges |
 | 2025-12-27 | Test infrastructure added - Integration tests (in-process WebSocket, concurrency, history catch-up), E2E tests (Playwright smoke tests), CI workflow updated for E2E |
+| 2025-12-27 | Milestone 3.4 (PTY Backend) design complete - Replace PrintModeBackend with PTY wrapper, xterm.js web UI, Claude hooks for structured data, auto-configure hooks on daemon start |
+| 2025-12-27 | Roadmap updated: PTY Backend promoted to Milestone 3.4, iOS App moved to Phase 4, setup wizards consolidated to Milestone 3.5 |

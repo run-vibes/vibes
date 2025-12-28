@@ -59,6 +59,7 @@ pub mod history;
 pub mod notifications;
 pub mod parser;
 pub mod plugins;
+pub mod pty;
 pub mod session;
 pub mod tunnel;
 
