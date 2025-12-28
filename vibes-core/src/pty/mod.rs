@@ -11,5 +11,5 @@ mod session;
 pub use config::PtyConfig;
 pub use error::PtyError;
 pub use manager::{PtyManager, PtySessionInfo};
-pub use scrollback::{ScrollbackBuffer, DEFAULT_CAPACITY};
+pub use scrollback::{DEFAULT_CAPACITY, ScrollbackBuffer};
 pub use session::{PtySession, PtySessionHandle, PtyState};

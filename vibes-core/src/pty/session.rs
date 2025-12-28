@@ -4,6 +4,7 @@ use portable_pty::{CommandBuilder, PtySize, native_pty_system};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
+use super::scrollback::ScrollbackBuffer;
 use super::{PtyConfig, PtyError};
 
 /// State of a PTY session
@@ -21,6 +22,8 @@ pub struct PtySessionHandle {
     reader: Arc<std::sync::Mutex<Box<dyn std::io::Read + Send>>>,
     /// Separate mutex for the writer to avoid blocking reads while writing
     writer: Arc<std::sync::Mutex<Box<dyn std::io::Write + Send>>>,
+    /// Scrollback buffer for replay on reconnect
+    scrollback: Arc<std::sync::Mutex<ScrollbackBuffer>>,
 }
 
 impl PtySessionHandle {
@@ -91,6 +94,21 @@ impl PtySessionHandle {
             })
             .map_err(|e| PtyError::IoError(std::io::Error::other(e)))
     }
+
+    /// Append data to the scrollback buffer
+    pub fn append_scrollback(&self, data: &[u8]) {
+        if let Ok(mut scrollback) = self.scrollback.lock() {
+            scrollback.append(data);
+        }
+    }
+
+    /// Get all scrollback data for replay
+    pub fn get_scrollback(&self) -> Vec<u8> {
+        self.scrollback
+            .lock()
+            .map(|s| s.get_all())
+            .unwrap_or_default()
+    }
 }
 
 pub(crate) struct PtySessionInner {
@@ -148,6 +166,7 @@ impl PtySession {
             inner: Arc::new(Mutex::new(inner)),
             reader: Arc::new(std::sync::Mutex::new(reader)),
             writer: Arc::new(std::sync::Mutex::new(writer)),
+            scrollback: Arc::new(std::sync::Mutex::new(ScrollbackBuffer::default())),
         };
 
         Ok(Self {
@@ -240,5 +259,30 @@ mod tests {
         // Resize should not error
         let result = session.handle.resize(80, 24).await;
         assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn handle_provides_scrollback_access() {
+        let config = PtyConfig {
+            claude_path: "cat".into(),
+            ..Default::default()
+        };
+
+        let session = PtySession::spawn("test-id".to_string(), None, &config).unwrap();
+
+        // Write data and read it back (cat echoes)
+        session.handle.write(b"test\n").await.unwrap();
+        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+
+        // Read the output
+        let data = session.handle.read().await.unwrap();
+        assert!(!data.is_empty());
+
+        // Append to scrollback
+        session.handle.append_scrollback(&data);
+
+        // Verify scrollback contains data
+        let scrollback = session.handle.get_scrollback();
+        assert!(!scrollback.is_empty());
     }
 }
