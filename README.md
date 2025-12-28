@@ -150,6 +150,49 @@ vibes uses a **daemon-first architecture** where a background server owns all se
 - **CLI Client** - Connects to daemon via WebSocket, streams I/O to terminal
 - **Web UI** - TanStack React SPA embedded in binary, served on localhost:7432
 
+## Testing
+
+vibes uses a three-layer testing pyramid:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│           E2E Tests (e2e-tests/)                        │
+│  Playwright: Browser + CLI + Server integration         │
+│  Critical user journeys, runs on PR/main                │
+├─────────────────────────────────────────────────────────┤
+│        Integration Tests (crate/tests/)                 │
+│  WebSocket protocol, server config, concurrency         │
+│  In-process, runs in CI                                 │
+├─────────────────────────────────────────────────────────┤
+│           Unit Tests (#[cfg(test)])                     │
+│  Logic correctness, edge cases, MockBackend-based       │
+│  Fast, isolated, no I/O                                 │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Running Tests
+
+```bash
+# Unit + integration tests (recommended for development)
+just test
+
+# All tests including those requiring Claude CLI
+just test-all
+
+# E2E browser tests (requires Playwright installed)
+just test-e2e
+
+# Pre-commit checks (fmt, clippy, test)
+just pre-commit
+```
+
+### Test Infrastructure
+
+- **MockBackend** - Scripted Claude responses for unit tests
+- **SlowMockBackend** - Delayed responses for concurrency tests
+- **TestClient** - WebSocket client for protocol testing
+- **Playwright** - Browser automation for e2e tests
+
 ## Documentation
 
 - [Product Requirements Document](docs/PRD.md) - Full design, architecture, and roadmap
