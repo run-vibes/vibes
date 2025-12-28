@@ -15,7 +15,8 @@ use uuid::Uuid;
 use vibes_core::history::{MessageQuery, MessageRole};
 use vibes_core::{AuthContext, ClaudeEvent, EventBus, InputSource, VibesEvent};
 
-use crate::AppState;
+use base64::Engine;
+use crate::{AppState, PtyEvent};
 
 use super::protocol::{
     ClientMessage, HistoryEvent, RemovalReason, ServerMessage, SessionInfo,
@@ -57,6 +58,8 @@ struct ConnectionState {
     client_type: InputSource,
     /// Session IDs this connection is subscribed to
     subscribed_sessions: HashSet<String>,
+    /// PTY session IDs this connection is attached to
+    attached_pty_sessions: HashSet<String>,
 }
 
 impl ConnectionState {
@@ -65,6 +68,7 @@ impl ConnectionState {
             client_id: Uuid::new_v4().to_string(),
             client_type,
             subscribed_sessions: HashSet::new(),
+            attached_pty_sessions: HashSet::new(),
         }
     }
 
@@ -91,6 +95,21 @@ impl ConnectionState {
             self.subscribed_sessions.remove(id);
         }
     }
+
+    /// Attach to a PTY session
+    fn attach_pty(&mut self, session_id: &str) {
+        self.attached_pty_sessions.insert(session_id.to_string());
+    }
+
+    /// Detach from a PTY session
+    fn detach_pty(&mut self, session_id: &str) {
+        self.attached_pty_sessions.remove(session_id);
+    }
+
+    /// Check if this connection is attached to a PTY session
+    fn is_attached_to_pty(&self, session_id: &str) -> bool {
+        self.attached_pty_sessions.contains(session_id)
+    }
 }
 
 /// Handle a WebSocket connection with bidirectional event streaming
@@ -102,6 +121,7 @@ async fn handle_socket(
 ) {
     let (mut sender, mut receiver) = socket.split();
     let mut event_rx = state.subscribe_events();
+    let mut pty_rx = state.subscribe_pty_events();
     let mut conn_state = ConnectionState::new(client_type);
 
     info!(
@@ -176,6 +196,25 @@ async fn handle_socket(
                     Err(broadcast::error::RecvError::Lagged(count)) => {
                         warn!("Client lagged behind by {} events", count);
                         // Continue receiving - the channel will skip missed events
+                    }
+                }
+            }
+
+            // Handle PTY events from broadcast channel
+            pty_event = pty_rx.recv() => {
+                match pty_event {
+                    Ok(event) => {
+                        if let Err(e) = handle_pty_event(&event, &mut sender, &conn_state).await {
+                            warn!("Failed to send PTY event to client: {}", e);
+                            break;
+                        }
+                    }
+                    Err(broadcast::error::RecvError::Closed) => {
+                        warn!("PTY broadcast channel closed");
+                        break;
+                    }
+                    Err(broadcast::error::RecvError::Lagged(count)) => {
+                        warn!("Client lagged behind by {} PTY events", count);
                     }
                 }
             }
@@ -261,6 +300,41 @@ async fn handle_broadcast_event(
         let json = serde_json::to_string(&server_msg)?;
         sender.send(Message::Text(json)).await?;
     }
+
+    Ok(())
+}
+
+/// Handle a PTY event from the broadcast channel
+async fn handle_pty_event(
+    event: &PtyEvent,
+    sender: &mut futures::stream::SplitSink<WebSocket, Message>,
+    conn_state: &ConnectionState,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    // Extract session_id from event
+    let session_id = match event {
+        PtyEvent::Output { session_id, .. } => session_id,
+        PtyEvent::Exit { session_id, .. } => session_id,
+    };
+
+    // Only send if client is attached to this PTY session
+    if !conn_state.is_attached_to_pty(session_id) {
+        return Ok(());
+    }
+
+    // Convert to ServerMessage and send
+    let server_msg = match event {
+        PtyEvent::Output { session_id, data } => ServerMessage::PtyOutput {
+            session_id: session_id.clone(),
+            data: data.clone(),
+        },
+        PtyEvent::Exit { session_id, exit_code } => ServerMessage::PtyExit {
+            session_id: session_id.clone(),
+            exit_code: *exit_code,
+        },
+    };
+
+    let json = serde_json::to_string(&server_msg)?;
+    sender.send(Message::Text(json)).await?;
 
     Ok(())
 }
@@ -495,27 +569,86 @@ async fn handle_text_message(
             }
         }
 
-        // PTY messages - will be implemented in Task 2.2
+        // PTY messages
         ClientMessage::Attach { session_id } => {
             debug!("PTY attach requested for session: {}", session_id);
-            // TODO: Implement PTY attach
-            let error = ServerMessage::Error {
-                session_id: Some(session_id),
-                message: "PTY attach not yet implemented".to_string(),
-                code: "NOT_IMPLEMENTED".to_string(),
+
+            let mut pty_manager = state.pty_manager.write().await;
+
+            // Check if session exists; if not, create it
+            let (cols, rows) = if pty_manager.get_session(&session_id).is_some() {
+                // Session exists, get dimensions from config (we don't track current size yet)
+                (120, 40) // TODO: Track actual PTY dimensions
+            } else {
+                // Create new PTY session
+                match pty_manager.create_session(Some(session_id.clone())) {
+                    Ok(new_id) => {
+                        debug!("Created new PTY session: {}", new_id);
+
+                        // Get handle for output reading
+                        if let Some(handle) = pty_manager.get_handle(&new_id) {
+                            // Spawn background task to read PTY output
+                            let state_clone = state.clone();
+                            let session_id_clone = new_id.clone();
+                            tokio::spawn(async move {
+                                pty_output_reader(state_clone, session_id_clone, handle).await;
+                            });
+                        }
+
+                        (120, 40) // Initial dimensions from config
+                    }
+                    Err(e) => {
+                        let error = ServerMessage::Error {
+                            session_id: Some(session_id),
+                            message: format!("Failed to create PTY session: {}", e),
+                            code: "PTY_CREATE_FAILED".to_string(),
+                        };
+                        let json = serde_json::to_string(&error)?;
+                        sender.send(Message::Text(json)).await?;
+                        return Ok(());
+                    }
+                }
             };
-            let json = serde_json::to_string(&error)?;
+
+            // Mark this connection as attached
+            conn_state.attach_pty(&session_id);
+
+            // Send AttachAck
+            let ack = ServerMessage::AttachAck {
+                session_id,
+                cols,
+                rows,
+            };
+            let json = serde_json::to_string(&ack)?;
             sender.send(Message::Text(json)).await?;
         }
 
         ClientMessage::Detach { session_id } => {
             debug!("PTY detach requested for session: {}", session_id);
-            // TODO: Implement PTY detach
+            conn_state.detach_pty(&session_id);
         }
 
         ClientMessage::PtyInput { session_id, data } => {
             debug!("PTY input for session: {}, {} bytes", session_id, data.len());
-            // TODO: Implement PTY input forwarding
+
+            // Decode base64 input
+            let decoded = match base64::engine::general_purpose::STANDARD.decode(&data) {
+                Ok(d) => d,
+                Err(e) => {
+                    warn!("Failed to decode PTY input: {}", e);
+                    return Ok(());
+                }
+            };
+
+            // Get handle and write
+            let pty_manager = state.pty_manager.read().await;
+            if let Some(handle) = pty_manager.get_handle(&session_id) {
+                if let Err(e) = handle.write(&decoded).await {
+                    warn!("Failed to write to PTY: {}", e);
+                }
+            } else {
+                warn!("PTY session not found: {}", session_id);
+            }
         }
 
         ClientMessage::PtyResize {
@@ -527,7 +660,15 @@ async fn handle_text_message(
                 "PTY resize for session: {}, {}x{}",
                 session_id, cols, rows
             );
-            // TODO: Implement PTY resize
+
+            let pty_manager = state.pty_manager.read().await;
+            if let Some(handle) = pty_manager.get_handle(&session_id) {
+                if let Err(e) = handle.resize(cols, rows).await {
+                    warn!("Failed to resize PTY: {}", e);
+                }
+            } else {
+                warn!("PTY session not found: {}", session_id);
+            }
         }
     }
 
@@ -647,4 +788,48 @@ fn get_history_page(
         .collect();
 
     (events, oldest_seq, has_more)
+}
+
+/// Background task that reads from a PTY and broadcasts output
+async fn pty_output_reader(
+    state: Arc<AppState>,
+    session_id: String,
+    handle: vibes_core::pty::PtySessionHandle,
+) {
+    use std::time::Duration;
+
+    debug!("Starting PTY output reader for session: {}", session_id);
+
+    loop {
+        // Read from PTY
+        match handle.read().await {
+            Ok(data) if !data.is_empty() => {
+                // Encode as base64 and broadcast
+                let encoded = base64::engine::general_purpose::STANDARD.encode(&data);
+                let event = PtyEvent::Output {
+                    session_id: session_id.clone(),
+                    data: encoded,
+                };
+                state.broadcast_pty_event(event);
+            }
+            Ok(_) => {
+                // No data available, wait a bit before polling again
+                tokio::time::sleep(Duration::from_millis(10)).await;
+            }
+            Err(e) => {
+                // Check if process has exited
+                warn!("PTY read error for session {}: {}", session_id, e);
+
+                // Broadcast exit event (exit code unknown without checking child)
+                let event = PtyEvent::Exit {
+                    session_id: session_id.clone(),
+                    exit_code: None,
+                };
+                state.broadcast_pty_event(event);
+                break;
+            }
+        }
+    }
+
+    debug!("PTY output reader finished for session: {}", session_id);
 }

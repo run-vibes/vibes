@@ -22,7 +22,7 @@ use vibes_core::{
 pub use error::ServerError;
 pub use http::create_router;
 pub use middleware::{AuthLayer, auth_middleware};
-pub use state::AppState;
+pub use state::{AppState, PtyEvent};
 
 /// The main vibes server
 pub struct VibesServer {
