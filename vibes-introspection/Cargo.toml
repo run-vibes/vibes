@@ -1,31 +1,32 @@
 [package]
 name = "vibes-introspection"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
 description = "Harness capability introspection for vibes"
-license = "MIT"
 
 [dependencies]
 # Async runtime
-tokio = { version = "1", features = ["fs", "process", "sync", "time"] }
-async-trait = "0.1"
+tokio = { workspace = true, features = ["fs", "process", "sync", "time"] }
+async-trait.workspace = true
 
 # File watching
-notify = "6"
+notify.workspace = true
 
 # Cross-platform paths
-dirs = "5"
+dirs.workspace = true
 
 # Serialization
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
+serde.workspace = true
+serde_json.workspace = true
 
 # Error handling
-thiserror = "1"
+thiserror.workspace = true
 
 # Logging
-tracing = "0.1"
+tracing.workspace = true
 
 [dev-dependencies]
-tempfile = "3"
-tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+tempfile.workspace = true
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }

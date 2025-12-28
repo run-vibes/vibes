@@ -3282,12 +3282,12 @@ name = "vibes-introspection"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "dirs 5.0.1",
+ "dirs 6.0.0",
  "notify",
  "serde",
  "serde_json",
  "tempfile",
- "thiserror 1.0.69",
+ "thiserror 2.0.17",
  "tokio",
  "tracing",
 ]

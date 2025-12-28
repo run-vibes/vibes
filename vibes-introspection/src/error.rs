@@ -1,7 +1,5 @@
 //! Error types for introspection
 
-use std::path::PathBuf;
-
 #[derive(Debug, thiserror::Error)]
 pub enum IntrospectionError {
     #[error("Could not determine home directory")]
