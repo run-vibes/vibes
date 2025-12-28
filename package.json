@@ -1,0 +1,16 @@
+{
+  "name": "vibes",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "web-ui",
+    "e2e-tests"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=web-ui",
+    "build": "npm run build --workspace=web-ui",
+    "test:e2e": "npm run test --workspace=e2e-tests",
+    "test:e2e:headed": "npm run test:headed --workspace=e2e-tests"
+  }
+}
