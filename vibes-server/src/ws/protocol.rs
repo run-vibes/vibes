@@ -62,6 +62,9 @@ pub enum ClientMessage {
     },
 
     /// Create a new session
+    ///
+    /// Note: With PTY mode, sessions are created via `Attach`. This is retained
+    /// for backwards compatibility with non-PTY clients.
     CreateSession {
         /// Optional session name
         name: Option<String>,
@@ -69,7 +72,12 @@ pub enum ClientMessage {
         request_id: String,
     },
 
-    /// Send user input to a session
+    // ==================== Legacy Messages (Non-PTY) ====================
+    // These are retained for backwards compatibility. New clients should
+    // use PTY messages (Attach, PtyInput, PtyResize) instead.
+    /// Send user input to a session (DEPRECATED)
+    ///
+    /// Use `PtyInput` instead for PTY sessions.
     Input {
         /// Target session ID
         session_id: String,
@@ -77,7 +85,9 @@ pub enum ClientMessage {
         content: String,
     },
 
-    /// Respond to a permission request
+    /// Respond to a permission request (DEPRECATED)
+    ///
+    /// With PTY mode, permissions are handled through the terminal UI.
     PermissionResponse {
         /// Target session ID
         session_id: String,
@@ -164,7 +174,10 @@ pub enum ServerMessage {
         name: Option<String>,
     },
 
-    /// Claude event from a session
+    /// Claude event from a session (DEPRECATED)
+    ///
+    /// With PTY mode, output is sent via `PtyOutput` instead.
+    /// Retained for backwards compatibility with non-PTY clients.
     Claude {
         /// Source session ID
         session_id: String,
@@ -251,7 +264,10 @@ pub enum ServerMessage {
         oldest_seq: u64,
     },
 
-    /// User input broadcast to other subscribers
+    /// User input broadcast to other subscribers (DEPRECATED)
+    ///
+    /// With PTY mode, input/output is handled via `PtyInput`/`PtyOutput`.
+    /// Retained for backwards compatibility with non-PTY clients.
     UserInput {
         /// Session ID
         session_id: String,

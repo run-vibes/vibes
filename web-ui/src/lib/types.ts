@@ -9,13 +9,16 @@
 export type ClientMessage =
   | { type: 'subscribe'; session_ids: string[]; catch_up?: boolean }
   | { type: 'unsubscribe'; session_ids: string[] }
+  /** @deprecated With PTY mode, sessions are created via 'attach' */
   | { type: 'create_session'; name?: string; request_id: string }
+  /** @deprecated Use 'pty_input' for PTY sessions */
   | { type: 'input'; session_id: string; content: string }
+  /** @deprecated With PTY mode, permissions are handled through the terminal UI */
   | { type: 'permission_response'; session_id: string; request_id: string; approved: boolean }
   | { type: 'list_sessions'; request_id: string }
   | { type: 'kill_session'; session_id: string }
   | { type: 'request_history'; session_id: string; before_seq: number; limit: number }
-  // PTY messages
+  // PTY messages (preferred)
   | { type: 'attach'; session_id: string }
   | { type: 'detach'; session_id: string }
   | { type: 'pty_input'; session_id: string; data: string }  // base64 encoded
@@ -28,6 +31,7 @@ export type ClientMessage =
 export type ServerMessage =
   | { type: 'session_created'; request_id: string; session_id: string; name?: string }
   | { type: 'session_notification'; session_id: string; name?: string }
+  /** @deprecated With PTY mode, output is sent via 'pty_output' instead */
   | { type: 'claude'; session_id: string; event: ClaudeEvent }
   | { type: 'session_state'; session_id: string; state: SessionState }
   | { type: 'error'; session_id?: string; message: string; code: string }
@@ -37,6 +41,7 @@ export type ServerMessage =
   | { type: 'ownership_transferred'; session_id: string; new_owner_id: string; you_are_owner: boolean }
   | { type: 'subscribe_ack'; session_id: string; current_seq: number; history: HistoryEvent[]; has_more: boolean }
   | { type: 'history_page'; session_id: string; events: HistoryEvent[]; has_more: boolean; oldest_seq: number }
+  /** @deprecated With PTY mode, user input is sent via 'pty_input' */
   | { type: 'user_input'; session_id: string; content: string; source: InputSource }
   | AuthContextMessage
   // PTY messages
