@@ -87,6 +87,9 @@ impl VibesClient {
     /// Create a new session and wait for confirmation
     ///
     /// Returns the new session ID
+    ///
+    /// Note: With PTY mode, sessions are created via PTY attachment instead.
+    #[allow(dead_code)]
     pub async fn create_session(&mut self, name: Option<String>) -> Result<String> {
         let request_id = uuid::Uuid::new_v4().to_string();
 
@@ -139,6 +142,9 @@ impl VibesClient {
     }
 
     /// Send input to a session
+    ///
+    /// Note: With PTY mode, input is sent via PTY data messages instead.
+    #[allow(dead_code)]
     pub async fn send_input(&self, session_id: &str, content: &str) -> Result<()> {
         self.send(ClientMessage::Input {
             session_id: session_id.to_string(),

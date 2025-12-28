@@ -6,7 +6,7 @@
 
 use std::fs;
 use std::os::unix::fs::PermissionsExt;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use tracing::{debug, info};
 
 use super::scripts;
@@ -114,12 +114,16 @@ impl HookInstaller {
             debug!("Installed hook script: {:?}", script_path);
         }
 
-        info!("Installed {} hook scripts to {:?}", scripts::SCRIPTS.len(), hooks_dir);
+        info!(
+            "Installed {} hook scripts to {:?}",
+            scripts::SCRIPTS.len(),
+            hooks_dir
+        );
         Ok(hooks_dir)
     }
 
     /// Update settings.json to register hooks
-    pub fn update_settings(&self, hooks_dir: &PathBuf) -> Result<(), InstallError> {
+    pub fn update_settings(&self, hooks_dir: &Path) -> Result<(), InstallError> {
         let settings_path = self.claude_dir()?.join("settings.json");
 
         // Read existing settings or create new
@@ -132,9 +136,9 @@ impl HookInstaller {
         };
 
         // Ensure settings is an object
-        let settings_obj = settings
-            .as_object_mut()
-            .ok_or_else(|| InstallError::ParseSettings("settings.json is not an object".to_string()))?;
+        let settings_obj = settings.as_object_mut().ok_or_else(|| {
+            InstallError::ParseSettings("settings.json is not an object".to_string())
+        })?;
 
         // Get or create hooks array
         let hooks = settings_obj
@@ -164,12 +168,14 @@ impl HookInstaller {
                     == Some(hook_type)
                     && h.get("hooks")
                         .and_then(|arr| arr.as_array())
-                        .map(|arr| arr.iter().any(|cmd| {
-                            cmd.get("command")
-                                .and_then(|c| c.as_str())
-                                .map(|c| c.contains("vibes"))
-                                .unwrap_or(false)
-                        }))
+                        .map(|arr| {
+                            arr.iter().any(|cmd| {
+                                cmd.get("command")
+                                    .and_then(|c| c.as_str())
+                                    .map(|c| c.contains("vibes"))
+                                    .unwrap_or(false)
+                            })
+                        })
                         .unwrap_or(false)
             });
 
@@ -237,7 +243,11 @@ mod tests {
             #[cfg(unix)]
             {
                 let perms = fs::metadata(&script_path).unwrap().permissions();
-                assert!(perms.mode() & 0o111 != 0, "Script {} should be executable", name);
+                assert!(
+                    perms.mode() & 0o111 != 0,
+                    "Script {} should be executable",
+                    name
+                );
             }
         }
     }

@@ -159,7 +159,10 @@ mod tests {
     #[test]
     fn test_default_config() {
         let config = HookReceiverConfig::default();
-        assert_eq!(config.socket_path.to_str().unwrap(), "/tmp/vibes-hooks.sock");
+        assert_eq!(
+            config.socket_path.to_str().unwrap(),
+            "/tmp/vibes-hooks.sock"
+        );
         assert_eq!(config.tcp_port, 7744);
     }
 

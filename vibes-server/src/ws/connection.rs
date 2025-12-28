@@ -15,8 +15,8 @@ use uuid::Uuid;
 use vibes_core::history::{MessageQuery, MessageRole};
 use vibes_core::{AuthContext, ClaudeEvent, EventBus, InputSource, VibesEvent};
 
-use base64::Engine;
 use crate::{AppState, PtyEvent};
+use base64::Engine;
 
 use super::protocol::{
     ClientMessage, HistoryEvent, RemovalReason, ServerMessage, SessionInfo,
@@ -327,7 +327,10 @@ async fn handle_pty_event(
             session_id: session_id.clone(),
             data: data.clone(),
         },
-        PtyEvent::Exit { session_id, exit_code } => ServerMessage::PtyExit {
+        PtyEvent::Exit {
+            session_id,
+            exit_code,
+        } => ServerMessage::PtyExit {
             session_id: session_id.clone(),
             exit_code: *exit_code,
         },
@@ -629,7 +632,11 @@ async fn handle_text_message(
         }
 
         ClientMessage::PtyInput { session_id, data } => {
-            debug!("PTY input for session: {}, {} bytes", session_id, data.len());
+            debug!(
+                "PTY input for session: {}, {} bytes",
+                session_id,
+                data.len()
+            );
 
             // Decode base64 input
             let decoded = match base64::engine::general_purpose::STANDARD.decode(&data) {
@@ -656,10 +663,7 @@ async fn handle_text_message(
             cols,
             rows,
         } => {
-            debug!(
-                "PTY resize for session: {}, {}x{}",
-                session_id, cols, rows
-            );
+            debug!("PTY resize for session: {}, {}x{}", session_id, cols, rows);
 
             let pty_manager = state.pty_manager.read().await;
             if let Some(handle) = pty_manager.get_handle(&session_id) {

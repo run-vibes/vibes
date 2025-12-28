@@ -1,4 +1,9 @@
 //! In-memory input history for up/down navigation
+//!
+//! Note: With PTY mode, terminal-native history is used instead.
+//! This module is retained for potential non-PTY use cases.
+
+#![allow(dead_code)]
 
 /// Manages input history for CLI sessions
 ///

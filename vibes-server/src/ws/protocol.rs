@@ -111,7 +111,6 @@ pub enum ClientMessage {
     },
 
     // ==================== PTY Messages ====================
-
     /// Attach to a session (receive PTY output)
     Attach {
         /// Session ID to attach to
@@ -263,7 +262,6 @@ pub enum ServerMessage {
     },
 
     // ==================== PTY Messages ====================
-
     /// PTY output data
     PtyOutput {
         /// Source session ID

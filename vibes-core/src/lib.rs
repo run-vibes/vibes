@@ -61,6 +61,10 @@ pub use backend::{BackendFactory, BackendState, ClaudeBackend, MockBackend, Mock
 pub use error::{BackendError, EventBusError, NotificationError, SessionError, VibesError};
 pub use events::{ClaudeEvent, EventBus, InputSource, MemoryEventBus, Usage, VibesEvent};
 pub use history::HistoryError;
+pub use hooks::{
+    HookEvent, HookInstaller, HookInstallerConfig, HookReceiver, HookReceiverConfig, HookType,
+    InstallError, PostToolUseData, PreToolUseData, StopData,
+};
 pub use notifications::{
     NotificationConfig, NotificationData, NotificationEvent, NotificationService, PushNotification,
     PushSubscription, SubscriptionKeys, SubscriptionStore, VapidKeyManager, VapidKeys,
@@ -73,8 +77,4 @@ pub use session::{
 pub use tunnel::{
     CloudflaredInfo, LogLevel, RestartPolicy, TunnelConfig, TunnelError, TunnelEvent,
     TunnelManager, TunnelMode, TunnelState, check_installation,
-};
-pub use hooks::{
-    HookEvent, HookInstaller, HookInstallerConfig, HookReceiver, HookReceiverConfig, HookType,
-    InstallError, PostToolUseData, PreToolUseData, StopData,
 };

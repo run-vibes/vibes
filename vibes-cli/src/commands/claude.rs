@@ -111,10 +111,7 @@ pub async fn run(args: ClaudeArgs) -> Result<()> {
 }
 
 /// Wait for attach acknowledgment from server
-async fn wait_for_attach_ack(
-    client: &mut VibesClient,
-    session_id: &str,
-) -> Result<(u16, u16)> {
+async fn wait_for_attach_ack(client: &mut VibesClient, session_id: &str) -> Result<(u16, u16)> {
     let timeout = Duration::from_secs(10);
     let start = std::time::Instant::now();
 
@@ -164,13 +161,13 @@ async fn pty_loop(client: &mut VibesClient, session_id: &str) -> Result<()> {
 
     loop {
         // Check for terminal resize
-        if let Ok(current_size) = terminal.size() {
-            if current_size != last_size {
-                client
-                    .pty_resize(session_id, current_size.0, current_size.1)
-                    .await?;
-                last_size = current_size;
-            }
+        if let Ok(current_size) = terminal.size()
+            && current_size != last_size
+        {
+            client
+                .pty_resize(session_id, current_size.0, current_size.1)
+                .await?;
+            last_size = current_size;
         }
 
         // Poll for terminal input
@@ -189,8 +186,7 @@ async fn pty_loop(client: &mut VibesClient, session_id: &str) -> Result<()> {
                 }
                 Event::Paste(text) => {
                     // Send pasted text directly
-                    let encoded =
-                        base64::engine::general_purpose::STANDARD.encode(text.as_bytes());
+                    let encoded = base64::engine::general_purpose::STANDARD.encode(text.as_bytes());
                     client.pty_input(session_id, &encoded).await?;
                 }
                 _ => {
@@ -203,11 +199,12 @@ async fn pty_loop(client: &mut VibesClient, session_id: &str) -> Result<()> {
         match tokio::time::timeout(Duration::from_millis(1), client.recv()).await {
             Ok(Some(msg)) => {
                 match msg {
-                    ServerMessage::PtyOutput { session_id: sid, data } if sid == session_id => {
+                    ServerMessage::PtyOutput {
+                        session_id: sid,
+                        data,
+                    } if sid == session_id => {
                         // Decode and write to terminal
-                        if let Ok(bytes) =
-                            base64::engine::general_purpose::STANDARD.decode(&data)
-                        {
+                        if let Ok(bytes) = base64::engine::general_purpose::STANDARD.decode(&data) {
                             terminal.write(&bytes)?;
                         }
                     }

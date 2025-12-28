@@ -3,8 +3,8 @@
 use std::collections::HashMap;
 use uuid::Uuid;
 
-use super::{PtyConfig, PtyError, PtySession, PtySessionHandle};
 use super::session::PtyState;
+use super::{PtyConfig, PtyError, PtySession, PtySessionHandle};
 
 /// Info about a session (without the handle)
 #[derive(Debug, Clone)]
@@ -84,9 +84,10 @@ mod tests {
     use super::*;
 
     fn test_config() -> PtyConfig {
-        let mut config = PtyConfig::default();
-        config.claude_path = "cat".into();
-        config
+        PtyConfig {
+            claude_path: "cat".into(),
+            ..Default::default()
+        }
     }
 
     #[test]
@@ -102,7 +103,9 @@ mod tests {
     fn create_session_with_name() {
         let mut manager = PtyManager::new(test_config());
 
-        let id = manager.create_session(Some("my-session".to_string())).unwrap();
+        let id = manager
+            .create_session(Some("my-session".to_string()))
+            .unwrap();
         let session = manager.get_session(&id).unwrap();
         assert_eq!(session.name, Some("my-session".to_string()));
     }
@@ -111,8 +114,12 @@ mod tests {
     fn list_sessions_returns_all() {
         let mut manager = PtyManager::new(test_config());
 
-        manager.create_session(Some("session1".to_string())).unwrap();
-        manager.create_session(Some("session2".to_string())).unwrap();
+        manager
+            .create_session(Some("session1".to_string()))
+            .unwrap();
+        manager
+            .create_session(Some("session2".to_string()))
+            .unwrap();
 
         let sessions = manager.list_sessions();
         assert_eq!(sessions.len(), 2);

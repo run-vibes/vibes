@@ -1,6 +1,6 @@
 //! PTY session management
 
-use portable_pty::{native_pty_system, CommandBuilder, PtySize};
+use portable_pty::{CommandBuilder, PtySize, native_pty_system};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -78,11 +78,7 @@ pub struct PtySession {
 
 impl PtySession {
     /// Spawn a new PTY session
-    pub fn spawn(
-        id: String,
-        name: Option<String>,
-        config: &PtyConfig,
-    ) -> Result<Self, PtyError> {
+    pub fn spawn(id: String, name: Option<String>, config: &PtyConfig) -> Result<Self, PtyError> {
         let pty_system = native_pty_system();
 
         let pair = pty_system
@@ -137,9 +133,11 @@ mod tests {
 
     #[test]
     fn spawn_creates_running_session() {
-        let mut config = PtyConfig::default();
         // Use 'cat' for testing - it will wait for input
-        config.claude_path = "cat".into();
+        let config = PtyConfig {
+            claude_path: "cat".into(),
+            ..Default::default()
+        };
 
         let session = PtySession::spawn("test-id".to_string(), None, &config);
         assert!(session.is_ok());
@@ -151,8 +149,10 @@ mod tests {
 
     #[test]
     fn spawn_with_name() {
-        let mut config = PtyConfig::default();
-        config.claude_path = "cat".into();
+        let config = PtyConfig {
+            claude_path: "cat".into(),
+            ..Default::default()
+        };
 
         let session = PtySession::spawn(
             "test-id".to_string(),
@@ -166,8 +166,10 @@ mod tests {
 
     #[test]
     fn spawn_invalid_command_fails() {
-        let mut config = PtyConfig::default();
-        config.claude_path = "/nonexistent/binary".into();
+        let config = PtyConfig {
+            claude_path: "/nonexistent/binary".into(),
+            ..Default::default()
+        };
 
         let result = PtySession::spawn("test-id".to_string(), None, &config);
         assert!(result.is_err());
@@ -175,9 +177,11 @@ mod tests {
 
     #[tokio::test]
     async fn write_and_read_data() {
-        let mut config = PtyConfig::default();
         // Use 'cat' - it echoes input back
-        config.claude_path = "cat".into();
+        let config = PtyConfig {
+            claude_path: "cat".into(),
+            ..Default::default()
+        };
 
         let session = PtySession::spawn("test-id".to_string(), None, &config).unwrap();
 
@@ -194,8 +198,10 @@ mod tests {
 
     #[tokio::test]
     async fn resize_pty() {
-        let mut config = PtyConfig::default();
-        config.claude_path = "cat".into();
+        let config = PtyConfig {
+            claude_path: "cat".into(),
+            ..Default::default()
+        };
 
         let session = PtySession::spawn("test-id".to_string(), None, &config).unwrap();
 

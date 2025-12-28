@@ -28,11 +28,21 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_scripts_not_empty() {
-        assert!(!PRE_TOOL_USE.is_empty());
-        assert!(!POST_TOOL_USE.is_empty());
-        assert!(!STOP.is_empty());
-        assert!(!VIBES_HOOK_SEND.is_empty());
+    fn test_scripts_have_content() {
+        // Verify scripts have meaningful content (not just shebang)
+        assert!(
+            PRE_TOOL_USE.len() > 50,
+            "pre-tool-use.sh should have content"
+        );
+        assert!(
+            POST_TOOL_USE.len() > 50,
+            "post-tool-use.sh should have content"
+        );
+        assert!(STOP.len() > 50, "stop.sh should have content");
+        assert!(
+            VIBES_HOOK_SEND.len() > 50,
+            "vibes-hook-send.sh should have content"
+        );
     }
 
     #[test]

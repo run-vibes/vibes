@@ -18,7 +18,10 @@ pub enum PtyEvent {
     /// Raw output from a PTY session (base64 encoded for binary safety)
     Output { session_id: String, data: String },
     /// PTY process has exited
-    Exit { session_id: String, exit_code: Option<i32> },
+    Exit {
+        session_id: String,
+        exit_code: Option<i32>,
+    },
 }
 
 use crate::middleware::AuthLayer;
