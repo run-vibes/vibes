@@ -16,7 +16,6 @@ pub enum VibesError {
 
     #[error("Notification error: {0}")]
     Notification(#[from] NotificationError),
-
 }
 
 /// Errors related to push notifications

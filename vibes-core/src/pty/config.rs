@@ -5,7 +5,7 @@ use std::path::PathBuf;
 /// Configuration for PTY sessions
 #[derive(Debug, Clone)]
 pub struct PtyConfig {
-    /// Path to claude binary (defaults to "claude")
+    /// Path to claude binary (defaults to "claude", can be overridden via VIBES_PTY_COMMAND env var)
     pub claude_path: PathBuf,
     /// Initial terminal columns
     pub initial_cols: u16,
@@ -15,8 +15,13 @@ pub struct PtyConfig {
 
 impl Default for PtyConfig {
     fn default() -> Self {
+        // Allow overriding the command via environment variable (useful for testing)
+        let claude_path = std::env::var("VIBES_PTY_COMMAND")
+            .map(PathBuf::from)
+            .unwrap_or_else(|_| PathBuf::from("claude"));
+
         Self {
-            claude_path: PathBuf::from("claude"),
+            claude_path,
             initial_cols: 120,
             initial_rows: 40,
         }
