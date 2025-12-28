@@ -2,10 +2,8 @@
 
 /// Manages input history for CLI sessions
 ///
-/// TODO: Integrate with CLI input loop using crossterm for arrow key detection.
-/// This struct is currently prepared but not yet integrated into the CLI's
-/// input loop. Integration will require terminal raw mode handling.
-#[allow(dead_code)]
+/// Used by `Readline` to provide up/down arrow navigation through
+/// previously entered commands.
 #[derive(Debug, Default)]
 pub struct InputHistory {
     /// Previous inputs
@@ -16,16 +14,19 @@ pub struct InputHistory {
     draft: String,
 }
 
-#[allow(dead_code)]
 impl InputHistory {
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Returns the number of entries in history
+    #[cfg(test)]
     pub fn len(&self) -> usize {
         self.entries.len()
     }
 
+    /// Returns true if history is empty
+    #[cfg(test)]
     pub fn is_empty(&self) -> bool {
         self.entries.is_empty()
     }
