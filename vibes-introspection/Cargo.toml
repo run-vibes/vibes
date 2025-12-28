@@ -27,6 +27,10 @@ thiserror.workspace = true
 # Logging
 tracing.workspace = true
 
+[features]
+default = []
+claude-code = []
+
 [dev-dependencies]
 tempfile.workspace = true
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }

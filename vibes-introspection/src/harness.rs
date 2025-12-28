@@ -47,4 +47,17 @@ mod tests {
         // This compiles only if Harness is object-safe
         fn _takes_boxed_harness(_: Box<dyn Harness>) {}
     }
+
+    #[test]
+    fn test_harness_for_unknown_command_returns_none() {
+        assert!(harness_for_command("unknown").is_none());
+        assert!(harness_for_command("cursor").is_none());
+        assert!(harness_for_command("aider").is_none());
+    }
+
+    #[test]
+    #[cfg(not(feature = "claude-code"))]
+    fn test_harness_for_claude_without_feature_returns_none() {
+        assert!(harness_for_command("claude").is_none());
+    }
 }
