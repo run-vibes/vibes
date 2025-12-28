@@ -2,19 +2,31 @@
 //!
 //! SessionManager handles creation, retrieval, and lifecycle of sessions.
 //! It uses a BackendFactory for dependency injection of backend implementations.
+//!
+//! ## Concurrency Design
+//!
+//! Sessions are wrapped in `Arc<Mutex<Session>>` to allow concurrent operations
+//! on different sessions. The HashMap itself is protected by an RwLock for
+//! concurrent read access during session lookup.
+//!
+//! This design prevents a long-running operation on one session (e.g., waiting
+//! for Claude to respond) from blocking operations on other sessions.
 
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use tokio::sync::RwLock;
+use tokio::sync::{Mutex, RwLock};
 use uuid::Uuid;
 
-use crate::backend::traits::BackendFactory;
+use crate::backend::traits::{BackendFactory, ClaudeBackend};
 use crate::error::SessionError;
 use crate::events::EventBus;
 
 use super::ownership::ClientId;
 use super::state::{Session, SessionState};
+
+/// A handle to a session, allowing concurrent access
+type SessionHandle = Arc<Mutex<Session>>;
 
 /// Manages multiple vibes sessions
 ///
@@ -23,9 +35,11 @@ use super::state::{Session, SessionState};
 /// - Session retrieval by ID
 /// - Session listing
 /// - Backend factory injection for testability
+///
+/// Sessions are individually locked to allow concurrent operations.
 pub struct SessionManager {
-    /// Active sessions indexed by ID
-    sessions: RwLock<HashMap<String, Session>>,
+    /// Active sessions indexed by ID, each wrapped for concurrent access
+    sessions: RwLock<HashMap<String, SessionHandle>>,
     /// Factory for creating backends
     backend_factory: Arc<dyn BackendFactory>,
     /// Event bus shared by all sessions
@@ -67,7 +81,10 @@ impl SessionManager {
             None => Session::new(id.clone(), name, backend, self.event_bus.clone()),
         };
 
-        self.sessions.write().await.insert(id.clone(), session);
+        self.sessions
+            .write()
+            .await
+            .insert(id.clone(), Arc::new(Mutex::new(session)));
         id
     }
 
@@ -92,63 +109,122 @@ impl SessionManager {
         let backend = self.backend_factory.create(claude_session_id);
         let session = Session::new(id.clone(), name, backend, self.event_bus.clone());
 
-        self.sessions.write().await.insert(id.clone(), session);
+        self.sessions
+            .write()
+            .await
+            .insert(id.clone(), Arc::new(Mutex::new(session)));
         Ok(id)
     }
 
-    /// Get a session by ID
+    /// Create a session with a custom backend
     ///
-    /// Returns a mutable reference for sending messages.
-    /// Uses the callback pattern to avoid lifetime issues with RwLock.
+    /// This allows injecting custom backends with specific behaviors
+    /// (e.g., SlowMockBackend for concurrency testing).
+    pub async fn create_session_with_backend<B: ClaudeBackend + 'static>(
+        &self,
+        name: Option<String>,
+        backend: B,
+    ) -> Result<String, SessionError> {
+        let id = uuid::Uuid::new_v4().to_string();
+        let session = Session::new(id.clone(), name, Box::new(backend), self.event_bus.clone());
+
+        self.sessions
+            .write()
+            .await
+            .insert(id.clone(), Arc::new(Mutex::new(session)));
+        Ok(id)
+    }
+
+    /// Get a session by ID for synchronous operations
+    ///
+    /// Uses the callback pattern. The callback receives a mutable reference
+    /// to the session. Note: For async operations, use `send_to_session` or
+    /// `respond_permission` instead to avoid holding locks during awaits.
     pub async fn with_session<F, R>(&self, id: &str, f: F) -> Result<R, SessionError>
     where
         F: FnOnce(&mut Session) -> R,
     {
-        let mut sessions = self.sessions.write().await;
-        let session = sessions
-            .get_mut(id)
-            .ok_or_else(|| SessionError::NotFound(id.to_string()))?;
-        Ok(f(session))
+        // Get session handle with read lock (allows concurrent lookups)
+        let session_handle = {
+            let sessions = self.sessions.read().await;
+            sessions
+                .get(id)
+                .cloned()
+                .ok_or_else(|| SessionError::NotFound(id.to_string()))?
+        };
+        // Lock only this session, not the entire map
+        let mut session = session_handle.lock().await;
+        Ok(f(&mut session))
     }
 
     /// Send input to a session
+    ///
+    /// This method is designed to not block other session operations while
+    /// waiting for Claude to respond. It only locks the individual session,
+    /// not the entire session map.
     pub async fn send_to_session(&self, id: &str, input: &str) -> Result<(), SessionError> {
-        let mut sessions = self.sessions.write().await;
-        let session = sessions
-            .get_mut(id)
-            .ok_or_else(|| SessionError::NotFound(id.to_string()))?;
+        // Get session handle with read lock (brief)
+        let session_handle = {
+            let sessions = self.sessions.read().await;
+            sessions
+                .get(id)
+                .cloned()
+                .ok_or_else(|| SessionError::NotFound(id.to_string()))?
+        };
+        // Read lock is now released - other sessions can be accessed
+
+        // Lock only this session for the duration of the send
+        let mut session = session_handle.lock().await;
         session.send(input).await
     }
 
     /// Respond to a permission request in a session
+    ///
+    /// Like `send_to_session`, this only locks the individual session.
     pub async fn respond_permission(
         &self,
         session_id: &str,
         request_id: &str,
         approved: bool,
     ) -> Result<(), SessionError> {
-        let mut sessions = self.sessions.write().await;
-        let session = sessions
-            .get_mut(session_id)
-            .ok_or_else(|| SessionError::NotFound(session_id.to_string()))?;
+        // Get session handle with read lock (brief)
+        let session_handle = {
+            let sessions = self.sessions.read().await;
+            sessions
+                .get(session_id)
+                .cloned()
+                .ok_or_else(|| SessionError::NotFound(session_id.to_string()))?
+        };
+        // Read lock is now released
+
+        // Lock only this session
+        let mut session = session_handle.lock().await;
         session.respond_permission(request_id, approved).await
     }
 
     /// Get session state by ID
     pub async fn get_session_state(&self, id: &str) -> Result<SessionState, SessionError> {
-        let sessions = self.sessions.read().await;
-        let session = sessions
-            .get(id)
-            .ok_or_else(|| SessionError::NotFound(id.to_string()))?;
+        let session_handle = {
+            let sessions = self.sessions.read().await;
+            sessions
+                .get(id)
+                .cloned()
+                .ok_or_else(|| SessionError::NotFound(id.to_string()))?
+        };
+        let session = session_handle.lock().await;
         Ok(session.state())
     }
 
     /// Get session name by ID
     pub async fn get_session_name(&self, id: &str) -> Result<Option<String>, SessionError> {
-        let sessions = self.sessions.read().await;
-        let session = sessions
-            .get(id)
-            .ok_or_else(|| SessionError::NotFound(id.to_string()))?;
+        let session_handle = {
+            let sessions = self.sessions.read().await;
+            sessions
+                .get(id)
+                .cloned()
+                .ok_or_else(|| SessionError::NotFound(id.to_string()))?
+        };
+        let session = session_handle.lock().await;
         Ok(session.name().map(|s| s.to_string()))
     }
 
@@ -159,31 +235,31 @@ impl SessionManager {
 
     /// List sessions with their states
     pub async fn list_sessions_with_state(&self) -> Vec<(String, SessionState)> {
-        self.sessions
-            .read()
-            .await
-            .iter()
-            .map(|(id, session)| (id.clone(), session.state()))
-            .collect()
+        let sessions = self.sessions.read().await;
+        let mut result = Vec::with_capacity(sessions.len());
+        for (id, handle) in sessions.iter() {
+            let session = handle.lock().await;
+            result.push((id.clone(), session.state()));
+        }
+        result
     }
 
     /// List sessions with ID, name, and state
     pub async fn list_sessions_full(
         &self,
     ) -> Vec<(String, Option<String>, SessionState, std::time::SystemTime)> {
-        self.sessions
-            .read()
-            .await
-            .iter()
-            .map(|(id, session)| {
-                (
-                    id.clone(),
-                    session.name().map(|s| s.to_string()),
-                    session.state(),
-                    session.created_at(),
-                )
-            })
-            .collect()
+        let sessions = self.sessions.read().await;
+        let mut result = Vec::with_capacity(sessions.len());
+        for (id, handle) in sessions.iter() {
+            let session = handle.lock().await;
+            result.push((
+                id.clone(),
+                session.name().map(|s| s.to_string()),
+                session.state(),
+                session.created_at(),
+            ));
+        }
+        result
     }
 
     /// Remove a session
@@ -202,24 +278,28 @@ impl SessionManager {
 
     /// Get all sessions owned by a client
     pub async fn get_sessions_owned_by(&self, client_id: &str) -> Vec<String> {
-        self.sessions
-            .read()
-            .await
-            .iter()
-            .filter(|(_, session)| session.ownership().is_owner(&client_id.to_string()))
-            .map(|(id, _)| id.clone())
-            .collect()
+        let sessions = self.sessions.read().await;
+        let mut result = Vec::new();
+        for (id, handle) in sessions.iter() {
+            let session = handle.lock().await;
+            if session.ownership().is_owner(&client_id.to_string()) {
+                result.push(id.clone());
+            }
+        }
+        result
     }
 
     /// Get all sessions a client is subscribed to
     pub async fn get_sessions_subscribed_by(&self, client_id: &str) -> Vec<String> {
-        self.sessions
-            .read()
-            .await
-            .iter()
-            .filter(|(_, session)| session.ownership().is_subscriber(&client_id.to_string()))
-            .map(|(id, _)| id.clone())
-            .collect()
+        let sessions = self.sessions.read().await;
+        let mut result = Vec::new();
+        for (id, handle) in sessions.iter() {
+            let session = handle.lock().await;
+            if session.ownership().is_subscriber(&client_id.to_string()) {
+                result.push(id.clone());
+            }
+        }
+        result
     }
 }
 

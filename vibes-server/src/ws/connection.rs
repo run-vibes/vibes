@@ -6,42 +6,71 @@ use std::sync::Arc;
 use axum::Extension;
 use axum::extract::State;
 use axum::extract::ws::{Message, WebSocket, WebSocketUpgrade};
+use axum::http::Request;
 use axum::response::IntoResponse;
 use futures::{SinkExt, StreamExt};
 use tokio::sync::broadcast;
 use tracing::{debug, error, info, warn};
 use uuid::Uuid;
-use vibes_core::{AuthContext, VibesEvent};
+use vibes_core::history::{MessageQuery, MessageRole};
+use vibes_core::{AuthContext, ClaudeEvent, EventBus, InputSource, VibesEvent};
 
 use crate::AppState;
 
 use super::protocol::{
-    ClientMessage, RemovalReason, ServerMessage, SessionInfo, vibes_event_to_server_message,
+    ClientMessage, HistoryEvent, RemovalReason, ServerMessage, SessionInfo,
+    vibes_event_to_server_message,
 };
+
+/// Detect client type from request headers
+///
+/// CLI clients send `X-Vibes-Client-Type: cli` header.
+/// Browser connections default to Web UI.
+fn detect_client_type<B>(req: &Request<B>) -> InputSource {
+    if let Some(header) = req.headers().get("X-Vibes-Client-Type")
+        && let Ok(value) = header.to_str()
+        && value.eq_ignore_ascii_case("cli")
+    {
+        return InputSource::Cli;
+    }
+    // Default to Web UI for browser connections
+    InputSource::WebUi
+}
 
 /// WebSocket upgrade handler
 pub async fn ws_handler(
     ws: WebSocketUpgrade,
     State(state): State<Arc<AppState>>,
     Extension(auth_context): Extension<AuthContext>,
+    req: Request<axum::body::Body>,
 ) -> impl IntoResponse {
-    ws.on_upgrade(move |socket| handle_socket(socket, state, auth_context))
+    let client_type = detect_client_type(&req);
+    debug!(?client_type, "WebSocket connection detected");
+    ws.on_upgrade(move |socket| handle_socket(socket, state, auth_context, client_type))
 }
 
 /// Per-connection state
 struct ConnectionState {
     /// Unique identifier for this connection
     client_id: String,
+    /// Type of client (CLI, Web UI)
+    client_type: InputSource,
     /// Session IDs this connection is subscribed to
     subscribed_sessions: HashSet<String>,
 }
 
 impl ConnectionState {
-    fn new() -> Self {
+    fn new(client_type: InputSource) -> Self {
         Self {
             client_id: Uuid::new_v4().to_string(),
+            client_type,
             subscribed_sessions: HashSet::new(),
         }
+    }
+
+    /// Get the client type
+    fn client_type(&self) -> InputSource {
+        self.client_type
     }
 
     /// Check if this connection should receive events for a given session
@@ -65,12 +94,21 @@ impl ConnectionState {
 }
 
 /// Handle a WebSocket connection with bidirectional event streaming
-async fn handle_socket(socket: WebSocket, state: Arc<AppState>, auth_context: AuthContext) {
+async fn handle_socket(
+    socket: WebSocket,
+    state: Arc<AppState>,
+    auth_context: AuthContext,
+    client_type: InputSource,
+) {
     let (mut sender, mut receiver) = socket.split();
     let mut event_rx = state.subscribe_events();
-    let mut conn_state = ConnectionState::new();
+    let mut conn_state = ConnectionState::new(client_type);
 
-    info!(client_id = %conn_state.client_id, "WebSocket client connected");
+    info!(
+        client_id = %conn_state.client_id,
+        ?client_type,
+        "WebSocket client connected"
+    );
 
     // Send auth context immediately on connection
     let auth_msg = ServerMessage::AuthContext(auth_context);
@@ -218,7 +256,7 @@ async fn handle_broadcast_event(
         return Ok(());
     }
 
-    // Convert VibesEvent to ServerMessage
+    // Convert VibesEvent to ServerMessage (including UserInput which clients filter by source)
     if let Some(server_msg) = vibes_event_to_server_message(event) {
         let json = serde_json::to_string(&server_msg)?;
         sender.send(Message::Text(json)).await?;
@@ -237,9 +275,32 @@ async fn handle_text_message(
     let client_msg: ClientMessage = serde_json::from_str(text)?;
 
     match client_msg {
-        ClientMessage::Subscribe { session_ids } => {
-            debug!("Client subscribed to sessions: {:?}", session_ids);
+        ClientMessage::Subscribe {
+            session_ids,
+            catch_up,
+        } => {
+            debug!(
+                "Client subscribed to sessions: {:?}, catch_up: {}",
+                session_ids, catch_up
+            );
             conn_state.subscribe(&session_ids);
+
+            // Send SubscribeAck with history if catch_up is requested
+            if catch_up {
+                for session_id in &session_ids {
+                    let (history, current_seq, has_more) =
+                        get_session_history(state.as_ref(), session_id, 50);
+
+                    let ack = ServerMessage::SubscribeAck {
+                        session_id: session_id.clone(),
+                        current_seq,
+                        history,
+                        has_more,
+                    };
+                    let json = serde_json::to_string(&ack)?;
+                    sender.send(Message::Text(json)).await?;
+                }
+            }
         }
 
         ClientMessage::Unsubscribe { session_ids } => {
@@ -268,6 +329,15 @@ async fn handle_text_message(
             session_id,
             content,
         } => {
+            // Publish input event with source attribution for other subscribers
+            let input_event = VibesEvent::UserInput {
+                session_id: session_id.clone(),
+                content: content.clone(),
+                source: conn_state.client_type(),
+            };
+            state.event_bus.publish(input_event).await;
+
+            // Forward to session
             if let Err(e) = state
                 .session_manager
                 .send_to_session(&session_id, &content)
@@ -396,7 +466,150 @@ async fn handle_text_message(
                 }
             }
         }
+
+        ClientMessage::RequestHistory {
+            session_id,
+            before_seq,
+            limit,
+        } => {
+            if !conn_state.is_subscribed_to(&session_id) {
+                let error = ServerMessage::Error {
+                    session_id: Some(session_id),
+                    message: "Not subscribed to session".to_string(),
+                    code: "NOT_SUBSCRIBED".to_string(),
+                };
+                let json = serde_json::to_string(&error)?;
+                sender.send(Message::Text(json)).await?;
+            } else {
+                let (events, oldest_seq, has_more) =
+                    get_history_page(state.as_ref(), &session_id, before_seq, limit);
+
+                let page = ServerMessage::HistoryPage {
+                    session_id,
+                    events,
+                    has_more,
+                    oldest_seq,
+                };
+                let json = serde_json::to_string(&page)?;
+                sender.send(Message::Text(json)).await?;
+            }
+        }
     }
 
     Ok(())
+}
+
+/// Convert a HistoricalMessage to a VibesEvent for catch-up
+fn message_to_vibes_event(msg: &vibes_core::history::HistoricalMessage) -> VibesEvent {
+    match msg.role {
+        MessageRole::User => VibesEvent::UserInput {
+            session_id: msg.session_id.clone(),
+            content: msg.content.clone(),
+            source: msg.source,
+        },
+        MessageRole::Assistant => VibesEvent::Claude {
+            session_id: msg.session_id.clone(),
+            event: ClaudeEvent::TextDelta {
+                text: msg.content.clone(),
+            },
+        },
+        MessageRole::ToolUse => VibesEvent::Claude {
+            session_id: msg.session_id.clone(),
+            event: ClaudeEvent::ToolUseStart {
+                id: msg.tool_id.clone().unwrap_or_default(),
+                name: msg.tool_name.clone().unwrap_or_default(),
+            },
+        },
+        MessageRole::ToolResult => VibesEvent::Claude {
+            session_id: msg.session_id.clone(),
+            event: ClaudeEvent::ToolResult {
+                id: msg.tool_id.clone().unwrap_or_default(),
+                output: msg.content.clone(),
+                is_error: false,
+            },
+        },
+    }
+}
+
+/// Get session history for catch-up
+///
+/// Returns (history events, current sequence, has_more_pages)
+fn get_session_history(
+    state: &AppState,
+    session_id: &str,
+    limit: u32,
+) -> (Vec<HistoryEvent>, u64, bool) {
+    let Some(history_service) = &state.history else {
+        return (vec![], 0, false);
+    };
+
+    let query = MessageQuery {
+        limit: limit + 1, // Request one extra to detect has_more
+        offset: 0,
+        role: None,
+        before_id: None,
+    };
+
+    let result = match history_service.get_messages(session_id, &query) {
+        Ok(r) => r,
+        Err(_) => return (vec![], 0, false),
+    };
+
+    let has_more = result.messages.len() > limit as usize;
+    let messages: Vec<_> = result.messages.into_iter().take(limit as usize).collect();
+
+    let current_seq = messages.last().map(|m| m.id as u64).unwrap_or(0);
+
+    let history: Vec<HistoryEvent> = messages
+        .into_iter()
+        .map(|m| HistoryEvent {
+            seq: m.id as u64,
+            event: message_to_vibes_event(&m),
+            timestamp: m.created_at * 1000, // Convert to milliseconds
+        })
+        .collect();
+
+    (history, current_seq, has_more)
+}
+
+/// Get paginated history for RequestHistory
+///
+/// Returns (history events, oldest sequence in page, has_more_pages)
+fn get_history_page(
+    state: &AppState,
+    session_id: &str,
+    before_seq: u64,
+    limit: u32,
+) -> (Vec<HistoryEvent>, u64, bool) {
+    let Some(history_service) = &state.history else {
+        return (vec![], 0, false);
+    };
+
+    let query = MessageQuery {
+        limit: limit + 1, // Request one extra to detect has_more
+        offset: 0,
+        role: None,
+        before_id: Some(before_seq as i64),
+    };
+
+    let result = match history_service.get_messages(session_id, &query) {
+        Ok(r) => r,
+        Err(_) => return (vec![], 0, false),
+    };
+
+    let has_more = result.messages.len() > limit as usize;
+    let messages: Vec<_> = result.messages.into_iter().take(limit as usize).collect();
+
+    let oldest_seq = messages.first().map(|m| m.id as u64).unwrap_or(0);
+
+    let events: Vec<HistoryEvent> = messages
+        .into_iter()
+        .map(|m| HistoryEvent {
+            seq: m.id as u64,
+            event: message_to_vibes_event(&m),
+            timestamp: m.created_at * 1000,
+        })
+        .collect();
+
+    (events, oldest_seq, has_more)
 }

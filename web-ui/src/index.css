@@ -340,6 +340,18 @@ body {
   font-size: 13px;
 }
 
+/* Remote messages (from CLI or other clients) */
+.message-remote.message-user {
+  background-color: rgba(130, 80, 223, 0.1);
+  border-left: 3px solid var(--color-purple, #8250df);
+}
+
+.message-source {
+  font-size: 11px;
+  color: var(--color-muted);
+  margin-bottom: 0.25rem;
+}
+
 /* Input form */
 .input-form {
   display: flex;
@@ -490,6 +502,12 @@ code {
   font-size: 0.875rem;
 }
 
+.session-list-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 /* Owner badge */
 .owner-badge {
   color: var(--color-warning);
@@ -562,9 +580,19 @@ code {
   cursor: not-allowed;
 }
 
+.btn-primary {
+  background-color: var(--color-accent);
+  color: white;
+}
+
 .btn-secondary {
   background-color: var(--color-border);
   color: var(--color-text);
+}
+
+.btn-sm {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8125rem;
 }
 
 .btn-icon {

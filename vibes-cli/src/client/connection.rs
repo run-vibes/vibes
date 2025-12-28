@@ -131,7 +131,11 @@ impl VibesClient {
 
     /// Subscribe to events for the specified session(s)
     pub async fn subscribe(&self, session_ids: Vec<String>) -> Result<()> {
-        self.send(ClientMessage::Subscribe { session_ids }).await
+        self.send(ClientMessage::Subscribe {
+            session_ids,
+            catch_up: false,
+        })
+        .await
     }
 
     /// Send input to a session

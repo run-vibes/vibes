@@ -5,6 +5,7 @@ mod client;
 mod commands;
 mod config;
 mod daemon;
+mod input;
 mod server;
 
 #[derive(Parser)]

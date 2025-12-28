@@ -7,6 +7,7 @@ use rusqlite::Connection;
 const MIGRATIONS: &[(&str, &str)] = &[
     ("v001_initial", include_str!("v001_initial.sql")),
     ("v002_fts", include_str!("v002_fts.sql")),
+    ("v003_add_source", include_str!("v003_add_source.sql")),
 ];
 
 /// Runs database migrations
@@ -127,7 +128,7 @@ mod tests {
         let migrator = Migrator::new(&conn);
         migrator.migrate().unwrap();
 
-        assert_eq!(migrator.current_version().unwrap(), 2);
+        assert_eq!(migrator.current_version().unwrap(), 3);
 
         // Verify FTS table exists
         let count: i32 = conn
@@ -155,5 +156,48 @@ mod tests {
             )
             .unwrap();
         assert_eq!(count, 3); // ai, ad, au
+    }
+
+    #[test]
+    fn test_source_column_exists() {
+        let conn = Connection::open_in_memory().unwrap();
+        let migrator = Migrator::new(&conn);
+        migrator.migrate().unwrap();
+
+        // Insert a test session
+        conn.execute(
+            "INSERT INTO sessions (id, name, state, created_at, last_accessed_at)
+             VALUES ('test-sess', 'Test', 'idle', strftime('%s','now'), strftime('%s','now'))",
+            [],
+        )
+        .unwrap();
+
+        // Insert a message with source value
+        conn.execute(
+            "INSERT INTO messages (session_id, role, content, source, created_at)
+             VALUES ('test-sess', 'user', 'Hello', 'cli', strftime('%s','now'))",
+            [],
+        )
+        .unwrap();
+
+        // Verify we can read back the source
+        let source: String = conn
+            .query_row(
+                "SELECT source FROM messages WHERE session_id = 'test-sess'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap();
+        assert_eq!(source, "cli");
+
+        // Verify index exists on source column
+        let index_count: i32 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='index' AND name='idx_messages_source'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap();
+        assert_eq!(index_count, 1);
     }
 }

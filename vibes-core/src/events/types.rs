@@ -2,6 +2,40 @@
 
 use serde::{Deserialize, Serialize};
 
+/// Source of user input for attribution
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum InputSource {
+    /// Input from CLI client
+    Cli,
+    /// Input from Web UI client
+    WebUi,
+    /// Source unknown (e.g., historical data before migration)
+    #[default]
+    Unknown,
+}
+
+impl InputSource {
+    /// Convert to database/JSON string representation
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Cli => "cli",
+            Self::WebUi => "web_ui",
+            Self::Unknown => "unknown",
+        }
+    }
+
+    /// Parse from database/JSON string
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "cli" => Some(Self::Cli),
+            "web_ui" => Some(Self::WebUi),
+            "unknown" => Some(Self::Unknown),
+            _ => None,
+        }
+    }
+}
+
 /// Token usage statistics from Claude
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Usage {
@@ -50,7 +84,7 @@ pub enum ClaudeEvent {
 }
 
 /// Events on the VibesEventBus (includes client events)
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum VibesEvent {
     /// Event from Claude (wrapped)
@@ -60,7 +94,12 @@ pub enum VibesEvent {
     },
 
     /// User input from any client
-    UserInput { session_id: String, content: String },
+    UserInput {
+        session_id: String,
+        content: String,
+        #[serde(default)]
+        source: InputSource,
+    },
 
     /// Permission response from client
     PermissionResponse {
@@ -118,6 +157,38 @@ impl VibesEvent {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // ==================== InputSource Tests ====================
+
+    #[test]
+    fn input_source_as_str_returns_correct_values() {
+        assert_eq!(InputSource::Cli.as_str(), "cli");
+        assert_eq!(InputSource::WebUi.as_str(), "web_ui");
+        assert_eq!(InputSource::Unknown.as_str(), "unknown");
+    }
+
+    #[test]
+    fn input_source_parse_returns_correct_variants() {
+        assert_eq!(InputSource::parse("cli"), Some(InputSource::Cli));
+        assert_eq!(InputSource::parse("web_ui"), Some(InputSource::WebUi));
+        assert_eq!(InputSource::parse("unknown"), Some(InputSource::Unknown));
+        assert_eq!(InputSource::parse("invalid"), None);
+    }
+
+    #[test]
+    fn input_source_serialization_roundtrip() {
+        for source in [InputSource::Cli, InputSource::WebUi, InputSource::Unknown] {
+            let json = serde_json::to_string(&source).unwrap();
+            let parsed: InputSource = serde_json::from_str(&json).unwrap();
+            assert_eq!(source, parsed);
+        }
+    }
+
+    #[test]
+    fn input_source_serializes_to_snake_case() {
+        let json = serde_json::to_string(&InputSource::WebUi).unwrap();
+        assert_eq!(json, "\"web_ui\"");
+    }
 
     // ==================== Usage Tests ====================
 
@@ -268,12 +339,39 @@ mod tests {
         let event = VibesEvent::UserInput {
             session_id: "sess-456".to_string(),
             content: "Help me code".to_string(),
+            source: InputSource::Unknown,
         };
         let json = serde_json::to_string(&event).unwrap();
         let parsed: VibesEvent = serde_json::from_str(&json).unwrap();
         assert!(
-            matches!(parsed, VibesEvent::UserInput { session_id, content }
-            if session_id == "sess-456" && content == "Help me code")
+            matches!(parsed, VibesEvent::UserInput { session_id, content, source }
+            if session_id == "sess-456" && content == "Help me code" && source == InputSource::Unknown)
+        );
+    }
+
+    #[test]
+    fn vibes_event_user_input_with_source_serialization_roundtrip() {
+        let event = VibesEvent::UserInput {
+            session_id: "sess-456".to_string(),
+            content: "Help me code".to_string(),
+            source: InputSource::Cli,
+        };
+        let json = serde_json::to_string(&event).unwrap();
+        let parsed: VibesEvent = serde_json::from_str(&json).unwrap();
+        assert!(
+            matches!(parsed, VibesEvent::UserInput { session_id, content, source }
+            if session_id == "sess-456" && content == "Help me code" && source == InputSource::Cli)
+        );
+    }
+
+    #[test]
+    fn vibes_event_user_input_deserializes_without_source() {
+        // Backward compatibility: old messages without source field
+        let json = r#"{"type":"user_input","session_id":"sess-1","content":"hello"}"#;
+        let parsed: VibesEvent = serde_json::from_str(json).unwrap();
+        assert!(
+            matches!(parsed, VibesEvent::UserInput { session_id, content, source }
+            if session_id == "sess-1" && content == "hello" && source == InputSource::Unknown)
         );
     }
 
@@ -373,6 +471,7 @@ mod tests {
             VibesEvent::UserInput {
                 session_id: "s2".to_string(),
                 content: "test".to_string(),
+                source: InputSource::Unknown,
             },
             VibesEvent::PermissionResponse {
                 session_id: "s3".to_string(),

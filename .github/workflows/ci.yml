@@ -20,13 +20,13 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: web-ui/package-lock.json
+          cache-dependency-path: package-lock.json
+
+      - name: Install npm dependencies
+        run: nix develop --command just npm-install
 
       - name: Build web-ui
-        run: |
-          cd web-ui
-          npm ci
-          npm run build
+        run: nix develop --command just build-web
 
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
@@ -39,3 +39,44 @@ jobs:
 
       - name: Test
         run: nix develop --command just test
+
+  e2e:
+    runs-on: ubuntu-latest
+    # Run on PRs and main branch
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install npm dependencies
+        run: nix develop --command just npm-install
+
+      - name: Build web-ui
+        run: nix develop --command just build-web
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build release binary
+        run: nix develop --command just build-release
+
+      - name: Install Playwright browsers
+        run: nix develop --command just e2e-setup
+
+      - name: Run E2E smoke tests
+        run: nix develop --command just test-e2e
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: e2e-tests/playwright-report/

@@ -183,6 +183,18 @@ impl VibesServer {
                 source: e,
             })?;
 
+        self.run_with_listener(listener).await
+    }
+
+    /// Run the server with a pre-bound listener
+    ///
+    /// This is useful for testing where you want to bind to port 0
+    /// and get the actual address before starting the server.
+    pub async fn run_with_listener(self, listener: TcpListener) -> Result<(), ServerError> {
+        let addr = listener
+            .local_addr()
+            .map_err(|e| ServerError::Internal(e.to_string()))?;
+
         tracing::info!("vibes server listening on {}", addr);
 
         // Start event forwarding from event_bus to WebSocket broadcaster

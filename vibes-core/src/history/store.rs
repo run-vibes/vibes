@@ -8,6 +8,7 @@ use super::error::HistoryError;
 use super::migrations::Migrator;
 use super::query::{MessageListResult, MessageQuery, SessionListResult, SessionQuery};
 use super::types::{HistoricalMessage, HistoricalSession, MessageRole, SessionSummary};
+use crate::events::InputSource;
 use crate::session::SessionState;
 
 /// History storage trait
@@ -105,6 +106,7 @@ impl SqliteHistoryStore {
 
     fn row_to_message(&self, row: &rusqlite::Row) -> Result<HistoricalMessage, rusqlite::Error> {
         let role_str: String = row.get(2)?;
+        let source_str: String = row.get(9)?;
         Ok(HistoricalMessage {
             id: row.get(0)?,
             session_id: row.get(1)?,
@@ -115,6 +117,7 @@ impl SqliteHistoryStore {
             created_at: row.get(6)?,
             input_tokens: row.get(7)?,
             output_tokens: row.get(8)?,
+            source: InputSource::parse(&source_str).unwrap_or(InputSource::Unknown),
         })
     }
 }
@@ -321,8 +324,8 @@ impl HistoryStore for SqliteHistoryStore {
     fn save_message(&self, message: &HistoricalMessage) -> Result<i64, HistoryError> {
         let conn = self.conn.lock().unwrap();
         conn.execute(
-            "INSERT INTO messages (session_id, role, content, tool_name, tool_id, created_at, input_tokens, output_tokens)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+            "INSERT INTO messages (session_id, role, content, tool_name, tool_id, created_at, input_tokens, output_tokens, source)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
             rusqlite::params![
                 message.session_id,
                 message.role.as_str(),
@@ -332,6 +335,7 @@ impl HistoryStore for SqliteHistoryStore {
                 message.created_at,
                 message.input_tokens,
                 message.output_tokens,
+                message.source.as_str(),
             ],
         )?;
 
@@ -351,51 +355,72 @@ impl HistoryStore for SqliteHistoryStore {
     ) -> Result<MessageListResult, HistoryError> {
         let conn = self.conn.lock().unwrap();
 
+        // Build WHERE clause dynamically
+        let mut conditions = vec!["session_id = ?1".to_string()];
+        let mut param_index = 2;
+
+        if query.role.is_some() {
+            conditions.push(format!("role = ?{}", param_index));
+            param_index += 1;
+        }
+
+        if query.before_id.is_some() {
+            conditions.push(format!("id < ?{}", param_index));
+            param_index += 1;
+        }
+
+        let where_clause = conditions.join(" AND ");
+
         // Get total count
-        let total: u32 = if let Some(role) = &query.role {
-            conn.query_row(
-                "SELECT COUNT(*) FROM messages WHERE session_id = ?1 AND role = ?2",
-                rusqlite::params![session_id, role.as_str()],
-                |row| row.get(0),
-            )?
-        } else {
-            conn.query_row(
-                "SELECT COUNT(*) FROM messages WHERE session_id = ?1",
-                [session_id],
-                |row| row.get(0),
-            )?
+        let count_sql = format!("SELECT COUNT(*) FROM messages WHERE {}", where_clause);
+        let total: u32 = {
+            let mut params: Vec<Box<dyn rusqlite::ToSql>> = vec![Box::new(session_id)];
+            if let Some(role) = &query.role {
+                params.push(Box::new(role.as_str()));
+            }
+            if let Some(before_id) = query.before_id {
+                params.push(Box::new(before_id));
+            }
+            let param_refs: Vec<&dyn rusqlite::ToSql> = params.iter().map(|p| p.as_ref()).collect();
+            conn.query_row(&count_sql, param_refs.as_slice(), |row| row.get(0))?
         };
 
-        // Build query
-        let sql = if query.role.is_some() {
-            "SELECT id, session_id, role, content, tool_name, tool_id, created_at, input_tokens, output_tokens
-             FROM messages WHERE session_id = ?1 AND role = ?2
-             ORDER BY created_at ASC LIMIT ?3 OFFSET ?4"
+        // Build query - use consistent ordering by id for both pagination modes:
+        // - With before_id: fetch in DESC order, then reverse (cursor-based pagination)
+        // - Without before_id: fetch in ASC order (chronological)
+        let order_clause = if query.before_id.is_some() {
+            "ORDER BY id DESC"
         } else {
-            "SELECT id, session_id, role, content, tool_name, tool_id, created_at, input_tokens, output_tokens
-             FROM messages WHERE session_id = ?1
-             ORDER BY created_at ASC LIMIT ?2 OFFSET ?3"
+            "ORDER BY id ASC"
         };
 
-        let messages = if let Some(role) = &query.role {
-            let mut stmt = conn.prepare(sql)?;
-            let rows = stmt.query_map(
-                rusqlite::params![
-                    session_id,
-                    role.as_str(),
-                    query.effective_limit(),
-                    query.offset
-                ],
-                |row| self.row_to_message(row),
-            )?;
-            rows.collect::<Result<Vec<_>, _>>()?
-        } else {
-            let mut stmt = conn.prepare(sql)?;
-            let rows = stmt.query_map(
-                rusqlite::params![session_id, query.effective_limit(), query.offset],
-                |row| self.row_to_message(row),
-            )?;
-            rows.collect::<Result<Vec<_>, _>>()?
+        let select_sql = format!(
+            "SELECT id, session_id, role, content, tool_name, tool_id, created_at, input_tokens, output_tokens, source
+             FROM messages WHERE {} {} LIMIT ?{} OFFSET ?{}",
+            where_clause, order_clause, param_index, param_index + 1
+        );
+
+        let messages = {
+            let mut params: Vec<Box<dyn rusqlite::ToSql>> = vec![Box::new(session_id)];
+            if let Some(role) = &query.role {
+                params.push(Box::new(role.as_str()));
+            }
+            if let Some(before_id) = query.before_id {
+                params.push(Box::new(before_id));
+            }
+            params.push(Box::new(query.effective_limit()));
+            params.push(Box::new(query.offset));
+
+            let param_refs: Vec<&dyn rusqlite::ToSql> = params.iter().map(|p| p.as_ref()).collect();
+            let mut stmt = conn.prepare(&select_sql)?;
+            let rows = stmt.query_map(param_refs.as_slice(), |row| self.row_to_message(row))?;
+            let mut result: Vec<_> = rows.collect::<Result<Vec<_>, _>>()?;
+
+            // When using before_id, reverse to get chronological order
+            if query.before_id.is_some() {
+                result.reverse();
+            }
+            result
         };
 
         Ok(MessageListResult { messages, total })

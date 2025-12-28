@@ -54,10 +54,11 @@ impl<S: HistoryStore> HistoryService<S> {
             VibesEvent::UserInput {
                 session_id,
                 content,
+                source,
             } => {
                 let mut builders = self.builders.write().await;
                 if let Some(builder) = builders.get_mut(session_id) {
-                    builder.add_user_input(content.clone());
+                    builder.add_user_input_with_source(content.clone(), *source);
                     self.persist_pending(session_id, builder)?;
                 }
             }
@@ -216,6 +217,7 @@ mod tests {
             .process_event(&VibesEvent::UserInput {
                 session_id: "sess-1".into(),
                 content: "Hello".into(),
+                source: crate::events::InputSource::Unknown,
             })
             .await
             .unwrap();
@@ -225,6 +227,26 @@ mod tests {
             .unwrap();
         assert_eq!(messages.total, 1);
         assert_eq!(messages.messages[0].content, "Hello");
+    }
+
+    #[tokio::test]
+    async fn test_process_user_input_preserves_source() {
+        let service = create_test_service();
+        service.create_session("sess-1".into(), None).await.unwrap();
+
+        service
+            .process_event(&VibesEvent::UserInput {
+                session_id: "sess-1".into(),
+                content: "Hello from CLI".into(),
+                source: crate::events::InputSource::Cli,
+            })
+            .await
+            .unwrap();
+
+        let messages = service
+            .get_messages("sess-1", &MessageQuery::new())
+            .unwrap();
+        assert_eq!(messages.messages[0].source, crate::events::InputSource::Cli);
     }
 
     #[tokio::test]

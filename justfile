@@ -51,7 +51,27 @@ build-release: build-web
 
 # Build web-ui (required for server)
 build-web:
-    cd web-ui && npm run build
+    npm run build
+
+# Install npm dependencies (uses workspaces)
+npm-install:
+    npm ci
+
+# E2E tests with Playwright
+test-e2e:
+    npm run test:e2e
+
+# E2E tests in headed mode (visible browser)
+test-e2e-headed:
+    npm run test:e2e:headed
+
+# E2E tests in debug mode
+test-e2e-debug:
+    npm run test:e2e -- --debug
+
+# Install Playwright browsers
+e2e-setup:
+    npx playwright install chromium --with-deps
 
 # Run all checks (pre-commit)
 pre-commit: fmt-check clippy test

@@ -7,13 +7,14 @@
 // ============================================================
 
 export type ClientMessage =
-  | { type: 'subscribe'; session_ids: string[] }
+  | { type: 'subscribe'; session_ids: string[]; catch_up?: boolean }
   | { type: 'unsubscribe'; session_ids: string[] }
   | { type: 'create_session'; name?: string; request_id: string }
   | { type: 'input'; session_id: string; content: string }
   | { type: 'permission_response'; session_id: string; request_id: string; approved: boolean }
   | { type: 'list_sessions'; request_id: string }
-  | { type: 'kill_session'; session_id: string };
+  | { type: 'kill_session'; session_id: string }
+  | { type: 'request_history'; session_id: string; before_seq: number; limit: number };
 
 // ============================================================
 // Server -> Client Messages
@@ -29,6 +30,9 @@ export type ServerMessage =
   | { type: 'session_list'; request_id: string; sessions: SessionInfo[] }
   | { type: 'session_removed'; session_id: string; reason: RemovalReason }
   | { type: 'ownership_transferred'; session_id: string; new_owner_id: string; you_are_owner: boolean }
+  | { type: 'subscribe_ack'; session_id: string; current_seq: number; history: HistoryEvent[]; has_more: boolean }
+  | { type: 'history_page'; session_id: string; events: HistoryEvent[]; has_more: boolean; oldest_seq: number }
+  | { type: 'user_input'; session_id: string; content: string; source: InputSource }
   | AuthContextMessage;
 
 // ============================================================
@@ -78,9 +82,32 @@ export type RemovalReason =
   | 'owner_disconnected'
   | 'session_finished';
 
+export type InputSource = 'cli' | 'web_ui' | 'unknown';
+
 export interface Usage {
   input_tokens: number;
   output_tokens: number;
+}
+
+/** Event from history catch-up */
+export interface HistoryEvent {
+  seq: number;
+  event: VibesEvent;
+  timestamp: number;
+}
+
+/** Vibes event wrapper (from history) */
+export type VibesEvent =
+  | { type: 'user_input'; session_id: string; content: string; source?: InputSource }
+  | { type: 'claude'; session_id: string; event: ClaudeEvent };
+
+/** Message for display in chat UI */
+export interface Message {
+  id: string;
+  role: 'user' | 'assistant' | 'tool_use' | 'tool_result';
+  content: string;
+  timestamp: number;
+  source?: InputSource;
 }
 
 export interface Session {
@@ -134,4 +161,16 @@ export function isSessionRemovedMessage(msg: ServerMessage): msg is Extract<Serv
 
 export function isOwnershipTransferredMessage(msg: ServerMessage): msg is Extract<ServerMessage, { type: 'ownership_transferred' }> {
   return msg.type === 'ownership_transferred';
+}
+
+export function isSubscribeAckMessage(msg: ServerMessage): msg is Extract<ServerMessage, { type: 'subscribe_ack' }> {
+  return msg.type === 'subscribe_ack';
+}
+
+export function isHistoryPageMessage(msg: ServerMessage): msg is Extract<ServerMessage, { type: 'history_page' }> {
+  return msg.type === 'history_page';
+}
+
+export function isUserInputMessage(msg: ServerMessage): msg is Extract<ServerMessage, { type: 'user_input' }> {
+  return msg.type === 'user_input';
 }

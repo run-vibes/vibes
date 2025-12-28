@@ -1,15 +1,25 @@
 import { useParams, Link } from '@tanstack/react-router';
 import { useEffect, useState, useCallback } from 'react';
 import { useWebSocket } from '../hooks/useWebSocket';
-import type { ServerMessage, ClaudeEvent, SessionState } from '../lib/types';
+import type { ServerMessage, ClaudeEvent, SessionState, InputSource } from '../lib/types';
 
 interface ConversationItem {
   type: 'user' | 'assistant' | 'tool';
   content: string;
   timestamp: Date;
+  source?: InputSource;
+  isOwn?: boolean;
 }
 
 export function ClaudeSession() {
+  // Helper to format source labels - kept inside component since only used here
+  const getSourceLabel = (source: InputSource): string => {
+    switch (source) {
+      case 'cli': return '📟 CLI';
+      case 'web_ui': return '🌐 Web';
+      default: return '❓ Unknown';
+    }
+  };
   const { sessionId } = useParams({ from: '/claude/$sessionId' });
   const { isConnected, subscribe, addMessageHandler, send } = useWebSocket();
 
@@ -39,6 +49,17 @@ export function ClaudeSession() {
     if (msg.type === 'claude' && msg.session_id === sessionId) {
       const event = msg.event;
       handleClaudeEvent(event);
+    }
+
+    // Handle remote user input from CLI clients
+    if (msg.type === 'user_input' && msg.session_id === sessionId && msg.source === 'cli') {
+      setConversation(prev => [...prev, {
+        type: 'user',
+        content: msg.content,
+        timestamp: new Date(),
+        source: msg.source,
+        isOwn: false,
+      }]);
     }
   }, [sessionId]);
 
@@ -89,6 +110,8 @@ export function ClaudeSession() {
       type: 'user',
       content: input,
       timestamp: new Date(),
+      source: 'web_ui',
+      isOwn: true,
     }]);
 
     send({
@@ -145,7 +168,10 @@ export function ClaudeSession() {
 
       <div className="conversation">
         {conversation.map((item, i) => (
-          <div key={i} className={`message message-${item.type}`}>
+          <div key={i} className={`message message-${item.type} ${item.isOwn === false ? 'message-remote' : ''}`}>
+            {item.type === 'user' && item.isOwn === false && item.source && (
+              <div className="message-source">{getSourceLabel(item.source)}</div>
+            )}
             <div className="message-content">{item.content}</div>
           </div>
         ))}

@@ -23,12 +23,16 @@ interface UseSessionListReturn {
   sessions: SessionInfo[];
   /** Whether the list is currently loading */
   isLoading: boolean;
+  /** Whether a session is being created */
+  isCreating: boolean;
   /** Error message if fetch failed */
   error: string | null;
   /** Refresh the session list */
   refresh: () => void;
   /** Kill a session by ID */
   killSession: (sessionId: string) => void;
+  /** Create a new session, returns the session ID */
+  createSession: (name?: string) => Promise<string>;
 }
 
 /**
@@ -45,8 +49,14 @@ export function useSessionList(options: UseSessionListOptions): UseSessionListRe
 
   const [sessions, setSessions] = useState<SessionInfo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pendingRequestId, setPendingRequestId] = useState<string | null>(null);
+  const [pendingCreateRequestId, setPendingCreateRequestId] = useState<string | null>(null);
+  const [createResolver, setCreateResolver] = useState<{
+    resolve: (sessionId: string) => void;
+    reject: (error: Error) => void;
+  } | null>(null);
 
   // Refresh the session list
   const refresh = useCallback(() => {
@@ -70,6 +80,27 @@ export function useSessionList(options: UseSessionListOptions): UseSessionListRe
         return;
       }
       send({ type: 'kill_session', session_id: sessionId });
+    },
+    [isConnected, send]
+  );
+
+  // Create a new session
+  const createSession = useCallback(
+    (name?: string): Promise<string> => {
+      return new Promise((resolve, reject) => {
+        if (!isConnected) {
+          reject(new Error('Not connected'));
+          return;
+        }
+
+        const requestId = generateRequestId();
+        setPendingCreateRequestId(requestId);
+        setIsCreating(true);
+        setError(null);
+        setCreateResolver({ resolve, reject });
+
+        send({ type: 'create_session', name, request_id: requestId });
+      });
     },
     [isConnected, send]
   );
@@ -107,7 +138,14 @@ export function useSessionList(options: UseSessionListOptions): UseSessionListRe
           break;
 
         case 'session_created':
-          // A new session was created - refresh the list to get full details
+          // A new session was created
+          if (message.request_id === pendingCreateRequestId && createResolver) {
+            createResolver.resolve(message.session_id);
+            setIsCreating(false);
+            setPendingCreateRequestId(null);
+            setCreateResolver(null);
+          }
+          // Refresh the list to get full details
           refresh();
           break;
 
@@ -126,12 +164,18 @@ export function useSessionList(options: UseSessionListOptions): UseSessionListRe
             setIsLoading(false);
             setPendingRequestId(null);
           }
+          if (pendingCreateRequestId && createResolver) {
+            createResolver.reject(new Error(message.message));
+            setIsCreating(false);
+            setPendingCreateRequestId(null);
+            setCreateResolver(null);
+          }
           break;
       }
     });
 
     return cleanup;
-  }, [addMessageHandler, pendingRequestId, refresh]);
+  }, [addMessageHandler, pendingRequestId, pendingCreateRequestId, createResolver, refresh]);
 
   // Auto-refresh on connect
   useEffect(() => {
@@ -153,8 +197,10 @@ export function useSessionList(options: UseSessionListOptions): UseSessionListRe
   return {
     sessions,
     isLoading,
+    isCreating,
     error,
     refresh,
     killSession,
+    createSession,
   };
 }

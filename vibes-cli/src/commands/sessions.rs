@@ -3,10 +3,22 @@
 use anyhow::Result;
 use clap::{Args, Subcommand};
 use tracing::info;
-use vibes_core::ClaudeEvent;
+use vibes_core::{ClaudeEvent, InputSource};
 use vibes_server::ws::ServerMessage;
 
 use crate::client::VibesClient;
+
+/// Display remote input from other clients
+fn display_remote_input(source: InputSource, content: &str) {
+    let prefix = match source {
+        InputSource::WebUi => "\x1b[36m[Web UI]:\x1b[0m",
+        InputSource::Cli => "\x1b[36m[CLI]:\x1b[0m",
+        InputSource::Unknown => "\x1b[2m[Remote]:\x1b[0m",
+    };
+
+    println!();
+    println!("{} {}", prefix, content);
+}
 
 /// Sessions management arguments
 #[derive(Args, Debug)]
@@ -145,6 +157,14 @@ async fn attach_session(session_id: &str) -> Result<()> {
                 if you_are_owner {
                     println!("\n\x1b[32mYou are now the owner of this session\x1b[0m");
                 }
+            }
+            ServerMessage::UserInput {
+                session_id: sid,
+                content,
+                source,
+            } if sid == session_id && source != InputSource::Cli => {
+                // Display input from non-CLI sources (Web UI, etc.)
+                display_remote_input(source, &content);
             }
             _ => {}
         }

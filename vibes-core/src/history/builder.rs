@@ -1,7 +1,7 @@
 //! Message aggregation from streaming events
 
 use super::types::HistoricalMessage;
-use crate::events::ClaudeEvent;
+use crate::events::{ClaudeEvent, InputSource};
 use std::collections::HashMap;
 
 /// Aggregates streaming events into complete messages
@@ -108,6 +108,17 @@ impl MessageBuilder {
             content,
             now(),
         ));
+    }
+
+    /// Add a user input message with source attribution
+    pub fn add_user_input_with_source(&mut self, content: String, source: InputSource) {
+        self.pending_messages
+            .push(HistoricalMessage::user_with_source(
+                self.session_id.clone(),
+                content,
+                source,
+                now(),
+            ));
     }
 
     /// Drain all pending messages

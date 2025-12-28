@@ -15,7 +15,7 @@ This document tracks the implementation progress of vibes against the roadmap de
 | 2.3 Push Notifications | Complete | [design](plans/07-push-notifications/design.md) | [implementation](plans/07-push-notifications/implementation.md) |
 | 3.1 Chat History | Complete | [design](plans/08-chat-history/design.md) | [implementation](plans/08-chat-history/implementation.md) |
 | 3.2 Multi-Session Support | Complete | [design](plans/09-multi-session/design.md) | [implementation](plans/09-multi-session/implementation.md) |
-| 3.3 CLI ↔ Web Mirroring | Not started | — | — |
+| 3.3 CLI ↔ Web Mirroring | Complete | [design](plans/10-cli-web-mirroring/design.md) | [implementation](plans/10-cli-web-mirroring/implementation.md) |
 | 3.4 Cloudflare Tunnel Wizard | Not started | — | — |
 | 3.5 Cloudflare Auth Wizard | Not started | — | — |
 
@@ -111,10 +111,14 @@ Note: Auto-detect team/aud moved to Milestone 3.5 (Cloudflare Auth Wizard)
 - [x] Graceful session cleanup on disconnect
 
 ### Milestone 3.3: CLI ↔ Web Mirroring
-- [ ] Real-time bidirectional sync between CLI and Web UI
-- [ ] Any connected client can send input to active session
-- [ ] Late-joiner catches up with full session history
-- [ ] Input source attribution (show who typed what)
+- [x] Design complete (input attribution, catch-up protocol)
+- [x] Add `InputSource` enum and update `UserInput` event
+- [x] Add `source` column to messages table
+- [x] Implement `SubscribeAck` with paginated catch-up
+- [x] CLI displays remote input with `[Web UI]:` prefix
+- [x] CLI input history with up/down navigation
+- [x] Web UI shows source attribution on messages
+- [x] Web UI catch-up on session join
 
 ### Milestone 3.4: Cloudflare Tunnel Wizard
 - [ ] Interactive `vibes tunnel setup` wizard
@@ -206,3 +210,6 @@ These phases are planned but not yet scheduled.
 | 2025-12-27 | Milestone 3.1 (Chat History) complete - SQLite storage with FTS5 full-text search, HistoryService, REST API endpoints, Web UI history page with search/filter/pagination |
 | 2025-12-27 | Milestone 3.2 (Multi-Session) design complete - SessionOwnership, SessionLifecycleManager, ownership transfer, responsive UI, CLI sessions commands |
 | 2025-12-27 | Milestone 3.2 (Multi-Session) implementation complete - SessionOwnership with subscriber tracking, SessionLifecycleManager for disconnect handling, WebSocket protocol for session list/lifecycle events, CLI `sessions` command (list/attach/kill), Web UI with responsive layout and real-time updates |
+| 2025-12-27 | Milestone 3.3 (CLI ↔ Web Mirroring) design complete - Input source attribution, paginated catch-up protocol, CLI input history with arrow keys |
+| 2025-12-27 | Milestone 3.3 (CLI ↔ Web Mirroring) implementation complete - InputSource enum, source column in messages table, SubscribeAck with history catch-up, CLI remote input display with [Web UI]: prefix, InputHistory struct for arrow key navigation, Web UI source attribution badges |
+| 2025-12-27 | Test infrastructure added - Integration tests (in-process WebSocket, concurrency, history catch-up), E2E tests (Playwright smoke tests), CI workflow updated for E2E |
