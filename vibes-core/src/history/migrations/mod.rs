@@ -7,6 +7,7 @@ use rusqlite::Connection;
 const MIGRATIONS: &[(&str, &str)] = &[
     ("v001_initial", include_str!("v001_initial.sql")),
     ("v002_fts", include_str!("v002_fts.sql")),
+    ("v003_add_source", include_str!("v003_add_source.sql")),
 ];
 
 /// Runs database migrations
@@ -127,7 +128,7 @@ mod tests {
         let migrator = Migrator::new(&conn);
         migrator.migrate().unwrap();
 
-        assert_eq!(migrator.current_version().unwrap(), 2);
+        assert_eq!(migrator.current_version().unwrap(), 3);
 
         // Verify FTS table exists
         let count: i32 = conn

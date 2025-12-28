@@ -1,5 +1,6 @@
 //! Core history types
 
+use crate::events::InputSource;
 use crate::session::SessionState;
 use serde::{Deserialize, Serialize};
 
@@ -57,6 +58,9 @@ pub struct HistoricalMessage {
     pub input_tokens: Option<u32>,
     /// Output tokens for this message
     pub output_tokens: Option<u32>,
+    /// Source of user input (for user messages)
+    #[serde(default)]
+    pub source: InputSource,
 }
 
 impl HistoricalMessage {
@@ -72,6 +76,28 @@ impl HistoricalMessage {
             created_at,
             input_tokens: None,
             output_tokens: None,
+            source: InputSource::Unknown,
+        }
+    }
+
+    /// Create a new user message with source attribution
+    pub fn user_with_source(
+        session_id: String,
+        content: String,
+        source: InputSource,
+        created_at: i64,
+    ) -> Self {
+        Self {
+            id: 0,
+            session_id,
+            role: MessageRole::User,
+            content,
+            tool_name: None,
+            tool_id: None,
+            created_at,
+            input_tokens: None,
+            output_tokens: None,
+            source,
         }
     }
 
@@ -87,6 +113,7 @@ impl HistoricalMessage {
             created_at,
             input_tokens: None,
             output_tokens: None,
+            source: InputSource::Unknown,
         }
     }
 
@@ -108,6 +135,7 @@ impl HistoricalMessage {
             created_at,
             input_tokens: None,
             output_tokens: None,
+            source: InputSource::Unknown,
         }
     }
 
@@ -129,6 +157,7 @@ impl HistoricalMessage {
             created_at,
             input_tokens: None,
             output_tokens: None,
+            source: InputSource::Unknown,
         }
     }
 }
@@ -198,6 +227,25 @@ pub struct SessionSummary {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::events::InputSource;
+
+    #[test]
+    fn test_historical_message_user_with_source() {
+        let msg = HistoricalMessage::user_with_source(
+            "sess-1".into(),
+            "Hello".into(),
+            InputSource::Cli,
+            1234567890,
+        );
+        assert_eq!(msg.role, MessageRole::User);
+        assert_eq!(msg.source, InputSource::Cli);
+    }
+
+    #[test]
+    fn test_historical_message_user_defaults_to_unknown_source() {
+        let msg = HistoricalMessage::user("sess-1".into(), "Hello".into(), 1234567890);
+        assert_eq!(msg.source, InputSource::Unknown);
+    }
 
     #[test]
     fn test_message_role_roundtrip() {

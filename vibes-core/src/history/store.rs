@@ -8,6 +8,7 @@ use super::error::HistoryError;
 use super::migrations::Migrator;
 use super::query::{MessageListResult, MessageQuery, SessionListResult, SessionQuery};
 use super::types::{HistoricalMessage, HistoricalSession, MessageRole, SessionSummary};
+use crate::events::InputSource;
 use crate::session::SessionState;
 
 /// History storage trait
@@ -105,6 +106,7 @@ impl SqliteHistoryStore {
 
     fn row_to_message(&self, row: &rusqlite::Row) -> Result<HistoricalMessage, rusqlite::Error> {
         let role_str: String = row.get(2)?;
+        let source_str: String = row.get(9)?;
         Ok(HistoricalMessage {
             id: row.get(0)?,
             session_id: row.get(1)?,
@@ -115,6 +117,7 @@ impl SqliteHistoryStore {
             created_at: row.get(6)?,
             input_tokens: row.get(7)?,
             output_tokens: row.get(8)?,
+            source: InputSource::parse(&source_str).unwrap_or(InputSource::Unknown),
         })
     }
 }
@@ -321,8 +324,8 @@ impl HistoryStore for SqliteHistoryStore {
     fn save_message(&self, message: &HistoricalMessage) -> Result<i64, HistoryError> {
         let conn = self.conn.lock().unwrap();
         conn.execute(
-            "INSERT INTO messages (session_id, role, content, tool_name, tool_id, created_at, input_tokens, output_tokens)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+            "INSERT INTO messages (session_id, role, content, tool_name, tool_id, created_at, input_tokens, output_tokens, source)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
             rusqlite::params![
                 message.session_id,
                 message.role.as_str(),
@@ -332,6 +335,7 @@ impl HistoryStore for SqliteHistoryStore {
                 message.created_at,
                 message.input_tokens,
                 message.output_tokens,
+                message.source.as_str(),
             ],
         )?;
 
@@ -368,11 +372,11 @@ impl HistoryStore for SqliteHistoryStore {
 
         // Build query
         let sql = if query.role.is_some() {
-            "SELECT id, session_id, role, content, tool_name, tool_id, created_at, input_tokens, output_tokens
+            "SELECT id, session_id, role, content, tool_name, tool_id, created_at, input_tokens, output_tokens, source
              FROM messages WHERE session_id = ?1 AND role = ?2
              ORDER BY created_at ASC LIMIT ?3 OFFSET ?4"
         } else {
-            "SELECT id, session_id, role, content, tool_name, tool_id, created_at, input_tokens, output_tokens
+            "SELECT id, session_id, role, content, tool_name, tool_id, created_at, input_tokens, output_tokens, source
              FROM messages WHERE session_id = ?1
              ORDER BY created_at ASC LIMIT ?2 OFFSET ?3"
         };
