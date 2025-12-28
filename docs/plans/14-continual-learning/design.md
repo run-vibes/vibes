@@ -2350,9 +2350,397 @@ vibes-learning/
 2. ~~**Sampling strategy**~~ → 20% random + boost for high-signal sessions
 3. ~~**Dashboard visibility**~~ → Invisible default, dashboard for power users, optional indicator
 4. ~~**Attribution method**~~ → Layered: activation → temporal → ablation → aggregation
+5. ~~**Embedding model**~~ → Hybrid from day one: local for real-time, API for background refinement
+6. ~~**Initial priors**~~ → Uninformed (α=1, β=1) + burn-in period; public learnings bootstrap new users
+7. ~~**Transcript access**~~ → Stop hook path + JSONL parser with version detection
 
 ### Remaining
-1. **Embedding model** - Local (fast, private) vs API (better quality)?
-2. **Initial priors** - How to bootstrap adaptive parameters? (Leaning: uninformed + burn-in)
-3. **Privacy** - Should learnings ever leave the local machine?
-4. **Transcript access** - Parse Claude's JSONL or request structured export?
+1. **Privacy** - Should learnings ever leave the local machine? (Enterprise: yes with controls)
+
+---
+
+## Hybrid Embedding Strategy
+
+Build hybrid from day one: local for real-time decisions, API for background quality refinement.
+
+### Configuration
+
+```rust
+/// Embedding strategy configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum EmbedderConfig {
+    /// Fast, private, good enough for most semantic search
+    Local { model: LocalModel },
+    /// Higher quality when privacy allows
+    Api { provider: ApiProvider, fallback: Option<Box<EmbedderConfig>> },
+    /// Local for real-time, API for background refinement
+    Hybrid {
+        realtime: Box<EmbedderConfig>,
+        background: Box<EmbedderConfig>,
+    },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum LocalModel {
+    /// ~33M params, 384 dims, fast
+    GteSmall,
+    /// ~110M params, 768 dims, better quality
+    BgeBase,
+    /// Custom ONNX model
+    Custom { path: PathBuf, dims: usize },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ApiProvider {
+    OpenAI { model: String },  // text-embedding-3-small
+    Anthropic,                 // If/when available
+    Custom { endpoint: Url },
+}
+
+impl Default for EmbedderConfig {
+    fn default() -> Self {
+        // Sensible default: hybrid with local real-time, OpenAI background
+        Self::Hybrid {
+            realtime: Box::new(Self::Local { model: LocalModel::GteSmall }),
+            background: Box::new(Self::Api {
+                provider: ApiProvider::OpenAI {
+                    model: "text-embedding-3-small".into()
+                },
+                fallback: Some(Box::new(Self::Local { model: LocalModel::GteSmall })),
+            }),
+        }
+    }
+}
+```
+
+### Embedder Trait
+
+```rust
+#[async_trait]
+pub trait Embedder: Send + Sync {
+    /// Embed text into vector
+    async fn embed(&self, text: &str) -> Result<Vec<f32>>;
+
+    /// Embed multiple texts (batch for efficiency)
+    async fn embed_batch(&self, texts: &[&str]) -> Result<Vec<Vec<f32>>>;
+
+    /// Get embedding dimensions
+    fn dimensions(&self) -> usize;
+
+    /// Check if this embedder is available (model loaded, API reachable)
+    async fn health_check(&self) -> Result<()>;
+}
+
+/// Hybrid embedder that routes to appropriate backend
+pub struct HybridEmbedder {
+    realtime: Box<dyn Embedder>,
+    background: Box<dyn Embedder>,
+}
+
+impl HybridEmbedder {
+    /// Use for real-time decisions (injection, activation detection)
+    pub async fn embed_realtime(&self, text: &str) -> Result<Vec<f32>> {
+        self.realtime.embed(text).await
+    }
+
+    /// Use for background refinement (heavy assessment, re-indexing)
+    pub async fn embed_background(&self, text: &str) -> Result<Vec<f32>> {
+        match self.background.embed(text).await {
+            Ok(v) => Ok(v),
+            Err(_) => self.realtime.embed(text).await, // Fallback
+        }
+    }
+}
+```
+
+### When to Use Which
+
+| Operation | Embedder | Rationale |
+|-----------|----------|-----------|
+| Injection relevance scoring | Realtime (local) | Must be fast, in hot path |
+| Activation detection | Realtime (local) | Every message, latency critical |
+| Semantic search for injection | Realtime (local) | User is waiting |
+| Heavy assessment embedding | Background (API) | Async, quality matters more |
+| Learning extraction embedding | Background (API) | Async, stored long-term |
+| Periodic re-indexing | Background (API) | Scheduled, can take time |
+
+---
+
+## Bootstrapping Strategy
+
+Uninformed priors + burn-in period, with public learnings accelerating new user onboarding.
+
+### Burn-In Policy
+
+```rust
+/// Configuration for the burn-in period
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BurnInPolicy {
+    /// Number of sessions before trusting adaptive parameters
+    pub sessions: u32,  // Default: 10
+
+    /// During burn-in, assess 100% of sessions (not sampled)
+    pub assess_all: bool,  // Default: true
+
+    /// During burn-in, don't ablate (need clean baseline)
+    pub no_ablation: bool,  // Default: true
+
+    /// During burn-in, inject public learnings to establish baseline
+    pub inject_public: bool,  // Default: true
+}
+
+impl Default for BurnInPolicy {
+    fn default() -> Self {
+        Self {
+            sessions: 10,
+            assess_all: true,
+            no_ablation: true,
+            inject_public: true,
+        }
+    }
+}
+```
+
+### Public Learning Bootstrap Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    NEW USER BOOTSTRAP FLOW                               │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  1. User installs vibes-learning                                        │
+│     └── Adaptive params initialized: α=1, β=1 (uninformed)              │
+│                                                                          │
+│  2. First session starts                                                 │
+│     └── Fetch public learnings (trust: PublicVerified, PublicUnverified)│
+│     └── Inject with trust-aware wrapping                                │
+│     └── Full assessment (100%, burn-in mode)                            │
+│                                                                          │
+│  3. Assessment measures which public learnings helped THIS user          │
+│     └── Activation detection: which were actually used?                 │
+│     └── Temporal correlation: which preceded good outcomes?             │
+│     └── Store attribution for each public learning                      │
+│                                                                          │
+│  4. Sessions 2-10 (burn-in continues)                                   │
+│     └── Keep injecting public learnings                                 │
+│     └── Keep assessing 100%                                             │
+│     └── No ablation yet (building baseline)                             │
+│     └── User's own learnings start accumulating                         │
+│                                                                          │
+│  5. Session 11+ (burn-in complete)                                      │
+│     └── Adaptive params now calibrated to public baseline               │
+│     └── User learnings + curated public learnings injected              │
+│     └── Normal sampling (20%) resumes                                   │
+│     └── Ablation testing begins                                         │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Public Learning Value Inheritance
+
+When a user first encounters a public learning, they inherit the community's value estimate as a prior:
+
+```rust
+impl LearningValue {
+    /// Create initial value estimate for a public learning
+    pub fn from_public_baseline(public: &PublicLearningStats) -> Self {
+        Self {
+            learning_id: public.learning_id,
+            estimated_value: public.community_value,
+            confidence: 0.3, // Lower confidence until personal data
+            source: ValueSource::Prior,
+            activation_rate: public.avg_activation_rate,
+            details: AttributionData::empty(),
+        }
+    }
+
+    /// Update with personal observation
+    pub fn incorporate_observation(&mut self, personal: &Attribution) {
+        // Bayesian update: combine public prior with personal observation
+        let prior_weight = 1.0 - self.confidence;
+        let observation_weight = personal.activation_confidence;
+
+        self.estimated_value =
+            (self.estimated_value * prior_weight + personal.attributed_value * observation_weight)
+            / (prior_weight + observation_weight);
+
+        // Confidence increases with personal data
+        self.confidence = (self.confidence + 0.1).min(0.9);
+        self.source = ValueSource::Temporal; // Upgraded from Prior
+    }
+}
+```
+
+### The Flywheel Effect
+
+```
+                    ┌──────────────────┐
+                    │  Public Corpus   │
+                    │  (community      │
+                    │   learnings)     │
+                    └────────┬─────────┘
+                             │
+              ┌──────────────┴──────────────┐
+              │                             │
+              ▼                             ▼
+    ┌─────────────────┐           ┌─────────────────┐
+    │   New User A    │           │   New User B    │
+    │                 │           │                 │
+    │ Burn-in with    │           │ Burn-in with    │
+    │ public learnings│           │ public learnings│
+    └────────┬────────┘           └────────┬────────┘
+             │                             │
+             ▼                             ▼
+    ┌─────────────────┐           ┌─────────────────┐
+    │ Personal priors │           │ Personal priors │
+    │ calibrated to   │           │ calibrated to   │
+    │ public baseline │           │ public baseline │
+    └────────┬────────┘           └────────┬────────┘
+             │                             │
+             │    ┌─────────────────┐      │
+             └───▶│ User contributes│◀─────┘
+                  │ new learnings   │
+                  │ back to public  │
+                  │ corpus          │
+                  └────────┬────────┘
+                           │
+                           ▼
+                  ┌─────────────────┐
+                  │ Public corpus   │
+                  │ improves        │
+                  │ (flywheel)      │
+                  └─────────────────┘
+```
+
+---
+
+## Transcript Access
+
+Use Claude Code's stop hook to get transcript path, then parse JSONL with version detection.
+
+### Transcript Parser
+
+```rust
+/// Parser for Claude Code JSONL transcripts
+pub struct ClaudeJsonlParser {
+    /// Detected format version (from metadata line)
+    format_version: Option<String>,
+    /// Strict mode fails on unknown fields, lenient ignores them
+    strict_mode: bool,
+}
+
+impl ClaudeJsonlParser {
+    pub fn new() -> Self {
+        Self {
+            format_version: None,
+            strict_mode: false, // Default lenient for forward compatibility
+        }
+    }
+
+    pub fn parse(&mut self, path: &Path) -> Result<Transcript> {
+        let file = File::open(path)?;
+        let reader = BufReader::new(file);
+        let mut messages = Vec::new();
+
+        for (i, line) in reader.lines().enumerate() {
+            let line = line?;
+            if line.is_empty() { continue; }
+
+            // First line may contain version metadata
+            if i == 0 {
+                if let Some(version) = self.detect_version(&line) {
+                    self.format_version = Some(version);
+                    continue;
+                }
+            }
+
+            let entry: TranscriptEntry = if self.strict_mode {
+                serde_json::from_str(&line)?
+            } else {
+                // Lenient: ignore unknown fields
+                serde_json::from_str(&line).unwrap_or_else(|_| {
+                    TranscriptEntry::Unknown { raw: line.clone() }
+                })
+            };
+
+            messages.push(entry);
+        }
+
+        Ok(Transcript {
+            path: path.to_path_buf(),
+            format_version: self.format_version.clone(),
+            entries: messages,
+        })
+    }
+
+    fn detect_version(&self, line: &str) -> Option<String> {
+        // Claude Code may include version in first line metadata
+        let v: serde_json::Value = serde_json::from_str(line).ok()?;
+        v.get("version")?.as_str().map(String::from)
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Transcript {
+    pub path: PathBuf,
+    pub format_version: Option<String>,
+    pub entries: Vec<TranscriptEntry>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub enum TranscriptEntry {
+    #[serde(rename = "user")]
+    User { content: String, timestamp: Option<i64> },
+
+    #[serde(rename = "assistant")]
+    Assistant { content: String, timestamp: Option<i64> },
+
+    #[serde(rename = "tool_use")]
+    ToolUse { tool: String, input: Value, timestamp: Option<i64> },
+
+    #[serde(rename = "tool_result")]
+    ToolResult { tool: String, output: Value, success: bool, timestamp: Option<i64> },
+
+    #[serde(rename = "system")]
+    System { content: String },
+
+    /// Fallback for unknown entry types (forward compatibility)
+    Unknown { raw: String },
+}
+```
+
+### Stop Hook Integration
+
+```rust
+/// Capture adapter that uses Claude Code's stop hook
+pub struct ClaudeCodeCaptureAdapter {
+    parser: ClaudeJsonlParser,
+    /// Transcripts received from stop hook
+    pending_transcripts: Arc<Mutex<HashMap<SessionId, PathBuf>>>,
+}
+
+impl ClaudeCodeCaptureAdapter {
+    /// Called when stop hook fires
+    pub async fn on_stop_hook(&self, event: StopHookEvent) -> Result<()> {
+        // Stop hook provides transcript path
+        if let Some(path) = event.transcript_path {
+            self.pending_transcripts.lock().await
+                .insert(event.session_id, PathBuf::from(path));
+        }
+        Ok(())
+    }
+}
+
+#[async_trait]
+impl CaptureAdapter for ClaudeCodeCaptureAdapter {
+    async fn get_transcript(&self, session_id: &SessionId) -> Result<Transcript> {
+        let path = self.pending_transcripts.lock().await
+            .get(session_id)
+            .cloned()
+            .ok_or(Error::TranscriptNotFound)?;
+
+        self.parser.parse(&path)
+    }
+}
+```
