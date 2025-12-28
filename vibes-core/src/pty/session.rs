@@ -161,7 +161,10 @@ impl PtySession {
             })
             .map_err(|e| PtyError::CreateFailed(e.to_string()))?;
 
-        let cmd = CommandBuilder::new(&config.claude_path);
+        let mut cmd = CommandBuilder::new(&config.claude_path);
+        for arg in &config.claude_args {
+            cmd.arg(arg);
+        }
 
         let child = pair
             .slave
