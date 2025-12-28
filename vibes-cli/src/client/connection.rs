@@ -179,6 +179,43 @@ impl VibesClient {
         .await
     }
 
+    // === PTY Methods ===
+
+    /// Attach to a PTY session to receive output
+    pub async fn attach(&self, session_id: &str) -> Result<()> {
+        self.send(ClientMessage::Attach {
+            session_id: session_id.to_string(),
+        })
+        .await
+    }
+
+    /// Detach from a PTY session
+    pub async fn detach(&self, session_id: &str) -> Result<()> {
+        self.send(ClientMessage::Detach {
+            session_id: session_id.to_string(),
+        })
+        .await
+    }
+
+    /// Send input to a PTY session (base64 encoded)
+    pub async fn pty_input(&self, session_id: &str, data: &str) -> Result<()> {
+        self.send(ClientMessage::PtyInput {
+            session_id: session_id.to_string(),
+            data: data.to_string(),
+        })
+        .await
+    }
+
+    /// Resize a PTY session
+    pub async fn pty_resize(&self, session_id: &str, cols: u16, rows: u16) -> Result<()> {
+        self.send(ClientMessage::PtyResize {
+            session_id: session_id.to_string(),
+            cols,
+            rows,
+        })
+        .await
+    }
+
     /// Spawn a task that forwards outgoing messages to the WebSocket
     async fn spawn_outgoing_task<S>(mut rx: mpsc::Receiver<ClientMessage>, mut ws_sender: S)
     where
