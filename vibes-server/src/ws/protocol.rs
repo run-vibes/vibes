@@ -303,6 +303,14 @@ pub enum ServerMessage {
         /// Current terminal rows
         rows: u16,
     },
+
+    /// Replay scrollback buffer on attach
+    PtyReplay {
+        /// Session ID
+        session_id: String,
+        /// Scrollback data (base64 encoded)
+        data: String,
+    },
 }
 
 /// Convert a VibesEvent to a ServerMessage for broadcasting
@@ -1004,5 +1012,17 @@ mod tests {
         assert!(json.contains(r#""type":"attach_ack""#));
         assert!(json.contains(r#""cols":80"#));
         assert!(json.contains(r#""rows":24"#));
+    }
+
+    #[test]
+    fn test_server_message_pty_replay_roundtrip() {
+        let msg = ServerMessage::PtyReplay {
+            session_id: "sess-1".to_string(),
+            data: "aGVsbG8gd29ybGQ=".to_string(), // base64 for "hello world"
+        };
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ServerMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+        assert!(json.contains(r#""type":"pty_replay""#));
     }
 }
