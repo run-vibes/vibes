@@ -18,12 +18,25 @@ export function ClaudeSession() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [terminalSize, setTerminalSize] = useState({ cols: 80, rows: 24 });
 
-  const terminalRef = useRef<SessionTerminalHandle>(null);
+  const terminalRef = useRef<SessionTerminalHandle | null>(null);
 
   // Buffer for terminal data that arrives before terminal is mounted.
   // This fixes a race condition where pty_replay arrives before attach_ack,
   // but the terminal only renders after connectionState becomes 'attached'.
   const pendingDataRef = useRef<string[]>([]);
+
+  // Callback ref that flushes pending data when terminal mounts.
+  // Using a callback ref (vs useEffect) ensures flush happens synchronously
+  // during React's commit phase, before any subsequent messages can arrive.
+  const terminalCallbackRef = useCallback((handle: SessionTerminalHandle | null) => {
+    terminalRef.current = handle;
+    if (handle && pendingDataRef.current.length > 0) {
+      for (const data of pendingDataRef.current) {
+        handle.write(data);
+      }
+      pendingDataRef.current = [];
+    }
+  }, []);
 
   // Send attach request when connected
   useEffect(() => {
@@ -35,19 +48,12 @@ export function ClaudeSession() {
     }
   }, [isConnected, sessionId, send, connectionState]);
 
-  // Helper to write data to terminal or buffer it for later
+  // Write data to terminal or buffer it if terminal isn't mounted yet.
+  // Buffered data is flushed by terminalCallbackRef when terminal mounts.
   const writeToTerminal = useCallback((data: string) => {
     if (terminalRef.current) {
-      // Terminal is ready - flush any pending data first, then write new data
-      if (pendingDataRef.current.length > 0) {
-        for (const pending of pendingDataRef.current) {
-          terminalRef.current.write(pending);
-        }
-        pendingDataRef.current = [];
-      }
       terminalRef.current.write(data);
     } else {
-      // Terminal not ready yet - buffer the data
       pendingDataRef.current.push(data);
     }
   }, []);
@@ -93,22 +99,6 @@ export function ClaudeSession() {
   useEffect(() => {
     return addMessageHandler(handleMessage);
   }, [addMessageHandler, handleMessage]);
-
-  // Flush pending data when terminal becomes available after attach
-  useEffect(() => {
-    if (connectionState === 'attached' && pendingDataRef.current.length > 0) {
-      // Use requestAnimationFrame to ensure terminal ref is set after React commits
-      const rafId = requestAnimationFrame(() => {
-        if (terminalRef.current && pendingDataRef.current.length > 0) {
-          for (const data of pendingDataRef.current) {
-            terminalRef.current.write(data);
-          }
-          pendingDataRef.current = [];
-        }
-      });
-      return () => cancelAnimationFrame(rafId);
-    }
-  }, [connectionState]);
 
   // Send detach when unmounting
   useEffect(() => {
@@ -171,7 +161,7 @@ export function ClaudeSession() {
       <div className="terminal-wrapper">
         {(connectionState === 'attached' || connectionState === 'exited') && (
           <SessionTerminal
-            ref={terminalRef}
+            ref={terminalCallbackRef}
             sessionId={sessionId}
             onInput={handleInput}
             onResize={handleResize}
