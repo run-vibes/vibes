@@ -9,5 +9,5 @@ mod session;
 
 pub use config::PtyConfig;
 pub use error::PtyError;
-pub use manager::PtyManager;
+pub use manager::{PtyManager, PtySessionInfo};
 pub use session::{PtySession, PtySessionHandle, PtyState};
