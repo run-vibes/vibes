@@ -29,9 +29,18 @@ impl PtyManager {
         }
     }
 
-    /// Create a new PTY session
+    /// Create a new PTY session with auto-generated ID
     pub fn create_session(&mut self, name: Option<String>) -> Result<String, PtyError> {
         let id = Uuid::new_v4().to_string();
+        self.create_session_with_id(id, name)
+    }
+
+    /// Create a new PTY session with a specific ID
+    pub fn create_session_with_id(
+        &mut self,
+        id: String,
+        name: Option<String>,
+    ) -> Result<String, PtyError> {
         let session = PtySession::spawn(id.clone(), name, &self.config)?;
         self.sessions.insert(id.clone(), session);
         Ok(id)

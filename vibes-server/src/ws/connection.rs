@@ -583,16 +583,16 @@ async fn handle_text_message(
                 // Session exists, get dimensions from config (we don't track current size yet)
                 (120, 40) // TODO: Track actual PTY dimensions
             } else {
-                // Create new PTY session
-                match pty_manager.create_session(Some(session_id.clone())) {
-                    Ok(new_id) => {
-                        debug!("Created new PTY session: {}", new_id);
+                // Create new PTY session with the client's session ID
+                match pty_manager.create_session_with_id(session_id.clone(), None) {
+                    Ok(created_id) => {
+                        debug!("Created new PTY session: {}", created_id);
 
                         // Get handle for output reading
-                        if let Some(handle) = pty_manager.get_handle(&new_id) {
+                        if let Some(handle) = pty_manager.get_handle(&created_id) {
                             // Spawn background task to read PTY output
                             let state_clone = state.clone();
-                            let session_id_clone = new_id.clone();
+                            let session_id_clone = created_id.clone();
                             tokio::spawn(async move {
                                 pty_output_reader(state_clone, session_id_clone, handle).await;
                             });
