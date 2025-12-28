@@ -31,6 +31,11 @@ export const SessionTerminal = forwardRef<SessionTerminalHandle, SessionTerminal
     const terminalRef = useRef<Terminal | null>(null);
     const fitAddonRef = useRef<FitAddon | null>(null);
 
+    // Buffer for data that arrives before terminal is initialized.
+    // useImperativeHandle runs before useEffect, so write() may be called
+    // before the xterm Terminal instance exists.
+    const pendingWritesRef = useRef<string[]>([]);
+
     // Expose write and focus methods via ref
     useImperativeHandle(ref, () => ({
       write: (data: string) => {
@@ -43,6 +48,9 @@ export const SessionTerminal = forwardRef<SessionTerminalHandle, SessionTerminal
             console.warn('Failed to decode terminal data, writing directly:', e);
             terminalRef.current.write(data);
           }
+        } else {
+          // Terminal not ready yet, buffer the data
+          pendingWritesRef.current.push(data);
         }
       },
       focus: () => {
@@ -106,6 +114,20 @@ export const SessionTerminal = forwardRef<SessionTerminalHandle, SessionTerminal
       // Store refs for later use
       terminalRef.current = term;
       fitAddonRef.current = fitAddon;
+
+      // Flush any data that was buffered before terminal was ready
+      if (pendingWritesRef.current.length > 0) {
+        for (const data of pendingWritesRef.current) {
+          try {
+            const decoded = decodeFromTransport(data);
+            term.write(decoded);
+          } catch (e) {
+            console.warn('Failed to decode buffered terminal data:', e);
+            term.write(data);
+          }
+        }
+        pendingWritesRef.current = [];
+      }
 
       // Handle user input - send to server
       term.onData(handleInput);
