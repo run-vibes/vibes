@@ -197,6 +197,21 @@ pub fn vibes_event_to_server_message(event: &VibesEvent) -> Option<ServerMessage
             state: state.clone(),
             url: url.clone(),
         }),
+        // SessionRemoved is converted directly
+        VibesEvent::SessionRemoved { session_id, reason } => {
+            let removal_reason = match reason.as_str() {
+                "killed" => RemovalReason::Killed,
+                "session_finished" => RemovalReason::SessionFinished,
+                _ => RemovalReason::OwnerDisconnected,
+            };
+            Some(ServerMessage::SessionRemoved {
+                session_id: session_id.clone(),
+                reason: removal_reason,
+            })
+        }
+        // OwnershipTransferred needs special handling (client-specific you_are_owner)
+        // It will be handled in handle_broadcast_event
+        VibesEvent::OwnershipTransferred { .. } => None,
         // These events are not broadcast to clients
         VibesEvent::UserInput { .. } => None,
         VibesEvent::PermissionResponse { .. } => None,

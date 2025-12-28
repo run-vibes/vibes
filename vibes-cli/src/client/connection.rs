@@ -18,11 +18,16 @@ pub struct VibesClient {
 }
 
 impl VibesClient {
+    /// Connect to the vibes daemon on the default port
+    pub async fn connect() -> Result<Self> {
+        Self::connect_default().await
+    }
+
     /// Connect to the vibes daemon at the specified URL
     ///
     /// # Arguments
     /// * `url` - WebSocket URL (e.g., "ws://127.0.0.1:7743/ws")
-    pub async fn connect(url: &str) -> Result<Self> {
+    pub async fn connect_url(url: &str) -> Result<Self> {
         let (ws_stream, _response) = connect_async(url)
             .await
             .with_context(|| format!("Failed to connect to {}", url))?;
@@ -50,11 +55,10 @@ impl VibesClient {
     }
 
     /// Connect to the vibes daemon on the default port
-    #[allow(dead_code)]
     pub async fn connect_default() -> Result<Self> {
         use crate::commands::serve::{DEFAULT_HOST, DEFAULT_PORT};
         let url = format!("ws://{}:{}/ws", DEFAULT_HOST, DEFAULT_PORT);
-        Self::connect(&url).await
+        Self::connect_url(&url).await
     }
 
     /// Send a message to the daemon
@@ -151,6 +155,22 @@ impl VibesClient {
             session_id: session_id.to_string(),
             request_id: request_id.to_string(),
             approved,
+        })
+        .await
+    }
+
+    /// Request list of active sessions
+    pub async fn send_list_sessions(&self, request_id: &str) -> Result<()> {
+        self.send(ClientMessage::ListSessions {
+            request_id: request_id.to_string(),
+        })
+        .await
+    }
+
+    /// Kill a session
+    pub async fn send_kill_session(&self, session_id: &str) -> Result<()> {
+        self.send(ClientMessage::KillSession {
+            session_id: session_id.to_string(),
         })
         .await
     }

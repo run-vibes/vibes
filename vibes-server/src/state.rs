@@ -6,8 +6,8 @@ use chrono::{DateTime, Utc};
 use tokio::sync::{RwLock, broadcast};
 use vibes_core::{
     AccessConfig, BackendFactory, MemoryEventBus, PluginHost, PluginHostConfig,
-    PrintModeBackendFactory, PrintModeConfig, SessionManager, SubscriptionStore, TunnelConfig,
-    TunnelManager, VapidKeyManager, VibesEvent,
+    PrintModeBackendFactory, PrintModeConfig, SessionLifecycleManager, SessionManager,
+    SubscriptionStore, TunnelConfig, TunnelManager, VapidKeyManager, VibesEvent,
     history::{HistoryService, SqliteHistoryStore},
 };
 
@@ -21,6 +21,8 @@ const DEFAULT_BROADCAST_CAPACITY: usize = 1000;
 pub struct AppState {
     /// Session manager for Claude sessions
     pub session_manager: Arc<SessionManager>,
+    /// Session lifecycle manager for ownership and cleanup
+    pub lifecycle: Arc<SessionLifecycleManager>,
     /// Plugin host for managing plugins
     pub plugin_host: Arc<PluginHost>,
     /// Event bus for publishing/subscribing to events
@@ -48,6 +50,7 @@ impl AppState {
         let factory: Arc<dyn BackendFactory> =
             Arc::new(PrintModeBackendFactory::new(PrintModeConfig::default()));
         let session_manager = Arc::new(SessionManager::new(factory, event_bus.clone()));
+        let lifecycle = Arc::new(SessionLifecycleManager::new(session_manager.clone()));
         let plugin_host = Arc::new(PluginHost::new(PluginHostConfig::default()));
         let tunnel_manager = Arc::new(RwLock::new(TunnelManager::new(
             TunnelConfig::default(),
@@ -57,6 +60,7 @@ impl AppState {
 
         Self {
             session_manager,
+            lifecycle,
             plugin_host,
             event_bus,
             tunnel_manager,
@@ -99,10 +103,12 @@ impl AppState {
         event_bus: Arc<MemoryEventBus>,
         tunnel_manager: Arc<RwLock<TunnelManager>>,
     ) -> Self {
+        let lifecycle = Arc::new(SessionLifecycleManager::new(session_manager.clone()));
         let (event_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
 
         Self {
             session_manager,
+            lifecycle,
             plugin_host,
             event_bus,
             tunnel_manager,

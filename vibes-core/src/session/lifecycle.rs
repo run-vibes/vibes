@@ -114,8 +114,8 @@ pub struct DisconnectResult {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::backend::traits::{BackendFactory, ClaudeBackend};
     use crate::backend::MockBackend;
+    use crate::backend::traits::{BackendFactory, ClaudeBackend};
     use crate::events::MemoryEventBus;
 
     struct MockBackendFactory;

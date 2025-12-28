@@ -432,3 +432,198 @@ code {
   color: var(--color-text-muted);
   font-size: 0.75rem;
 }
+
+/* Page header with connection status */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.page-header h1 {
+  margin-bottom: 0;
+}
+
+/* Connection status styles */
+.connection-connected {
+  background-color: rgba(63, 185, 80, 0.2);
+  color: var(--color-success);
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.connection-connecting {
+  background-color: rgba(210, 153, 34, 0.2);
+  color: var(--color-warning);
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.connection-disconnected {
+  background-color: rgba(248, 81, 73, 0.2);
+  color: var(--color-error);
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Session list styles */
+.session-list {
+  margin-top: 1rem;
+}
+
+.session-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.session-count {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+/* Owner badge */
+.owner-badge {
+  color: var(--color-warning);
+  margin-left: 0.5rem;
+  font-size: 0.875rem;
+}
+
+/* Subscriber count */
+.subscriber-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+}
+
+/* Session kill button */
+.session-card {
+  position: relative;
+}
+
+.session-kill-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  background-color: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, background-color 0.15s, color 0.15s;
+}
+
+.session-card:hover .session-kill-btn {
+  opacity: 1;
+}
+
+.session-kill-btn:hover {
+  background-color: var(--color-error);
+  border-color: var(--color-error);
+  color: white;
+}
+
+/* Button styles */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  background-color: var(--color-accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.btn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background-color: var(--color-border);
+  color: var(--color-text);
+}
+
+.btn-icon {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  background-color: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+
+.btn-icon:hover:not(:disabled) {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--color-text-muted);
+}
+
+.empty-state code {
+  display: inline-block;
+  margin-top: 0.5rem;
+}
+
+/* Error container */
+.error-container {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.error-container .btn {
+  margin-top: 1rem;
+}
+
+/* Loading message */
+.loading-message {
+  text-align: center;
+  color: var(--color-text-muted);
+  padding: 2rem 1rem;
+}
+
+/* Responsive layout */
+@media (max-width: 768px) {
+  .session-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .session-card-meta {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+}

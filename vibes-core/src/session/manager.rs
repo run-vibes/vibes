@@ -531,7 +531,9 @@ mod tests {
         // Add client-a as subscriber to client-b's session
         manager
             .with_session(&id2, |session| {
-                session.ownership_mut().add_subscriber("client-a".to_string());
+                session
+                    .ownership_mut()
+                    .add_subscriber("client-a".to_string());
             })
             .await
             .unwrap();

@@ -77,8 +77,8 @@ pub use notifications::{
 };
 pub use plugins::{PluginHost, PluginHostConfig, PluginHostError, PluginInfo, PluginState};
 pub use session::{
-    ClientId, DisconnectResult, Session, SessionLifecycleManager, SessionManager,
-    SessionOwnership, SessionState,
+    ClientId, DisconnectResult, Session, SessionLifecycleManager, SessionManager, SessionOwnership,
+    SessionState,
 };
 pub use tunnel::{
     CloudflaredInfo, LogLevel, RestartPolicy, TunnelConfig, TunnelError, TunnelEvent,

@@ -352,7 +352,9 @@ fn dispatch_to_plugin(
         | VibesEvent::PermissionResponse { .. }
         | VibesEvent::ClientConnected { .. }
         | VibesEvent::ClientDisconnected { .. }
-        | VibesEvent::TunnelStateChanged { .. } => {
+        | VibesEvent::TunnelStateChanged { .. }
+        | VibesEvent::OwnershipTransferred { .. }
+        | VibesEvent::SessionRemoved { .. } => {
             // These events are not dispatched to plugins (they're client -> server or system events)
         }
     }

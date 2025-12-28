@@ -11,7 +11,9 @@ export type ClientMessage =
   | { type: 'unsubscribe'; session_ids: string[] }
   | { type: 'create_session'; name?: string; request_id: string }
   | { type: 'input'; session_id: string; content: string }
-  | { type: 'permission_response'; session_id: string; request_id: string; approved: boolean };
+  | { type: 'permission_response'; session_id: string; request_id: string; approved: boolean }
+  | { type: 'list_sessions'; request_id: string }
+  | { type: 'kill_session'; session_id: string };
 
 // ============================================================
 // Server -> Client Messages
@@ -24,6 +26,9 @@ export type ServerMessage =
   | { type: 'session_state'; session_id: string; state: SessionState }
   | { type: 'error'; session_id?: string; message: string; code: string }
   | { type: 'tunnel_state'; state: string; url?: string }
+  | { type: 'session_list'; request_id: string; sessions: SessionInfo[] }
+  | { type: 'session_removed'; session_id: string; reason: RemovalReason }
+  | { type: 'ownership_transferred'; session_id: string; new_owner_id: string; you_are_owner: boolean }
   | AuthContextMessage;
 
 // ============================================================
@@ -68,6 +73,11 @@ export type SessionState =
   | 'finished'
   | 'failed';
 
+export type RemovalReason =
+  | 'killed'
+  | 'owner_disconnected'
+  | 'session_finished';
+
 export interface Usage {
   input_tokens: number;
   output_tokens: number;
@@ -86,6 +96,18 @@ export interface Session {
   };
 }
 
+/** Session info returned by list_sessions - matches vibes-server/src/ws/protocol.rs */
+export interface SessionInfo {
+  id: string;
+  name?: string;
+  state: string;
+  owner_id: string;
+  is_owner: boolean;
+  subscriber_count: number;
+  created_at: number;
+  last_activity_at: number;
+}
+
 // ============================================================
 // Type Guards
 // ============================================================
@@ -100,4 +122,16 @@ export function isSessionStateMessage(msg: ServerMessage): msg is Extract<Server
 
 export function isErrorMessage(msg: ServerMessage): msg is Extract<ServerMessage, { type: 'error' }> {
   return msg.type === 'error';
+}
+
+export function isSessionListMessage(msg: ServerMessage): msg is Extract<ServerMessage, { type: 'session_list' }> {
+  return msg.type === 'session_list';
+}
+
+export function isSessionRemovedMessage(msg: ServerMessage): msg is Extract<ServerMessage, { type: 'session_removed' }> {
+  return msg.type === 'session_removed';
+}
+
+export function isOwnershipTransferredMessage(msg: ServerMessage): msg is Extract<ServerMessage, { type: 'ownership_transferred' }> {
+  return msg.type === 'ownership_transferred';
 }

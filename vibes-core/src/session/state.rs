@@ -656,7 +656,9 @@ mod tests {
             event_bus,
         );
 
-        session.ownership_mut().add_subscriber("client-2".to_string());
+        session
+            .ownership_mut()
+            .add_subscriber("client-2".to_string());
 
         assert!(session.ownership().is_subscriber(&"client-2".to_string()));
         assert_eq!(session.ownership().subscriber_count(), 2);
