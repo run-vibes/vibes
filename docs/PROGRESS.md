@@ -17,7 +17,16 @@ This document tracks the implementation progress of vibes against the roadmap de
 | 3.2 Multi-Session Support | Complete | [design](plans/09-multi-session/design.md) | [implementation](plans/09-multi-session/implementation.md) |
 | 3.3 CLI ↔ Web Mirroring | Complete | [design](plans/10-cli-web-mirroring/design.md) | [implementation](plans/10-cli-web-mirroring/implementation.md) |
 | 3.4 PTY Backend | Complete | [design](plans/12-pty-backend/design.md) | [implementation](plans/12-pty-backend/implementation.md) |
-| 3.5 Setup Wizards | Not started | — | — |
+| 4.1 Harness Introspection | Not started | [design](plans/2025-12-28-continual-learning-design.md) | — |
+| 4.2 Storage Foundation | Not started | [design](plans/2025-12-28-continual-learning-design.md) | — |
+| 4.3 Capture & Inject | Not started | [design](plans/2025-12-28-continual-learning-design.md) | — |
+| 4.4 Learning Extraction | Not started | [design](plans/2025-12-28-continual-learning-design.md) | — |
+| 4.5 Adaptive Strategies | Not started | [design](plans/2025-12-28-continual-learning-design.md) | — |
+| 4.6 Open-World Adaptation | Not started | [design](plans/2025-12-28-continual-learning-design.md) | — |
+| 5.1 Setup Wizards | Not started | — | — |
+| 5.2 Default Plugins | Not started | — | — |
+| 5.3 CLI Enhancements | Not started | — | — |
+| 5.4 iOS App | Not started | — | — |
 
 ---
 
@@ -94,9 +103,11 @@ Note: Auto-detect team/aud moved to Milestone 3.5 (Cloudflare Auth Wizard)
 
 ---
 
-## Phase 3: Multi-Client Experience
+## Phase 3: Multi-Client Experience ✓
 
-**Goal:** Full multi-client support with setup wizards for remote access
+**Goal:** Full multi-client support with real-time sessions
+
+**Status:** Complete
 
 ### Milestone 3.1: Chat History
 - [x] Persistent session history storage (SQLite with FTS5)
@@ -130,37 +141,93 @@ Note: Auto-detect team/aud moved to Milestone 3.5 (Cloudflare Auth Wizard)
 - [x] Auto-configure hooks on daemon start
 - [x] Remove PrintModeBackend and stream-json parser
 
-### Milestone 3.5: Setup Wizards
+**Phase 3 Deliverable:** Full CLI parity with real-time multi-client sessions ✓
+
+---
+
+## Phase 4: Continual Learning
+
+**Goal:** Progressive improvement through accumulated experience
+
+**Design:** [Continual Learning Design](plans/2025-12-28-continual-learning-design.md)
+
+### Milestone 4.1: Harness Introspection (Level 0)
+- [ ] `Harness` trait and `HarnessCapabilities` struct
+- [ ] `ClaudeCodeHarness` implementation
+- [ ] `GenericHarnessDiscovery` for unknown harnesses
+- [ ] Capability caching in storage
+- [ ] Adapter selection based on discovered capabilities
+
+### Milestone 4.2: Storage Foundation
+- [ ] CozoDB setup with schema and migrations
+- [ ] `Learning` model with UUIDv7 identifiers
+- [ ] `LearningStorage` trait and CozoDB implementation
+- [ ] `AdaptiveParam` with Bayesian update mechanics
+- [ ] `AdaptiveConfig` for system-wide parameters
+- [ ] Basic CRUD operations for learnings
+
+### Milestone 4.3: Capture & Inject (Level 1 MVP)
+- [ ] `CaptureAdapter` trait for abstract capture
+- [ ] `ClaudeCodeHooksCapture` using PreToolUse/PostToolUse/Stop hooks
+- [ ] `InjectionAdapter` trait for abstract injection
+- [ ] `ClaudeCodeInjector` via CLAUDE.md
+- [ ] Session context preparation with scope hierarchy
+- [ ] Outcome inference from session signals
+
+### Milestone 4.4: Learning Extraction (Level 2a)
+- [ ] Transcript parser for Claude JSONL format
+- [ ] Error recovery pattern extraction
+- [ ] User correction detection
+- [ ] Tool usage pattern learning
+- [ ] `Embedder` trait with local/API implementations
+- [ ] Semantic search via CozoDB HNSW index
+
+### Milestone 4.5: Adaptive Strategies (Level 2b)
+- [ ] `InjectionStrategy` enum (MainContext, Subagent, BackgroundSubagent, Deferred)
+- [ ] `StrategyLearner` with Thompson sampling
+- [ ] Subagent injection support
+- [ ] Outcome-based parameter updates
+- [ ] Confidence calibration from usage
+
+### Milestone 4.6: Open-World Adaptation (Level 3)
+- [ ] `NoveltyDetector` for unknown patterns
+- [ ] `PatternFingerprint` for known/unknown classification
+- [ ] `AnomalyCluster` for grouping similar unknowns
+- [ ] `CapabilityGapDetector` for surfacing limitations
+- [ ] Emergent pattern discovery and notification
+- [ ] Meta-learning metrics and self-improvement tracking
+
+**Phase 4 Deliverable:** Self-improving assistant that learns from every session
+
+---
+
+## Phase 5: Polish & Ecosystem
+
+**Goal:** Production-ready with setup wizards, default plugins, and mobile apps
+
+### Milestone 5.1: Setup Wizards
 - [ ] Interactive `vibes tunnel setup` wizard
 - [ ] Interactive `vibes auth setup` wizard
 - [ ] Guide through cloudflared installation
 - [ ] Auto-detect team/AUD from tunnel config
 - [ ] Test connectivity and validation
 
-**Phase 3 Deliverable:** Full CLI parity with real-time multi-client sessions
-
----
-
-## Phase 4: Polish & Ecosystem
-
-**Goal:** Production-ready with default plugins and mobile apps
-
-### Milestone 4.1: Default plugins
+### Milestone 5.2: Default Plugins
 - [ ] analytics (session stats, token usage)
 - [ ] templates (prompt templates/snippets)
 - [ ] export (session export to markdown/JSON)
 
-### Milestone 4.2: CLI enhancements
+### Milestone 5.3: CLI Enhancements
 - [ ] Tab completion
 - [ ] Interactive session picker
 
-### Milestone 4.3: iOS App
+### Milestone 5.4: iOS App
 - [ ] Swift native app with xterm.js WebView
 - [ ] Push notification integration
 - [ ] Session list and attach
 - [ ] Structured data display (from hooks)
 
-**Phase 4 Deliverable:** Feature-rich vibes with mobile access
+**Phase 5 Deliverable:** Feature-rich vibes with mobile access
 
 ---
 
@@ -179,7 +246,7 @@ These phases are planned but not yet scheduled.
 - [ ] Linux: GTK via gtk-rs
 - [ ] Menu bar/system tray integration
 
-### Phase F4: Licensing System
+### Phase F3: Licensing System
 - [ ] License validation adapter interface
 - [ ] Plugin license checking
 - [ ] Grace periods and offline validation
@@ -210,3 +277,6 @@ These phases are planned but not yet scheduled.
 | 2025-12-27 | Milestone 3.4 (PTY Backend) design complete - Replace PrintModeBackend with PTY wrapper, xterm.js web UI, Claude hooks for structured data, auto-configure hooks on daemon start |
 | 2025-12-27 | Roadmap updated: PTY Backend promoted to Milestone 3.4, iOS App moved to Phase 4, setup wizards consolidated to Milestone 3.5 |
 | 2025-12-27 | Milestone 3.4 (PTY Backend) implementation complete - portable-pty for PTY sessions, xterm.js web UI, Claude hooks receiver with auto-install, raw terminal mode CLI, deprecated legacy protocol messages |
+| 2025-12-28 | Phase 3 marked complete (deliverable achieved with PTY Backend) |
+| 2025-12-28 | Continual Learning design complete - comprehensive design for vibes-learning plugin with harness introspection, adaptive parameters, open-world adaptation |
+| 2025-12-28 | Roadmap reorganized: New Phase 4 (Continual Learning) with 6 milestones (L0-L3), Setup Wizards moved to Phase 5, old Phase 4 becomes Phase 5 |
