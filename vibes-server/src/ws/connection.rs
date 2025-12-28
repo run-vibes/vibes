@@ -468,39 +468,32 @@ async fn handle_text_message(
         ClientMessage::ListSessions { request_id } => {
             debug!("ListSessions request: {}", request_id);
 
-            // Collect session info for all sessions
-            let session_ids = state.session_manager.list_sessions().await;
-            let mut sessions = Vec::with_capacity(session_ids.len());
+            // Get PTY sessions (the active terminal sessions)
+            let pty_manager = state.pty_manager.read().await;
+            let pty_sessions = pty_manager.list_sessions();
 
-            for id in session_ids {
-                if let Ok(info) = state
-                    .session_manager
-                    .with_session(&id, |session| {
-                        let ownership = session.ownership();
-                        SessionInfo {
-                            id: id.clone(),
-                            name: session.name().map(|s| s.to_string()),
-                            state: format!("{:?}", session.state()),
-                            owner_id: ownership.owner_id.clone(),
-                            is_owner: ownership.is_owner(&conn_state.client_id),
-                            subscriber_count: ownership.subscriber_count() as u32,
-                            created_at: session
-                                .created_at()
-                                .duration_since(std::time::UNIX_EPOCH)
-                                .map(|d| d.as_secs() as i64)
-                                .unwrap_or(0),
-                            last_activity_at: session
-                                .last_activity_at()
-                                .duration_since(std::time::UNIX_EPOCH)
-                                .map(|d| d.as_secs() as i64)
-                                .unwrap_or(0),
-                        }
-                    })
-                    .await
-                {
-                    sessions.push(info);
-                }
-            }
+            let sessions: Vec<SessionInfo> = pty_sessions
+                .into_iter()
+                .map(|pty_info| {
+                    use vibes_core::pty::PtyState;
+                    let state_str = match pty_info.state {
+                        PtyState::Running => "Running".to_string(),
+                        PtyState::Exited(code) => format!("Exited({})", code),
+                    };
+
+                    SessionInfo {
+                        id: pty_info.id,
+                        name: pty_info.name,
+                        state: state_str,
+                        // PTY sessions don't have ownership tracking yet
+                        owner_id: String::new(),
+                        is_owner: true, // All clients can interact with PTY
+                        subscriber_count: 0,
+                        created_at: 0,
+                        last_activity_at: 0,
+                    }
+                })
+                .collect();
 
             let response = ServerMessage::SessionList {
                 request_id,
@@ -513,30 +506,34 @@ async fn handle_text_message(
         ClientMessage::KillSession { session_id } => {
             debug!("KillSession request: {}", session_id);
 
-            match state.session_manager.remove_session(&session_id).await {
+            // Kill PTY session
+            let mut pty_manager = state.pty_manager.write().await;
+            match pty_manager.kill_session(&session_id).await {
                 Ok(()) => {
-                    // Unsubscribe locally
-                    conn_state.unsubscribe(std::slice::from_ref(&session_id));
+                    // Detach locally
+                    conn_state.detach_pty(&session_id);
 
                     // Broadcast removal to all clients
                     let removal_msg = ServerMessage::SessionRemoved {
-                        session_id,
+                        session_id: session_id.clone(),
                         reason: RemovalReason::Killed,
                     };
                     let json = serde_json::to_string(&removal_msg)?;
                     sender.send(Message::Text(json)).await?;
+
+                    // Also broadcast PTY exit event
+                    let exit_event = PtyEvent::Exit {
+                        session_id,
+                        exit_code: None,
+                    };
+                    state.broadcast_pty_event(exit_event);
                 }
                 Err(e) => {
-                    warn!("Failed to kill session {}: {}", session_id, e);
-                    let code = if e.to_string().contains("not found") {
-                        "NOT_FOUND"
-                    } else {
-                        "KILL_FAILED"
-                    };
+                    warn!("Failed to kill PTY session {}: {}", session_id, e);
                     let error_msg = ServerMessage::Error {
                         session_id: Some(session_id),
                         message: e.to_string(),
-                        code: code.to_string(),
+                        code: "KILL_FAILED".to_string(),
                     };
                     let json = serde_json::to_string(&error_msg)?;
                     sender.send(Message::Text(json)).await?;

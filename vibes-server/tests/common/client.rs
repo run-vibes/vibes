@@ -265,4 +265,30 @@ impl TestClient {
         }
         panic!("Timeout waiting for pty_exit");
     }
+
+    /// List all sessions, returns vector of session IDs
+    #[allow(dead_code)]
+    pub async fn list_sessions(&mut self) -> Vec<String> {
+        let request_id = Uuid::new_v4().to_string();
+        self.conn
+            .send_json(&serde_json::json!({
+                "type": "list_sessions",
+                "request_id": request_id,
+            }))
+            .await;
+
+        let response: serde_json::Value = self.conn.recv_json().await;
+        assert_eq!(
+            response["type"], "session_list",
+            "Expected session_list but got: {}",
+            response
+        );
+
+        response["sessions"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|s| s["id"].as_str().unwrap().to_string())
+            .collect()
+    }
 }

@@ -164,3 +164,68 @@ async fn session_id_mismatch_regression() {
         output_str
     );
 }
+
+#[tokio::test]
+async fn list_sessions_shows_pty_sessions() {
+    // This test catches the bug where list_sessions queried the wrong session manager
+    let (_state, addr) = common::create_test_server_with_pty_config(test_pty_config()).await;
+
+    // Client 1 creates a PTY session by attaching
+    let mut client1 = TestClient::connect(addr).await;
+    let session_id = Uuid::new_v4().to_string();
+    client1.attach(&session_id).await;
+
+    // Client 2 should be able to discover the session via list_sessions
+    let mut client2 = TestClient::connect(addr).await;
+    let sessions = client2.list_sessions().await;
+
+    assert!(
+        sessions.contains(&session_id),
+        "Expected list_sessions to contain '{}', but got: {:?}. \
+         This may indicate that ListSessions is querying the wrong session manager!",
+        session_id,
+        sessions
+    );
+}
+
+#[tokio::test]
+async fn second_client_can_attach_to_discovered_session() {
+    // Full flow test: Client 1 creates session, Client 2 discovers and attaches
+    let (_state, addr) = common::create_test_server_with_pty_config(test_pty_config()).await;
+
+    // Client 1 creates session
+    let mut client1 = TestClient::connect(addr).await;
+    let session_id = Uuid::new_v4().to_string();
+    client1.attach(&session_id).await;
+
+    // Client 2 discovers session
+    let mut client2 = TestClient::connect(addr).await;
+    let sessions = client2.list_sessions().await;
+    assert!(sessions.contains(&session_id));
+
+    // Client 2 attaches to the discovered session
+    client2.attach(&session_id).await;
+
+    // Client 1 sends input
+    client1.pty_input_bytes(&session_id, b"mirrored\n").await;
+
+    // BOTH clients should receive the output (mirroring)
+    let output1 = client1
+        .expect_pty_output(&session_id, Duration::from_secs(2))
+        .await;
+    let output2 = client2
+        .expect_pty_output(&session_id, Duration::from_secs(2))
+        .await;
+
+    let output1_str = String::from_utf8_lossy(&output1);
+    let output2_str = String::from_utf8_lossy(&output2);
+
+    assert!(
+        output1_str.contains("mirrored"),
+        "Client 1 should receive 'mirrored'"
+    );
+    assert!(
+        output2_str.contains("mirrored"),
+        "Client 2 should receive 'mirrored' (session mirroring)"
+    );
+}
