@@ -89,7 +89,7 @@ pub enum ClaudeEvent {
 }
 
 /// Events on the VibesEventBus (includes client events)
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum VibesEvent {
     /// Event from Claude (wrapped)

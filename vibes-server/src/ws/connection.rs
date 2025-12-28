@@ -237,7 +237,8 @@ async fn handle_text_message(
     let client_msg: ClientMessage = serde_json::from_str(text)?;
 
     match client_msg {
-        ClientMessage::Subscribe { session_ids } => {
+        ClientMessage::Subscribe { session_ids, .. } => {
+            // Note: catch_up handling is implemented in Phase 5
             debug!("Client subscribed to sessions: {:?}", session_ids);
             conn_state.subscribe(&session_ids);
         }
@@ -395,6 +396,14 @@ async fn handle_text_message(
                     sender.send(Message::Text(json)).await?;
                 }
             }
+        }
+
+        ClientMessage::RequestHistory { session_id, .. } => {
+            // TODO: Phase 5 - implement history pagination
+            debug!(
+                "RequestHistory for session {} (not yet implemented)",
+                session_id
+            );
         }
     }
 
