@@ -46,6 +46,8 @@ impl PtySessionHandle {
     ///
     /// This uses spawn_blocking internally since the underlying reader
     /// may block. Use this in async contexts where blocking would be problematic.
+    ///
+    /// Returns `PtyError::Eof` when the PTY process has exited and there's no more data.
     pub async fn read(&self) -> Result<Vec<u8>, PtyError> {
         let reader = Arc::clone(&self.reader);
 
@@ -61,8 +63,14 @@ impl PtySessionHandle {
                     buf.truncate(n);
                     Ok(buf)
                 }
-                Ok(_) => Ok(vec![]),
-                Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => Ok(vec![]),
+                Ok(_) => {
+                    // 0 bytes read in blocking mode = EOF (process exited)
+                    Err(PtyError::Eof)
+                }
+                Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                    // Non-blocking mode: no data available yet
+                    Ok(vec![])
+                }
                 Err(e) => Err(PtyError::IoError(e)),
             }
         })

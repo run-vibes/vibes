@@ -798,6 +798,7 @@ async fn pty_output_reader(
     handle: vibes_core::pty::PtySessionHandle,
 ) {
     use std::time::Duration;
+    use vibes_core::pty::PtyError;
 
     debug!("Starting PTY output reader for session: {}", session_id);
 
@@ -814,14 +815,26 @@ async fn pty_output_reader(
                 state.broadcast_pty_event(event);
             }
             Ok(_) => {
-                // No data available, wait a bit before polling again
+                // No data available (non-blocking WouldBlock case), wait a bit
                 tokio::time::sleep(Duration::from_millis(10)).await;
             }
+            Err(PtyError::Eof) => {
+                // PTY process has exited (EOF on read)
+                debug!("PTY EOF for session {}: process exited", session_id);
+
+                // Broadcast exit event
+                let event = PtyEvent::Exit {
+                    session_id: session_id.clone(),
+                    exit_code: None, // Could check child.try_wait() for actual code
+                };
+                state.broadcast_pty_event(event);
+                break;
+            }
             Err(e) => {
-                // Check if process has exited
+                // Other I/O error
                 warn!("PTY read error for session {}: {}", session_id, e);
 
-                // Broadcast exit event (exit code unknown without checking child)
+                // Broadcast exit event
                 let event = PtyEvent::Exit {
                     session_id: session_id.clone(),
                     exit_code: None,

@@ -229,3 +229,43 @@ async fn second_client_can_attach_to_discovered_session() {
         "Client 2 should receive 'mirrored' (session mirroring)"
     );
 }
+
+#[tokio::test]
+async fn ctrl_c_terminates_pty_process() {
+    // Test that Ctrl+C (byte 0x03) is correctly sent to PTY and triggers SIGINT
+    // This catches a bug where PTY read() didn't distinguish EOF from no-data,
+    // causing the process exit to go undetected.
+    let (_state, addr) = common::create_test_server_with_pty_config(test_pty_config()).await;
+    let mut client = TestClient::connect(addr).await;
+
+    let session_id = Uuid::new_v4().to_string();
+    client.attach(&session_id).await;
+
+    // Verify cat is running by sending some data first
+    client.pty_input_bytes(&session_id, b"hello\n").await;
+    let output = client
+        .expect_pty_output(&session_id, Duration::from_secs(2))
+        .await;
+    assert!(
+        String::from_utf8_lossy(&output).contains("hello"),
+        "cat should echo input"
+    );
+
+    // Send Ctrl+C (0x03 = ETX = End of Text)
+    // This should trigger SIGINT on the PTY, causing cat to exit
+    client.pty_input_bytes(&session_id, &[0x03]).await;
+
+    // cat should exit - we should receive pty_exit message
+    // First we may receive the ^C echo, then the exit
+    let exit_code = client
+        .expect_pty_exit(&session_id, Duration::from_secs(2))
+        .await;
+
+    // Exit code should be None (signal) or 130 (128 + SIGINT)
+    // The exact value depends on the shell/OS
+    assert!(
+        exit_code.is_none() || exit_code == Some(130) || exit_code == Some(2),
+        "Expected cat to be terminated by SIGINT, got exit code: {:?}",
+        exit_code
+    );
+}

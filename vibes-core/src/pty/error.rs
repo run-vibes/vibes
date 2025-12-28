@@ -15,4 +15,7 @@ pub enum PtyError {
 
     #[error("PTY I/O error: {0}")]
     IoError(#[from] std::io::Error),
+
+    #[error("End of file - PTY process has exited")]
+    Eof,
 }
