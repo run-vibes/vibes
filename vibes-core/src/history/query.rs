@@ -95,6 +95,8 @@ pub struct MessageQuery {
     pub offset: u32,
     /// Filter by role
     pub role: Option<super::types::MessageRole>,
+    /// Return messages with id < before_id (cursor-based pagination)
+    pub before_id: Option<i64>,
 }
 
 impl MessageQuery {

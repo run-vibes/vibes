@@ -101,6 +101,7 @@ impl From<ListMessagesQuery> for MessageQuery {
             limit: q.limit.unwrap_or(50),
             offset: q.offset.unwrap_or(0),
             role: q.role.and_then(|r| MessageRole::parse(&r)),
+            before_id: None,
         }
     }
 }
