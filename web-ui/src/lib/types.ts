@@ -17,7 +17,6 @@ export type ClientMessage =
   | { type: 'permission_response'; session_id: string; request_id: string; approved: boolean }
   | { type: 'list_sessions'; request_id: string }
   | { type: 'kill_session'; session_id: string }
-  | { type: 'request_history'; session_id: string; before_seq: number; limit: number }
   // PTY messages (preferred)
   | { type: 'attach'; session_id: string }
   | { type: 'detach'; session_id: string }
@@ -39,8 +38,6 @@ export type ServerMessage =
   | { type: 'session_list'; request_id: string; sessions: SessionInfo[] }
   | { type: 'session_removed'; session_id: string; reason: RemovalReason }
   | { type: 'ownership_transferred'; session_id: string; new_owner_id: string; you_are_owner: boolean }
-  | { type: 'subscribe_ack'; session_id: string; current_seq: number; history: HistoryEvent[]; has_more: boolean }
-  | { type: 'history_page'; session_id: string; events: HistoryEvent[]; has_more: boolean; oldest_seq: number }
   /** @deprecated With PTY mode, user input is sent via 'pty_input' */
   | { type: 'user_input'; session_id: string; content: string; source: InputSource }
   | AuthContextMessage
@@ -104,18 +101,6 @@ export interface Usage {
   output_tokens: number;
 }
 
-/** Event from history catch-up */
-export interface HistoryEvent {
-  seq: number;
-  event: VibesEvent;
-  timestamp: number;
-}
-
-/** Vibes event wrapper (from history) */
-export type VibesEvent =
-  | { type: 'user_input'; session_id: string; content: string; source?: InputSource }
-  | { type: 'claude'; session_id: string; event: ClaudeEvent };
-
 /** Message for display in chat UI */
 export interface Message {
   id: string;
@@ -176,14 +161,6 @@ export function isSessionRemovedMessage(msg: ServerMessage): msg is Extract<Serv
 
 export function isOwnershipTransferredMessage(msg: ServerMessage): msg is Extract<ServerMessage, { type: 'ownership_transferred' }> {
   return msg.type === 'ownership_transferred';
-}
-
-export function isSubscribeAckMessage(msg: ServerMessage): msg is Extract<ServerMessage, { type: 'subscribe_ack' }> {
-  return msg.type === 'subscribe_ack';
-}
-
-export function isHistoryPageMessage(msg: ServerMessage): msg is Extract<ServerMessage, { type: 'history_page' }> {
-  return msg.type === 'history_page';
 }
 
 export function isUserInputMessage(msg: ServerMessage): msg is Extract<ServerMessage, { type: 'user_input' }> {
