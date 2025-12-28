@@ -12,7 +12,7 @@ use futures::{SinkExt, StreamExt};
 use tokio::sync::broadcast;
 use tracing::{debug, error, info, warn};
 use uuid::Uuid;
-use vibes_core::{AuthContext, EventBus, InputSource, VibesEvent};
+use vibes_core::{AuthContext, InputSource, VibesEvent};
 
 use crate::{AppState, PtyEvent};
 use base64::Engine;
@@ -52,39 +52,24 @@ pub async fn ws_handler(
 struct ConnectionState {
     /// Unique identifier for this connection
     client_id: String,
-    /// Type of client (CLI, Web UI)
-    client_type: InputSource,
-    /// Session IDs this connection is subscribed to
+    /// Session IDs this connection is subscribed to (legacy, to be removed)
     subscribed_sessions: HashSet<String>,
     /// PTY session IDs this connection is attached to
     attached_pty_sessions: HashSet<String>,
 }
 
 impl ConnectionState {
-    fn new(client_type: InputSource) -> Self {
+    fn new(_client_type: InputSource) -> Self {
         Self {
             client_id: Uuid::new_v4().to_string(),
-            client_type,
             subscribed_sessions: HashSet::new(),
             attached_pty_sessions: HashSet::new(),
         }
     }
 
-    /// Get the client type
-    fn client_type(&self) -> InputSource {
-        self.client_type
-    }
-
     /// Check if this connection should receive events for a given session
     fn is_subscribed_to(&self, session_id: &str) -> bool {
         self.subscribed_sessions.contains(session_id)
-    }
-
-    /// Subscribe to session events
-    fn subscribe(&mut self, session_ids: &[String]) {
-        for id in session_ids {
-            self.subscribed_sessions.insert(id.clone());
-        }
     }
 
     /// Unsubscribe from session events
@@ -219,47 +204,8 @@ async fn handle_socket(
         }
     }
 
-    // Handle lifecycle cleanup on disconnect
-    let result = state
-        .lifecycle
-        .handle_client_disconnect(&conn_state.client_id)
-        .await;
-
-    // Log any ownership transfers
-    for (session_id, new_owner) in &result.transfers {
-        info!(
-            session_id = %session_id,
-            new_owner = %new_owner,
-            "Ownership transferred due to client disconnect"
-        );
-
-        // Broadcast ownership transfer event
-        let event = VibesEvent::OwnershipTransferred {
-            session_id: session_id.clone(),
-            new_owner_id: new_owner.clone(),
-        };
-        state.broadcast_event(event);
-    }
-
-    // Log any cleanups
-    for session_id in &result.cleanups {
-        info!(
-            session_id = %session_id,
-            "Session cleaned up due to client disconnect"
-        );
-
-        // Broadcast session removal event
-        let event = VibesEvent::SessionRemoved {
-            session_id: session_id.clone(),
-            reason: "owner_disconnected".to_string(),
-        };
-        state.broadcast_event(event);
-    }
-
     info!(
         client_id = %conn_state.client_id,
-        transfers = result.transfers.len(),
-        cleanups = result.cleanups.len(),
         "WebSocket client disconnected"
     );
 }
@@ -355,84 +301,18 @@ async fn handle_text_message(
             conn_state.unsubscribe(&session_ids);
         }
 
-        ClientMessage::CreateSession { name, request_id } => {
-            let session_id = state.session_manager.create_session(name.clone()).await;
-
-            // Auto-subscribe to the newly created session
-            conn_state.subscribe(std::slice::from_ref(&session_id));
-            debug!("Auto-subscribed to new session: {}", session_id);
-
-            let response = ServerMessage::SessionCreated {
-                request_id,
-                session_id,
-                name,
-            };
-
-            let json = serde_json::to_string(&response)?;
-            sender.send(Message::Text(json)).await?;
+        // Legacy messages - deprecated, kept for protocol compatibility
+        // These do nothing as all session interaction now goes through PTY
+        ClientMessage::CreateSession { .. } => {
+            warn!("Received deprecated CreateSession message - use Attach instead");
         }
 
-        ClientMessage::Input {
-            session_id,
-            content,
-        } => {
-            // Publish input event with source attribution for other subscribers
-            let input_event = VibesEvent::UserInput {
-                session_id: session_id.clone(),
-                content: content.clone(),
-                source: conn_state.client_type(),
-            };
-            state.event_bus.publish(input_event).await;
-
-            // Forward to session
-            if let Err(e) = state
-                .session_manager
-                .send_to_session(&session_id, &content)
-                .await
-            {
-                warn!("Failed to send input to session {}: {}", session_id, e);
-                let code = if e.to_string().contains("not found") {
-                    "NOT_FOUND"
-                } else {
-                    "SEND_FAILED"
-                };
-                let error_msg = ServerMessage::Error {
-                    session_id: Some(session_id),
-                    message: e.to_string(),
-                    code: code.to_string(),
-                };
-                let json = serde_json::to_string(&error_msg)?;
-                sender.send(Message::Text(json)).await?;
-            }
+        ClientMessage::Input { .. } => {
+            warn!("Received deprecated Input message - use PtyInput instead");
         }
 
-        ClientMessage::PermissionResponse {
-            session_id,
-            request_id,
-            approved,
-        } => {
-            if let Err(e) = state
-                .session_manager
-                .respond_permission(&session_id, &request_id, approved)
-                .await
-            {
-                warn!(
-                    "Failed to respond to permission {} in session {}: {}",
-                    request_id, session_id, e
-                );
-                let code = if e.to_string().contains("not found") {
-                    "NOT_FOUND"
-                } else {
-                    "PERMISSION_FAILED"
-                };
-                let error_msg = ServerMessage::Error {
-                    session_id: Some(session_id),
-                    message: e.to_string(),
-                    code: code.to_string(),
-                };
-                let json = serde_json::to_string(&error_msg)?;
-                sender.send(Message::Text(json)).await?;
-            }
+        ClientMessage::PermissionResponse { .. } => {
+            warn!("Received deprecated PermissionResponse message - PTY handles permissions");
         }
 
         ClientMessage::ListSessions { request_id } => {

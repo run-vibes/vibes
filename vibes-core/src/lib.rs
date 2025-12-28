@@ -3,7 +3,6 @@
 //! This crate provides the foundational components for vibes:
 //!
 //! - **PTY management** - [`pty::PtyManager`] for spawning and managing Claude PTY sessions
-//! - **Session management** - [`Session`] and [`SessionManager`] for session metadata and state
 //! - **Event system** - [`EventBus`] trait and [`MemoryEventBus`] for real-time event distribution
 //! - **Hooks integration** - [`HookReceiver`] for structured data capture from Claude Code
 //! - **Event types** - [`ClaudeEvent`] and [`VibesEvent`] for typed event handling
@@ -44,20 +43,17 @@
 //! ```
 
 pub mod auth;
-pub mod backend;
 pub mod error;
 pub mod events;
 pub mod hooks;
 pub mod notifications;
 pub mod plugins;
 pub mod pty;
-pub mod session;
 pub mod tunnel;
 
 // Re-export key types for convenience
 pub use auth::{AccessConfig, AccessIdentity, AuthContext, AuthError, JwtValidator};
-pub use backend::{BackendFactory, BackendState, ClaudeBackend, MockBackend, MockBackendFactory};
-pub use error::{BackendError, EventBusError, NotificationError, SessionError, VibesError};
+pub use error::{EventBusError, NotificationError, VibesError};
 pub use events::{ClaudeEvent, EventBus, InputSource, MemoryEventBus, Usage, VibesEvent};
 pub use hooks::{
     HookEvent, HookInstaller, HookInstallerConfig, HookReceiver, HookReceiverConfig, HookType,
@@ -68,10 +64,6 @@ pub use notifications::{
     PushSubscription, SubscriptionKeys, SubscriptionStore, VapidKeyManager, VapidKeys,
 };
 pub use plugins::{PluginHost, PluginHostConfig, PluginHostError, PluginInfo, PluginState};
-pub use session::{
-    ClientId, DisconnectResult, Session, SessionLifecycleManager, SessionManager, SessionOwnership,
-    SessionState,
-};
 pub use tunnel::{
     CloudflaredInfo, LogLevel, RestartPolicy, TunnelConfig, TunnelError, TunnelEvent,
     TunnelManager, TunnelMode, TunnelState, check_installation,

@@ -5,6 +5,15 @@ function generateRequestId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }
 
+function generateSessionId(): string {
+  // Generate a UUID v4 for session IDs (matches CLI behavior)
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 interface UseSessionListOptions {
   /** Function to send WebSocket messages */
   send: (message: ClientMessage) => void;
@@ -52,7 +61,7 @@ export function useSessionList(options: UseSessionListOptions): UseSessionListRe
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pendingRequestId, setPendingRequestId] = useState<string | null>(null);
-  const [pendingCreateRequestId, setPendingCreateRequestId] = useState<string | null>(null);
+  const [pendingCreateSessionId, setPendingCreateSessionId] = useState<string | null>(null);
   const [createResolver, setCreateResolver] = useState<{
     resolve: (sessionId: string) => void;
     reject: (error: Error) => void;
@@ -84,7 +93,7 @@ export function useSessionList(options: UseSessionListOptions): UseSessionListRe
     [isConnected, send]
   );
 
-  // Create a new session
+  // Create a new session by attaching to a new session ID
   const createSession = useCallback(
     (name?: string): Promise<string> => {
       return new Promise((resolve, reject) => {
@@ -93,13 +102,14 @@ export function useSessionList(options: UseSessionListOptions): UseSessionListRe
           return;
         }
 
-        const requestId = generateRequestId();
-        setPendingCreateRequestId(requestId);
+        const sessionId = generateSessionId();
+        setPendingCreateSessionId(sessionId);
         setIsCreating(true);
         setError(null);
         setCreateResolver({ resolve, reject });
 
-        send({ type: 'create_session', name, request_id: requestId });
+        // Use attach message - server creates PTY session if it doesn't exist
+        send({ type: 'attach', session_id: sessionId, name });
       });
     },
     [isConnected, send]
@@ -137,14 +147,20 @@ export function useSessionList(options: UseSessionListOptions): UseSessionListRe
           );
           break;
 
-        case 'session_created':
-          // A new session was created
-          if (message.request_id === pendingCreateRequestId && createResolver) {
+        case 'attach_ack':
+          // PTY session attached/created successfully
+          if (message.session_id === pendingCreateSessionId && createResolver) {
             createResolver.resolve(message.session_id);
             setIsCreating(false);
-            setPendingCreateRequestId(null);
+            setPendingCreateSessionId(null);
             setCreateResolver(null);
+            // Refresh the list to include the new session
+            refresh();
           }
+          break;
+
+        case 'session_created':
+          // Legacy: kept for backwards compatibility with old servers
           // Refresh the list to get full details
           refresh();
           break;
@@ -164,10 +180,10 @@ export function useSessionList(options: UseSessionListOptions): UseSessionListRe
             setIsLoading(false);
             setPendingRequestId(null);
           }
-          if (pendingCreateRequestId && createResolver) {
+          if (pendingCreateSessionId && createResolver) {
             createResolver.reject(new Error(message.message));
             setIsCreating(false);
-            setPendingCreateRequestId(null);
+            setPendingCreateSessionId(null);
             setCreateResolver(null);
           }
           break;
@@ -175,7 +191,7 @@ export function useSessionList(options: UseSessionListOptions): UseSessionListRe
     });
 
     return cleanup;
-  }, [addMessageHandler, pendingRequestId, pendingCreateRequestId, createResolver, refresh]);
+  }, [addMessageHandler, pendingRequestId, pendingCreateSessionId, createResolver, refresh]);
 
   // Auto-refresh on connect
   useEffect(() => {

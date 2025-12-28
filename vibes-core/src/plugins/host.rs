@@ -11,7 +11,6 @@ use vibes_plugin_api::{API_VERSION, Plugin, PluginConfig, PluginContext, PluginM
 use super::error::PluginHostError;
 use super::registry::PluginRegistry;
 use crate::events::{ClaudeEvent, VibesEvent};
-use crate::session::SessionState as CoreSessionState;
 
 /// A loaded plugin with its runtime state
 struct LoadedPlugin {
@@ -407,24 +406,6 @@ fn dispatch_claude_event(
     }
 }
 
-/// Convert core SessionState to plugin API SessionState
-pub fn convert_session_state(state: &CoreSessionState) -> vibes_plugin_api::SessionState {
-    match state {
-        CoreSessionState::Idle => vibes_plugin_api::SessionState::Idle,
-        CoreSessionState::Processing => vibes_plugin_api::SessionState::Processing,
-        CoreSessionState::WaitingPermission { request_id, tool } => {
-            vibes_plugin_api::SessionState::WaitingForPermission {
-                request_id: request_id.clone(),
-                tool: tool.clone(),
-            }
-        }
-        CoreSessionState::Failed { message, .. } => vibes_plugin_api::SessionState::Failed {
-            message: message.clone(),
-        },
-        CoreSessionState::Finished => vibes_plugin_api::SessionState::Completed,
-    }
-}
-
 /// Parse a session state string back to plugin API SessionState
 fn parse_session_state(state: &str) -> vibes_plugin_api::SessionState {
     // The state string comes from format!("{:?}", state) so we need to parse it
@@ -516,59 +497,6 @@ mod tests {
         assert!(matches!(
             result,
             Err(PluginHostError::LibraryNotFound { .. })
-        ));
-    }
-
-    #[test]
-    fn test_convert_session_state_idle() {
-        let state = CoreSessionState::Idle;
-        let api_state = convert_session_state(&state);
-        assert!(matches!(api_state, vibes_plugin_api::SessionState::Idle));
-    }
-
-    #[test]
-    fn test_convert_session_state_processing() {
-        let state = CoreSessionState::Processing;
-        let api_state = convert_session_state(&state);
-        assert!(matches!(
-            api_state,
-            vibes_plugin_api::SessionState::Processing
-        ));
-    }
-
-    #[test]
-    fn test_convert_session_state_waiting_permission() {
-        let state = CoreSessionState::WaitingPermission {
-            request_id: "req-1".to_string(),
-            tool: "bash".to_string(),
-        };
-        let api_state = convert_session_state(&state);
-        assert!(matches!(
-            api_state,
-            vibes_plugin_api::SessionState::WaitingForPermission { .. }
-        ));
-    }
-
-    #[test]
-    fn test_convert_session_state_failed() {
-        let state = CoreSessionState::Failed {
-            message: "error".to_string(),
-            recoverable: true,
-        };
-        let api_state = convert_session_state(&state);
-        assert!(matches!(
-            api_state,
-            vibes_plugin_api::SessionState::Failed { .. }
-        ));
-    }
-
-    #[test]
-    fn test_convert_session_state_finished() {
-        let state = CoreSessionState::Finished;
-        let api_state = convert_session_state(&state);
-        assert!(matches!(
-            api_state,
-            vibes_plugin_api::SessionState::Completed
         ));
     }
 

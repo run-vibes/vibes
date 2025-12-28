@@ -18,7 +18,7 @@ export type ClientMessage =
   | { type: 'list_sessions'; request_id: string }
   | { type: 'kill_session'; session_id: string }
   // PTY messages (preferred)
-  | { type: 'attach'; session_id: string }
+  | { type: 'attach'; session_id: string; name?: string }
   | { type: 'detach'; session_id: string }
   | { type: 'pty_input'; session_id: string; data: string }  // base64 encoded
   | { type: 'pty_resize'; session_id: string; cols: number; rows: number };

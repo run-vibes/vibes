@@ -25,7 +25,8 @@ pub struct HealthResponse {
 ///
 /// Returns server status, version, uptime, and active session count.
 pub async fn health(State(state): State<Arc<AppState>>) -> Json<HealthResponse> {
-    let active_sessions = state.session_manager.session_count().await;
+    let pty_manager = state.pty_manager.read().await;
+    let active_sessions = pty_manager.list_sessions().len();
 
     Json(HealthResponse {
         status: "ok".to_string(),

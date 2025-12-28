@@ -5,9 +5,8 @@ use std::sync::Arc;
 use chrono::{DateTime, Utc};
 use tokio::sync::{RwLock, broadcast};
 use vibes_core::{
-    AccessConfig, BackendFactory, MemoryEventBus, MockBackendFactory, PluginHost, PluginHostConfig,
-    SessionLifecycleManager, SessionManager, SubscriptionStore, TunnelConfig, TunnelManager,
-    VapidKeyManager, VibesEvent,
+    AccessConfig, MemoryEventBus, PluginHost, PluginHostConfig, SubscriptionStore, TunnelConfig,
+    TunnelManager, VapidKeyManager, VibesEvent,
     pty::{PtyConfig, PtyManager},
 };
 
@@ -31,10 +30,6 @@ const DEFAULT_BROADCAST_CAPACITY: usize = 1000;
 /// Shared application state accessible by all handlers
 #[derive(Clone)]
 pub struct AppState {
-    /// Session manager for Claude sessions
-    pub session_manager: Arc<SessionManager>,
-    /// Session lifecycle manager for ownership and cleanup
-    pub lifecycle: Arc<SessionLifecycleManager>,
     /// Plugin host for managing plugins
     pub plugin_host: Arc<PluginHost>,
     /// Event bus for publishing/subscribing to events
@@ -61,10 +56,6 @@ impl AppState {
     /// Create a new AppState with default components
     pub fn new() -> Self {
         let event_bus = Arc::new(MemoryEventBus::new(10_000));
-        // Use MockBackendFactory since PTY handles actual Claude I/O
-        let factory: Arc<dyn BackendFactory> = Arc::new(MockBackendFactory::new());
-        let session_manager = Arc::new(SessionManager::new(factory, event_bus.clone()));
-        let lifecycle = Arc::new(SessionLifecycleManager::new(session_manager.clone()));
         let plugin_host = Arc::new(PluginHost::new(PluginHostConfig::default()));
         let tunnel_manager = Arc::new(RwLock::new(TunnelManager::new(
             TunnelConfig::default(),
@@ -75,8 +66,6 @@ impl AppState {
         let pty_manager = Arc::new(RwLock::new(PtyManager::new(PtyConfig::default())));
 
         Self {
-            session_manager,
-            lifecycle,
             plugin_host,
             event_bus,
             tunnel_manager,
@@ -115,19 +104,15 @@ impl AppState {
 
     /// Create AppState with custom components (for testing)
     pub fn with_components(
-        session_manager: Arc<SessionManager>,
         plugin_host: Arc<PluginHost>,
         event_bus: Arc<MemoryEventBus>,
         tunnel_manager: Arc<RwLock<TunnelManager>>,
     ) -> Self {
-        let lifecycle = Arc::new(SessionLifecycleManager::new(session_manager.clone()));
         let (event_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let (pty_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let pty_manager = Arc::new(RwLock::new(PtyManager::new(PtyConfig::default())));
 
         Self {
-            session_manager,
-            lifecycle,
             plugin_host,
             event_bus,
             tunnel_manager,
@@ -210,16 +195,13 @@ mod tests {
     #[test]
     fn test_app_state_with_components() {
         let event_bus = Arc::new(MemoryEventBus::new(100));
-        let factory: Arc<dyn BackendFactory> = Arc::new(MockBackendFactory::new());
-        let session_manager = Arc::new(SessionManager::new(factory, event_bus.clone()));
         let plugin_host = Arc::new(PluginHost::new(PluginHostConfig::default()));
         let tunnel_manager = Arc::new(RwLock::new(TunnelManager::new(
             TunnelConfig::default(),
             7432,
         )));
 
-        let state =
-            AppState::with_components(session_manager, plugin_host, event_bus, tunnel_manager);
+        let state = AppState::with_components(plugin_host, event_bus, tunnel_manager);
         assert!(state.uptime_seconds() >= 0);
     }
 

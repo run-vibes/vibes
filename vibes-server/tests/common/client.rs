@@ -96,36 +96,29 @@ impl TestClient {
     }
 
     /// Create a new session, returns session ID
+    /// Uses the attach flow - generates session ID and sends attach message
     #[allow(dead_code)]
     pub async fn create_session(&mut self, name: Option<&str>) -> String {
-        let request_id = Uuid::new_v4().to_string();
+        let session_id = Uuid::new_v4().to_string();
         self.conn
             .send_json(&serde_json::json!({
-                "type": "create_session",
+                "type": "attach",
+                "session_id": session_id,
                 "name": name,
-                "request_id": request_id,
             }))
             .await;
 
         let response: serde_json::Value = self.conn.recv_json().await;
         assert_eq!(
-            response["type"], "session_created",
-            "Expected session_created but got: {}",
+            response["type"], "attach_ack",
+            "Expected attach_ack but got: {}",
             response
         );
-        response["session_id"].as_str().unwrap().to_string()
-    }
-
-    /// Send input to session
-    #[allow(dead_code)]
-    pub async fn send_input(&mut self, session_id: &str, content: &str) {
-        self.conn
-            .send_json(&serde_json::json!({
-                "type": "input",
-                "session_id": session_id,
-                "content": content,
-            }))
-            .await;
+        assert_eq!(
+            response["session_id"], session_id,
+            "Session ID mismatch in attach_ack"
+        );
+        session_id
     }
 
     /// Receive next message
