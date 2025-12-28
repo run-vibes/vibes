@@ -638,6 +638,76 @@ code {
   padding: 2rem 1rem;
 }
 
+/* Terminal page styles */
+.terminal-page {
+  height: calc(100vh - 100px);
+}
+
+.terminal-wrapper {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.terminal-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background-color: #1a1a2e;
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  border-radius: 8px;
+}
+
+.terminal-size {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  padding: 0.25rem 0.5rem;
+  background-color: var(--color-surface);
+  border-radius: 4px;
+}
+
+.error-banner {
+  background-color: rgba(248, 81, 73, 0.2);
+  color: var(--color-error);
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  border: 1px solid var(--color-error);
+}
+
+.exit-banner {
+  background-color: var(--color-surface);
+  color: var(--color-text-muted);
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  text-align: center;
+  border: 1px solid var(--color-border);
+}
+
+.status-connecting {
+  background-color: rgba(210, 153, 34, 0.2);
+  color: var(--color-warning);
+}
+
+.status-attached {
+  background-color: rgba(63, 185, 80, 0.2);
+  color: var(--color-success);
+}
+
+.status-exited {
+  background-color: var(--color-border);
+  color: var(--color-text-muted);
+}
+
+.status-error {
+  background-color: rgba(248, 81, 73, 0.2);
+  color: var(--color-error);
+}
+
 /* Responsive layout */
 @media (max-width: 768px) {
   .session-grid {
