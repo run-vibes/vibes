@@ -3,7 +3,7 @@
 use serde::{Deserialize, Serialize};
 
 /// Source of user input for attribution
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum InputSource {
     /// Input from CLI client
@@ -11,6 +11,7 @@ pub enum InputSource {
     /// Input from Web UI client
     WebUi,
     /// Source unknown (e.g., historical data before migration)
+    #[default]
     Unknown,
 }
 
@@ -32,12 +33,6 @@ impl InputSource {
             "unknown" => Some(Self::Unknown),
             _ => None,
         }
-    }
-}
-
-impl Default for InputSource {
-    fn default() -> Self {
-        Self::Unknown
     }
 }
 
