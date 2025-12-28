@@ -47,6 +47,11 @@ impl ConfigPaths {
         path.exists().then_some(path)
     }
 
+    #[cfg(all(unix, not(any(target_os = "linux", target_os = "macos"))))]
+    fn system_config_dir(_harness: &str) -> Option<PathBuf> {
+        None // No standard system config location for other Unix systems
+    }
+
     #[cfg(windows)]
     fn system_config_dir(harness: &str) -> Option<PathBuf> {
         std::env::var("PROGRAMDATA")
@@ -82,5 +87,12 @@ mod tests {
         let paths = ConfigPaths::resolve("claude", None).unwrap();
 
         assert!(paths.project.is_none());
+    }
+
+    #[test]
+    fn test_resolve_system_path_none_when_not_exists() {
+        // System path should be None when /etc/claude doesn't exist
+        let paths = ConfigPaths::resolve("nonexistent_harness_xyz", None).unwrap();
+        assert!(paths.system.is_none(), "System path should be None for non-existent harness");
     }
 }
