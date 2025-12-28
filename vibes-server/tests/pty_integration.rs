@@ -11,6 +11,7 @@ mod common;
 
 use std::time::Duration;
 
+use base64::Engine;
 use common::client::TestClient;
 use uuid::Uuid;
 use vibes_core::pty::PtyConfig;
@@ -228,6 +229,94 @@ async fn second_client_can_attach_to_discovered_session() {
         output2_str.contains("mirrored"),
         "Client 2 should receive 'mirrored' (session mirroring)"
     );
+}
+
+/// Test that output produced immediately when PTY spawns is received by client.
+///
+/// This test catches a race condition where:
+/// 1. Session is created, PTY process starts outputting immediately
+/// 2. pty_output_reader task is spawned
+/// 3. Reader broadcasts PtyEvent::Output
+/// 4. BUT conn_state.attach_pty() hasn't been called yet!
+/// 5. handle_pty_event checks is_attached_to_pty() -> FALSE
+/// 6. Event is DROPPED, client never receives initial output
+///
+/// The fix: call conn_state.attach_pty() BEFORE spawning the reader task.
+///
+/// Note: This race is timing-dependent. We run multiple iterations to increase
+/// the probability of catching it. Even if individual runs pass, the race exists
+/// in the code when attach_pty is called after spawning the reader.
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn immediate_pty_output_is_received_on_new_session() {
+    // Run multiple iterations to increase chance of hitting the race
+    for iteration in 0..5 {
+        // Use `echo` which outputs immediately when spawned and then exits
+        let pty_config = PtyConfig {
+            claude_path: "echo".into(),
+            claude_args: vec![format!("welcome-{}", iteration)],
+            ..Default::default()
+        };
+        let (_state, addr) = common::create_test_server_with_pty_config(pty_config).await;
+        let mut client = TestClient::connect(addr).await;
+
+        let session_id = Uuid::new_v4().to_string();
+        let expected_output = format!("welcome-{}", iteration);
+
+        // Send attach - this creates a NEW session
+        // The echo command runs immediately and outputs
+        client
+            .conn
+            .send_json(&serde_json::json!({
+                "type": "attach",
+                "session_id": session_id,
+            }))
+            .await;
+
+        // Collect all messages until we get attach_ack
+        // We should receive the echo output either before or after attach_ack
+        let mut received_output = false;
+        let mut received_ack = false;
+
+        let timeout = Duration::from_secs(5);
+        let start = std::time::Instant::now();
+
+        while start.elapsed() < timeout && !(received_ack && received_output) {
+            if let Some(text) = client.conn.recv_timeout(Duration::from_millis(50)).await {
+                let msg: serde_json::Value = serde_json::from_str(&text).unwrap();
+
+                match msg["type"].as_str() {
+                    Some("attach_ack") if msg["session_id"] == session_id => {
+                        received_ack = true;
+                    }
+                    Some("pty_output") | Some("pty_replay") if msg["session_id"] == session_id => {
+                        // Decode base64 data
+                        let data = msg["data"].as_str().unwrap();
+                        let decoded = base64::engine::general_purpose::STANDARD
+                            .decode(data)
+                            .unwrap();
+                        let output_str = String::from_utf8_lossy(&decoded);
+                        if output_str.contains(&expected_output) {
+                            received_output = true;
+                        }
+                    }
+                    _ => {} // Ignore other messages
+                }
+            }
+        }
+
+        assert!(
+            received_ack,
+            "Iteration {}: Should have received attach_ack",
+            iteration
+        );
+        assert!(
+            received_output,
+            "Iteration {}: Should have received '{}' output from echo command. \
+             This failure indicates the attach race condition: output was broadcast \
+             before conn_state.attach_pty() was called, causing it to be dropped.",
+            iteration, expected_output
+        );
+    }
 }
 
 #[tokio::test]

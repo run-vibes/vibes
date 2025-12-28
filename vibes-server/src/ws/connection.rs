@@ -305,6 +305,12 @@ async fn handle_text_message(
 
             let mut pty_manager = state.pty_manager.write().await;
 
+            // Mark this connection as attached BEFORE spawning any reader tasks.
+            // This prevents a race condition where the reader broadcasts output
+            // before we've marked the connection as attached, causing the output
+            // to be filtered out by handle_pty_event's is_attached_to_pty() check.
+            conn_state.attach_pty(&session_id);
+
             // Check if session exists; if not, create it
             let (cols, rows) = if pty_manager.get_session(&session_id).is_some() {
                 // Session exists, get dimensions from config (we don't track current size yet)
@@ -332,6 +338,8 @@ async fn handle_text_message(
                         (120, 40)
                     }
                     Err(e) => {
+                        // Detach since we failed to create the session
+                        conn_state.detach_pty(&session_id);
                         let error = ServerMessage::Error {
                             session_id: Some(session_id),
                             message: format!("Failed to create PTY session: {}", e),
@@ -343,9 +351,6 @@ async fn handle_text_message(
                     }
                 }
             };
-
-            // Mark this connection as attached
-            conn_state.attach_pty(&session_id);
 
             // Send scrollback replay if available
             if let Some(handle) = pty_manager.get_handle(&session_id) {
