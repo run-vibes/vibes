@@ -23,6 +23,33 @@ Transform vibes from a Claude Code proxy into a **learning harness** that makes 
 | Injection mechanism | CLAUDE.md first | Simple, reliable; abstract for extensibility |
 | Level 0 priority | Harness introspection | Must know capabilities before attempting to learn |
 
+## Milestone Index
+
+| Milestone | Name | Section |
+|-----------|------|---------|
+| [4.1](#41-harness-introspection) | Harness Introspection | Discover harness capabilities |
+| [4.2](#42-storage-foundation) | Storage Foundation | CozoDB, Learning model, AdaptiveParam |
+| [4.2.5](#425-security-foundation--new) | Security Foundation | Trust hierarchy, provenance, audit, RBAC |
+| [4.3](#43-capture--inject-mvp) | Capture & Inject | MVP learning pipeline |
+| [4.4](#44-assessment-framework--new) | Assessment Framework | Tiered outcome measurement |
+| [4.5](#45-learning-extraction) | Learning Extraction | Transcript analysis, embeddings |
+| [4.6](#46-attribution-engine--new) | Attribution Engine | 4-layer value attribution |
+| [4.7](#47-adaptive-strategies) | Adaptive Strategies | Thompson sampling for injection |
+| [4.8](#48-observability-dashboard--new) | Observability Dashboard | User-facing metrics and trends |
+| [4.9](#49-open-world-adaptation) | Open-World Adaptation | Novelty detection, meta-learning |
+
+**Deep Dive Sections:**
+
+| Topic | Section |
+|-------|---------|
+| [Assessment Framework](#assessment-framework) | Tiered assessment, signals, circuit breaker |
+| [Attribution Engine](#attribution-engine) | Activation, temporal, ablation, aggregation |
+| [Security Architecture](#security-architecture) | Trust levels, provenance, content scanning |
+| [Observability Dashboard](#observability-dashboard) | Dashboard data, indicator states |
+| [Hybrid Embedding Strategy](#hybrid-embedding-strategy) | Local vs API, when to use which |
+| [Bootstrapping Strategy](#bootstrapping-strategy) | Burn-in policy, public learning flywheel |
+| [Transcript Access](#transcript-access) | JSONL parser, stop hook integration |
+
 ## Architecture
 
 ```
