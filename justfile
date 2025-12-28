@@ -53,5 +53,21 @@ build-release: build-web
 build-web:
     cd web-ui && npm run build
 
+# E2E tests with Playwright
+test-e2e:
+    cd e2e-tests && npm test
+
+# E2E tests in headed mode (visible browser)
+test-e2e-headed:
+    cd e2e-tests && npm run test:headed
+
+# E2E tests in debug mode
+test-e2e-debug:
+    cd e2e-tests && npm run test:debug
+
+# Install Playwright browsers
+e2e-setup:
+    cd e2e-tests && npm install && npx playwright install chromium
+
 # Run all checks (pre-commit)
 pre-commit: fmt-check clippy test

@@ -4,17 +4,21 @@ import type { SessionInfo } from '../lib/types';
 interface SessionListProps {
   sessions: SessionInfo[];
   isLoading: boolean;
+  isCreating?: boolean;
   error: string | null;
   onKill?: (sessionId: string) => void;
   onRefresh?: () => void;
+  onCreateSession?: () => void;
 }
 
 export function SessionList({
   sessions,
   isLoading,
+  isCreating = false,
   error,
   onKill,
   onRefresh,
+  onCreateSession,
 }: SessionListProps) {
   if (isLoading && sessions.length === 0) {
     return <p className="loading-message">Loading sessions...</p>;
@@ -37,9 +41,19 @@ export function SessionList({
     return (
       <div className="empty-state">
         <p>No active sessions.</p>
-        <p>
-          Start one with <code>vibes claude "your prompt"</code>
-        </p>
+        {onCreateSession ? (
+          <button
+            onClick={onCreateSession}
+            className="btn btn-primary"
+            disabled={isCreating}
+          >
+            {isCreating ? 'Creating...' : 'New Session'}
+          </button>
+        ) : (
+          <p>
+            Start one with <code>vibes claude "your prompt"</code>
+          </p>
+        )}
       </div>
     );
   }
@@ -50,16 +64,27 @@ export function SessionList({
         <span className="session-count">
           {sessions.length} active session{sessions.length !== 1 ? 's' : ''}
         </span>
-        {onRefresh && (
-          <button
-            onClick={onRefresh}
-            className="btn btn-icon"
-            title="Refresh"
-            disabled={isLoading}
-          >
-            🔄
-          </button>
-        )}
+        <div className="session-list-actions">
+          {onCreateSession && (
+            <button
+              onClick={onCreateSession}
+              className="btn btn-primary btn-sm"
+              disabled={isCreating}
+            >
+              {isCreating ? 'Creating...' : 'New Session'}
+            </button>
+          )}
+          {onRefresh && (
+            <button
+              onClick={onRefresh}
+              className="btn btn-icon"
+              title="Refresh"
+              disabled={isLoading}
+            >
+              🔄
+            </button>
+          )}
+        </div>
       </div>
       <div className="session-grid">
         {sessions.map((session) => (

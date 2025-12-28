@@ -18,7 +18,7 @@ use std::sync::Arc;
 use tokio::sync::{Mutex, RwLock};
 use uuid::Uuid;
 
-use crate::backend::traits::BackendFactory;
+use crate::backend::traits::{BackendFactory, ClaudeBackend};
 use crate::error::SessionError;
 use crate::events::EventBus;
 
@@ -108,6 +108,25 @@ impl SessionManager {
 
         let backend = self.backend_factory.create(claude_session_id);
         let session = Session::new(id.clone(), name, backend, self.event_bus.clone());
+
+        self.sessions
+            .write()
+            .await
+            .insert(id.clone(), Arc::new(Mutex::new(session)));
+        Ok(id)
+    }
+
+    /// Create a session with a custom backend
+    ///
+    /// This allows injecting custom backends with specific behaviors
+    /// (e.g., SlowMockBackend for concurrency testing).
+    pub async fn create_session_with_backend<B: ClaudeBackend + 'static>(
+        &self,
+        name: Option<String>,
+        backend: B,
+    ) -> Result<String, SessionError> {
+        let id = uuid::Uuid::new_v4().to_string();
+        let session = Session::new(id.clone(), name, Box::new(backend), self.event_bus.clone());
 
         self.sessions
             .write()
