@@ -7,6 +7,7 @@ import { FitAddon } from '@xterm/addon-fit';
 import { WebLinksAddon } from '@xterm/addon-web-links';
 import '@xterm/xterm/css/xterm.css';
 import './Terminal.css';
+import { encodeForTransport, decodeFromTransport } from '../lib/encoding';
 
 interface SessionTerminalProps {
   sessionId: string;
@@ -34,9 +35,8 @@ export const SessionTerminal = forwardRef<SessionTerminalHandle, SessionTerminal
     useImperativeHandle(ref, () => ({
       write: (data: string) => {
         if (terminalRef.current) {
-          // Decode base64 and write to terminal
           try {
-            const decoded = atob(data);
+            const decoded = decodeFromTransport(data);
             terminalRef.current.write(decoded);
           } catch {
             // If not valid base64, write directly
@@ -51,8 +51,7 @@ export const SessionTerminal = forwardRef<SessionTerminalHandle, SessionTerminal
 
     // Stable callbacks to avoid re-initialization
     const handleInput = useCallback((data: string) => {
-      // Encode to base64 for WebSocket transport
-      onInput(btoa(data));
+      onInput(encodeForTransport(data));
     }, [onInput]);
 
     const handleResize = useCallback((event: { cols: number; rows: number }) => {
