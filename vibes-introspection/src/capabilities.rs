@@ -2,8 +2,10 @@
 
 use std::path::PathBuf;
 
+use serde::{Deserialize, Serialize};
+
 /// Hook types that can be observed
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum HookType {
     PreToolUse,
     PostToolUse,
@@ -12,7 +14,7 @@ pub enum HookType {
 }
 
 /// Config file format
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ConfigFormat {
     Json,
     Toml,
@@ -20,7 +22,7 @@ pub enum ConfigFormat {
 }
 
 /// Scope for injection targets
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum InjectionScope {
     System,
     User,
@@ -28,7 +30,7 @@ pub enum InjectionScope {
 }
 
 /// An installed hook we detected
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InstalledHook {
     pub hook_type: HookType,
     pub name: String,
@@ -36,7 +38,7 @@ pub struct InstalledHook {
 }
 
 /// Hook system capabilities
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct HookCapabilities {
     pub supported_types: Vec<HookType>,
     pub hooks_dir: Option<PathBuf>,
@@ -44,7 +46,7 @@ pub struct HookCapabilities {
 }
 
 /// A config file we detected
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConfigFile {
     pub path: PathBuf,
     pub format: ConfigFormat,
@@ -52,7 +54,7 @@ pub struct ConfigFile {
 }
 
 /// A file we can inject learnings into
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InjectionTarget {
     pub path: PathBuf,
     pub format: ConfigFormat,
@@ -61,7 +63,7 @@ pub struct InjectionTarget {
 }
 
 /// Capabilities at a single scope level
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct ScopedCapabilities {
     pub hooks: Option<HookCapabilities>,
     pub config_files: Vec<ConfigFile>,
@@ -69,7 +71,7 @@ pub struct ScopedCapabilities {
 }
 
 /// Full harness capabilities across all scopes
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HarnessCapabilities {
     pub harness_type: String,
     pub version: Option<String>,
@@ -89,7 +91,7 @@ impl HarnessCapabilities {
     }
 
     /// Get all injection targets across scopes
-    pub fn all_injection_targets(&self) -> Vec<&InjectionTarget> {
+    pub fn effective_injection_targets(&self) -> Vec<&InjectionTarget> {
         let mut targets = Vec::new();
         if let Some(sys) = &self.system {
             targets.extend(sys.injection_targets.iter());
@@ -162,7 +164,7 @@ mod tests {
     }
 
     #[test]
-    fn test_all_injection_targets_collects_all_scopes() {
+    fn test_effective_injection_targets_collects_all_scopes() {
         let caps = HarnessCapabilities {
             harness_type: "claude".to_string(),
             version: None,
@@ -195,7 +197,43 @@ mod tests {
             }),
         };
 
-        let targets = caps.all_injection_targets();
+        let targets = caps.effective_injection_targets();
         assert_eq!(targets.len(), 3);
+    }
+
+    #[test]
+    fn test_effective_hooks_falls_back_to_system() {
+        let system_hooks = HookCapabilities {
+            supported_types: vec![HookType::Notification],
+            hooks_dir: Some(PathBuf::from("/etc/claude/hooks")),
+            installed_hooks: vec![],
+        };
+
+        let caps = HarnessCapabilities {
+            harness_type: "claude".to_string(),
+            version: None,
+            system: Some(ScopedCapabilities {
+                hooks: Some(system_hooks),
+                ..Default::default()
+            }),
+            user: ScopedCapabilities::default(),
+            project: None,
+        };
+
+        let effective = caps.effective_hooks().unwrap();
+        assert_eq!(effective.supported_types, vec![HookType::Notification]);
+    }
+
+    #[test]
+    fn test_effective_hooks_returns_none_when_no_hooks() {
+        let caps = HarnessCapabilities {
+            harness_type: "claude".to_string(),
+            version: None,
+            system: None,
+            user: ScopedCapabilities::default(),
+            project: None,
+        };
+
+        assert!(caps.effective_hooks().is_none());
     }
 }
