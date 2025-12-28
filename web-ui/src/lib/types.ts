@@ -14,7 +14,12 @@ export type ClientMessage =
   | { type: 'permission_response'; session_id: string; request_id: string; approved: boolean }
   | { type: 'list_sessions'; request_id: string }
   | { type: 'kill_session'; session_id: string }
-  | { type: 'request_history'; session_id: string; before_seq: number; limit: number };
+  | { type: 'request_history'; session_id: string; before_seq: number; limit: number }
+  // PTY messages
+  | { type: 'attach'; session_id: string }
+  | { type: 'detach'; session_id: string }
+  | { type: 'pty_input'; session_id: string; data: string }  // base64 encoded
+  | { type: 'pty_resize'; session_id: string; cols: number; rows: number };
 
 // ============================================================
 // Server -> Client Messages
@@ -33,7 +38,11 @@ export type ServerMessage =
   | { type: 'subscribe_ack'; session_id: string; current_seq: number; history: HistoryEvent[]; has_more: boolean }
   | { type: 'history_page'; session_id: string; events: HistoryEvent[]; has_more: boolean; oldest_seq: number }
   | { type: 'user_input'; session_id: string; content: string; source: InputSource }
-  | AuthContextMessage;
+  | AuthContextMessage
+  // PTY messages
+  | { type: 'pty_output'; session_id: string; data: string }  // base64 encoded
+  | { type: 'pty_exit'; session_id: string; exit_code?: number }
+  | { type: 'attach_ack'; session_id: string; cols: number; rows: number };
 
 // ============================================================
 // Auth Context - matches vibes-core/src/auth/context.rs
@@ -173,4 +182,17 @@ export function isHistoryPageMessage(msg: ServerMessage): msg is Extract<ServerM
 
 export function isUserInputMessage(msg: ServerMessage): msg is Extract<ServerMessage, { type: 'user_input' }> {
   return msg.type === 'user_input';
+}
+
+// PTY message type guards
+export function isPtyOutputMessage(msg: ServerMessage): msg is Extract<ServerMessage, { type: 'pty_output' }> {
+  return msg.type === 'pty_output';
+}
+
+export function isPtyExitMessage(msg: ServerMessage): msg is Extract<ServerMessage, { type: 'pty_exit' }> {
+  return msg.type === 'pty_exit';
+}
+
+export function isAttachAckMessage(msg: ServerMessage): msg is Extract<ServerMessage, { type: 'attach_ack' }> {
+  return msg.type === 'attach_ack';
 }

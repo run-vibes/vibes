@@ -109,6 +109,38 @@ pub enum ClientMessage {
         #[serde(default = "default_history_limit")]
         limit: u32,
     },
+
+    // ==================== PTY Messages ====================
+
+    /// Attach to a session (receive PTY output)
+    Attach {
+        /// Session ID to attach to
+        session_id: String,
+    },
+
+    /// Detach from a session
+    Detach {
+        /// Session ID to detach from
+        session_id: String,
+    },
+
+    /// Send input to PTY
+    PtyInput {
+        /// Target session ID
+        session_id: String,
+        /// Input data (base64 encoded)
+        data: String,
+    },
+
+    /// Resize PTY
+    PtyResize {
+        /// Target session ID
+        session_id: String,
+        /// New column count
+        cols: u16,
+        /// New row count
+        rows: u16,
+    },
 }
 
 /// Messages sent from server to client
@@ -228,6 +260,34 @@ pub enum ServerMessage {
         content: String,
         /// Source of the input
         source: InputSource,
+    },
+
+    // ==================== PTY Messages ====================
+
+    /// PTY output data
+    PtyOutput {
+        /// Source session ID
+        session_id: String,
+        /// Output data (base64 encoded)
+        data: String,
+    },
+
+    /// PTY process exited
+    PtyExit {
+        /// Session ID
+        session_id: String,
+        /// Exit code (None if killed by signal)
+        exit_code: Option<i32>,
+    },
+
+    /// Attach acknowledged
+    AttachAck {
+        /// Session ID
+        session_id: String,
+        /// Current terminal columns
+        cols: u16,
+        /// Current terminal rows
+        rows: u16,
     },
 }
 
@@ -827,5 +887,108 @@ mod tests {
         };
         let json = serde_json::to_string(&msg).unwrap();
         assert!(json.contains(r#""source":"web_ui""#));
+    }
+
+    // ==================== PTY Message Tests ====================
+
+    #[test]
+    fn test_client_message_attach_roundtrip() {
+        let msg = ClientMessage::Attach {
+            session_id: "sess-1".to_string(),
+        };
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+        assert!(json.contains(r#""type":"attach""#));
+    }
+
+    #[test]
+    fn test_client_message_detach_roundtrip() {
+        let msg = ClientMessage::Detach {
+            session_id: "sess-1".to_string(),
+        };
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+        assert!(json.contains(r#""type":"detach""#));
+    }
+
+    #[test]
+    fn test_client_message_pty_input_roundtrip() {
+        let msg = ClientMessage::PtyInput {
+            session_id: "sess-1".to_string(),
+            data: "aGVsbG8=".to_string(), // base64 for "hello"
+        };
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+        assert!(json.contains(r#""type":"pty_input""#));
+    }
+
+    #[test]
+    fn test_client_message_pty_resize_roundtrip() {
+        let msg = ClientMessage::PtyResize {
+            session_id: "sess-1".to_string(),
+            cols: 120,
+            rows: 40,
+        };
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+        assert!(json.contains(r#""type":"pty_resize""#));
+        assert!(json.contains(r#""cols":120"#));
+        assert!(json.contains(r#""rows":40"#));
+    }
+
+    #[test]
+    fn test_server_message_pty_output_roundtrip() {
+        let msg = ServerMessage::PtyOutput {
+            session_id: "sess-1".to_string(),
+            data: "aGVsbG8gd29ybGQ=".to_string(), // base64 for "hello world"
+        };
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ServerMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+        assert!(json.contains(r#""type":"pty_output""#));
+    }
+
+    #[test]
+    fn test_server_message_pty_exit_roundtrip() {
+        let msg = ServerMessage::PtyExit {
+            session_id: "sess-1".to_string(),
+            exit_code: Some(0),
+        };
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ServerMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+        assert!(json.contains(r#""type":"pty_exit""#));
+        assert!(json.contains(r#""exit_code":0"#));
+    }
+
+    #[test]
+    fn test_server_message_pty_exit_no_exit_code() {
+        let msg = ServerMessage::PtyExit {
+            session_id: "sess-1".to_string(),
+            exit_code: None,
+        };
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ServerMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+        assert!(json.contains(r#""exit_code":null"#));
+    }
+
+    #[test]
+    fn test_server_message_attach_ack_roundtrip() {
+        let msg = ServerMessage::AttachAck {
+            session_id: "sess-1".to_string(),
+            cols: 80,
+            rows: 24,
+        };
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ServerMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+        assert!(json.contains(r#""type":"attach_ack""#));
+        assert!(json.contains(r#""cols":80"#));
+        assert!(json.contains(r#""rows":24"#));
     }
 }

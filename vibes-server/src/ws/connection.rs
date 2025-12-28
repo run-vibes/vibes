@@ -494,6 +494,41 @@ async fn handle_text_message(
                 sender.send(Message::Text(json)).await?;
             }
         }
+
+        // PTY messages - will be implemented in Task 2.2
+        ClientMessage::Attach { session_id } => {
+            debug!("PTY attach requested for session: {}", session_id);
+            // TODO: Implement PTY attach
+            let error = ServerMessage::Error {
+                session_id: Some(session_id),
+                message: "PTY attach not yet implemented".to_string(),
+                code: "NOT_IMPLEMENTED".to_string(),
+            };
+            let json = serde_json::to_string(&error)?;
+            sender.send(Message::Text(json)).await?;
+        }
+
+        ClientMessage::Detach { session_id } => {
+            debug!("PTY detach requested for session: {}", session_id);
+            // TODO: Implement PTY detach
+        }
+
+        ClientMessage::PtyInput { session_id, data } => {
+            debug!("PTY input for session: {}, {} bytes", session_id, data.len());
+            // TODO: Implement PTY input forwarding
+        }
+
+        ClientMessage::PtyResize {
+            session_id,
+            cols,
+            rows,
+        } => {
+            debug!(
+                "PTY resize for session: {}, {}x{}",
+                session_id, cols, rows
+            );
+            // TODO: Implement PTY resize
+        }
     }
 
     Ok(())
