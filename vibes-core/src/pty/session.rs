@@ -19,13 +19,52 @@ pub struct PtySessionHandle {
     pub(crate) inner: Arc<Mutex<PtySessionInner>>,
 }
 
+impl PtySessionHandle {
+    /// Write data to the PTY
+    pub async fn write(&self, data: &[u8]) -> Result<(), PtyError> {
+        let mut inner = self.inner.lock().await;
+        use std::io::Write;
+        inner.writer.write_all(data)?;
+        inner.writer.flush()?;
+        Ok(())
+    }
+
+    /// Read available data from the PTY (non-blocking)
+    pub async fn read(&self) -> Result<Vec<u8>, PtyError> {
+        let mut inner = self.inner.lock().await;
+        let mut buf = vec![0u8; 4096];
+
+        use std::io::Read;
+        match inner.reader.read(&mut buf) {
+            Ok(n) if n > 0 => {
+                buf.truncate(n);
+                Ok(buf)
+            }
+            Ok(_) => Ok(vec![]),
+            Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => Ok(vec![]),
+            Err(e) => Err(PtyError::IoError(e)),
+        }
+    }
+
+    /// Resize the PTY
+    pub async fn resize(&self, cols: u16, rows: u16) -> Result<(), PtyError> {
+        let inner = self.inner.lock().await;
+        inner
+            .master
+            .resize(PtySize {
+                rows,
+                cols,
+                pixel_width: 0,
+                pixel_height: 0,
+            })
+            .map_err(|e| PtyError::IoError(std::io::Error::other(e)))
+    }
+}
+
 pub(crate) struct PtySessionInner {
-    #[allow(dead_code)]
     pub(crate) master: Box<dyn portable_pty::MasterPty + Send>,
     pub(crate) child: Box<dyn portable_pty::Child + Send + Sync>,
-    #[allow(dead_code)]
     pub(crate) reader: Box<dyn std::io::Read + Send>,
-    #[allow(dead_code)]
     pub(crate) writer: Box<dyn std::io::Write + Send>,
 }
 
@@ -132,5 +171,36 @@ mod tests {
 
         let result = PtySession::spawn("test-id".to_string(), None, &config);
         assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn write_and_read_data() {
+        let mut config = PtyConfig::default();
+        // Use 'cat' - it echoes input back
+        config.claude_path = "cat".into();
+
+        let session = PtySession::spawn("test-id".to_string(), None, &config).unwrap();
+
+        // Write some data
+        session.handle.write(b"hello\n").await.unwrap();
+
+        // Give cat time to echo
+        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+
+        // Read it back
+        let data = session.handle.read().await.unwrap();
+        assert!(!data.is_empty());
+    }
+
+    #[tokio::test]
+    async fn resize_pty() {
+        let mut config = PtyConfig::default();
+        config.claude_path = "cat".into();
+
+        let session = PtySession::spawn("test-id".to_string(), None, &config).unwrap();
+
+        // Resize should not error
+        let result = session.handle.resize(80, 24).await;
+        assert!(result.is_ok());
     }
 }
