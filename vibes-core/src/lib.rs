@@ -47,7 +47,6 @@ pub mod auth;
 pub mod backend;
 pub mod error;
 pub mod events;
-pub mod history;
 pub mod hooks;
 pub mod notifications;
 pub mod plugins;
@@ -60,7 +59,6 @@ pub use auth::{AccessConfig, AccessIdentity, AuthContext, AuthError, JwtValidato
 pub use backend::{BackendFactory, BackendState, ClaudeBackend, MockBackend, MockBackendFactory};
 pub use error::{BackendError, EventBusError, NotificationError, SessionError, VibesError};
 pub use events::{ClaudeEvent, EventBus, InputSource, MemoryEventBus, Usage, VibesEvent};
-pub use history::HistoryError;
 pub use hooks::{
     HookEvent, HookInstaller, HookInstallerConfig, HookReceiver, HookReceiverConfig, HookType,
     InstallError, PostToolUseData, PreToolUseData, StopData,
