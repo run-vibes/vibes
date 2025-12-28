@@ -132,15 +132,6 @@ impl VibesClient {
         anyhow::bail!("Timeout waiting for session creation response")
     }
 
-    /// Subscribe to events for the specified session(s)
-    pub async fn subscribe(&self, session_ids: Vec<String>) -> Result<()> {
-        self.send(ClientMessage::Subscribe {
-            session_ids,
-            catch_up: false,
-        })
-        .await
-    }
-
     /// Send input to a session
     ///
     /// Note: With PTY mode, input is sent via PTY data messages instead.
