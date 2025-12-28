@@ -806,6 +806,9 @@ async fn pty_output_reader(
         // Read from PTY
         match handle.read().await {
             Ok(data) if !data.is_empty() => {
+                // Capture raw output in scrollback buffer before broadcasting
+                handle.append_scrollback(&data);
+
                 // Encode as base64 and broadcast
                 let encoded = base64::engine::general_purpose::STANDARD.encode(&data);
                 let event = PtyEvent::Output {
