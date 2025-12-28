@@ -520,7 +520,10 @@ async fn handle_text_message(
             // Check if session exists; if not, create it
             let (cols, rows) = if pty_manager.get_session(&session_id).is_some() {
                 // Session exists, get dimensions from config (we don't track current size yet)
-                (120, 40) // TODO: Track actual PTY dimensions
+                // TODO: Track actual PTY dimensions per session. For now we use reasonable
+                // defaults (120x40) which the client will override via PtyResize after attach.
+                // Using (0, 0) would cause rendering issues in terminals.
+                (120, 40)
             } else {
                 // Create new PTY session with the client's session ID
                 match pty_manager.create_session_with_id(session_id.clone(), None) {
@@ -537,7 +540,8 @@ async fn handle_text_message(
                             });
                         }
 
-                        (120, 40) // Initial dimensions from config
+                        // Initial dimensions from config - client will resize after attach
+                        (120, 40)
                     }
                     Err(e) => {
                         let error = ServerMessage::Error {
@@ -664,7 +668,11 @@ async fn pty_output_reader(
                 state.broadcast_pty_event(event);
             }
             Ok(_) => {
-                // No data available (non-blocking WouldBlock case), wait a bit
+                // No data available (non-blocking WouldBlock case), wait a bit.
+                // We use polling here because portable-pty doesn't provide async I/O.
+                // The 10ms sleep balances responsiveness with CPU usage. Alternative
+                // approaches like tokio::io::unix::AsyncFd aren't portable across
+                // all platforms that portable-pty supports.
                 tokio::time::sleep(Duration::from_millis(10)).await;
             }
             Err(PtyError::Eof) => {

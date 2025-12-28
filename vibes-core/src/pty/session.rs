@@ -15,6 +15,20 @@ pub enum PtyState {
 }
 
 /// Handle to interact with a PTY session
+///
+/// # Threading Model
+///
+/// This handle uses `std::sync::Mutex` (not `tokio::sync::Mutex`) for the reader,
+/// writer, and scrollback buffer. This is safe because:
+///
+/// 1. Each mutex guards a separate, independent resource (reader vs writer vs scrollback)
+/// 2. We never hold multiple locks simultaneously
+/// 3. Operations use `spawn_blocking` to move blocking I/O off the async runtime
+/// 4. The `tokio::sync::Mutex` on `inner` is only used for resize operations which
+///    don't overlap with read/write
+///
+/// Using `std::sync::Mutex` with `spawn_blocking` is the recommended pattern for
+/// wrapping synchronous I/O in async contexts, as per tokio documentation.
 #[derive(Clone)]
 pub struct PtySessionHandle {
     pub(crate) inner: Arc<Mutex<PtySessionInner>>,
@@ -35,7 +49,7 @@ impl PtySessionHandle {
         tokio::task::spawn_blocking(move || {
             let mut guard = writer
                 .lock()
-                .map_err(|_| PtyError::IoError(std::io::Error::other("mutex poisoned")))?;
+                .map_err(|_| PtyError::IoError(std::io::Error::other("writer mutex poisoned")))?;
             use std::io::Write;
             guard.write_all(&data)?;
             guard.flush()?;
@@ -57,7 +71,7 @@ impl PtySessionHandle {
         tokio::task::spawn_blocking(move || {
             let mut guard = reader
                 .lock()
-                .map_err(|_| PtyError::IoError(std::io::Error::other("mutex poisoned")))?;
+                .map_err(|_| PtyError::IoError(std::io::Error::other("reader mutex poisoned")))?;
             let mut buf = vec![0u8; 4096];
 
             use std::io::Read;

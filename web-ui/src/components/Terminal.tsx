@@ -38,8 +38,9 @@ export const SessionTerminal = forwardRef<SessionTerminalHandle, SessionTerminal
           try {
             const decoded = decodeFromTransport(data);
             terminalRef.current.write(decoded);
-          } catch {
-            // If not valid base64, write directly
+          } catch (e) {
+            // If not valid base64, write directly (this is expected for some messages)
+            console.warn('Failed to decode terminal data, writing directly:', e);
             terminalRef.current.write(data);
           }
         }

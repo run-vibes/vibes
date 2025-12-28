@@ -5,8 +5,10 @@
 //! - Updating ~/.claude/settings.json to register the hooks
 
 use std::fs;
-use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
+
+#[cfg(unix)]
+use std::os::unix::fs::PermissionsExt;
 use tracing::{debug, info};
 
 use super::scripts;
