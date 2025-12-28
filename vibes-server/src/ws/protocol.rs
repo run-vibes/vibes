@@ -5,21 +5,6 @@
 use serde::{Deserialize, Serialize};
 use vibes_core::{AuthContext, ClaudeEvent, InputSource, VibesEvent};
 
-/// A historical event with sequence number for catch-up
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct HistoryEvent {
-    /// Sequence number for ordering
-    pub seq: u64,
-    /// The actual event
-    pub event: VibesEvent,
-    /// Unix timestamp in milliseconds
-    pub timestamp: i64,
-}
-
-fn default_history_limit() -> u32 {
-    50
-}
-
 /// Information about an active session
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct SessionInfo {
@@ -46,15 +31,6 @@ pub enum RemovalReason {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ClientMessage {
-    /// Subscribe to session events
-    Subscribe {
-        /// Session IDs to subscribe to
-        session_ids: Vec<String>,
-        /// Request catch-up with historical events
-        #[serde(default)]
-        catch_up: bool,
-    },
-
     /// Unsubscribe from session events
     Unsubscribe {
         /// Session IDs to unsubscribe from
@@ -107,17 +83,6 @@ pub enum ClientMessage {
     KillSession {
         /// Session ID to terminate
         session_id: String,
-    },
-
-    /// Request additional history page
-    RequestHistory {
-        /// Session ID
-        session_id: String,
-        /// Return events with seq < before_seq
-        before_seq: u64,
-        /// Max events to return
-        #[serde(default = "default_history_limit")]
-        limit: u32,
     },
 
     // ==================== PTY Messages ====================
@@ -238,30 +203,6 @@ pub enum ServerMessage {
         new_owner_id: String,
         /// Whether the recipient is the new owner
         you_are_owner: bool,
-    },
-
-    /// Subscribe acknowledgment with history catch-up
-    SubscribeAck {
-        /// Session ID
-        session_id: String,
-        /// Current sequence number (live events continue from current_seq + 1)
-        current_seq: u64,
-        /// Historical events (most recent page)
-        history: Vec<HistoryEvent>,
-        /// Whether more history pages are available
-        has_more: bool,
-    },
-
-    /// Additional history page response
-    HistoryPage {
-        /// Session ID
-        session_id: String,
-        /// Historical events for this page
-        events: Vec<HistoryEvent>,
-        /// Whether more pages exist before oldest_seq
-        has_more: bool,
-        /// Oldest sequence number in this page
-        oldest_seq: u64,
     },
 
     /// User input broadcast to other subscribers (DEPRECATED)
@@ -411,44 +352,6 @@ mod tests {
     }
 
     // ==================== ClientMessage Tests ====================
-
-    #[test]
-    fn test_client_message_subscribe_roundtrip() {
-        let msg = ClientMessage::Subscribe {
-            session_ids: vec!["sess-1".to_string(), "sess-2".to_string()],
-            catch_up: false,
-        };
-        let json = serde_json::to_string(&msg).unwrap();
-        let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
-        assert_eq!(msg, parsed);
-
-        // Verify JSON structure
-        assert!(json.contains(r#""type":"subscribe""#));
-        assert!(json.contains(r#""session_ids""#));
-    }
-
-    #[test]
-    fn test_client_message_subscribe_with_catch_up() {
-        let msg = ClientMessage::Subscribe {
-            session_ids: vec!["sess-1".to_string()],
-            catch_up: true,
-        };
-        let json = serde_json::to_string(&msg).unwrap();
-        let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
-        assert_eq!(msg, parsed);
-        assert!(json.contains(r#""catch_up":true"#));
-    }
-
-    #[test]
-    fn test_client_message_subscribe_catch_up_defaults_false() {
-        // When catch_up is not provided in JSON, it should default to false
-        let json = r#"{"type":"subscribe","session_ids":["sess-1"]}"#;
-        let parsed: ClientMessage = serde_json::from_str(json).unwrap();
-        match parsed {
-            ClientMessage::Subscribe { catch_up, .. } => assert!(!catch_up),
-            _ => panic!("Expected Subscribe message"),
-        }
-    }
 
     #[test]
     fn test_client_message_unsubscribe_roundtrip() {
@@ -803,87 +706,6 @@ mod tests {
         assert_eq!(msg, parsed);
         assert!(json.contains(r#""source":"authenticated""#));
         assert!(json.contains(r#""email":"user@example.com""#));
-    }
-
-    // ==================== History Event Tests ====================
-
-    #[test]
-    fn test_history_event_serialization() {
-        let event = HistoryEvent {
-            seq: 42,
-            event: VibesEvent::SessionStateChanged {
-                session_id: "sess-1".to_string(),
-                state: "processing".to_string(),
-            },
-            timestamp: 1234567890000,
-        };
-        let json = serde_json::to_string(&event).unwrap();
-        let parsed: HistoryEvent = serde_json::from_str(&json).unwrap();
-        assert_eq!(event, parsed);
-        assert!(json.contains(r#""seq":42"#));
-        assert!(json.contains(r#""timestamp":1234567890000"#));
-    }
-
-    #[test]
-    fn test_client_message_request_history_roundtrip() {
-        let msg = ClientMessage::RequestHistory {
-            session_id: "sess-1".to_string(),
-            before_seq: 100,
-            limit: 25,
-        };
-        let json = serde_json::to_string(&msg).unwrap();
-        let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
-        assert_eq!(msg, parsed);
-        assert!(json.contains(r#""type":"request_history""#));
-        assert!(json.contains(r#""before_seq":100"#));
-    }
-
-    #[test]
-    fn test_client_message_request_history_default_limit() {
-        let json = r#"{"type":"request_history","session_id":"sess-1","before_seq":50}"#;
-        let parsed: ClientMessage = serde_json::from_str(json).unwrap();
-        match parsed {
-            ClientMessage::RequestHistory { limit, .. } => assert_eq!(limit, 50),
-            _ => panic!("Expected RequestHistory message"),
-        }
-    }
-
-    #[test]
-    fn test_server_message_subscribe_ack_roundtrip() {
-        let msg = ServerMessage::SubscribeAck {
-            session_id: "sess-1".to_string(),
-            current_seq: 42,
-            history: vec![HistoryEvent {
-                seq: 40,
-                event: VibesEvent::SessionStateChanged {
-                    session_id: "sess-1".to_string(),
-                    state: "idle".to_string(),
-                },
-                timestamp: 1234567890000,
-            }],
-            has_more: true,
-        };
-        let json = serde_json::to_string(&msg).unwrap();
-        let parsed: ServerMessage = serde_json::from_str(&json).unwrap();
-        assert_eq!(msg, parsed);
-        assert!(json.contains(r#""type":"subscribe_ack""#));
-        assert!(json.contains(r#""current_seq":42"#));
-        assert!(json.contains(r#""has_more":true"#));
-    }
-
-    #[test]
-    fn test_server_message_history_page_roundtrip() {
-        let msg = ServerMessage::HistoryPage {
-            session_id: "sess-1".to_string(),
-            events: vec![],
-            has_more: false,
-            oldest_seq: 0,
-        };
-        let json = serde_json::to_string(&msg).unwrap();
-        let parsed: ServerMessage = serde_json::from_str(&json).unwrap();
-        assert_eq!(msg, parsed);
-        assert!(json.contains(r#""type":"history_page""#));
-        assert!(json.contains(r#""oldest_seq":0"#));
     }
 
     #[test]

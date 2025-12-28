@@ -1,7 +1,6 @@
 //! HTTP server module
 
 mod api;
-mod history;
 mod push;
 mod static_files;
 
@@ -39,20 +38,6 @@ pub fn create_router(state: Arc<AppState>) -> Router {
         .route("/api/push/subscribe", post(push::subscribe))
         .route("/api/push/subscribe/:id", delete(push::unsubscribe))
         .route("/api/push/subscriptions", get(push::list_subscriptions))
-        // History endpoints
-        .route("/api/history/sessions", get(history::list_sessions))
-        .route(
-            "/api/history/sessions/:id",
-            get(history::get_session).delete(history::delete_session),
-        )
-        .route(
-            "/api/history/sessions/:id/messages",
-            get(history::get_messages),
-        )
-        .route(
-            "/api/history/sessions/:id/resume",
-            post(history::resume_session),
-        )
         .route("/ws", get(ws_handler))
         .layer(middleware::from_fn(auth_middleware))
         .layer(Extension(auth_layer))

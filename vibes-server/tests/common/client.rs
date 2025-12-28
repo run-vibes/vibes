@@ -116,32 +116,6 @@ impl TestClient {
         response["session_id"].as_str().unwrap().to_string()
     }
 
-    /// Subscribe to sessions
-    ///
-    /// Note: The server only sends SubscribeAck when catch_up=true.
-    /// When catch_up=false, subscription happens silently.
-    #[allow(dead_code)]
-    pub async fn subscribe(&mut self, session_ids: &[&str], catch_up: bool) {
-        self.conn
-            .send_json(&serde_json::json!({
-                "type": "subscribe",
-                "session_ids": session_ids,
-                "catch_up": catch_up,
-            }))
-            .await;
-
-        // Server only sends SubscribeAck when catch_up is true
-        if catch_up {
-            let response: serde_json::Value = self.conn.recv_json().await;
-            assert_eq!(
-                response["type"], "subscribe_ack",
-                "Expected subscribe_ack but got: {}",
-                response
-            );
-        }
-        // When catch_up=false, subscription happens silently - no response expected
-    }
-
     /// Send input to session
     #[allow(dead_code)]
     pub async fn send_input(&mut self, session_id: &str, content: &str) {
