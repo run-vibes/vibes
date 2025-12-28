@@ -42,9 +42,7 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
-    # TODO: Re-enable when PTY mock backend properly supports e2e tests
-    # The mock backend needs to emit session events for the API to track sessions
-    if: false
+    needs: check  # Run after check job passes
     steps:
       - uses: actions/checkout@v4
 

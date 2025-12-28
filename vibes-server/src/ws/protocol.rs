@@ -3,7 +3,7 @@
 //! Both CLI and Web UI use the same protocol for consistent behavior.
 
 use serde::{Deserialize, Serialize};
-use vibes_core::{AuthContext, ClaudeEvent, InputSource, VibesEvent};
+use vibes_core::{AuthContext, VibesEvent};
 
 /// Information about an active session
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -31,48 +31,6 @@ pub enum RemovalReason {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ClientMessage {
-    /// Unsubscribe from session events
-    Unsubscribe {
-        /// Session IDs to unsubscribe from
-        session_ids: Vec<String>,
-    },
-
-    /// Create a new session
-    ///
-    /// Note: With PTY mode, sessions are created via `Attach`. This is retained
-    /// for backwards compatibility with non-PTY clients.
-    CreateSession {
-        /// Optional session name
-        name: Option<String>,
-        /// Request ID for correlation
-        request_id: String,
-    },
-
-    // ==================== Legacy Messages (Non-PTY) ====================
-    // These are retained for backwards compatibility. New clients should
-    // use PTY messages (Attach, PtyInput, PtyResize) instead.
-    /// Send user input to a session (DEPRECATED)
-    ///
-    /// Use `PtyInput` instead for PTY sessions.
-    Input {
-        /// Target session ID
-        session_id: String,
-        /// Input content
-        content: String,
-    },
-
-    /// Respond to a permission request (DEPRECATED)
-    ///
-    /// With PTY mode, permissions are handled through the terminal UI.
-    PermissionResponse {
-        /// Target session ID
-        session_id: String,
-        /// Permission request ID
-        request_id: String,
-        /// Whether to approve
-        approved: bool,
-    },
-
     /// Request list of all active sessions
     ListSessions {
         /// Request ID for correlation
@@ -85,11 +43,14 @@ pub enum ClientMessage {
         session_id: String,
     },
 
-    // ==================== PTY Messages ====================
     /// Attach to a session (receive PTY output)
+    /// Creates the session if it doesn't exist.
     Attach {
         /// Session ID to attach to
         session_id: String,
+        /// Optional session name (used when creating new session)
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        name: Option<String>,
     },
 
     /// Detach from a session
@@ -121,33 +82,12 @@ pub enum ClientMessage {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ServerMessage {
-    /// Session created confirmation (response to CreateSession)
-    SessionCreated {
-        /// Original request ID
-        request_id: String,
-        /// New session ID
-        session_id: String,
-        /// Session name if provided
-        name: Option<String>,
-    },
-
     /// Session notification (broadcast when session is created by another client)
     SessionNotification {
         /// Session ID
         session_id: String,
         /// Session name if provided
         name: Option<String>,
-    },
-
-    /// Claude event from a session (DEPRECATED)
-    ///
-    /// With PTY mode, output is sent via `PtyOutput` instead.
-    /// Retained for backwards compatibility with non-PTY clients.
-    Claude {
-        /// Source session ID
-        session_id: String,
-        /// The Claude event
-        event: ClaudeEvent,
     },
 
     /// Session state change
@@ -195,30 +135,6 @@ pub enum ServerMessage {
         reason: RemovalReason,
     },
 
-    /// Ownership transferred to a new client
-    OwnershipTransferred {
-        /// Session ID
-        session_id: String,
-        /// New owner client ID
-        new_owner_id: String,
-        /// Whether the recipient is the new owner
-        you_are_owner: bool,
-    },
-
-    /// User input broadcast to other subscribers (DEPRECATED)
-    ///
-    /// With PTY mode, input/output is handled via `PtyInput`/`PtyOutput`.
-    /// Retained for backwards compatibility with non-PTY clients.
-    UserInput {
-        /// Session ID
-        session_id: String,
-        /// Input content
-        content: String,
-        /// Source of the input
-        source: InputSource,
-    },
-
-    // ==================== PTY Messages ====================
     /// PTY output data
     PtyOutput {
         /// Source session ID
@@ -256,14 +172,10 @@ pub enum ServerMessage {
 
 /// Convert a VibesEvent to a ServerMessage for broadcasting
 ///
-/// Returns None for events that shouldn't be broadcast to clients
-/// (e.g., PermissionResponse, ClientConnected/Disconnected)
+/// Returns None for events that shouldn't be broadcast to WebSocket clients.
+/// PTY output goes through the separate PTY broadcast channel, not this function.
 pub fn vibes_event_to_server_message(event: &VibesEvent) -> Option<ServerMessage> {
     match event {
-        VibesEvent::Claude { session_id, event } => Some(ServerMessage::Claude {
-            session_id: session_id.clone(),
-            event: event.clone(),
-        }),
         VibesEvent::SessionStateChanged { session_id, state } => {
             Some(ServerMessage::SessionState {
                 session_id: session_id.clone(),
@@ -276,12 +188,10 @@ pub fn vibes_event_to_server_message(event: &VibesEvent) -> Option<ServerMessage
                 name: name.clone(),
             })
         }
-        // Tunnel state changes are broadcast to clients
         VibesEvent::TunnelStateChanged { state, url } => Some(ServerMessage::TunnelState {
             state: state.clone(),
             url: url.clone(),
         }),
-        // SessionRemoved is converted directly
         VibesEvent::SessionRemoved { session_id, reason } => {
             let removal_reason = match reason.as_str() {
                 "killed" => RemovalReason::Killed,
@@ -293,20 +203,11 @@ pub fn vibes_event_to_server_message(event: &VibesEvent) -> Option<ServerMessage
                 reason: removal_reason,
             })
         }
-        // OwnershipTransferred needs special handling (client-specific you_are_owner)
-        // It will be handled in handle_broadcast_event
-        VibesEvent::OwnershipTransferred { .. } => None,
-        // UserInput is broadcast to all subscribers (clients filter by source)
-        VibesEvent::UserInput {
-            session_id,
-            content,
-            source,
-        } => Some(ServerMessage::UserInput {
-            session_id: session_id.clone(),
-            content: content.clone(),
-            source: *source,
-        }),
+        // These events are not broadcast to WebSocket clients
+        VibesEvent::Claude { .. } => None,
+        VibesEvent::UserInput { .. } => None,
         VibesEvent::PermissionResponse { .. } => None,
+        VibesEvent::OwnershipTransferred { .. } => None,
         VibesEvent::ClientConnected { .. } => None,
         VibesEvent::ClientDisconnected { .. } => None,
     }
@@ -315,6 +216,7 @@ pub fn vibes_event_to_server_message(event: &VibesEvent) -> Option<ServerMessage
 #[cfg(test)]
 mod tests {
     use super::*;
+    use vibes_core::ClaudeEvent;
 
     // ==================== SessionInfo Tests ====================
 
@@ -354,54 +256,6 @@ mod tests {
     // ==================== ClientMessage Tests ====================
 
     #[test]
-    fn test_client_message_unsubscribe_roundtrip() {
-        let msg = ClientMessage::Unsubscribe {
-            session_ids: vec!["sess-abc".to_string()],
-        };
-        let json = serde_json::to_string(&msg).unwrap();
-        let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
-        assert_eq!(msg, parsed);
-    }
-
-    #[test]
-    fn test_client_message_create_session_roundtrip() {
-        let msg = ClientMessage::CreateSession {
-            name: Some("my-feature".to_string()),
-            request_id: "req-1".to_string(),
-        };
-        let json = serde_json::to_string(&msg).unwrap();
-        let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
-        assert_eq!(msg, parsed);
-
-        assert!(json.contains(r#""type":"create_session""#));
-    }
-
-    #[test]
-    fn test_client_message_input_roundtrip() {
-        let msg = ClientMessage::Input {
-            session_id: "sess-abc".to_string(),
-            content: "Help me refactor this".to_string(),
-        };
-        let json = serde_json::to_string(&msg).unwrap();
-        let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
-        assert_eq!(msg, parsed);
-    }
-
-    #[test]
-    fn test_client_message_permission_response_roundtrip() {
-        let msg = ClientMessage::PermissionResponse {
-            session_id: "sess-abc".to_string(),
-            request_id: "perm-1".to_string(),
-            approved: true,
-        };
-        let json = serde_json::to_string(&msg).unwrap();
-        let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
-        assert_eq!(msg, parsed);
-
-        assert!(json.contains(r#""type":"permission_response""#));
-    }
-
-    #[test]
     fn test_client_message_list_sessions_roundtrip() {
         let msg = ClientMessage::ListSessions {
             request_id: "req-1".to_string(),
@@ -423,35 +277,93 @@ mod tests {
         assert!(json.contains(r#""type":"kill_session""#));
     }
 
-    // ==================== ServerMessage Tests ====================
-
     #[test]
-    fn test_server_message_session_created_roundtrip() {
-        let msg = ServerMessage::SessionCreated {
-            request_id: "req-1".to_string(),
-            session_id: "sess-abc".to_string(),
-            name: Some("my-feature".to_string()),
+    fn test_client_message_attach_roundtrip() {
+        let msg = ClientMessage::Attach {
+            session_id: "sess-1".to_string(),
+            name: None,
         };
         let json = serde_json::to_string(&msg).unwrap();
-        let parsed: ServerMessage = serde_json::from_str(&json).unwrap();
+        let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
         assert_eq!(msg, parsed);
-
-        assert!(json.contains(r#""type":"session_created""#));
+        assert!(json.contains(r#""type":"attach""#));
     }
 
     #[test]
-    fn test_server_message_claude_roundtrip() {
-        let msg = ServerMessage::Claude {
+    fn test_client_message_attach_with_name_roundtrip() {
+        let msg = ClientMessage::Attach {
+            session_id: "sess-1".to_string(),
+            name: Some("my-session".to_string()),
+        };
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+        assert!(json.contains(r#""name":"my-session""#));
+    }
+
+    #[test]
+    fn test_client_message_attach_without_name_field_deserializes() {
+        // Test backwards compatibility - old clients that don't send name field
+        let json = r#"{"type":"attach","session_id":"sess-1"}"#;
+        let parsed: ClientMessage = serde_json::from_str(json).unwrap();
+        assert!(matches!(
+            parsed,
+            ClientMessage::Attach { session_id, name }
+            if session_id == "sess-1" && name.is_none()
+        ));
+    }
+
+    #[test]
+    fn test_client_message_detach_roundtrip() {
+        let msg = ClientMessage::Detach {
+            session_id: "sess-1".to_string(),
+        };
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+        assert!(json.contains(r#""type":"detach""#));
+    }
+
+    #[test]
+    fn test_client_message_pty_input_roundtrip() {
+        let msg = ClientMessage::PtyInput {
+            session_id: "sess-1".to_string(),
+            data: "aGVsbG8=".to_string(), // base64 for "hello"
+        };
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+        assert!(json.contains(r#""type":"pty_input""#));
+    }
+
+    #[test]
+    fn test_client_message_pty_resize_roundtrip() {
+        let msg = ClientMessage::PtyResize {
+            session_id: "sess-1".to_string(),
+            cols: 120,
+            rows: 40,
+        };
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+        assert!(json.contains(r#""type":"pty_resize""#));
+        assert!(json.contains(r#""cols":120"#));
+        assert!(json.contains(r#""rows":40"#));
+    }
+
+    // ==================== ServerMessage Tests ====================
+
+    #[test]
+    fn test_server_message_session_notification_roundtrip() {
+        let msg = ServerMessage::SessionNotification {
             session_id: "sess-abc".to_string(),
-            event: ClaudeEvent::TextDelta {
-                text: "Here's how...".to_string(),
-            },
+            name: Some("new-session".to_string()),
         };
         let json = serde_json::to_string(&msg).unwrap();
         let parsed: ServerMessage = serde_json::from_str(&json).unwrap();
         assert_eq!(msg, parsed);
 
-        assert!(json.contains(r#""type":"claude""#));
+        assert!(json.contains(r#""type":"session_notification""#));
     }
 
     #[test]
@@ -475,129 +387,6 @@ mod tests {
         let json = serde_json::to_string(&msg).unwrap();
         let parsed: ServerMessage = serde_json::from_str(&json).unwrap();
         assert_eq!(msg, parsed);
-    }
-
-    #[test]
-    fn test_server_message_session_notification_roundtrip() {
-        let msg = ServerMessage::SessionNotification {
-            session_id: "sess-abc".to_string(),
-            name: Some("new-session".to_string()),
-        };
-        let json = serde_json::to_string(&msg).unwrap();
-        let parsed: ServerMessage = serde_json::from_str(&json).unwrap();
-        assert_eq!(msg, parsed);
-
-        assert!(json.contains(r#""type":"session_notification""#));
-    }
-
-    // ==================== Event Conversion Tests ====================
-
-    #[test]
-    fn test_vibes_event_claude_converts_to_server_message() {
-        let vibes_event = VibesEvent::Claude {
-            session_id: "sess-1".to_string(),
-            event: ClaudeEvent::TextDelta {
-                text: "Hello".to_string(),
-            },
-        };
-
-        let server_msg = vibes_event_to_server_message(&vibes_event);
-        match server_msg {
-            Some(ServerMessage::Claude { session_id, event }) => {
-                assert_eq!(session_id, "sess-1");
-                match event {
-                    ClaudeEvent::TextDelta { text } => assert_eq!(text, "Hello"),
-                    _ => panic!("Expected TextDelta event"),
-                }
-            }
-            _ => panic!("Expected Some(Claude) message"),
-        }
-    }
-
-    #[test]
-    fn test_vibes_event_session_state_changed_converts() {
-        let vibes_event = VibesEvent::SessionStateChanged {
-            session_id: "sess-1".to_string(),
-            state: "processing".to_string(),
-        };
-
-        let server_msg = vibes_event_to_server_message(&vibes_event);
-        assert!(matches!(
-            server_msg,
-            Some(ServerMessage::SessionState { session_id, state })
-            if session_id == "sess-1" && state == "processing"
-        ));
-    }
-
-    #[test]
-    fn test_vibes_event_session_created_converts_to_notification() {
-        let vibes_event = VibesEvent::SessionCreated {
-            session_id: "sess-new".to_string(),
-            name: Some("my-session".to_string()),
-        };
-
-        let server_msg = vibes_event_to_server_message(&vibes_event);
-        assert!(matches!(
-            server_msg,
-            Some(ServerMessage::SessionNotification { session_id, name })
-            if session_id == "sess-new" && name == Some("my-session".to_string())
-        ));
-    }
-
-    #[test]
-    fn test_vibes_event_user_input_converts() {
-        let vibes_event = VibesEvent::UserInput {
-            session_id: "sess-1".to_string(),
-            content: "test input".to_string(),
-            source: InputSource::Cli,
-        };
-
-        let server_msg = vibes_event_to_server_message(&vibes_event);
-        assert!(matches!(
-            server_msg,
-            Some(ServerMessage::UserInput {
-                session_id,
-                content,
-                source: InputSource::Cli,
-            }) if session_id == "sess-1" && content == "test input"
-        ));
-    }
-
-    #[test]
-    fn test_vibes_event_permission_response_not_broadcast() {
-        let vibes_event = VibesEvent::PermissionResponse {
-            session_id: "sess-1".to_string(),
-            request_id: "req-1".to_string(),
-            approved: true,
-        };
-
-        assert!(vibes_event_to_server_message(&vibes_event).is_none());
-    }
-
-    #[test]
-    fn test_vibes_event_client_events_not_broadcast() {
-        let connected = VibesEvent::ClientConnected {
-            client_id: "client-1".to_string(),
-        };
-        let disconnected = VibesEvent::ClientDisconnected {
-            client_id: "client-1".to_string(),
-        };
-
-        assert!(vibes_event_to_server_message(&connected).is_none());
-        assert!(vibes_event_to_server_message(&disconnected).is_none());
-    }
-
-    // ==================== Tunnel State Tests ====================
-
-    #[test]
-    fn test_server_message_tunnel_state_serialization() {
-        let msg = ServerMessage::TunnelState {
-            state: "connected".to_string(),
-            url: Some("https://test.trycloudflare.com".to_string()),
-        };
-        let json = serde_json::to_string(&msg).unwrap();
-        assert!(json.contains("tunnel_state"));
-        assert!(json.contains("connected"));
     }
 
     #[test]
@@ -642,146 +431,6 @@ mod tests {
         let parsed: ServerMessage = serde_json::from_str(&json).unwrap();
         assert_eq!(msg, parsed);
         assert!(json.contains(r#""type":"session_removed""#));
-    }
-
-    #[test]
-    fn test_server_message_ownership_transferred_roundtrip() {
-        let msg = ServerMessage::OwnershipTransferred {
-            session_id: "sess-1".to_string(),
-            new_owner_id: "client-2".to_string(),
-            you_are_owner: false,
-        };
-        let json = serde_json::to_string(&msg).unwrap();
-        let parsed: ServerMessage = serde_json::from_str(&json).unwrap();
-        assert_eq!(msg, parsed);
-        assert!(json.contains(r#""type":"ownership_transferred""#));
-    }
-
-    #[test]
-    fn test_vibes_event_tunnel_state_changed_converts() {
-        let vibes_event = VibesEvent::TunnelStateChanged {
-            state: "connected".to_string(),
-            url: Some("https://test.trycloudflare.com".to_string()),
-        };
-
-        let server_msg = vibes_event_to_server_message(&vibes_event);
-        assert!(matches!(
-            server_msg,
-            Some(ServerMessage::TunnelState { state, url })
-            if state == "connected" && url == Some("https://test.trycloudflare.com".to_string())
-        ));
-    }
-
-    // ==================== Auth Context Tests ====================
-
-    #[test]
-    fn test_server_message_auth_context_local_roundtrip() {
-        let msg = ServerMessage::AuthContext(AuthContext::Local);
-        let json = serde_json::to_string(&msg).unwrap();
-        let parsed: ServerMessage = serde_json::from_str(&json).unwrap();
-        assert_eq!(msg, parsed);
-        assert!(json.contains(r#""type":"auth_context""#));
-        assert!(json.contains(r#""source":"local""#));
-    }
-
-    #[test]
-    fn test_server_message_auth_context_anonymous_roundtrip() {
-        let msg = ServerMessage::AuthContext(AuthContext::Anonymous);
-        let json = serde_json::to_string(&msg).unwrap();
-        let parsed: ServerMessage = serde_json::from_str(&json).unwrap();
-        assert_eq!(msg, parsed);
-        assert!(json.contains(r#""source":"anonymous""#));
-    }
-
-    #[test]
-    fn test_server_message_auth_context_authenticated_roundtrip() {
-        use chrono::Utc;
-        use vibes_core::AccessIdentity;
-
-        let identity = AccessIdentity::new("user@example.com".to_string(), Utc::now())
-            .with_name("Test User".to_string());
-        let msg = ServerMessage::AuthContext(AuthContext::Authenticated { identity });
-        let json = serde_json::to_string(&msg).unwrap();
-        let parsed: ServerMessage = serde_json::from_str(&json).unwrap();
-        assert_eq!(msg, parsed);
-        assert!(json.contains(r#""source":"authenticated""#));
-        assert!(json.contains(r#""email":"user@example.com""#));
-    }
-
-    #[test]
-    fn test_server_message_user_input_roundtrip() {
-        let msg = ServerMessage::UserInput {
-            session_id: "sess-1".to_string(),
-            content: "Hello from CLI".to_string(),
-            source: InputSource::Cli,
-        };
-        let json = serde_json::to_string(&msg).unwrap();
-        let parsed: ServerMessage = serde_json::from_str(&json).unwrap();
-        assert_eq!(msg, parsed);
-        assert!(json.contains(r#""type":"user_input""#));
-        assert!(json.contains(r#""source":"cli""#));
-    }
-
-    #[test]
-    fn test_server_message_user_input_web_ui_source() {
-        let msg = ServerMessage::UserInput {
-            session_id: "sess-1".to_string(),
-            content: "Hello from Web".to_string(),
-            source: InputSource::WebUi,
-        };
-        let json = serde_json::to_string(&msg).unwrap();
-        assert!(json.contains(r#""source":"web_ui""#));
-    }
-
-    // ==================== PTY Message Tests ====================
-
-    #[test]
-    fn test_client_message_attach_roundtrip() {
-        let msg = ClientMessage::Attach {
-            session_id: "sess-1".to_string(),
-        };
-        let json = serde_json::to_string(&msg).unwrap();
-        let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
-        assert_eq!(msg, parsed);
-        assert!(json.contains(r#""type":"attach""#));
-    }
-
-    #[test]
-    fn test_client_message_detach_roundtrip() {
-        let msg = ClientMessage::Detach {
-            session_id: "sess-1".to_string(),
-        };
-        let json = serde_json::to_string(&msg).unwrap();
-        let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
-        assert_eq!(msg, parsed);
-        assert!(json.contains(r#""type":"detach""#));
-    }
-
-    #[test]
-    fn test_client_message_pty_input_roundtrip() {
-        let msg = ClientMessage::PtyInput {
-            session_id: "sess-1".to_string(),
-            data: "aGVsbG8=".to_string(), // base64 for "hello"
-        };
-        let json = serde_json::to_string(&msg).unwrap();
-        let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
-        assert_eq!(msg, parsed);
-        assert!(json.contains(r#""type":"pty_input""#));
-    }
-
-    #[test]
-    fn test_client_message_pty_resize_roundtrip() {
-        let msg = ClientMessage::PtyResize {
-            session_id: "sess-1".to_string(),
-            cols: 120,
-            rows: 40,
-        };
-        let json = serde_json::to_string(&msg).unwrap();
-        let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
-        assert_eq!(msg, parsed);
-        assert!(json.contains(r#""type":"pty_resize""#));
-        assert!(json.contains(r#""cols":120"#));
-        assert!(json.contains(r#""rows":40"#));
     }
 
     #[test]
@@ -846,5 +495,139 @@ mod tests {
         let parsed: ServerMessage = serde_json::from_str(&json).unwrap();
         assert_eq!(msg, parsed);
         assert!(json.contains(r#""type":"pty_replay""#));
+    }
+
+    // ==================== Auth Context Tests ====================
+
+    #[test]
+    fn test_server_message_auth_context_local_roundtrip() {
+        let msg = ServerMessage::AuthContext(AuthContext::Local);
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ServerMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+        assert!(json.contains(r#""type":"auth_context""#));
+        assert!(json.contains(r#""source":"local""#));
+    }
+
+    #[test]
+    fn test_server_message_auth_context_anonymous_roundtrip() {
+        let msg = ServerMessage::AuthContext(AuthContext::Anonymous);
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ServerMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+        assert!(json.contains(r#""source":"anonymous""#));
+    }
+
+    #[test]
+    fn test_server_message_auth_context_authenticated_roundtrip() {
+        use chrono::Utc;
+        use vibes_core::AccessIdentity;
+
+        let identity = AccessIdentity::new("user@example.com".to_string(), Utc::now())
+            .with_name("Test User".to_string());
+        let msg = ServerMessage::AuthContext(AuthContext::Authenticated { identity });
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ServerMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+        assert!(json.contains(r#""source":"authenticated""#));
+        assert!(json.contains(r#""email":"user@example.com""#));
+    }
+
+    // ==================== Event Conversion Tests ====================
+
+    #[test]
+    fn test_vibes_event_session_state_changed_converts() {
+        let vibes_event = VibesEvent::SessionStateChanged {
+            session_id: "sess-1".to_string(),
+            state: "processing".to_string(),
+        };
+
+        let server_msg = vibes_event_to_server_message(&vibes_event);
+        assert!(matches!(
+            server_msg,
+            Some(ServerMessage::SessionState { session_id, state })
+            if session_id == "sess-1" && state == "processing"
+        ));
+    }
+
+    #[test]
+    fn test_vibes_event_session_created_converts_to_notification() {
+        let vibes_event = VibesEvent::SessionCreated {
+            session_id: "sess-new".to_string(),
+            name: Some("my-session".to_string()),
+        };
+
+        let server_msg = vibes_event_to_server_message(&vibes_event);
+        assert!(matches!(
+            server_msg,
+            Some(ServerMessage::SessionNotification { session_id, name })
+            if session_id == "sess-new" && name == Some("my-session".to_string())
+        ));
+    }
+
+    #[test]
+    fn test_vibes_event_tunnel_state_changed_converts() {
+        let vibes_event = VibesEvent::TunnelStateChanged {
+            state: "connected".to_string(),
+            url: Some("https://test.trycloudflare.com".to_string()),
+        };
+
+        let server_msg = vibes_event_to_server_message(&vibes_event);
+        assert!(matches!(
+            server_msg,
+            Some(ServerMessage::TunnelState { state, url })
+            if state == "connected" && url == Some("https://test.trycloudflare.com".to_string())
+        ));
+    }
+
+    #[test]
+    fn test_vibes_event_claude_not_broadcast() {
+        let vibes_event = VibesEvent::Claude {
+            session_id: "sess-1".to_string(),
+            event: ClaudeEvent::TextDelta {
+                text: "Hello".to_string(),
+            },
+        };
+
+        // Claude events are not broadcast to WebSocket clients (PTY handles output)
+        assert!(vibes_event_to_server_message(&vibes_event).is_none());
+    }
+
+    #[test]
+    fn test_vibes_event_user_input_not_broadcast() {
+        use vibes_core::InputSource;
+
+        let vibes_event = VibesEvent::UserInput {
+            session_id: "sess-1".to_string(),
+            content: "test input".to_string(),
+            source: InputSource::Cli,
+        };
+
+        // UserInput events are not broadcast to WebSocket clients (PTY handles I/O)
+        assert!(vibes_event_to_server_message(&vibes_event).is_none());
+    }
+
+    #[test]
+    fn test_vibes_event_permission_response_not_broadcast() {
+        let vibes_event = VibesEvent::PermissionResponse {
+            session_id: "sess-1".to_string(),
+            request_id: "req-1".to_string(),
+            approved: true,
+        };
+
+        assert!(vibes_event_to_server_message(&vibes_event).is_none());
+    }
+
+    #[test]
+    fn test_vibes_event_client_events_not_broadcast() {
+        let connected = VibesEvent::ClientConnected {
+            client_id: "client-1".to_string(),
+        };
+        let disconnected = VibesEvent::ClientDisconnected {
+            client_id: "client-1".to_string(),
+        };
+
+        assert!(vibes_event_to_server_message(&connected).is_none());
+        assert!(vibes_event_to_server_message(&disconnected).is_none());
     }
 }

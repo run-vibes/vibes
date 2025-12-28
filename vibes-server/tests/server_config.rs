@@ -12,8 +12,9 @@ async fn server_state_has_event_bus() {
 }
 
 #[tokio::test]
-async fn server_state_has_session_manager() {
+async fn server_state_has_pty_manager() {
     let (state, _addr) = common::create_test_server().await;
-    let sessions = state.session_manager.list_sessions().await;
-    assert!(sessions.is_empty(), "No sessions initially");
+    let pty_manager = state.pty_manager.read().await;
+    let sessions = pty_manager.list_sessions();
+    assert!(sessions.is_empty(), "No PTY sessions initially");
 }

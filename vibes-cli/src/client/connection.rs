@@ -84,82 +84,6 @@ impl VibesClient {
         }
     }
 
-    /// Create a new session and wait for confirmation
-    ///
-    /// Returns the new session ID
-    ///
-    /// Note: With PTY mode, sessions are created via PTY attachment instead.
-    #[allow(dead_code)]
-    pub async fn create_session(&mut self, name: Option<String>) -> Result<String> {
-        let request_id = uuid::Uuid::new_v4().to_string();
-
-        self.send(ClientMessage::CreateSession {
-            name,
-            request_id: request_id.clone(),
-        })
-        .await?;
-
-        // Wait for response with matching request_id
-        let timeout = Duration::from_secs(10);
-        let start = std::time::Instant::now();
-
-        while start.elapsed() < timeout {
-            match self.recv_timeout(Duration::from_secs(1)).await {
-                Ok(Some(ServerMessage::SessionCreated {
-                    request_id: resp_id,
-                    session_id,
-                    ..
-                })) if resp_id == request_id => {
-                    return Ok(session_id);
-                }
-                Ok(Some(ServerMessage::Error { message, .. })) => {
-                    anyhow::bail!("Failed to create session: {}", message);
-                }
-                Ok(Some(_)) => {
-                    // Not our response, continue waiting
-                    continue;
-                }
-                Ok(None) => {
-                    anyhow::bail!("Connection closed while waiting for session creation");
-                }
-                Err(_) => {
-                    // Timeout on individual recv, continue loop
-                    continue;
-                }
-            }
-        }
-
-        anyhow::bail!("Timeout waiting for session creation response")
-    }
-
-    /// Send input to a session
-    ///
-    /// Note: With PTY mode, input is sent via PTY data messages instead.
-    #[allow(dead_code)]
-    pub async fn send_input(&self, session_id: &str, content: &str) -> Result<()> {
-        self.send(ClientMessage::Input {
-            session_id: session_id.to_string(),
-            content: content.to_string(),
-        })
-        .await
-    }
-
-    /// Respond to a permission request
-    #[allow(dead_code)]
-    pub async fn respond_permission(
-        &self,
-        session_id: &str,
-        request_id: &str,
-        approved: bool,
-    ) -> Result<()> {
-        self.send(ClientMessage::PermissionResponse {
-            session_id: session_id.to_string(),
-            request_id: request_id.to_string(),
-            approved,
-        })
-        .await
-    }
-
     /// Request list of active sessions
     pub async fn send_list_sessions(&self, request_id: &str) -> Result<()> {
         self.send(ClientMessage::ListSessions {
@@ -179,9 +103,13 @@ impl VibesClient {
     // === PTY Methods ===
 
     /// Attach to a PTY session to receive output
-    pub async fn attach(&self, session_id: &str) -> Result<()> {
+    ///
+    /// If `name` is provided and the session doesn't exist, a new session will be
+    /// created with this human-readable name.
+    pub async fn attach(&self, session_id: &str, name: Option<String>) -> Result<()> {
         self.send(ClientMessage::Attach {
             session_id: session_id.to_string(),
+            name,
         })
         .await
     }
@@ -289,30 +217,27 @@ mod tests {
 
     #[test]
     fn test_client_message_serialization() {
-        let msg = ClientMessage::CreateSession {
-            name: Some("test".to_string()),
+        let msg = ClientMessage::ListSessions {
             request_id: "req-1".to_string(),
         };
         let json = serde_json::to_string(&msg).unwrap();
-        assert!(json.contains("create_session"));
-        assert!(json.contains("test"));
+        assert!(json.contains("list_sessions"));
+        assert!(json.contains("req-1"));
     }
 
     #[test]
     fn test_server_message_deserialization() {
-        let json = r#"{"type":"session_created","request_id":"req-1","session_id":"sess-1","name":"test"}"#;
+        let json = r#"{"type":"session_list","request_id":"req-1","sessions":[]}"#;
         let msg: ServerMessage = serde_json::from_str(json).unwrap();
         match msg {
-            ServerMessage::SessionCreated {
+            ServerMessage::SessionList {
                 request_id,
-                session_id,
-                name,
+                sessions,
             } => {
                 assert_eq!(request_id, "req-1");
-                assert_eq!(session_id, "sess-1");
-                assert_eq!(name, Some("test".to_string()));
+                assert!(sessions.is_empty());
             }
-            _ => panic!("Expected SessionCreated"),
+            _ => panic!("Expected SessionList"),
         }
     }
 }

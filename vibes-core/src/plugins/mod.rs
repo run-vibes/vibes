@@ -43,5 +43,5 @@ mod host;
 mod registry;
 
 pub use error::PluginHostError;
-pub use host::{PluginHost, PluginHostConfig, PluginInfo, PluginState, convert_session_state};
+pub use host::{PluginHost, PluginHostConfig, PluginInfo, PluginState};
 pub use registry::PluginRegistry;

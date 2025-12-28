@@ -1,5 +1,6 @@
 //! PTY session manager
 
+use chrono::{DateTime, Utc};
 use std::collections::HashMap;
 use uuid::Uuid;
 
@@ -13,6 +14,7 @@ pub struct PtySessionInfo {
     pub id: String,
     pub name: Option<String>,
     pub state: PtyState,
+    pub created_at: DateTime<Utc>,
 }
 
 /// Manages multiple PTY sessions
@@ -79,8 +81,14 @@ impl PtyManager {
                 id: s.id.clone(),
                 name: s.name.clone(),
                 state: s.state.clone(),
+                created_at: s.created_at,
             })
             .collect()
+    }
+
+    /// Get the number of active sessions
+    pub fn session_count(&self) -> usize {
+        self.sessions.len()
     }
 
     /// Remove a session
