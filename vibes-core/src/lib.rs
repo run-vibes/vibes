@@ -87,6 +87,6 @@ pub use tunnel::{
     TunnelManager, TunnelMode, TunnelState, check_installation,
 };
 pub use hooks::{
-    HookEvent, HookReceiver, HookReceiverConfig, HookType, PostToolUseData, PreToolUseData,
-    StopData,
+    HookEvent, HookInstaller, HookInstallerConfig, HookReceiver, HookReceiverConfig, HookType,
+    InstallError, PostToolUseData, PreToolUseData, StopData,
 };

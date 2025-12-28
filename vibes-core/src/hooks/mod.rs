@@ -16,9 +16,11 @@
 //! Claude Code ---> Hook Script ---> vibes-hook-send ---> Unix Socket ---> HookReceiver
 //! ```
 
+mod installer;
 mod receiver;
 pub mod scripts;
 mod types;
 
+pub use installer::{HookInstaller, HookInstallerConfig, InstallError};
 pub use receiver::{HookReceiver, HookReceiverConfig};
 pub use types::{HookEvent, HookType, PostToolUseData, PreToolUseData, StopData};

@@ -15,7 +15,8 @@ use std::sync::Arc;
 
 use tokio::net::TcpListener;
 use vibes_core::{
-    EventBus, NotificationConfig, NotificationService, SubscriptionStore, VapidKeyManager,
+    EventBus, HookInstaller, HookInstallerConfig, NotificationConfig, NotificationService,
+    SubscriptionStore, VapidKeyManager,
     history::{HistoryService, SqliteHistoryStore},
 };
 
@@ -197,6 +198,9 @@ impl VibesServer {
 
         tracing::info!("vibes server listening on {}", addr);
 
+        // Install Claude Code hooks
+        self.install_hooks();
+
         // Start event forwarding from event_bus to WebSocket broadcaster
         self.start_event_forwarding();
 
@@ -288,6 +292,21 @@ impl VibesServer {
         });
 
         tracing::info!("History service started");
+    }
+
+    /// Install Claude Code hooks for structured event capture
+    fn install_hooks(&self) {
+        let installer = HookInstaller::new(HookInstallerConfig::default());
+
+        match installer.install() {
+            Ok(()) => {
+                tracing::info!("Claude Code hooks installed successfully");
+            }
+            Err(e) => {
+                // Log error but don't fail startup - hooks are optional
+                tracing::warn!("Failed to install Claude Code hooks: {}", e);
+            }
+        }
     }
 }
 
