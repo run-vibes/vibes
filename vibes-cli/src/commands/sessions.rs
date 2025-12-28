@@ -62,7 +62,7 @@ async fn list_sessions() -> Result<()> {
                     println!("Active sessions:");
                     println!();
                     for session in sessions {
-                        let name = session.name.unwrap_or_else(|| "(unnamed)".to_string());
+                        let name = session.name.as_deref().unwrap_or("(unnamed)");
                         let owner_marker = if session.is_owner { " (owner)" } else { "" };
                         println!("  {} - {}{}", session.id, name, owner_marker);
                         println!(

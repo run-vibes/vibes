@@ -55,7 +55,12 @@ pub struct Session {
     ownership: SessionOwnership,
 }
 
-/// Default owner ID when none is specified
+/// Legacy/system owner ID used when no explicit owner is specified.
+///
+/// This is used for backward compatibility by [`Session::new`], which creates
+/// sessions without a client-provided owner. New code should prefer
+/// [`Session::new_with_owner`] and pass a real [`ClientId`] instead of relying
+/// on this synthetic `"system"` owner.
 const DEFAULT_OWNER_ID: &str = "system";
 
 impl Session {

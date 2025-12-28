@@ -43,7 +43,7 @@ export function SessionCard({
   const displayName = name || id.slice(0, 8);
   const shortId = id.slice(0, 8);
   const formattedDate = formatDate(createdAt);
-  const stateKey = typeof state === 'string' ? state.toLowerCase().replace('_', '') : state;
+  const stateKey = typeof state === 'string' ? state.toLowerCase().replace(/_/g, '') : state;
   const stateLabel = stateLabels[state] || state;
 
   const handleKill = (e: React.MouseEvent) => {
