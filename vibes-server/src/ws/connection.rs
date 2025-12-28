@@ -6,12 +6,13 @@ use std::sync::Arc;
 use axum::Extension;
 use axum::extract::State;
 use axum::extract::ws::{Message, WebSocket, WebSocketUpgrade};
+use axum::http::Request;
 use axum::response::IntoResponse;
 use futures::{SinkExt, StreamExt};
 use tokio::sync::broadcast;
 use tracing::{debug, error, info, warn};
 use uuid::Uuid;
-use vibes_core::{AuthContext, VibesEvent};
+use vibes_core::{AuthContext, EventBus, InputSource, VibesEvent};
 
 use crate::AppState;
 
@@ -19,29 +20,56 @@ use super::protocol::{
     ClientMessage, RemovalReason, ServerMessage, SessionInfo, vibes_event_to_server_message,
 };
 
+/// Detect client type from request headers
+///
+/// CLI clients send `X-Vibes-Client-Type: cli` header.
+/// Browser connections default to Web UI.
+fn detect_client_type<B>(req: &Request<B>) -> InputSource {
+    if let Some(header) = req.headers().get("X-Vibes-Client-Type")
+        && let Ok(value) = header.to_str()
+        && value == "cli"
+    {
+        return InputSource::Cli;
+    }
+    // Default to Web UI for browser connections
+    InputSource::WebUi
+}
+
 /// WebSocket upgrade handler
 pub async fn ws_handler(
     ws: WebSocketUpgrade,
     State(state): State<Arc<AppState>>,
     Extension(auth_context): Extension<AuthContext>,
+    req: Request<axum::body::Body>,
 ) -> impl IntoResponse {
-    ws.on_upgrade(move |socket| handle_socket(socket, state, auth_context))
+    let client_type = detect_client_type(&req);
+    debug!(?client_type, "WebSocket connection detected");
+    ws.on_upgrade(move |socket| handle_socket(socket, state, auth_context, client_type))
 }
 
 /// Per-connection state
 struct ConnectionState {
     /// Unique identifier for this connection
     client_id: String,
+    /// Type of client (CLI, Web UI)
+    client_type: InputSource,
     /// Session IDs this connection is subscribed to
     subscribed_sessions: HashSet<String>,
 }
 
 impl ConnectionState {
-    fn new() -> Self {
+    fn new(client_type: InputSource) -> Self {
         Self {
             client_id: Uuid::new_v4().to_string(),
+            client_type,
             subscribed_sessions: HashSet::new(),
         }
+    }
+
+    /// Get the client type
+    #[allow(dead_code)]
+    fn client_type(&self) -> InputSource {
+        self.client_type
     }
 
     /// Check if this connection should receive events for a given session
@@ -65,12 +93,21 @@ impl ConnectionState {
 }
 
 /// Handle a WebSocket connection with bidirectional event streaming
-async fn handle_socket(socket: WebSocket, state: Arc<AppState>, auth_context: AuthContext) {
+async fn handle_socket(
+    socket: WebSocket,
+    state: Arc<AppState>,
+    auth_context: AuthContext,
+    client_type: InputSource,
+) {
     let (mut sender, mut receiver) = socket.split();
     let mut event_rx = state.subscribe_events();
-    let mut conn_state = ConnectionState::new();
+    let mut conn_state = ConnectionState::new(client_type);
 
-    info!(client_id = %conn_state.client_id, "WebSocket client connected");
+    info!(
+        client_id = %conn_state.client_id,
+        ?client_type,
+        "WebSocket client connected"
+    );
 
     // Send auth context immediately on connection
     let auth_msg = ServerMessage::AuthContext(auth_context);
@@ -269,6 +306,15 @@ async fn handle_text_message(
             session_id,
             content,
         } => {
+            // Publish input event with source attribution for other subscribers
+            let input_event = VibesEvent::UserInput {
+                session_id: session_id.clone(),
+                content: content.clone(),
+                source: conn_state.client_type(),
+            };
+            state.event_bus.publish(input_event).await;
+
+            // Forward to session
             if let Err(e) = state
                 .session_manager
                 .send_to_session(&session_id, &content)
