@@ -17,6 +17,7 @@
 //! ```
 
 mod receiver;
+pub mod scripts;
 mod types;
 
 pub use receiver::{HookReceiver, HookReceiverConfig};
