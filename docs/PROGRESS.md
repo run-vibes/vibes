@@ -17,12 +17,12 @@ This document tracks the implementation progress of vibes against the roadmap de
 | 3.2 Multi-Session Support | Complete | [design](plans/09-multi-session/design.md) | [implementation](plans/09-multi-session/implementation.md) |
 | 3.3 CLI ↔ Web Mirroring | Complete | [design](plans/10-cli-web-mirroring/design.md) | [implementation](plans/10-cli-web-mirroring/implementation.md) |
 | 3.4 PTY Backend | Complete | [design](plans/12-pty-backend/design.md) | [implementation](plans/12-pty-backend/implementation.md) |
-| 4.1 Harness Introspection | Not started | [design](plans/2025-12-28-continual-learning-design.md) | — |
-| 4.2 Storage Foundation | Not started | [design](plans/2025-12-28-continual-learning-design.md) | — |
-| 4.3 Capture & Inject | Not started | [design](plans/2025-12-28-continual-learning-design.md) | — |
-| 4.4 Learning Extraction | Not started | [design](plans/2025-12-28-continual-learning-design.md) | — |
-| 4.5 Adaptive Strategies | Not started | [design](plans/2025-12-28-continual-learning-design.md) | — |
-| 4.6 Open-World Adaptation | Not started | [design](plans/2025-12-28-continual-learning-design.md) | — |
+| 4.1 Harness Introspection | Not started | [design](plans/14-continual-learning/design.md) | — |
+| 4.2 Storage Foundation | Not started | [design](plans/14-continual-learning/design.md) | — |
+| 4.3 Capture & Inject | Not started | [design](plans/14-continual-learning/design.md) | — |
+| 4.4 Learning Extraction | Not started | [design](plans/14-continual-learning/design.md) | — |
+| 4.5 Adaptive Strategies | Not started | [design](plans/14-continual-learning/design.md) | — |
+| 4.6 Open-World Adaptation | Not started | [design](plans/14-continual-learning/design.md) | — |
 | 5.1 Setup Wizards | Not started | — | — |
 | 5.2 Default Plugins | Not started | — | — |
 | 5.3 CLI Enhancements | Not started | — | — |
@@ -149,7 +149,7 @@ Note: Auto-detect team/aud moved to Milestone 3.5 (Cloudflare Auth Wizard)
 
 **Goal:** Progressive improvement through accumulated experience
 
-**Design:** [Continual Learning Design](plans/2025-12-28-continual-learning-design.md)
+**Design:** [Continual Learning Design](plans/14-continual-learning/design.md)
 
 ### Milestone 4.1: Harness Introspection (Level 0)
 - [ ] `Harness` trait and `HarnessCapabilities` struct
