@@ -3,6 +3,7 @@
 use std::collections::HashMap;
 use uuid::Uuid;
 
+use super::backend::{PtyBackend, create_backend};
 use super::session::PtyState;
 use super::{PtyConfig, PtyError, PtySession, PtySessionHandle};
 
@@ -17,15 +18,24 @@ pub struct PtySessionInfo {
 /// Manages multiple PTY sessions
 pub struct PtyManager {
     sessions: HashMap<String, PtySession>,
-    config: PtyConfig,
+    backend: Box<dyn PtyBackend>,
 }
 
 impl PtyManager {
-    /// Create a new PTY manager
+    /// Create a new PTY manager with the specified config
     pub fn new(config: PtyConfig) -> Self {
+        let backend = create_backend(config);
         Self {
             sessions: HashMap::new(),
-            config,
+            backend,
+        }
+    }
+
+    /// Create a new PTY manager with a custom backend
+    pub fn with_backend(backend: Box<dyn PtyBackend>) -> Self {
+        Self {
+            sessions: HashMap::new(),
+            backend,
         }
     }
 
@@ -41,7 +51,7 @@ impl PtyManager {
         id: String,
         name: Option<String>,
     ) -> Result<String, PtyError> {
-        let session = PtySession::spawn(id.clone(), name, &self.config)?;
+        let session = self.backend.create_session(id.clone(), name)?;
         self.sessions.insert(id.clone(), session);
         Ok(id)
     }

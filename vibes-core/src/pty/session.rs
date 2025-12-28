@@ -1,11 +1,11 @@
 //! PTY session management
 
-use portable_pty::{CommandBuilder, PtySize, native_pty_system};
+use portable_pty::PtySize;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
+use super::PtyError;
 use super::scrollback::ScrollbackBuffer;
-use super::{PtyConfig, PtyError};
 
 /// State of a PTY session
 #[derive(Debug, Clone, PartialEq)]
@@ -33,11 +33,11 @@ pub enum PtyState {
 pub struct PtySessionHandle {
     pub(crate) inner: Arc<Mutex<PtySessionInner>>,
     /// Separate mutex for the reader to avoid blocking writes while reading
-    reader: Arc<std::sync::Mutex<Box<dyn std::io::Read + Send>>>,
+    pub(crate) reader: Arc<std::sync::Mutex<Box<dyn std::io::Read + Send>>>,
     /// Separate mutex for the writer to avoid blocking reads while writing
-    writer: Arc<std::sync::Mutex<Box<dyn std::io::Write + Send>>>,
+    pub(crate) writer: Arc<std::sync::Mutex<Box<dyn std::io::Write + Send>>>,
     /// Scrollback buffer for replay on reconnect
-    scrollback: Arc<std::sync::Mutex<ScrollbackBuffer>>,
+    pub(crate) scrollback: Arc<std::sync::Mutex<ScrollbackBuffer>>,
 }
 
 impl PtySessionHandle {
@@ -140,145 +140,26 @@ pub struct PtySession {
     pub handle: PtySessionHandle,
 }
 
-impl PtySession {
-    /// Spawn a new PTY session
-    pub fn spawn(id: String, name: Option<String>, config: &PtyConfig) -> Result<Self, PtyError> {
-        tracing::info!(
-            id = %id,
-            name = ?name,
-            command = %config.claude_path.display(),
-            mock_mode = config.mock_mode,
-            "Spawning PTY session"
-        );
-
-        // In mock mode, create a session without a real PTY
-        if config.mock_mode {
-            return Self::spawn_mock(id, name, config);
-        }
-
-        let pty_system = native_pty_system();
-
-        let pair = pty_system
-            .openpty(PtySize {
-                rows: config.initial_rows,
-                cols: config.initial_cols,
-                pixel_width: 0,
-                pixel_height: 0,
-            })
-            .map_err(|e| PtyError::CreateFailed(e.to_string()))?;
-
-        let mut cmd = CommandBuilder::new(&config.claude_path);
-        for arg in &config.claude_args {
-            cmd.arg(arg);
-        }
-
-        let child = pair
-            .slave
-            .spawn_command(cmd)
-            .map_err(|e| PtyError::SpawnFailed(e.to_string()))?;
-
-        let reader = pair
-            .master
-            .try_clone_reader()
-            .map_err(|e| PtyError::IoError(std::io::Error::other(e)))?;
-
-        let writer = pair
-            .master
-            .take_writer()
-            .map_err(|e| PtyError::IoError(std::io::Error::other(e)))?;
-
-        let inner = PtySessionInner {
-            master: pair.master,
-            child,
-        };
-
-        let handle = PtySessionHandle {
-            inner: Arc::new(Mutex::new(inner)),
-            reader: Arc::new(std::sync::Mutex::new(reader)),
-            writer: Arc::new(std::sync::Mutex::new(writer)),
-            scrollback: Arc::new(std::sync::Mutex::new(ScrollbackBuffer::default())),
-        };
-
-        Ok(Self {
-            id,
-            name,
-            state: PtyState::Running,
-            handle,
-        })
-    }
-
-    /// Create a mock PTY session without spawning a real process
-    /// Used for testing in environments without PTY support (e.g., CI)
-    fn spawn_mock(id: String, name: Option<String>, config: &PtyConfig) -> Result<Self, PtyError> {
-        tracing::info!(id = %id, name = ?name, "Creating mock PTY session");
-
-        // Create mock reader/writer using pipes
-        let (reader, _writer_end) = std::os::unix::net::UnixStream::pair()
-            .map_err(|e| PtyError::CreateFailed(format!("Failed to create mock pipes: {}", e)))?;
-        let (writer, _reader_end) = std::os::unix::net::UnixStream::pair()
-            .map_err(|e| PtyError::CreateFailed(format!("Failed to create mock pipes: {}", e)))?;
-
-        // Set reader to non-blocking so reads don't hang
-        reader
-            .set_nonblocking(true)
-            .map_err(|e| PtyError::CreateFailed(format!("Failed to set non-blocking: {}", e)))?;
-
-        // Create a mock inner with a dummy child process (just spawn 'true')
-        let pty_system = native_pty_system();
-        let pair = pty_system
-            .openpty(PtySize {
-                rows: config.initial_rows,
-                cols: config.initial_cols,
-                pixel_width: 0,
-                pixel_height: 0,
-            })
-            .map_err(|e| PtyError::CreateFailed(e.to_string()))?;
-
-        // Spawn 'true' which exits immediately but gives us a valid child
-        let cmd = CommandBuilder::new("true");
-        let child = pair
-            .slave
-            .spawn_command(cmd)
-            .map_err(|e| PtyError::SpawnFailed(e.to_string()))?;
-
-        let inner = PtySessionInner {
-            master: pair.master,
-            child,
-        };
-
-        let handle = PtySessionHandle {
-            inner: Arc::new(Mutex::new(inner)),
-            reader: Arc::new(std::sync::Mutex::new(
-                Box::new(reader) as Box<dyn std::io::Read + Send>
-            )),
-            writer: Arc::new(std::sync::Mutex::new(
-                Box::new(writer) as Box<dyn std::io::Write + Send>
-            )),
-            scrollback: Arc::new(std::sync::Mutex::new(ScrollbackBuffer::default())),
-        };
-
-        Ok(Self {
-            id,
-            name,
-            state: PtyState::Running,
-            handle,
-        })
-    }
-}
+// Note: PtySession creation is now handled by PtyBackend implementations
+// See backend.rs for RealPtyBackend and MockPtyBackend
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::pty::backend::RealPtyBackend;
+    use crate::pty::{PtyBackend, PtyConfig};
 
-    #[test]
-    fn spawn_creates_running_session() {
-        // Use 'cat' for testing - it will wait for input
-        let config = PtyConfig {
+    fn test_config() -> PtyConfig {
+        PtyConfig {
             claude_path: "cat".into(),
             ..Default::default()
-        };
+        }
+    }
 
-        let session = PtySession::spawn("test-id".to_string(), None, &config);
+    #[test]
+    fn backend_creates_running_session() {
+        let backend = RealPtyBackend::new(test_config());
+        let session = backend.create_session("test-id".to_string(), None);
         assert!(session.is_ok());
 
         let session = session.unwrap();
@@ -287,42 +168,30 @@ mod tests {
     }
 
     #[test]
-    fn spawn_with_name() {
-        let config = PtyConfig {
-            claude_path: "cat".into(),
-            ..Default::default()
-        };
-
-        let session = PtySession::spawn(
-            "test-id".to_string(),
-            Some("my-session".to_string()),
-            &config,
-        )
-        .unwrap();
+    fn backend_creates_session_with_name() {
+        let backend = RealPtyBackend::new(test_config());
+        let session = backend
+            .create_session("test-id".to_string(), Some("my-session".to_string()))
+            .unwrap();
 
         assert_eq!(session.name, Some("my-session".to_string()));
     }
 
     #[test]
-    fn spawn_invalid_command_fails() {
+    fn backend_invalid_command_fails() {
         let config = PtyConfig {
             claude_path: "/nonexistent/binary".into(),
             ..Default::default()
         };
-
-        let result = PtySession::spawn("test-id".to_string(), None, &config);
+        let backend = RealPtyBackend::new(config);
+        let result = backend.create_session("test-id".to_string(), None);
         assert!(result.is_err());
     }
 
     #[tokio::test]
     async fn write_and_read_data() {
-        // Use 'cat' - it echoes input back
-        let config = PtyConfig {
-            claude_path: "cat".into(),
-            ..Default::default()
-        };
-
-        let session = PtySession::spawn("test-id".to_string(), None, &config).unwrap();
+        let backend = RealPtyBackend::new(test_config());
+        let session = backend.create_session("test-id".to_string(), None).unwrap();
 
         // Write some data
         session.handle.write(b"hello\n").await.unwrap();
@@ -337,12 +206,8 @@ mod tests {
 
     #[tokio::test]
     async fn resize_pty() {
-        let config = PtyConfig {
-            claude_path: "cat".into(),
-            ..Default::default()
-        };
-
-        let session = PtySession::spawn("test-id".to_string(), None, &config).unwrap();
+        let backend = RealPtyBackend::new(test_config());
+        let session = backend.create_session("test-id".to_string(), None).unwrap();
 
         // Resize should not error
         let result = session.handle.resize(80, 24).await;
@@ -351,12 +216,8 @@ mod tests {
 
     #[tokio::test]
     async fn handle_provides_scrollback_access() {
-        let config = PtyConfig {
-            claude_path: "cat".into(),
-            ..Default::default()
-        };
-
-        let session = PtySession::spawn("test-id".to_string(), None, &config).unwrap();
+        let backend = RealPtyBackend::new(test_config());
+        let session = backend.create_session("test-id".to_string(), None).unwrap();
 
         // Write data and read it back (cat echoes)
         session.handle.write(b"test\n").await.unwrap();
