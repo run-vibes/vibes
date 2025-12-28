@@ -17,33 +17,57 @@ pub enum PtyState {
 #[derive(Clone)]
 pub struct PtySessionHandle {
     pub(crate) inner: Arc<Mutex<PtySessionInner>>,
+    /// Separate mutex for the reader to avoid blocking writes while reading
+    reader: Arc<std::sync::Mutex<Box<dyn std::io::Read + Send>>>,
+    /// Separate mutex for the writer to avoid blocking reads while writing
+    writer: Arc<std::sync::Mutex<Box<dyn std::io::Write + Send>>>,
 }
 
 impl PtySessionHandle {
     /// Write data to the PTY
     pub async fn write(&self, data: &[u8]) -> Result<(), PtyError> {
-        let mut inner = self.inner.lock().await;
-        use std::io::Write;
-        inner.writer.write_all(data)?;
-        inner.writer.flush()?;
-        Ok(())
+        let data = data.to_vec();
+        let writer = Arc::clone(&self.writer);
+
+        tokio::task::spawn_blocking(move || {
+            let mut guard = writer
+                .lock()
+                .map_err(|_| PtyError::IoError(std::io::Error::other("mutex poisoned")))?;
+            use std::io::Write;
+            guard.write_all(&data)?;
+            guard.flush()?;
+            Ok(())
+        })
+        .await
+        .map_err(|e| PtyError::IoError(std::io::Error::other(e)))?
     }
 
-    /// Read available data from the PTY (non-blocking)
+    /// Read available data from the PTY
+    ///
+    /// This uses spawn_blocking internally since the underlying reader
+    /// may block. Use this in async contexts where blocking would be problematic.
     pub async fn read(&self) -> Result<Vec<u8>, PtyError> {
-        let mut inner = self.inner.lock().await;
-        let mut buf = vec![0u8; 4096];
+        let reader = Arc::clone(&self.reader);
 
-        use std::io::Read;
-        match inner.reader.read(&mut buf) {
-            Ok(n) if n > 0 => {
-                buf.truncate(n);
-                Ok(buf)
+        tokio::task::spawn_blocking(move || {
+            let mut guard = reader
+                .lock()
+                .map_err(|_| PtyError::IoError(std::io::Error::other("mutex poisoned")))?;
+            let mut buf = vec![0u8; 4096];
+
+            use std::io::Read;
+            match guard.read(&mut buf) {
+                Ok(n) if n > 0 => {
+                    buf.truncate(n);
+                    Ok(buf)
+                }
+                Ok(_) => Ok(vec![]),
+                Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => Ok(vec![]),
+                Err(e) => Err(PtyError::IoError(e)),
             }
-            Ok(_) => Ok(vec![]),
-            Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => Ok(vec![]),
-            Err(e) => Err(PtyError::IoError(e)),
-        }
+        })
+        .await
+        .map_err(|e| PtyError::IoError(std::io::Error::other(e)))?
     }
 
     /// Resize the PTY
@@ -64,8 +88,8 @@ impl PtySessionHandle {
 pub(crate) struct PtySessionInner {
     pub(crate) master: Box<dyn portable_pty::MasterPty + Send>,
     pub(crate) child: Box<dyn portable_pty::Child + Send + Sync>,
-    pub(crate) reader: Box<dyn std::io::Read + Send>,
-    pub(crate) writer: Box<dyn std::io::Write + Send>,
+    // Note: reader and writer are now stored separately on PtySessionHandle
+    // to allow independent locking for concurrent read/write operations
 }
 
 /// A PTY session wrapping Claude
@@ -110,12 +134,12 @@ impl PtySession {
         let inner = PtySessionInner {
             master: pair.master,
             child,
-            reader,
-            writer,
         };
 
         let handle = PtySessionHandle {
             inner: Arc::new(Mutex::new(inner)),
+            reader: Arc::new(std::sync::Mutex::new(reader)),
+            writer: Arc::new(std::sync::Mutex::new(writer)),
         };
 
         Ok(Self {

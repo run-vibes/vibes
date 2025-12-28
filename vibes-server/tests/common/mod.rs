@@ -7,14 +7,17 @@ use std::sync::Arc;
 
 use tokio::net::TcpListener;
 use vibes_core::history::{HistoryService, SqliteHistoryStore};
+use vibes_core::pty::PtyConfig;
 use vibes_server::{AppState, ServerConfig, VibesServer};
 
 /// Creates a test server with in-memory SQLite, returns state and address
+#[allow(dead_code)]
 pub async fn create_test_server() -> (Arc<AppState>, SocketAddr) {
     create_test_server_with_config(ServerConfig::default()).await
 }
 
 /// Creates a test server with custom config
+#[allow(dead_code)]
 pub async fn create_test_server_with_config(config: ServerConfig) -> (Arc<AppState>, SocketAddr) {
     // In-memory SQLite for speed and isolation
     let store = SqliteHistoryStore::open(":memory:").unwrap();
@@ -22,6 +25,25 @@ pub async fn create_test_server_with_config(config: ServerConfig) -> (Arc<AppSta
     let state = Arc::new(AppState::new().with_history(history));
 
     let server = VibesServer::with_state(config, Arc::clone(&state));
+    let addr = spawn_server(server).await;
+
+    (state, addr)
+}
+
+/// Creates a test server with custom PTY config (for PTY integration tests)
+#[allow(dead_code)]
+pub async fn create_test_server_with_pty_config(
+    pty_config: PtyConfig,
+) -> (Arc<AppState>, SocketAddr) {
+    let store = SqliteHistoryStore::open(":memory:").unwrap();
+    let history = Arc::new(HistoryService::new(Arc::new(store)));
+    let state = Arc::new(
+        AppState::new()
+            .with_history(history)
+            .with_pty_config(pty_config),
+    );
+
+    let server = VibesServer::with_state(ServerConfig::default(), Arc::clone(&state));
     let addr = spawn_server(server).await;
 
     (state, addr)

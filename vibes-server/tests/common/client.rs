@@ -168,4 +168,101 @@ impl TestClient {
             "Expected no message but received one"
         );
     }
+
+    // === PTY Methods ===
+
+    /// Attach to a PTY session, returns (cols, rows) from AttachAck
+    #[allow(dead_code)]
+    pub async fn attach(&mut self, session_id: &str) -> (u16, u16) {
+        self.conn
+            .send_json(&serde_json::json!({
+                "type": "attach",
+                "session_id": session_id,
+            }))
+            .await;
+
+        let response: serde_json::Value = self.conn.recv_json().await;
+        assert_eq!(
+            response["type"], "attach_ack",
+            "Expected attach_ack but got: {}",
+            response
+        );
+        assert_eq!(
+            response["session_id"], session_id,
+            "Session ID mismatch in attach_ack"
+        );
+
+        let cols = response["cols"].as_u64().unwrap() as u16;
+        let rows = response["rows"].as_u64().unwrap() as u16;
+        (cols, rows)
+    }
+
+    /// Send PTY input (data should be base64 encoded)
+    #[allow(dead_code)]
+    pub async fn pty_input(&mut self, session_id: &str, data: &str) {
+        self.conn
+            .send_json(&serde_json::json!({
+                "type": "pty_input",
+                "session_id": session_id,
+                "data": data,
+            }))
+            .await;
+    }
+
+    /// Send PTY input from raw bytes (handles base64 encoding)
+    #[allow(dead_code)]
+    pub async fn pty_input_bytes(&mut self, session_id: &str, data: &[u8]) {
+        use base64::Engine;
+        let encoded = base64::engine::general_purpose::STANDARD.encode(data);
+        self.pty_input(session_id, &encoded).await;
+    }
+
+    /// Resize PTY
+    #[allow(dead_code)]
+    pub async fn pty_resize(&mut self, session_id: &str, cols: u16, rows: u16) {
+        self.conn
+            .send_json(&serde_json::json!({
+                "type": "pty_resize",
+                "session_id": session_id,
+                "cols": cols,
+                "rows": rows,
+            }))
+            .await;
+    }
+
+    /// Wait for PTY output, returns decoded bytes
+    #[allow(dead_code)]
+    pub async fn expect_pty_output(&mut self, session_id: &str, timeout: Duration) -> Vec<u8> {
+        use base64::Engine;
+
+        let start = std::time::Instant::now();
+        while start.elapsed() < timeout {
+            if let Some(text) = self.conn.recv_timeout(Duration::from_millis(50)).await {
+                let msg: serde_json::Value = serde_json::from_str(&text).unwrap();
+                if msg["type"] == "pty_output" && msg["session_id"] == session_id {
+                    let data = msg["data"].as_str().unwrap();
+                    return base64::engine::general_purpose::STANDARD
+                        .decode(data)
+                        .unwrap();
+                }
+                // Not our message, continue waiting
+            }
+        }
+        panic!("Timeout waiting for pty_output");
+    }
+
+    /// Wait for PTY exit
+    #[allow(dead_code)]
+    pub async fn expect_pty_exit(&mut self, session_id: &str, timeout: Duration) -> Option<i32> {
+        let start = std::time::Instant::now();
+        while start.elapsed() < timeout {
+            if let Some(text) = self.conn.recv_timeout(Duration::from_millis(50)).await {
+                let msg: serde_json::Value = serde_json::from_str(&text).unwrap();
+                if msg["type"] == "pty_exit" && msg["session_id"] == session_id {
+                    return msg["exit_code"].as_i64().map(|c| c as i32);
+                }
+            }
+        }
+        panic!("Timeout waiting for pty_exit");
+    }
 }

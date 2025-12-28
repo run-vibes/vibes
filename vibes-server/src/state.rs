@@ -117,6 +117,12 @@ impl AppState {
         self
     }
 
+    /// Configure PTY settings for this state
+    pub fn with_pty_config(mut self, config: PtyConfig) -> Self {
+        self.pty_manager = Arc::new(RwLock::new(PtyManager::new(config)));
+        self
+    }
+
     /// Create AppState with custom components (for testing)
     pub fn with_components(
         session_manager: Arc<SessionManager>,
