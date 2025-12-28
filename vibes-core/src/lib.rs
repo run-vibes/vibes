@@ -2,50 +2,42 @@
 //!
 //! This crate provides the foundational components for vibes:
 //!
-//! - **Session management** - [`Session`] and [`SessionManager`] for managing Claude Code interactions
+//! - **PTY management** - [`pty::PtyManager`] for spawning and managing Claude PTY sessions
+//! - **Session management** - [`Session`] and [`SessionManager`] for session metadata and state
 //! - **Event system** - [`EventBus`] trait and [`MemoryEventBus`] for real-time event distribution
-//! - **Backend abstraction** - [`ClaudeBackend`] trait with [`PrintModeBackend`] and [`MockBackend`] implementations
+//! - **Hooks integration** - [`HookReceiver`] for structured data capture from Claude Code
 //! - **Event types** - [`ClaudeEvent`] and [`VibesEvent`] for typed event handling
 //!
 //! # Quick Start
 //!
 //! ```no_run
-//! use std::sync::Arc;
-//! use vibes_core::{
-//!     SessionManager, MemoryEventBus,
-//!     PrintModeBackendFactory, PrintModeConfig, BackendFactory,
-//! };
+//! use vibes_core::pty::{PtyManager, PtyConfig};
 //!
-//! # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-//! // Create event bus and backend factory
-//! let event_bus = Arc::new(MemoryEventBus::new(1000));
-//! let factory: Arc<dyn BackendFactory> = Arc::new(PrintModeBackendFactory::new(
-//!     PrintModeConfig::default()
-//! ));
+//! fn example() -> Result<(), Box<dyn std::error::Error>> {
+//!     // Create PTY manager
+//!     let mut pty_manager = PtyManager::new(PtyConfig::default());
 //!
-//! // Create session manager
-//! let manager = SessionManager::new(factory, event_bus);
+//!     // Create a Claude PTY session
+//!     let session_id = pty_manager.create_session(Some("My Session".to_string()))?;
 //!
-//! // Create a session
-//! let session_id = manager.create_session(Some("My Session".to_string())).await;
-//!
-//! // Get session state
-//! let state = manager.get_session_state(&session_id).await?;
-//! println!("Session state: {:?}", state);
-//! # Ok(())
-//! # }
+//!     // Get the session
+//!     if let Some(session) = pty_manager.get_session(&session_id) {
+//!         println!("Session started: {}", session.id);
+//!     }
+//!     Ok(())
+//! }
 //! ```
 //!
 //! # Architecture
 //!
 //! ```text
 //! ┌─────────────────────────────────────────────────┐
-//! │                 SessionManager                   │
+//! │                  PtyManager                      │
 //! │  ┌─────────────────────────────────────────────┐│
-//! │  │                  Session                    ││
+//! │  │               PtySession                    ││
 //! │  │  ┌───────────────┐  ┌───────────────────┐  ││
-//! │  │  │ ClaudeBackend │  │     EventBus      │  ││
-//! │  │  │ (PrintMode)   │  │ (MemoryEventBus)  │  ││
+//! │  │  │   PTY Master  │  │   Claude Process  │  ││
+//! │  │  │  (portable)   │  │                   │  ││
 //! │  │  └───────────────┘  └───────────────────┘  ││
 //! │  └─────────────────────────────────────────────┘│
 //! └─────────────────────────────────────────────────┘
@@ -58,7 +50,6 @@ pub mod events;
 pub mod history;
 pub mod hooks;
 pub mod notifications;
-pub mod parser;
 pub mod plugins;
 pub mod pty;
 pub mod session;
@@ -66,10 +57,7 @@ pub mod tunnel;
 
 // Re-export key types for convenience
 pub use auth::{AccessConfig, AccessIdentity, AuthContext, AuthError, JwtValidator};
-pub use backend::{
-    BackendFactory, BackendState, ClaudeBackend, MockBackend, PrintModeBackend,
-    PrintModeBackendFactory, PrintModeConfig,
-};
+pub use backend::{BackendFactory, BackendState, ClaudeBackend, MockBackend, MockBackendFactory};
 pub use error::{BackendError, EventBusError, NotificationError, SessionError, VibesError};
 pub use events::{ClaudeEvent, EventBus, InputSource, MemoryEventBus, Usage, VibesEvent};
 pub use history::HistoryError;

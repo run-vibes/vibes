@@ -5,9 +5,9 @@ use std::sync::Arc;
 use chrono::{DateTime, Utc};
 use tokio::sync::{RwLock, broadcast};
 use vibes_core::{
-    AccessConfig, BackendFactory, MemoryEventBus, PluginHost, PluginHostConfig,
-    PrintModeBackendFactory, PrintModeConfig, SessionLifecycleManager, SessionManager,
-    SubscriptionStore, TunnelConfig, TunnelManager, VapidKeyManager, VibesEvent,
+    AccessConfig, BackendFactory, MemoryEventBus, MockBackendFactory, PluginHost, PluginHostConfig,
+    SessionLifecycleManager, SessionManager, SubscriptionStore, TunnelConfig, TunnelManager,
+    VapidKeyManager, VibesEvent,
     history::{HistoryService, SqliteHistoryStore},
     pty::{PtyConfig, PtyManager},
 };
@@ -61,8 +61,8 @@ impl AppState {
     /// Create a new AppState with default components
     pub fn new() -> Self {
         let event_bus = Arc::new(MemoryEventBus::new(10_000));
-        let factory: Arc<dyn BackendFactory> =
-            Arc::new(PrintModeBackendFactory::new(PrintModeConfig::default()));
+        // Use MockBackendFactory since PTY handles actual Claude I/O
+        let factory: Arc<dyn BackendFactory> = Arc::new(MockBackendFactory::new());
         let session_manager = Arc::new(SessionManager::new(factory, event_bus.clone()));
         let lifecycle = Arc::new(SessionLifecycleManager::new(session_manager.clone()));
         let plugin_host = Arc::new(PluginHost::new(PluginHostConfig::default()));
@@ -212,8 +212,7 @@ mod tests {
     #[test]
     fn test_app_state_with_components() {
         let event_bus = Arc::new(MemoryEventBus::new(100));
-        let factory: Arc<dyn BackendFactory> =
-            Arc::new(PrintModeBackendFactory::new(PrintModeConfig::default()));
+        let factory: Arc<dyn BackendFactory> = Arc::new(MockBackendFactory::new());
         let session_manager = Arc::new(SessionManager::new(factory, event_bus.clone()));
         let plugin_host = Arc::new(PluginHost::new(PluginHostConfig::default()));
         let tunnel_manager = Arc::new(RwLock::new(TunnelManager::new(

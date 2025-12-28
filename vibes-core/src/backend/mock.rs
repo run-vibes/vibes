@@ -1,7 +1,10 @@
-//! Mock backend for testing
+//! Mock backend for testing and PTY mode
 //!
 //! MockBackend allows scripting Claude responses for unit tests,
 //! enabling fast, deterministic testing of Session logic.
+//!
+//! In PTY mode, MockBackendFactory is used since actual I/O happens
+//! through PtyManager, not through the backend.
 
 use std::collections::VecDeque;
 
@@ -9,7 +12,7 @@ use async_trait::async_trait;
 use tokio::sync::broadcast;
 use uuid::Uuid;
 
-use super::traits::{BackendState, ClaudeBackend};
+use super::traits::{BackendFactory, BackendState, ClaudeBackend};
 use crate::error::BackendError;
 use crate::events::ClaudeEvent;
 
@@ -136,6 +139,30 @@ impl ClaudeBackend for MockBackend {
     async fn shutdown(&mut self) -> Result<(), BackendError> {
         self.state = BackendState::Finished;
         Ok(())
+    }
+}
+
+/// Factory for creating MockBackend instances
+///
+/// Used in PTY mode where actual I/O happens through PtyManager.
+/// The backend is kept for API compatibility but does not perform
+/// any real Claude interaction.
+#[derive(Clone, Default)]
+pub struct MockBackendFactory;
+
+impl MockBackendFactory {
+    /// Create a new MockBackendFactory
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl BackendFactory for MockBackendFactory {
+    fn create(&self, claude_session_id: Option<String>) -> Box<dyn ClaudeBackend> {
+        match claude_session_id {
+            Some(id) => Box::new(MockBackend::with_session_id(id)),
+            None => Box::new(MockBackend::new()),
+        }
     }
 }
 
