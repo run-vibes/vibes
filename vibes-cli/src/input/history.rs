@@ -1,6 +1,11 @@
 //! In-memory input history for up/down navigation
 
 /// Manages input history for CLI sessions
+///
+/// Note: This struct is currently prepared but not yet integrated
+/// into the CLI's input loop. Integration will require terminal
+/// raw mode handling (e.g., crossterm) for arrow key detection.
+#[allow(dead_code)]
 #[derive(Debug, Default)]
 pub struct InputHistory {
     /// Previous inputs
@@ -11,6 +16,7 @@ pub struct InputHistory {
     draft: String,
 }
 
+#[allow(dead_code)]
 impl InputHistory {
     pub fn new() -> Self {
         Self::default()

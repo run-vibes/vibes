@@ -2,4 +2,5 @@
 
 mod history;
 
+#[allow(unused_imports)]
 pub use history::InputHistory;
