@@ -54,6 +54,7 @@ impl<S: HistoryStore> HistoryService<S> {
             VibesEvent::UserInput {
                 session_id,
                 content,
+                ..  // source handled in Task 2.4
             } => {
                 let mut builders = self.builders.write().await;
                 if let Some(builder) = builders.get_mut(session_id) {
@@ -216,6 +217,7 @@ mod tests {
             .process_event(&VibesEvent::UserInput {
                 session_id: "sess-1".into(),
                 content: "Hello".into(),
+                source: crate::events::InputSource::Unknown,
             })
             .await
             .unwrap();

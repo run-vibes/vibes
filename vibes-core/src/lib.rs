@@ -69,7 +69,7 @@ pub use backend::{
     PrintModeBackendFactory, PrintModeConfig,
 };
 pub use error::{BackendError, EventBusError, NotificationError, SessionError, VibesError};
-pub use events::{ClaudeEvent, EventBus, MemoryEventBus, Usage, VibesEvent};
+pub use events::{ClaudeEvent, EventBus, InputSource, MemoryEventBus, Usage, VibesEvent};
 pub use history::HistoryError;
 pub use notifications::{
     NotificationConfig, NotificationData, NotificationEvent, NotificationService, PushNotification,
