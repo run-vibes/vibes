@@ -83,15 +83,17 @@ pub async fn run(args: ClaudeArgs) -> Result<()> {
     let mut client = VibesClient::connect_url(&url).await?;
 
     // Attach to PTY session (creates it if needed)
-    let session_id = if let Some(resume_id) = args.resume.clone() {
-        resume_id
+    let (session_id, session_name) = if let Some(resume_id) = args.resume.clone() {
+        // Resuming an existing session - don't set a new name
+        (resume_id, None)
     } else {
-        // Generate a session ID - the server will create the PTY on attach
-        uuid::Uuid::new_v4().to_string()
+        // New session - use provided name or None
+        let id = uuid::Uuid::new_v4().to_string();
+        (id, args.session_name.clone())
     };
 
-    // Send attach request
-    client.attach(&session_id).await?;
+    // Send attach request with optional session name
+    client.attach(&session_id, session_name).await?;
 
     // Wait for attach acknowledgment
     let (initial_cols, initial_rows) = wait_for_attach_ack(&mut client, &session_id).await?;

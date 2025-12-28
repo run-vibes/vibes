@@ -55,29 +55,27 @@ pub struct SessionListResponse {
     pub sessions: Vec<SessionSummary>,
 }
 
-/// List all Claude sessions
+/// List all Claude sessions (PTY-based terminal sessions)
 pub async fn list_sessions(State(state): State<Arc<AppState>>) -> Json<SessionListResponse> {
-    let sessions_full = state.session_manager.list_sessions_full().await;
+    use vibes_core::pty::PtyState;
 
-    let sessions = sessions_full
+    let pty_manager = state.pty_manager.read().await;
+    let pty_sessions = pty_manager.list_sessions();
+
+    let sessions = pty_sessions
         .into_iter()
-        .map(|(id, name, session_state, created_at)| {
-            // Convert SystemTime to ISO 8601 format
-            let created_at_str = created_at
-                .duration_since(std::time::UNIX_EPOCH)
-                .map(|d| {
-                    let secs = d.as_secs();
-                    let datetime =
-                        chrono::DateTime::from_timestamp(secs as i64, 0).unwrap_or_default();
-                    datetime.to_rfc3339()
-                })
-                .unwrap_or_else(|_| "unknown".to_string());
+        .map(|pty_info| {
+            let state_str = match pty_info.state {
+                PtyState::Running => "Running".to_string(),
+                PtyState::Exited(code) => format!("Exited({})", code),
+            };
 
             SessionSummary {
-                id,
-                name,
-                state: format!("{:?}", session_state),
-                created_at: created_at_str,
+                id: pty_info.id,
+                name: pty_info.name,
+                state: state_str,
+                // PTY sessions don't track creation time yet
+                created_at: chrono::Utc::now().to_rfc3339(),
             }
         })
         .collect();

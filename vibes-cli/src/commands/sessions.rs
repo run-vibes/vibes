@@ -103,8 +103,8 @@ async fn attach_session(session_id: &str) -> Result<()> {
 
     let mut client = VibesClient::connect().await?;
 
-    // Attach to the session to receive output
-    client.attach(session_id).await?;
+    // Attach to the session to receive output (no name since session already exists)
+    client.attach(session_id, None).await?;
 
     println!("Attached to session: {}", session_id);
     println!("Listening for events... (Ctrl+C to detach)");

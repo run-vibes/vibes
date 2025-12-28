@@ -179,9 +179,13 @@ impl VibesClient {
     // === PTY Methods ===
 
     /// Attach to a PTY session to receive output
-    pub async fn attach(&self, session_id: &str) -> Result<()> {
+    ///
+    /// If `name` is provided and the session doesn't exist, a new session will be
+    /// created with this human-readable name.
+    pub async fn attach(&self, session_id: &str, name: Option<String>) -> Result<()> {
         self.send(ClientMessage::Attach {
             session_id: session_id.to_string(),
+            name,
         })
         .await
     }

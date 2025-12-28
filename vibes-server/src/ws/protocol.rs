@@ -90,6 +90,9 @@ pub enum ClientMessage {
     Attach {
         /// Session ID to attach to
         session_id: String,
+        /// Optional session name (used when creating new session)
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        name: Option<String>,
     },
 
     /// Detach from a session
@@ -739,11 +742,36 @@ mod tests {
     fn test_client_message_attach_roundtrip() {
         let msg = ClientMessage::Attach {
             session_id: "sess-1".to_string(),
+            name: None,
         };
         let json = serde_json::to_string(&msg).unwrap();
         let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
         assert_eq!(msg, parsed);
         assert!(json.contains(r#""type":"attach""#));
+    }
+
+    #[test]
+    fn test_client_message_attach_with_name_roundtrip() {
+        let msg = ClientMessage::Attach {
+            session_id: "sess-1".to_string(),
+            name: Some("my-session".to_string()),
+        };
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+        assert!(json.contains(r#""name":"my-session""#));
+    }
+
+    #[test]
+    fn test_client_message_attach_without_name_field_deserializes() {
+        // Test backwards compatibility - old clients that don't send name field
+        let json = r#"{"type":"attach","session_id":"sess-1"}"#;
+        let parsed: ClientMessage = serde_json::from_str(json).unwrap();
+        assert!(matches!(
+            parsed,
+            ClientMessage::Attach { session_id, name }
+            if session_id == "sess-1" && name.is_none()
+        ));
     }
 
     #[test]
