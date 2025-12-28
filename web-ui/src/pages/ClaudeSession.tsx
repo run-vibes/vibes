@@ -18,7 +18,25 @@ export function ClaudeSession() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [terminalSize, setTerminalSize] = useState({ cols: 80, rows: 24 });
 
-  const terminalRef = useRef<SessionTerminalHandle>(null);
+  const terminalRef = useRef<SessionTerminalHandle | null>(null);
+
+  // Buffer for terminal data that arrives before terminal is mounted.
+  // This fixes a race condition where pty_replay arrives before attach_ack,
+  // but the terminal only renders after connectionState becomes 'attached'.
+  const pendingDataRef = useRef<string[]>([]);
+
+  // Callback ref that flushes pending data when terminal mounts.
+  // Using a callback ref (vs useEffect) ensures flush happens synchronously
+  // during React's commit phase, before any subsequent messages can arrive.
+  const terminalCallbackRef = useCallback((handle: SessionTerminalHandle | null) => {
+    terminalRef.current = handle;
+    if (handle && pendingDataRef.current.length > 0) {
+      for (const data of pendingDataRef.current) {
+        handle.write(data);
+      }
+      pendingDataRef.current = [];
+    }
+  }, []);
 
   // Send attach request when connected
   useEffect(() => {
@@ -29,6 +47,16 @@ export function ClaudeSession() {
       });
     }
   }, [isConnected, sessionId, send, connectionState]);
+
+  // Write data to terminal or buffer it if terminal isn't mounted yet.
+  // Buffered data is flushed by terminalCallbackRef when terminal mounts.
+  const writeToTerminal = useCallback((data: string) => {
+    if (terminalRef.current) {
+      terminalRef.current.write(data);
+    } else {
+      pendingDataRef.current.push(data);
+    }
+  }, []);
 
   // Handle incoming messages
   const handleMessage = useCallback((msg: ServerMessage) => {
@@ -41,14 +69,14 @@ export function ClaudeSession() {
         break;
 
       case 'pty_output':
-        if (msg.session_id === sessionId && terminalRef.current) {
-          terminalRef.current.write(msg.data);
+        if (msg.session_id === sessionId) {
+          writeToTerminal(msg.data);
         }
         break;
 
       case 'pty_replay':
-        if (msg.session_id === sessionId && terminalRef.current) {
-          terminalRef.current.write(msg.data);
+        if (msg.session_id === sessionId) {
+          writeToTerminal(msg.data);
         }
         break;
 
@@ -66,7 +94,7 @@ export function ClaudeSession() {
         }
         break;
     }
-  }, [sessionId]);
+  }, [sessionId, writeToTerminal]);
 
   useEffect(() => {
     return addMessageHandler(handleMessage);
@@ -133,7 +161,7 @@ export function ClaudeSession() {
       <div className="terminal-wrapper">
         {(connectionState === 'attached' || connectionState === 'exited') && (
           <SessionTerminal
-            ref={terminalRef}
+            ref={terminalCallbackRef}
             sessionId={sessionId}
             onInput={handleInput}
             onResize={handleResize}
