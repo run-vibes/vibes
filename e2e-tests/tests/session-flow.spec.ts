@@ -1,5 +1,9 @@
 import { test, expect } from '../fixtures/vibes.js';
 
+// Polling configuration for waiting on async operations
+const POLL_INTERVAL_MS = 500;
+const POLL_MAX_ITERATIONS = 30; // 30 * 500ms = 15 seconds max wait
+
 test('shows empty state when no sessions', async ({ page, serverUrl }) => {
   await page.goto(`${serverUrl}/claude`);
 
@@ -31,8 +35,8 @@ test('CLI-created session appears in session list', async ({ page, serverUrl, cl
 
   // Poll the API until a session appears
   let sessionFound = false;
-  for (let i = 0; i < 30; i++) {
-    await new Promise(r => setTimeout(r, 500));
+  for (let i = 0; i < POLL_MAX_ITERATIONS; i++) {
+    await new Promise(r => setTimeout(r, POLL_INTERVAL_MS));
     try {
       const response = await fetch(`${serverUrl}/api/claude/sessions`);
       const data = await response.json();

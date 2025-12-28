@@ -234,7 +234,7 @@ pub enum ServerMessage {
 /// Convert a VibesEvent to a ServerMessage for broadcasting
 ///
 /// Returns None for events that shouldn't be broadcast to clients
-/// (e.g., UserInput, PermissionResponse, ClientConnected/Disconnected)
+/// (e.g., PermissionResponse, ClientConnected/Disconnected)
 pub fn vibes_event_to_server_message(event: &VibesEvent) -> Option<ServerMessage> {
     match event {
         VibesEvent::Claude { session_id, event } => Some(ServerMessage::Claude {
@@ -273,8 +273,16 @@ pub fn vibes_event_to_server_message(event: &VibesEvent) -> Option<ServerMessage
         // OwnershipTransferred needs special handling (client-specific you_are_owner)
         // It will be handled in handle_broadcast_event
         VibesEvent::OwnershipTransferred { .. } => None,
-        // These events are not broadcast to clients
-        VibesEvent::UserInput { .. } => None,
+        // UserInput is broadcast to all subscribers (clients filter by source)
+        VibesEvent::UserInput {
+            session_id,
+            content,
+            source,
+        } => Some(ServerMessage::UserInput {
+            session_id: session_id.clone(),
+            content: content.clone(),
+            source: *source,
+        }),
         VibesEvent::PermissionResponse { .. } => None,
         VibesEvent::ClientConnected { .. } => None,
         VibesEvent::ClientDisconnected { .. } => None,
@@ -552,14 +560,22 @@ mod tests {
     }
 
     #[test]
-    fn test_vibes_event_user_input_not_broadcast() {
+    fn test_vibes_event_user_input_converts() {
         let vibes_event = VibesEvent::UserInput {
             session_id: "sess-1".to_string(),
             content: "test input".to_string(),
-            source: InputSource::Unknown,
+            source: InputSource::Cli,
         };
 
-        assert!(vibes_event_to_server_message(&vibes_event).is_none());
+        let server_msg = vibes_event_to_server_message(&vibes_event);
+        assert!(matches!(
+            server_msg,
+            Some(ServerMessage::UserInput {
+                session_id,
+                content,
+                source: InputSource::Cli,
+            }) if session_id == "sess-1" && content == "test input"
+        ));
     }
 
     #[test]

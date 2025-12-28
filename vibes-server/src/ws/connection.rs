@@ -29,7 +29,7 @@ use super::protocol::{
 fn detect_client_type<B>(req: &Request<B>) -> InputSource {
     if let Some(header) = req.headers().get("X-Vibes-Client-Type")
         && let Ok(value) = header.to_str()
-        && value == "cli"
+        && value.eq_ignore_ascii_case("cli")
     {
         return InputSource::Cli;
     }
@@ -69,7 +69,6 @@ impl ConnectionState {
     }
 
     /// Get the client type
-    #[allow(dead_code)]
     fn client_type(&self) -> InputSource {
         self.client_type
     }
@@ -257,25 +256,7 @@ async fn handle_broadcast_event(
         return Ok(());
     }
 
-    // Handle UserInput specially - broadcast to other subscribers
-    // Clients filter by source to avoid echoing back their own input
-    if let VibesEvent::UserInput {
-        session_id,
-        content,
-        source,
-    } = event
-    {
-        let server_msg = ServerMessage::UserInput {
-            session_id: session_id.clone(),
-            content: content.clone(),
-            source: *source,
-        };
-        let json = serde_json::to_string(&server_msg)?;
-        sender.send(Message::Text(json)).await?;
-        return Ok(());
-    }
-
-    // Convert VibesEvent to ServerMessage
+    // Convert VibesEvent to ServerMessage (including UserInput which clients filter by source)
     if let Some(server_msg) = vibes_event_to_server_message(event) {
         let json = serde_json::to_string(&server_msg)?;
         sender.send(Message::Text(json)).await?;

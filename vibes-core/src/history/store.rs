@@ -385,11 +385,13 @@ impl HistoryStore for SqliteHistoryStore {
             conn.query_row(&count_sql, param_refs.as_slice(), |row| row.get(0))?
         };
 
-        // Build query - order by id DESC when using before_id for pagination
+        // Build query - use consistent ordering by id for both pagination modes:
+        // - With before_id: fetch in DESC order, then reverse (cursor-based pagination)
+        // - Without before_id: fetch in ASC order (chronological)
         let order_clause = if query.before_id.is_some() {
             "ORDER BY id DESC"
         } else {
-            "ORDER BY created_at ASC"
+            "ORDER BY id ASC"
         };
 
         let select_sql = format!(

@@ -11,15 +11,15 @@ interface ConversationItem {
   isOwn?: boolean;
 }
 
-function getSourceLabel(source: InputSource): string {
-  switch (source) {
-    case 'cli': return '📟 CLI';
-    case 'web_ui': return '🌐 Web';
-    default: return '❓ Unknown';
-  }
-}
-
 export function ClaudeSession() {
+  // Helper to format source labels - kept inside component since only used here
+  const getSourceLabel = (source: InputSource): string => {
+    switch (source) {
+      case 'cli': return '📟 CLI';
+      case 'web_ui': return '🌐 Web';
+      default: return '❓ Unknown';
+    }
+  };
   const { sessionId } = useParams({ from: '/claude/$sessionId' });
   const { isConnected, subscribe, addMessageHandler, send } = useWebSocket();
 
@@ -51,8 +51,8 @@ export function ClaudeSession() {
       handleClaudeEvent(event);
     }
 
-    // Handle remote user input (from CLI or other web sessions)
-    if (msg.type === 'user_input' && msg.session_id === sessionId && msg.source !== 'web_ui') {
+    // Handle remote user input from CLI clients
+    if (msg.type === 'user_input' && msg.session_id === sessionId && msg.source === 'cli') {
       setConversation(prev => [...prev, {
         type: 'user',
         content: msg.content,

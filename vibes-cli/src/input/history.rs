@@ -2,9 +2,9 @@
 
 /// Manages input history for CLI sessions
 ///
-/// Note: This struct is currently prepared but not yet integrated
-/// into the CLI's input loop. Integration will require terminal
-/// raw mode handling (e.g., crossterm) for arrow key detection.
+/// TODO: Integrate with CLI input loop using crossterm for arrow key detection.
+/// This struct is currently prepared but not yet integrated into the CLI's
+/// input loop. Integration will require terminal raw mode handling.
 #[allow(dead_code)]
 #[derive(Debug, Default)]
 pub struct InputHistory {

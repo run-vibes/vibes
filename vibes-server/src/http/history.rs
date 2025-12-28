@@ -93,6 +93,8 @@ pub struct ListMessagesQuery {
     pub limit: Option<u32>,
     pub offset: Option<u32>,
     pub role: Option<String>,
+    /// Cursor-based pagination: return messages with id < before_id
+    pub before_id: Option<i64>,
 }
 
 impl From<ListMessagesQuery> for MessageQuery {
@@ -101,7 +103,7 @@ impl From<ListMessagesQuery> for MessageQuery {
             limit: q.limit.unwrap_or(50),
             offset: q.offset.unwrap_or(0),
             role: q.role.and_then(|r| MessageRole::parse(&r)),
-            before_id: None,
+            before_id: q.before_id,
         }
     }
 }

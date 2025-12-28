@@ -107,6 +107,24 @@ impl MessageQuery {
         }
     }
 
+    /// Set the limit (max results)
+    pub fn with_limit(mut self, limit: u32) -> Self {
+        self.limit = limit;
+        self
+    }
+
+    /// Set cursor-based pagination (return messages with id < before_id)
+    pub fn with_before_id(mut self, before_id: i64) -> Self {
+        self.before_id = Some(before_id);
+        self
+    }
+
+    /// Filter by message role
+    pub fn with_role(mut self, role: super::types::MessageRole) -> Self {
+        self.role = Some(role);
+        self
+    }
+
     pub fn effective_limit(&self) -> u32 {
         self.limit.clamp(1, 500)
     }

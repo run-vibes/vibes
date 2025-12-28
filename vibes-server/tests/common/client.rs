@@ -1,7 +1,9 @@
 //! WebSocket test client for protocol testing
 //!
 //! Provides both low-level WsConnection and high-level TestClient.
-#![allow(dead_code)]
+//!
+//! Note: Some methods may appear unused because they're only used in specific
+//! test files and clippy checks each test independently.
 
 use std::net::SocketAddr;
 use std::time::Duration;
@@ -79,6 +81,7 @@ pub struct TestClient {
 
 impl TestClient {
     /// Connect to server (consumes initial auth_context message)
+    #[allow(dead_code)]
     pub async fn connect(addr: SocketAddr) -> Self {
         let mut conn = WsConnection::connect(addr).await;
 
@@ -93,6 +96,7 @@ impl TestClient {
     }
 
     /// Create a new session, returns session ID
+    #[allow(dead_code)]
     pub async fn create_session(&mut self, name: Option<&str>) -> String {
         let request_id = Uuid::new_v4().to_string();
         self.conn
@@ -116,6 +120,7 @@ impl TestClient {
     ///
     /// Note: The server only sends SubscribeAck when catch_up=true.
     /// When catch_up=false, subscription happens silently.
+    #[allow(dead_code)]
     pub async fn subscribe(&mut self, session_ids: &[&str], catch_up: bool) {
         self.conn
             .send_json(&serde_json::json!({
@@ -138,6 +143,7 @@ impl TestClient {
     }
 
     /// Send input to session
+    #[allow(dead_code)]
     pub async fn send_input(&mut self, session_id: &str, content: &str) {
         self.conn
             .send_json(&serde_json::json!({
@@ -149,11 +155,13 @@ impl TestClient {
     }
 
     /// Receive next message
+    #[allow(dead_code)]
     pub async fn recv(&mut self) -> serde_json::Value {
         self.conn.recv_json().await
     }
 
     /// Assert no message received within duration
+    #[allow(dead_code)]
     pub async fn expect_no_message(&mut self, duration: Duration) {
         assert!(
             self.conn.recv_timeout(duration).await.is_none(),
