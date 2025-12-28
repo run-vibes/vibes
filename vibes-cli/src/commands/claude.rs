@@ -161,13 +161,13 @@ async fn pty_loop(client: &mut VibesClient, session_id: &str) -> Result<()> {
 
     loop {
         // Check for terminal resize
-        if let Ok(current_size) = terminal.size() {
-            if current_size != last_size {
-                client
-                    .pty_resize(session_id, current_size.0, current_size.1)
-                    .await?;
-                last_size = current_size;
-            }
+        if let Ok(current_size) = terminal.size()
+            && current_size != last_size
+        {
+            client
+                .pty_resize(session_id, current_size.0, current_size.1)
+                .await?;
+            last_size = current_size;
         }
 
         // Poll for terminal input
