@@ -13,10 +13,18 @@ pub struct PtyConfig {
     pub initial_cols: u16,
     /// Initial terminal rows
     pub initial_rows: u16,
+    /// Mock mode - don't spawn actual process (for testing)
+    /// Enabled via VIBES_MOCK_PTY=1 env var
+    pub mock_mode: bool,
 }
 
 impl Default for PtyConfig {
     fn default() -> Self {
+        // Check for mock mode (useful for CI testing without real PTY)
+        let mock_mode = std::env::var("VIBES_MOCK_PTY")
+            .map(|v| v == "1" || v.to_lowercase() == "true")
+            .unwrap_or(false);
+
         // Allow overriding the command via environment variable (useful for testing)
         // Supports "command arg1 arg2" format
         let command_str =
@@ -34,6 +42,7 @@ impl Default for PtyConfig {
         tracing::debug!(
             claude_path = %claude_path.display(),
             claude_args = ?claude_args,
+            mock_mode = mock_mode,
             "PtyConfig initialized"
         );
 
@@ -42,6 +51,7 @@ impl Default for PtyConfig {
             claude_args,
             initial_cols: 120,
             initial_rows: 40,
+            mock_mode,
         }
     }
 }

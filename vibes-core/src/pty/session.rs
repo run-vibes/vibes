@@ -147,8 +147,14 @@ impl PtySession {
             id = %id,
             name = ?name,
             command = %config.claude_path.display(),
+            mock_mode = config.mock_mode,
             "Spawning PTY session"
         );
+
+        // In mock mode, create a session without a real PTY
+        if config.mock_mode {
+            return Self::spawn_mock(id, name, config);
+        }
 
         let pty_system = native_pty_system();
 
@@ -190,6 +196,64 @@ impl PtySession {
             inner: Arc::new(Mutex::new(inner)),
             reader: Arc::new(std::sync::Mutex::new(reader)),
             writer: Arc::new(std::sync::Mutex::new(writer)),
+            scrollback: Arc::new(std::sync::Mutex::new(ScrollbackBuffer::default())),
+        };
+
+        Ok(Self {
+            id,
+            name,
+            state: PtyState::Running,
+            handle,
+        })
+    }
+
+    /// Create a mock PTY session without spawning a real process
+    /// Used for testing in environments without PTY support (e.g., CI)
+    fn spawn_mock(id: String, name: Option<String>, config: &PtyConfig) -> Result<Self, PtyError> {
+        tracing::info!(id = %id, name = ?name, "Creating mock PTY session");
+
+        // Create mock reader/writer using pipes
+        let (reader, _writer_end) = std::os::unix::net::UnixStream::pair()
+            .map_err(|e| PtyError::CreateFailed(format!("Failed to create mock pipes: {}", e)))?;
+        let (writer, _reader_end) = std::os::unix::net::UnixStream::pair()
+            .map_err(|e| PtyError::CreateFailed(format!("Failed to create mock pipes: {}", e)))?;
+
+        // Set reader to non-blocking so reads don't hang
+        reader
+            .set_nonblocking(true)
+            .map_err(|e| PtyError::CreateFailed(format!("Failed to set non-blocking: {}", e)))?;
+
+        // Create a mock inner with a dummy child process (just spawn 'true')
+        let pty_system = native_pty_system();
+        let pair = pty_system
+            .openpty(PtySize {
+                rows: config.initial_rows,
+                cols: config.initial_cols,
+                pixel_width: 0,
+                pixel_height: 0,
+            })
+            .map_err(|e| PtyError::CreateFailed(e.to_string()))?;
+
+        // Spawn 'true' which exits immediately but gives us a valid child
+        let cmd = CommandBuilder::new("true");
+        let child = pair
+            .slave
+            .spawn_command(cmd)
+            .map_err(|e| PtyError::SpawnFailed(e.to_string()))?;
+
+        let inner = PtySessionInner {
+            master: pair.master,
+            child,
+        };
+
+        let handle = PtySessionHandle {
+            inner: Arc::new(Mutex::new(inner)),
+            reader: Arc::new(std::sync::Mutex::new(
+                Box::new(reader) as Box<dyn std::io::Read + Send>
+            )),
+            writer: Arc::new(std::sync::Mutex::new(
+                Box::new(writer) as Box<dyn std::io::Write + Send>
+            )),
             scrollback: Arc::new(std::sync::Mutex::new(ScrollbackBuffer::default())),
         };
 

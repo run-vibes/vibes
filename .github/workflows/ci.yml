@@ -75,9 +75,8 @@ jobs:
       - name: Run E2E smoke tests
         run: nix develop --command just test-e2e
         env:
-          # Use 'sleep 300' as mock command since Claude CLI isn't installed in CI
-          # sleep doesn't require terminal I/O, unlike cat which fails with ENXIO
-          VIBES_PTY_COMMAND: "sleep 300"
+          # Use mock PTY mode since Claude CLI isn't installed in CI
+          VIBES_MOCK_PTY: "1"
 
       - uses: actions/upload-artifact@v4
         if: failure()
