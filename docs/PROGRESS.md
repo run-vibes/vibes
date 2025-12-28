@@ -16,7 +16,7 @@ This document tracks the implementation progress of vibes against the roadmap de
 | 3.1 Chat History | Complete | [design](plans/08-chat-history/design.md) | [implementation](plans/08-chat-history/implementation.md) |
 | 3.2 Multi-Session Support | Complete | [design](plans/09-multi-session/design.md) | [implementation](plans/09-multi-session/implementation.md) |
 | 3.3 CLI ↔ Web Mirroring | Complete | [design](plans/10-cli-web-mirroring/design.md) | [implementation](plans/10-cli-web-mirroring/implementation.md) |
-| 3.4 PTY Backend | In Progress | [design](plans/12-pty-backend/design.md) | — |
+| 3.4 PTY Backend | Complete | [design](plans/12-pty-backend/design.md) | [implementation](plans/12-pty-backend/implementation.md) |
 | 3.5 Setup Wizards | Not started | — | — |
 
 ---
@@ -121,14 +121,14 @@ Note: Auto-detect team/aud moved to Milestone 3.5 (Cloudflare Auth Wizard)
 - [x] Web UI catch-up on session join
 
 ### Milestone 3.4: PTY Backend
-- [~] Replace PrintModeBackend with PTY wrapper for full CLI parity
-- [ ] Add `portable-pty` crate for cross-platform PTY management
-- [ ] Implement PtyManager with spawn/read/write/resize/kill
-- [ ] Refactor `vibes claude` to PTY client mode
-- [ ] Web UI terminal via xterm.js (replace chat-based UI)
-- [ ] Claude hooks integration for structured data capture
-- [ ] Auto-configure hooks on daemon start
-- [ ] Remove PrintModeBackend and stream-json parser
+- [x] Replace PrintModeBackend with PTY wrapper for full CLI parity
+- [x] Add `portable-pty` crate for cross-platform PTY management
+- [x] Implement PtyManager with spawn/read/write/resize/kill
+- [x] Refactor `vibes claude` to PTY client mode
+- [x] Web UI terminal via xterm.js (replace chat-based UI)
+- [x] Claude hooks integration for structured data capture
+- [x] Auto-configure hooks on daemon start
+- [x] Remove PrintModeBackend and stream-json parser
 
 ### Milestone 3.5: Setup Wizards
 - [ ] Interactive `vibes tunnel setup` wizard
@@ -209,3 +209,4 @@ These phases are planned but not yet scheduled.
 | 2025-12-27 | Test infrastructure added - Integration tests (in-process WebSocket, concurrency, history catch-up), E2E tests (Playwright smoke tests), CI workflow updated for E2E |
 | 2025-12-27 | Milestone 3.4 (PTY Backend) design complete - Replace PrintModeBackend with PTY wrapper, xterm.js web UI, Claude hooks for structured data, auto-configure hooks on daemon start |
 | 2025-12-27 | Roadmap updated: PTY Backend promoted to Milestone 3.4, iOS App moved to Phase 4, setup wizards consolidated to Milestone 3.5 |
+| 2025-12-27 | Milestone 3.4 (PTY Backend) implementation complete - portable-pty for PTY sessions, xterm.js web UI, Claude hooks receiver with auto-install, raw terminal mode CLI, deprecated legacy protocol messages |
