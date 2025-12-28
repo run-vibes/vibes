@@ -47,7 +47,8 @@ export type ServerMessage =
   // PTY messages
   | { type: 'pty_output'; session_id: string; data: string }  // base64 encoded
   | { type: 'pty_exit'; session_id: string; exit_code?: number }
-  | { type: 'attach_ack'; session_id: string; cols: number; rows: number };
+  | { type: 'attach_ack'; session_id: string; cols: number; rows: number }
+  | { type: 'pty_replay'; session_id: string; data: string };  // base64 encoded scrollback
 
 // ============================================================
 // Auth Context - matches vibes-core/src/auth/context.rs
@@ -200,4 +201,8 @@ export function isPtyExitMessage(msg: ServerMessage): msg is Extract<ServerMessa
 
 export function isAttachAckMessage(msg: ServerMessage): msg is Extract<ServerMessage, { type: 'attach_ack' }> {
   return msg.type === 'attach_ack';
+}
+
+export function isPtyReplayMessage(msg: ServerMessage): msg is Extract<ServerMessage, { type: 'pty_replay' }> {
+  return msg.type === 'pty_replay';
 }

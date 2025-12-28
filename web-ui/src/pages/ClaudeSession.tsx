@@ -46,6 +46,12 @@ export function ClaudeSession() {
         }
         break;
 
+      case 'pty_replay':
+        if (msg.session_id === sessionId && terminalRef.current) {
+          terminalRef.current.write(msg.data);
+        }
+        break;
+
       case 'pty_exit':
         if (msg.session_id === sessionId) {
           setConnectionState('exited');
