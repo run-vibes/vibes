@@ -340,6 +340,18 @@ body {
   font-size: 13px;
 }
 
+/* Remote messages (from CLI or other clients) */
+.message-remote.message-user {
+  background-color: rgba(130, 80, 223, 0.1);
+  border-left: 3px solid var(--color-purple, #8250df);
+}
+
+.message-source {
+  font-size: 11px;
+  color: var(--color-muted);
+  margin-bottom: 0.25rem;
+}
+
 /* Input form */
 .input-form {
   display: flex;
