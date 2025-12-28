@@ -257,6 +257,24 @@ async fn handle_broadcast_event(
         return Ok(());
     }
 
+    // Handle UserInput specially - broadcast to other subscribers
+    // Clients filter by source to avoid echoing back their own input
+    if let VibesEvent::UserInput {
+        session_id,
+        content,
+        source,
+    } = event
+    {
+        let server_msg = ServerMessage::UserInput {
+            session_id: session_id.clone(),
+            content: content.clone(),
+            source: *source,
+        };
+        let json = serde_json::to_string(&server_msg)?;
+        sender.send(Message::Text(json)).await?;
+        return Ok(());
+    }
+
     // Convert VibesEvent to ServerMessage
     if let Some(server_msg) = vibes_event_to_server_message(event) {
         let json = serde_json::to_string(&server_msg)?;
