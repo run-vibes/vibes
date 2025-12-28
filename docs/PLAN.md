@@ -563,8 +563,12 @@ Before implementing, verify:
 | 3 | 3.1 Chat History | 08-chat-history |
 | 3 | 3.2 Multi-Session Support | 09-multi-session |
 | 3 | 3.3 CLI ↔ Web Mirroring | 10-cli-web-mirroring |
-| 3 | 3.4 Tunnel Wizard | 11-tunnel-wizard |
-| 3 | 3.5 Auth Wizard | 12-auth-wizard |
+| 3 | 3.4 PTY Backend | 12-pty-backend |
+| 4 | 4.1-4.6 Continual Learning | 14-continual-learning |
+| 5 | 5.1 Setup Wizards | 15-setup-wizards |
+| 5 | 5.2 Default Plugins | 16-default-plugins |
+| 5 | 5.3 CLI Enhancements | 17-cli-enhancements |
+| 5 | 5.4 iOS App | 18-ios-app |
 
 When starting a new milestone:
 1. Create the directory under `docs/plans/`
