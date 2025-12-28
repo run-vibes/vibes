@@ -76,18 +76,44 @@ fn vibes_config_path_shows_paths() {
     assert!(stdout.contains(".vibes/config.toml"));
 }
 
-/// Test that vibes claude without prompt shows error
+/// Test that vibes claude without prompt enters interactive mode
+///
+/// When no prompt is provided, vibes claude enters interactive mode.
+/// With EOF on stdin, it should exit gracefully with "Goodbye!".
 #[test]
-fn vibes_claude_without_prompt_shows_error() {
-    let output = Command::new("cargo")
-        .args(["run", "-p", "vibes-cli", "--", "claude"])
-        .output()
-        .expect("Failed to run vibes claude");
+fn vibes_claude_without_prompt_enters_interactive_mode() {
+    use std::process::Stdio;
 
-    // Should fail because no prompt provided
-    assert!(!output.status.success());
-    let stderr = String::from_utf8_lossy(&output.stderr);
-    assert!(stderr.contains("No prompt provided") || stderr.contains("error"));
+    let mut child = Command::new("cargo")
+        .args(["run", "-p", "vibes-cli", "--", "claude"])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("Failed to spawn vibes claude");
+
+    // Close stdin immediately to trigger EOF
+    drop(child.stdin.take());
+
+    // Wait for process to exit (with timeout via test framework)
+    let output = child
+        .wait_with_output()
+        .expect("Failed to wait for process");
+
+    // Should exit successfully after EOF
+    assert!(
+        output.status.success(),
+        "Expected success, got: {:?}\nstderr: {}",
+        output.status,
+        String::from_utf8_lossy(&output.stderr)
+    );
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.contains("Goodbye"),
+        "Expected 'Goodbye' in output, got: {}",
+        stdout
+    );
 }
 
 // Note: Tests that actually call Claude require Claude CLI to be installed

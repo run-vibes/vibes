@@ -2,13 +2,14 @@
 
 use anyhow::{Result, anyhow};
 use clap::Args;
-use std::io::{BufRead, Write};
+use std::io::Write;
 use vibes_core::{ClaudeEvent, PluginHost, PluginHostConfig, VibesEvent};
 use vibes_server::ws::ServerMessage;
 
 use crate::client::VibesClient;
 use crate::config::ConfigLoader;
 use crate::daemon::ensure_daemon_running;
+use crate::input::{Readline, ReadlineResult};
 
 #[derive(Args)]
 pub struct ClaudeArgs {
@@ -121,8 +122,7 @@ async fn interactive_loop(
     session_id: &str,
     initial_prompt: Option<String>,
 ) -> Result<()> {
-    let stdin = std::io::stdin();
-    let mut reader = stdin.lock();
+    let mut readline = Readline::new("\n> ");
 
     // Send initial prompt if provided
     if let Some(prompt) = initial_prompt {
@@ -130,21 +130,10 @@ async fn interactive_loop(
         stream_output(client, plugin_host, session_id).await?;
     }
 
-    // Interactive prompt loop
+    // Interactive prompt loop with history support
     loop {
-        // Print prompt indicator
-        print!("\n> ");
-        std::io::stdout().flush()?;
-
-        // Read input line
-        let mut input = String::new();
-        match reader.read_line(&mut input) {
-            Ok(0) => {
-                // EOF (Ctrl+D)
-                println!("\nGoodbye!");
-                break;
-            }
-            Ok(_) => {
+        match readline.readline() {
+            Ok(ReadlineResult::Line(input)) => {
                 let input = input.trim();
                 if input.is_empty() {
                     continue;
@@ -159,6 +148,13 @@ async fn interactive_loop(
                 // Send input to session
                 client.send_input(session_id, input).await?;
                 stream_output(client, plugin_host, session_id).await?;
+            }
+            Ok(ReadlineResult::Eof) => {
+                println!("\nGoodbye!");
+                break;
+            }
+            Ok(ReadlineResult::Interrupted) => {
+                println!("\nInterrupted. Type 'exit' to quit.");
             }
             Err(e) => {
                 return Err(anyhow!("Failed to read input: {}", e));
