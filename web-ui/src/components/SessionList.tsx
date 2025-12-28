@@ -1,0 +1,80 @@
+import { SessionCard } from './SessionCard';
+import type { SessionInfo } from '../lib/types';
+
+interface SessionListProps {
+  sessions: SessionInfo[];
+  isLoading: boolean;
+  error: string | null;
+  onKill?: (sessionId: string) => void;
+  onRefresh?: () => void;
+}
+
+export function SessionList({
+  sessions,
+  isLoading,
+  error,
+  onKill,
+  onRefresh,
+}: SessionListProps) {
+  if (isLoading && sessions.length === 0) {
+    return <p className="loading-message">Loading sessions...</p>;
+  }
+
+  if (error) {
+    return (
+      <div className="error-container">
+        <p className="error">Error: {error}</p>
+        {onRefresh && (
+          <button onClick={onRefresh} className="btn btn-secondary">
+            Retry
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  if (sessions.length === 0) {
+    return (
+      <div className="empty-state">
+        <p>No active sessions.</p>
+        <p>
+          Start one with <code>vibes claude "your prompt"</code>
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="session-list">
+      <div className="session-list-header">
+        <span className="session-count">
+          {sessions.length} active session{sessions.length !== 1 ? 's' : ''}
+        </span>
+        {onRefresh && (
+          <button
+            onClick={onRefresh}
+            className="btn btn-icon"
+            title="Refresh"
+            disabled={isLoading}
+          >
+            🔄
+          </button>
+        )}
+      </div>
+      <div className="session-grid">
+        {sessions.map((session) => (
+          <SessionCard
+            key={session.id}
+            id={session.id}
+            name={session.name}
+            state={session.state}
+            createdAt={session.created_at}
+            isOwner={session.is_owner}
+            subscriberCount={session.subscriber_count}
+            onKill={onKill ? () => onKill(session.id) : undefined}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}

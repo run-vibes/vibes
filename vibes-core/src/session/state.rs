@@ -8,6 +8,7 @@ use std::time::SystemTime;
 
 use serde::{Deserialize, Serialize};
 
+use super::ownership::{ClientId, SessionOwnership};
 use crate::backend::traits::ClaudeBackend;
 use crate::error::SessionError;
 use crate::events::{EventBus, VibesEvent};
@@ -34,6 +35,7 @@ pub enum SessionState {
 /// - An event bus for broadcasting events
 /// - State machine for tracking session state
 /// - Event forwarding from backend to bus
+/// - Ownership tracking for multi-client support
 pub struct Session {
     /// Unique session identifier
     id: String,
@@ -47,23 +49,51 @@ pub struct Session {
     state: SessionState,
     /// When the session was created
     created_at: SystemTime,
+    /// When session was last active
+    last_activity_at: SystemTime,
+    /// Ownership and subscription tracking
+    ownership: SessionOwnership,
 }
 
+/// Legacy/system owner ID used when no explicit owner is specified.
+///
+/// This is used for backward compatibility by [`Session::new`], which creates
+/// sessions without a client-provided owner. New code should prefer
+/// [`Session::new_with_owner`] and pass a real [`ClientId`] instead of relying
+/// on this synthetic `"system"` owner.
+const DEFAULT_OWNER_ID: &str = "system";
+
 impl Session {
-    /// Create a new session
+    /// Create a new session with a default owner
+    ///
+    /// For backward compatibility with existing code.
     pub fn new(
         id: impl Into<String>,
         name: Option<String>,
         backend: Box<dyn ClaudeBackend>,
         event_bus: Arc<dyn EventBus>,
     ) -> Self {
+        Self::new_with_owner(id, name, DEFAULT_OWNER_ID.to_string(), backend, event_bus)
+    }
+
+    /// Create a new session with a specific owner
+    pub fn new_with_owner(
+        id: impl Into<String>,
+        name: Option<String>,
+        owner_id: ClientId,
+        backend: Box<dyn ClaudeBackend>,
+        event_bus: Arc<dyn EventBus>,
+    ) -> Self {
+        let now = SystemTime::now();
         Self {
             id: id.into(),
             name,
             backend,
             event_bus,
             state: SessionState::Idle,
-            created_at: SystemTime::now(),
+            created_at: now,
+            last_activity_at: now,
+            ownership: SessionOwnership::new(owner_id),
         }
     }
 
@@ -90,6 +120,26 @@ impl Session {
     /// Get when the session was created
     pub fn created_at(&self) -> SystemTime {
         self.created_at
+    }
+
+    /// Get when the session was last active
+    pub fn last_activity_at(&self) -> SystemTime {
+        self.last_activity_at
+    }
+
+    /// Update the last activity timestamp
+    pub fn touch(&mut self) {
+        self.last_activity_at = SystemTime::now();
+    }
+
+    /// Get the session ownership info
+    pub fn ownership(&self) -> &SessionOwnership {
+        &self.ownership
+    }
+
+    /// Get mutable access to ownership info
+    pub fn ownership_mut(&mut self) -> &mut SessionOwnership {
+        &mut self.ownership
     }
 
     /// Send user input to Claude
@@ -570,5 +620,78 @@ mod tests {
         session.shutdown().await.unwrap();
 
         assert!(matches!(session.state(), SessionState::Finished));
+    }
+
+    // ==================== Ownership Tests ====================
+
+    #[tokio::test]
+    async fn new_session_has_default_owner() {
+        let backend = MockBackend::new();
+        let event_bus: Arc<dyn EventBus> = Arc::new(MemoryEventBus::new(100));
+        let session = Session::new("test", None, Box::new(backend), event_bus);
+
+        assert!(session.ownership().is_owner(&"system".to_string()));
+    }
+
+    #[tokio::test]
+    async fn new_with_owner_sets_correct_owner() {
+        let backend = MockBackend::new();
+        let event_bus: Arc<dyn EventBus> = Arc::new(MemoryEventBus::new(100));
+        let session = Session::new_with_owner(
+            "test",
+            None,
+            "client-123".to_string(),
+            Box::new(backend),
+            event_bus,
+        );
+
+        assert!(session.ownership().is_owner(&"client-123".to_string()));
+        assert!(session.ownership().is_subscriber(&"client-123".to_string()));
+    }
+
+    #[tokio::test]
+    async fn ownership_mut_allows_modification() {
+        let backend = MockBackend::new();
+        let event_bus: Arc<dyn EventBus> = Arc::new(MemoryEventBus::new(100));
+        let mut session = Session::new_with_owner(
+            "test",
+            None,
+            "client-1".to_string(),
+            Box::new(backend),
+            event_bus,
+        );
+
+        session
+            .ownership_mut()
+            .add_subscriber("client-2".to_string());
+
+        assert!(session.ownership().is_subscriber(&"client-2".to_string()));
+        assert_eq!(session.ownership().subscriber_count(), 2);
+    }
+
+    #[tokio::test]
+    async fn last_activity_at_initialized_to_created_at() {
+        let backend = MockBackend::new();
+        let event_bus: Arc<dyn EventBus> = Arc::new(MemoryEventBus::new(100));
+        let session = Session::new("test", None, Box::new(backend), event_bus);
+
+        // Both should be approximately the same time
+        let created = session.created_at();
+        let last_activity = session.last_activity_at();
+        assert_eq!(created, last_activity);
+    }
+
+    #[tokio::test]
+    async fn touch_updates_last_activity() {
+        let backend = MockBackend::new();
+        let event_bus: Arc<dyn EventBus> = Arc::new(MemoryEventBus::new(100));
+        let mut session = Session::new("test", None, Box::new(backend), event_bus);
+
+        let before = session.last_activity_at();
+        std::thread::sleep(std::time::Duration::from_millis(10));
+        session.touch();
+        let after = session.last_activity_at();
+
+        assert!(after > before);
     }
 }

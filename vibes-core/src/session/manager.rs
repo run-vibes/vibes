@@ -13,6 +13,7 @@ use crate::backend::traits::BackendFactory;
 use crate::error::SessionError;
 use crate::events::EventBus;
 
+use super::ownership::ClientId;
 use super::state::{Session, SessionState};
 
 /// Manages multiple vibes sessions
@@ -43,11 +44,28 @@ impl SessionManager {
 
     /// Create a new session with an optional name
     ///
-    /// Returns the session ID.
+    /// Uses the default "system" owner. Returns the session ID.
     pub async fn create_session(&self, name: Option<String>) -> String {
+        self.create_session_with_owner(name, None).await
+    }
+
+    /// Create a new session with an optional name and owner
+    ///
+    /// If owner_id is None, uses the default "system" owner.
+    /// Returns the session ID.
+    pub async fn create_session_with_owner(
+        &self,
+        name: Option<String>,
+        owner_id: Option<ClientId>,
+    ) -> String {
         let id = Uuid::new_v4().to_string();
         let backend = self.backend_factory.create(None);
-        let session = Session::new(id.clone(), name, backend, self.event_bus.clone());
+        let session = match owner_id {
+            Some(owner) => {
+                Session::new_with_owner(id.clone(), name, owner, backend, self.event_bus.clone())
+            }
+            None => Session::new(id.clone(), name, backend, self.event_bus.clone()),
+        };
 
         self.sessions.write().await.insert(id.clone(), session);
         id
@@ -181,6 +199,28 @@ impl SessionManager {
     pub async fn session_count(&self) -> usize {
         self.sessions.read().await.len()
     }
+
+    /// Get all sessions owned by a client
+    pub async fn get_sessions_owned_by(&self, client_id: &str) -> Vec<String> {
+        self.sessions
+            .read()
+            .await
+            .iter()
+            .filter(|(_, session)| session.ownership().is_owner(&client_id.to_string()))
+            .map(|(id, _)| id.clone())
+            .collect()
+    }
+
+    /// Get all sessions a client is subscribed to
+    pub async fn get_sessions_subscribed_by(&self, client_id: &str) -> Vec<String> {
+        self.sessions
+            .read()
+            .await
+            .iter()
+            .filter(|(_, session)| session.ownership().is_subscriber(&client_id.to_string()))
+            .map(|(id, _)| id.clone())
+            .collect()
+    }
 }
 
 #[cfg(test)]
@@ -230,6 +270,24 @@ mod tests {
         let name = manager.get_session_name(&id).await.unwrap();
 
         assert_eq!(name, Some("My Session".to_string()));
+    }
+
+    #[tokio::test]
+    async fn create_session_with_owner_sets_owner() {
+        let manager = create_test_manager();
+
+        let id = manager
+            .create_session_with_owner(None, Some("client-abc".to_string()))
+            .await;
+
+        let is_owner = manager
+            .with_session(&id, |session| {
+                session.ownership().is_owner(&"client-abc".to_string())
+            })
+            .await
+            .unwrap();
+
+        assert!(is_owner);
     }
 
     #[tokio::test]
@@ -421,5 +479,82 @@ mod tests {
 
         // All sessions should exist
         assert_eq!(manager.session_count().await, 10);
+    }
+
+    // ==================== Ownership Query Tests ====================
+
+    #[tokio::test]
+    async fn get_sessions_owned_by_returns_matching() {
+        let manager = create_test_manager();
+
+        let id1 = manager
+            .create_session_with_owner(None, Some("client-a".to_string()))
+            .await;
+        let _id2 = manager
+            .create_session_with_owner(None, Some("client-b".to_string()))
+            .await;
+        let id3 = manager
+            .create_session_with_owner(None, Some("client-a".to_string()))
+            .await;
+
+        let owned = manager.get_sessions_owned_by("client-a").await;
+
+        assert_eq!(owned.len(), 2);
+        assert!(owned.contains(&id1));
+        assert!(owned.contains(&id3));
+    }
+
+    #[tokio::test]
+    async fn get_sessions_owned_by_returns_empty_for_unknown() {
+        let manager = create_test_manager();
+
+        manager
+            .create_session_with_owner(None, Some("client-a".to_string()))
+            .await;
+
+        let owned = manager.get_sessions_owned_by("unknown").await;
+
+        assert!(owned.is_empty());
+    }
+
+    #[tokio::test]
+    async fn get_sessions_subscribed_by_returns_matching() {
+        let manager = create_test_manager();
+
+        let id1 = manager
+            .create_session_with_owner(None, Some("client-a".to_string()))
+            .await;
+        let id2 = manager
+            .create_session_with_owner(None, Some("client-b".to_string()))
+            .await;
+
+        // Add client-a as subscriber to client-b's session
+        manager
+            .with_session(&id2, |session| {
+                session
+                    .ownership_mut()
+                    .add_subscriber("client-a".to_string());
+            })
+            .await
+            .unwrap();
+
+        let subscribed = manager.get_sessions_subscribed_by("client-a").await;
+
+        assert_eq!(subscribed.len(), 2);
+        assert!(subscribed.contains(&id1));
+        assert!(subscribed.contains(&id2));
+    }
+
+    #[tokio::test]
+    async fn get_sessions_subscribed_by_returns_empty_for_unknown() {
+        let manager = create_test_manager();
+
+        manager
+            .create_session_with_owner(None, Some("client-a".to_string()))
+            .await;
+
+        let subscribed = manager.get_sessions_subscribed_by("unknown").await;
+
+        assert!(subscribed.is_empty());
     }
 }

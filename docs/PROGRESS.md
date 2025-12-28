@@ -14,7 +14,7 @@ This document tracks the implementation progress of vibes against the roadmap de
 | 2.2 Cloudflare Access | Complete | [design](plans/06-cloudflare-access/design.md) | [implementation](plans/06-cloudflare-access/implementation.md) |
 | 2.3 Push Notifications | Complete | [design](plans/07-push-notifications/design.md) | [implementation](plans/07-push-notifications/implementation.md) |
 | 3.1 Chat History | Complete | [design](plans/08-chat-history/design.md) | [implementation](plans/08-chat-history/implementation.md) |
-| 3.2 Multi-Session Support | Not started | — | — |
+| 3.2 Multi-Session Support | Complete | [design](plans/09-multi-session/design.md) | [implementation](plans/09-multi-session/implementation.md) |
 | 3.3 CLI ↔ Web Mirroring | Not started | — | — |
 | 3.4 Cloudflare Tunnel Wizard | Not started | — | — |
 | 3.5 Cloudflare Auth Wizard | Not started | — | — |
@@ -105,10 +105,10 @@ Note: Auto-detect team/aud moved to Milestone 3.5 (Cloudflare Auth Wizard)
 - [x] History pagination for large session counts
 
 ### Milestone 3.2: Multi-Session Support
-- [ ] Multiple concurrent Claude sessions on same server
-- [ ] Session list view in Web UI with status indicators
-- [ ] Session isolation (events/input per session)
-- [ ] Graceful session cleanup on disconnect
+- [x] Multiple concurrent Claude sessions on same server
+- [x] Session list view in Web UI with status indicators
+- [x] Session isolation (events/input per session)
+- [x] Graceful session cleanup on disconnect
 
 ### Milestone 3.3: CLI ↔ Web Mirroring
 - [ ] Real-time bidirectional sync between CLI and Web UI
@@ -204,3 +204,5 @@ These phases are planned but not yet scheduled.
 | 2025-12-27 | Milestone 2.3 (Push Notifications) complete - VAPID keys, subscription store, NotificationService, web push endpoints, service worker, usePushSubscription hook, NotificationSettings UI |
 | 2025-12-27 | Roadmap re-planned: New Phase 3 (Multi-Client Experience) with chat history, multi-session, CLI↔Web mirroring, setup wizards. Old Phase 3 becomes Phase 4. |
 | 2025-12-27 | Milestone 3.1 (Chat History) complete - SQLite storage with FTS5 full-text search, HistoryService, REST API endpoints, Web UI history page with search/filter/pagination |
+| 2025-12-27 | Milestone 3.2 (Multi-Session) design complete - SessionOwnership, SessionLifecycleManager, ownership transfer, responsive UI, CLI sessions commands |
+| 2025-12-27 | Milestone 3.2 (Multi-Session) implementation complete - SessionOwnership with subscriber tracking, SessionLifecycleManager for disconnect handling, WebSocket protocol for session list/lifecycle events, CLI `sessions` command (list/attach/kill), Web UI with responsive layout and real-time updates |

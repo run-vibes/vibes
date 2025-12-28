@@ -86,6 +86,15 @@ pub enum VibesEvent {
 
     /// Tunnel state changed
     TunnelStateChanged { state: String, url: Option<String> },
+
+    /// Session ownership was transferred
+    OwnershipTransferred {
+        session_id: String,
+        new_owner_id: String,
+    },
+
+    /// Session was removed
+    SessionRemoved { session_id: String, reason: String },
 }
 
 impl VibesEvent {
@@ -97,6 +106,8 @@ impl VibesEvent {
             VibesEvent::PermissionResponse { session_id, .. } => Some(session_id),
             VibesEvent::SessionCreated { session_id, .. } => Some(session_id),
             VibesEvent::SessionStateChanged { session_id, .. } => Some(session_id),
+            VibesEvent::OwnershipTransferred { session_id, .. } => Some(session_id),
+            VibesEvent::SessionRemoved { session_id, .. } => Some(session_id),
             VibesEvent::ClientConnected { .. } => None,
             VibesEvent::ClientDisconnected { .. } => None,
             VibesEvent::TunnelStateChanged { .. } => None,

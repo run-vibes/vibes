@@ -78,7 +78,7 @@ pub async fn run(args: ClaudeArgs) -> Result<()> {
 
     // Connect to daemon via WebSocket
     let url = format!("ws://127.0.0.1:{}/ws", config.server.port);
-    let mut client = VibesClient::connect(&url).await?;
+    let mut client = VibesClient::connect_url(&url).await?;
 
     // Load plugins
     let mut plugin_host = PluginHost::new(PluginHostConfig::default());
