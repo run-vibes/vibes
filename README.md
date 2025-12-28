@@ -1,7 +1,7 @@
 # vibes
 
 [![CI](https://github.com/run-vibes/vibes/actions/workflows/ci.yml/badge.svg)](https://github.com/run-vibes/vibes/actions/workflows/ci.yml)
-[![Progress](https://img.shields.io/badge/progress-10%2F14%20milestones-blue)](docs/PROGRESS.md)
+[![Progress](https://img.shields.io/badge/progress-11%2F25%20milestones-blue)](docs/PROGRESS.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Remote control for your Claude Code sessions.
@@ -197,8 +197,9 @@ just pre-commit
 |-------|-------------|--------|
 | [**1. Foundation**](docs/PROGRESS.md#phase-1-foundation-mvp) | Claude Code proxy, plugin system, local web UI | ✅ Complete |
 | [**2. Remote Access**](docs/PROGRESS.md#phase-2-remote-access) | Cloudflare Tunnel, authentication, push notifications | ✅ Complete |
-| [**3. Multi-Client**](docs/PROGRESS.md#phase-3-multi-client-experience) | PTY backend, xterm.js UI, multi-session, setup wizards | 🔄 In Progress |
-| [**4. Polish**](docs/PROGRESS.md#phase-4-polish--ecosystem) | Default plugins, iOS app, CLI enhancements | ⏳ Planned |
+| [**3. Multi-Client**](docs/PROGRESS.md#phase-3-multi-client-experience-) | PTY backend, xterm.js UI, multi-session, mirroring | ✅ Complete |
+| [**4. Continual Learning**](docs/PROGRESS.md#phase-4-continual-learning) | Self-improving assistant that learns from every session | ⏳ Planned |
+| [**5. Polish**](docs/PROGRESS.md#phase-5-polish--ecosystem) | Setup wizards, default plugins, iOS app | ⏳ Planned |
 
 See [PROGRESS.md](docs/PROGRESS.md) for detailed milestone tracking and changelog.
 

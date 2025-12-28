@@ -17,12 +17,16 @@ This document tracks the implementation progress of vibes against the roadmap de
 | 3.2 Multi-Session Support | Complete | [design](plans/09-multi-session/design.md) | [implementation](plans/09-multi-session/implementation.md) |
 | 3.3 CLI ↔ Web Mirroring | Complete | [design](plans/10-cli-web-mirroring/design.md) | [implementation](plans/10-cli-web-mirroring/implementation.md) |
 | 3.4 PTY Backend | Complete | [design](plans/12-pty-backend/design.md) | [implementation](plans/12-pty-backend/implementation.md) |
-| 4.1 Harness Introspection | Not started | [design](plans/14-continual-learning/design.md) | — |
-| 4.2 Storage Foundation | Not started | [design](plans/14-continual-learning/design.md) | — |
-| 4.3 Capture & Inject | Not started | [design](plans/14-continual-learning/design.md) | — |
-| 4.4 Learning Extraction | Not started | [design](plans/14-continual-learning/design.md) | — |
-| 4.5 Adaptive Strategies | Not started | [design](plans/14-continual-learning/design.md) | — |
-| 4.6 Open-World Adaptation | Not started | [design](plans/14-continual-learning/design.md) | — |
+| 4.1 Harness Introspection | Not started | [design](plans/14-continual-learning/design.md#41-harness-introspection) | — |
+| 4.2 Storage Foundation | Not started | [design](plans/14-continual-learning/design.md#42-storage-foundation) | — |
+| 4.2.5 Security Foundation | Not started | [design](plans/14-continual-learning/design.md#425-security-foundation--new) | — |
+| 4.3 Capture & Inject | Not started | [design](plans/14-continual-learning/design.md#43-capture--inject-mvp) | — |
+| 4.4 Assessment Framework | Not started | [design](plans/14-continual-learning/design.md#44-assessment-framework--new) | — |
+| 4.5 Learning Extraction | Not started | [design](plans/14-continual-learning/design.md#45-learning-extraction) | — |
+| 4.6 Attribution Engine | Not started | [design](plans/14-continual-learning/design.md#46-attribution-engine--new) | — |
+| 4.7 Adaptive Strategies | Not started | [design](plans/14-continual-learning/design.md#47-adaptive-strategies) | — |
+| 4.8 Observability Dashboard | Not started | [design](plans/14-continual-learning/design.md#48-observability-dashboard--new) | — |
+| 4.9 Open-World Adaptation | Not started | [design](plans/14-continual-learning/design.md#49-open-world-adaptation) | — |
 | 5.1 Setup Wizards | Not started | — | — |
 | 5.2 Default Plugins | Not started | — | — |
 | 5.3 CLI Enhancements | Not started | — | — |
@@ -151,12 +155,11 @@ Note: Auto-detect team/aud moved to Milestone 3.5 (Cloudflare Auth Wizard)
 
 **Design:** [Continual Learning Design](plans/14-continual-learning/design.md)
 
-### Milestone 4.1: Harness Introspection (Level 0)
+### Milestone 4.1: Harness Introspection
 - [ ] `Harness` trait and `HarnessCapabilities` struct
 - [ ] `ClaudeCodeHarness` implementation
 - [ ] `GenericHarnessDiscovery` for unknown harnesses
 - [ ] Capability caching in storage
-- [ ] Adapter selection based on discovered capabilities
 
 ### Milestone 4.2: Storage Foundation
 - [ ] CozoDB setup with schema and migrations
@@ -164,38 +167,68 @@ Note: Auto-detect team/aud moved to Milestone 3.5 (Cloudflare Auth Wizard)
 - [ ] `LearningStorage` trait and CozoDB implementation
 - [ ] `AdaptiveParam` with Bayesian update mechanics
 - [ ] `AdaptiveConfig` for system-wide parameters
-- [ ] Basic CRUD operations for learnings
 
-### Milestone 4.3: Capture & Inject (Level 1 MVP)
+### Milestone 4.2.5: Security Foundation
+- [ ] `TrustLevel` enum (Local → Quarantined hierarchy)
+- [ ] `TrustContext`, `TrustSource`, `Permissions` types
+- [ ] `Provenance` with `ContentHash` and `CustodyChain`
+- [ ] `ContentSecurityScanner` for injection detection
+- [ ] `SecureInjector` with trust-aware wrapping
+- [ ] `AuditLog` trait and CozoDB audit schema
+- [ ] `OrgRole` RBAC (Admin, Curator, Member, Viewer)
+
+### Milestone 4.3: Capture & Inject (MVP)
 - [ ] `CaptureAdapter` trait for abstract capture
-- [ ] `ClaudeCodeHooksCapture` using PreToolUse/PostToolUse/Stop hooks
+- [ ] `ClaudeCodeHooksCapture` using stop hooks
+- [ ] `ClaudeJsonlParser` with version detection
 - [ ] `InjectionAdapter` trait for abstract injection
 - [ ] `ClaudeCodeInjector` via CLAUDE.md
 - [ ] Session context preparation with scope hierarchy
-- [ ] Outcome inference from session signals
 
-### Milestone 4.4: Learning Extraction (Level 2a)
+### Milestone 4.4: Assessment Framework
+- [ ] Lightweight assessment (every message, <10ms)
+- [ ] Medium assessment (checkpoints, async LLM)
+- [ ] Heavy assessment (session end, sampled 20%)
+- [ ] `CircuitBreaker` for real-time intervention
+- [ ] Outcome signals: token metrics, linguistic patterns, behavioral
+- [ ] `SamplingConfig` with burn-in and boost conditions
+
+### Milestone 4.5: Learning Extraction
 - [ ] Transcript parser for Claude JSONL format
 - [ ] Error recovery pattern extraction
 - [ ] User correction detection
-- [ ] Tool usage pattern learning
-- [ ] `Embedder` trait with local/API implementations
+- [ ] `Embedder` trait with local/API implementations (hybrid)
 - [ ] Semantic search via CozoDB HNSW index
 
-### Milestone 4.5: Adaptive Strategies (Level 2b)
+### Milestone 4.6: Attribution Engine
+- [ ] Layer 1: Activation detection (embedding similarity)
+- [ ] Layer 2: Temporal correlation (signal proximity)
+- [ ] Layer 3: Ablation testing (causal impact)
+- [ ] Layer 4: Value aggregation (multi-source estimation)
+- [ ] Negative learning detection and deprecation
+- [ ] `Attribution` storage schema
+
+### Milestone 4.7: Adaptive Strategies
 - [ ] `InjectionStrategy` enum (MainContext, Subagent, BackgroundSubagent, Deferred)
 - [ ] `StrategyLearner` with Thompson sampling
 - [ ] Subagent injection support
 - [ ] Outcome-based parameter updates
-- [ ] Confidence calibration from usage
 
-### Milestone 4.6: Open-World Adaptation (Level 3)
+### Milestone 4.8: Observability Dashboard
+- [ ] `LearningOverview`, `SessionTrends`, `AttributionInsights` data models
+- [ ] API endpoints for dashboard
+- [ ] Session quality trend visualization
+- [ ] Learning list with filtering and attribution
+- [ ] Real-time `🧠 learning...` indicator (toggle)
+- [ ] System health metrics
+
+### Milestone 4.9: Open-World Adaptation
 - [ ] `NoveltyDetector` for unknown patterns
 - [ ] `PatternFingerprint` for known/unknown classification
 - [ ] `AnomalyCluster` for grouping similar unknowns
 - [ ] `CapabilityGapDetector` for surfacing limitations
 - [ ] Emergent pattern discovery and notification
-- [ ] Meta-learning metrics and self-improvement tracking
+- [ ] Meta-learning metrics
 
 **Phase 4 Deliverable:** Self-improving assistant that learns from every session
 
@@ -280,3 +313,4 @@ These phases are planned but not yet scheduled.
 | 2025-12-28 | Phase 3 marked complete (deliverable achieved with PTY Backend) |
 | 2025-12-28 | Continual Learning design complete - comprehensive design for vibes-learning plugin with harness introspection, adaptive parameters, open-world adaptation |
 | 2025-12-28 | Roadmap reorganized: New Phase 4 (Continual Learning) with 6 milestones (L0-L3), Setup Wizards moved to Phase 5, old Phase 4 becomes Phase 5 |
+| 2025-12-28 | Continual Learning design expanded: 10 milestones (4.1-4.9 + 4.2.5), added Assessment Framework, Attribution Engine, Security Architecture, Observability Dashboard |
