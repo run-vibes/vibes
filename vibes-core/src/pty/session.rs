@@ -1,5 +1,6 @@
 //! PTY session management
 
+use chrono::{DateTime, Utc};
 use portable_pty::PtySize;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -138,6 +139,8 @@ pub struct PtySession {
     pub name: Option<String>,
     pub state: PtyState,
     pub handle: PtySessionHandle,
+    /// When this session was created
+    pub created_at: DateTime<Utc>,
 }
 
 // Note: PtySession creation is now handled by PtyBackend implementations

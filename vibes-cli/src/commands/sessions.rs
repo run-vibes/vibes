@@ -1,24 +1,13 @@
 //! Sessions management commands
 
 use anyhow::Result;
+use base64::Engine;
 use clap::{Args, Subcommand};
+use std::io::{self, Write};
 use tracing::info;
-use vibes_core::{ClaudeEvent, InputSource};
 use vibes_server::ws::ServerMessage;
 
 use crate::client::VibesClient;
-
-/// Display remote input from other clients
-fn display_remote_input(source: InputSource, content: &str) {
-    let prefix = match source {
-        InputSource::WebUi => "\x1b[36m[Web UI]:\x1b[0m",
-        InputSource::Cli => "\x1b[36m[CLI]:\x1b[0m",
-        InputSource::Unknown => "\x1b[2m[Remote]:\x1b[0m",
-    };
-
-    println!();
-    println!("{} {}", prefix, content);
-}
 
 /// Sessions management arguments
 #[derive(Args, Debug)]
@@ -97,7 +86,7 @@ async fn list_sessions() -> Result<()> {
     Ok(())
 }
 
-/// Attach to an existing session
+/// Attach to an existing session (read-only view of PTY output)
 async fn attach_session(session_id: &str) -> Result<()> {
     info!(session_id = %session_id, "Attaching to session");
 
@@ -106,65 +95,62 @@ async fn attach_session(session_id: &str) -> Result<()> {
     // Attach to the session to receive output (no name since session already exists)
     client.attach(session_id, None).await?;
 
-    println!("Attached to session: {}", session_id);
-    println!("Listening for events... (Ctrl+C to detach)");
-    println!();
+    eprintln!("Attached to session: {}", session_id);
+    eprintln!("Streaming PTY output... (Ctrl+C to detach)");
+    eprintln!();
 
-    // Stream events from the session
+    let mut stdout = io::stdout();
+
+    // Stream PTY output from the session
     while let Some(msg) = client.recv().await {
         match msg {
-            ServerMessage::Claude {
+            ServerMessage::AttachAck {
+                session_id: sid, ..
+            } if sid == session_id => {
+                // Successfully attached
+            }
+            ServerMessage::PtyReplay {
                 session_id: sid,
-                event,
-            } if sid == session_id => match event {
-                ClaudeEvent::TextDelta { text } => {
-                    print!("{}", text);
+                data,
+            } if sid == session_id => {
+                // Replay scrollback buffer
+                if let Ok(decoded) = base64::engine::general_purpose::STANDARD.decode(&data) {
+                    let _ = stdout.write_all(&decoded);
+                    let _ = stdout.flush();
                 }
-                ClaudeEvent::ThinkingDelta { text } => {
-                    print!("\x1b[2m{}\x1b[0m", text); // Dim for thinking
+            }
+            ServerMessage::PtyOutput {
+                session_id: sid,
+                data,
+            } if sid == session_id => {
+                // Real-time PTY output
+                if let Ok(decoded) = base64::engine::general_purpose::STANDARD.decode(&data) {
+                    let _ = stdout.write_all(&decoded);
+                    let _ = stdout.flush();
                 }
-                ClaudeEvent::ToolUseStart { name, .. } => {
-                    println!("\n\x1b[33m▶ Tool: {}\x1b[0m", name);
-                }
-                ClaudeEvent::ToolResult {
-                    output, is_error, ..
-                } => {
-                    if is_error {
-                        println!("\x1b[31m✗ Error: {}\x1b[0m", output);
-                    } else {
-                        println!("\x1b[32m✓ Result: {}\x1b[0m", output);
-                    }
-                }
-                ClaudeEvent::TurnComplete { .. } => {
-                    println!("\n\x1b[36m── Turn complete ──\x1b[0m\n");
-                }
-                ClaudeEvent::Error { message, .. } => {
-                    println!("\x1b[31mError: {}\x1b[0m", message);
-                }
-                _ => {}
-            },
+            }
+            ServerMessage::PtyExit {
+                session_id: sid,
+                exit_code,
+            } if sid == session_id => {
+                eprintln!(
+                    "\n\x1b[33mSession {} exited with code {:?}\x1b[0m",
+                    session_id, exit_code
+                );
+                break;
+            }
             ServerMessage::SessionRemoved {
                 session_id: sid, ..
             } if sid == session_id => {
-                println!("\n\x1b[33mSession {} was removed\x1b[0m", session_id);
+                eprintln!("\n\x1b[33mSession {} was removed\x1b[0m", session_id);
                 break;
             }
-            ServerMessage::OwnershipTransferred {
-                session_id: sid,
-                you_are_owner,
+            ServerMessage::Error {
+                session_id: Some(sid),
+                message,
                 ..
             } if sid == session_id => {
-                if you_are_owner {
-                    println!("\n\x1b[32mYou are now the owner of this session\x1b[0m");
-                }
-            }
-            ServerMessage::UserInput {
-                session_id: sid,
-                content,
-                source,
-            } if sid == session_id && source != InputSource::Cli => {
-                // Display input from non-CLI sources (Web UI, etc.)
-                display_remote_input(source, &content);
+                anyhow::bail!("Error: {}", message);
             }
             _ => {}
         }

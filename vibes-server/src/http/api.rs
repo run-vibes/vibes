@@ -26,7 +26,7 @@ pub struct HealthResponse {
 /// Returns server status, version, uptime, and active session count.
 pub async fn health(State(state): State<Arc<AppState>>) -> Json<HealthResponse> {
     let pty_manager = state.pty_manager.read().await;
-    let active_sessions = pty_manager.list_sessions().len();
+    let active_sessions = pty_manager.session_count();
 
     Json(HealthResponse {
         status: "ok".to_string(),
@@ -75,8 +75,7 @@ pub async fn list_sessions(State(state): State<Arc<AppState>>) -> Json<SessionLi
                 id: pty_info.id,
                 name: pty_info.name,
                 state: state_str,
-                // PTY sessions don't track creation time yet
-                created_at: chrono::Utc::now().to_rfc3339(),
+                created_at: pty_info.created_at.to_rfc3339(),
             }
         })
         .collect();

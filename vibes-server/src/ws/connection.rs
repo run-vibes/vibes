@@ -12,14 +12,12 @@ use futures::{SinkExt, StreamExt};
 use tokio::sync::broadcast;
 use tracing::{debug, error, info, warn};
 use uuid::Uuid;
-use vibes_core::{AuthContext, InputSource, VibesEvent};
+use vibes_core::{AuthContext, InputSource};
 
 use crate::{AppState, PtyEvent};
 use base64::Engine;
 
-use super::protocol::{
-    ClientMessage, RemovalReason, ServerMessage, SessionInfo, vibes_event_to_server_message,
-};
+use super::protocol::{ClientMessage, RemovalReason, ServerMessage, SessionInfo};
 
 /// Detect client type from request headers
 ///
@@ -51,9 +49,8 @@ pub async fn ws_handler(
 /// Per-connection state
 struct ConnectionState {
     /// Unique identifier for this connection
+    #[allow(dead_code)] // Used for logging
     client_id: String,
-    /// Session IDs this connection is subscribed to (legacy, to be removed)
-    subscribed_sessions: HashSet<String>,
     /// PTY session IDs this connection is attached to
     attached_pty_sessions: HashSet<String>,
 }
@@ -62,20 +59,7 @@ impl ConnectionState {
     fn new(_client_type: InputSource) -> Self {
         Self {
             client_id: Uuid::new_v4().to_string(),
-            subscribed_sessions: HashSet::new(),
             attached_pty_sessions: HashSet::new(),
-        }
-    }
-
-    /// Check if this connection should receive events for a given session
-    fn is_subscribed_to(&self, session_id: &str) -> bool {
-        self.subscribed_sessions.contains(session_id)
-    }
-
-    /// Unsubscribe from session events
-    fn unsubscribe(&mut self, session_ids: &[String]) {
-        for id in session_ids {
-            self.subscribed_sessions.remove(id);
         }
     }
 
@@ -103,7 +87,6 @@ async fn handle_socket(
     client_type: InputSource,
 ) {
     let (mut sender, mut receiver) = socket.split();
-    let mut event_rx = state.subscribe_events();
     let mut pty_rx = state.subscribe_pty_events();
     let mut conn_state = ConnectionState::new(client_type);
 
@@ -163,26 +146,6 @@ async fn handle_socket(
                 }
             }
 
-            // Handle outgoing events from broadcast channel
-            event = event_rx.recv() => {
-                match event {
-                    Ok(vibes_event) => {
-                        if let Err(e) = handle_broadcast_event(&vibes_event, &mut sender, &conn_state).await {
-                            warn!("Failed to send event to client: {}", e);
-                            break;
-                        }
-                    }
-                    Err(broadcast::error::RecvError::Closed) => {
-                        warn!("Event broadcast channel closed");
-                        break;
-                    }
-                    Err(broadcast::error::RecvError::Lagged(count)) => {
-                        warn!("Client lagged behind by {} events", count);
-                        // Continue receiving - the channel will skip missed events
-                    }
-                }
-            }
-
             // Handle PTY events from broadcast channel
             pty_event = pty_rx.recv() => {
                 match pty_event {
@@ -208,44 +171,6 @@ async fn handle_socket(
         client_id = %conn_state.client_id,
         "WebSocket client disconnected"
     );
-}
-
-/// Handle a broadcast event, sending it to the client if subscribed
-async fn handle_broadcast_event(
-    event: &VibesEvent,
-    sender: &mut futures::stream::SplitSink<WebSocket, Message>,
-    conn_state: &ConnectionState,
-) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    // Only send if client is subscribed to this session
-    if let Some(session_id) = event.session_id()
-        && !conn_state.is_subscribed_to(session_id)
-    {
-        return Ok(());
-    }
-
-    // Handle OwnershipTransferred specially (needs client-specific you_are_owner)
-    if let VibesEvent::OwnershipTransferred {
-        session_id,
-        new_owner_id,
-    } = event
-    {
-        let server_msg = ServerMessage::OwnershipTransferred {
-            session_id: session_id.clone(),
-            new_owner_id: new_owner_id.clone(),
-            you_are_owner: *new_owner_id == conn_state.client_id,
-        };
-        let json = serde_json::to_string(&server_msg)?;
-        sender.send(Message::Text(json)).await?;
-        return Ok(());
-    }
-
-    // Convert VibesEvent to ServerMessage (including UserInput which clients filter by source)
-    if let Some(server_msg) = vibes_event_to_server_message(event) {
-        let json = serde_json::to_string(&server_msg)?;
-        sender.send(Message::Text(json)).await?;
-    }
-
-    Ok(())
 }
 
 /// Handle a PTY event from the broadcast channel
@@ -296,25 +221,6 @@ async fn handle_text_message(
     let client_msg: ClientMessage = serde_json::from_str(text)?;
 
     match client_msg {
-        ClientMessage::Unsubscribe { session_ids } => {
-            debug!("Client unsubscribed from sessions: {:?}", session_ids);
-            conn_state.unsubscribe(&session_ids);
-        }
-
-        // Legacy messages - deprecated, kept for protocol compatibility
-        // These do nothing as all session interaction now goes through PTY
-        ClientMessage::CreateSession { .. } => {
-            warn!("Received deprecated CreateSession message - use Attach instead");
-        }
-
-        ClientMessage::Input { .. } => {
-            warn!("Received deprecated Input message - use PtyInput instead");
-        }
-
-        ClientMessage::PermissionResponse { .. } => {
-            warn!("Received deprecated PermissionResponse message - PTY handles permissions");
-        }
-
         ClientMessage::ListSessions { request_id } => {
             debug!("ListSessions request: {}", request_id);
 
@@ -331,6 +237,7 @@ async fn handle_text_message(
                         PtyState::Exited(code) => format!("Exited({})", code),
                     };
 
+                    let created_ts = pty_info.created_at.timestamp();
                     SessionInfo {
                         id: pty_info.id,
                         name: pty_info.name,
@@ -339,8 +246,9 @@ async fn handle_text_message(
                         owner_id: String::new(),
                         is_owner: true, // All clients can interact with PTY
                         subscriber_count: 0,
-                        created_at: 0,
-                        last_activity_at: 0,
+                        created_at: created_ts,
+                        // TODO: Track last_activity_at separately (on I/O)
+                        last_activity_at: created_ts,
                     }
                 })
                 .collect();

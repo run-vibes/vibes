@@ -3,6 +3,7 @@
 //! This module provides a trait-based abstraction for PTY backends,
 //! allowing for different implementations (real PTY vs mock for testing).
 
+use chrono::Utc;
 use portable_pty::{CommandBuilder, PtySize, native_pty_system};
 use std::io::{Read, Write};
 use std::sync::Arc;
@@ -87,6 +88,7 @@ impl PtyBackend for RealPtyBackend {
             name,
             state: PtyState::Running,
             handle,
+            created_at: Utc::now(),
         })
     }
 }
@@ -182,6 +184,7 @@ impl PtyBackend for MockPtyBackend {
             name,
             state: PtyState::Running,
             handle,
+            created_at: Utc::now(),
         })
     }
 }
