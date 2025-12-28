@@ -1,8 +1,14 @@
 # Harness Introspection Design
 
+> Part of [vibes groove](../14-continual-learning/design.md) - The continual learning system that finds your coding rhythm.
+
 ## Overview
 
-Milestone 4.1 introduces harness introspection - the ability to discover what capabilities an AI coding assistant provides for capture and injection. This is **Level 0** of the continual learning system: before we can learn anything, we must know what the harness supports.
+Milestone 4.1 introduces harness introspection - the ability to discover what capabilities an AI coding assistant provides for capture and injection. This is **Level 0** of groove: before groove can learn anything, it must know what the harness supports.
+
+```
+◉ groove: Detected Claude Code v1.0.16 with hooks support. Ready to learn.
+```
 
 ## Goals
 

@@ -1,8 +1,10 @@
 # Harness Introspection Implementation Plan
 
+> Part of [vibes groove](../14-continual-learning/design.md) - The continual learning system that finds your coding rhythm.
+>
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Create `vibes-introspection` crate that discovers AI coding assistant capabilities across platform-aware config paths with real-time file watching.
+**Goal:** Create `vibes-introspection` crate that discovers AI coding assistant capabilities across platform-aware config paths with real-time file watching. This is Level 0 of groove - the foundation that enables all learning.
 
 **Architecture:** Trait-based `Harness` abstraction with `ClaudeCodeHarness` implementation. 3-tier scope hierarchy (system → user → project). `CapabilityWatcher` uses notify crate with 500ms debounce for reactive updates.
 

@@ -17,7 +17,8 @@ This document tracks the implementation progress of vibes against the roadmap de
 | 3.2 Multi-Session Support | Complete | [design](plans/09-multi-session/design.md) | [implementation](plans/09-multi-session/implementation.md) |
 | 3.3 CLI ↔ Web Mirroring | Complete | [design](plans/10-cli-web-mirroring/design.md) | [implementation](plans/10-cli-web-mirroring/implementation.md) |
 | 3.4 PTY Backend | Complete | [design](plans/12-pty-backend/design.md) | [implementation](plans/12-pty-backend/implementation.md) |
-| 4.1 Harness Introspection | Not started | [design](plans/14-continual-learning/design.md#41-harness-introspection) | — |
+| **◉ groove** | | [branding](groove/BRANDING.md) | |
+| 4.1 Harness Introspection | Not started | [design](plans/15-harness-introspection/design.md) | [implementation](plans/15-harness-introspection/implementation.md) |
 | 4.2 Storage Foundation | Not started | [design](plans/14-continual-learning/design.md#42-storage-foundation) | — |
 | 4.2.5 Security Foundation | Not started | [design](plans/14-continual-learning/design.md#425-security-foundation--new) | — |
 | 4.3 Capture & Inject | Not started | [design](plans/14-continual-learning/design.md#43-capture--inject-mvp) | — |
@@ -25,7 +26,7 @@ This document tracks the implementation progress of vibes against the roadmap de
 | 4.5 Learning Extraction | Not started | [design](plans/14-continual-learning/design.md#45-learning-extraction) | — |
 | 4.6 Attribution Engine | Not started | [design](plans/14-continual-learning/design.md#46-attribution-engine--new) | — |
 | 4.7 Adaptive Strategies | Not started | [design](plans/14-continual-learning/design.md#47-adaptive-strategies) | — |
-| 4.8 Observability Dashboard | Not started | [design](plans/14-continual-learning/design.md#48-observability-dashboard--new) | — |
+| 4.8 groove Dashboard | Not started | [design](plans/14-continual-learning/design.md#48-observability-dashboard--new) | — |
 | 4.9 Open-World Adaptation | Not started | [design](plans/14-continual-learning/design.md#49-open-world-adaptation) | — |
 | 5.1 Setup Wizards | Not started | — | — |
 | 5.2 Default Plugins | Not started | — | — |
@@ -149,11 +150,13 @@ Note: Auto-detect team/aud moved to Milestone 3.5 (Cloudflare Auth Wizard)
 
 ---
 
-## Phase 4: Continual Learning
+## Phase 4: vibes groove ◉
 
-**Goal:** Progressive improvement through accumulated experience
+> **groove** - The continual learning system that finds your coding rhythm.
 
-**Design:** [Continual Learning Design](plans/14-continual-learning/design.md)
+**Goal:** Progressive improvement through accumulated experience - zero friction, fully adaptive.
+
+**Design:** [vibes groove Design](plans/14-continual-learning/design.md) | [Branding Guide](groove/BRANDING.md)
 
 ### Milestone 4.1: Harness Introspection
 - [ ] `Harness` trait and `HarnessCapabilities` struct
@@ -214,12 +217,12 @@ Note: Auto-detect team/aud moved to Milestone 3.5 (Cloudflare Auth Wizard)
 - [ ] Subagent injection support
 - [ ] Outcome-based parameter updates
 
-### Milestone 4.8: Observability Dashboard
+### Milestone 4.8: groove Dashboard
 - [ ] `LearningOverview`, `SessionTrends`, `AttributionInsights` data models
-- [ ] API endpoints for dashboard
+- [ ] API endpoints for `vibes groove` CLI commands
 - [ ] Session quality trend visualization
 - [ ] Learning list with filtering and attribution
-- [ ] Real-time `🧠 learning...` indicator (toggle)
+- [ ] Real-time `◉ groove: learning...` indicator
 - [ ] System health metrics
 
 ### Milestone 4.9: Open-World Adaptation
@@ -230,7 +233,11 @@ Note: Auto-detect team/aud moved to Milestone 3.5 (Cloudflare Auth Wizard)
 - [ ] Emergent pattern discovery and notification
 - [ ] Meta-learning metrics
 
-**Phase 4 Deliverable:** Self-improving assistant that learns from every session
+**Phase 4 Deliverable:** groove - a self-improving system that finds your coding rhythm
+
+```
+◉ groove: You're in the groove. 47 learnings applied this session.
+```
 
 ---
 
