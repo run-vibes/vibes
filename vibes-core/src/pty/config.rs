@@ -19,7 +19,8 @@ impl Default for PtyConfig {
     fn default() -> Self {
         // Allow overriding the command via environment variable (useful for testing)
         // Supports "command arg1 arg2" format
-        let command_str = std::env::var("VIBES_PTY_COMMAND").unwrap_or_else(|_| "claude".to_string());
+        let command_str =
+            std::env::var("VIBES_PTY_COMMAND").unwrap_or_else(|_| "claude".to_string());
         let parts: Vec<&str> = command_str.split_whitespace().collect();
         let (claude_path, claude_args) = if parts.is_empty() {
             (PathBuf::from("claude"), Vec::new())
