@@ -7,6 +7,7 @@ mod config;
 mod daemon;
 mod input;
 mod server;
+mod terminal;
 
 #[derive(Parser)]
 #[command(name = "vibes", about = "Remote control for Claude Code")]
