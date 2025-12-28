@@ -20,6 +20,11 @@ impl Default for PtyConfig {
             .map(PathBuf::from)
             .unwrap_or_else(|_| PathBuf::from("claude"));
 
+        tracing::debug!(
+            claude_path = %claude_path.display(),
+            "PtyConfig initialized"
+        );
+
         Self {
             claude_path,
             initial_cols: 120,

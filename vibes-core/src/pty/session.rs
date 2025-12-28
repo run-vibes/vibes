@@ -143,6 +143,13 @@ pub struct PtySession {
 impl PtySession {
     /// Spawn a new PTY session
     pub fn spawn(id: String, name: Option<String>, config: &PtyConfig) -> Result<Self, PtyError> {
+        tracing::info!(
+            id = %id,
+            name = ?name,
+            command = %config.claude_path.display(),
+            "Spawning PTY session"
+        );
+
         let pty_system = native_pty_system();
 
         let pair = pty_system

@@ -20,7 +20,8 @@ export const test = base.extend<VibesFixture>({
     // Build first to ensure we have the latest
     const buildResult = spawnSync('cargo', ['build', '--release'], {
       cwd: projectRoot,
-      stdio: 'inherit'
+      stdio: 'inherit',
+      env: process.env
     });
 
     if (buildResult.status !== 0) {
@@ -28,10 +29,11 @@ export const test = base.extend<VibesFixture>({
     }
 
     // Start server on random port
+    // Explicitly pass process.env to ensure VIBES_PTY_COMMAND is inherited
     const server = spawn(
       path.join(projectRoot, 'target/release/vibes'),
       ['serve', '--port', '0'],
-      { cwd: projectRoot }
+      { cwd: projectRoot, env: process.env }
     );
 
     // Log server stderr for debugging
