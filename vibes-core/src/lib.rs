@@ -56,6 +56,7 @@ pub mod backend;
 pub mod error;
 pub mod events;
 pub mod history;
+pub mod hooks;
 pub mod notifications;
 pub mod parser;
 pub mod plugins;
@@ -84,4 +85,8 @@ pub use session::{
 pub use tunnel::{
     CloudflaredInfo, LogLevel, RestartPolicy, TunnelConfig, TunnelError, TunnelEvent,
     TunnelManager, TunnelMode, TunnelState, check_installation,
+};
+pub use hooks::{
+    HookEvent, HookReceiver, HookReceiverConfig, HookType, PostToolUseData, PreToolUseData,
+    StopData,
 };
