@@ -5,6 +5,11 @@
 //! - Left/Right arrows for cursor movement
 //! - Backspace/Delete for character deletion
 //! - Home/End for line navigation
+//!
+//! Note: With PTY mode, terminal-native input is used instead.
+//! This module is retained for potential non-PTY use cases.
+
+#![allow(dead_code)]
 
 use std::io::{self, Stdout, Write};
 

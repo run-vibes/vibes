@@ -12,14 +12,13 @@ use futures::{SinkExt, StreamExt};
 use tokio::sync::broadcast;
 use tracing::{debug, error, info, warn};
 use uuid::Uuid;
-use vibes_core::history::{MessageQuery, MessageRole};
-use vibes_core::{AuthContext, ClaudeEvent, EventBus, InputSource, VibesEvent};
+use vibes_core::{AuthContext, EventBus, InputSource, VibesEvent};
 
-use crate::AppState;
+use crate::{AppState, PtyEvent};
+use base64::Engine;
 
 use super::protocol::{
-    ClientMessage, HistoryEvent, RemovalReason, ServerMessage, SessionInfo,
-    vibes_event_to_server_message,
+    ClientMessage, RemovalReason, ServerMessage, SessionInfo, vibes_event_to_server_message,
 };
 
 /// Detect client type from request headers
@@ -57,6 +56,8 @@ struct ConnectionState {
     client_type: InputSource,
     /// Session IDs this connection is subscribed to
     subscribed_sessions: HashSet<String>,
+    /// PTY session IDs this connection is attached to
+    attached_pty_sessions: HashSet<String>,
 }
 
 impl ConnectionState {
@@ -65,6 +66,7 @@ impl ConnectionState {
             client_id: Uuid::new_v4().to_string(),
             client_type,
             subscribed_sessions: HashSet::new(),
+            attached_pty_sessions: HashSet::new(),
         }
     }
 
@@ -91,6 +93,21 @@ impl ConnectionState {
             self.subscribed_sessions.remove(id);
         }
     }
+
+    /// Attach to a PTY session
+    fn attach_pty(&mut self, session_id: &str) {
+        self.attached_pty_sessions.insert(session_id.to_string());
+    }
+
+    /// Detach from a PTY session
+    fn detach_pty(&mut self, session_id: &str) {
+        self.attached_pty_sessions.remove(session_id);
+    }
+
+    /// Check if this connection is attached to a PTY session
+    fn is_attached_to_pty(&self, session_id: &str) -> bool {
+        self.attached_pty_sessions.contains(session_id)
+    }
 }
 
 /// Handle a WebSocket connection with bidirectional event streaming
@@ -102,6 +119,7 @@ async fn handle_socket(
 ) {
     let (mut sender, mut receiver) = socket.split();
     let mut event_rx = state.subscribe_events();
+    let mut pty_rx = state.subscribe_pty_events();
     let mut conn_state = ConnectionState::new(client_type);
 
     info!(
@@ -176,6 +194,25 @@ async fn handle_socket(
                     Err(broadcast::error::RecvError::Lagged(count)) => {
                         warn!("Client lagged behind by {} events", count);
                         // Continue receiving - the channel will skip missed events
+                    }
+                }
+            }
+
+            // Handle PTY events from broadcast channel
+            pty_event = pty_rx.recv() => {
+                match pty_event {
+                    Ok(event) => {
+                        if let Err(e) = handle_pty_event(&event, &mut sender, &conn_state).await {
+                            warn!("Failed to send PTY event to client: {}", e);
+                            break;
+                        }
+                    }
+                    Err(broadcast::error::RecvError::Closed) => {
+                        warn!("PTY broadcast channel closed");
+                        break;
+                    }
+                    Err(broadcast::error::RecvError::Lagged(count)) => {
+                        warn!("Client lagged behind by {} PTY events", count);
                     }
                 }
             }
@@ -265,6 +302,44 @@ async fn handle_broadcast_event(
     Ok(())
 }
 
+/// Handle a PTY event from the broadcast channel
+async fn handle_pty_event(
+    event: &PtyEvent,
+    sender: &mut futures::stream::SplitSink<WebSocket, Message>,
+    conn_state: &ConnectionState,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    // Extract session_id from event
+    let session_id = match event {
+        PtyEvent::Output { session_id, .. } => session_id,
+        PtyEvent::Exit { session_id, .. } => session_id,
+    };
+
+    // Only send if client is attached to this PTY session
+    if !conn_state.is_attached_to_pty(session_id) {
+        return Ok(());
+    }
+
+    // Convert to ServerMessage and send
+    let server_msg = match event {
+        PtyEvent::Output { session_id, data } => ServerMessage::PtyOutput {
+            session_id: session_id.clone(),
+            data: data.clone(),
+        },
+        PtyEvent::Exit {
+            session_id,
+            exit_code,
+        } => ServerMessage::PtyExit {
+            session_id: session_id.clone(),
+            exit_code: *exit_code,
+        },
+    };
+
+    let json = serde_json::to_string(&server_msg)?;
+    sender.send(Message::Text(json)).await?;
+
+    Ok(())
+}
+
 /// Handle a text message from the client
 async fn handle_text_message(
     text: &str,
@@ -275,34 +350,6 @@ async fn handle_text_message(
     let client_msg: ClientMessage = serde_json::from_str(text)?;
 
     match client_msg {
-        ClientMessage::Subscribe {
-            session_ids,
-            catch_up,
-        } => {
-            debug!(
-                "Client subscribed to sessions: {:?}, catch_up: {}",
-                session_ids, catch_up
-            );
-            conn_state.subscribe(&session_ids);
-
-            // Send SubscribeAck with history if catch_up is requested
-            if catch_up {
-                for session_id in &session_ids {
-                    let (history, current_seq, has_more) =
-                        get_session_history(state.as_ref(), session_id, 50);
-
-                    let ack = ServerMessage::SubscribeAck {
-                        session_id: session_id.clone(),
-                        current_seq,
-                        history,
-                        has_more,
-                    };
-                    let json = serde_json::to_string(&ack)?;
-                    sender.send(Message::Text(json)).await?;
-                }
-            }
-        }
-
         ClientMessage::Unsubscribe { session_ids } => {
             debug!("Client unsubscribed from sessions: {:?}", session_ids);
             conn_state.unsubscribe(&session_ids);
@@ -391,39 +438,32 @@ async fn handle_text_message(
         ClientMessage::ListSessions { request_id } => {
             debug!("ListSessions request: {}", request_id);
 
-            // Collect session info for all sessions
-            let session_ids = state.session_manager.list_sessions().await;
-            let mut sessions = Vec::with_capacity(session_ids.len());
+            // Get PTY sessions (the active terminal sessions)
+            let pty_manager = state.pty_manager.read().await;
+            let pty_sessions = pty_manager.list_sessions();
 
-            for id in session_ids {
-                if let Ok(info) = state
-                    .session_manager
-                    .with_session(&id, |session| {
-                        let ownership = session.ownership();
-                        SessionInfo {
-                            id: id.clone(),
-                            name: session.name().map(|s| s.to_string()),
-                            state: format!("{:?}", session.state()),
-                            owner_id: ownership.owner_id.clone(),
-                            is_owner: ownership.is_owner(&conn_state.client_id),
-                            subscriber_count: ownership.subscriber_count() as u32,
-                            created_at: session
-                                .created_at()
-                                .duration_since(std::time::UNIX_EPOCH)
-                                .map(|d| d.as_secs() as i64)
-                                .unwrap_or(0),
-                            last_activity_at: session
-                                .last_activity_at()
-                                .duration_since(std::time::UNIX_EPOCH)
-                                .map(|d| d.as_secs() as i64)
-                                .unwrap_or(0),
-                        }
-                    })
-                    .await
-                {
-                    sessions.push(info);
-                }
-            }
+            let sessions: Vec<SessionInfo> = pty_sessions
+                .into_iter()
+                .map(|pty_info| {
+                    use vibes_core::pty::PtyState;
+                    let state_str = match pty_info.state {
+                        PtyState::Running => "Running".to_string(),
+                        PtyState::Exited(code) => format!("Exited({})", code),
+                    };
+
+                    SessionInfo {
+                        id: pty_info.id,
+                        name: pty_info.name,
+                        state: state_str,
+                        // PTY sessions don't have ownership tracking yet
+                        owner_id: String::new(),
+                        is_owner: true, // All clients can interact with PTY
+                        subscriber_count: 0,
+                        created_at: 0,
+                        last_activity_at: 0,
+                    }
+                })
+                .collect();
 
             let response = ServerMessage::SessionList {
                 request_id,
@@ -436,30 +476,34 @@ async fn handle_text_message(
         ClientMessage::KillSession { session_id } => {
             debug!("KillSession request: {}", session_id);
 
-            match state.session_manager.remove_session(&session_id).await {
+            // Kill PTY session
+            let mut pty_manager = state.pty_manager.write().await;
+            match pty_manager.kill_session(&session_id).await {
                 Ok(()) => {
-                    // Unsubscribe locally
-                    conn_state.unsubscribe(std::slice::from_ref(&session_id));
+                    // Detach locally
+                    conn_state.detach_pty(&session_id);
 
                     // Broadcast removal to all clients
                     let removal_msg = ServerMessage::SessionRemoved {
-                        session_id,
+                        session_id: session_id.clone(),
                         reason: RemovalReason::Killed,
                     };
                     let json = serde_json::to_string(&removal_msg)?;
                     sender.send(Message::Text(json)).await?;
+
+                    // Also broadcast PTY exit event
+                    let exit_event = PtyEvent::Exit {
+                        session_id,
+                        exit_code: None,
+                    };
+                    state.broadcast_pty_event(exit_event);
                 }
                 Err(e) => {
-                    warn!("Failed to kill session {}: {}", session_id, e);
-                    let code = if e.to_string().contains("not found") {
-                        "NOT_FOUND"
-                    } else {
-                        "KILL_FAILED"
-                    };
+                    warn!("Failed to kill PTY session {}: {}", session_id, e);
                     let error_msg = ServerMessage::Error {
                         session_id: Some(session_id),
                         message: e.to_string(),
-                        code: code.to_string(),
+                        code: "KILL_FAILED".to_string(),
                     };
                     let json = serde_json::to_string(&error_msg)?;
                     sender.send(Message::Text(json)).await?;
@@ -467,31 +511,129 @@ async fn handle_text_message(
             }
         }
 
-        ClientMessage::RequestHistory {
-            session_id,
-            before_seq,
-            limit,
-        } => {
-            if !conn_state.is_subscribed_to(&session_id) {
-                let error = ServerMessage::Error {
-                    session_id: Some(session_id),
-                    message: "Not subscribed to session".to_string(),
-                    code: "NOT_SUBSCRIBED".to_string(),
-                };
-                let json = serde_json::to_string(&error)?;
-                sender.send(Message::Text(json)).await?;
-            } else {
-                let (events, oldest_seq, has_more) =
-                    get_history_page(state.as_ref(), &session_id, before_seq, limit);
+        // PTY messages
+        ClientMessage::Attach { session_id } => {
+            debug!("PTY attach requested for session: {}", session_id);
 
-                let page = ServerMessage::HistoryPage {
-                    session_id,
-                    events,
-                    has_more,
-                    oldest_seq,
-                };
-                let json = serde_json::to_string(&page)?;
-                sender.send(Message::Text(json)).await?;
+            let mut pty_manager = state.pty_manager.write().await;
+
+            // Check if session exists; if not, create it
+            let (cols, rows) = if pty_manager.get_session(&session_id).is_some() {
+                // Session exists, get dimensions from config (we don't track current size yet)
+                // TODO: Track actual PTY dimensions per session. For now we use reasonable
+                // defaults (120x40) which the client will override via PtyResize after attach.
+                // Using (0, 0) would cause rendering issues in terminals.
+                (120, 40)
+            } else {
+                // Create new PTY session with the client's session ID
+                match pty_manager.create_session_with_id(session_id.clone(), None) {
+                    Ok(created_id) => {
+                        debug!("Created new PTY session: {}", created_id);
+
+                        // Get handle for output reading
+                        if let Some(handle) = pty_manager.get_handle(&created_id) {
+                            // Spawn background task to read PTY output
+                            let state_clone = state.clone();
+                            let session_id_clone = created_id.clone();
+                            tokio::spawn(async move {
+                                pty_output_reader(state_clone, session_id_clone, handle).await;
+                            });
+                        }
+
+                        // Initial dimensions from config - client will resize after attach
+                        (120, 40)
+                    }
+                    Err(e) => {
+                        let error = ServerMessage::Error {
+                            session_id: Some(session_id),
+                            message: format!("Failed to create PTY session: {}", e),
+                            code: "PTY_CREATE_FAILED".to_string(),
+                        };
+                        let json = serde_json::to_string(&error)?;
+                        sender.send(Message::Text(json)).await?;
+                        return Ok(());
+                    }
+                }
+            };
+
+            // Mark this connection as attached
+            conn_state.attach_pty(&session_id);
+
+            // Send scrollback replay if available
+            if let Some(handle) = pty_manager.get_handle(&session_id) {
+                let scrollback = handle.get_scrollback();
+                if !scrollback.is_empty() {
+                    let data = base64::engine::general_purpose::STANDARD.encode(&scrollback);
+                    let replay_msg = ServerMessage::PtyReplay {
+                        session_id: session_id.clone(),
+                        data,
+                    };
+                    let json = serde_json::to_string(&replay_msg)?;
+                    sender.send(Message::Text(json)).await?;
+                    debug!(
+                        "Sent {} bytes of scrollback replay for session {}",
+                        scrollback.len(),
+                        session_id
+                    );
+                }
+            }
+
+            // Send AttachAck
+            let ack = ServerMessage::AttachAck {
+                session_id,
+                cols,
+                rows,
+            };
+            let json = serde_json::to_string(&ack)?;
+            sender.send(Message::Text(json)).await?;
+        }
+
+        ClientMessage::Detach { session_id } => {
+            debug!("PTY detach requested for session: {}", session_id);
+            conn_state.detach_pty(&session_id);
+        }
+
+        ClientMessage::PtyInput { session_id, data } => {
+            debug!(
+                "PTY input for session: {}, {} bytes",
+                session_id,
+                data.len()
+            );
+
+            // Decode base64 input
+            let decoded = match base64::engine::general_purpose::STANDARD.decode(&data) {
+                Ok(d) => d,
+                Err(e) => {
+                    warn!("Failed to decode PTY input: {}", e);
+                    return Ok(());
+                }
+            };
+
+            // Get handle and write
+            let pty_manager = state.pty_manager.read().await;
+            if let Some(handle) = pty_manager.get_handle(&session_id) {
+                if let Err(e) = handle.write(&decoded).await {
+                    warn!("Failed to write to PTY: {}", e);
+                }
+            } else {
+                warn!("PTY session not found: {}", session_id);
+            }
+        }
+
+        ClientMessage::PtyResize {
+            session_id,
+            cols,
+            rows,
+        } => {
+            debug!("PTY resize for session: {}, {}x{}", session_id, cols, rows);
+
+            let pty_manager = state.pty_manager.read().await;
+            if let Some(handle) = pty_manager.get_handle(&session_id) {
+                if let Err(e) = handle.resize(cols, rows).await {
+                    warn!("Failed to resize PTY: {}", e);
+                }
+            } else {
+                warn!("PTY session not found: {}", session_id);
             }
         }
     }
@@ -499,117 +641,66 @@ async fn handle_text_message(
     Ok(())
 }
 
-/// Convert a HistoricalMessage to a VibesEvent for catch-up
-fn message_to_vibes_event(msg: &vibes_core::history::HistoricalMessage) -> VibesEvent {
-    match msg.role {
-        MessageRole::User => VibesEvent::UserInput {
-            session_id: msg.session_id.clone(),
-            content: msg.content.clone(),
-            source: msg.source,
-        },
-        MessageRole::Assistant => VibesEvent::Claude {
-            session_id: msg.session_id.clone(),
-            event: ClaudeEvent::TextDelta {
-                text: msg.content.clone(),
-            },
-        },
-        MessageRole::ToolUse => VibesEvent::Claude {
-            session_id: msg.session_id.clone(),
-            event: ClaudeEvent::ToolUseStart {
-                id: msg.tool_id.clone().unwrap_or_default(),
-                name: msg.tool_name.clone().unwrap_or_default(),
-            },
-        },
-        MessageRole::ToolResult => VibesEvent::Claude {
-            session_id: msg.session_id.clone(),
-            event: ClaudeEvent::ToolResult {
-                id: msg.tool_id.clone().unwrap_or_default(),
-                output: msg.content.clone(),
-                is_error: false,
-            },
-        },
+/// Background task that reads from a PTY and broadcasts output
+async fn pty_output_reader(
+    state: Arc<AppState>,
+    session_id: String,
+    handle: vibes_core::pty::PtySessionHandle,
+) {
+    use std::time::Duration;
+    use vibes_core::pty::PtyError;
+
+    debug!("Starting PTY output reader for session: {}", session_id);
+
+    loop {
+        // Read from PTY
+        match handle.read().await {
+            Ok(data) if !data.is_empty() => {
+                // Capture raw output in scrollback buffer before broadcasting
+                handle.append_scrollback(&data);
+
+                // Encode as base64 and broadcast
+                let encoded = base64::engine::general_purpose::STANDARD.encode(&data);
+                let event = PtyEvent::Output {
+                    session_id: session_id.clone(),
+                    data: encoded,
+                };
+                state.broadcast_pty_event(event);
+            }
+            Ok(_) => {
+                // No data available (non-blocking WouldBlock case), wait a bit.
+                // We use polling here because portable-pty doesn't provide async I/O.
+                // The 10ms sleep balances responsiveness with CPU usage. Alternative
+                // approaches like tokio::io::unix::AsyncFd aren't portable across
+                // all platforms that portable-pty supports.
+                tokio::time::sleep(Duration::from_millis(10)).await;
+            }
+            Err(PtyError::Eof) => {
+                // PTY process has exited (EOF on read)
+                debug!("PTY EOF for session {}: process exited", session_id);
+
+                // Broadcast exit event
+                let event = PtyEvent::Exit {
+                    session_id: session_id.clone(),
+                    exit_code: None, // Could check child.try_wait() for actual code
+                };
+                state.broadcast_pty_event(event);
+                break;
+            }
+            Err(e) => {
+                // Other I/O error
+                warn!("PTY read error for session {}: {}", session_id, e);
+
+                // Broadcast exit event
+                let event = PtyEvent::Exit {
+                    session_id: session_id.clone(),
+                    exit_code: None,
+                };
+                state.broadcast_pty_event(event);
+                break;
+            }
+        }
     }
-}
 
-/// Get session history for catch-up
-///
-/// Returns (history events, current sequence, has_more_pages)
-fn get_session_history(
-    state: &AppState,
-    session_id: &str,
-    limit: u32,
-) -> (Vec<HistoryEvent>, u64, bool) {
-    let Some(history_service) = &state.history else {
-        return (vec![], 0, false);
-    };
-
-    let query = MessageQuery {
-        limit: limit + 1, // Request one extra to detect has_more
-        offset: 0,
-        role: None,
-        before_id: None,
-    };
-
-    let result = match history_service.get_messages(session_id, &query) {
-        Ok(r) => r,
-        Err(_) => return (vec![], 0, false),
-    };
-
-    let has_more = result.messages.len() > limit as usize;
-    let messages: Vec<_> = result.messages.into_iter().take(limit as usize).collect();
-
-    let current_seq = messages.last().map(|m| m.id as u64).unwrap_or(0);
-
-    let history: Vec<HistoryEvent> = messages
-        .into_iter()
-        .map(|m| HistoryEvent {
-            seq: m.id as u64,
-            event: message_to_vibes_event(&m),
-            timestamp: m.created_at * 1000, // Convert to milliseconds
-        })
-        .collect();
-
-    (history, current_seq, has_more)
-}
-
-/// Get paginated history for RequestHistory
-///
-/// Returns (history events, oldest sequence in page, has_more_pages)
-fn get_history_page(
-    state: &AppState,
-    session_id: &str,
-    before_seq: u64,
-    limit: u32,
-) -> (Vec<HistoryEvent>, u64, bool) {
-    let Some(history_service) = &state.history else {
-        return (vec![], 0, false);
-    };
-
-    let query = MessageQuery {
-        limit: limit + 1, // Request one extra to detect has_more
-        offset: 0,
-        role: None,
-        before_id: Some(before_seq as i64),
-    };
-
-    let result = match history_service.get_messages(session_id, &query) {
-        Ok(r) => r,
-        Err(_) => return (vec![], 0, false),
-    };
-
-    let has_more = result.messages.len() > limit as usize;
-    let messages: Vec<_> = result.messages.into_iter().take(limit as usize).collect();
-
-    let oldest_seq = messages.first().map(|m| m.id as u64).unwrap_or(0);
-
-    let events: Vec<HistoryEvent> = messages
-        .into_iter()
-        .map(|m| HistoryEvent {
-            seq: m.id as u64,
-            event: message_to_vibes_event(&m),
-            timestamp: m.created_at * 1000,
-        })
-        .collect();
-
-    (events, oldest_seq, has_more)
+    debug!("PTY output reader finished for session: {}", session_id);
 }

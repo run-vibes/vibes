@@ -87,6 +87,9 @@ impl VibesClient {
     /// Create a new session and wait for confirmation
     ///
     /// Returns the new session ID
+    ///
+    /// Note: With PTY mode, sessions are created via PTY attachment instead.
+    #[allow(dead_code)]
     pub async fn create_session(&mut self, name: Option<String>) -> Result<String> {
         let request_id = uuid::Uuid::new_v4().to_string();
 
@@ -129,16 +132,10 @@ impl VibesClient {
         anyhow::bail!("Timeout waiting for session creation response")
     }
 
-    /// Subscribe to events for the specified session(s)
-    pub async fn subscribe(&self, session_ids: Vec<String>) -> Result<()> {
-        self.send(ClientMessage::Subscribe {
-            session_ids,
-            catch_up: false,
-        })
-        .await
-    }
-
     /// Send input to a session
+    ///
+    /// Note: With PTY mode, input is sent via PTY data messages instead.
+    #[allow(dead_code)]
     pub async fn send_input(&self, session_id: &str, content: &str) -> Result<()> {
         self.send(ClientMessage::Input {
             session_id: session_id.to_string(),
@@ -175,6 +172,43 @@ impl VibesClient {
     pub async fn send_kill_session(&self, session_id: &str) -> Result<()> {
         self.send(ClientMessage::KillSession {
             session_id: session_id.to_string(),
+        })
+        .await
+    }
+
+    // === PTY Methods ===
+
+    /// Attach to a PTY session to receive output
+    pub async fn attach(&self, session_id: &str) -> Result<()> {
+        self.send(ClientMessage::Attach {
+            session_id: session_id.to_string(),
+        })
+        .await
+    }
+
+    /// Detach from a PTY session
+    pub async fn detach(&self, session_id: &str) -> Result<()> {
+        self.send(ClientMessage::Detach {
+            session_id: session_id.to_string(),
+        })
+        .await
+    }
+
+    /// Send input to a PTY session (base64 encoded)
+    pub async fn pty_input(&self, session_id: &str, data: &str) -> Result<()> {
+        self.send(ClientMessage::PtyInput {
+            session_id: session_id.to_string(),
+            data: data.to_string(),
+        })
+        .await
+    }
+
+    /// Resize a PTY session
+    pub async fn pty_resize(&self, session_id: &str, cols: u16, rows: u16) -> Result<()> {
+        self.send(ClientMessage::PtyResize {
+            session_id: session_id.to_string(),
+            cols,
+            rows,
         })
         .await
     }

@@ -2,8 +2,6 @@
 
 use thiserror::Error;
 
-use crate::history::HistoryError;
-
 /// Top-level error type for vibes-core
 #[derive(Error, Debug)]
 pub enum VibesError {
@@ -18,9 +16,6 @@ pub enum VibesError {
 
     #[error("Notification error: {0}")]
     Notification(#[from] NotificationError),
-
-    #[error("History error: {0}")]
-    History(#[from] HistoryError),
 }
 
 /// Errors related to push notifications

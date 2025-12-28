@@ -5,11 +5,23 @@ use std::sync::Arc;
 use chrono::{DateTime, Utc};
 use tokio::sync::{RwLock, broadcast};
 use vibes_core::{
-    AccessConfig, BackendFactory, MemoryEventBus, PluginHost, PluginHostConfig,
-    PrintModeBackendFactory, PrintModeConfig, SessionLifecycleManager, SessionManager,
-    SubscriptionStore, TunnelConfig, TunnelManager, VapidKeyManager, VibesEvent,
-    history::{HistoryService, SqliteHistoryStore},
+    AccessConfig, BackendFactory, MemoryEventBus, MockBackendFactory, PluginHost, PluginHostConfig,
+    SessionLifecycleManager, SessionManager, SubscriptionStore, TunnelConfig, TunnelManager,
+    VapidKeyManager, VibesEvent,
+    pty::{PtyConfig, PtyManager},
 };
+
+/// PTY output event for broadcasting to attached clients
+#[derive(Clone, Debug)]
+pub enum PtyEvent {
+    /// Raw output from a PTY session (base64 encoded for binary safety)
+    Output { session_id: String, data: String },
+    /// PTY process has exited
+    Exit {
+        session_id: String,
+        exit_code: Option<i32>,
+    },
+}
 
 use crate::middleware::AuthLayer;
 
@@ -39,16 +51,18 @@ pub struct AppState {
     pub vapid: Option<Arc<VapidKeyManager>>,
     /// Push subscription store (optional)
     pub subscriptions: Option<Arc<SubscriptionStore>>,
-    /// Chat history service (optional)
-    pub history: Option<Arc<HistoryService<SqliteHistoryStore>>>,
+    /// PTY session manager for terminal sessions
+    pub pty_manager: Arc<RwLock<PtyManager>>,
+    /// Broadcast channel for PTY output distribution
+    pty_broadcaster: broadcast::Sender<PtyEvent>,
 }
 
 impl AppState {
     /// Create a new AppState with default components
     pub fn new() -> Self {
         let event_bus = Arc::new(MemoryEventBus::new(10_000));
-        let factory: Arc<dyn BackendFactory> =
-            Arc::new(PrintModeBackendFactory::new(PrintModeConfig::default()));
+        // Use MockBackendFactory since PTY handles actual Claude I/O
+        let factory: Arc<dyn BackendFactory> = Arc::new(MockBackendFactory::new());
         let session_manager = Arc::new(SessionManager::new(factory, event_bus.clone()));
         let lifecycle = Arc::new(SessionLifecycleManager::new(session_manager.clone()));
         let plugin_host = Arc::new(PluginHost::new(PluginHostConfig::default()));
@@ -57,6 +71,8 @@ impl AppState {
             7432,
         )));
         let (event_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
+        let (pty_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
+        let pty_manager = Arc::new(RwLock::new(PtyManager::new(PtyConfig::default())));
 
         Self {
             session_manager,
@@ -67,9 +83,10 @@ impl AppState {
             auth_layer: AuthLayer::disabled(),
             started_at: Utc::now(),
             event_broadcaster,
+            pty_broadcaster,
             vapid: None,
             subscriptions: None,
-            history: None,
+            pty_manager,
         }
     }
 
@@ -90,9 +107,9 @@ impl AppState {
         self
     }
 
-    /// Configure chat history for this state
-    pub fn with_history(mut self, service: Arc<HistoryService<SqliteHistoryStore>>) -> Self {
-        self.history = Some(service);
+    /// Configure PTY settings for this state
+    pub fn with_pty_config(mut self, config: PtyConfig) -> Self {
+        self.pty_manager = Arc::new(RwLock::new(PtyManager::new(config)));
         self
     }
 
@@ -105,6 +122,8 @@ impl AppState {
     ) -> Self {
         let lifecycle = Arc::new(SessionLifecycleManager::new(session_manager.clone()));
         let (event_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
+        let (pty_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
+        let pty_manager = Arc::new(RwLock::new(PtyManager::new(PtyConfig::default())));
 
         Self {
             session_manager,
@@ -115,9 +134,10 @@ impl AppState {
             auth_layer: AuthLayer::disabled(),
             started_at: Utc::now(),
             event_broadcaster,
+            pty_broadcaster,
             vapid: None,
             subscriptions: None,
-            history: None,
+            pty_manager,
         }
     }
 
@@ -140,6 +160,22 @@ impl AppState {
     /// Returns 0 if there are no active subscribers.
     pub fn broadcast_event(&self, event: VibesEvent) -> usize {
         self.event_broadcaster.send(event).unwrap_or(0)
+    }
+
+    /// Subscribe to PTY events broadcast to WebSocket clients
+    ///
+    /// Returns a receiver that will receive all PtyEvents published
+    /// through the PTY broadcaster.
+    pub fn subscribe_pty_events(&self) -> broadcast::Receiver<PtyEvent> {
+        self.pty_broadcaster.subscribe()
+    }
+
+    /// Publish a PTY event to all subscribed WebSocket clients
+    ///
+    /// Returns the number of receivers that received the event.
+    /// Returns 0 if there are no active subscribers.
+    pub fn broadcast_pty_event(&self, event: PtyEvent) -> usize {
+        self.pty_broadcaster.send(event).unwrap_or(0)
     }
 
     /// Returns how long the server has been running
@@ -174,8 +210,7 @@ mod tests {
     #[test]
     fn test_app_state_with_components() {
         let event_bus = Arc::new(MemoryEventBus::new(100));
-        let factory: Arc<dyn BackendFactory> =
-            Arc::new(PrintModeBackendFactory::new(PrintModeConfig::default()));
+        let factory: Arc<dyn BackendFactory> = Arc::new(MockBackendFactory::new());
         let session_manager = Arc::new(SessionManager::new(factory, event_bus.clone()));
         let plugin_host = Arc::new(PluginHost::new(PluginHostConfig::default()));
         let tunnel_manager = Arc::new(RwLock::new(TunnelManager::new(

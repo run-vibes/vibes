@@ -1,147 +1,115 @@
+/**
+ * Claude session page - displays a PTY terminal for interacting with Claude
+ */
 import { useParams, Link } from '@tanstack/react-router';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useWebSocket } from '../hooks/useWebSocket';
-import type { ServerMessage, ClaudeEvent, SessionState, InputSource } from '../lib/types';
+import { SessionTerminal, type SessionTerminalHandle } from '../components/Terminal';
+import type { ServerMessage } from '../lib/types';
 
-interface ConversationItem {
-  type: 'user' | 'assistant' | 'tool';
-  content: string;
-  timestamp: Date;
-  source?: InputSource;
-  isOwn?: boolean;
-}
+type ConnectionState = 'connecting' | 'attached' | 'exited' | 'error';
 
 export function ClaudeSession() {
-  // Helper to format source labels - kept inside component since only used here
-  const getSourceLabel = (source: InputSource): string => {
-    switch (source) {
-      case 'cli': return '📟 CLI';
-      case 'web_ui': return '🌐 Web';
-      default: return '❓ Unknown';
-    }
-  };
   const { sessionId } = useParams({ from: '/claude/$sessionId' });
-  const { isConnected, subscribe, addMessageHandler, send } = useWebSocket();
+  const { isConnected, addMessageHandler, send } = useWebSocket();
 
-  const [state, setState] = useState<SessionState>('idle');
-  const [conversation, setConversation] = useState<ConversationItem[]>([]);
-  const [streamingText, setStreamingText] = useState('');
-  const [input, setInput] = useState('');
-  const [pendingPermission, setPendingPermission] = useState<{
-    id: string;
-    tool: string;
-    description: string;
-  } | null>(null);
+  const [connectionState, setConnectionState] = useState<ConnectionState>('connecting');
+  const [exitCode, setExitCode] = useState<number | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [terminalSize, setTerminalSize] = useState({ cols: 80, rows: 24 });
 
-  // Subscribe to session events
+  const terminalRef = useRef<SessionTerminalHandle>(null);
+
+  // Send attach request when connected
   useEffect(() => {
-    if (isConnected) {
-      subscribe([sessionId]);
+    if (isConnected && connectionState === 'connecting') {
+      send({
+        type: 'attach',
+        session_id: sessionId,
+      });
     }
-  }, [isConnected, sessionId, subscribe]);
+  }, [isConnected, sessionId, send, connectionState]);
 
   // Handle incoming messages
   const handleMessage = useCallback((msg: ServerMessage) => {
-    if (msg.type === 'session_state' && msg.session_id === sessionId) {
-      setState(msg.state);
-    }
-
-    if (msg.type === 'claude' && msg.session_id === sessionId) {
-      const event = msg.event;
-      handleClaudeEvent(event);
-    }
-
-    // Handle remote user input from CLI clients
-    if (msg.type === 'user_input' && msg.session_id === sessionId && msg.source === 'cli') {
-      setConversation(prev => [...prev, {
-        type: 'user',
-        content: msg.content,
-        timestamp: new Date(),
-        source: msg.source,
-        isOwn: false,
-      }]);
-    }
-  }, [sessionId]);
-
-  const handleClaudeEvent = (event: ClaudeEvent) => {
-    switch (event.type) {
-      case 'text_delta':
-        setStreamingText(prev => prev + event.text);
-        break;
-      case 'turn_start':
-        setStreamingText('');
-        break;
-      case 'turn_complete':
-        if (streamingText) {
-          setConversation(prev => [...prev, {
-            type: 'assistant',
-            content: streamingText,
-            timestamp: new Date(),
-          }]);
-          setStreamingText('');
+    switch (msg.type) {
+      case 'attach_ack':
+        if (msg.session_id === sessionId) {
+          setConnectionState('attached');
+          setTerminalSize({ cols: msg.cols, rows: msg.rows });
         }
         break;
-      case 'permission_request':
-        setPendingPermission({
-          id: event.id,
-          tool: event.tool,
-          description: event.description,
-        });
+
+      case 'pty_output':
+        if (msg.session_id === sessionId && terminalRef.current) {
+          terminalRef.current.write(msg.data);
+        }
         break;
+
+      case 'pty_replay':
+        if (msg.session_id === sessionId && terminalRef.current) {
+          terminalRef.current.write(msg.data);
+        }
+        break;
+
+      case 'pty_exit':
+        if (msg.session_id === sessionId) {
+          setConnectionState('exited');
+          setExitCode(msg.exit_code ?? null);
+        }
+        break;
+
       case 'error':
-        setConversation(prev => [...prev, {
-          type: 'assistant',
-          content: `Error: ${event.message}`,
-          timestamp: new Date(),
-        }]);
+        if (msg.session_id === sessionId) {
+          setConnectionState('error');
+          setErrorMessage(msg.message);
+        }
         break;
     }
-  };
+  }, [sessionId]);
 
   useEffect(() => {
     return addMessageHandler(handleMessage);
   }, [addMessageHandler, handleMessage]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim()) return;
+  // Send detach when unmounting
+  useEffect(() => {
+    return () => {
+      if (isConnected) {
+        send({
+          type: 'detach',
+          session_id: sessionId,
+        });
+      }
+    };
+  }, [isConnected, sessionId, send]);
 
-    setConversation(prev => [...prev, {
-      type: 'user',
-      content: input,
-      timestamp: new Date(),
-      source: 'web_ui',
-      isOwn: true,
-    }]);
-
+  // Terminal callbacks
+  const handleInput = useCallback((data: string) => {
     send({
-      type: 'input',
+      type: 'pty_input',
       session_id: sessionId,
-      content: input,
+      data,
     });
+  }, [sessionId, send]);
 
-    setInput('');
-  };
-
-  const handlePermission = (approved: boolean) => {
-    if (!pendingPermission) return;
-
+  const handleResize = useCallback((cols: number, rows: number) => {
+    setTerminalSize({ cols, rows });
     send({
-      type: 'permission_response',
+      type: 'pty_resize',
       session_id: sessionId,
-      request_id: pendingPermission.id,
-      approved,
+      cols,
+      rows,
     });
-
-    setPendingPermission(null);
-  };
+  }, [sessionId, send]);
 
   return (
-    <div className="page session-detail">
+    <div className="page session-detail terminal-page">
       <div className="session-header">
         <Link to="/claude" className="back-link">&larr; Sessions</Link>
         <h1>Session {sessionId.slice(0, 8)}</h1>
-        <span className={`status status-${state}`}>{state}</span>
+        <span className="terminal-size">{terminalSize.cols}x{terminalSize.rows}</span>
+        <ConnectionStatus state={connectionState} exitCode={exitCode} />
       </div>
 
       {!isConnected && (
@@ -150,50 +118,46 @@ export function ClaudeSession() {
         </div>
       )}
 
-      {pendingPermission && (
-        <div className="permission-card">
-          <h3>Permission Required</h3>
-          <p><strong>{pendingPermission.tool}</strong></p>
-          <p>{pendingPermission.description}</p>
-          <div className="permission-actions">
-            <button onClick={() => handlePermission(true)} className="button approve">
-              Allow
-            </button>
-            <button onClick={() => handlePermission(false)} className="button deny">
-              Deny
-            </button>
-          </div>
+      {connectionState === 'error' && errorMessage && (
+        <div className="error-banner">
+          <strong>Error:</strong> {errorMessage}
         </div>
       )}
 
-      <div className="conversation">
-        {conversation.map((item, i) => (
-          <div key={i} className={`message message-${item.type} ${item.isOwn === false ? 'message-remote' : ''}`}>
-            {item.type === 'user' && item.isOwn === false && item.source && (
-              <div className="message-source">{getSourceLabel(item.source)}</div>
-            )}
-            <div className="message-content">{item.content}</div>
-          </div>
-        ))}
-        {streamingText && (
-          <div className="message message-assistant streaming">
-            <div className="message-content">{streamingText}</div>
+      {connectionState === 'exited' && (
+        <div className="exit-banner">
+          Session ended {exitCode !== null && `(exit code: ${exitCode})`}
+        </div>
+      )}
+
+      <div className="terminal-wrapper">
+        {(connectionState === 'attached' || connectionState === 'exited') && (
+          <SessionTerminal
+            ref={terminalRef}
+            sessionId={sessionId}
+            onInput={handleInput}
+            onResize={handleResize}
+          />
+        )}
+        {connectionState === 'connecting' && (
+          <div className="terminal-placeholder">
+            Attaching to session...
           </div>
         )}
       </div>
-
-      <form onSubmit={handleSubmit} className="input-form">
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Send a message..."
-          disabled={state === 'processing'}
-        />
-        <button type="submit" disabled={state === 'processing' || !input.trim()}>
-          Send
-        </button>
-      </form>
     </div>
   );
+}
+
+function ConnectionStatus({ state, exitCode }: { state: ConnectionState; exitCode: number | null }) {
+  switch (state) {
+    case 'connecting':
+      return <span className="status status-connecting">Connecting...</span>;
+    case 'attached':
+      return <span className="status status-attached">Connected</span>;
+    case 'exited':
+      return <span className="status status-exited">Exited ({exitCode ?? '?'})</span>;
+    case 'error':
+      return <span className="status status-error">Error</span>;
+  }
 }

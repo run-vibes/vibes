@@ -5,21 +5,6 @@
 use serde::{Deserialize, Serialize};
 use vibes_core::{AuthContext, ClaudeEvent, InputSource, VibesEvent};
 
-/// A historical event with sequence number for catch-up
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct HistoryEvent {
-    /// Sequence number for ordering
-    pub seq: u64,
-    /// The actual event
-    pub event: VibesEvent,
-    /// Unix timestamp in milliseconds
-    pub timestamp: i64,
-}
-
-fn default_history_limit() -> u32 {
-    50
-}
-
 /// Information about an active session
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct SessionInfo {
@@ -46,15 +31,6 @@ pub enum RemovalReason {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ClientMessage {
-    /// Subscribe to session events
-    Subscribe {
-        /// Session IDs to subscribe to
-        session_ids: Vec<String>,
-        /// Request catch-up with historical events
-        #[serde(default)]
-        catch_up: bool,
-    },
-
     /// Unsubscribe from session events
     Unsubscribe {
         /// Session IDs to unsubscribe from
@@ -62,6 +38,9 @@ pub enum ClientMessage {
     },
 
     /// Create a new session
+    ///
+    /// Note: With PTY mode, sessions are created via `Attach`. This is retained
+    /// for backwards compatibility with non-PTY clients.
     CreateSession {
         /// Optional session name
         name: Option<String>,
@@ -69,7 +48,12 @@ pub enum ClientMessage {
         request_id: String,
     },
 
-    /// Send user input to a session
+    // ==================== Legacy Messages (Non-PTY) ====================
+    // These are retained for backwards compatibility. New clients should
+    // use PTY messages (Attach, PtyInput, PtyResize) instead.
+    /// Send user input to a session (DEPRECATED)
+    ///
+    /// Use `PtyInput` instead for PTY sessions.
     Input {
         /// Target session ID
         session_id: String,
@@ -77,7 +61,9 @@ pub enum ClientMessage {
         content: String,
     },
 
-    /// Respond to a permission request
+    /// Respond to a permission request (DEPRECATED)
+    ///
+    /// With PTY mode, permissions are handled through the terminal UI.
     PermissionResponse {
         /// Target session ID
         session_id: String,
@@ -99,15 +85,35 @@ pub enum ClientMessage {
         session_id: String,
     },
 
-    /// Request additional history page
-    RequestHistory {
-        /// Session ID
+    // ==================== PTY Messages ====================
+    /// Attach to a session (receive PTY output)
+    Attach {
+        /// Session ID to attach to
         session_id: String,
-        /// Return events with seq < before_seq
-        before_seq: u64,
-        /// Max events to return
-        #[serde(default = "default_history_limit")]
-        limit: u32,
+    },
+
+    /// Detach from a session
+    Detach {
+        /// Session ID to detach from
+        session_id: String,
+    },
+
+    /// Send input to PTY
+    PtyInput {
+        /// Target session ID
+        session_id: String,
+        /// Input data (base64 encoded)
+        data: String,
+    },
+
+    /// Resize PTY
+    PtyResize {
+        /// Target session ID
+        session_id: String,
+        /// New column count
+        cols: u16,
+        /// New row count
+        rows: u16,
     },
 }
 
@@ -133,7 +139,10 @@ pub enum ServerMessage {
         name: Option<String>,
     },
 
-    /// Claude event from a session
+    /// Claude event from a session (DEPRECATED)
+    ///
+    /// With PTY mode, output is sent via `PtyOutput` instead.
+    /// Retained for backwards compatibility with non-PTY clients.
     Claude {
         /// Source session ID
         session_id: String,
@@ -196,31 +205,10 @@ pub enum ServerMessage {
         you_are_owner: bool,
     },
 
-    /// Subscribe acknowledgment with history catch-up
-    SubscribeAck {
-        /// Session ID
-        session_id: String,
-        /// Current sequence number (live events continue from current_seq + 1)
-        current_seq: u64,
-        /// Historical events (most recent page)
-        history: Vec<HistoryEvent>,
-        /// Whether more history pages are available
-        has_more: bool,
-    },
-
-    /// Additional history page response
-    HistoryPage {
-        /// Session ID
-        session_id: String,
-        /// Historical events for this page
-        events: Vec<HistoryEvent>,
-        /// Whether more pages exist before oldest_seq
-        has_more: bool,
-        /// Oldest sequence number in this page
-        oldest_seq: u64,
-    },
-
-    /// User input broadcast to other subscribers
+    /// User input broadcast to other subscribers (DEPRECATED)
+    ///
+    /// With PTY mode, input/output is handled via `PtyInput`/`PtyOutput`.
+    /// Retained for backwards compatibility with non-PTY clients.
     UserInput {
         /// Session ID
         session_id: String,
@@ -228,6 +216,41 @@ pub enum ServerMessage {
         content: String,
         /// Source of the input
         source: InputSource,
+    },
+
+    // ==================== PTY Messages ====================
+    /// PTY output data
+    PtyOutput {
+        /// Source session ID
+        session_id: String,
+        /// Output data (base64 encoded)
+        data: String,
+    },
+
+    /// PTY process exited
+    PtyExit {
+        /// Session ID
+        session_id: String,
+        /// Exit code (None if killed by signal)
+        exit_code: Option<i32>,
+    },
+
+    /// Attach acknowledged
+    AttachAck {
+        /// Session ID
+        session_id: String,
+        /// Current terminal columns
+        cols: u16,
+        /// Current terminal rows
+        rows: u16,
+    },
+
+    /// Replay scrollback buffer on attach
+    PtyReplay {
+        /// Session ID
+        session_id: String,
+        /// Scrollback data (base64 encoded)
+        data: String,
     },
 }
 
@@ -329,44 +352,6 @@ mod tests {
     }
 
     // ==================== ClientMessage Tests ====================
-
-    #[test]
-    fn test_client_message_subscribe_roundtrip() {
-        let msg = ClientMessage::Subscribe {
-            session_ids: vec!["sess-1".to_string(), "sess-2".to_string()],
-            catch_up: false,
-        };
-        let json = serde_json::to_string(&msg).unwrap();
-        let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
-        assert_eq!(msg, parsed);
-
-        // Verify JSON structure
-        assert!(json.contains(r#""type":"subscribe""#));
-        assert!(json.contains(r#""session_ids""#));
-    }
-
-    #[test]
-    fn test_client_message_subscribe_with_catch_up() {
-        let msg = ClientMessage::Subscribe {
-            session_ids: vec!["sess-1".to_string()],
-            catch_up: true,
-        };
-        let json = serde_json::to_string(&msg).unwrap();
-        let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
-        assert_eq!(msg, parsed);
-        assert!(json.contains(r#""catch_up":true"#));
-    }
-
-    #[test]
-    fn test_client_message_subscribe_catch_up_defaults_false() {
-        // When catch_up is not provided in JSON, it should default to false
-        let json = r#"{"type":"subscribe","session_ids":["sess-1"]}"#;
-        let parsed: ClientMessage = serde_json::from_str(json).unwrap();
-        match parsed {
-            ClientMessage::Subscribe { catch_up, .. } => assert!(!catch_up),
-            _ => panic!("Expected Subscribe message"),
-        }
-    }
 
     #[test]
     fn test_client_message_unsubscribe_roundtrip() {
@@ -723,87 +708,6 @@ mod tests {
         assert!(json.contains(r#""email":"user@example.com""#));
     }
 
-    // ==================== History Event Tests ====================
-
-    #[test]
-    fn test_history_event_serialization() {
-        let event = HistoryEvent {
-            seq: 42,
-            event: VibesEvent::SessionStateChanged {
-                session_id: "sess-1".to_string(),
-                state: "processing".to_string(),
-            },
-            timestamp: 1234567890000,
-        };
-        let json = serde_json::to_string(&event).unwrap();
-        let parsed: HistoryEvent = serde_json::from_str(&json).unwrap();
-        assert_eq!(event, parsed);
-        assert!(json.contains(r#""seq":42"#));
-        assert!(json.contains(r#""timestamp":1234567890000"#));
-    }
-
-    #[test]
-    fn test_client_message_request_history_roundtrip() {
-        let msg = ClientMessage::RequestHistory {
-            session_id: "sess-1".to_string(),
-            before_seq: 100,
-            limit: 25,
-        };
-        let json = serde_json::to_string(&msg).unwrap();
-        let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
-        assert_eq!(msg, parsed);
-        assert!(json.contains(r#""type":"request_history""#));
-        assert!(json.contains(r#""before_seq":100"#));
-    }
-
-    #[test]
-    fn test_client_message_request_history_default_limit() {
-        let json = r#"{"type":"request_history","session_id":"sess-1","before_seq":50}"#;
-        let parsed: ClientMessage = serde_json::from_str(json).unwrap();
-        match parsed {
-            ClientMessage::RequestHistory { limit, .. } => assert_eq!(limit, 50),
-            _ => panic!("Expected RequestHistory message"),
-        }
-    }
-
-    #[test]
-    fn test_server_message_subscribe_ack_roundtrip() {
-        let msg = ServerMessage::SubscribeAck {
-            session_id: "sess-1".to_string(),
-            current_seq: 42,
-            history: vec![HistoryEvent {
-                seq: 40,
-                event: VibesEvent::SessionStateChanged {
-                    session_id: "sess-1".to_string(),
-                    state: "idle".to_string(),
-                },
-                timestamp: 1234567890000,
-            }],
-            has_more: true,
-        };
-        let json = serde_json::to_string(&msg).unwrap();
-        let parsed: ServerMessage = serde_json::from_str(&json).unwrap();
-        assert_eq!(msg, parsed);
-        assert!(json.contains(r#""type":"subscribe_ack""#));
-        assert!(json.contains(r#""current_seq":42"#));
-        assert!(json.contains(r#""has_more":true"#));
-    }
-
-    #[test]
-    fn test_server_message_history_page_roundtrip() {
-        let msg = ServerMessage::HistoryPage {
-            session_id: "sess-1".to_string(),
-            events: vec![],
-            has_more: false,
-            oldest_seq: 0,
-        };
-        let json = serde_json::to_string(&msg).unwrap();
-        let parsed: ServerMessage = serde_json::from_str(&json).unwrap();
-        assert_eq!(msg, parsed);
-        assert!(json.contains(r#""type":"history_page""#));
-        assert!(json.contains(r#""oldest_seq":0"#));
-    }
-
     #[test]
     fn test_server_message_user_input_roundtrip() {
         let msg = ServerMessage::UserInput {
@@ -827,5 +731,120 @@ mod tests {
         };
         let json = serde_json::to_string(&msg).unwrap();
         assert!(json.contains(r#""source":"web_ui""#));
+    }
+
+    // ==================== PTY Message Tests ====================
+
+    #[test]
+    fn test_client_message_attach_roundtrip() {
+        let msg = ClientMessage::Attach {
+            session_id: "sess-1".to_string(),
+        };
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+        assert!(json.contains(r#""type":"attach""#));
+    }
+
+    #[test]
+    fn test_client_message_detach_roundtrip() {
+        let msg = ClientMessage::Detach {
+            session_id: "sess-1".to_string(),
+        };
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+        assert!(json.contains(r#""type":"detach""#));
+    }
+
+    #[test]
+    fn test_client_message_pty_input_roundtrip() {
+        let msg = ClientMessage::PtyInput {
+            session_id: "sess-1".to_string(),
+            data: "aGVsbG8=".to_string(), // base64 for "hello"
+        };
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+        assert!(json.contains(r#""type":"pty_input""#));
+    }
+
+    #[test]
+    fn test_client_message_pty_resize_roundtrip() {
+        let msg = ClientMessage::PtyResize {
+            session_id: "sess-1".to_string(),
+            cols: 120,
+            rows: 40,
+        };
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+        assert!(json.contains(r#""type":"pty_resize""#));
+        assert!(json.contains(r#""cols":120"#));
+        assert!(json.contains(r#""rows":40"#));
+    }
+
+    #[test]
+    fn test_server_message_pty_output_roundtrip() {
+        let msg = ServerMessage::PtyOutput {
+            session_id: "sess-1".to_string(),
+            data: "aGVsbG8gd29ybGQ=".to_string(), // base64 for "hello world"
+        };
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ServerMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+        assert!(json.contains(r#""type":"pty_output""#));
+    }
+
+    #[test]
+    fn test_server_message_pty_exit_roundtrip() {
+        let msg = ServerMessage::PtyExit {
+            session_id: "sess-1".to_string(),
+            exit_code: Some(0),
+        };
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ServerMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+        assert!(json.contains(r#""type":"pty_exit""#));
+        assert!(json.contains(r#""exit_code":0"#));
+    }
+
+    #[test]
+    fn test_server_message_pty_exit_no_exit_code() {
+        let msg = ServerMessage::PtyExit {
+            session_id: "sess-1".to_string(),
+            exit_code: None,
+        };
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ServerMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+        assert!(json.contains(r#""exit_code":null"#));
+    }
+
+    #[test]
+    fn test_server_message_attach_ack_roundtrip() {
+        let msg = ServerMessage::AttachAck {
+            session_id: "sess-1".to_string(),
+            cols: 80,
+            rows: 24,
+        };
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ServerMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+        assert!(json.contains(r#""type":"attach_ack""#));
+        assert!(json.contains(r#""cols":80"#));
+        assert!(json.contains(r#""rows":24"#));
+    }
+
+    #[test]
+    fn test_server_message_pty_replay_roundtrip() {
+        let msg = ServerMessage::PtyReplay {
+            session_id: "sess-1".to_string(),
+            data: "aGVsbG8gd29ybGQ=".to_string(), // base64 for "hello world"
+        };
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ServerMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+        assert!(json.contains(r#""type":"pty_replay""#));
     }
 }

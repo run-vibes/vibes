@@ -1,7 +1,7 @@
 # vibes
 
 [![CI](https://github.com/run-vibes/vibes/actions/workflows/ci.yml/badge.svg)](https://github.com/run-vibes/vibes/actions/workflows/ci.yml)
-[![Progress](https://img.shields.io/badge/progress-8%2F15%20milestones-blue)](docs/PROGRESS.md)
+[![Progress](https://img.shields.io/badge/progress-10%2F14%20milestones-blue)](docs/PROGRESS.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Remote control for your Claude Code sessions.
@@ -102,53 +102,44 @@ export_plugin!(MyPlugin);
 
 ## Architecture
 
-vibes uses a **daemon-first architecture** where a background server owns all session state. The CLI and Web UI connect as WebSocket clients.
+vibes uses a **daemon-first architecture** with a PTY-based backend. The server owns Claude sessions as persistent PTY processes, and both CLI and Web UI connect as terminal clients.
 
 ```
-                         ┌─────────────────────────────────────────────────────┐
-                         │              vibes daemon (server)                   │
-                         │                localhost:7432                        │
-                         ├─────────────────────────────────────────────────────┤
-                         │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  │
-                         │  │   Session   │  │  EventBus   │  │ PluginHost  │  │
-                         │  │   Manager   │  │  (memory)   │  │             │  │
-                         │  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘  │
-                         │         │                │                │         │
-                         │         └────────────────┼────────────────┘         │
-                         │                          │                          │
-                         │         ┌────────────────┴────────────────┐         │
-                         │         │  axum HTTP/WebSocket Server     │         │
-                         │         │  ┌───────────┐  ┌────────────┐  │         │
-                         │         │  │  REST API │  │ WebSocket  │  │         │
-                         │         │  └───────────┘  └────────────┘  │         │
-                         │         └─────────────────────────────────┘         │
-                         │                          │                          │
-                         │         ┌────────────────┴────────────────┐         │
-                         │         │    Embedded TanStack Web UI     │         │
-                         │         │    (rust-embed static files)    │         │
-                         │         └─────────────────────────────────┘         │
-                         └─────────────────────────────────────────────────────┘
-                                    ▲               ▲                ▲
-                                    │ WebSocket     │ HTTP           │ spawns
-┌─────────────────┐                 │               │                │
-│   vibes claude  │◄────────────────┘               │    ┌───────────┴───────┐
-│   (CLI client)  │                                 │    │    Claude Code    │
-└─────────────────┘                                 │    │   (subprocess)    │
-                                                    │    └───────────────────┘
-┌─────────────────┐                                 │
-│   Web Browser   │◄────────────────────────────────┘
-│ (phone/tablet)  │  http://localhost:7432
-└─────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│                      vibes daemon (server)                          │
+│                        localhost:7432                               │
+├─────────────────────────────────────────────────────────────────────┤
+│  ┌──────────────┐    ┌──────────────┐    ┌───────────────────────┐ │
+│  │ PTY Manager  │◄───│ Hook Receiver│    │   WebSocket Server    │ │
+│  │              │    │   (events)   │    │                       │ │
+│  │ ┌──────────┐ │    └──────┬───────┘    │  ┌────────┐ ┌───────┐ │ │
+│  │ │ claude   │ │           │            │  │  CLI   │ │  Web  │ │ │
+│  │ │  (PTY)   │ │    structured          │  │terminal│ │xterm  │ │ │
+│  │ └──────────┘ │    ClaudeEvents        │  └────────┘ └───────┘ │ │
+│  └──────────────┘           │            └───────────────────────┘ │
+│                             ▼                                      │
+│                    ┌──────────────┐                                │
+│                    │  Event Bus   │──► Analytics, History, iOS     │
+│                    └──────────────┘                                │
+└─────────────────────────────────────────────────────────────────────┘
+         ▲                           ▲
+         │ PTY I/O via WebSocket     │ PTY I/O via WebSocket
+         │                           │
+┌────────┴────────┐         ┌────────┴────────┐
+│  vibes claude   │         │   Web Browser   │
+│  (CLI client)   │         │   (xterm.js)    │
+│  Raw terminal   │         │   Terminal UI   │
+└─────────────────┘         └─────────────────┘
 ```
 
 **Key components:**
 
-- **Daemon Server** - Background process (auto-started by CLI) that owns all state
-- **SessionManager** - Orchestrates Claude Code sessions
-- **EventBus** - Real-time pub/sub for events with late-joiner replay
-- **PluginHost** - Loads and manages native Rust plugins
-- **CLI Client** - Connects to daemon via WebSocket, streams I/O to terminal
-- **Web UI** - TanStack React SPA embedded in binary, served on localhost:7432
+- **Daemon Server** - Background process that owns PTY sessions (survives CLI disconnect)
+- **PTY Manager** - Spawns Claude in persistent pseudo-terminals
+- **Hook Receiver** - Captures structured events via Claude Code hooks
+- **CLI Client** - Connects to daemon, proxies PTY I/O to local terminal
+- **Web UI** - xterm.js terminal emulator showing exact CLI experience
+- **Event Bus** - Real-time pub/sub fed by hooks for analytics/history
 
 ## Testing
 
@@ -206,8 +197,8 @@ just pre-commit
 |-------|-------------|--------|
 | [**1. Foundation**](docs/PROGRESS.md#phase-1-foundation-mvp) | Claude Code proxy, plugin system, local web UI | ✅ Complete |
 | [**2. Remote Access**](docs/PROGRESS.md#phase-2-remote-access) | Cloudflare Tunnel, authentication, push notifications | ✅ Complete |
-| [**3. Multi-Client**](docs/PROGRESS.md#phase-3-multi-client-experience) | Chat history, multi-session, setup wizards | 🔄 In Progress |
-| [**4. Polish**](docs/PROGRESS.md#phase-4-polish--ecosystem) | Default plugins, CLI enhancements, advanced permissions | ⏳ Planned |
+| [**3. Multi-Client**](docs/PROGRESS.md#phase-3-multi-client-experience) | PTY backend, xterm.js UI, multi-session, setup wizards | 🔄 In Progress |
+| [**4. Polish**](docs/PROGRESS.md#phase-4-polish--ecosystem) | Default plugins, iOS app, CLI enhancements | ⏳ Planned |
 
 See [PROGRESS.md](docs/PROGRESS.md) for detailed milestone tracking and changelog.
 
