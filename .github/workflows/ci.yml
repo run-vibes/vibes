@@ -30,12 +30,18 @@ jobs:
 
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
+        with:
+          # Cache all crates including heavy native deps (cozo, rocksdb)
+          cache-all-crates: true
+          # Share cache between check and e2e jobs
+          shared-key: "rust-cache"
 
       - name: Format check
         run: nix develop --command just fmt-check
 
       - name: Clippy
-        run: nix develop --command just clippy
+        # Build all targets so test binaries are ready for next step
+        run: nix develop --command cargo clippy --all-targets -- -D warnings
 
       - name: Test
         run: nix develop --command just test
@@ -64,6 +70,9 @@ jobs:
 
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
+        with:
+          cache-all-crates: true
+          shared-key: "rust-cache"
 
       - name: Build release binary
         run: nix develop --command just build-release

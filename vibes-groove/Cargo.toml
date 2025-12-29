@@ -1,0 +1,39 @@
+[package]
+name = "vibes-groove"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Continual learning storage for vibes"
+
+[dependencies]
+# Storage
+cozo = { version = "0.7", default-features = false, features = ["storage-rocksdb", "rayon"] }
+
+# Async
+async-trait.workspace = true
+tokio = { workspace = true, features = ["sync"] }
+
+# Serialization
+serde.workspace = true
+serde_json.workspace = true
+toml = "0.8"
+
+# Types
+chrono.workspace = true
+uuid.workspace = true
+thiserror.workspace = true
+
+# Vector operations (for HNSW embeddings - must match cozo's ndarray version)
+ndarray = "0.15"
+
+# Bayesian sampling
+rand = "0.8"
+rand_distr = "0.4"
+
+# Config paths
+dirs.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
