@@ -106,10 +106,17 @@ impl VibesClient {
     ///
     /// If `name` is provided and the session doesn't exist, a new session will be
     /// created with this human-readable name.
-    pub async fn attach(&self, session_id: &str, name: Option<String>) -> Result<()> {
+    /// If `cwd` is provided, the spawned process will use it as its working directory.
+    pub async fn attach(
+        &self,
+        session_id: &str,
+        name: Option<String>,
+        cwd: Option<String>,
+    ) -> Result<()> {
         self.send(ClientMessage::Attach {
             session_id: session_id.to_string(),
             name,
+            cwd,
         })
         .await
     }

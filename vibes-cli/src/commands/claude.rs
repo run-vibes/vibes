@@ -93,7 +93,8 @@ pub async fn run(args: ClaudeArgs) -> Result<()> {
     };
 
     // Send attach request with optional session name
-    client.attach(&session_id, session_name).await?;
+    // TODO: Pass actual cwd once CLI cwd propagation is implemented
+    client.attach(&session_id, session_name, None).await?;
 
     // Wait for attach acknowledgment
     let (initial_cols, initial_rows) = wait_for_attach_ack(&mut client, &session_id).await?;

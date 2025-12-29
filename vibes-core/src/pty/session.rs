@@ -162,7 +162,7 @@ mod tests {
     #[test]
     fn backend_creates_running_session() {
         let backend = RealPtyBackend::new(test_config());
-        let session = backend.create_session("test-id".to_string(), None);
+        let session = backend.create_session("test-id".to_string(), None, None);
         assert!(session.is_ok());
 
         let session = session.unwrap();
@@ -174,7 +174,7 @@ mod tests {
     fn backend_creates_session_with_name() {
         let backend = RealPtyBackend::new(test_config());
         let session = backend
-            .create_session("test-id".to_string(), Some("my-session".to_string()))
+            .create_session("test-id".to_string(), Some("my-session".to_string()), None)
             .unwrap();
 
         assert_eq!(session.name, Some("my-session".to_string()));
@@ -187,14 +187,16 @@ mod tests {
             ..Default::default()
         };
         let backend = RealPtyBackend::new(config);
-        let result = backend.create_session("test-id".to_string(), None);
+        let result = backend.create_session("test-id".to_string(), None, None);
         assert!(result.is_err());
     }
 
     #[tokio::test]
     async fn write_and_read_data() {
         let backend = RealPtyBackend::new(test_config());
-        let session = backend.create_session("test-id".to_string(), None).unwrap();
+        let session = backend
+            .create_session("test-id".to_string(), None, None)
+            .unwrap();
 
         // Write some data
         session.handle.write(b"hello\n").await.unwrap();
@@ -210,7 +212,9 @@ mod tests {
     #[tokio::test]
     async fn resize_pty() {
         let backend = RealPtyBackend::new(test_config());
-        let session = backend.create_session("test-id".to_string(), None).unwrap();
+        let session = backend
+            .create_session("test-id".to_string(), None, None)
+            .unwrap();
 
         // Resize should not error
         let result = session.handle.resize(80, 24).await;
@@ -220,7 +224,9 @@ mod tests {
     #[tokio::test]
     async fn handle_provides_scrollback_access() {
         let backend = RealPtyBackend::new(test_config());
-        let session = backend.create_session("test-id".to_string(), None).unwrap();
+        let session = backend
+            .create_session("test-id".to_string(), None, None)
+            .unwrap();
 
         // Write data and read it back (cat echoes)
         session.handle.write(b"test\n").await.unwrap();
