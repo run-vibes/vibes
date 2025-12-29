@@ -25,4 +25,6 @@ pub use store::{
 pub use types::*;
 
 // Security re-exports
-pub use security::{SecurityError, SecurityResult, TrustLevel};
+pub use security::{
+    SecurityError, SecurityResult, TrustContext, TrustLevel, TrustSource, Verification, VerifiedBy,
+};

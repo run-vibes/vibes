@@ -17,7 +17,8 @@ mod scanning;
 mod trust;
 
 pub use error::{SecurityError, SecurityResult};
-pub use trust::*;
+pub use trust::{TrustContext, TrustLevel, TrustSource, Verification, VerifiedBy};
+
 // TODO: Uncomment as modules are implemented
 // pub use provenance::*;
 // pub use policy::*;
