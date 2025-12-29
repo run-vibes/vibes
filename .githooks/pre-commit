@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -e
+
+echo "Running pre-commit checks..."
+
+# Format check
+echo "→ Checking formatting..."
+cargo fmt --check
+
+# Clippy
+echo "→ Running clippy..."
+cargo clippy --all-targets -- -D warnings
+
+echo "✓ Pre-commit checks passed"
