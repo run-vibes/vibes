@@ -11,78 +11,85 @@ pub const CURRENT_SCHEMA_VERSION: u32 = 1;
 /// This script creates all the base tables, indexes, and the HNSW index
 /// for semantic search with 384-dimensional embeddings (GteSmall).
 pub const INITIAL_SCHEMA: &str = r#"
-# Schema version tracking
-:create schema_version {
-    version: Int =>
-    applied_at: Int,
-    description: String
+{
+    :create schema_version {
+        version: Int =>
+        applied_at: Int,
+        description: String
+    }
 }
-
-# Core learning entity
-:create learning {
-    id: String =>
-    scope: String,
-    category: String,
-    description: String,
-    pattern_json: String?,
-    insight: String,
-    confidence: Float,
-    created_at: Int,
-    updated_at: Int,
-    source_type: String,
-    source_json: String
+{
+    :create learning {
+        id: String =>
+        scope: String,
+        category: String,
+        description: String,
+        pattern_json: String?,
+        insight: String,
+        confidence: Float,
+        created_at: Int,
+        updated_at: Int,
+        source_type: String,
+        source_json: String
+    }
 }
-
-# Per-learning usage statistics (updated frequently)
-:create usage_stats {
-    learning_id: String =>
-    times_injected: Int,
-    times_helpful: Int,
-    times_ignored: Int,
-    times_contradicted: Int,
-    last_used: Int?,
-    confidence_alpha: Float,
-    confidence_beta: Float
+{
+    :create usage_stats {
+        learning_id: String =>
+        times_injected: Int,
+        times_helpful: Int,
+        times_ignored: Int,
+        times_contradicted: Int,
+        last_used: Int?,
+        confidence_alpha: Float,
+        confidence_beta: Float
+    }
 }
-
-# Embeddings for semantic search (384-dim GteSmall)
-:create learning_embeddings {
-    learning_id: String =>
-    embedding: <F32; 384>
+{
+    :create learning_embeddings {
+        learning_id: String =>
+        embedding: <F32; 384>
+    }
 }
-
-# Learning relationships
-:create learning_relations {
-    from_id: String,
-    relation_type: String,
-    to_id: String =>
-    weight: Float,
-    created_at: Int
+{
+    :create learning_relations {
+        from_id: String,
+        relation_type: String,
+        to_id: String =>
+        weight: Float,
+        created_at: Int
+    }
 }
-
-# System-wide adaptive parameters
-:create adaptive_params {
-    param_name: String =>
-    value: Float,
-    uncertainty: Float,
-    observations: Int,
-    prior_alpha: Float,
-    prior_beta: Float,
-    updated_at: Int
+{
+    :create adaptive_params {
+        param_name: String =>
+        value: Float,
+        uncertainty: Float,
+        observations: Int,
+        prior_alpha: Float,
+        prior_beta: Float,
+        updated_at: Int
+    }
 }
-
-# Indexes
-::index create learning:by_scope { scope }
-::index create learning:by_category { category }
-::index create learning_relations:by_from { from_id }
-::index create learning_relations:by_to { to_id }
-
-# HNSW index for semantic search
-::hnsw create learning_embeddings:semantic_idx {
-    dim: 384,
-    m: 16,
-    ef_construction: 200,
-    fields: [embedding]
+{
+    ::index create learning:by_scope { scope }
+}
+{
+    ::index create learning:by_category { category }
+}
+{
+    ::index create learning_relations:by_from { from_id }
+}
+{
+    ::index create learning_relations:by_to { to_id }
+}
+{
+    ::hnsw create learning_embeddings:semantic_idx {
+        dim: 384,
+        m: 16,
+        ef_construction: 200,
+        fields: [embedding]
+    }
 }
 "#;
 
