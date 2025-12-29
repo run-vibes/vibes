@@ -49,6 +49,7 @@ pub struct IdentityPolicy {
 
 /// Which storage tiers are allowed
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
 pub struct TiersPolicy {
     pub allow_personal_tier: bool,
     pub allow_project_tier: bool,
@@ -67,6 +68,7 @@ impl Default for TiersPolicy {
 
 /// Learning capture policy
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
 pub struct CapturePolicy {
     pub allow_capture_on_personal: bool,
     pub allow_capture_on_enterprise: bool,
@@ -85,6 +87,7 @@ impl Default for CapturePolicy {
 
 /// Learning injection policy
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
 pub struct InjectionPolicy {
     pub allow_personal_injection: bool,
     pub allow_unverified_injection: bool,
@@ -158,6 +161,7 @@ pub enum WrapperType {
 
 /// Import/export policy
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
 pub struct ImportExportPolicy {
     pub allow_import_from_file: bool,
     pub allow_import_from_url: bool,
@@ -243,6 +247,7 @@ pub enum QuarantineAction {
 
 /// Audit logging policy
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
 pub struct AuditPolicy {
     pub enabled: bool,
     pub retention_days: u32,
@@ -259,6 +264,7 @@ impl Default for AuditPolicy {
 
 /// Quarantine management policy
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
 pub struct QuarantinePolicy {
     #[serde(default)]
     pub reviewers: Vec<String>,

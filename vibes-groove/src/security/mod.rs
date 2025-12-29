@@ -33,9 +33,11 @@ pub use audit::{
     ResourceRef,
 };
 pub use policy::{
-    AuditPolicy, CapturePolicy, IdentityPolicy, ImportExportPolicy, InjectionPolicy, Policy,
-    PolicyChangeAction, PresentationPolicy, QuarantineAction, QuarantinePolicy, ScanPatterns,
-    ScanningPolicy, TiersPolicy, WrapperConfig, WrapperType,
+    AuditPolicy, CapturePolicy, FilePolicyProvider, IdentityPolicy, ImportExportPolicy,
+    InjectionPolicy, MemoryPolicyProvider, Policy, PolicyChangeAction, PolicyProvider,
+    PresentationPolicy, QuarantineAction, QuarantinePolicy, ScanPatterns, ScanningPolicy,
+    TiersPolicy, WrapperConfig, WrapperType, load_policy_from_file, load_policy_or_default,
+    parse_policy, validate_policy,
 };
 
 // TODO: Uncomment as modules are implemented
