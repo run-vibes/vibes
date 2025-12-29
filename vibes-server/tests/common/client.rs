@@ -99,14 +99,28 @@ impl TestClient {
     /// Uses the attach flow - generates session ID and sends attach message
     #[allow(dead_code)]
     pub async fn create_session(&mut self, name: Option<&str>) -> String {
+        self.create_session_with_cwd(name, None).await
+    }
+
+    /// Create a new session with optional cwd, returns session ID
+    #[allow(dead_code)]
+    pub async fn create_session_with_cwd(
+        &mut self,
+        name: Option<&str>,
+        cwd: Option<&str>,
+    ) -> String {
         let session_id = Uuid::new_v4().to_string();
-        self.conn
-            .send_json(&serde_json::json!({
-                "type": "attach",
-                "session_id": session_id,
-                "name": name,
-            }))
-            .await;
+        let mut msg = serde_json::json!({
+            "type": "attach",
+            "session_id": session_id,
+        });
+        if let Some(n) = name {
+            msg["name"] = serde_json::json!(n);
+        }
+        if let Some(c) = cwd {
+            msg["cwd"] = serde_json::json!(c);
+        }
+        self.conn.send_json(&msg).await;
 
         let response: serde_json::Value = self.conn.recv_json().await;
         assert_eq!(
@@ -141,12 +155,20 @@ impl TestClient {
     /// Attach to a PTY session, returns (cols, rows) from AttachAck
     #[allow(dead_code)]
     pub async fn attach(&mut self, session_id: &str) -> (u16, u16) {
-        self.conn
-            .send_json(&serde_json::json!({
-                "type": "attach",
-                "session_id": session_id,
-            }))
-            .await;
+        self.attach_with_cwd(session_id, None).await
+    }
+
+    /// Attach to a PTY session with optional cwd, returns (cols, rows) from AttachAck
+    #[allow(dead_code)]
+    pub async fn attach_with_cwd(&mut self, session_id: &str, cwd: Option<&str>) -> (u16, u16) {
+        let mut msg = serde_json::json!({
+            "type": "attach",
+            "session_id": session_id,
+        });
+        if let Some(c) = cwd {
+            msg["cwd"] = serde_json::json!(c);
+        }
+        self.conn.send_json(&msg).await;
 
         let response: serde_json::Value = self.conn.recv_json().await;
         assert_eq!(
