@@ -300,7 +300,9 @@ async fn handle_text_message(
         }
 
         // PTY messages
-        ClientMessage::Attach { session_id, name } => {
+        ClientMessage::Attach {
+            session_id, name, ..
+        } => {
             debug!("PTY attach requested for session: {}", session_id);
 
             let mut pty_manager = state.pty_manager.write().await;

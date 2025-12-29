@@ -51,6 +51,9 @@ pub enum ClientMessage {
         /// Optional session name (used when creating new session)
         #[serde(default, skip_serializing_if = "Option::is_none")]
         name: Option<String>,
+        /// Optional working directory for the spawned process
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        cwd: Option<String>,
     },
 
     /// Detach from a session
@@ -282,6 +285,7 @@ mod tests {
         let msg = ClientMessage::Attach {
             session_id: "sess-1".to_string(),
             name: None,
+            cwd: None,
         };
         let json = serde_json::to_string(&msg).unwrap();
         let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
@@ -294,6 +298,7 @@ mod tests {
         let msg = ClientMessage::Attach {
             session_id: "sess-1".to_string(),
             name: Some("my-session".to_string()),
+            cwd: None,
         };
         let json = serde_json::to_string(&msg).unwrap();
         let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
@@ -308,8 +313,33 @@ mod tests {
         let parsed: ClientMessage = serde_json::from_str(json).unwrap();
         assert!(matches!(
             parsed,
-            ClientMessage::Attach { session_id, name }
-            if session_id == "sess-1" && name.is_none()
+            ClientMessage::Attach { session_id, name, cwd }
+            if session_id == "sess-1" && name.is_none() && cwd.is_none()
+        ));
+    }
+
+    #[test]
+    fn test_client_message_attach_with_cwd_roundtrip() {
+        let msg = ClientMessage::Attach {
+            session_id: "sess-1".to_string(),
+            name: Some("my-session".to_string()),
+            cwd: Some("/home/user/project".to_string()),
+        };
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+        assert!(json.contains(r#""cwd":"/home/user/project""#));
+    }
+
+    #[test]
+    fn test_client_message_attach_without_cwd_field_deserializes() {
+        // Backwards compatibility - old clients that don't send cwd field
+        let json = r#"{"type":"attach","session_id":"sess-1"}"#;
+        let parsed: ClientMessage = serde_json::from_str(json).unwrap();
+        assert!(matches!(
+            parsed,
+            ClientMessage::Attach { session_id, name, cwd }
+            if session_id == "sess-1" && name.is_none() && cwd.is_none()
         ));
     }
 
