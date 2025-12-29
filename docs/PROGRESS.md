@@ -21,6 +21,7 @@ This document tracks the implementation progress of vibes against the roadmap de
 | 4.1 Harness Introspection | Complete | [design](plans/15-harness-introspection/design.md) | [implementation](plans/15-harness-introspection/implementation.md) |
 | 4.2 Storage Foundation | In progress | [design](plans/14-continual-learning/design.md#42-storage-foundation), [decisions](plans/14-continual-learning/milestone-4.2-decisions.md) | [implementation](plans/14-continual-learning/milestone-4.2-implementation.md) |
 | 4.2.5 Security Foundation | Complete ⚠️ | [design](plans/14-continual-learning/design.md#425-security-foundation--new) | [implementation](plans/14-continual-learning/milestone-4.2.5-implementation.md) |
+| 4.2.6 Plugin API Extension | Not started | — | — |
 | 4.3 Capture & Inject | Not started | [design](plans/14-continual-learning/design.md#43-capture--inject-mvp) | — |
 | 4.4 Assessment Framework | Not started | [design](plans/14-continual-learning/design.md#44-assessment-framework--new) | — |
 | 4.5 Learning Extraction | Not started | [design](plans/14-continual-learning/design.md#45-learning-extraction) | — |
@@ -29,10 +30,9 @@ This document tracks the implementation progress of vibes against the roadmap de
 | 4.8 groove Dashboard | Not started | [design](plans/14-continual-learning/design.md#48-observability-dashboard--new) | — |
 | 4.9 Open-World Adaptation | Not started | [design](plans/14-continual-learning/design.md#49-open-world-adaptation) | — |
 | 5.1 Setup Wizards | Not started | — | — |
-| 5.2 Plugin API Extension | Not started | — | — |
-| 5.3 Default Plugins | Not started | — | — |
-| 5.4 CLI Enhancements | Not started | — | — |
-| 5.5 iOS App | Not started | — | — |
+| 5.2 Default Plugins | Not started | — | — |
+| 5.3 CLI Enhancements | Not started | — | — |
+| 5.4 iOS App | Not started | — | — |
 
 ---
 
@@ -188,7 +188,20 @@ Note: Auto-detect team/aud moved to Milestone 3.5 (Cloudflare Auth Wizard)
 - [x] REST API endpoints (`/api/groove/*`)
 - [x] Web UI quarantine page with dashboard
 
-> ⚠️ **Technical Debt:** CLI commands and API routes were added directly to `vibes-cli` and `vibes-server` instead of via the plugin system. This should be migrated to use the plugin API once Milestone 5.2 (Plugin API Extension) is complete. See [PLAN.md](PLAN.md#architectural-decision-plugin-vs-built-in).
+> ⚠️ **Technical Debt:** CLI commands and API routes were added directly to `vibes-cli` and `vibes-server` instead of via the plugin system. This will be migrated in Milestone 4.2.6. See [PLAN.md](PLAN.md#architectural-decision-plugin-vs-built-in).
+
+### Milestone 4.2.6: Plugin API Extension
+
+> **Prerequisite for remaining groove milestones.** Extends the plugin system so groove (and future plugins) can register CLI commands and HTTP routes.
+
+- [ ] Extend `vibes-plugin-api` to support CLI subcommand registration
+- [ ] Extend `vibes-plugin-api` to support HTTP route registration
+- [ ] Plugin manifest for declaring CLI commands and routes
+- [ ] Dynamic loading of plugin CLI commands in `vibes-cli`
+- [ ] Dynamic mounting of plugin routes in `vibes-server`
+- [ ] Migrate groove CLI commands from `vibes-cli` to `vibes-groove` plugin
+- [ ] Migrate groove API routes from `vibes-server` to `vibes-groove` plugin
+- [ ] Update documentation and examples
 
 ### Milestone 4.3: Capture & Inject (MVP)
 - [ ] `CaptureAdapter` trait for abstract capture
@@ -262,34 +275,22 @@ Note: Auto-detect team/aud moved to Milestone 3.5 (Cloudflare Auth Wizard)
 - [ ] Auto-detect team/AUD from tunnel config
 - [ ] Test connectivity and validation
 
-### Milestone 5.2: Plugin API Extension
-- [ ] Extend `vibes-plugin-api` to support CLI subcommand registration
-- [ ] Extend `vibes-plugin-api` to support HTTP route registration
-- [ ] Plugin manifest for declaring CLI commands and routes
-- [ ] Dynamic loading of plugin CLI commands in `vibes-cli`
-- [ ] Dynamic mounting of plugin routes in `vibes-server`
-- [ ] Migrate groove CLI commands from `vibes-cli` to plugin
-- [ ] Migrate groove API routes from `vibes-server` to plugin
-- [ ] Update documentation and examples
-
-> **Why this milestone exists:** During Milestone 4.2.5 (groove Security Foundation), CLI commands and API routes were added directly to vibes-cli and vibes-server because the plugin API didn't support registering them. This milestone extends the plugin system to prevent similar architectural shortcuts in the future.
-
-### Milestone 5.3: Default Plugins
+### Milestone 5.2: Default Plugins
 - [ ] analytics (session stats, token usage)
 - [ ] templates (prompt templates/snippets)
 - [ ] export (session export to markdown/JSON)
 
-### Milestone 5.4: CLI Enhancements
+### Milestone 5.3: CLI Enhancements
 - [ ] Tab completion
 - [ ] Interactive session picker
 
-### Milestone 5.5: iOS App
+### Milestone 5.4: iOS App
 - [ ] Swift native app with xterm.js WebView
 - [ ] Push notification integration
 - [ ] Session list and attach
 - [ ] Structured data display (from hooks)
 
-**Phase 5 Deliverable:** Feature-rich vibes with mobile access and extensible plugin system
+**Phase 5 Deliverable:** Feature-rich vibes with mobile access
 
 ---
 

@@ -46,7 +46,7 @@ It does **not yet** support:
 - Registering HTTP routes
 - Deep server integration
 
-**If your feature needs CLI commands or HTTP routes and should be a plugin**, you must first extend the plugin API (see Milestone 5.2 roadmap).
+**If your feature needs CLI commands or HTTP routes and should be a plugin**, the plugin API must first be extended (see Milestone 4.2.6).
 
 ### Example: groove
 
