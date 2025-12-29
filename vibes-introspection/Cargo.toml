@@ -28,7 +28,7 @@ thiserror.workspace = true
 tracing.workspace = true
 
 [features]
-default = []
+default = ["claude-code"]
 claude-code = []
 
 [dev-dependencies]

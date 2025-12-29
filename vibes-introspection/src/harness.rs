@@ -60,4 +60,12 @@ mod tests {
     fn test_harness_for_claude_without_feature_returns_none() {
         assert!(harness_for_command("claude").is_none());
     }
+
+    #[test]
+    #[cfg(feature = "claude-code")]
+    fn test_harness_for_claude_with_feature_returns_some() {
+        let harness = harness_for_command("claude");
+        assert!(harness.is_some());
+        assert_eq!(harness.unwrap().harness_type(), "claude");
+    }
 }
