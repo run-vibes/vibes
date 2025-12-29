@@ -6,7 +6,7 @@
 
 // Module declarations - commented out until implemented
 pub mod error;
-// pub mod types;
+pub mod types;
 // pub mod store;
 // pub mod storage;
 // pub mod config;
@@ -14,7 +14,7 @@ pub mod error;
 
 // Re-exports - commented out until modules are implemented
 pub use error::{GrooveError, Result};
-// pub use types::*;
+pub use types::*;
 // pub use store::{LearningStore, ParamStore};
 // pub use storage::GrooveStorage;
 // pub use config::GrooveConfig;
