@@ -4,6 +4,59 @@ use crate::error::PluginError;
 use serde::{Serialize, de::DeserializeOwned};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
+
+// ─── Capability Enum ─────────────────────────────────────────────────
+
+/// Capabilities that may be available to plugins through the groove/harness system.
+///
+/// These represent the continual learning features that can be enabled
+/// when vibes-groove is integrated with the plugin system.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Capability {
+    /// Store and retrieve learnings from past interactions
+    LearningStorage,
+    /// Semantic vector search for finding similar learnings
+    SemanticSearch,
+    /// Adaptive parameter tuning based on feedback
+    AdaptiveParams,
+    /// Multi-tier storage (user/project/enterprise levels)
+    MultiTierStorage,
+}
+
+// ─── Harness Trait ───────────────────────────────────────────────────
+
+/// Harness trait for groove integration.
+///
+/// This is the plugin-facing interface for continual learning capabilities.
+/// The concrete implementation is provided by vibes-core when groove is enabled.
+///
+/// Plugins can use this to:
+/// - Check what capabilities are available
+/// - Access learning storage and retrieval (when implemented)
+/// - Integrate with adaptive parameter systems (when implemented)
+///
+/// # Example
+///
+/// ```ignore
+/// fn on_load(&mut self, ctx: &mut PluginContext) -> Result<(), PluginError> {
+///     if let Some(harness) = ctx.harness() {
+///         if harness.has_capability(Capability::SemanticSearch) {
+///             ctx.log_info("Semantic search is available!");
+///         }
+///     }
+///     Ok(())
+/// }
+/// ```
+pub trait Harness: Send + Sync {
+    /// Get the list of available capabilities
+    fn capabilities(&self) -> &[Capability];
+
+    /// Check if a specific capability is available
+    fn has_capability(&self, cap: Capability) -> bool {
+        self.capabilities().contains(&cap)
+    }
+}
 
 /// Plugin's interface to vibes-core capabilities.
 ///
@@ -12,11 +65,17 @@ use std::path::{Path, PathBuf};
 /// - Plugin directory for storing data
 /// - Logging utilities
 /// - Command registration
+/// - Harness for groove integration (optional)
+/// - Available capabilities
 pub struct PluginContext {
     plugin_name: String,
     plugin_dir: PathBuf,
     config: PluginConfig,
     registered_commands: Vec<RegisteredCommand>,
+    /// Optional harness for groove integration
+    harness: Option<Arc<dyn Harness>>,
+    /// Available capabilities
+    capabilities: Vec<Capability>,
 }
 
 /// Plugin configuration - persistent key-value store backed by TOML
@@ -48,6 +107,8 @@ impl PluginContext {
             plugin_dir,
             config: PluginConfig::new(),
             registered_commands: Vec::new(),
+            harness: None,
+            capabilities: Vec::new(),
         }
     }
 
@@ -58,7 +119,21 @@ impl PluginContext {
             plugin_dir,
             config,
             registered_commands: Vec::new(),
+            harness: None,
+            capabilities: Vec::new(),
         }
+    }
+
+    /// Builder: set the harness for groove integration
+    pub fn with_harness(mut self, harness: Arc<dyn Harness>) -> Self {
+        self.harness = Some(harness);
+        self
+    }
+
+    /// Builder: set available capabilities
+    pub fn with_capabilities(mut self, capabilities: Vec<Capability>) -> Self {
+        self.capabilities = capabilities;
+        self
     }
 
     // ─── Configuration ───────────────────────────────────────────────
@@ -141,6 +216,33 @@ impl PluginContext {
     /// Log a debug message
     pub fn log_debug(&self, message: &str) {
         tracing::debug!(plugin = %self.plugin_name, "{}", message);
+    }
+
+    // ─── Harness & Capabilities ─────────────────────────────────────
+
+    /// Get the harness for groove integration (if enabled)
+    ///
+    /// Returns `None` if groove is not enabled or the harness has not been set.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// if let Some(harness) = ctx.harness() {
+    ///     if harness.has_capability(Capability::SemanticSearch) {
+    ///         // Use semantic search features
+    ///     }
+    /// }
+    /// ```
+    pub fn harness(&self) -> Option<&dyn Harness> {
+        self.harness.as_deref()
+    }
+
+    /// Get the list of available capabilities
+    ///
+    /// This returns the capabilities that are available to the plugin,
+    /// which may be empty if groove is not enabled.
+    pub fn capabilities(&self) -> &[Capability] {
+        &self.capabilities
     }
 }
 
@@ -301,5 +403,81 @@ mod tests {
 
         assert_eq!(args.args.len(), 1);
         assert_eq!(args.flags.get("verbose"), Some(&"true".to_string()));
+    }
+
+    // ─── Capability and Harness Tests ────────────────────────────────
+
+    #[test]
+    fn test_capabilities_default_empty() {
+        let ctx = PluginContext::new("test".to_string(), PathBuf::from("/tmp"));
+        assert!(ctx.capabilities().is_empty());
+    }
+
+    #[test]
+    fn test_harness_not_available_by_default() {
+        let ctx = PluginContext::new("test".to_string(), PathBuf::from("/tmp"));
+        assert!(ctx.harness().is_none());
+    }
+
+    #[test]
+    fn test_with_capabilities() {
+        let ctx = PluginContext::new("test".to_string(), PathBuf::from("/tmp"))
+            .with_capabilities(vec![
+                Capability::SemanticSearch,
+                Capability::LearningStorage,
+            ]);
+        assert!(ctx.capabilities().contains(&Capability::SemanticSearch));
+        assert!(ctx.capabilities().contains(&Capability::LearningStorage));
+        assert!(!ctx.capabilities().contains(&Capability::AdaptiveParams));
+    }
+
+    #[test]
+    fn test_capability_equality() {
+        assert_eq!(Capability::SemanticSearch, Capability::SemanticSearch);
+        assert_ne!(Capability::SemanticSearch, Capability::LearningStorage);
+    }
+
+    #[test]
+    fn test_harness_has_capability() {
+        struct TestHarness {
+            caps: Vec<Capability>,
+        }
+        impl Harness for TestHarness {
+            fn capabilities(&self) -> &[Capability] {
+                &self.caps
+            }
+        }
+
+        let harness = TestHarness {
+            caps: vec![Capability::SemanticSearch, Capability::LearningStorage],
+        };
+        assert!(harness.has_capability(Capability::SemanticSearch));
+        assert!(harness.has_capability(Capability::LearningStorage));
+        assert!(!harness.has_capability(Capability::AdaptiveParams));
+    }
+
+    #[test]
+    fn test_with_harness() {
+        use std::sync::Arc;
+
+        struct TestHarness {
+            caps: Vec<Capability>,
+        }
+        impl Harness for TestHarness {
+            fn capabilities(&self) -> &[Capability] {
+                &self.caps
+            }
+        }
+
+        let harness = Arc::new(TestHarness {
+            caps: vec![Capability::MultiTierStorage],
+        });
+
+        let ctx = PluginContext::new("test".to_string(), PathBuf::from("/tmp"))
+            .with_harness(harness);
+
+        assert!(ctx.harness().is_some());
+        let h = ctx.harness().unwrap();
+        assert!(h.has_capability(Capability::MultiTierStorage));
     }
 }
