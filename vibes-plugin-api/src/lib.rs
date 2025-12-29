@@ -44,7 +44,7 @@ pub mod types;
 pub use command::{ArgSpec, CommandOutput, CommandSpec};
 pub use context::{Capability, Harness, PluginConfig, PluginContext};
 pub use error::PluginError;
-pub use http::HttpMethod;
+pub use http::{HttpMethod, RouteRequest, RouteResponse, RouteSpec};
 pub use types::*;
 
 /// Current plugin API version. Plugins must match this exactly.
