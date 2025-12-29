@@ -40,5 +40,4 @@ pub use policy::{
     parse_policy, validate_policy,
 };
 
-// TODO: Uncomment as modules are implemented
-// pub use injector::*;
+pub use injector::{InjectableContent, InjectionResult, InjectorConfig, SecureInjector};
