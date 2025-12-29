@@ -37,10 +37,12 @@
 
 pub mod context;
 pub mod error;
+pub mod http;
 pub mod types;
 
 pub use context::{Capability, Harness, PluginConfig, PluginContext};
 pub use error::PluginError;
+pub use http::HttpMethod;
 pub use types::*;
 
 /// Current plugin API version. Plugins must match this exactly.
