@@ -42,4 +42,6 @@ pub use policy::{
 };
 
 pub use injector::{InjectableContent, InjectionResult, InjectorConfig, SecureInjector};
-pub use store::{MemorySecureLearningStore, SecureLearning, SecureLearningFilter, SecureLearningStore};
+pub use store::{
+    MemorySecureLearningStore, SecureLearning, SecureLearningFilter, SecureLearningStore,
+};

@@ -5,12 +5,12 @@
 use std::sync::Arc;
 
 use super::{QuarantineReason, QuarantineStatus, ReviewOutcome};
+use crate::LearningId;
 use crate::security::{
     ActionOutcome, ActorId, AuditAction, AuditLog, AuditLogEntry, Operation, Permissions,
     ResourceRef, ScanFinding, ScanResult, SecureLearning, SecureLearningStore, SecurityError,
     SecurityResult, TrustLevel,
 };
-use crate::LearningId;
 
 /// Result of a quarantine review
 #[derive(Debug, Clone)]
@@ -86,7 +86,7 @@ where
                 learning_id: id.to_string(),
                 reason: format!("{:?}", reason),
             },
-            ResourceRef::Learning(id.into()),
+            ResourceRef::Learning(id),
             ActionOutcome::Success,
         );
         self.audit_log.log(entry).await?;
@@ -134,11 +134,10 @@ where
         }
 
         // Get current quarantine status
-        let learning = self
-            .store
-            .get_secure(id)
-            .await?
-            .ok_or_else(|| SecurityError::PolicyViolation(format!("learning {} not found", id)))?;
+        let learning =
+            self.store.get_secure(id).await?.ok_or_else(|| {
+                SecurityError::PolicyViolation(format!("learning {} not found", id))
+            })?;
 
         let mut quarantine = learning.quarantine.ok_or_else(|| {
             SecurityError::PolicyViolation(format!("learning {} is not quarantined", id))
@@ -186,7 +185,7 @@ where
                 learning_id: id.to_string(),
                 outcome: format!("{:?}", outcome),
             },
-            ResourceRef::Learning(id.into()),
+            ResourceRef::Learning(id),
             ActionOutcome::Success,
         );
         self.audit_log.log(entry).await?;

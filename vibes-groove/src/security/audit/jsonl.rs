@@ -30,9 +30,9 @@ impl JsonlAuditLog {
     /// Ensure the parent directory exists
     async fn ensure_parent_dir(&self) -> SecurityResult<()> {
         if let Some(parent) = self.path.parent() {
-            tokio::fs::create_dir_all(parent)
-                .await
-                .map_err(|e| SecurityError::AuditLog(format!("failed to create audit dir: {}", e)))?;
+            tokio::fs::create_dir_all(parent).await.map_err(|e| {
+                SecurityError::AuditLog(format!("failed to create audit dir: {}", e))
+            })?;
         }
         Ok(())
     }
@@ -47,34 +47,28 @@ impl JsonlAuditLog {
 
     /// Check if an entry matches the filter
     fn matches_filter(entry: &AuditLogEntry, filter: &AuditFilter) -> bool {
-        if let Some(ref actor) = filter.actor {
-            if &entry.actor != actor {
-                return false;
-            }
+        if filter.actor.as_ref().is_some_and(|a| &entry.actor != a) {
+            return false;
         }
 
-        if let Some(ref action) = filter.action {
-            if &entry.action != action {
-                return false;
-            }
+        if filter.action.as_ref().is_some_and(|a| &entry.action != a) {
+            return false;
         }
 
-        if let Some(ref resource) = filter.resource {
-            if &entry.resource != resource {
-                return false;
-            }
+        if filter
+            .resource
+            .as_ref()
+            .is_some_and(|r| &entry.resource != r)
+        {
+            return false;
         }
 
-        if let Some(from) = filter.from {
-            if entry.timestamp < from {
-                return false;
-            }
+        if filter.from.is_some_and(|from| entry.timestamp < from) {
+            return false;
         }
 
-        if let Some(to) = filter.to {
-            if entry.timestamp > to {
-                return false;
-            }
+        if filter.to.is_some_and(|to| entry.timestamp > to) {
+            return false;
         }
 
         true
@@ -128,17 +122,17 @@ impl AuditLog for JsonlAuditLog {
             .await
             .map_err(|e| SecurityError::AuditLog(format!("failed to read line: {}", e)))?
         {
-            if let Some(entry) = Self::parse_line(&line) {
-                if Self::matches_filter(&entry, &filter) {
-                    results.push(entry);
+            let Some(entry) = Self::parse_line(&line) else {
+                continue;
+            };
+            if !Self::matches_filter(&entry, &filter) {
+                continue;
+            }
+            results.push(entry);
 
-                    // Check limit
-                    if let Some(limit) = filter.limit {
-                        if results.len() >= limit {
-                            break;
-                        }
-                    }
-                }
+            // Check limit
+            if filter.limit.is_some_and(|limit| results.len() >= limit) {
+                break;
             }
         }
 

@@ -85,7 +85,11 @@ impl SecureLearning {
     /// Check if this learning is quarantined
     pub fn is_quarantined(&self) -> bool {
         self.trust.level == TrustLevel::Quarantined
-            || self.quarantine.as_ref().map(|q| q.is_pending_review()).unwrap_or(false)
+            || self
+                .quarantine
+                .as_ref()
+                .map(|q| q.is_pending_review())
+                .unwrap_or(false)
     }
 
     /// Check if injection is allowed based on trust level
@@ -130,7 +134,10 @@ pub trait SecureLearningStore: Send + Sync {
     async fn get_secure(&self, id: LearningId) -> SecurityResult<Option<SecureLearning>>;
 
     /// Find learnings with security filtering
-    async fn find_secure(&self, filter: &SecureLearningFilter) -> SecurityResult<Vec<SecureLearning>>;
+    async fn find_secure(
+        &self,
+        filter: &SecureLearningFilter,
+    ) -> SecurityResult<Vec<SecureLearning>>;
 
     /// Get all quarantined learnings
     async fn find_quarantined(&self) -> SecurityResult<Vec<SecureLearning>>;
@@ -185,23 +192,29 @@ impl SecureLearningStore for MemorySecureLearningStore {
         Ok(learnings.get(&id).cloned())
     }
 
-    async fn find_secure(&self, filter: &SecureLearningFilter) -> SecurityResult<Vec<SecureLearning>> {
+    async fn find_secure(
+        &self,
+        filter: &SecureLearningFilter,
+    ) -> SecurityResult<Vec<SecureLearning>> {
         let learnings = self.learnings.read().await;
         let mut results: Vec<_> = learnings
             .values()
             .filter(|l| {
                 // Scope filter
-                if let Some(ref scope) = filter.scope {
-                    if &l.learning.scope != scope {
-                        return false;
-                    }
+                if filter
+                    .scope
+                    .as_ref()
+                    .is_some_and(|s| &l.learning.scope != s)
+                {
+                    return false;
                 }
 
                 // Trust level filter
-                if let Some(min_level) = filter.min_trust_level {
-                    if l.trust.level < min_level {
-                        return false;
-                    }
+                if filter
+                    .min_trust_level
+                    .is_some_and(|min| l.trust.level < min)
+                {
+                    return false;
                 }
 
                 // Quarantine filter
@@ -224,7 +237,11 @@ impl SecureLearningStore for MemorySecureLearningStore {
 
     async fn find_quarantined(&self) -> SecurityResult<Vec<SecureLearning>> {
         let learnings = self.learnings.read().await;
-        Ok(learnings.values().filter(|l| l.is_quarantined()).cloned().collect())
+        Ok(learnings
+            .values()
+            .filter(|l| l.is_quarantined())
+            .cloned()
+            .collect())
     }
 
     async fn update_quarantine(
@@ -236,7 +253,11 @@ impl SecureLearningStore for MemorySecureLearningStore {
         if let Some(learning) = learnings.get_mut(&id) {
             learning.quarantine = quarantine.clone();
             // Update trust level based on quarantine status
-            if quarantine.as_ref().map(|q| q.is_pending_review()).unwrap_or(false) {
+            if quarantine
+                .as_ref()
+                .map(|q| q.is_pending_review())
+                .unwrap_or(false)
+            {
                 learning.trust.level = TrustLevel::Quarantined;
             }
             Ok(())

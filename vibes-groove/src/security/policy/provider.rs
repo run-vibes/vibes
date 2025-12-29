@@ -8,8 +8,8 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use tokio::sync::{RwLock, broadcast};
 
-use super::{loader, Policy};
-use crate::security::{SecurityResult, SecurityError};
+use super::{Policy, loader};
+use crate::security::{SecurityError, SecurityResult};
 
 /// Policy provider trait
 #[async_trait]
@@ -143,8 +143,8 @@ impl PolicyProvider for MemoryPolicyProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::NamedTempFile;
     use std::io::Write;
+    use tempfile::NamedTempFile;
 
     #[tokio::test]
     async fn test_memory_provider_default() {

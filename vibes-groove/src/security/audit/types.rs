@@ -183,25 +183,17 @@ impl AuditLog for InMemoryAuditLog {
         let mut results: Vec<_> = entries
             .iter()
             .filter(|e| {
-                if let Some(ref actor) = filter.actor {
-                    if &e.actor != actor {
-                        return false;
-                    }
+                if filter.actor.as_ref().is_some_and(|a| &e.actor != a) {
+                    return false;
                 }
-                if let Some(ref action) = filter.action {
-                    if &e.action != action {
-                        return false;
-                    }
+                if filter.action.as_ref().is_some_and(|a| &e.action != a) {
+                    return false;
                 }
-                if let Some(ref from) = filter.from {
-                    if e.timestamp < *from {
-                        return false;
-                    }
+                if filter.from.as_ref().is_some_and(|from| e.timestamp < *from) {
+                    return false;
                 }
-                if let Some(ref to) = filter.to {
-                    if e.timestamp > *to {
-                        return false;
-                    }
+                if filter.to.as_ref().is_some_and(|to| e.timestamp > *to) {
+                    return false;
                 }
                 true
             })

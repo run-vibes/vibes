@@ -132,9 +132,16 @@ pub struct Verification {
 /// Who verified the learning
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum VerifiedBy {
-    Curator { curator_id: String },
-    CommunityVote { votes_required: u32, votes_received: u32 },
-    Automated { checker: String },
+    Curator {
+        curator_id: String,
+    },
+    CommunityVote {
+        votes_required: u32,
+        votes_received: u32,
+    },
+    Automated {
+        checker: String,
+    },
 }
 
 /// Full trust context combining level, source, and verification

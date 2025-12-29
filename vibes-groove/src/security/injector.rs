@@ -23,20 +23,12 @@ pub struct InjectionResult {
 }
 
 /// Configuration for the secure injector
+#[derive(Default)]
 pub struct InjectorConfig {
     /// The injection policy to enforce
     pub policy: InjectionPolicy,
     /// Optional content scanner
     pub scanner: Option<Arc<dyn ContentScanner>>,
-}
-
-impl Default for InjectorConfig {
-    fn default() -> Self {
-        Self {
-            policy: InjectionPolicy::default(),
-            scanner: None,
-        }
-    }
 }
 
 /// Secure content injector
@@ -73,10 +65,9 @@ impl SecureInjector {
         quarantine: Option<&QuarantineStatus>,
     ) -> bool {
         // Check quarantine status - block if pending review and policy requires
-        if let Some(status) = quarantine {
-            if status.is_pending_review() && self.config.policy.block_quarantined {
-                return false;
-            }
+        if quarantine.is_some_and(|s| s.is_pending_review() && self.config.policy.block_quarantined)
+        {
+            return false;
         }
 
         // Check trust level - quarantined content is never allowed
@@ -127,26 +118,30 @@ impl SecureInjector {
                     TrustSource::Public { .. } => "Public",
                 };
                 let mut tag_parts = vec![format!("[Source: {}]", source_type)];
-                if wrapper_config.show_author {
-                    if let Some(author) = ctx.source.author_id() {
-                        tag_parts.push(format!("[Author: {}]", author));
-                    }
+                if let Some(author) = wrapper_config
+                    .show_author
+                    .then(|| ctx.source.author_id())
+                    .flatten()
+                {
+                    tag_parts.push(format!("[Author: {}]", author));
                 }
-                if wrapper_config.show_verification {
-                    if let Some(ref verification) = ctx.verification {
-                        let verifier = match &verification.verified_by {
-                            super::VerifiedBy::Curator { curator_id } => {
-                                format!("Curator({})", curator_id)
-                            }
-                            super::VerifiedBy::CommunityVote { votes_received, .. } => {
-                                format!("Community({} votes)", votes_received)
-                            }
-                            super::VerifiedBy::Automated { checker } => {
-                                format!("Automated({})", checker)
-                            }
-                        };
-                        tag_parts.push(format!("[Verified by: {}]", verifier));
-                    }
+                if let Some(verification) = wrapper_config
+                    .show_verification
+                    .then_some(ctx.verification.as_ref())
+                    .flatten()
+                {
+                    let verifier = match &verification.verified_by {
+                        super::VerifiedBy::Curator { curator_id } => {
+                            format!("Curator({})", curator_id)
+                        }
+                        super::VerifiedBy::CommunityVote { votes_received, .. } => {
+                            format!("Community({} votes)", votes_received)
+                        }
+                        super::VerifiedBy::Automated { checker } => {
+                            format!("Automated({})", checker)
+                        }
+                    };
+                    tag_parts.push(format!("[Verified by: {}]", verifier));
                 }
                 format!("{}\n{}", tag_parts.join(" "), content)
             }

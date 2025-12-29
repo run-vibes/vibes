@@ -1,0 +1,50 @@
+# Groove Default Secure Policy
+#
+# This is the default security policy for vibes groove.
+# Copy this file to one of the following locations to customize:
+#   1. ./groove-policy.toml (project-local)
+#   2. ~/.config/vibes/groove-policy.toml (user)
+#   3. /etc/vibes/groove-policy.toml (system)
+
+[injection]
+# Block quarantined learnings from being injected
+block_quarantined = true
+
+# Allow personal learnings to be injected without additional review
+allow_personal_injection = true
+
+# Disallow unverified public learnings by default (requires scan)
+allow_unverified_injection = false
+
+[quarantine]
+# Roles that can review quarantined items
+reviewers = ["Admin", "Curator"]
+
+# Roles that can view the quarantine queue
+visible_to = ["Admin", "Curator"]
+
+# Auto-delete quarantined items after 90 days (set to null to disable)
+auto_delete_after_days = 90
+
+[import_export]
+# Allow importing learnings from local files
+allow_import_from_file = true
+
+# Disallow importing from URLs by default (security risk)
+allow_import_from_url = false
+
+# Trusted import sources (empty = all allowed, if imports enabled)
+allowed_import_sources = []
+
+# Allow exporting personal learnings
+allow_export_personal = true
+
+# Disallow enterprise export by default
+allow_export_enterprise = false
+
+[audit]
+# Enable audit logging
+enabled = true
+
+# Retain audit logs for 30 days
+retention_days = 30

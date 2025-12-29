@@ -10,9 +10,7 @@ use axum::{
     http::StatusCode,
 };
 use serde::{Deserialize, Serialize};
-use vibes_groove::security::{
-    OrgRole, Policy, ReviewOutcome, TrustLevel, load_policy_or_default,
-};
+use vibes_groove::security::{OrgRole, Policy, ReviewOutcome, TrustLevel, load_policy_or_default};
 
 use crate::AppState;
 
@@ -277,7 +275,10 @@ pub async fn get_role_permissions(
         (
             StatusCode::BAD_REQUEST,
             Json(GrooveErrorResponse {
-                error: format!("Invalid role: {}. Use: admin, curator, member, viewer", role),
+                error: format!(
+                    "Invalid role: {}. Use: admin, curator, member, viewer",
+                    role
+                ),
                 code: "INVALID_ROLE".to_string(),
             }),
         )
@@ -304,9 +305,7 @@ pub async fn get_role_permissions(
 // ============================================================================
 
 /// GET /api/groove/quarantine - List quarantined learnings
-pub async fn list_quarantined(
-    State(_state): State<Arc<AppState>>,
-) -> Json<QuarantineListResponse> {
+pub async fn list_quarantined(State(_state): State<Arc<AppState>>) -> Json<QuarantineListResponse> {
     // Placeholder - full implementation requires storage integration
     Json(QuarantineListResponse {
         items: vec![],

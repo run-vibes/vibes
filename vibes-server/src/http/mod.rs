@@ -42,10 +42,19 @@ pub fn create_router(state: Arc<AppState>) -> Router {
         // Groove security endpoints
         .route("/api/groove/policy", get(groove::get_policy))
         .route("/api/groove/trust/levels", get(groove::get_trust_levels))
-        .route("/api/groove/trust/role/:role", get(groove::get_role_permissions))
+        .route(
+            "/api/groove/trust/role/:role",
+            get(groove::get_role_permissions),
+        )
         .route("/api/groove/quarantine", get(groove::list_quarantined))
-        .route("/api/groove/quarantine/stats", get(groove::get_quarantine_stats))
-        .route("/api/groove/quarantine/:id/review", post(groove::review_quarantined))
+        .route(
+            "/api/groove/quarantine/stats",
+            get(groove::get_quarantine_stats),
+        )
+        .route(
+            "/api/groove/quarantine/:id/review",
+            post(groove::review_quarantined),
+        )
         .route("/ws", get(ws_handler))
         .layer(middleware::from_fn(auth_middleware))
         .layer(Extension(auth_layer))

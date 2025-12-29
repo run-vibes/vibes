@@ -5,10 +5,7 @@
 use anyhow::Result;
 use clap::{Args, Subcommand};
 
-use vibes_groove::security::{
-    OrgRole,
-    load_policy_or_default,
-};
+use vibes_groove::security::{OrgRole, load_policy_or_default};
 
 #[derive(Args)]
 pub struct GrooveArgs {
@@ -84,14 +81,34 @@ fn run_trust(args: TrustArgs) -> Result<()> {
         TrustCommands::Levels => {
             println!("Trust Level Hierarchy (highest to lowest):");
             println!();
-            println!("  {:20} {:>6}  {}", "Level", "Score", "Description");
-            println!("  {:20} {:>6}  {}", "─".repeat(20), "─".repeat(6), "─".repeat(40));
-            println!("  {:20} {:>6}  {}", "Local", "100", "Locally created content (full trust)");
-            println!("  {:20} {:>6}  {}", "OrganizationVerified", "80", "Verified by organization admin");
-            println!("  {:20} {:>6}  {}", "OrganizationMember", "60", "From organization member");
-            println!("  {:20} {:>6}  {}", "CommunityVerified", "40", "Community-verified public content");
-            println!("  {:20} {:>6}  {}", "PublicUnverified", "10", "Unverified public content");
-            println!("  {:20} {:>6}  {}", "Quarantined", "0", "Quarantined (blocked)");
+            println!("  {:<20} {:>6}  Description", "Level", "Score");
+            println!(
+                "  {:20} {:>6}  {}",
+                "─".repeat(20),
+                "─".repeat(6),
+                "─".repeat(40)
+            );
+            println!(
+                "  {:<20} {:>6}  Locally created content (full trust)",
+                "Local", "100"
+            );
+            println!(
+                "  {:<20} {:>6}  Verified by organization admin",
+                "OrganizationVerified", "80"
+            );
+            println!(
+                "  {:<20} {:>6}  From organization member",
+                "OrganizationMember", "60"
+            );
+            println!(
+                "  {:<20} {:>6}  Community-verified public content",
+                "CommunityVerified", "40"
+            );
+            println!(
+                "  {:<20} {:>6}  Unverified public content",
+                "PublicUnverified", "10"
+            );
+            println!("  {:<20} {:>6}  Quarantined (blocked)", "Quarantined", "0");
             println!();
             println!("Injection Policy:");
             println!("  - Local & OrganizationVerified: Allowed without scanning");
@@ -101,9 +118,12 @@ fn run_trust(args: TrustArgs) -> Result<()> {
             Ok(())
         }
         TrustCommands::Role { role } => {
-            let parsed_role: OrgRole = role
-                .parse()
-                .map_err(|_| anyhow::anyhow!("Invalid role: {}. Use: admin, curator, member, viewer", role))?;
+            let parsed_role: OrgRole = role.parse().map_err(|_| {
+                anyhow::anyhow!(
+                    "Invalid role: {}. Use: admin, curator, member, viewer",
+                    role
+                )
+            })?;
 
             let perms = parsed_role.permissions();
             println!("Role: {}", parsed_role.as_str());
@@ -132,31 +152,67 @@ fn run_policy(args: PolicyArgs) -> Result<()> {
 
             // Injection policy
             println!("Injection Policy:");
-            println!("  Block quarantined:       {}", policy.injection.block_quarantined);
-            println!("  Allow personal:          {}", policy.injection.allow_personal_injection);
-            println!("  Allow unverified:        {}", policy.injection.allow_unverified_injection);
+            println!(
+                "  Block quarantined:       {}",
+                policy.injection.block_quarantined
+            );
+            println!(
+                "  Allow personal:          {}",
+                policy.injection.allow_personal_injection
+            );
+            println!(
+                "  Allow unverified:        {}",
+                policy.injection.allow_unverified_injection
+            );
             println!();
 
             // Quarantine policy
             println!("Quarantine Policy:");
-            println!("  Reviewers:               {:?}", policy.quarantine.reviewers);
-            println!("  Visible to:              {:?}", policy.quarantine.visible_to);
-            println!("  Auto-delete after days:  {:?}", policy.quarantine.auto_delete_after_days);
+            println!(
+                "  Reviewers:               {:?}",
+                policy.quarantine.reviewers
+            );
+            println!(
+                "  Visible to:              {:?}",
+                policy.quarantine.visible_to
+            );
+            println!(
+                "  Auto-delete after days:  {:?}",
+                policy.quarantine.auto_delete_after_days
+            );
             println!();
 
             // Import/Export policy
             println!("Import/Export Policy:");
-            println!("  Allow import from file:  {}", policy.import_export.allow_import_from_file);
-            println!("  Allow import from URL:   {}", policy.import_export.allow_import_from_url);
-            println!("  Allowed import sources:  {:?}", policy.import_export.allowed_import_sources);
-            println!("  Allow export personal:   {}", policy.import_export.allow_export_personal);
-            println!("  Allow export enterprise: {}", policy.import_export.allow_export_enterprise);
+            println!(
+                "  Allow import from file:  {}",
+                policy.import_export.allow_import_from_file
+            );
+            println!(
+                "  Allow import from URL:   {}",
+                policy.import_export.allow_import_from_url
+            );
+            println!(
+                "  Allowed import sources:  {:?}",
+                policy.import_export.allowed_import_sources
+            );
+            println!(
+                "  Allow export personal:   {}",
+                policy.import_export.allow_export_personal
+            );
+            println!(
+                "  Allow export enterprise: {}",
+                policy.import_export.allow_export_enterprise
+            );
             println!();
 
             // Audit policy
             println!("Audit Policy:");
             println!("  Enabled:                 {}", policy.audit.enabled);
-            println!("  Retention days:          {:?}", policy.audit.retention_days);
+            println!(
+                "  Retention days:          {:?}",
+                policy.audit.retention_days
+            );
 
             Ok(())
         }

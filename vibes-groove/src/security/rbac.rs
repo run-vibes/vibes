@@ -181,7 +181,12 @@ mod tests {
 
     #[test]
     fn test_role_str_roundtrip() {
-        for role in [OrgRole::Admin, OrgRole::Curator, OrgRole::Member, OrgRole::Viewer] {
+        for role in [
+            OrgRole::Admin,
+            OrgRole::Curator,
+            OrgRole::Member,
+            OrgRole::Viewer,
+        ] {
             let s = role.as_str();
             let parsed: OrgRole = s.parse().unwrap();
             assert_eq!(parsed, role);

@@ -5,7 +5,7 @@
 use serde::{Deserialize, Serialize};
 
 /// Complete policy configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Policy {
     #[serde(default)]
     pub identity: IdentityPolicy,
@@ -23,21 +23,6 @@ pub struct Policy {
     pub audit: AuditPolicy,
     #[serde(default)]
     pub quarantine: QuarantinePolicy,
-}
-
-impl Default for Policy {
-    fn default() -> Self {
-        Self {
-            identity: IdentityPolicy::default(),
-            tiers: TiersPolicy::default(),
-            capture: CapturePolicy::default(),
-            injection: InjectionPolicy::default(),
-            import_export: ImportExportPolicy::default(),
-            scanning: ScanningPolicy::default(),
-            audit: AuditPolicy::default(),
-            quarantine: QuarantinePolicy::default(),
-        }
-    }
 }
 
 /// Identity and versioning for the policy
