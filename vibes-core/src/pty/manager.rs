@@ -42,9 +42,13 @@ impl PtyManager {
     }
 
     /// Create a new PTY session with auto-generated ID
-    pub fn create_session(&mut self, name: Option<String>) -> Result<String, PtyError> {
+    pub fn create_session(
+        &mut self,
+        name: Option<String>,
+        cwd: Option<String>,
+    ) -> Result<String, PtyError> {
         let id = Uuid::new_v4().to_string();
-        self.create_session_with_id(id, name)
+        self.create_session_with_id(id, name, cwd)
     }
 
     /// Create a new PTY session with a specific ID
@@ -52,8 +56,9 @@ impl PtyManager {
         &mut self,
         id: String,
         name: Option<String>,
+        cwd: Option<String>,
     ) -> Result<String, PtyError> {
-        let session = self.backend.create_session(id.clone(), name)?;
+        let session = self.backend.create_session(id.clone(), name, cwd)?;
         self.sessions.insert(id.clone(), session);
         Ok(id)
     }
@@ -121,7 +126,7 @@ mod tests {
     fn create_session_adds_to_manager() {
         let mut manager = PtyManager::new(test_config());
 
-        let id = manager.create_session(None).unwrap();
+        let id = manager.create_session(None, None).unwrap();
         assert!(!id.is_empty());
         assert!(manager.get_session(&id).is_some());
     }
@@ -131,7 +136,7 @@ mod tests {
         let mut manager = PtyManager::new(test_config());
 
         let id = manager
-            .create_session(Some("my-session".to_string()))
+            .create_session(Some("my-session".to_string()), None)
             .unwrap();
         let session = manager.get_session(&id).unwrap();
         assert_eq!(session.name, Some("my-session".to_string()));
@@ -142,10 +147,10 @@ mod tests {
         let mut manager = PtyManager::new(test_config());
 
         manager
-            .create_session(Some("session1".to_string()))
+            .create_session(Some("session1".to_string()), None)
             .unwrap();
         manager
-            .create_session(Some("session2".to_string()))
+            .create_session(Some("session2".to_string()), None)
             .unwrap();
 
         let sessions = manager.list_sessions();
@@ -156,7 +161,7 @@ mod tests {
     fn remove_session_removes_from_manager() {
         let mut manager = PtyManager::new(test_config());
 
-        let id = manager.create_session(None).unwrap();
+        let id = manager.create_session(None, None).unwrap();
         assert!(manager.get_session(&id).is_some());
 
         manager.remove_session(&id);
@@ -167,7 +172,7 @@ mod tests {
     fn get_handle_returns_cloneable_handle() {
         let mut manager = PtyManager::new(test_config());
 
-        let id = manager.create_session(None).unwrap();
+        let id = manager.create_session(None, None).unwrap();
         let handle1 = manager.get_handle(&id);
         let handle2 = manager.get_handle(&id);
 
@@ -179,7 +184,7 @@ mod tests {
     async fn kill_session_removes_and_kills() {
         let mut manager = PtyManager::new(test_config());
 
-        let id = manager.create_session(None).unwrap();
+        let id = manager.create_session(None, None).unwrap();
         assert!(manager.get_session(&id).is_some());
 
         manager.kill_session(&id).await.unwrap();

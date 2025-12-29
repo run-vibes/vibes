@@ -92,8 +92,13 @@ pub async fn run(args: ClaudeArgs) -> Result<()> {
         (id, args.session_name.clone())
     };
 
-    // Send attach request with optional session name
-    client.attach(&session_id, session_name).await?;
+    // Get current working directory
+    let cwd = std::env::current_dir()
+        .ok()
+        .and_then(|p| p.to_str().map(String::from));
+
+    // Send attach request with optional session name and cwd
+    client.attach(&session_id, session_name, cwd).await?;
 
     // Wait for attach acknowledgment
     let (initial_cols, initial_rows) = wait_for_attach_ack(&mut client, &session_id).await?;

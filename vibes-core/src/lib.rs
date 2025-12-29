@@ -17,7 +17,7 @@
 //!     let mut pty_manager = PtyManager::new(PtyConfig::default());
 //!
 //!     // Create a Claude PTY session
-//!     let session_id = pty_manager.create_session(Some("My Session".to_string()))?;
+//!     let session_id = pty_manager.create_session(Some("My Session".to_string()), None)?;
 //!
 //!     // Get the session
 //!     if let Some(session) = pty_manager.get_session(&session_id) {

@@ -300,7 +300,11 @@ async fn handle_text_message(
         }
 
         // PTY messages
-        ClientMessage::Attach { session_id, name } => {
+        ClientMessage::Attach {
+            session_id,
+            name,
+            cwd,
+        } => {
             debug!("PTY attach requested for session: {}", session_id);
 
             let mut pty_manager = state.pty_manager.write().await;
@@ -320,7 +324,7 @@ async fn handle_text_message(
                 (120, 40)
             } else {
                 // Create new PTY session with the client's session ID
-                match pty_manager.create_session_with_id(session_id.clone(), name) {
+                match pty_manager.create_session_with_id(session_id.clone(), name, cwd) {
                     Ok(created_id) => {
                         debug!("Created new PTY session: {}", created_id);
 

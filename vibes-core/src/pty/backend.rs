@@ -16,7 +16,12 @@ use super::{PtyConfig, PtyError};
 /// Trait for PTY backend implementations
 pub trait PtyBackend: Send + Sync {
     /// Create a new PTY session
-    fn create_session(&self, id: String, name: Option<String>) -> Result<PtySession, PtyError>;
+    fn create_session(
+        &self,
+        id: String,
+        name: Option<String>,
+        cwd: Option<String>,
+    ) -> Result<PtySession, PtyError>;
 }
 
 /// Real PTY backend using portable_pty
@@ -32,10 +37,16 @@ impl RealPtyBackend {
 }
 
 impl PtyBackend for RealPtyBackend {
-    fn create_session(&self, id: String, name: Option<String>) -> Result<PtySession, PtyError> {
+    fn create_session(
+        &self,
+        id: String,
+        name: Option<String>,
+        cwd: Option<String>,
+    ) -> Result<PtySession, PtyError> {
         tracing::info!(
             id = %id,
             name = ?name,
+            cwd = ?cwd,
             command = %self.config.claude_path.display(),
             "Spawning real PTY session"
         );
@@ -54,6 +65,11 @@ impl PtyBackend for RealPtyBackend {
         let mut cmd = CommandBuilder::new(&self.config.claude_path);
         for arg in &self.config.claude_args {
             cmd.arg(arg);
+        }
+
+        // Set working directory if provided
+        if let Some(dir) = cwd {
+            cmd.cwd(dir);
         }
 
         let child = pair
@@ -137,10 +153,16 @@ impl Write for MockWriter {
 }
 
 impl PtyBackend for MockPtyBackend {
-    fn create_session(&self, id: String, name: Option<String>) -> Result<PtySession, PtyError> {
+    fn create_session(
+        &self,
+        id: String,
+        name: Option<String>,
+        cwd: Option<String>,
+    ) -> Result<PtySession, PtyError> {
         tracing::info!(
             id = %id,
             name = ?name,
+            cwd = ?cwd,
             "Creating mock PTY session (no real process)"
         );
 
@@ -210,7 +232,7 @@ mod tests {
     #[test]
     fn mock_backend_creates_session() {
         let backend = MockPtyBackend::new();
-        let session = backend.create_session("test-id".to_string(), Some("test".to_string()));
+        let session = backend.create_session("test-id".to_string(), Some("test".to_string()), None);
         assert!(session.is_ok());
         let session = session.unwrap();
         assert_eq!(session.id, "test-id");
@@ -225,5 +247,15 @@ mod tests {
         };
         let _backend = create_backend(config);
         // Just verify it doesn't panic
+    }
+
+    #[test]
+    fn mock_backend_creates_session_with_cwd() {
+        let backend = MockPtyBackend::new();
+        let cwd = Some("/tmp/test-dir".to_string());
+        let session = backend.create_session("test-id".to_string(), Some("test".to_string()), cwd);
+        assert!(session.is_ok());
+        let session = session.unwrap();
+        assert_eq!(session.id, "test-id");
     }
 }
