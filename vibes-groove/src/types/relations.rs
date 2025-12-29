@@ -1,5 +1,7 @@
 //! Relation types for knowledge graph edges between learnings
 
+use std::str::FromStr;
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -58,15 +60,31 @@ impl RelationType {
         }
     }
 
-    #[allow(clippy::should_implement_trait)]
-    pub fn from_str(s: &str) -> Option<Self> {
+}
+
+/// Error type for parsing RelationType from string
+#[derive(Debug, Clone)]
+pub struct ParseRelationTypeError(pub String);
+
+impl std::fmt::Display for ParseRelationTypeError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "unknown relation type: {}", self.0)
+    }
+}
+
+impl std::error::Error for ParseRelationTypeError {}
+
+impl FromStr for RelationType {
+    type Err = ParseRelationTypeError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "supersedes" => Some(Self::Supersedes),
-            "contradicts" => Some(Self::Contradicts),
-            "derived_from" => Some(Self::DerivedFrom),
-            "related_to" => Some(Self::RelatedTo),
-            "specializes" => Some(Self::Specializes),
-            _ => None,
+            "supersedes" => Ok(Self::Supersedes),
+            "contradicts" => Ok(Self::Contradicts),
+            "derived_from" => Ok(Self::DerivedFrom),
+            "related_to" => Ok(Self::RelatedTo),
+            "specializes" => Ok(Self::Specializes),
+            _ => Err(ParseRelationTypeError(s.to_string())),
         }
     }
 }
@@ -87,10 +105,10 @@ mod tests {
     #[test]
     fn test_relation_type_from_str() {
         assert_eq!(
-            RelationType::from_str("supersedes"),
-            Some(RelationType::Supersedes)
+            RelationType::from_str("supersedes").unwrap(),
+            RelationType::Supersedes
         );
-        assert_eq!(RelationType::from_str("unknown"), None);
+        assert!(RelationType::from_str("unknown").is_err());
     }
 
     #[test]

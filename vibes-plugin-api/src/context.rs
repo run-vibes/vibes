@@ -67,14 +67,30 @@ pub trait Harness: Send + Sync {
 /// - Command registration
 /// - Harness for groove integration (optional)
 /// - Available capabilities
+///
+/// # Harness vs Capabilities
+///
+/// The context stores both a `harness` (optional) and a `capabilities` vector.
+/// These serve different purposes:
+///
+/// - `capabilities`: The authoritative list of features available to the plugin,
+///   regardless of whether a harness is present. This allows capability checks
+///   without requiring the full harness implementation.
+///
+/// - `harness`: The runtime implementation of groove integration. When present,
+///   its `capabilities()` method should return the same set as the context's
+///   `capabilities` field.
+///
+/// When constructing a `PluginContext` with a harness, ensure both are kept in sync.
 pub struct PluginContext {
     plugin_name: String,
     plugin_dir: PathBuf,
     config: PluginConfig,
     registered_commands: Vec<RegisteredCommand>,
-    /// Optional harness for groove integration
+    /// Optional harness for groove integration.
+    /// When present, its capabilities should match the `capabilities` field.
     harness: Option<Arc<dyn Harness>>,
-    /// Available capabilities
+    /// Authoritative list of capabilities available to this plugin.
     capabilities: Vec<Capability>,
 }
 

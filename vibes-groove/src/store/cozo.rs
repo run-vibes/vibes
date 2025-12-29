@@ -139,7 +139,6 @@ impl CozoStore {
     }
 
     /// Run a mutation query
-    #[allow(dead_code)]
     async fn run_mutation(
         &self,
         query: &str,
@@ -946,9 +945,8 @@ impl CozoStore {
         let relation_type_str = row[1]
             .get_str()
             .ok_or_else(|| GrooveError::Database("Invalid relation_type type".into()))?;
-        let relation_type = RelationType::from_str(relation_type_str).ok_or_else(|| {
-            GrooveError::Database(format!("Unknown relation type: {relation_type_str}"))
-        })?;
+        let relation_type = RelationType::from_str(relation_type_str)
+            .map_err(|e| GrooveError::Database(format!("Unknown relation type: {e}")))?;
 
         let to_id_str = row[2]
             .get_str()
