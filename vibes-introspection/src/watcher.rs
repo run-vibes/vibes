@@ -12,6 +12,7 @@ pub struct CapabilityWatcher {
     capabilities: Arc<RwLock<HarnessCapabilities>>,
     project_root: Option<PathBuf>,
     _watcher: notify::RecommendedWatcher,
+    _task: tokio::task::JoinHandle<()>,
 }
 
 impl CapabilityWatcher {
@@ -33,60 +34,52 @@ impl CapabilityWatcher {
         // Set up file watching
         let (tx, rx) = mpsc::channel::<notify::Result<notify::Event>>(100);
 
-        let watcher = {
-            let tx = tx.clone();
-            recommended_watcher(move |event| {
-                // Use blocking_send since this callback runs in the notify thread
-                let _ = tx.blocking_send(event);
-            })?
-        };
+        let watcher = recommended_watcher(move |event| {
+            // Use blocking_send since this callback runs in the notify thread
+            let _ = tx.blocking_send(event);
+        })?;
 
         // Get config paths to watch
         let config_paths = harness.config_paths(project_root.as_deref())?;
 
-        let mut instance = Self {
-            harness,
-            capabilities,
-            project_root,
-            _watcher: watcher,
-        };
+        let mut watcher = watcher;
 
         // Watch all existing config paths
         if let Some(system) = &config_paths.system
             && system.exists()
         {
             tracing::debug!("Watching system config: {:?}", system);
-            instance
-                ._watcher
-                .watch(system, RecursiveMode::Recursive)?;
+            watcher.watch(system, RecursiveMode::Recursive)?;
         }
 
         if config_paths.user.exists() {
             tracing::debug!("Watching user config: {:?}", config_paths.user);
-            instance
-                ._watcher
-                .watch(&config_paths.user, RecursiveMode::Recursive)?;
+            watcher.watch(&config_paths.user, RecursiveMode::Recursive)?;
         }
 
         if let Some(project) = &config_paths.project
             && project.exists()
         {
             tracing::debug!("Watching project config: {:?}", project);
-            instance
-                ._watcher
-                .watch(project, RecursiveMode::Recursive)?;
+            watcher.watch(project, RecursiveMode::Recursive)?;
         }
 
         // Spawn the debounce loop
-        let harness_clone = instance.harness.clone();
-        let capabilities_clone = instance.capabilities.clone();
-        let project_root_clone = instance.project_root.clone();
+        let harness_clone = harness.clone();
+        let capabilities_clone = capabilities.clone();
+        let project_root_clone = project_root.clone();
 
-        tokio::spawn(async move {
+        let task = tokio::spawn(async move {
             Self::debounce_loop(rx, harness_clone, capabilities_clone, project_root_clone, debounce_ms).await;
         });
 
-        Ok(instance)
+        Ok(Self {
+            harness,
+            capabilities,
+            project_root,
+            _watcher: watcher,
+            _task: task,
+        })
     }
 
     /// Get the current capabilities
@@ -259,5 +252,72 @@ mod tests {
 
         let caps = watcher.capabilities().await;
         assert_eq!(caps.harness_type, "mock");
+    }
+
+    /// Mock harness that uses a specific config directory for file watching tests
+    struct MockHarnessWithConfigDir {
+        config_dir: PathBuf,
+        introspect_count: Arc<RwLock<usize>>,
+    }
+
+    #[async_trait]
+    impl Harness for MockHarnessWithConfigDir {
+        fn harness_type(&self) -> &'static str {
+            "mock"
+        }
+
+        async fn version(&self) -> Option<String> {
+            Some("1.0.0".to_string())
+        }
+
+        fn config_paths(&self, _project_root: Option<&std::path::Path>) -> Result<ConfigPaths> {
+            Ok(ConfigPaths {
+                system: None,
+                user: self.config_dir.clone(),
+                project: None,
+            })
+        }
+
+        async fn introspect(&self, _project_root: Option<&std::path::Path>) -> Result<HarnessCapabilities> {
+            *self.introspect_count.write().await += 1;
+            Ok(HarnessCapabilities {
+                harness_type: "mock".to_string(),
+                version: Some("1.0.0".to_string()),
+                system: None,
+                user: ScopedCapabilities::default(),
+                project: None,
+            })
+        }
+    }
+
+    #[tokio::test]
+    async fn test_watcher_re_introspects_on_file_change() {
+        use std::time::Duration;
+        use tokio::fs;
+
+        let tmp = tempfile::TempDir::new().unwrap();
+        let config_dir = tmp.path().join(".mock");
+        fs::create_dir(&config_dir).await.unwrap();
+
+        let introspect_count = Arc::new(RwLock::new(0));
+        let harness = Arc::new(MockHarnessWithConfigDir {
+            config_dir: config_dir.clone(),
+            introspect_count: introspect_count.clone(),
+        });
+
+        let _watcher = CapabilityWatcher::new(harness, None, 50).await.unwrap();
+        assert_eq!(*introspect_count.read().await, 1);
+
+        // Modify a file in the watched directory
+        fs::write(config_dir.join("test.txt"), "trigger").await.unwrap();
+
+        // Wait for debounce + processing
+        tokio::time::sleep(Duration::from_millis(200)).await;
+
+        // Should have triggered re-introspection
+        assert!(
+            *introspect_count.read().await >= 2,
+            "Expected at least 2 introspections after file change"
+        );
     }
 }
