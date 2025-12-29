@@ -56,7 +56,7 @@ impl VibesClient {
 
     /// Connect to the vibes daemon on the default port
     pub async fn connect_default() -> Result<Self> {
-        use crate::commands::serve::{DEFAULT_HOST, DEFAULT_PORT};
+        use crate::config::{DEFAULT_HOST, DEFAULT_PORT};
         let url = format!("ws://{}:{}/ws", DEFAULT_HOST, DEFAULT_PORT);
         Self::connect_url(&url).await
     }

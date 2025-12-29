@@ -1,5 +1,5 @@
 use super::types::{
-    DEFAULT_PORT, RawServerConfig, RawVibesConfig, ServerConfig, SessionConfig,
+    DEFAULT_HOST, DEFAULT_PORT, RawServerConfig, RawVibesConfig, ServerConfig, SessionConfig,
     TunnelConfigSection, VibesConfig,
 };
 use anyhow::Result;
@@ -49,6 +49,7 @@ impl ConfigLoader {
     fn merge_raw(base: RawVibesConfig, overlay: RawVibesConfig) -> RawVibesConfig {
         RawVibesConfig {
             server: RawServerConfig {
+                host: overlay.server.host.or(base.server.host),
                 port: overlay.server.port.or(base.server.port),
                 auto_start: overlay.server.auto_start.or(base.server.auto_start),
             },
@@ -95,6 +96,7 @@ impl ConfigLoader {
     fn finalize(raw: RawVibesConfig) -> VibesConfig {
         VibesConfig {
             server: ServerConfig {
+                host: raw.server.host.unwrap_or_else(|| DEFAULT_HOST.to_string()),
                 port: raw.server.port.unwrap_or(DEFAULT_PORT),
                 auto_start: raw.server.auto_start.unwrap_or(true),
             },
@@ -179,6 +181,7 @@ default_model = "claude-sonnet-4"
         // Test that overlay values override base, but None in overlay preserves base
         let base = RawVibesConfig {
             server: RawServerConfig {
+                host: Some("127.0.0.1".to_string()),
                 port: Some(7432),
                 auto_start: Some(true),
             },
@@ -193,6 +196,7 @@ default_model = "claude-sonnet-4"
 
         let overlay = RawVibesConfig {
             server: RawServerConfig {
+                host: Some("0.0.0.0".to_string()),
                 port: Some(8080),
                 auto_start: Some(false),
             },
@@ -207,6 +211,7 @@ default_model = "claude-sonnet-4"
 
         let merged = ConfigLoader::merge_raw(base, overlay);
 
+        assert_eq!(merged.server.host, Some("0.0.0.0".to_string()));
         assert_eq!(merged.server.port, Some(8080));
         assert_eq!(merged.server.auto_start, Some(false));
         assert_eq!(
@@ -226,6 +231,7 @@ default_model = "claude-sonnet-4"
         // Test that None values in overlay don't override base values
         let base = RawVibesConfig {
             server: RawServerConfig {
+                host: Some("0.0.0.0".to_string()),
                 port: Some(9000),
                 auto_start: Some(false),
             },
@@ -236,6 +242,7 @@ default_model = "claude-sonnet-4"
 
         let overlay = RawVibesConfig {
             server: RawServerConfig {
+                host: None,       // Should preserve base
                 port: None,       // Should preserve base
                 auto_start: None, // Should preserve base
             },
@@ -247,6 +254,7 @@ default_model = "claude-sonnet-4"
         let merged = ConfigLoader::merge_raw(base, overlay);
 
         // Base values preserved when overlay has None
+        assert_eq!(merged.server.host, Some("0.0.0.0".to_string()));
         assert_eq!(merged.server.port, Some(9000));
         assert_eq!(merged.server.auto_start, Some(false));
     }
