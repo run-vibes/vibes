@@ -4320,6 +4320,7 @@ dependencies = [
  "tracing-subscriber",
  "uuid",
  "vibes-core",
+ "vibes-groove",
  "vibes-server",
 ]
 
