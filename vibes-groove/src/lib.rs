@@ -16,6 +16,8 @@ pub mod types;
 pub use config::{EnterpriseConfig, GrooveConfig, ProjectContext};
 pub use error::{GrooveError, Result};
 pub use export::{GrooveExport, ImportStats, LearningExport, EXPORT_VERSION};
-pub use store::{LearningStore, ParamStore};
+pub use store::{
+    LearningStore, Migration, ParamStore, CURRENT_SCHEMA_VERSION, INITIAL_SCHEMA, MIGRATIONS,
+};
 pub use types::*;
 // pub use storage::GrooveStorage;
