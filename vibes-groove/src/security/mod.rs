@@ -24,7 +24,7 @@ pub use quarantine::{QuarantineReason, QuarantineStatus, ReviewOutcome};
 pub use rbac::{Operation, OrgRole, Permissions};
 pub use scanning::{
     ContentScanner, DlpScanner, InjectionDetector, NoOpDlpScanner, NoOpInjectionDetector,
-    ScanFinding, ScanResult, Severity,
+    RegexScanner, ScanFinding, ScanResult, Severity,
 };
 pub use trust::{TrustContext, TrustLevel, TrustSource, Verification, VerifiedBy};
 

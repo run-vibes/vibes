@@ -1,12 +1,12 @@
-//! Content scanning for injection protection
+//! Scanning types
 //!
-//! Provides multi-layer scanning with regex patterns.
+//! Core types for content scanning.
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use super::{SecurityResult, TrustLevel};
+use crate::security::{SecurityResult, TrustLevel};
 
 /// Severity of a scan finding
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
