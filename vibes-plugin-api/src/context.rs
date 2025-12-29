@@ -1,5 +1,6 @@
 //! PluginContext - Plugin's interface to vibes-core capabilities
 
+use crate::command::CommandSpec;
 use crate::error::PluginError;
 use serde::{Serialize, de::DeserializeOwned};
 use std::collections::HashMap;
@@ -87,6 +88,8 @@ pub struct PluginContext {
     plugin_dir: PathBuf,
     config: PluginConfig,
     registered_commands: Vec<RegisteredCommand>,
+    /// Commands pending registration (using CommandSpec)
+    pending_commands: Vec<CommandSpec>,
     /// Optional harness for groove integration.
     /// When present, its capabilities should match the `capabilities` field.
     harness: Option<Arc<dyn Harness>>,
@@ -123,6 +126,7 @@ impl PluginContext {
             plugin_dir,
             config: PluginConfig::new(),
             registered_commands: Vec::new(),
+            pending_commands: Vec::new(),
             harness: None,
             capabilities: Vec::new(),
         }
@@ -135,6 +139,7 @@ impl PluginContext {
             plugin_dir,
             config,
             registered_commands: Vec::new(),
+            pending_commands: Vec::new(),
             harness: None,
             capabilities: Vec::new(),
         }
@@ -210,6 +215,32 @@ impl PluginContext {
     /// Get the list of registered commands
     pub fn registered_commands(&self) -> &[RegisteredCommand] {
         &self.registered_commands
+    }
+
+    // ─── CommandSpec Registration ─────────────────────────────────────
+
+    /// Register a CLI command for this plugin using CommandSpec.
+    ///
+    /// The command will be namespaced under the plugin name:
+    /// `vibes <plugin-name> <path...>`
+    ///
+    /// Returns error if command path is duplicate within this plugin.
+    pub fn register_command_spec(&mut self, spec: CommandSpec) -> Result<(), PluginError> {
+        if self.pending_commands.iter().any(|c| c.path == spec.path) {
+            return Err(PluginError::DuplicateCommand(spec.path.join(" ")));
+        }
+        self.pending_commands.push(spec);
+        Ok(())
+    }
+
+    /// Get commands pending registration (used by PluginHost)
+    pub fn pending_commands(&self) -> &[CommandSpec] {
+        &self.pending_commands
+    }
+
+    /// Take pending commands (used by PluginHost after validation)
+    pub fn take_pending_commands(&mut self) -> Vec<CommandSpec> {
+        std::mem::take(&mut self.pending_commands)
     }
 
     // ─── Logging ─────────────────────────────────────────────────────
@@ -409,6 +440,60 @@ mod tests {
         assert_eq!(commands.len(), 2);
         assert_eq!(commands[0].name, "hello");
         assert_eq!(commands[1].name, "goodbye");
+    }
+
+    // ─── CommandSpec Registration Tests ─────────────────────────────────
+
+    #[test]
+    fn test_register_command_spec() {
+        use crate::command::CommandSpec;
+
+        let mut ctx = PluginContext::new("test".into(), PathBuf::from("/tmp"));
+
+        let result = ctx.register_command_spec(CommandSpec {
+            path: vec!["trust".into(), "levels".into()],
+            description: "Show trust levels".into(),
+            args: vec![],
+        });
+
+        assert!(result.is_ok());
+        assert_eq!(ctx.pending_commands().len(), 1);
+    }
+
+    #[test]
+    fn test_register_command_spec_duplicate_fails() {
+        use crate::command::CommandSpec;
+
+        let mut ctx = PluginContext::new("test".into(), PathBuf::from("/tmp"));
+
+        let spec = CommandSpec {
+            path: vec!["trust".into(), "levels".into()],
+            description: "Show trust levels".into(),
+            args: vec![],
+        };
+
+        ctx.register_command_spec(spec.clone()).unwrap();
+        let result = ctx.register_command_spec(spec);
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_take_pending_commands() {
+        use crate::command::CommandSpec;
+
+        let mut ctx = PluginContext::new("test".into(), PathBuf::from("/tmp"));
+
+        ctx.register_command_spec(CommandSpec {
+            path: vec!["foo".into()],
+            description: "Foo".into(),
+            args: vec![],
+        })
+        .unwrap();
+
+        let commands = ctx.take_pending_commands();
+        assert_eq!(commands.len(), 1);
+        assert!(ctx.pending_commands().is_empty());
     }
 
     #[test]
