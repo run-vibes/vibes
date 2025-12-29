@@ -23,7 +23,15 @@
             pkgs.cargo-nextest
             pkgs.cargo-mutants
             pkgs.cargo-watch
+            # Native build deps for CozoDB/RocksDB
+            pkgs.clang
+            pkgs.llvmPackages.libclang
+            pkgs.zstd
+            pkgs.pkg-config
           ];
+
+          # Required for bindgen to find libclang
+          LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
 
           shellHook = ''
             echo "vibes dev shell loaded"
