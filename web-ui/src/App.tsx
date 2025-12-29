@@ -8,6 +8,7 @@ import {
 import { ClaudeSessions } from './pages/ClaudeSessions'
 import { ClaudeSession } from './pages/ClaudeSession'
 import { StatusPage } from './pages/Status'
+import { QuarantinePage } from './pages/Quarantine'
 import { TunnelBadge } from './components/TunnelBadge'
 import { useAuth } from './hooks/useAuth'
 import { useWebSocket } from './hooks/useWebSocket'
@@ -23,6 +24,7 @@ function RootLayout() {
         <nav>
           <Link to="/" className="logo">vibes</Link>
           <Link to="/claude">Sessions</Link>
+          <Link to="/groove">Groove</Link>
           <TunnelBadge />
           <div className="header-auth">
             {isLoading ? null : isLocal ? (
@@ -87,8 +89,14 @@ const statusRoute = createRoute({
   component: StatusPage,
 })
 
+const grooveRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/groove',
+  component: QuarantinePage,
+})
+
 // Create route tree and router
-const routeTree = rootRoute.addChildren([indexRoute, claudeRoute, sessionRoute, statusRoute])
+const routeTree = rootRoute.addChildren([indexRoute, claudeRoute, sessionRoute, statusRoute, grooveRoute])
 
 export const router = createRouter({ routeTree })
 
