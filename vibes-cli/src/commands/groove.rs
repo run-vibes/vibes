@@ -81,38 +81,42 @@ fn run_trust(args: TrustArgs) -> Result<()> {
         TrustCommands::Levels => {
             println!("Trust Level Hierarchy (highest to lowest):");
             println!();
-            println!("  {:<20} {:>6}  Description", "Level", "Score");
+            println!("  {:<24} {:>6}  Description", "Level", "Score");
             println!(
-                "  {:20} {:>6}  {}",
-                "─".repeat(20),
+                "  {:24} {:>6}  {}",
+                "─".repeat(24),
                 "─".repeat(6),
-                "─".repeat(40)
+                "─".repeat(36)
             );
             println!(
-                "  {:<20} {:>6}  Locally created content (full trust)",
+                "  {:<24} {:>6}  Locally created content (full trust)",
                 "Local", "100"
             );
             println!(
-                "  {:<20} {:>6}  Verified by organization admin",
-                "OrganizationVerified", "80"
+                "  {:<24} {:>6}  Synced from user's own cloud",
+                "PrivateCloud", "90"
             );
             println!(
-                "  {:<20} {:>6}  From organization member",
-                "OrganizationMember", "60"
+                "  {:<24} {:>6}  Enterprise content, curator approved",
+                "OrganizationVerified", "70"
             );
             println!(
-                "  {:<20} {:>6}  Community-verified public content",
-                "CommunityVerified", "40"
+                "  {:<24} {:>6}  Enterprise content, not yet approved",
+                "OrganizationUnverified", "50"
             );
             println!(
-                "  {:<20} {:>6}  Unverified public content",
+                "  {:<24} {:>6}  Community content, verified",
+                "PublicVerified", "30"
+            );
+            println!(
+                "  {:<24} {:>6}  Community content, unverified",
                 "PublicUnverified", "10"
             );
-            println!("  {:<20} {:>6}  Quarantined (blocked)", "Quarantined", "0");
+            println!("  {:<24} {:>6}  Quarantined (blocked)", "Quarantined", "0");
             println!();
             println!("Injection Policy:");
-            println!("  - Local & OrganizationVerified: Allowed without scanning");
-            println!("  - OrganizationMember & CommunityVerified: Requires scanning");
+            println!("  - Local, PrivateCloud, OrganizationVerified: Allowed without scanning");
+            println!("  - OrganizationUnverified, PublicVerified: Requires scanning");
             println!("  - PublicUnverified: Requires scanning, may show warnings");
             println!("  - Quarantined: Blocked from injection");
             Ok(())
