@@ -30,7 +30,7 @@ pub use trust::{TrustContext, TrustLevel, TrustSource, Verification, VerifiedBy}
 
 pub use audit::{
     ActionOutcome, ActorId, AuditAction, AuditContext, AuditFilter, AuditLog, AuditLogEntry,
-    ResourceRef,
+    JsonlAuditLog, ResourceRef,
 };
 pub use policy::{
     AuditPolicy, CapturePolicy, FilePolicyProvider, IdentityPolicy, ImportExportPolicy,

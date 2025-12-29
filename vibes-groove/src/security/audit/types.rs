@@ -1,13 +1,13 @@
-//! Audit logging for compliance
+//! Audit log types
 //!
-//! Provides append-only JSONL audit logs.
+//! Core types for audit logging.
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use super::SecurityResult;
+use crate::security::SecurityResult;
 
 /// Actor who performed an action
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
