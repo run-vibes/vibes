@@ -14,8 +14,8 @@ use cozo::{DataValue, DbInstance, NamedRows};
 
 use super::schema::MIGRATIONS;
 use crate::{
-    GrooveError, Learning, LearningCategory, LearningContent, LearningId, LearningSource, Result,
-    Scope, UsageStats,
+    GrooveError, Learning, LearningCategory, LearningContent, LearningId, LearningRelation,
+    LearningSource, RelationType, Result, Scope, UsageStats,
 };
 
 /// CozoDB-backed learning store
@@ -422,6 +422,61 @@ impl CozoStore {
         }))
     }
 
+    /// Store a relation between two learnings
+    pub async fn store_relation(&self, relation: &LearningRelation) -> Result<()> {
+        let query = format!(
+            r#"?[from_id, relation_type, to_id, weight, created_at] <- [[
+                '{}', '{}', '{}', {}, {}
+            ]]
+            :put learning_relations {{
+                from_id, relation_type, to_id => weight, created_at
+            }}"#,
+            relation.from_id,
+            relation.relation_type.as_str(),
+            relation.to_id,
+            relation.weight,
+            relation.created_at.timestamp(),
+        );
+
+        self.run_mutation(&query, Default::default()).await?;
+        Ok(())
+    }
+
+    /// Find learnings related to the given learning ID
+    pub async fn find_related(
+        &self,
+        id: LearningId,
+        relation_type: Option<&RelationType>,
+    ) -> Result<Vec<Learning>> {
+        // Build query based on whether relation_type filter is provided
+        let base_query = if let Some(rt) = relation_type {
+            format!(
+                r#"?[to_id] := *learning_relations{{from_id, relation_type, to_id}}, from_id = '{}', relation_type = '{}'"#,
+                id,
+                rt.as_str()
+            )
+        } else {
+            format!(
+                r#"?[to_id] := *learning_relations{{from_id, to_id}}, from_id = '{}'"#,
+                id
+            )
+        };
+
+        let rows = self.run_query(&base_query, Default::default()).await?;
+
+        let mut learnings = Vec::new();
+        for row in &rows.rows {
+            if let Some(to_id_str) = row[0].get_str()
+                && let Ok(to_id) = uuid::Uuid::parse_str(to_id_str)
+                && let Ok(Some(learning)) = self.get(to_id).await
+            {
+                learnings.push(learning);
+            }
+        }
+
+        Ok(learnings)
+    }
+
     /// Helper to convert a database row to a Learning struct
     fn row_to_learning(&self, row: &[DataValue]) -> Result<Option<Learning>> {
         if row.len() < 11 {
@@ -510,7 +565,10 @@ impl CozoStore {
 mod tests {
     use super::super::schema::CURRENT_SCHEMA_VERSION;
     use super::*;
-    use crate::{Learning, LearningCategory, LearningContent, LearningSource, Outcome, Scope};
+    use crate::{
+        Learning, LearningCategory, LearningContent, LearningRelation, LearningSource, Outcome,
+        RelationType, Scope,
+    };
     use tempfile::TempDir;
 
     #[tokio::test]
@@ -770,5 +828,134 @@ mod tests {
         let fake_id = uuid::Uuid::now_v7();
         let stats = store.get_usage(fake_id).await.unwrap();
         assert!(stats.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_store_relation() {
+        let tmp = TempDir::new().unwrap();
+        let store = CozoStore::open(tmp.path()).await.unwrap();
+
+        let learning1 = Learning::new(
+            Scope::Global,
+            LearningCategory::CodePattern,
+            LearningContent {
+                description: "Original pattern".into(),
+                pattern: None,
+                insight: "insight".into(),
+            },
+            LearningSource::UserCreated,
+        );
+        let learning2 = Learning::new(
+            Scope::Global,
+            LearningCategory::CodePattern,
+            LearningContent {
+                description: "Improved pattern".into(),
+                pattern: None,
+                insight: "insight".into(),
+            },
+            LearningSource::UserCreated,
+        );
+
+        store.store(&learning1).await.unwrap();
+        store.store(&learning2).await.unwrap();
+
+        let relation = LearningRelation::new(learning2.id, RelationType::Supersedes, learning1.id);
+        store.store_relation(&relation).await.unwrap();
+
+        // Verify by finding related
+        let related = store.find_related(learning2.id, None).await.unwrap();
+        assert_eq!(related.len(), 1);
+        assert_eq!(related[0].id, learning1.id);
+    }
+
+    #[tokio::test]
+    async fn test_find_related_with_filter() {
+        let tmp = TempDir::new().unwrap();
+        let store = CozoStore::open(tmp.path()).await.unwrap();
+
+        let base = Learning::new(
+            Scope::Global,
+            LearningCategory::CodePattern,
+            LearningContent {
+                description: "Base".into(),
+                pattern: None,
+                insight: "insight".into(),
+            },
+            LearningSource::UserCreated,
+        );
+        let supersedes = Learning::new(
+            Scope::Global,
+            LearningCategory::CodePattern,
+            LearningContent {
+                description: "Supersedes".into(),
+                pattern: None,
+                insight: "insight".into(),
+            },
+            LearningSource::UserCreated,
+        );
+        let related = Learning::new(
+            Scope::Global,
+            LearningCategory::CodePattern,
+            LearningContent {
+                description: "Related".into(),
+                pattern: None,
+                insight: "insight".into(),
+            },
+            LearningSource::UserCreated,
+        );
+
+        store.store(&base).await.unwrap();
+        store.store(&supersedes).await.unwrap();
+        store.store(&related).await.unwrap();
+
+        store
+            .store_relation(&LearningRelation::new(
+                base.id,
+                RelationType::Supersedes,
+                supersedes.id,
+            ))
+            .await
+            .unwrap();
+        store
+            .store_relation(&LearningRelation::new(
+                base.id,
+                RelationType::RelatedTo,
+                related.id,
+            ))
+            .await
+            .unwrap();
+
+        // All relations
+        let all = store.find_related(base.id, None).await.unwrap();
+        assert_eq!(all.len(), 2);
+
+        // Filtered by type
+        let only_supersedes = store
+            .find_related(base.id, Some(&RelationType::Supersedes))
+            .await
+            .unwrap();
+        assert_eq!(only_supersedes.len(), 1);
+        assert_eq!(only_supersedes[0].id, supersedes.id);
+    }
+
+    #[tokio::test]
+    async fn test_find_related_empty() {
+        let tmp = TempDir::new().unwrap();
+        let store = CozoStore::open(tmp.path()).await.unwrap();
+
+        let learning = Learning::new(
+            Scope::Global,
+            LearningCategory::CodePattern,
+            LearningContent {
+                description: "Isolated".into(),
+                pattern: None,
+                insight: "insight".into(),
+            },
+            LearningSource::UserCreated,
+        );
+        store.store(&learning).await.unwrap();
+
+        let related = store.find_related(learning.id, None).await.unwrap();
+        assert!(related.is_empty());
     }
 }
