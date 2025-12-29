@@ -53,7 +53,14 @@ impl ConfigPaths {
 
     #[cfg(all(unix, not(any(target_os = "linux", target_os = "macos"))))]
     fn system_config_dir(_harness: &str) -> Option<PathBuf> {
-        None // No standard system config location for other Unix systems
+        // For non-Linux/macOS Unix targets (e.g., *BSDs, Illumos/Solaris, other Unix-likes)
+        // there is no single, widely adopted convention for a global application config
+        // directory (paths like `/usr/local/etc/<harness>` are common but not universal).
+        //
+        // To avoid baking in OS- or distro-specific assumptions, we intentionally do not
+        // resolve a system config directory here and instead return `None`. Callers can
+        // add explicit per-platform handling if they need support for a particular Unix.
+        None
     }
 
     #[cfg(windows)]

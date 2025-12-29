@@ -377,7 +377,7 @@ impl HarnessCapabilities {
     }
 
     /// Get all injection targets across scopes
-    pub fn all_injection_targets(&self) -> Vec<&InjectionTarget> {
+    pub fn effective_injection_targets(&self) -> Vec<&InjectionTarget> {
         let mut targets = Vec::new();
         if let Some(sys) = &self.system {
             targets.extend(sys.injection_targets.iter());
@@ -450,7 +450,7 @@ mod tests {
     }
 
     #[test]
-    fn test_all_injection_targets_collects_all_scopes() {
+    fn test_effective_injection_targets_collects_all_scopes() {
         let caps = HarnessCapabilities {
             harness_type: "claude".to_string(),
             version: None,
@@ -483,7 +483,7 @@ mod tests {
             }),
         };
 
-        let targets = caps.all_injection_targets();
+        let targets = caps.effective_injection_targets();
         assert_eq!(targets.len(), 3);
     }
 }
@@ -1455,7 +1455,7 @@ async fn test_full_introspection_workflow() {
     assert_eq!(caps.user.config_files[0].format, ConfigFormat::Json);
 
     // Check injection targets
-    let targets = caps.all_injection_targets();
+    let targets = caps.effective_injection_targets();
     assert_eq!(targets.len(), 1);
     assert_eq!(targets[0].format, ConfigFormat::Markdown);
     assert_eq!(targets[0].scope, InjectionScope::User);
