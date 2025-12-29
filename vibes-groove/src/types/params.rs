@@ -128,7 +128,7 @@ mod tests {
         let param = AdaptiveParam::new_uninformed();
         for _ in 0..100 {
             let sample = param.sample();
-            assert!(sample >= 0.0 && sample <= 1.0);
+            assert!((0.0..=1.0).contains(&sample));
         }
     }
 
