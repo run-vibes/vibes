@@ -42,7 +42,7 @@ pub mod http;
 pub mod types;
 
 pub use command::{ArgSpec, CommandOutput, CommandSpec};
-pub use context::{Capability, Harness, PluginConfig, PluginContext};
+pub use context::{Capability, CommandArgs, Harness, PluginConfig, PluginContext};
 pub use error::PluginError;
 pub use http::{HttpMethod, RouteRequest, RouteResponse, RouteSpec};
 pub use types::*;
@@ -127,6 +127,23 @@ pub trait Plugin: Send + Sync {
         _ctx: &mut PluginContext,
     ) {
     }
+
+    // ─── Command Handler ────────────────────────────────────────────
+
+    /// Handle a CLI command invocation.
+    ///
+    /// Called when a user runs a command registered by this plugin.
+    /// The `path` matches what was registered in `on_load`.
+    ///
+    /// Default: returns UnknownCommand error (override if registering commands)
+    fn handle_command(
+        &mut self,
+        _path: &[&str],
+        _args: &CommandArgs,
+        _ctx: &mut PluginContext,
+    ) -> Result<CommandOutput, PluginError> {
+        Err(PluginError::UnknownCommand("no commands registered".into()))
+    }
 }
 
 /// Export a plugin type for dynamic loading.
@@ -173,6 +190,7 @@ macro_rules! export_plugin {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::PathBuf;
 
     #[test]
     fn test_api_version_is_set() {
@@ -189,5 +207,28 @@ mod tests {
     fn test_manifest_default_has_correct_api_version() {
         let manifest = PluginManifest::default();
         assert_eq!(manifest.api_version, API_VERSION);
+    }
+
+    #[test]
+    fn test_plugin_handle_command_default_returns_error() {
+        struct TestPlugin;
+        impl Plugin for TestPlugin {
+            fn manifest(&self) -> PluginManifest {
+                PluginManifest::default()
+            }
+            fn on_load(&mut self, _ctx: &mut PluginContext) -> Result<(), PluginError> {
+                Ok(())
+            }
+            fn on_unload(&mut self) -> Result<(), PluginError> {
+                Ok(())
+            }
+        }
+
+        let mut plugin = TestPlugin;
+        let mut ctx = PluginContext::new("test".into(), PathBuf::from("/tmp"));
+        let args = CommandArgs::default();
+
+        let result = plugin.handle_command(&["foo"], &args, &mut ctx);
+        assert!(result.is_err());
     }
 }
