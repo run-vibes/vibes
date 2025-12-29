@@ -161,23 +161,23 @@ mod tests {
 
     #[test]
     fn test_ensure_daemon_running_accepts_host_parameter() {
-        // This test verifies the API signature accepts host
-        // The actual daemon spawning is tested in integration tests
+        // Compile-time signature test: ensures the API accepts host parameter.
+        // This catches regressions where host parameter might be accidentally removed.
+        // TODO: Add integration test to verify host is actually passed to subprocess
         fn _assert_signature() {
-            // This will fail to compile if ensure_daemon_running doesn't accept host
             let _future = ensure_daemon_running("0.0.0.0", 7432);
         }
     }
 
     #[test]
     fn test_start_daemon_process_accepts_host_parameter() {
-        // Verify start_daemon_process accepts host parameter
+        // Compile-time signature test: ensures start_daemon_process accepts host.
+        // TODO: Add integration test to verify host argument appears in spawned process
         fn _assert_signature() {
-            // This will fail to compile if start_daemon_process doesn't accept host
             let _result = start_daemon_process("0.0.0.0", 7432);
         }
     }
 
-    // Integration tests for daemon auto-start would require actual process spawning
-    // and are better suited for the integration test suite
+    // Note: Full integration tests for daemon auto-start require actual process
+    // spawning and are in the integration test suite (tests/e2e.rs)
 }

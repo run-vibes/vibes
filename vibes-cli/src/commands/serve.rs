@@ -23,11 +23,11 @@ pub struct ServeArgs {
     #[command(subcommand)]
     pub command: Option<ServeCommand>,
 
-    /// Port to listen on (defaults to config or 7432)
+    /// Port to listen on (defaults to config; config default is 7432)
     #[arg(short, long)]
     pub port: Option<u16>,
 
-    /// Host to bind to (defaults to config or 127.0.0.1)
+    /// Host to bind to (defaults to config; config default is 127.0.0.1)
     #[arg(long)]
     pub host: Option<String>,
 
