@@ -8,6 +8,7 @@
 pub mod config;
 pub mod error;
 pub mod export;
+pub mod security;
 pub mod storage;
 pub mod store;
 pub mod types;
@@ -22,3 +23,6 @@ pub use store::{
     ParamStore,
 };
 pub use types::*;
+
+// Security re-exports
+pub use security::{SecurityError, SecurityResult, TrustLevel};
