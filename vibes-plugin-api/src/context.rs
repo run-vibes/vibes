@@ -2,6 +2,7 @@
 
 use crate::command::CommandSpec;
 use crate::error::PluginError;
+use crate::http::RouteSpec;
 use serde::{Serialize, de::DeserializeOwned};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -90,6 +91,8 @@ pub struct PluginContext {
     registered_commands: Vec<RegisteredCommand>,
     /// Commands pending registration (using CommandSpec)
     pending_commands: Vec<CommandSpec>,
+    /// Routes pending registration
+    pending_routes: Vec<RouteSpec>,
     /// Optional harness for groove integration.
     /// When present, its capabilities should match the `capabilities` field.
     harness: Option<Arc<dyn Harness>>,
@@ -127,6 +130,7 @@ impl PluginContext {
             config: PluginConfig::new(),
             registered_commands: Vec::new(),
             pending_commands: Vec::new(),
+            pending_routes: Vec::new(),
             harness: None,
             capabilities: Vec::new(),
         }
@@ -140,6 +144,7 @@ impl PluginContext {
             config,
             registered_commands: Vec::new(),
             pending_commands: Vec::new(),
+            pending_routes: Vec::new(),
             harness: None,
             capabilities: Vec::new(),
         }
@@ -241,6 +246,40 @@ impl PluginContext {
     /// Take pending commands (used by PluginHost after validation)
     pub fn take_pending_commands(&mut self) -> Vec<CommandSpec> {
         std::mem::take(&mut self.pending_commands)
+    }
+
+    // ─── Route Registration ───────────────────────────────────────
+
+    /// Register an HTTP route for this plugin.
+    ///
+    /// Routes are automatically prefixed: `/api/<plugin-name>/...`
+    ///
+    /// Path parameters use `:name` syntax: `/quarantine/:id/review`
+    ///
+    /// Returns error if route (same method+path) is duplicate within this plugin.
+    pub fn register_route(&mut self, spec: RouteSpec) -> Result<(), PluginError> {
+        if self
+            .pending_routes
+            .iter()
+            .any(|r| r.method == spec.method && r.path == spec.path)
+        {
+            return Err(PluginError::DuplicateRoute(format!(
+                "{:?} {}",
+                spec.method, spec.path
+            )));
+        }
+        self.pending_routes.push(spec);
+        Ok(())
+    }
+
+    /// Get routes pending registration (used by PluginHost)
+    pub fn pending_routes(&self) -> &[RouteSpec] {
+        &self.pending_routes
+    }
+
+    /// Take pending routes (used by PluginHost after validation)
+    pub fn take_pending_routes(&mut self) -> Vec<RouteSpec> {
+        std::mem::take(&mut self.pending_routes)
     }
 
     // ─── Logging ─────────────────────────────────────────────────────
@@ -580,5 +619,77 @@ mod tests {
         assert!(ctx.harness().is_some());
         let h = ctx.harness().unwrap();
         assert!(h.has_capability(Capability::MultiTierStorage));
+    }
+
+    // ─── RouteSpec Registration Tests ─────────────────────────────────
+
+    #[test]
+    fn test_register_route() {
+        use crate::http::{HttpMethod, RouteSpec};
+
+        let mut ctx = PluginContext::new("test".into(), PathBuf::from("/tmp"));
+
+        let result = ctx.register_route(RouteSpec {
+            method: HttpMethod::Get,
+            path: "/policy".into(),
+        });
+
+        assert!(result.is_ok());
+        assert_eq!(ctx.pending_routes().len(), 1);
+    }
+
+    #[test]
+    fn test_register_route_duplicate_fails() {
+        use crate::http::{HttpMethod, RouteSpec};
+
+        let mut ctx = PluginContext::new("test".into(), PathBuf::from("/tmp"));
+
+        let spec = RouteSpec {
+            method: HttpMethod::Get,
+            path: "/policy".into(),
+        };
+
+        ctx.register_route(spec.clone()).unwrap();
+        let result = ctx.register_route(spec);
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_same_path_different_method_allowed() {
+        use crate::http::{HttpMethod, RouteSpec};
+
+        let mut ctx = PluginContext::new("test".into(), PathBuf::from("/tmp"));
+
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Get,
+            path: "/resource".into(),
+        })
+        .unwrap();
+
+        let result = ctx.register_route(RouteSpec {
+            method: HttpMethod::Post,
+            path: "/resource".into(),
+        });
+
+        assert!(result.is_ok());
+        assert_eq!(ctx.pending_routes().len(), 2);
+    }
+
+    #[test]
+    fn test_take_pending_routes() {
+        use crate::http::{HttpMethod, RouteSpec};
+
+        let mut ctx = PluginContext::new("test".into(), PathBuf::from("/tmp"));
+
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Get,
+            path: "/test".into(),
+        })
+        .unwrap();
+
+        let routes = ctx.take_pending_routes();
+        assert_eq!(routes.len(), 1);
+        assert!(ctx.pending_routes().is_empty());
     }
 }
