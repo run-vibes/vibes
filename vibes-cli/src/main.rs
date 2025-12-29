@@ -29,6 +29,8 @@ enum Commands {
     Claude(commands::claude::ClaudeArgs),
     /// Manage configuration
     Config(commands::config::ConfigArgs),
+    /// Groove continual learning and security
+    Groove(commands::groove::GrooveArgs),
     /// Manage plugins
     Plugin(commands::plugin::PluginArgs),
     /// Run the vibes server
@@ -50,6 +52,7 @@ async fn main() -> Result<()> {
         Commands::Auth(args) => commands::auth::run(args).await,
         Commands::Claude(args) => commands::claude::run(args).await,
         Commands::Config(args) => commands::config::run(args),
+        Commands::Groove(args) => commands::groove::run(args),
         Commands::Plugin(args) => commands::plugin::run(args),
         Commands::Serve(args) => commands::serve::run(args).await,
         Commands::Sessions(args) => commands::sessions::run(args).await,

@@ -45,6 +45,7 @@ The project uses a **Nix flake** for reproducible development environments with 
 ```bash
 cd vibes              # direnv auto-loads the Nix shell
 direnv allow          # First time only
+just setup-hooks      # Enable pre-commit hooks
 ```
 
 ### Tooling
@@ -62,6 +63,7 @@ direnv allow          # First time only
 
 ```bash
 just              # List all available commands
+just setup-hooks  # Enable git pre-commit hooks (run once)
 just dev          # Watch mode (cargo watch -x check)
 just test         # Run tests (cargo nextest run)
 just test-all     # Run tests including integration tests

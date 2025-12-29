@@ -20,6 +20,40 @@ Skip planning for:
 - Single-file changes
 - Test additions for existing code
 
+## Architectural Decision: Plugin vs Built-in
+
+When adding new functionality that could be a separate feature, **always evaluate whether it should be a plugin** before implementing it directly in vibes-cli or vibes-server.
+
+### Decision Framework
+
+| Question | Plugin | Built-in |
+|----------|--------|----------|
+| Is this a first-party core feature? | Maybe | Yes |
+| Should users be able to disable it? | Yes | No |
+| Does it need CLI subcommands? | Plugin (requires API extension) | Built-in |
+| Does it need HTTP routes? | Plugin (requires API extension) | Built-in |
+| Is it specific to certain use cases? | Yes | No |
+| Would third parties want similar features? | Yes | No |
+
+### Current Plugin API Limitations
+
+As of Milestone 4.2.5, the `vibes-plugin-api` supports:
+- Session lifecycle hooks (`on_session_created`, `on_turn_complete`, etc.)
+- Event subscription
+
+It does **not yet** support:
+- Registering CLI subcommands
+- Registering HTTP routes
+- Deep server integration
+
+**If your feature needs CLI commands or HTTP routes and should be a plugin**, the plugin API must first be extended (see Milestone 4.2.6).
+
+### Example: groove
+
+The groove continual learning system was initially implemented with direct CLI commands in `vibes-cli` and HTTP routes in `vibes-server`. This is **technical debt** that should be migrated to the plugin system once the plugin API supports CLI/HTTP registration.
+
+**Lesson learned:** Identify plugin vs built-in during the design phase, not after implementation.
+
 ## Plan Directory Structure
 
 Plans live in `docs/plans/` with numbered directories matching milestones.
@@ -63,8 +97,11 @@ Before implementation, create a `design.md` that captures architectural decision
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
+| **Plugin vs Built-in** | [Plugin / Built-in] | [See framework above - explain why this is/isn't a plugin] |
 | [Decision Area] | [Choice Made] | [Why] |
 | ... | ... | ... |
+
+> ⚠️ **Required:** Every design document must explicitly address the Plugin vs Built-in decision. See the [decision framework](#architectural-decision-plugin-vs-built-in) above.
 
 ---
 

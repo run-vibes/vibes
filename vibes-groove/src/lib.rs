@@ -8,6 +8,7 @@
 pub mod config;
 pub mod error;
 pub mod export;
+pub mod security;
 pub mod storage;
 pub mod store;
 pub mod types;
@@ -22,3 +23,12 @@ pub use store::{
     ParamStore,
 };
 pub use types::*;
+
+// Security re-exports
+pub use security::{
+    ContentHash, ContentScanner, CreationEvent, CustodyEvent, CustodyEventType, DlpScanner,
+    InjectionDetector, NoOpDlpScanner, NoOpInjectionDetector, Operation, OrgRole, Permissions,
+    Provenance, QuarantineReason, QuarantineStatus, ReviewOutcome, ScanFinding, ScanResult,
+    SecurityError, SecurityResult, Severity, TrustContext, TrustLevel, TrustSource, Verification,
+    VerifiedBy,
+};

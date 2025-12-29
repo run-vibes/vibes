@@ -4,6 +4,11 @@
 default:
     @just --list
 
+# Setup git hooks (run once after clone)
+setup-hooks:
+    git config core.hooksPath .githooks
+    @echo "✓ Git hooks configured"
+
 # Development
 dev:
     cargo watch -x check
