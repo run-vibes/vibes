@@ -437,8 +437,8 @@ mod tests {
 
     #[test]
     fn test_with_capabilities() {
-        let ctx = PluginContext::new("test".to_string(), PathBuf::from("/tmp"))
-            .with_capabilities(vec![
+        let ctx =
+            PluginContext::new("test".to_string(), PathBuf::from("/tmp")).with_capabilities(vec![
                 Capability::SemanticSearch,
                 Capability::LearningStorage,
             ]);
@@ -489,8 +489,8 @@ mod tests {
             caps: vec![Capability::MultiTierStorage],
         });
 
-        let ctx = PluginContext::new("test".to_string(), PathBuf::from("/tmp"))
-            .with_harness(harness);
+        let ctx =
+            PluginContext::new("test".to_string(), PathBuf::from("/tmp")).with_harness(harness);
 
         assert!(ctx.harness().is_some());
         let h = ctx.harness().unwrap();

@@ -59,7 +59,6 @@ impl RelationType {
             Self::Specializes => "specializes",
         }
     }
-
 }
 
 /// Error type for parsing RelationType from string
