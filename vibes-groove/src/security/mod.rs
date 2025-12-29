@@ -28,7 +28,15 @@ pub use scanning::{
 };
 pub use trust::{TrustContext, TrustLevel, TrustSource, Verification, VerifiedBy};
 
+pub use audit::{
+    ActionOutcome, ActorId, AuditAction, AuditContext, AuditFilter, AuditLog, AuditLogEntry,
+    ResourceRef,
+};
+pub use policy::{
+    AuditPolicy, CapturePolicy, IdentityPolicy, ImportExportPolicy, InjectionPolicy, Policy,
+    PolicyChangeAction, PresentationPolicy, QuarantineAction, QuarantinePolicy, ScanPatterns,
+    ScanningPolicy, TiersPolicy, WrapperConfig, WrapperType,
+};
+
 // TODO: Uncomment as modules are implemented
-// pub use policy::*;
-// pub use audit::*;
 // pub use injector::*;
