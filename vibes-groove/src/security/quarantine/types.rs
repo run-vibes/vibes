@@ -1,11 +1,11 @@
-//! Quarantine management
+//! Quarantine types
 //!
-//! Provides quarantine workflow for suspicious learnings.
+//! Core types for quarantine workflow.
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use super::ScanFinding;
+use crate::security::ScanFinding;
 
 /// Why a learning was quarantined
 #[derive(Debug, Clone, Serialize, Deserialize)]

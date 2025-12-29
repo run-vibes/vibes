@@ -28,6 +28,9 @@ pub enum SecurityError {
     #[error("Provenance verification failed: {0}")]
     ProvenanceFailed(String),
 
+    #[error("Permission denied: {0}")]
+    PermissionDenied(String),
+
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
 }

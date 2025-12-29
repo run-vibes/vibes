@@ -35,6 +35,16 @@ pub enum AuditAction {
     QuarantineTriggered,
     QuarantineReviewed,
 
+    // Quarantine actions with details
+    QuarantinedLearning {
+        learning_id: String,
+        reason: String,
+    },
+    ReviewedQuarantine {
+        learning_id: String,
+        outcome: String,
+    },
+
     // Import/Export
     ImportAttempted,
     ImportBlocked,
@@ -134,6 +144,76 @@ pub trait AuditLog: Send + Sync {
 
     /// Query audit entries
     async fn query(&self, filter: AuditFilter) -> SecurityResult<Vec<AuditLogEntry>>;
+}
+
+/// In-memory audit log for testing
+pub struct InMemoryAuditLog {
+    entries: tokio::sync::RwLock<Vec<AuditLogEntry>>,
+}
+
+impl InMemoryAuditLog {
+    /// Create a new in-memory audit log
+    pub fn new() -> Self {
+        Self {
+            entries: tokio::sync::RwLock::new(Vec::new()),
+        }
+    }
+
+    /// Get all entries (for testing)
+    pub async fn entries(&self) -> Vec<AuditLogEntry> {
+        self.entries.read().await.clone()
+    }
+}
+
+impl Default for InMemoryAuditLog {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[async_trait]
+impl AuditLog for InMemoryAuditLog {
+    async fn log(&self, entry: AuditLogEntry) -> SecurityResult<()> {
+        self.entries.write().await.push(entry);
+        Ok(())
+    }
+
+    async fn query(&self, filter: AuditFilter) -> SecurityResult<Vec<AuditLogEntry>> {
+        let entries = self.entries.read().await;
+        let mut results: Vec<_> = entries
+            .iter()
+            .filter(|e| {
+                if let Some(ref actor) = filter.actor {
+                    if &e.actor != actor {
+                        return false;
+                    }
+                }
+                if let Some(ref action) = filter.action {
+                    if &e.action != action {
+                        return false;
+                    }
+                }
+                if let Some(ref from) = filter.from {
+                    if e.timestamp < *from {
+                        return false;
+                    }
+                }
+                if let Some(ref to) = filter.to {
+                    if e.timestamp > *to {
+                        return false;
+                    }
+                }
+                true
+            })
+            .cloned()
+            .collect();
+
+        if let Some(limit) = filter.limit {
+            results.truncate(limit);
+        }
+
+        Ok(results)
+    }
 }
 
 #[cfg(test)]

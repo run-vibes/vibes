@@ -21,7 +21,7 @@ mod trust;
 
 pub use error::{SecurityError, SecurityResult};
 pub use provenance::{ContentHash, CreationEvent, CustodyEvent, CustodyEventType, Provenance};
-pub use quarantine::{QuarantineReason, QuarantineStatus, ReviewOutcome};
+pub use quarantine::{QuarantineManager, QuarantineReason, QuarantineStatus, ReviewOutcome};
 pub use rbac::{Operation, OrgRole, Permissions};
 pub use scanning::{
     ContentScanner, DlpScanner, InjectionDetector, NoOpDlpScanner, NoOpInjectionDetector,
@@ -31,7 +31,7 @@ pub use trust::{TrustContext, TrustLevel, TrustSource, Verification, VerifiedBy}
 
 pub use audit::{
     ActionOutcome, ActorId, AuditAction, AuditContext, AuditFilter, AuditLog, AuditLogEntry,
-    JsonlAuditLog, ResourceRef,
+    InMemoryAuditLog, JsonlAuditLog, ResourceRef,
 };
 pub use policy::{
     AuditPolicy, CapturePolicy, FilePolicyProvider, IdentityPolicy, ImportExportPolicy,
