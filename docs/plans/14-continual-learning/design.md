@@ -2125,6 +2125,11 @@ vibes-learning/
 - [ ] Capability caching in storage
 
 ### 4.2 Storage Foundation
+
+> **Implementation Docs:**
+> - [Brainstorm Decisions](./milestone-4.2-decisions.md) — CozoDB location, harness access, storage backend choices
+> - [Implementation Plan](./milestone-4.2-implementation.md) — 20 tasks for storage layer
+
 - [ ] CozoDB setup with schema
 - [ ] `Learning` model with UUIDv7
 - [ ] `LearningStorage` trait and implementation

@@ -387,11 +387,18 @@ git commit -m "feat(history): add HistoryStore with SQLite backend"
    /superpowers:brainstorm
    ```
 
-2. Explore the codebase to understand existing patterns
+2. **Epic Detection** — Before writing any documents, ask:
+   - Will this feature require **3+ internal milestones**?
+   - Is the design likely to exceed **30KB**?
+   - Will different sub-milestones need **separate brainstorming sessions**?
 
-3. Write the design document discussing options
+   If **yes to any**, use the [Multi-Phase Milestones](#multi-phase-milestones-epics) structure from the start.
 
-4. Create the implementation plan with specific tasks
+3. Explore the codebase to understand existing patterns
+
+4. Write the design document discussing options
+
+5. Create the implementation plan with specific tasks
 
 ### Executing a Plan
 
@@ -564,11 +571,12 @@ Before implementing, verify:
 | 3 | 3.2 Multi-Session Support | 09-multi-session |
 | 3 | 3.3 CLI ↔ Web Mirroring | 10-cli-web-mirroring |
 | 3 | 3.4 PTY Backend | 12-pty-backend |
-| 4 | 4.1-4.6 Continual Learning | 14-continual-learning |
-| 5 | 5.1 Setup Wizards | 15-setup-wizards |
-| 5 | 5.2 Default Plugins | 16-default-plugins |
-| 5 | 5.3 CLI Enhancements | 17-cli-enhancements |
-| 5 | 5.4 iOS App | 18-ios-app |
+| 4 | 4.1-4.9 Continual Learning | 14-continual-learning |
+| 4 | 4.1 Harness Introspection | 15-harness-introspection |
+| 5 | 5.1 Setup Wizards | (planned) |
+| 5 | 5.2 Default Plugins | (planned) |
+| 5 | 5.3 CLI Enhancements | (planned) |
+| 5 | 5.4 iOS App | (planned) |
 
 When starting a new milestone:
 1. Create the directory under `docs/plans/`
@@ -576,3 +584,69 @@ When starting a new milestone:
 3. Get design approved (PR or discussion)
 4. Write `implementation.md` with step-by-step tasks
 5. Reference any new ADRs added to `docs/PRD.md`
+
+---
+
+## Multi-Phase Milestones (Epics)
+
+Some milestones are too large to fit the standard `design.md` + `implementation.md` pattern. These "epic" milestones contain multiple internal sub-milestones that each require their own implementation planning.
+
+### When to Use Multi-Phase Structure
+
+Use this structure when:
+- A feature spans **3+ internal milestones**
+- The design document exceeds 30KB
+- Different sub-milestones require different technical decisions
+- Sub-milestones may be executed by different people or in parallel
+
+### Multi-Phase Directory Structure
+
+```
+docs/plans/NN-epic-name/
+├── design.md                          # Unified design covering ALL sub-milestones
+├── milestone-X.Y-decisions.md         # Brainstorm decisions for sub-milestone X.Y
+├── milestone-X.Y-implementation.md    # Implementation plan for sub-milestone X.Y
+├── milestone-X.Z-decisions.md         # (optional) for next sub-milestone
+└── milestone-X.Z-implementation.md    # Implementation plan for X.Z
+```
+
+### File Naming Conventions
+
+| File | Purpose | When to Create |
+|------|---------|----------------|
+| `design.md` | Comprehensive architecture for the epic | At epic start |
+| `milestone-X.Y-decisions.md` | Captures decisions from brainstorming session | After brainstorming sub-milestone |
+| `milestone-X.Y-implementation.md` | Step-by-step tasks for sub-milestone | When starting implementation |
+
+### Example: vibes groove (Milestone 14)
+
+groove is an epic spanning milestones 4.1-4.9:
+
+```
+docs/plans/14-continual-learning/
+├── design.md                              # 98KB covering all 10 sub-milestones
+├── milestone-4.2-decisions.md             # Storage decisions from brainstorm
+└── milestone-4.2-implementation.md        # 20 tasks for storage foundation
+```
+
+The unified `design.md` links to sections via anchors (e.g., `design.md#42-storage-foundation`).
+
+### Multi-Phase Workflow
+
+1. **Create unified design.md** covering the entire epic architecture
+2. **For each sub-milestone:**
+   a. Use `superpowers:brainstorming` to explore options
+   b. Capture decisions in `milestone-X.Y-decisions.md`
+   c. Write `milestone-X.Y-implementation.md` with tasks
+   d. Execute using `superpowers:executing-plans`
+3. **Track progress** in PROGRESS.md with sub-milestone granularity
+
+### Design Document Sections for Multi-Phase
+
+The unified design.md should include:
+- **Milestone Index** - Table linking to each sub-milestone section
+- **Level Progression** - Dependencies between sub-milestones
+- **Core Types** - Shared types used across sub-milestones
+- **Architecture Diagram** - How sub-milestones connect
+
+Each sub-milestone section in design.md should have an anchor (e.g., `## 4.2 Storage Foundation {#42-storage-foundation}`) for linking from PROGRESS.md
