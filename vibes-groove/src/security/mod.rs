@@ -17,10 +17,12 @@ mod scanning;
 mod trust;
 
 pub use error::{SecurityError, SecurityResult};
+pub use provenance::{
+    ContentHash, CreationEvent, CustodyEvent, CustodyEventType, Provenance,
+};
 pub use trust::{TrustContext, TrustLevel, TrustSource, Verification, VerifiedBy};
 
 // TODO: Uncomment as modules are implemented
-// pub use provenance::*;
 // pub use policy::*;
 // pub use scanning::*;
 // pub use audit::*;

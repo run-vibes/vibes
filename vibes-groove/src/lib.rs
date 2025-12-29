@@ -26,5 +26,6 @@ pub use types::*;
 
 // Security re-exports
 pub use security::{
-    SecurityError, SecurityResult, TrustContext, TrustLevel, TrustSource, Verification, VerifiedBy,
+    ContentHash, CreationEvent, CustodyEvent, CustodyEventType, Provenance, SecurityError,
+    SecurityResult, TrustContext, TrustLevel, TrustSource, Verification, VerifiedBy,
 };
