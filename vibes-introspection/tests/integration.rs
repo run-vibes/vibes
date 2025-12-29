@@ -46,7 +46,9 @@ impl TestHarness {
                 continue;
             }
 
-            let file_name = path.file_stem().and_then(|s| s.to_str())?;
+            let Some(file_name) = path.file_stem().and_then(|s| s.to_str()) else {
+                continue;
+            };
             let hook_type = if file_name.starts_with("pre_tool_use") || file_name.starts_with("pre-tool-use") {
                 Some(vibes_introspection::HookType::PreToolUse)
             } else if file_name.starts_with("post_tool_use") || file_name.starts_with("post-tool-use") {
