@@ -4425,6 +4425,7 @@ dependencies = [
  "tracing",
  "uuid",
  "vibes-core",
+ "vibes-groove",
 ]
 
 [[package]]
