@@ -126,7 +126,7 @@ async fn start_daemon(settings: &ResolvedSettings) -> Result<()> {
     use crate::daemon::ensure_daemon_running;
 
     // Use the auto-start machinery to spawn a detached daemon
-    ensure_daemon_running(settings.port).await?;
+    ensure_daemon_running(&settings.host, settings.port).await?;
 
     println!("Vibes daemon started on {}:{}", settings.host, settings.port);
     Ok(())

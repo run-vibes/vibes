@@ -18,11 +18,11 @@ const DEFAULT_STARTUP_TIMEOUT: Duration = Duration::from_secs(10);
 /// Interval between health check attempts
 const HEALTH_CHECK_INTERVAL: Duration = Duration::from_millis(100);
 
-/// Ensure the vibes daemon is running on the specified port.
+/// Ensure the vibes daemon is running on the specified host and port.
 ///
 /// If a daemon is already running on the port, returns Ok immediately.
 /// Otherwise, starts a new daemon process and waits for it to become ready.
-pub async fn ensure_daemon_running(port: u16) -> Result<()> {
+pub async fn ensure_daemon_running(host: &str, port: u16) -> Result<()> {
     // Check if daemon is already running
     if let Some(state) = read_daemon_state()
         && state.port == port
@@ -36,8 +36,8 @@ pub async fn ensure_daemon_running(port: u16) -> Result<()> {
     }
 
     // Start the daemon
-    info!("Starting vibes daemon on port {}...", port);
-    start_daemon_process(port)?;
+    info!("Starting vibes daemon on {}:{}...", host, port);
+    start_daemon_process(host, port)?;
 
     // Wait for it to become ready
     wait_for_daemon_ready(port, DEFAULT_STARTUP_TIMEOUT).await?;
@@ -51,7 +51,7 @@ pub async fn ensure_daemon_running(port: u16) -> Result<()> {
 /// On Unix, this creates a new session using setsid() so the daemon
 /// survives the parent CLI process exiting.
 #[cfg(unix)]
-fn start_daemon_process(port: u16) -> Result<()> {
+fn start_daemon_process(host: &str, port: u16) -> Result<()> {
     use std::os::unix::process::CommandExt;
 
     let current_exe = std::env::current_exe().context("Failed to get current executable path")?;
@@ -63,7 +63,7 @@ fn start_daemon_process(port: u16) -> Result<()> {
         .arg("--port")
         .arg(port.to_string())
         .arg("--host")
-        .arg(DEFAULT_HOST)
+        .arg(host)
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::null());
@@ -86,8 +86,8 @@ fn start_daemon_process(port: u16) -> Result<()> {
 
 /// Start the daemon as a detached background process (Windows stub).
 #[cfg(not(unix))]
-fn start_daemon_process(port: u16) -> Result<()> {
-    let _ = port;
+fn start_daemon_process(host: &str, port: u16) -> Result<()> {
+    let _ = (host, port);
     // TODO: Implement Windows daemon spawning
     anyhow::bail!("Daemon auto-start not yet implemented on Windows")
 }
@@ -138,11 +138,11 @@ async fn wait_for_daemon_ready(port: u16, timeout: Duration) -> Result<()> {
     }
 }
 
-/// Ensure daemon is running with default port.
+/// Ensure daemon is running with default host and port.
 /// Used by the claude command when auto-starting the daemon.
 #[allow(dead_code)] // Will be used in Task 4.2
 pub async fn ensure_daemon_running_default() -> Result<()> {
-    ensure_daemon_running(DEFAULT_PORT).await
+    ensure_daemon_running(DEFAULT_HOST, DEFAULT_PORT).await
 }
 
 #[cfg(test)]
@@ -157,6 +157,25 @@ mod tests {
     #[test]
     fn test_health_check_interval_is_100ms() {
         assert_eq!(HEALTH_CHECK_INTERVAL, Duration::from_millis(100));
+    }
+
+    #[test]
+    fn test_ensure_daemon_running_accepts_host_parameter() {
+        // This test verifies the API signature accepts host
+        // The actual daemon spawning is tested in integration tests
+        fn _assert_signature() {
+            // This will fail to compile if ensure_daemon_running doesn't accept host
+            let _future = ensure_daemon_running("0.0.0.0", 7432);
+        }
+    }
+
+    #[test]
+    fn test_start_daemon_process_accepts_host_parameter() {
+        // Verify start_daemon_process accepts host parameter
+        fn _assert_signature() {
+            // This will fail to compile if start_daemon_process doesn't accept host
+            let _result = start_daemon_process("0.0.0.0", 7432);
+        }
     }
 
     // Integration tests for daemon auto-start would require actual process spawning

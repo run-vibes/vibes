@@ -75,7 +75,7 @@ pub async fn run(args: ClaudeArgs) -> Result<()> {
 
     // Ensure daemon is running (unless --no-serve is set)
     if !args.no_serve {
-        ensure_daemon_running(config.server.port).await?;
+        ensure_daemon_running(&config.server.host, config.server.port).await?;
     }
 
     // Connect to daemon via WebSocket
