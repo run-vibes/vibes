@@ -9,7 +9,9 @@ use serde::{Deserialize, Serialize};
 ///
 /// Higher values indicate more trust. Local (100) is most trusted,
 /// Quarantined (0) is least trusted.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(
+    Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize,
+)]
 pub enum TrustLevel {
     /// Quarantined - blocked from injection
     Quarantined = 0,
@@ -24,13 +26,8 @@ pub enum TrustLevel {
     /// Private cloud - synced from user's own cloud
     PrivateCloud = 90,
     /// Local - created locally by this user
+    #[default]
     Local = 100,
-}
-
-impl Default for TrustLevel {
-    fn default() -> Self {
-        Self::Local
-    }
 }
 
 impl TrustLevel {
