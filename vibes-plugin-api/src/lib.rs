@@ -144,6 +144,23 @@ pub trait Plugin: Send + Sync {
     ) -> Result<CommandOutput, PluginError> {
         Err(PluginError::UnknownCommand("no commands registered".into()))
     }
+
+    // ─── Route Handler ─────────────────────────────────────────────
+
+    /// Handle an HTTP route invocation.
+    ///
+    /// Called when an HTTP request matches a route registered by this plugin.
+    ///
+    /// Default: returns UnknownRoute error (override if registering routes)
+    fn handle_route(
+        &mut self,
+        _method: HttpMethod,
+        _path: &str,
+        _request: RouteRequest,
+        _ctx: &mut PluginContext,
+    ) -> Result<RouteResponse, PluginError> {
+        Err(PluginError::UnknownRoute("no routes registered".into()))
+    }
 }
 
 /// Export a plugin type for dynamic loading.
@@ -229,6 +246,38 @@ mod tests {
         let args = CommandArgs::default();
 
         let result = plugin.handle_command(&["foo"], &args, &mut ctx);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_plugin_handle_route_default_returns_error() {
+        use crate::context::PluginContext;
+        use crate::http::{HttpMethod, RouteRequest};
+        use std::collections::HashMap;
+
+        struct TestPlugin;
+        impl Plugin for TestPlugin {
+            fn manifest(&self) -> PluginManifest {
+                PluginManifest::default()
+            }
+            fn on_load(&mut self, _ctx: &mut PluginContext) -> Result<(), PluginError> {
+                Ok(())
+            }
+            fn on_unload(&mut self) -> Result<(), PluginError> {
+                Ok(())
+            }
+        }
+
+        let mut plugin = TestPlugin;
+        let mut ctx = PluginContext::new("test".into(), PathBuf::from("/tmp"));
+        let request = RouteRequest {
+            params: HashMap::new(),
+            query: HashMap::new(),
+            body: vec![],
+            headers: HashMap::new(),
+        };
+
+        let result = plugin.handle_route(HttpMethod::Get, "/foo", request, &mut ctx);
         assert!(result.is_err());
     }
 }
