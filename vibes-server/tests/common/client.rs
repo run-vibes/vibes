@@ -280,4 +280,52 @@ impl TestClient {
             .map(|s| s["id"].as_str().unwrap().to_string())
             .collect()
     }
+
+    /// Wait for PTY replay (scrollback), returns decoded bytes
+    #[allow(dead_code)]
+    pub async fn expect_pty_replay(&mut self, session_id: &str, timeout: Duration) -> Vec<u8> {
+        use base64::Engine;
+
+        let start = std::time::Instant::now();
+        while start.elapsed() < timeout {
+            if let Some(text) = self.conn.recv_timeout(Duration::from_millis(50)).await {
+                let msg: serde_json::Value = serde_json::from_str(&text).unwrap();
+                if msg["type"] == "pty_replay" && msg["session_id"] == session_id {
+                    let data = msg["data"].as_str().unwrap();
+                    return base64::engine::general_purpose::STANDARD
+                        .decode(data)
+                        .unwrap();
+                }
+                // Not our message, continue waiting
+            }
+        }
+        panic!("Timeout waiting for pty_replay");
+    }
+
+    /// Try to receive a pty_replay within timeout, returns None if not received
+    #[allow(dead_code)]
+    pub async fn try_expect_pty_replay(
+        &mut self,
+        session_id: &str,
+        timeout: Duration,
+    ) -> Option<Vec<u8>> {
+        use base64::Engine;
+
+        let start = std::time::Instant::now();
+        while start.elapsed() < timeout {
+            if let Some(text) = self.conn.recv_timeout(Duration::from_millis(50)).await {
+                let msg: serde_json::Value = serde_json::from_str(&text).unwrap();
+                if msg["type"] == "pty_replay" && msg["session_id"] == session_id {
+                    let data = msg["data"].as_str().unwrap();
+                    return Some(
+                        base64::engine::general_purpose::STANDARD
+                            .decode(data)
+                            .unwrap(),
+                    );
+                }
+                // Not our message, continue waiting
+            }
+        }
+        None
+    }
 }
