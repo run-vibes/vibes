@@ -53,6 +53,15 @@ struct ConnectionState {
     client_id: String,
     /// PTY session IDs this connection is attached to
     attached_pty_sessions: HashSet<String>,
+    /// PTY session IDs that have received their scrollback replay.
+    /// Replay is deferred until the first resize so the PTY dimensions
+    /// match the client's terminal size (important for mobile clients).
+    replay_sent_sessions: HashSet<String>,
+    /// Scrollback buffer length at attach time for each session.
+    /// Used to avoid sending content that arrived after attach as both
+    /// pty_output (real-time) AND pty_replay (historical), which would
+    /// cause duplicate content on the client.
+    scrollback_snapshot_len: std::collections::HashMap<String, usize>,
 }
 
 impl ConnectionState {
@@ -60,22 +69,47 @@ impl ConnectionState {
         Self {
             client_id: Uuid::new_v4().to_string(),
             attached_pty_sessions: HashSet::new(),
+            replay_sent_sessions: HashSet::new(),
+            scrollback_snapshot_len: std::collections::HashMap::new(),
         }
     }
 
-    /// Attach to a PTY session
-    fn attach_pty(&mut self, session_id: &str) {
+    /// Attach to a PTY session, recording the current scrollback length
+    fn attach_pty(&mut self, session_id: &str, scrollback_len: usize) {
         self.attached_pty_sessions.insert(session_id.to_string());
+        self.scrollback_snapshot_len
+            .insert(session_id.to_string(), scrollback_len);
     }
 
     /// Detach from a PTY session
     fn detach_pty(&mut self, session_id: &str) {
         self.attached_pty_sessions.remove(session_id);
+        self.replay_sent_sessions.remove(session_id);
+        self.scrollback_snapshot_len.remove(session_id);
     }
 
     /// Check if this connection is attached to a PTY session
     fn is_attached_to_pty(&self, session_id: &str) -> bool {
         self.attached_pty_sessions.contains(session_id)
+    }
+
+    /// Check if replay needs to be sent for this session
+    fn needs_replay(&self, session_id: &str) -> bool {
+        self.attached_pty_sessions.contains(session_id)
+            && !self.replay_sent_sessions.contains(session_id)
+    }
+
+    /// Get the scrollback length that was recorded at attach time
+    fn get_replay_limit(&self, session_id: &str) -> usize {
+        self.scrollback_snapshot_len
+            .get(session_id)
+            .copied()
+            .unwrap_or(0)
+    }
+
+    /// Mark replay as sent for this session
+    fn mark_replay_sent(&mut self, session_id: &str) {
+        self.replay_sent_sessions.insert(session_id.to_string());
     }
 }
 
@@ -309,71 +343,60 @@ async fn handle_text_message(
 
             let mut pty_manager = state.pty_manager.write().await;
 
-            // Mark this connection as attached BEFORE spawning any reader tasks.
-            // This prevents a race condition where the reader broadcasts output
-            // before we've marked the connection as attached, causing the output
-            // to be filtered out by handle_pty_event's is_attached_to_pty() check.
-            conn_state.attach_pty(&session_id);
+            // Check if session exists and capture scrollback length for replay limiting
+            let (cols, rows, _scrollback_len) =
+                if let Some(handle) = pty_manager.get_handle(&session_id) {
+                    // Session exists - capture scrollback length BEFORE marking as attached.
+                    // This prevents duplicate content: any output that arrives after this point
+                    // will be sent as pty_output AND would also be in scrollback for replay.
+                    // By recording the length now, replay will only include content up to here.
+                    let scrollback_len = handle.get_scrollback().len();
 
-            // Check if session exists; if not, create it
-            let (cols, rows) = if pty_manager.get_session(&session_id).is_some() {
-                // Session exists, get dimensions from config (we don't track current size yet)
-                // TODO: Track actual PTY dimensions per session. For now we use reasonable
-                // defaults (120x40) which the client will override via PtyResize after attach.
-                // Using (0, 0) would cause rendering issues in terminals.
-                (120, 40)
-            } else {
-                // Create new PTY session with the client's session ID
-                match pty_manager.create_session_with_id(session_id.clone(), name, cwd) {
-                    Ok(created_id) => {
-                        debug!("Created new PTY session: {}", created_id);
+                    // Mark as attached with the scrollback snapshot length
+                    conn_state.attach_pty(&session_id, scrollback_len);
 
-                        // Get handle for output reading
-                        if let Some(handle) = pty_manager.get_handle(&created_id) {
-                            // Spawn background task to read PTY output
-                            let state_clone = state.clone();
-                            let session_id_clone = created_id.clone();
-                            tokio::spawn(async move {
-                                pty_output_reader(state_clone, session_id_clone, handle).await;
-                            });
+                    // TODO: Track actual PTY dimensions per session. For now we use reasonable
+                    // defaults (120x40) which the client will override via PtyResize after attach.
+                    (120, 40, scrollback_len)
+                } else {
+                    // Create new PTY session with the client's session ID
+                    match pty_manager.create_session_with_id(session_id.clone(), name, cwd) {
+                        Ok(created_id) => {
+                            debug!("Created new PTY session: {}", created_id);
+
+                            // New session has no scrollback yet
+                            conn_state.attach_pty(&session_id, 0);
+
+                            // Get handle for output reading
+                            if let Some(handle) = pty_manager.get_handle(&created_id) {
+                                // Spawn background task to read PTY output
+                                let state_clone = state.clone();
+                                let session_id_clone = created_id.clone();
+                                tokio::spawn(async move {
+                                    pty_output_reader(state_clone, session_id_clone, handle).await;
+                                });
+                            }
+
+                            // Initial dimensions from config - client will resize after attach
+                            // scrollback_len is 0 for new sessions
+                            (120, 40, 0)
                         }
-
-                        // Initial dimensions from config - client will resize after attach
-                        (120, 40)
+                        Err(e) => {
+                            let error = ServerMessage::Error {
+                                session_id: Some(session_id),
+                                message: format!("Failed to create PTY session: {}", e),
+                                code: "PTY_CREATE_FAILED".to_string(),
+                            };
+                            let json = serde_json::to_string(&error)?;
+                            sender.send(Message::Text(json)).await?;
+                            return Ok(());
+                        }
                     }
-                    Err(e) => {
-                        // Detach since we failed to create the session
-                        conn_state.detach_pty(&session_id);
-                        let error = ServerMessage::Error {
-                            session_id: Some(session_id),
-                            message: format!("Failed to create PTY session: {}", e),
-                            code: "PTY_CREATE_FAILED".to_string(),
-                        };
-                        let json = serde_json::to_string(&error)?;
-                        sender.send(Message::Text(json)).await?;
-                        return Ok(());
-                    }
-                }
-            };
+                };
 
-            // Send scrollback replay if available
-            if let Some(handle) = pty_manager.get_handle(&session_id) {
-                let scrollback = handle.get_scrollback();
-                if !scrollback.is_empty() {
-                    let data = base64::engine::general_purpose::STANDARD.encode(&scrollback);
-                    let replay_msg = ServerMessage::PtyReplay {
-                        session_id: session_id.clone(),
-                        data,
-                    };
-                    let json = serde_json::to_string(&replay_msg)?;
-                    sender.send(Message::Text(json)).await?;
-                    debug!(
-                        "Sent {} bytes of scrollback replay for session {}",
-                        scrollback.len(),
-                        session_id
-                    );
-                }
-            }
+            // Note: Scrollback replay is deferred until first PtyResize.
+            // This ensures the PTY dimensions match the client's terminal size,
+            // which is critical for mobile clients with narrower screens.
 
             // Send AttachAck
             let ack = ServerMessage::AttachAck {
@@ -426,8 +449,44 @@ async fn handle_text_message(
 
             let pty_manager = state.pty_manager.read().await;
             if let Some(handle) = pty_manager.get_handle(&session_id) {
+                // Resize the PTY first
                 if let Err(e) = handle.resize(cols, rows).await {
                     warn!("Failed to resize PTY: {}", e);
+                }
+
+                // Send scrollback replay on first resize after attach.
+                // This ensures the client has set the correct terminal dimensions
+                // before receiving historical output (important for mobile clients).
+                if conn_state.needs_replay(&session_id) {
+                    // Only send scrollback up to the length recorded at attach time.
+                    // Content added after attach was already sent as pty_output,
+                    // so including it in replay would cause duplicates.
+                    let replay_limit = conn_state.get_replay_limit(&session_id);
+                    let scrollback = handle.get_scrollback();
+                    let replay_data = if scrollback.len() > replay_limit {
+                        &scrollback[..replay_limit]
+                    } else {
+                        &scrollback[..]
+                    };
+
+                    if !replay_data.is_empty() {
+                        let data = base64::engine::general_purpose::STANDARD.encode(replay_data);
+                        let replay_msg = ServerMessage::PtyReplay {
+                            session_id: session_id.clone(),
+                            data,
+                        };
+                        let json = serde_json::to_string(&replay_msg)?;
+                        sender.send(Message::Text(json)).await?;
+                        debug!(
+                            "Sent {} bytes of scrollback replay (limit: {}) for session {} after resize to {}x{}",
+                            replay_data.len(),
+                            replay_limit,
+                            session_id,
+                            cols,
+                            rows
+                        );
+                    }
+                    conn_state.mark_replay_sent(&session_id);
                 }
             } else {
                 warn!("PTY session not found: {}", session_id);

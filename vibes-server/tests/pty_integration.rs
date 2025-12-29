@@ -358,3 +358,68 @@ async fn ctrl_c_terminates_pty_process() {
         exit_code
     );
 }
+
+#[tokio::test]
+async fn replay_excludes_content_received_after_attach() {
+    // This test verifies that when a client attaches and then receives pty_output
+    // before sending resize, the subsequent pty_replay does NOT include that content.
+    // This prevents duplicate content on mobile clients where:
+    // 1. Client attaches
+    // 2. Content arrives as pty_output (client displays it)
+    // 3. Client sends resize
+    // 4. Server sends pty_replay - should NOT include content from step 2
+    let (_state, addr) = common::create_test_server_with_pty_config(test_pty_config()).await;
+
+    // Client 1 creates session and generates some initial content
+    let mut client1 = TestClient::connect(addr).await;
+    let session_id = Uuid::new_v4().to_string();
+    client1.attach(&session_id).await;
+
+    // Generate initial content that goes to scrollback
+    client1.pty_input_bytes(&session_id, b"initial\n").await;
+    let _ = client1
+        .expect_pty_output(&session_id, Duration::from_secs(2))
+        .await;
+
+    // Small delay to ensure scrollback is populated
+    tokio::time::sleep(Duration::from_millis(100)).await;
+
+    // Client 2 attaches - scrollback now contains "initial"
+    let mut client2 = TestClient::connect(addr).await;
+    client2.attach(&session_id).await;
+
+    // Client 1 generates MORE content AFTER client 2 attached
+    client1
+        .pty_input_bytes(&session_id, b"after_attach\n")
+        .await;
+
+    // Client 2 receives this as pty_output (real-time)
+    let realtime_output = client2
+        .expect_pty_output(&session_id, Duration::from_secs(2))
+        .await;
+    let realtime_str = String::from_utf8_lossy(&realtime_output);
+    assert!(
+        realtime_str.contains("after_attach"),
+        "Client 2 should receive 'after_attach' as pty_output"
+    );
+
+    // Now client 2 sends resize - this triggers replay
+    client2.pty_resize(&session_id, 80, 24).await;
+
+    // Client 2 should receive replay with ONLY "initial", NOT "after_attach"
+    let replay = client2
+        .expect_pty_replay(&session_id, Duration::from_secs(2))
+        .await;
+    let replay_str = String::from_utf8_lossy(&replay);
+
+    assert!(
+        replay_str.contains("initial"),
+        "Replay should contain 'initial' (content from before attach)"
+    );
+    assert!(
+        !replay_str.contains("after_attach"),
+        "Replay should NOT contain 'after_attach' (content received as pty_output after attach). \
+         Got replay: {:?}",
+        replay_str
+    );
+}
