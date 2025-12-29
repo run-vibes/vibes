@@ -17,6 +17,7 @@ tokio = { workspace = true, features = ["sync"] }
 # Serialization
 serde.workspace = true
 serde_json.workspace = true
+toml = "0.8"
 
 # Types
 chrono.workspace = true

@@ -5,17 +5,17 @@
 //! adaptive parameters, and semantic search capabilities.
 
 // Module declarations - commented out until implemented
+pub mod config;
 pub mod error;
 pub mod store;
 pub mod types;
 // pub mod storage;
-// pub mod config;
 // pub mod export;
 
 // Re-exports - commented out until modules are implemented
+pub use config::{EnterpriseConfig, GrooveConfig, ProjectContext};
 pub use error::{GrooveError, Result};
 pub use store::{LearningStore, ParamStore};
 pub use types::*;
 // pub use storage::GrooveStorage;
-// pub use config::GrooveConfig;
 // pub use export::{GrooveExport, ImportStats};
