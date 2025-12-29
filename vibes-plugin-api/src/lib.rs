@@ -49,7 +49,7 @@ pub use types::*;
 
 /// Current plugin API version. Plugins must match this exactly.
 /// This will be checked when loading plugins to ensure compatibility.
-pub const API_VERSION: u32 = 1;
+pub const API_VERSION: u32 = 2;
 
 /// The core plugin trait - implement this to create a vibes plugin.
 ///
@@ -211,7 +211,7 @@ mod tests {
 
     #[test]
     fn test_api_version_is_set() {
-        assert_eq!(API_VERSION, 1);
+        assert_eq!(API_VERSION, 2);
     }
 
     #[test]
