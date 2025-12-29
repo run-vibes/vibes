@@ -5,5 +5,5 @@ mod schema;
 mod traits;
 
 pub use cozo::CozoStore;
-pub use schema::{Migration, CURRENT_SCHEMA_VERSION, INITIAL_SCHEMA, MIGRATIONS};
+pub use schema::{CURRENT_SCHEMA_VERSION, INITIAL_SCHEMA, MIGRATIONS, Migration};
 pub use traits::{LearningStore, ParamStore};
