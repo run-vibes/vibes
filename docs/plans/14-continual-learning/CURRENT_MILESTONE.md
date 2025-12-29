@@ -33,7 +33,8 @@
 |-----------|--------|-------|
 | 4.1 Harness Introspection | ✅ Complete | `vibes-introspection` crate |
 | 4.2 Storage Foundation | 🔄 In Progress | This milestone |
-| 4.2.5 Security Foundation | ⏳ Not Started | After 4.2 |
+| 4.2.5 Security Foundation | ✅ Complete | RBAC, policy engine, quarantine, audit logging |
+| 4.2.6 Plugin API Extension | ⏳ Not Started | Migrate groove to plugin system |
 | 4.3 Capture & Inject | ⏳ Not Started | — |
 | 4.4 Assessment Framework | ⏳ Not Started | — |
 | 4.5 Learning Extraction | ⏳ Not Started | — |

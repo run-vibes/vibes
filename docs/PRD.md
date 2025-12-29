@@ -71,11 +71,10 @@ vibes/
 ├── vibes-core/             # Core library
 │   └── src/
 │       ├── lib.rs
-│       ├── session/        # Session management & state machine
-│       ├── backend/        # Claude Code interaction (PrintModeBackend, MockBackend)
+│       ├── pty/            # PTY management (Claude as persistent terminal)
+│       ├── hooks/          # Claude Code hooks (structured event capture)
 │       ├── events/         # Pub/sub event system
 │       ├── plugins/        # Plugin loading & lifecycle
-│       ├── parser/         # Stream-JSON parser
 │       ├── auth/           # Cloudflare Access JWT validation
 │       ├── tunnel/         # Cloudflare Tunnel integration
 │       ├── notifications/  # Web Push support
@@ -95,6 +94,8 @@ vibes/
 │       ├── daemon/         # Auto-start logic
 │       └── config/         # Configuration loading
 ├── vibes-plugin-api/       # Published crate for plugin authors
+├── vibes-introspection/    # Harness detection and capability discovery
+├── vibes-groove/           # Continual learning system (Phase 4)
 ├── web-ui/                 # TanStack frontend (embedded via rust-embed)
 └── examples/plugins/       # Example plugins
 ```
@@ -426,12 +427,14 @@ pub struct DevicePairingAuth;         // Future: QR code pairing
 
 ---
 
-### Phase 3: Multi-Client Experience
+### Phase 3: Multi-Client Experience ✓
 
-**Goal:** Full multi-client support with setup wizards for remote access
+**Goal:** Full multi-client support with real-time sessions
+
+**Status:** Complete
 
 #### Milestone 3.1: Chat History
-- Persistent session history storage (SQLite or file-based)
+- Persistent session history storage (SQLite with FTS5)
 - Session search and filtering
 - Replay previous sessions from any client
 - History pagination for large session counts
@@ -448,71 +451,91 @@ pub struct DevicePairingAuth;         // Future: QR code pairing
 - Late-joiner catches up with full session history
 - Input source attribution (show who typed what)
 
-#### Milestone 3.4: Cloudflare Tunnel Wizard
-- Interactive `vibes tunnel setup` wizard
-- Guide user through cloudflared installation check
-- Tunnel mode selection (quick vs named)
-- DNS configuration assistance for named tunnels
-- Test connectivity and display public URL
+#### Milestone 3.4: PTY Backend
+- Replace stream-json backend with PTY wrapper for full CLI parity
+- xterm.js web UI terminal emulator
+- Claude hooks integration for structured data capture
+- Auto-configure hooks on daemon start
 
-#### Milestone 3.5: Cloudflare Auth Wizard
-- Interactive `vibes auth setup` wizard
-- Auto-detect team/AUD from existing tunnel config
-- Manual configuration fallback
-- Test JWT validation with sample request
-- Display identity information on success
-
-**Deliverable:** Multiple clients share sessions in real-time with guided setup
+**Deliverable:** Full CLI parity with real-time multi-client sessions ✓
 
 ---
 
-### Phase 4: Polish & Ecosystem
+### Phase 4: vibes groove ◉
 
-**Goal:** Production-ready with default plugins
+> **groove** - The continual learning system that finds your coding rhythm.
 
-#### Milestone 4.1: Default plugins
+**Goal:** Progressive improvement through accumulated experience - zero friction, fully adaptive.
+
+**Design:** See [vibes groove Design](plans/14-continual-learning/design.md) and [Branding Guide](groove/BRANDING.md)
+
+#### Milestone 4.1: Harness Introspection ✓
+- `vibes-introspection` crate with public API
+- `Harness` trait and `ClaudeCodeHarness` implementation
+- Cross-platform support (Windows, macOS, Linux)
+- `HarnessCapabilities` with 3-tier scope hierarchy
+
+#### Milestone 4.2: Storage Foundation (In Progress)
+- CozoDB setup with schema and migrations
+- `Learning` model with UUIDv7 identifiers
+- `LearningStorage` trait and CozoDB implementation
+- `AdaptiveParam` with Bayesian update mechanics
+
+#### Milestone 4.2.5: Security Foundation ✓
+- `TrustLevel` enum (Local → Quarantined hierarchy)
+- `ContentSecurityScanner` for injection detection
+- `SecureInjector` with trust-aware wrapping
+- RBAC, audit logging, quarantine workflow
+
+#### Milestone 4.3-4.9: (See PROGRESS.md)
+- Capture & Inject MVP
+- Assessment Framework
+- Learning Extraction
+- Attribution Engine
+- Adaptive Strategies
+- groove Dashboard
+- Open-World Adaptation
+
+**Deliverable:** groove - a self-improving system that finds your coding rhythm
+
+---
+
+### Phase 5: Polish & Ecosystem
+
+**Goal:** Production-ready with setup wizards, default plugins, and mobile apps
+
+#### Milestone 5.1: Setup Wizards
+- Interactive `vibes tunnel setup` wizard
+- Interactive `vibes auth setup` wizard
+- Guide through cloudflared installation
+- Auto-detect team/AUD from tunnel config
+
+#### Milestone 5.2: Default plugins
 - analytics (session stats, token usage)
-- history (searchable session history)
 - templates (prompt templates/snippets)
 - export (session export to markdown/JSON)
 
-#### Milestone 4.2: CLI enhancements
-- vibes sessions list/switch/kill
+#### Milestone 5.3: CLI Enhancements
 - Tab completion
 - Interactive session picker
 
-#### Milestone 4.3: Advanced permissions
-- Per-session notification settings
-- First-responder policy for permission requests
-- Permission request timeout handling
+#### Milestone 5.4: iOS App
+- Swift native app with xterm.js WebView
+- Push notification integration
+- Session list and attach
 
-**Deliverable:** Feature-rich vibes with useful default plugins
+**Deliverable:** Feature-rich vibes with mobile access
 
 ---
 
 ### Future Phases
 
-#### Phase F1: Alternative Claude Code Backends
-
-Investigation phase - revisit the Claude Code interaction model for better performance or capabilities.
-
-- **Option B:** PTY wrapper for interactive mode (real-time permissions)
-- **Option C:** Hook-based permission routing (custom hook integration)
-- **Option D:** stream-json bidirectional (long-running process)
-- Benchmark current PrintModeBackend vs alternatives
-- Migrate if significant benefits proven
-
-#### Phase F2: Mobile Apps
-
-Native mobile applications for iOS and Android.
-
-- iOS app (Swift, native)
-- Android app (Kotlin, native)
+#### Phase F1: Android App
+- Kotlin native app with terminal WebView
 - Push notification integration
-- App Store/Play Store distribution
-- Subscription management
+- Play Store distribution
 
-#### Phase F3: Native GUIs
+#### Phase F2: Native GUIs
 
 True native desktop applications.
 
@@ -522,7 +545,7 @@ True native desktop applications.
 - Shared core, platform-specific UI layer
 - Menu bar/system tray integration
 
-#### Phase F4: Licensing System
+#### Phase F3: Licensing System
 
 Paid plugin support and license management.
 
@@ -538,24 +561,25 @@ Paid plugin support and license management.
 
 ### ADR-001: Claude Code Interaction Model
 
-**Status:** Decided (Option A), with alternatives documented for Phase F1
+**Status:** Revised — Migrated from Option A to Option B+C (PTY + Hooks) in Milestone 3.4
 
-**Context:** Claude Code's `-p` flag exits after one response. We need multi-turn sessions with structured output.
+**Context:** Claude Code's `-p` flag exits after one response. We needed multi-turn sessions with structured output.
 
-**Decision:** Use multiple `-p` invocations with `--session-id` for session continuity.
+**Original Decision (Phase 1):** Use multiple `-p` invocations with `--session-id` for session continuity (PrintModeBackend).
 
-**Rationale:** Provides structured JSON output immediately. Per-turn process spawn is acceptable overhead. Permission handling uses `--allowedTools` for pre-approved tools.
+**Revised Decision (Phase 3):** PTY wrapper with Claude hooks for structured data capture. Implemented in Milestone 3.4.
 
-**Alternatives preserved:**
+**Rationale for migration:** PTY backend provides full CLI parity including colors, interactive prompts, and real-time output. Claude hooks provide structured event data (tool calls, completions) without parsing terminal output.
 
-| Option | Approach | Pros | Cons |
-|--------|----------|------|------|
-| A ✓ | Multiple `-p` + session-id | Structured JSON, clean lifecycle | Process spawn per turn, pre-configured permissions |
-| B | PTY wrapper (interactive) | True interactive, real-time permissions | Unstructured output, parse terminal codes |
-| C | Interactive + hooks | Permission routing works | Still unstructured output |
-| D | `--input-format stream-json` | Potential best of both | Needs testing, may not exist |
+**Options evaluated:**
 
-**Revisit trigger:** If process spawn overhead becomes noticeable, or if permission handling becomes painful.
+| Option | Approach | Status |
+|--------|----------|--------|
+| A | Multiple `-p` + session-id (PrintModeBackend) | Deprecated - Phase 1-2 |
+| B+C ✓ | PTY wrapper + Hooks | **Implemented** - Phase 3 |
+| D | `--input-format stream-json` | Not pursued |
+
+**Current architecture:** Claude runs as a PTY process. vibes receives structured events via Claude Code hooks (stop hooks), providing best of both worlds: full terminal experience + structured data.
 
 ---
 
@@ -675,53 +699,32 @@ Implementations:
 
 ### ADR-008: Claude Backend Abstraction
 
-**Status:** Decided
+**Status:** Revised — PtyBackend is now the active implementation (Milestone 3.4)
 
-**Context:** ADR-001 chose `-p` mode for MVP but preserved alternatives (PTY, hooks, stream-json bidirectional). We need to swap interaction backends without rewriting Session/EventBus logic.
+**Context:** We needed to swap interaction backends without rewriting Session/EventBus logic. The abstraction enabled migration from PrintModeBackend to PtyBackend.
 
-**Decision:** Abstract Claude interaction behind a `ClaudeBackend` trait. Each backend handles its own process lifecycle, output parsing, and input mechanism, emitting normalized events.
+**Decision:** Abstract Claude interaction behind PTY manager in `vibes-core/src/pty/`. Claude runs as a long-running PTY process with structured events captured via Claude Code hooks.
 
-**Architecture:**
-```rust
-#[async_trait]
-pub trait ClaudeBackend: Send + Sync {
-    async fn send(&mut self, input: &str) -> Result<()>;
-    fn events(&self) -> broadcast::Receiver<ClaudeEvent>;
-    async fn respond_permission(&mut self, request_id: &str, approved: bool) -> Result<()>;
-    fn claude_session_id(&self) -> &str;
-    fn state(&self) -> BackendState;
-    async fn shutdown(&mut self) -> Result<()>;
-}
+**Current Architecture:**
+- `PtyManager` in `vibes-core/src/pty/` manages Claude as a PTY process
+- `HookReceiver` in `vibes-core/src/hooks/` captures structured Claude events
+- Raw terminal I/O passed to CLI and Web UI (xterm.js)
+- Session lifecycle tied to PTY process
 
-pub enum BackendState {
-    Idle,                              // Ready for input
-    Processing,                        // Claude working
-    WaitingPermission(PermissionRequest),
-    Finished,
-    Failed(String),
-}
-```
-
-**Implementations:**
-| Backend | Process Model | Output Format | MVP? |
-|---------|---------------|---------------|------|
-| PrintModeBackend | Per-turn spawn | stream-json | ✓ |
-| PtyBackend | Long-running | Terminal codes | Future |
-| StreamJsonBackend | Long-running | stream-json bidirectional | Investigate |
+**Implementation History:**
+| Backend | Process Model | Status |
+|---------|---------------|--------|
+| PrintModeBackend | Per-turn spawn | Deprecated (Phase 1-2) |
+| **PtyBackend + Hooks** | Long-running PTY | **Active** (Phase 3+) |
+| MockBackend | Scripted responses | Testing only |
 
 **Key design points:**
-- Backend parses its native format → normalized `ClaudeEvent`
-- Session never sees raw stream-json or terminal codes
-- "Turns" are internal to PrintModeBackend, not exposed in trait
+- PTY provides full terminal parity (colors, raw mode, interactive prompts)
+- Claude hooks provide structured events (tool calls, completions)
+- MockBackend enables unit testing without real Claude process
 - Consistent adapter pattern with EventBus (ADR-007)
 
-**Rationale:**
-- Enables backend swapping without API changes
-- Mock backend for testing
-- Future API-direct backend possible
-- A/B testing backends for performance
-
-**Revisit trigger:** When investigating PTY mode (Phase F1) or if stream-json bidirectional proves viable.
+**Outcome:** Successfully migrated in Milestone 3.4. PrintModeBackend and stream-json parser removed.
 
 ---
 

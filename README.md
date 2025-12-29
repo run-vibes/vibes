@@ -198,7 +198,7 @@ just pre-commit
 | [**1. Foundation**](docs/PROGRESS.md#phase-1-foundation-mvp) | Claude Code proxy, plugin system, local web UI | ✅ Complete |
 | [**2. Remote Access**](docs/PROGRESS.md#phase-2-remote-access) | Cloudflare Tunnel, authentication, push notifications | ✅ Complete |
 | [**3. Multi-Client**](docs/PROGRESS.md#phase-3-multi-client-experience-) | PTY backend, xterm.js UI, multi-session, mirroring | ✅ Complete |
-| [**4. Continual Learning**](docs/PROGRESS.md#phase-4-continual-learning) | Self-improving assistant that learns from every session | ⏳ Planned |
+| [**4. Continual Learning**](docs/PROGRESS.md#phase-4-continual-learning) | Self-improving assistant that learns from every session | 🔄 In Progress |
 | [**5. Polish**](docs/PROGRESS.md#phase-5-polish--ecosystem) | Setup wizards, default plugins, iOS app | ⏳ Planned |
 
 See [PROGRESS.md](docs/PROGRESS.md) for detailed milestone tracking and changelog.
