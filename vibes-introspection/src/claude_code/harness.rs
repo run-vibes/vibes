@@ -20,7 +20,11 @@ impl Harness for ClaudeCodeHarness {
     }
 
     async fn version(&self) -> Option<String> {
-        let output = Command::new("claude").arg("--version").output().await.ok()?;
+        let output = Command::new("claude")
+            .arg("--version")
+            .output()
+            .await
+            .ok()?;
 
         if !output.status.success() {
             return None;
@@ -69,7 +73,11 @@ impl Harness for ClaudeCodeHarness {
                     let scoped = scoped.get_or_insert_with(ScopedCapabilities::default);
                     for target in root_targets {
                         // Avoid duplicates
-                        if !scoped.injection_targets.iter().any(|t| t.path == target.path) {
+                        if !scoped
+                            .injection_targets
+                            .iter()
+                            .any(|t| t.path == target.path)
+                        {
                             scoped.injection_targets.push(target);
                         }
                     }

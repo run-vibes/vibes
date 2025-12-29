@@ -18,7 +18,7 @@ This document tracks the implementation progress of vibes against the roadmap de
 | 3.3 CLI ↔ Web Mirroring | Complete | [design](plans/10-cli-web-mirroring/design.md) | [implementation](plans/10-cli-web-mirroring/implementation.md) |
 | 3.4 PTY Backend | Complete | [design](plans/12-pty-backend/design.md) | [implementation](plans/12-pty-backend/implementation.md) |
 | **◉ groove** | | [branding](groove/BRANDING.md) | |
-| 4.1 Harness Introspection | Not started | [design](plans/15-harness-introspection/design.md) | [implementation](plans/15-harness-introspection/implementation.md) |
+| 4.1 Harness Introspection | Complete | [design](plans/15-harness-introspection/design.md) | [implementation](plans/15-harness-introspection/implementation.md) |
 | 4.2 Storage Foundation | Not started | [design](plans/14-continual-learning/design.md#42-storage-foundation) | — |
 | 4.2.5 Security Foundation | Not started | [design](plans/14-continual-learning/design.md#425-security-foundation--new) | — |
 | 4.3 Capture & Inject | Not started | [design](plans/14-continual-learning/design.md#43-capture--inject-mvp) | — |
@@ -159,10 +159,12 @@ Note: Auto-detect team/aud moved to Milestone 3.5 (Cloudflare Auth Wizard)
 **Design:** [vibes groove Design](plans/14-continual-learning/design.md) | [Branding Guide](groove/BRANDING.md)
 
 ### Milestone 4.1: Harness Introspection
-- [ ] `Harness` trait and `HarnessCapabilities` struct
-- [ ] `ClaudeCodeHarness` implementation
-- [ ] `GenericHarnessDiscovery` for unknown harnesses
-- [ ] Capability caching in storage
+- [x] `vibes-introspection` crate with public API
+- [x] `Harness` trait and `ClaudeCodeHarness` implementation
+- [x] `ConfigPaths` with cross-platform support (Windows, macOS, Linux)
+- [x] `HarnessCapabilities` with 3-tier scope hierarchy (system → user → project)
+- [x] `CapabilityWatcher` with debounced file watching
+- [x] Integration tests
 
 ### Milestone 4.2: Storage Foundation
 - [ ] CozoDB setup with schema and migrations
@@ -321,3 +323,4 @@ These phases are planned but not yet scheduled.
 | 2025-12-28 | Continual Learning design complete - comprehensive design for vibes-learning plugin with harness introspection, adaptive parameters, open-world adaptation |
 | 2025-12-28 | Roadmap reorganized: New Phase 4 (Continual Learning) with 6 milestones (L0-L3), Setup Wizards moved to Phase 5, old Phase 4 becomes Phase 5 |
 | 2025-12-28 | Continual Learning design expanded: 10 milestones (4.1-4.9 + 4.2.5), added Assessment Framework, Attribution Engine, Security Architecture, Observability Dashboard |
+| 2025-12-28 | Milestone 4.1 (Harness Introspection) complete - vibes-introspection crate with Harness trait, ClaudeCodeHarness, ConfigPaths cross-platform, HarnessCapabilities 3-tier scope, CapabilityWatcher with debounce |

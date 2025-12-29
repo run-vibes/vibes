@@ -11,7 +11,7 @@ pub mod claude_code;
 
 pub use capabilities::*;
 pub use error::{IntrospectionError, Result};
-pub use harness::{harness_for_command, Harness};
+pub use harness::{Harness, harness_for_command};
 pub use paths::ConfigPaths;
 pub use watcher::CapabilityWatcher;
 

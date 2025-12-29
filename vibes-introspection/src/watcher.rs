@@ -1,10 +1,10 @@
 //! File watcher for capability changes with debouncing
 
 use crate::{Harness, HarnessCapabilities, Result};
-use notify::{recommended_watcher, RecursiveMode, Watcher};
+use notify::{RecursiveMode, Watcher, recommended_watcher};
 use std::path::PathBuf;
 use std::sync::Arc;
-use tokio::sync::{mpsc, RwLock};
+use tokio::sync::{RwLock, mpsc};
 
 /// Watches config files and re-introspects on changes with debouncing
 pub struct CapabilityWatcher {
@@ -70,7 +70,14 @@ impl CapabilityWatcher {
         let project_root_clone = project_root.clone();
 
         let task = tokio::spawn(async move {
-            Self::debounce_loop(rx, harness_clone, capabilities_clone, project_root_clone, debounce_ms).await;
+            Self::debounce_loop(
+                rx,
+                harness_clone,
+                capabilities_clone,
+                project_root_clone,
+                debounce_ms,
+            )
+            .await;
         });
 
         Ok(Self {
@@ -90,7 +97,10 @@ impl CapabilityWatcher {
     /// Force a re-introspection
     pub async fn refresh(&self) -> Result<()> {
         tracing::info!("Forcing capability refresh");
-        let new_caps = self.harness.introspect(self.project_root.as_deref()).await?;
+        let new_caps = self
+            .harness
+            .introspect(self.project_root.as_deref())
+            .await?;
         *self.capabilities.write().await = new_caps;
         Ok(())
     }
@@ -190,7 +200,10 @@ mod tests {
             })
         }
 
-        async fn introspect(&self, _project_root: Option<&std::path::Path>) -> Result<HarnessCapabilities> {
+        async fn introspect(
+            &self,
+            _project_root: Option<&std::path::Path>,
+        ) -> Result<HarnessCapabilities> {
             self.introspect_count.fetch_add(1, Ordering::SeqCst);
             Ok(HarnessCapabilities {
                 harness_type: "mock".to_string(),
@@ -278,7 +291,10 @@ mod tests {
             })
         }
 
-        async fn introspect(&self, _project_root: Option<&std::path::Path>) -> Result<HarnessCapabilities> {
+        async fn introspect(
+            &self,
+            _project_root: Option<&std::path::Path>,
+        ) -> Result<HarnessCapabilities> {
             *self.introspect_count.write().await += 1;
             Ok(HarnessCapabilities {
                 harness_type: "mock".to_string(),
@@ -309,7 +325,9 @@ mod tests {
         assert_eq!(*introspect_count.read().await, 1);
 
         // Modify a file in the watched directory
-        fs::write(config_dir.join("test.txt"), "trigger").await.unwrap();
+        fs::write(config_dir.join("test.txt"), "trigger")
+            .await
+            .unwrap();
 
         // Wait for debounce + processing
         tokio::time::sleep(Duration::from_millis(200)).await;

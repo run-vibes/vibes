@@ -31,7 +31,10 @@ impl TestHarness {
     }
 
     /// Detect hooks in a directory
-    async fn detect_hooks(&self, base_path: &std::path::Path) -> Option<vibes_introspection::HookCapabilities> {
+    async fn detect_hooks(
+        &self,
+        base_path: &std::path::Path,
+    ) -> Option<vibes_introspection::HookCapabilities> {
         let hooks_dir = base_path.join("hooks");
         if !hooks_dir.exists() {
             return None;
@@ -49,17 +52,20 @@ impl TestHarness {
             let Some(file_name) = path.file_stem().and_then(|s| s.to_str()) else {
                 continue;
             };
-            let hook_type = if file_name.starts_with("pre_tool_use") || file_name.starts_with("pre-tool-use") {
-                Some(vibes_introspection::HookType::PreToolUse)
-            } else if file_name.starts_with("post_tool_use") || file_name.starts_with("post-tool-use") {
-                Some(vibes_introspection::HookType::PostToolUse)
-            } else if file_name.starts_with("stop") {
-                Some(vibes_introspection::HookType::Stop)
-            } else if file_name.starts_with("notification") {
-                Some(vibes_introspection::HookType::Notification)
-            } else {
-                None
-            };
+            let hook_type =
+                if file_name.starts_with("pre_tool_use") || file_name.starts_with("pre-tool-use") {
+                    Some(vibes_introspection::HookType::PreToolUse)
+                } else if file_name.starts_with("post_tool_use")
+                    || file_name.starts_with("post-tool-use")
+                {
+                    Some(vibes_introspection::HookType::PostToolUse)
+                } else if file_name.starts_with("stop") {
+                    Some(vibes_introspection::HookType::Stop)
+                } else if file_name.starts_with("notification") {
+                    Some(vibes_introspection::HookType::Notification)
+                } else {
+                    None
+                };
 
             if let Some(hook_type) = hook_type {
                 installed_hooks.push(vibes_introspection::InstalledHook {
@@ -83,7 +89,10 @@ impl TestHarness {
     }
 
     /// Detect config files in a directory
-    async fn detect_config_files(&self, base_path: &std::path::Path) -> Vec<vibes_introspection::ConfigFile> {
+    async fn detect_config_files(
+        &self,
+        base_path: &std::path::Path,
+    ) -> Vec<vibes_introspection::ConfigFile> {
         let mut config_files = Vec::new();
 
         let settings_path = base_path.join("settings.json");
@@ -163,7 +172,10 @@ impl Harness for TestHarness {
         })
     }
 
-    async fn introspect(&self, project_root: Option<&std::path::Path>) -> Result<HarnessCapabilities> {
+    async fn introspect(
+        &self,
+        project_root: Option<&std::path::Path>,
+    ) -> Result<HarnessCapabilities> {
         let paths = self.config_paths(project_root)?;
 
         // Detect user scope
@@ -174,7 +186,8 @@ impl Harness for TestHarness {
 
         // Detect project scope
         let project = if let Some(ref project_path) = paths.project {
-            self.detect_scope(project_path, InjectionScope::Project).await
+            self.detect_scope(project_path, InjectionScope::Project)
+                .await
         } else {
             None
         };
@@ -212,9 +225,12 @@ async fn test_full_introspection_workflow() {
         .expect("Failed to create vibes hooks dir");
 
     // Create a sample hook
-    fs::write(hooks_dir.join("pre_tool_use.sh"), "#!/bin/bash\necho 'hook'")
-        .await
-        .expect("Failed to create hook");
+    fs::write(
+        hooks_dir.join("pre_tool_use.sh"),
+        "#!/bin/bash\necho 'hook'",
+    )
+    .await
+    .expect("Failed to create hook");
 
     // Create settings.json
     fs::write(user_config_path.join("settings.json"), "{}")
@@ -298,7 +314,10 @@ fn test_config_paths_with_project() {
     let paths =
         ConfigPaths::resolve("claude", Some(&project_root)).expect("Failed to resolve paths");
 
-    assert!(paths.project.is_some(), "Project should be Some with project_root");
+    assert!(
+        paths.project.is_some(),
+        "Project should be Some with project_root"
+    );
 
     let project = paths.project.unwrap();
     assert_eq!(

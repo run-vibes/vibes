@@ -79,7 +79,10 @@ pub async fn detect_config_files(base_path: &Path) -> Vec<ConfigFile> {
 }
 
 /// Detect injection targets at a base path for a specific scope
-pub async fn detect_injection_targets(base_path: &Path, scope: InjectionScope) -> Vec<InjectionTarget> {
+pub async fn detect_injection_targets(
+    base_path: &Path,
+    scope: InjectionScope,
+) -> Vec<InjectionTarget> {
     let mut targets = Vec::new();
 
     // CLAUDE.md is the primary injection target
@@ -133,7 +136,9 @@ pub async fn find_installed_hooks(hooks_dir: &Path) -> Vec<InstalledHook> {
         };
 
         // Determine hook type from filename prefix
-        let hook_type = if file_name.starts_with("pre_tool_use") || file_name.starts_with("pre-tool-use") {
+        let hook_type = if file_name.starts_with("pre_tool_use")
+            || file_name.starts_with("pre-tool-use")
+        {
             Some(HookType::PreToolUse)
         } else if file_name.starts_with("post_tool_use") || file_name.starts_with("post-tool-use") {
             Some(HookType::PostToolUse)
@@ -195,7 +200,9 @@ mod tests {
         let temp = create_test_dir().await;
         let hooks_dir = temp.path().join("hooks");
         fs::create_dir(&hooks_dir).await.unwrap();
-        fs::write(hooks_dir.join("pre_tool_use.sh"), "#!/bin/bash").await.unwrap();
+        fs::write(hooks_dir.join("pre_tool_use.sh"), "#!/bin/bash")
+            .await
+            .unwrap();
 
         let result = detect_scope(temp.path(), InjectionScope::User).await;
         assert!(result.is_some());
@@ -207,7 +214,9 @@ mod tests {
     #[tokio::test]
     async fn test_detect_scope_finds_config_files() {
         let temp = create_test_dir().await;
-        fs::write(temp.path().join("settings.json"), "{}").await.unwrap();
+        fs::write(temp.path().join("settings.json"), "{}")
+            .await
+            .unwrap();
 
         let result = detect_scope(temp.path(), InjectionScope::User).await;
         assert!(result.is_some());
@@ -219,7 +228,9 @@ mod tests {
     #[tokio::test]
     async fn test_detect_scope_finds_injection_targets() {
         let temp = create_test_dir().await;
-        fs::write(temp.path().join("CLAUDE.md"), "# Test").await.unwrap();
+        fs::write(temp.path().join("CLAUDE.md"), "# Test")
+            .await
+            .unwrap();
 
         let result = detect_scope(temp.path(), InjectionScope::User).await;
         assert!(result.is_some());
@@ -251,7 +262,9 @@ mod tests {
     #[tokio::test]
     async fn test_detect_config_files_finds_settings_json() {
         let temp = create_test_dir().await;
-        fs::write(temp.path().join("settings.json"), "{}").await.unwrap();
+        fs::write(temp.path().join("settings.json"), "{}")
+            .await
+            .unwrap();
 
         let files = detect_config_files(temp.path()).await;
         assert_eq!(files.len(), 1);
@@ -262,7 +275,9 @@ mod tests {
     #[tokio::test]
     async fn test_detect_config_files_finds_clauderc() {
         let temp = create_test_dir().await;
-        fs::write(temp.path().join(".clauderc"), "{}").await.unwrap();
+        fs::write(temp.path().join(".clauderc"), "{}")
+            .await
+            .unwrap();
 
         let files = detect_config_files(temp.path()).await;
         assert_eq!(files.len(), 1);
@@ -279,7 +294,9 @@ mod tests {
     #[tokio::test]
     async fn test_detect_injection_targets_finds_claude_md() {
         let temp = create_test_dir().await;
-        fs::write(temp.path().join("CLAUDE.md"), "# Test").await.unwrap();
+        fs::write(temp.path().join("CLAUDE.md"), "# Test")
+            .await
+            .unwrap();
 
         let targets = detect_injection_targets(temp.path(), InjectionScope::User).await;
         assert_eq!(targets.len(), 1);
@@ -309,7 +326,9 @@ mod tests {
         let temp = create_test_dir().await;
         let hooks_dir = temp.path().join("hooks");
         fs::create_dir(&hooks_dir).await.unwrap();
-        fs::write(hooks_dir.join("pre_tool_use.sh"), "#!/bin/bash").await.unwrap();
+        fs::write(hooks_dir.join("pre_tool_use.sh"), "#!/bin/bash")
+            .await
+            .unwrap();
 
         let hooks = find_installed_hooks(&hooks_dir).await;
         assert_eq!(hooks.len(), 1);
@@ -322,7 +341,9 @@ mod tests {
         let temp = create_test_dir().await;
         let hooks_dir = temp.path().join("hooks");
         fs::create_dir(&hooks_dir).await.unwrap();
-        fs::write(hooks_dir.join("post-tool-use.py"), "#!/usr/bin/env python").await.unwrap();
+        fs::write(hooks_dir.join("post-tool-use.py"), "#!/usr/bin/env python")
+            .await
+            .unwrap();
 
         let hooks = find_installed_hooks(&hooks_dir).await;
         assert_eq!(hooks.len(), 1);
@@ -335,7 +356,9 @@ mod tests {
         let temp = create_test_dir().await;
         let hooks_dir = temp.path().join("hooks");
         fs::create_dir(&hooks_dir).await.unwrap();
-        fs::write(hooks_dir.join("stop.sh"), "#!/bin/bash").await.unwrap();
+        fs::write(hooks_dir.join("stop.sh"), "#!/bin/bash")
+            .await
+            .unwrap();
 
         let hooks = find_installed_hooks(&hooks_dir).await;
         assert_eq!(hooks.len(), 1);
@@ -347,7 +370,9 @@ mod tests {
         let temp = create_test_dir().await;
         let hooks_dir = temp.path().join("hooks");
         fs::create_dir(&hooks_dir).await.unwrap();
-        fs::write(hooks_dir.join("notification_handler.sh"), "#!/bin/bash").await.unwrap();
+        fs::write(hooks_dir.join("notification_handler.sh"), "#!/bin/bash")
+            .await
+            .unwrap();
 
         let hooks = find_installed_hooks(&hooks_dir).await;
         assert_eq!(hooks.len(), 1);
@@ -359,8 +384,12 @@ mod tests {
         let temp = create_test_dir().await;
         let hooks_dir = temp.path().join("hooks");
         fs::create_dir(&hooks_dir).await.unwrap();
-        fs::write(hooks_dir.join("unknown.sh"), "#!/bin/bash").await.unwrap();
-        fs::write(hooks_dir.join("README.md"), "# Hooks").await.unwrap();
+        fs::write(hooks_dir.join("unknown.sh"), "#!/bin/bash")
+            .await
+            .unwrap();
+        fs::write(hooks_dir.join("README.md"), "# Hooks")
+            .await
+            .unwrap();
 
         let hooks = find_installed_hooks(&hooks_dir).await;
         assert!(hooks.is_empty());
@@ -371,9 +400,15 @@ mod tests {
         let temp = create_test_dir().await;
         let hooks_dir = temp.path().join("hooks");
         fs::create_dir(&hooks_dir).await.unwrap();
-        fs::write(hooks_dir.join("pre_tool_use.sh"), "#!/bin/bash").await.unwrap();
-        fs::write(hooks_dir.join("post_tool_use.sh"), "#!/bin/bash").await.unwrap();
-        fs::write(hooks_dir.join("stop.sh"), "#!/bin/bash").await.unwrap();
+        fs::write(hooks_dir.join("pre_tool_use.sh"), "#!/bin/bash")
+            .await
+            .unwrap();
+        fs::write(hooks_dir.join("post_tool_use.sh"), "#!/bin/bash")
+            .await
+            .unwrap();
+        fs::write(hooks_dir.join("stop.sh"), "#!/bin/bash")
+            .await
+            .unwrap();
 
         let hooks = find_installed_hooks(&hooks_dir).await;
         assert_eq!(hooks.len(), 3);

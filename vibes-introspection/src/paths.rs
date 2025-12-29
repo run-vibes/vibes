@@ -18,7 +18,11 @@ impl ConfigPaths {
         let system = Self::system_config_dir(harness);
         let project = project_root.map(|p| p.join(format!(".{}", harness)));
 
-        Ok(Self { system, user, project })
+        Ok(Self {
+            system,
+            user,
+            project,
+        })
     }
 
     #[cfg(windows)]
@@ -71,7 +75,11 @@ mod tests {
 
         // User path should exist and contain "claude"
         let user_str = paths.user.to_string_lossy();
-        assert!(user_str.contains("claude"), "User path should contain 'claude': {}", user_str);
+        assert!(
+            user_str.contains("claude"),
+            "User path should contain 'claude': {}",
+            user_str
+        );
     }
 
     #[test]
@@ -79,7 +87,10 @@ mod tests {
         let project = PathBuf::from("/tmp/my-project");
         let paths = ConfigPaths::resolve("claude", Some(&project)).unwrap();
 
-        assert_eq!(paths.project, Some(PathBuf::from("/tmp/my-project/.claude")));
+        assert_eq!(
+            paths.project,
+            Some(PathBuf::from("/tmp/my-project/.claude"))
+        );
     }
 
     #[test]
@@ -93,6 +104,9 @@ mod tests {
     fn test_resolve_system_path_none_when_not_exists() {
         // System path should be None when /etc/claude doesn't exist
         let paths = ConfigPaths::resolve("nonexistent_harness_xyz", None).unwrap();
-        assert!(paths.system.is_none(), "System path should be None for non-existent harness");
+        assert!(
+            paths.system.is_none(),
+            "System path should be None for non-existent harness"
+        );
     }
 }
