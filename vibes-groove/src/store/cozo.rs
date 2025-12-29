@@ -239,6 +239,38 @@ impl CozoStore {
         self.row_to_learning(&rows.rows[0])
     }
 
+    /// Retrieve multiple learnings by IDs in a single query (batch fetch)
+    async fn get_many(&self, ids: &[LearningId]) -> Result<Vec<Learning>> {
+        if ids.is_empty() {
+            return Ok(Vec::new());
+        }
+
+        // Build IN clause with quoted UUIDs
+        let id_list = ids
+            .iter()
+            .map(|id| format!("'{}'", id))
+            .collect::<Vec<_>>()
+            .join(", ");
+
+        let query = format!(
+            r#"?[id, scope, category, description, pattern_json, insight, confidence, created_at, updated_at, source_type, source_json] :=
+                *learning{{id, scope, category, description, pattern_json, insight, confidence, created_at, updated_at, source_type, source_json}},
+                id in [{}]"#,
+            id_list
+        );
+
+        let rows = self.run_query(&query, Default::default()).await?;
+
+        let mut learnings = Vec::new();
+        for row in &rows.rows {
+            if let Ok(Some(learning)) = self.row_to_learning(row) {
+                learnings.push(learning);
+            }
+        }
+
+        Ok(learnings)
+    }
+
     /// Find all learnings in a scope
     pub async fn find_by_scope(&self, scope: &Scope) -> Result<Vec<Learning>> {
         let scope_str = scope.to_db_string();
@@ -464,17 +496,14 @@ impl CozoStore {
 
         let rows = self.run_query(&base_query, Default::default()).await?;
 
-        let mut learnings = Vec::new();
-        for row in &rows.rows {
-            if let Some(to_id_str) = row[0].get_str()
-                && let Ok(to_id) = uuid::Uuid::parse_str(to_id_str)
-                && let Ok(Some(learning)) = self.get(to_id).await
-            {
-                learnings.push(learning);
-            }
-        }
+        // Collect all IDs first, then batch fetch (avoids N+1 queries)
+        let ids: Vec<LearningId> = rows
+            .rows
+            .iter()
+            .filter_map(|row| row[0].get_str().and_then(|s| uuid::Uuid::parse_str(s).ok()))
+            .collect();
 
-        Ok(learnings)
+        self.get_many(&ids).await
     }
 
     /// Helper to convert a database row to a Learning struct
@@ -699,17 +728,30 @@ impl CozoStore {
 
         let rows = self.run_query(query, params).await?;
 
-        // Fetch full Learning objects for each result
-        let mut results = Vec::new();
+        // Collect IDs and distances first (avoids N+1 queries)
+        let mut id_distances: Vec<(LearningId, f64)> = Vec::new();
         for row in &rows.rows {
             if let Some(learning_id_str) = row[0].get_str()
                 && let Ok(learning_id) = uuid::Uuid::parse_str(learning_id_str)
-                && let Ok(Some(learning)) = self.get(learning_id).await
             {
                 let distance = row[1].get_float().unwrap_or(f64::MAX);
-                results.push((learning, distance));
+                id_distances.push((learning_id, distance));
             }
         }
+
+        // Batch fetch all learnings
+        let ids: Vec<LearningId> = id_distances.iter().map(|(id, _)| *id).collect();
+        let learnings = self.get_many(&ids).await?;
+
+        // Build a map for O(1) lookup
+        let learning_map: std::collections::HashMap<LearningId, Learning> =
+            learnings.into_iter().map(|l| (l.id, l)).collect();
+
+        // Reassemble results with distances, preserving HNSW order
+        let mut results: Vec<(Learning, f64)> = id_distances
+            .into_iter()
+            .filter_map(|(id, dist)| learning_map.get(&id).cloned().map(|l| (l, dist)))
+            .collect();
 
         // Results should already be sorted by distance from HNSW, but ensure ordering
         results.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
