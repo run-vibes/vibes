@@ -19,7 +19,7 @@ This document tracks the implementation progress of vibes against the roadmap de
 | 3.4 PTY Backend | Complete | [design](plans/12-pty-backend/design.md) | [implementation](plans/12-pty-backend/implementation.md) |
 | **◉ groove** | | [branding](groove/BRANDING.md) | |
 | 4.1 Harness Introspection | Complete | [design](plans/15-harness-introspection/design.md) | [implementation](plans/15-harness-introspection/implementation.md) |
-| 4.2 Storage Foundation | Not started | [design](plans/14-continual-learning/design.md#42-storage-foundation) | — |
+| 4.2 Storage Foundation | In progress | [design](plans/14-continual-learning/design.md#42-storage-foundation), [decisions](plans/14-continual-learning/milestone-4.2-decisions.md) | [implementation](plans/14-continual-learning/milestone-4.2-implementation.md) |
 | 4.2.5 Security Foundation | Not started | [design](plans/14-continual-learning/design.md#425-security-foundation--new) | — |
 | 4.3 Capture & Inject | Not started | [design](plans/14-continual-learning/design.md#43-capture--inject-mvp) | — |
 | 4.4 Assessment Framework | Not started | [design](plans/14-continual-learning/design.md#44-assessment-framework--new) | — |
@@ -324,3 +324,5 @@ These phases are planned but not yet scheduled.
 | 2025-12-28 | Roadmap reorganized: New Phase 4 (Continual Learning) with 6 milestones (L0-L3), Setup Wizards moved to Phase 5, old Phase 4 becomes Phase 5 |
 | 2025-12-28 | Continual Learning design expanded: 10 milestones (4.1-4.9 + 4.2.5), added Assessment Framework, Attribution Engine, Security Architecture, Observability Dashboard |
 | 2025-12-28 | Milestone 4.1 (Harness Introspection) complete - vibes-introspection crate with Harness trait, ClaudeCodeHarness, ConfigPaths cross-platform, HarnessCapabilities 3-tier scope, CapabilityWatcher with debounce |
+| 2025-12-29 | Documentation updated: PLAN.md with multi-phase milestone conventions (epics), CLAUDE.md updated for Phase 4 status, CURRENT_MILESTONE.md pointer added for groove epic |
+| 2025-12-29 | Milestone 4.2 (Storage Foundation) marked in progress - brainstorm decisions and implementation plan complete, vibes-groove crate ready to implement |

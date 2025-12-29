@@ -14,25 +14,29 @@ A utility application that proxies Claude Code with remote access capabilities, 
 - **vibes-server**: HTTP/WebSocket server (axum-based)
 - **vibes-cli**: CLI binary consuming vibes-core, connects to daemon via WebSocket
 - **vibes-plugin-api**: Published crate for plugin authors
+- **vibes-introspection**: Harness detection and capability discovery (Level 0 for groove)
+- **vibes-groove**: Continual learning plugin (in development)
 - **web-ui**: TanStack frontend embedded in binary via rust-embed
 
 ### Current State
 
-**Phases 1 & 2 are complete** (7 of 11 milestones). See [docs/PROGRESS.md](docs/PROGRESS.md) for details.
+**Phases 1-3 are complete** (11 milestones). See [docs/PROGRESS.md](docs/PROGRESS.md) for details.
 
 Key capabilities:
-- `vibes claude` proxies Claude Code with session management and remote access
+- `vibes claude` proxies Claude Code with PTY-based terminal (full CLI parity)
 - Daemon architecture: server owns state, CLI + Web UI are WebSocket clients
 - Plugin system with dynamic native Rust library loading
 - Cloudflare Tunnel integration for remote access
 - Cloudflare Access JWT authentication with localhost bypass
 - Web Push notifications for session events
+- Persistent chat history with FTS5 full-text search
+- Multi-session support with real-time updates
+- CLI ↔ Web UI mirroring with source attribution
 
-**Next: Phase 3 (Multi-Client Experience)** focusing on:
-- Persistent chat history
-- Multi-session support
-- CLI ↔ Web UI mirroring
-- Setup wizards for Tunnel and Auth
+**Current: Phase 4 (vibes groove)** - The continual learning system:
+- Milestone 4.1 (Harness Introspection) ✓ complete
+- Milestone 4.2 (Storage Foundation) in progress
+- See [groove design](docs/plans/14-continual-learning/design.md) and [branding](docs/groove/BRANDING.md)
 
 ## Development Environment
 
@@ -105,13 +109,18 @@ Plans are required for new milestones and significant features. Skip planning fo
 
 ```
 docs/plans/
-├── 01-core-proxy/          # Completed milestones
+├── 01-core-proxy/              # Standard milestone (design.md + implementation.md)
 ├── ...
-├── 07-push-notifications/
-└── 08-chat-history/        # Next milestone (create when starting)
+├── 14-continual-learning/      # Multi-phase epic (see PLAN.md)
+│   ├── design.md               # Unified design for all sub-milestones
+│   ├── milestone-4.2-decisions.md
+│   └── milestone-4.2-implementation.md
+└── 15-harness-introspection/   # Standard milestone
     ├── design.md
     └── implementation.md
 ```
+
+**Note:** For large epics with 3+ internal sub-milestones, see "Multi-Phase Milestones" in [docs/PLAN.md](docs/PLAN.md).
 
 ### Planning Workflow
 
