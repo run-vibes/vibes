@@ -42,6 +42,26 @@ pub enum PluginHostError {
     /// IO error
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
+
+    /// Command conflict: another plugin already registered this command
+    #[error(
+        "Command conflict: '{command}' already registered by plugin '{existing_plugin}', cannot register for '{new_plugin}'"
+    )]
+    CommandConflict {
+        command: String,
+        existing_plugin: String,
+        new_plugin: String,
+    },
+
+    /// Route conflict: another plugin already registered this route
+    #[error(
+        "Route conflict: '{route}' already registered by plugin '{existing_plugin}', cannot register for '{new_plugin}'"
+    )]
+    RouteConflict {
+        route: String,
+        existing_plugin: String,
+        new_plugin: String,
+    },
 }
 
 #[cfg(test)]
@@ -91,5 +111,28 @@ mod tests {
         let io_err = std::io::Error::new(std::io::ErrorKind::NotFound, "file not found");
         let err: PluginHostError = io_err.into();
         assert!(matches!(err, PluginHostError::Io(_)));
+    }
+
+    #[test]
+    fn test_command_conflict_error() {
+        let err = PluginHostError::CommandConflict {
+            command: "trust levels".into(),
+            existing_plugin: "groove".into(),
+            new_plugin: "other".into(),
+        };
+        let msg = err.to_string();
+        assert!(msg.contains("trust levels"));
+        assert!(msg.contains("groove"));
+    }
+
+    #[test]
+    fn test_route_conflict_error() {
+        let err = PluginHostError::RouteConflict {
+            route: "GET /api/groove/policy".into(),
+            existing_plugin: "groove".into(),
+            new_plugin: "other".into(),
+        };
+        let msg = err.to_string();
+        assert!(msg.contains("/api/groove/policy"));
     }
 }
