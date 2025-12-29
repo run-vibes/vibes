@@ -26,6 +26,9 @@ pub use types::*;
 
 // Security re-exports
 pub use security::{
-    ContentHash, CreationEvent, CustodyEvent, CustodyEventType, Provenance, SecurityError,
-    SecurityResult, TrustContext, TrustLevel, TrustSource, Verification, VerifiedBy,
+    ContentHash, ContentScanner, CreationEvent, CustodyEvent, CustodyEventType, DlpScanner,
+    InjectionDetector, NoOpDlpScanner, NoOpInjectionDetector, Operation, OrgRole, Permissions,
+    Provenance, QuarantineReason, QuarantineStatus, ReviewOutcome, ScanFinding, ScanResult,
+    SecurityError, SecurityResult, Severity, TrustContext, TrustLevel, TrustSource, Verification,
+    VerifiedBy,
 };
