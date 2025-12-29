@@ -10,7 +10,8 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 use chrono::{DateTime, Utc};
-use cozo::{DataValue, DbInstance, NamedRows};
+use cozo::{DataValue, DbInstance, NamedRows, Vector};
+use ndarray::Array1;
 
 use super::schema::MIGRATIONS;
 use crate::{
@@ -623,6 +624,100 @@ impl CozoStore {
         Ok(params)
     }
 
+    // ===== Embedding/Semantic Search Implementation =====
+
+    /// Expected embedding dimension (matches GteSmall / all-MiniLM-L6-v2)
+    const EMBEDDING_DIM: usize = 384;
+
+    /// Store embedding vector for a learning
+    ///
+    /// # Errors
+    /// Returns an error if the embedding dimension is not exactly 384
+    pub async fn store_embedding(&self, learning_id: LearningId, embedding: &[f32]) -> Result<()> {
+        // Validate embedding dimension
+        if embedding.len() != Self::EMBEDDING_DIM {
+            return Err(GrooveError::Database(format!(
+                "Invalid embedding dimension: expected {}, got {}",
+                Self::EMBEDDING_DIM,
+                embedding.len()
+            )));
+        }
+
+        // Use CozoDB parameters with proper Vector type
+        let mut params = BTreeMap::new();
+        params.insert(
+            "learning_id".to_string(),
+            DataValue::Str(learning_id.to_string().into()),
+        );
+        // Convert to ndarray Array1 for the Vector::F32 type
+        let array: Array1<f32> = Array1::from_vec(embedding.to_vec());
+        params.insert("embedding".to_string(), DataValue::Vec(Vector::F32(array)));
+
+        let query = r#"?[learning_id, embedding] <- [[$learning_id, $embedding]]
+            :put learning_embeddings { learning_id => embedding }"#;
+
+        self.run_mutation(query, params).await?;
+        Ok(())
+    }
+
+    /// Semantic search using HNSW index
+    ///
+    /// Returns learnings with their cosine distance (lower = more similar).
+    /// Distance ranges from 0 (identical) to 2 (opposite).
+    ///
+    /// # Errors
+    /// Returns an error if the embedding dimension is not exactly 384
+    pub async fn semantic_search(
+        &self,
+        embedding: &[f32],
+        limit: usize,
+    ) -> Result<Vec<(Learning, f64)>> {
+        // Validate embedding dimension
+        if embedding.len() != Self::EMBEDDING_DIM {
+            return Err(GrooveError::Database(format!(
+                "Invalid embedding dimension: expected {}, got {}",
+                Self::EMBEDDING_DIM,
+                embedding.len()
+            )));
+        }
+
+        // Use CozoDB parameters with proper Vector type
+        let mut params = BTreeMap::new();
+        let array: Array1<f32> = Array1::from_vec(embedding.to_vec());
+        params.insert("query_vec".to_string(), DataValue::Vec(Vector::F32(array)));
+        params.insert("k".to_string(), DataValue::from(limit as i64));
+
+        // HNSW search query
+        // ef: 50 provides a good balance of speed and accuracy
+        // The distance is bound via the bind_distance parameter
+        let query = r#"?[learning_id, distance] := ~learning_embeddings:semantic_idx {
+                learning_id |
+                query: $query_vec,
+                k: $k,
+                ef: 50,
+                bind_distance: distance
+            }"#;
+
+        let rows = self.run_query(query, params).await?;
+
+        // Fetch full Learning objects for each result
+        let mut results = Vec::new();
+        for row in &rows.rows {
+            if let Some(learning_id_str) = row[0].get_str()
+                && let Ok(learning_id) = uuid::Uuid::parse_str(learning_id_str)
+                && let Ok(Some(learning)) = self.get(learning_id).await
+            {
+                let distance = row[1].get_float().unwrap_or(f64::MAX);
+                results.push((learning, distance));
+            }
+        }
+
+        // Results should already be sorted by distance from HNSW, but ensure ordering
+        results.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
+
+        Ok(results)
+    }
+
     /// Helper to convert a database row to a SystemParam struct
     fn row_to_system_param(&self, row: &[DataValue]) -> Result<Option<SystemParam>> {
         if row.len() < 7 {
@@ -1146,5 +1241,184 @@ mod tests {
         let retrieved = store.get_param("injection_budget").await.unwrap().unwrap();
         assert!(retrieved.param.value > 0.5); // Value should have increased after positive outcome
         assert_eq!(retrieved.param.observations, 1);
+    }
+
+    // ===== Embedding/Semantic Search Tests =====
+
+    /// Create a deterministic 384-dim embedding for testing
+    fn make_test_embedding(seed: u8) -> Vec<f32> {
+        (0..384)
+            .map(|i| ((i as u8).wrapping_add(seed) as f32) / 255.0)
+            .collect()
+    }
+
+    #[tokio::test]
+    async fn test_store_embedding() {
+        let tmp = TempDir::new().unwrap();
+        let store = CozoStore::open(tmp.path()).await.unwrap();
+
+        // Create a learning first
+        let learning = Learning::new(
+            Scope::Global,
+            LearningCategory::CodePattern,
+            LearningContent {
+                description: "Test pattern".into(),
+                pattern: None,
+                insight: "Test insight".into(),
+            },
+            LearningSource::UserCreated,
+        );
+        store.store(&learning).await.unwrap();
+
+        // Store embedding for the learning
+        let embedding = make_test_embedding(42);
+        store
+            .store_embedding(learning.id, &embedding)
+            .await
+            .unwrap();
+
+        // Verify by doing a semantic search that should find it
+        let results = store.semantic_search(&embedding, 1).await.unwrap();
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].0.id, learning.id);
+    }
+
+    #[tokio::test]
+    async fn test_store_embedding_invalid_dimension() {
+        let tmp = TempDir::new().unwrap();
+        let store = CozoStore::open(tmp.path()).await.unwrap();
+
+        let learning = Learning::new(
+            Scope::Global,
+            LearningCategory::CodePattern,
+            LearningContent {
+                description: "Test".into(),
+                pattern: None,
+                insight: "insight".into(),
+            },
+            LearningSource::UserCreated,
+        );
+        store.store(&learning).await.unwrap();
+
+        // Try to store embedding with wrong dimension (128 instead of 384)
+        let bad_embedding: Vec<f32> = (0..128).map(|i| i as f32 / 128.0).collect();
+        let result = store.store_embedding(learning.id, &bad_embedding).await;
+        assert!(result.is_err());
+
+        let err = result.unwrap_err();
+        assert!(
+            err.to_string().contains("384"),
+            "Error should mention expected dimension 384"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_semantic_search_basic() {
+        let tmp = TempDir::new().unwrap();
+        let store = CozoStore::open(tmp.path()).await.unwrap();
+
+        // Create multiple learnings with embeddings
+        let mut learnings = Vec::new();
+        for i in 0..5u8 {
+            let learning = Learning::new(
+                Scope::Global,
+                LearningCategory::CodePattern,
+                LearningContent {
+                    description: format!("Pattern {}", i),
+                    pattern: None,
+                    insight: format!("Insight {}", i),
+                },
+                LearningSource::UserCreated,
+            );
+            store.store(&learning).await.unwrap();
+
+            let embedding = make_test_embedding(i * 10);
+            store
+                .store_embedding(learning.id, &embedding)
+                .await
+                .unwrap();
+            learnings.push(learning);
+        }
+
+        // Search with an embedding similar to seed 0
+        let query = make_test_embedding(0);
+        let results = store.semantic_search(&query, 3).await.unwrap();
+
+        // Should find results
+        assert!(!results.is_empty());
+        assert!(results.len() <= 3);
+
+        // First result should be the most similar (seed 0)
+        assert_eq!(results[0].0.id, learnings[0].id);
+
+        // Results should be ordered by distance (ascending)
+        for window in results.windows(2) {
+            assert!(
+                window[0].1 <= window[1].1,
+                "Results should be ordered by distance"
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn test_semantic_search_empty() {
+        let tmp = TempDir::new().unwrap();
+        let store = CozoStore::open(tmp.path()).await.unwrap();
+
+        // Search when no embeddings are stored
+        let query = make_test_embedding(42);
+        let results = store.semantic_search(&query, 10).await.unwrap();
+
+        assert!(results.is_empty(), "Should return empty when no embeddings");
+    }
+
+    #[tokio::test]
+    async fn test_semantic_search_respects_limit() {
+        let tmp = TempDir::new().unwrap();
+        let store = CozoStore::open(tmp.path()).await.unwrap();
+
+        // Create 10 learnings with embeddings
+        for i in 0..10u8 {
+            let learning = Learning::new(
+                Scope::Global,
+                LearningCategory::CodePattern,
+                LearningContent {
+                    description: format!("Pattern {}", i),
+                    pattern: None,
+                    insight: format!("Insight {}", i),
+                },
+                LearningSource::UserCreated,
+            );
+            store.store(&learning).await.unwrap();
+
+            let embedding = make_test_embedding(i);
+            store
+                .store_embedding(learning.id, &embedding)
+                .await
+                .unwrap();
+        }
+
+        // Search with limit of 3
+        let query = make_test_embedding(5);
+        let results = store.semantic_search(&query, 3).await.unwrap();
+
+        assert_eq!(results.len(), 3, "Should return at most 'limit' results");
+    }
+
+    #[tokio::test]
+    async fn test_semantic_search_invalid_dimension() {
+        let tmp = TempDir::new().unwrap();
+        let store = CozoStore::open(tmp.path()).await.unwrap();
+
+        // Try to search with wrong dimension
+        let bad_query: Vec<f32> = (0..256).map(|i| i as f32 / 256.0).collect();
+        let result = store.semantic_search(&bad_query, 10).await;
+
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(
+            err.to_string().contains("384"),
+            "Error should mention expected dimension 384"
+        );
     }
 }

@@ -4354,6 +4354,7 @@ dependencies = [
  "chrono",
  "cozo",
  "dirs 6.0.0",
+ "ndarray",
  "rand 0.8.5",
  "rand_distr",
  "serde",
