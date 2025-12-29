@@ -1,8 +1,16 @@
-# Continual Learning Design
+# vibes groove Design
+
+> **groove** - The continual learning system that finds your coding rhythm.
+>
+> See [BRANDING.md](../../groove/BRANDING.md) for personality, voice, and visual identity guidelines.
 
 ## Overview
 
-Transform vibes from a Claude Code proxy into a **learning harness** that makes any AI coding assistant progressively more effective through accumulated experience. The system captures learnings automatically from session outcomes and injects them into future sessions with no user intervention required.
+**vibes groove** transforms vibes from a Claude Code proxy into a **learning harness** that makes any AI coding assistant progressively more effective through accumulated experience. groove captures learnings automatically from session outcomes and injects them into future sessions with no user intervention required.
+
+```
+◉ groove: Noticed you prefer explicit error handling. Remembered.
+```
 
 ## Goals
 
@@ -54,7 +62,7 @@ Transform vibes from a Claude Code proxy into a **learning harness** that makes 
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                         vibes-learning plugin                        │
+│                         ◉ vibes-groove                               │
 │                                                                      │
 │  ┌──────────────────┐  ┌──────────────────┐  ┌───────────────────┐  │
 │  │ Level 0          │  │ Level 1          │  │ Level 2-3         │  │
@@ -69,7 +77,7 @@ Transform vibes from a Claude Code proxy into a **learning harness** that makes 
 │  │ │   struct     │─┼──┼▶│   Adapter    │ │  │ │   Learner     │ │  │
 │  │ └──────────────┘ │  │ └──────────────┘ │  │ └───────────────┘ │  │
 │  └──────────────────┘  └────────┬─────────┘  │ ┌───────────────┐ │  │
-│                                 │            │ │   Novelty     │ │  │
+│   vibes-introspection          │            │ │   Novelty     │ │  │
 │                                 ▼            │ │   Detector    │ │  │
 │                        ┌──────────────────┐  │ └───────────────┘ │  │
 │                        │     CozoDB       │  └───────────────────┘  │
@@ -77,6 +85,13 @@ Transform vibes from a Claude Code proxy into a **learning harness** that makes 
 │                        └──────────────────┘                         │
 └─────────────────────────────────────────────────────────────────────┘
 ```
+
+### Crate Structure
+
+| Crate | Purpose |
+|-------|---------|
+| `vibes-introspection` | Level 0: Harness detection, capability discovery |
+| `vibes-groove` | Main groove plugin: storage, capture, injection, learning |
 
 ## Level Progression
 
