@@ -14,8 +14,8 @@ use cozo::{DataValue, DbInstance, NamedRows};
 
 use super::schema::MIGRATIONS;
 use crate::{
-    GrooveError, Learning, LearningCategory, LearningContent, LearningId, LearningRelation,
-    LearningSource, RelationType, Result, Scope, UsageStats,
+    AdaptiveParam, GrooveError, Learning, LearningCategory, LearningContent, LearningId,
+    LearningRelation, LearningSource, RelationType, Result, Scope, SystemParam, UsageStats,
 };
 
 /// CozoDB-backed learning store
@@ -559,6 +559,121 @@ impl CozoStore {
             source,
         }))
     }
+
+    // ===== ParamStore Implementation =====
+
+    /// Store or update a system parameter
+    pub async fn store_param(&self, param: &SystemParam) -> Result<()> {
+        let name = param.name.replace('\'', "''");
+        let updated_at = param.updated_at.timestamp();
+
+        let query = format!(
+            r#"?[param_name, value, uncertainty, observations, prior_alpha, prior_beta, updated_at] <- [[
+                '{}', {}, {}, {}, {}, {}, {}
+            ]]
+            :put adaptive_params {{
+                param_name => value, uncertainty, observations, prior_alpha, prior_beta, updated_at
+            }}"#,
+            name,
+            param.param.value,
+            param.param.uncertainty,
+            param.param.observations,
+            param.param.prior_alpha,
+            param.param.prior_beta,
+            updated_at,
+        );
+
+        self.run_mutation(&query, Default::default()).await?;
+        Ok(())
+    }
+
+    /// Get a system parameter by name
+    pub async fn get_param(&self, name: &str) -> Result<Option<SystemParam>> {
+        let name_escaped = name.replace('\'', "''");
+        let query = format!(
+            r#"?[param_name, value, uncertainty, observations, prior_alpha, prior_beta, updated_at] :=
+                *adaptive_params{{param_name, value, uncertainty, observations, prior_alpha, prior_beta, updated_at}},
+                param_name = '{}'"#,
+            name_escaped
+        );
+
+        let rows = self.run_query(&query, Default::default()).await?;
+
+        if rows.rows.is_empty() {
+            return Ok(None);
+        }
+
+        self.row_to_system_param(&rows.rows[0])
+    }
+
+    /// Get all system parameters
+    pub async fn all_params(&self) -> Result<Vec<SystemParam>> {
+        let query = r#"?[param_name, value, uncertainty, observations, prior_alpha, prior_beta, updated_at] :=
+            *adaptive_params{param_name, value, uncertainty, observations, prior_alpha, prior_beta, updated_at}"#;
+
+        let rows = self.run_query(query, Default::default()).await?;
+
+        let mut params = Vec::new();
+        for row in &rows.rows {
+            if let Some(param) = self.row_to_system_param(row)? {
+                params.push(param);
+            }
+        }
+
+        Ok(params)
+    }
+
+    /// Helper to convert a database row to a SystemParam struct
+    fn row_to_system_param(&self, row: &[DataValue]) -> Result<Option<SystemParam>> {
+        if row.len() < 7 {
+            return Ok(None);
+        }
+
+        // [param_name, value, uncertainty, observations, prior_alpha, prior_beta, updated_at]
+        let name = row[0]
+            .get_str()
+            .ok_or_else(|| GrooveError::Database("Invalid param_name type".into()))?
+            .to_string();
+
+        let value = row[1]
+            .get_float()
+            .ok_or_else(|| GrooveError::Database("Invalid value type".into()))?;
+
+        let uncertainty = row[2]
+            .get_float()
+            .ok_or_else(|| GrooveError::Database("Invalid uncertainty type".into()))?;
+
+        let observations = row[3]
+            .get_int()
+            .ok_or_else(|| GrooveError::Database("Invalid observations type".into()))?
+            as u64;
+
+        let prior_alpha = row[4]
+            .get_float()
+            .ok_or_else(|| GrooveError::Database("Invalid prior_alpha type".into()))?;
+
+        let prior_beta = row[5]
+            .get_float()
+            .ok_or_else(|| GrooveError::Database("Invalid prior_beta type".into()))?;
+
+        let updated_at_ts = row[6]
+            .get_int()
+            .ok_or_else(|| GrooveError::Database("Invalid updated_at type".into()))?;
+        let updated_at = DateTime::from_timestamp(updated_at_ts, 0)
+            .ok_or_else(|| GrooveError::Database("Invalid updated_at timestamp".into()))?;
+
+        Ok(Some(SystemParam {
+            name,
+            param: AdaptiveParam {
+                value,
+                uncertainty,
+                observations,
+                prior_alpha,
+                prior_beta,
+            },
+            updated_at,
+        }))
+    }
 }
 
 #[cfg(test)]
@@ -567,7 +682,7 @@ mod tests {
     use super::*;
     use crate::{
         Learning, LearningCategory, LearningContent, LearningRelation, LearningSource, Outcome,
-        RelationType, Scope,
+        RelationType, Scope, SystemParam,
     };
     use tempfile::TempDir;
 
@@ -957,5 +1072,79 @@ mod tests {
 
         let related = store.find_related(learning.id, None).await.unwrap();
         assert!(related.is_empty());
+    }
+
+    // ===== ParamStore Tests =====
+
+    #[tokio::test]
+    async fn test_store_and_get_param() {
+        let tmp = TempDir::new().unwrap();
+        let store = CozoStore::open(tmp.path()).await.unwrap();
+
+        let param = SystemParam::with_prior("injection_budget", 8.0, 2.0);
+
+        store.store_param(&param).await.unwrap();
+
+        let retrieved = store.get_param("injection_budget").await.unwrap();
+        assert!(retrieved.is_some());
+
+        let retrieved = retrieved.unwrap();
+        assert_eq!(retrieved.name, "injection_budget");
+        assert!((retrieved.param.value - 0.8).abs() < 0.001);
+        assert!((retrieved.param.prior_alpha - 8.0).abs() < 0.001);
+        assert!((retrieved.param.prior_beta - 2.0).abs() < 0.001);
+    }
+
+    #[tokio::test]
+    async fn test_get_param_not_found() {
+        let tmp = TempDir::new().unwrap();
+        let store = CozoStore::open(tmp.path()).await.unwrap();
+
+        let retrieved = store.get_param("nonexistent").await.unwrap();
+        assert!(retrieved.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_all_params() {
+        let tmp = TempDir::new().unwrap();
+        let store = CozoStore::open(tmp.path()).await.unwrap();
+
+        let param1 = SystemParam::new("injection_budget");
+        let param2 = SystemParam::with_prior("context_relevance", 5.0, 5.0);
+        let param3 = SystemParam::new("recency_weight");
+
+        store.store_param(&param1).await.unwrap();
+        store.store_param(&param2).await.unwrap();
+        store.store_param(&param3).await.unwrap();
+
+        let all = store.all_params().await.unwrap();
+        assert_eq!(all.len(), 3);
+
+        // Check all names are present
+        let names: Vec<&str> = all.iter().map(|p| p.name.as_str()).collect();
+        assert!(names.contains(&"injection_budget"));
+        assert!(names.contains(&"context_relevance"));
+        assert!(names.contains(&"recency_weight"));
+    }
+
+    #[tokio::test]
+    async fn test_store_param_upsert() {
+        let tmp = TempDir::new().unwrap();
+        let store = CozoStore::open(tmp.path()).await.unwrap();
+
+        // Store initial param
+        let mut param = SystemParam::new("injection_budget");
+        store.store_param(&param).await.unwrap();
+
+        // Update it via Bayesian update
+        param.param.update(1.0, 1.0);
+
+        // Store again (upsert)
+        store.store_param(&param).await.unwrap();
+
+        // Retrieve and verify update was applied
+        let retrieved = store.get_param("injection_budget").await.unwrap().unwrap();
+        assert!(retrieved.param.value > 0.5); // Value should have increased after positive outcome
+        assert_eq!(retrieved.param.observations, 1);
     }
 }
