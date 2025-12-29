@@ -24,6 +24,30 @@ pub enum PluginError {
     /// Custom error with message
     #[error("{0}")]
     Custom(String),
+
+    /// Duplicate command registration
+    #[error("Duplicate command: {0}")]
+    DuplicateCommand(String),
+
+    /// Duplicate route registration
+    #[error("Duplicate route: {0}")]
+    DuplicateRoute(String),
+
+    /// Unknown command dispatch
+    #[error("Unknown command: {0}")]
+    UnknownCommand(String),
+
+    /// Unknown route dispatch
+    #[error("Unknown route: {0}")]
+    UnknownRoute(String),
+
+    /// Invalid input error
+    #[error("Invalid input: {0}")]
+    InvalidInput(String),
+
+    /// JSON serialization/deserialization error
+    #[error("JSON error: {0}")]
+    Json(String),
 }
 
 impl PluginError {
@@ -78,5 +102,41 @@ mod tests {
 
         let err = PluginError::command("failed");
         assert!(matches!(err, PluginError::Command(_)));
+    }
+
+    #[test]
+    fn test_duplicate_command_error() {
+        let err = PluginError::DuplicateCommand("trust levels".into());
+        assert!(err.to_string().contains("trust levels"));
+    }
+
+    #[test]
+    fn test_unknown_command_error() {
+        let err = PluginError::UnknownCommand("foo bar".into());
+        assert!(err.to_string().contains("foo bar"));
+    }
+
+    #[test]
+    fn test_json_error() {
+        let err = PluginError::Json("parse error".into());
+        assert!(err.to_string().contains("parse error"));
+    }
+
+    #[test]
+    fn test_duplicate_route_error() {
+        let err = PluginError::DuplicateRoute("GET /foo".into());
+        assert!(err.to_string().contains("GET /foo"));
+    }
+
+    #[test]
+    fn test_unknown_route_error() {
+        let err = PluginError::UnknownRoute("POST /bar".into());
+        assert!(err.to_string().contains("POST /bar"));
+    }
+
+    #[test]
+    fn test_invalid_input_error() {
+        let err = PluginError::InvalidInput("missing param".into());
+        assert!(err.to_string().contains("missing param"));
     }
 }

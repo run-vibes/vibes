@@ -54,8 +54,7 @@ impl RouteResponse {
     pub fn json<T: Serialize>(status: u16, data: &T) -> Result<Self, PluginError> {
         Ok(Self {
             status,
-            body: serde_json::to_vec(data)
-                .map_err(|e| PluginError::Serialization(e.to_string()))?,
+            body: serde_json::to_vec(data).map_err(|e| PluginError::Json(e.to_string()))?,
             content_type: "application/json".to_string(),
         })
     }
