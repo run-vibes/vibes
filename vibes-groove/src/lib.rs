@@ -8,17 +8,17 @@
 pub mod config;
 pub mod error;
 pub mod export;
+pub mod storage;
 pub mod store;
 pub mod types;
-// pub mod storage;
 
 // Re-exports - commented out until modules are implemented
 pub use config::{EnterpriseConfig, GrooveConfig, ProjectContext};
 pub use error::{GrooveError, Result};
 pub use export::{EXPORT_VERSION, GrooveExport, ImportStats, LearningExport};
+pub use storage::GrooveStorage;
 pub use store::{
     CURRENT_SCHEMA_VERSION, CozoStore, INITIAL_SCHEMA, LearningStore, MIGRATIONS, Migration,
     ParamStore,
 };
 pub use types::*;
-// pub use storage::GrooveStorage;

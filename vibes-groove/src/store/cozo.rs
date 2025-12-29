@@ -769,6 +769,211 @@ impl CozoStore {
             updated_at,
         }))
     }
+
+    // ===== Export/Import Implementation =====
+
+    /// Export all data from the store
+    ///
+    /// Exports all learnings (with usage stats), system parameters, and relations
+    /// to a portable `GrooveExport` format for backup or migration.
+    pub async fn export(&self) -> Result<crate::GrooveExport> {
+        use crate::{GrooveExport, LearningExport};
+
+        let mut export = GrooveExport::new();
+
+        // Export all learnings with their usage stats
+        let learnings_query = r#"
+            ?[id, scope, category, description, pattern_json, insight, confidence,
+              created_at, updated_at, source_type, source_json] :=
+            *learning{id, scope, category, description, pattern_json, insight,
+                     confidence, created_at, updated_at, source_type, source_json}
+        "#;
+        let rows = self.run_query(learnings_query, Default::default()).await?;
+
+        for row in &rows.rows {
+            if let Some(learning) = self.row_to_learning(row)? {
+                // Get usage stats for this learning
+                let usage_stats = self.get_usage(learning.id).await?.unwrap_or_default();
+
+                export.learnings.push(LearningExport {
+                    id: learning.id,
+                    scope: learning.scope,
+                    category: learning.category,
+                    content: learning.content,
+                    confidence: learning.confidence,
+                    created_at: learning.created_at,
+                    updated_at: learning.updated_at,
+                    source: learning.source,
+                    usage_stats,
+                });
+            }
+        }
+
+        // Export all params
+        export.params = self.all_params().await?;
+
+        // Export all relations
+        let relations_query = r#"
+            ?[from_id, relation_type, to_id, weight, created_at] :=
+            *learning_relations{from_id, relation_type, to_id, weight, created_at}
+        "#;
+        let rows = self.run_query(relations_query, Default::default()).await?;
+
+        for row in &rows.rows {
+            if let Some(relation) = self.row_to_relation(row)? {
+                export.relations.push(relation);
+            }
+        }
+
+        Ok(export)
+    }
+
+    /// Import data into the store
+    ///
+    /// Imports learnings, parameters, and relations from a `GrooveExport`.
+    /// Skips learnings with IDs that already exist (no overwrites).
+    /// Returns statistics about the import operation.
+    pub async fn import(&self, export: &crate::GrooveExport) -> Result<crate::ImportStats> {
+        let mut stats = crate::ImportStats::default();
+
+        // Import learnings (skip if ID already exists)
+        for learning_export in &export.learnings {
+            if self.get(learning_export.id).await?.is_some() {
+                stats.learnings_skipped += 1;
+                continue;
+            }
+
+            // Reconstruct Learning and store with original ID
+            let learning = Learning {
+                id: learning_export.id,
+                scope: learning_export.scope.clone(),
+                category: learning_export.category.clone(),
+                content: learning_export.content.clone(),
+                confidence: learning_export.confidence,
+                created_at: learning_export.created_at,
+                updated_at: learning_export.updated_at,
+                source: learning_export.source.clone(),
+            };
+
+            // Use internal store that preserves ID
+            self.store_with_id(&learning).await?;
+
+            // Store usage stats
+            self.update_usage(learning_export.id, &learning_export.usage_stats)
+                .await?;
+
+            stats.learnings_imported += 1;
+            stats.embeddings_queued += 1; // Embeddings need regeneration
+        }
+
+        // Import params
+        for param in &export.params {
+            self.store_param(param).await?;
+            stats.params_imported += 1;
+        }
+
+        // Import relations
+        for relation in &export.relations {
+            self.store_relation(relation).await?;
+            stats.relations_imported += 1;
+        }
+
+        Ok(stats)
+    }
+
+    /// Internal method to store learning preserving its ID
+    ///
+    /// Unlike `store()` which uses the learning's pre-assigned ID anyway,
+    /// this is explicit about preserving imported IDs.
+    async fn store_with_id(&self, learning: &Learning) -> Result<()> {
+        let id_str = learning.id.to_string();
+        let scope_str = learning.scope.to_db_string();
+        let category_str = learning.category.as_str();
+        let description = learning.content.description.replace('\'', "''");
+        let pattern_json = learning
+            .content
+            .pattern
+            .as_ref()
+            .map(|p| format!("'{}'", p.to_string().replace('\'', "''")))
+            .unwrap_or_else(|| "null".to_string());
+        let insight = learning.content.insight.replace('\'', "''");
+        let confidence = learning.confidence;
+        let created_at = learning.created_at.timestamp();
+        let updated_at = learning.updated_at.timestamp();
+        let source_type = learning.source.source_type();
+        let source_json = serde_json::to_string(&learning.source)
+            .map_err(|e| GrooveError::Serialization(e.to_string()))?
+            .replace('\'', "''");
+
+        // Insert learning
+        let query = format!(
+            r#"?[id, scope, category, description, pattern_json, insight, confidence, created_at, updated_at, source_type, source_json] <- [[
+                '{}', '{}', '{}', '{}', {}, '{}', {}, {}, {}, '{}', '{}'
+            ]]
+            :put learning {{
+                id => scope, category, description, pattern_json, insight, confidence, created_at, updated_at, source_type, source_json
+            }}"#,
+            id_str,
+            scope_str,
+            category_str,
+            description,
+            pattern_json,
+            insight,
+            confidence,
+            created_at,
+            updated_at,
+            source_type,
+            source_json
+        );
+
+        self.run_mutation(&query, Default::default()).await?;
+        Ok(())
+    }
+
+    /// Helper to convert a database row to a LearningRelation struct
+    fn row_to_relation(&self, row: &[DataValue]) -> Result<Option<LearningRelation>> {
+        if row.len() < 5 {
+            return Ok(None);
+        }
+
+        // [from_id, relation_type, to_id, weight, created_at]
+        let from_id_str = row[0]
+            .get_str()
+            .ok_or_else(|| GrooveError::Database("Invalid from_id type".into()))?;
+        let from_id = LearningId::parse_str(from_id_str)
+            .map_err(|e| GrooveError::Database(format!("Invalid from_id UUID: {e}")))?;
+
+        let relation_type_str = row[1]
+            .get_str()
+            .ok_or_else(|| GrooveError::Database("Invalid relation_type type".into()))?;
+        let relation_type = RelationType::from_str(relation_type_str).ok_or_else(|| {
+            GrooveError::Database(format!("Unknown relation type: {relation_type_str}"))
+        })?;
+
+        let to_id_str = row[2]
+            .get_str()
+            .ok_or_else(|| GrooveError::Database("Invalid to_id type".into()))?;
+        let to_id = LearningId::parse_str(to_id_str)
+            .map_err(|e| GrooveError::Database(format!("Invalid to_id UUID: {e}")))?;
+
+        let weight = row[3]
+            .get_float()
+            .ok_or_else(|| GrooveError::Database("Invalid weight type".into()))?;
+
+        let created_at_ts = row[4]
+            .get_int()
+            .ok_or_else(|| GrooveError::Database("Invalid created_at type".into()))?;
+        let created_at = DateTime::from_timestamp(created_at_ts, 0)
+            .ok_or_else(|| GrooveError::Database("Invalid created_at timestamp".into()))?;
+
+        Ok(Some(LearningRelation {
+            from_id,
+            relation_type,
+            to_id,
+            weight,
+            created_at,
+        }))
+    }
 }
 
 #[cfg(test)]
@@ -1420,5 +1625,324 @@ mod tests {
             err.to_string().contains("384"),
             "Error should mention expected dimension 384"
         );
+    }
+
+    // ===== Export/Import Tests =====
+
+    #[tokio::test]
+    async fn test_export_empty_store() {
+        let tmp = TempDir::new().unwrap();
+        let store = CozoStore::open(tmp.path()).await.unwrap();
+
+        let export = store.export().await.unwrap();
+
+        assert_eq!(export.version, crate::EXPORT_VERSION);
+        assert!(export.learnings.is_empty());
+        assert!(export.params.is_empty());
+        assert!(export.relations.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_export_with_data() {
+        let tmp = TempDir::new().unwrap();
+        let store = CozoStore::open(tmp.path()).await.unwrap();
+
+        // Store a learning with usage stats
+        let learning = Learning::new(
+            Scope::Global,
+            LearningCategory::CodePattern,
+            LearningContent {
+                description: "Test".into(),
+                pattern: None,
+                insight: "Test".into(),
+            },
+            LearningSource::UserCreated,
+        );
+        let id = store.store(&learning).await.unwrap();
+
+        // Update usage stats
+        let mut stats = store.get_usage(id).await.unwrap().unwrap();
+        stats.record_outcome(Outcome::Helpful);
+        store.update_usage(id, &stats).await.unwrap();
+
+        // Store a param
+        let param = SystemParam::new("test_param");
+        store.store_param(&param).await.unwrap();
+
+        let export = store.export().await.unwrap();
+
+        assert_eq!(export.learnings.len(), 1);
+        assert_eq!(export.learnings[0].id, id);
+        assert_eq!(export.learnings[0].usage_stats.times_helpful, 1);
+        assert_eq!(export.params.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn test_export_includes_relations() {
+        let tmp = TempDir::new().unwrap();
+        let store = CozoStore::open(tmp.path()).await.unwrap();
+
+        // Store two learnings
+        let learning1 = Learning::new(
+            Scope::Global,
+            LearningCategory::CodePattern,
+            LearningContent {
+                description: "Original".into(),
+                pattern: None,
+                insight: "insight".into(),
+            },
+            LearningSource::UserCreated,
+        );
+        let learning2 = Learning::new(
+            Scope::Global,
+            LearningCategory::CodePattern,
+            LearningContent {
+                description: "Updated".into(),
+                pattern: None,
+                insight: "insight".into(),
+            },
+            LearningSource::UserCreated,
+        );
+        store.store(&learning1).await.unwrap();
+        store.store(&learning2).await.unwrap();
+
+        // Create a relation
+        let relation = LearningRelation::new(learning2.id, RelationType::Supersedes, learning1.id);
+        store.store_relation(&relation).await.unwrap();
+
+        let export = store.export().await.unwrap();
+
+        assert_eq!(export.learnings.len(), 2);
+        assert_eq!(export.relations.len(), 1);
+        assert_eq!(export.relations[0].from_id, learning2.id);
+        assert_eq!(export.relations[0].to_id, learning1.id);
+    }
+
+    #[tokio::test]
+    async fn test_import_into_empty_store() {
+        let tmp = TempDir::new().unwrap();
+        let store = CozoStore::open(tmp.path()).await.unwrap();
+
+        let mut export = crate::GrooveExport::new();
+        export.learnings.push(crate::LearningExport {
+            id: uuid::Uuid::now_v7(),
+            scope: Scope::Global,
+            category: LearningCategory::CodePattern,
+            content: LearningContent {
+                description: "Test".into(),
+                pattern: None,
+                insight: "Test".into(),
+            },
+            confidence: 0.8,
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+            source: LearningSource::UserCreated,
+            usage_stats: UsageStats::default(),
+        });
+
+        let stats = store.import(&export).await.unwrap();
+
+        assert_eq!(stats.learnings_imported, 1);
+        assert_eq!(stats.learnings_skipped, 0);
+
+        // Verify it was imported
+        let count = store.count().await.unwrap();
+        assert_eq!(count, 1);
+    }
+
+    #[tokio::test]
+    async fn test_import_skips_duplicates() {
+        let tmp = TempDir::new().unwrap();
+        let store = CozoStore::open(tmp.path()).await.unwrap();
+
+        // Store a learning
+        let learning = Learning::new(
+            Scope::Global,
+            LearningCategory::CodePattern,
+            LearningContent {
+                description: "Test".into(),
+                pattern: None,
+                insight: "Test".into(),
+            },
+            LearningSource::UserCreated,
+        );
+        let id = store.store(&learning).await.unwrap();
+
+        // Try to import with same ID
+        let mut export = crate::GrooveExport::new();
+        export.learnings.push(crate::LearningExport {
+            id, // Same ID
+            scope: Scope::Global,
+            category: LearningCategory::Solution,
+            content: LearningContent {
+                description: "Different".into(),
+                pattern: None,
+                insight: "Different".into(),
+            },
+            confidence: 0.9,
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+            source: LearningSource::UserCreated,
+            usage_stats: UsageStats::default(),
+        });
+
+        let stats = store.import(&export).await.unwrap();
+
+        assert_eq!(stats.learnings_imported, 0);
+        assert_eq!(stats.learnings_skipped, 1);
+
+        // Verify original content is unchanged
+        let retrieved = store.get(id).await.unwrap().unwrap();
+        assert_eq!(retrieved.content.description, "Test");
+    }
+
+    #[tokio::test]
+    async fn test_import_params() {
+        let tmp = TempDir::new().unwrap();
+        let store = CozoStore::open(tmp.path()).await.unwrap();
+
+        let mut export = crate::GrooveExport::new();
+        export
+            .params
+            .push(SystemParam::with_prior("test_param", 8.0, 2.0));
+
+        let stats = store.import(&export).await.unwrap();
+
+        assert_eq!(stats.params_imported, 1);
+
+        // Verify param was imported
+        let param = store.get_param("test_param").await.unwrap();
+        assert!(param.is_some());
+        assert!((param.unwrap().param.prior_alpha - 8.0).abs() < 0.001);
+    }
+
+    #[tokio::test]
+    async fn test_import_relations() {
+        let tmp = TempDir::new().unwrap();
+        let store = CozoStore::open(tmp.path()).await.unwrap();
+
+        let id1 = uuid::Uuid::now_v7();
+        let id2 = uuid::Uuid::now_v7();
+
+        let mut export = crate::GrooveExport::new();
+        // Add learnings first
+        export.learnings.push(crate::LearningExport {
+            id: id1,
+            scope: Scope::Global,
+            category: LearningCategory::CodePattern,
+            content: LearningContent {
+                description: "First".into(),
+                pattern: None,
+                insight: "insight".into(),
+            },
+            confidence: 0.5,
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+            source: LearningSource::UserCreated,
+            usage_stats: UsageStats::default(),
+        });
+        export.learnings.push(crate::LearningExport {
+            id: id2,
+            scope: Scope::Global,
+            category: LearningCategory::CodePattern,
+            content: LearningContent {
+                description: "Second".into(),
+                pattern: None,
+                insight: "insight".into(),
+            },
+            confidence: 0.5,
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+            source: LearningSource::UserCreated,
+            usage_stats: UsageStats::default(),
+        });
+        // Add relation
+        export
+            .relations
+            .push(LearningRelation::new(id2, RelationType::Supersedes, id1));
+
+        let stats = store.import(&export).await.unwrap();
+
+        assert_eq!(stats.learnings_imported, 2);
+        assert_eq!(stats.relations_imported, 1);
+
+        // Verify relation was imported
+        let related = store.find_related(id2, None).await.unwrap();
+        assert_eq!(related.len(), 1);
+        assert_eq!(related[0].id, id1);
+    }
+
+    #[tokio::test]
+    async fn test_roundtrip_export_import() {
+        let tmp1 = TempDir::new().unwrap();
+        let tmp2 = TempDir::new().unwrap();
+
+        // Store data in first store
+        let store1 = CozoStore::open(tmp1.path()).await.unwrap();
+        let learning = Learning::new(
+            Scope::Global,
+            LearningCategory::CodePattern,
+            LearningContent {
+                description: "Roundtrip".into(),
+                pattern: None,
+                insight: "Test".into(),
+            },
+            LearningSource::UserCreated,
+        );
+        let id = store1.store(&learning).await.unwrap();
+
+        // Update usage stats
+        let mut stats = store1.get_usage(id).await.unwrap().unwrap();
+        stats.record_outcome(Outcome::Helpful);
+        stats.record_outcome(Outcome::Helpful);
+        store1.update_usage(id, &stats).await.unwrap();
+
+        // Export
+        let export = store1.export().await.unwrap();
+
+        // Import into second store
+        let store2 = CozoStore::open(tmp2.path()).await.unwrap();
+        let import_stats = store2.import(&export).await.unwrap();
+
+        assert_eq!(import_stats.learnings_imported, 1);
+
+        // Verify data matches
+        let imported = store2.get(id).await.unwrap().unwrap();
+        assert_eq!(imported.content.description, "Roundtrip");
+
+        // Verify usage stats preserved
+        let imported_stats = store2.get_usage(id).await.unwrap().unwrap();
+        assert_eq!(imported_stats.times_helpful, 2);
+    }
+
+    #[tokio::test]
+    async fn test_import_preserves_original_id() {
+        let tmp = TempDir::new().unwrap();
+        let store = CozoStore::open(tmp.path()).await.unwrap();
+
+        let original_id = uuid::Uuid::now_v7();
+        let mut export = crate::GrooveExport::new();
+        export.learnings.push(crate::LearningExport {
+            id: original_id,
+            scope: Scope::User("alice".into()),
+            category: LearningCategory::Preference,
+            content: LearningContent {
+                description: "Preserved ID".into(),
+                pattern: None,
+                insight: "insight".into(),
+            },
+            confidence: 0.75,
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+            source: LearningSource::UserCreated,
+            usage_stats: UsageStats::default(),
+        });
+
+        store.import(&export).await.unwrap();
+
+        // Verify the ID was preserved
+        let retrieved = store.get(original_id).await.unwrap();
+        assert!(retrieved.is_some());
+        assert_eq!(retrieved.unwrap().id, original_id);
     }
 }
