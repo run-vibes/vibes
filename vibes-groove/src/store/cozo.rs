@@ -332,6 +332,96 @@ impl CozoStore {
         Ok(count as u64)
     }
 
+    /// Update usage stats for a learning
+    pub async fn update_usage(&self, id: LearningId, stats: &UsageStats) -> Result<()> {
+        let id_str = id.to_string();
+        let last_used = stats.last_used.map(|dt| dt.timestamp()).unwrap_or(-1);
+        let last_used_str = if last_used < 0 {
+            "null".to_string()
+        } else {
+            last_used.to_string()
+        };
+
+        let query = format!(
+            r#"?[learning_id, times_injected, times_helpful, times_ignored, times_contradicted, last_used, confidence_alpha, confidence_beta] <- [[
+                '{}', {}, {}, {}, {}, {}, {}, {}
+            ]]
+            :put usage_stats {{
+                learning_id => times_injected, times_helpful, times_ignored, times_contradicted, last_used, confidence_alpha, confidence_beta
+            }}"#,
+            id_str,
+            stats.times_injected,
+            stats.times_helpful,
+            stats.times_ignored,
+            stats.times_contradicted,
+            last_used_str,
+            stats.confidence_alpha,
+            stats.confidence_beta,
+        );
+
+        self.run_mutation(&query, Default::default()).await?;
+        Ok(())
+    }
+
+    /// Retrieve usage stats for a learning
+    pub async fn get_usage(&self, id: LearningId) -> Result<Option<UsageStats>> {
+        let query = format!(
+            r#"?[times_injected, times_helpful, times_ignored, times_contradicted, last_used, confidence_alpha, confidence_beta] :=
+                *usage_stats{{learning_id, times_injected, times_helpful, times_ignored, times_contradicted, last_used, confidence_alpha, confidence_beta}},
+                learning_id = '{}'"#,
+            id
+        );
+
+        let rows = self.run_query(&query, Default::default()).await?;
+
+        if rows.rows.is_empty() {
+            return Ok(None);
+        }
+
+        let row = &rows.rows[0];
+
+        let times_injected = row[0]
+            .get_int()
+            .ok_or_else(|| GrooveError::Database("Invalid times_injected".into()))?
+            as u32;
+        let times_helpful = row[1]
+            .get_int()
+            .ok_or_else(|| GrooveError::Database("Invalid times_helpful".into()))?
+            as u32;
+        let times_ignored = row[2]
+            .get_int()
+            .ok_or_else(|| GrooveError::Database("Invalid times_ignored".into()))?
+            as u32;
+        let times_contradicted = row[3]
+            .get_int()
+            .ok_or_else(|| GrooveError::Database("Invalid times_contradicted".into()))?
+            as u32;
+
+        let last_used = match &row[4] {
+            cozo::DataValue::Null => None,
+            val => val
+                .get_int()
+                .and_then(|ts| chrono::DateTime::from_timestamp(ts, 0)),
+        };
+
+        let confidence_alpha = row[5]
+            .get_float()
+            .ok_or_else(|| GrooveError::Database("Invalid confidence_alpha".into()))?;
+        let confidence_beta = row[6]
+            .get_float()
+            .ok_or_else(|| GrooveError::Database("Invalid confidence_beta".into()))?;
+
+        Ok(Some(UsageStats {
+            times_injected,
+            times_helpful,
+            times_ignored,
+            times_contradicted,
+            last_used,
+            confidence_alpha,
+            confidence_beta,
+        }))
+    }
+
     /// Helper to convert a database row to a Learning struct
     fn row_to_learning(&self, row: &[DataValue]) -> Result<Option<Learning>> {
         if row.len() < 11 {
@@ -420,7 +510,7 @@ impl CozoStore {
 mod tests {
     use super::super::schema::CURRENT_SCHEMA_VERSION;
     use super::*;
-    use crate::{Learning, LearningCategory, LearningContent, LearningSource, Scope};
+    use crate::{Learning, LearningCategory, LearningContent, LearningSource, Outcome, Scope};
     use tempfile::TempDir;
 
     #[tokio::test]
@@ -618,5 +708,67 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(preferences.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn test_get_default_usage_stats() {
+        let tmp = TempDir::new().unwrap();
+        let store = CozoStore::open(tmp.path()).await.unwrap();
+
+        let learning = Learning::new(
+            Scope::Global,
+            LearningCategory::Preference,
+            LearningContent {
+                description: "Test".into(),
+                pattern: None,
+                insight: "insight".into(),
+            },
+            LearningSource::UserCreated,
+        );
+        store.store(&learning).await.unwrap();
+
+        let stats = store.get_usage(learning.id).await.unwrap().unwrap();
+        assert_eq!(stats.times_injected, 0);
+        assert_eq!(stats.confidence_alpha, 1.0);
+        assert_eq!(stats.confidence_beta, 1.0);
+    }
+
+    #[tokio::test]
+    async fn test_update_usage_stats() {
+        let tmp = TempDir::new().unwrap();
+        let store = CozoStore::open(tmp.path()).await.unwrap();
+
+        let learning = Learning::new(
+            Scope::Global,
+            LearningCategory::Preference,
+            LearningContent {
+                description: "Test".into(),
+                pattern: None,
+                insight: "insight".into(),
+            },
+            LearningSource::UserCreated,
+        );
+        store.store(&learning).await.unwrap();
+
+        let mut stats = store.get_usage(learning.id).await.unwrap().unwrap();
+        stats.record_outcome(Outcome::Helpful);
+        stats.record_outcome(Outcome::Helpful);
+
+        store.update_usage(learning.id, &stats).await.unwrap();
+
+        let updated = store.get_usage(learning.id).await.unwrap().unwrap();
+        assert_eq!(updated.times_injected, 2);
+        assert_eq!(updated.times_helpful, 2);
+        assert_eq!(updated.confidence_alpha, 3.0); // 1.0 + 2*1.0
+    }
+
+    #[tokio::test]
+    async fn test_usage_stats_not_found() {
+        let tmp = TempDir::new().unwrap();
+        let store = CozoStore::open(tmp.path()).await.unwrap();
+
+        let fake_id = uuid::Uuid::now_v7();
+        let stats = store.get_usage(fake_id).await.unwrap();
+        assert!(stats.is_none());
     }
 }
