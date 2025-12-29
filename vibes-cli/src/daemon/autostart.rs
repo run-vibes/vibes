@@ -10,7 +10,7 @@ use anyhow::{Context, Result};
 use tracing::{debug, info};
 
 use super::state::{is_process_alive, read_daemon_state};
-use crate::commands::serve::{DEFAULT_HOST, DEFAULT_PORT};
+use crate::config::{DEFAULT_HOST, DEFAULT_PORT};
 
 /// Default timeout for waiting for daemon to become ready
 const DEFAULT_STARTUP_TIMEOUT: Duration = Duration::from_secs(10);

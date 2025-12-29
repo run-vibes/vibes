@@ -10,15 +10,11 @@ use clap::{Args, Subcommand};
 use tracing::info;
 use vibes_server::{ServerConfig, VibesServer};
 
+use crate::config::ConfigLoader;
 use crate::daemon::{
     DaemonState, clear_daemon_state, is_process_alive, read_daemon_state, terminate_process,
     write_daemon_state,
 };
-
-/// Default port for the vibes server
-pub const DEFAULT_PORT: u16 = 7743;
-/// Default host for the vibes server
-pub const DEFAULT_HOST: &str = "127.0.0.1";
 
 /// Arguments for the serve command
 #[derive(Debug, Args)]
@@ -27,13 +23,13 @@ pub struct ServeArgs {
     #[command(subcommand)]
     pub command: Option<ServeCommand>,
 
-    /// Port to listen on
-    #[arg(short, long, default_value_t = DEFAULT_PORT)]
-    pub port: u16,
+    /// Port to listen on (defaults to config or 7743)
+    #[arg(short, long)]
+    pub port: Option<u16>,
 
-    /// Host to bind to
-    #[arg(long, default_value = DEFAULT_HOST)]
-    pub host: String,
+    /// Host to bind to (defaults to config or 127.0.0.1)
+    #[arg(long)]
+    pub host: Option<String>,
 
     /// Run as a background daemon
     #[arg(short, long)]
@@ -61,30 +57,54 @@ pub enum ServeCommand {
     Status,
 }
 
+/// Resolved server settings after merging config and CLI args
+struct ResolvedSettings {
+    host: String,
+    port: u16,
+    tunnel: bool,
+    quick_tunnel: bool,
+    notify: bool,
+}
+
 /// Run the serve command
 pub async fn run(args: ServeArgs) -> Result<()> {
     match args.command {
         Some(ServeCommand::Stop) => stop_daemon().await,
         Some(ServeCommand::Status) => show_status().await,
-        None if args.daemon => start_daemon(&args).await,
-        None => run_foreground(&args).await,
+        None => {
+            // Load config and merge with CLI args
+            let config = ConfigLoader::load()?;
+            let settings = ResolvedSettings {
+                host: args.host.unwrap_or(config.server.host),
+                port: args.port.unwrap_or(config.server.port),
+                tunnel: args.tunnel,
+                quick_tunnel: args.quick_tunnel,
+                notify: args.notify,
+            };
+
+            if args.daemon {
+                start_daemon(&settings).await
+            } else {
+                run_foreground(&settings).await
+            }
+        }
     }
 }
 
 /// Run the server in the foreground
-async fn run_foreground(args: &ServeArgs) -> Result<()> {
+async fn run_foreground(settings: &ResolvedSettings) -> Result<()> {
     let config = ServerConfig {
-        host: args.host.clone(),
-        port: args.port,
-        tunnel_enabled: args.tunnel,
-        tunnel_quick: args.quick_tunnel,
-        notify_enabled: args.notify,
+        host: settings.host.clone(),
+        port: settings.port,
+        tunnel_enabled: settings.tunnel,
+        tunnel_quick: settings.quick_tunnel,
+        notify_enabled: settings.notify,
     };
 
     info!("Starting vibes server on {}:{}", config.host, config.port);
 
     // Write daemon state file
-    let state = DaemonState::new(args.port);
+    let state = DaemonState::new(settings.port);
     if let Err(e) = write_daemon_state(&state) {
         tracing::warn!("Failed to write daemon state file: {}", e);
     }
@@ -102,13 +122,13 @@ async fn run_foreground(args: &ServeArgs) -> Result<()> {
 }
 
 /// Start the daemon in the background
-async fn start_daemon(args: &ServeArgs) -> Result<()> {
+async fn start_daemon(settings: &ResolvedSettings) -> Result<()> {
     use crate::daemon::ensure_daemon_running;
 
     // Use the auto-start machinery to spawn a detached daemon
-    ensure_daemon_running(args.port).await?;
+    ensure_daemon_running(settings.port).await?;
 
-    println!("Vibes daemon started on {}:{}", args.host, args.port);
+    println!("Vibes daemon started on {}:{}", settings.host, settings.port);
     Ok(())
 }
 
@@ -178,16 +198,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_default_port() {
-        assert_eq!(DEFAULT_PORT, 7743);
-    }
-
-    #[test]
-    fn test_default_host() {
-        assert_eq!(DEFAULT_HOST, "127.0.0.1");
-    }
-
-    #[test]
     fn test_serve_args_defaults() {
         use clap::Parser;
 
@@ -198,8 +208,9 @@ mod tests {
         }
 
         let cli = TestCli::parse_from(["test"]);
-        assert_eq!(cli.serve.port, DEFAULT_PORT);
-        assert_eq!(cli.serve.host, DEFAULT_HOST);
+        // host and port default to None (loaded from config at runtime)
+        assert!(cli.serve.port.is_none());
+        assert!(cli.serve.host.is_none());
         assert!(!cli.serve.daemon);
         assert!(cli.serve.command.is_none());
     }
@@ -215,7 +226,21 @@ mod tests {
         }
 
         let cli = TestCli::parse_from(["test", "--port", "8080"]);
-        assert_eq!(cli.serve.port, 8080);
+        assert_eq!(cli.serve.port, Some(8080));
+    }
+
+    #[test]
+    fn test_serve_args_custom_host() {
+        use clap::Parser;
+
+        #[derive(Parser)]
+        struct TestCli {
+            #[command(flatten)]
+            serve: ServeArgs,
+        }
+
+        let cli = TestCli::parse_from(["test", "--host", "0.0.0.0"]);
+        assert_eq!(cli.serve.host, Some("0.0.0.0".to_string()));
     }
 
     #[test]

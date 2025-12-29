@@ -2,6 +2,12 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use vibes_core::AccessConfig;
 
+/// Default host for the vibes server
+pub const DEFAULT_HOST: &str = "127.0.0.1";
+
+/// Default port for the vibes server
+pub const DEFAULT_PORT: u16 = 7432;
+
 /// Configuration as stored in TOML files (with optional fields for merging)
 #[derive(Debug, Clone, Deserialize, Default)]
 pub struct RawVibesConfig {
@@ -21,6 +27,9 @@ pub struct RawVibesConfig {
 /// Server config as stored in TOML (optional fields for proper merging)
 #[derive(Debug, Clone, Deserialize, Default)]
 pub struct RawServerConfig {
+    /// Host to bind to (default: 127.0.0.1)
+    pub host: Option<String>,
+
     /// Port for the vibes server
     pub port: Option<u16>,
 
@@ -46,16 +55,35 @@ pub struct VibesConfig {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServerConfig {
+    /// Host to bind to
+    #[serde(default = "default_host")]
+    pub host: String,
+
     /// Port for the vibes server
+    #[serde(default = "default_port")]
     pub port: u16,
 
     /// Auto-start server with vibes claude
+    #[serde(default = "default_true")]
     pub auto_start: bool,
+}
+
+fn default_host() -> String {
+    DEFAULT_HOST.to_string()
+}
+
+fn default_port() -> u16 {
+    DEFAULT_PORT
+}
+
+fn default_true() -> bool {
+    true
 }
 
 impl Default for ServerConfig {
     fn default() -> Self {
         Self {
+            host: DEFAULT_HOST.to_string(),
             port: DEFAULT_PORT,
             auto_start: true,
         }
@@ -91,9 +119,6 @@ pub struct TunnelConfigSection {
     pub hostname: Option<String>,
 }
 
-/// Default port for the vibes server
-pub const DEFAULT_PORT: u16 = 7432;
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -101,6 +126,7 @@ mod tests {
     #[test]
     fn test_default_values() {
         let config = VibesConfig::default();
+        assert_eq!(config.server.host, DEFAULT_HOST);
         assert_eq!(config.server.port, DEFAULT_PORT);
         assert!(config.server.auto_start);
         assert!(config.session.default_model.is_none());
@@ -112,6 +138,7 @@ mod tests {
     fn test_toml_round_trip() {
         let config = VibesConfig {
             server: ServerConfig {
+                host: "0.0.0.0".to_string(),
                 port: 8080,
                 auto_start: false,
             },
@@ -127,6 +154,7 @@ mod tests {
         let toml_str = toml::to_string(&config).unwrap();
         let parsed: VibesConfig = toml::from_str(&toml_str).unwrap();
 
+        assert_eq!(parsed.server.host, "0.0.0.0");
         assert_eq!(parsed.server.port, 8080);
         assert!(!parsed.server.auto_start);
         assert_eq!(
@@ -147,7 +175,8 @@ port = 9000
 "#;
         let raw: RawVibesConfig = toml::from_str(toml_str).unwrap();
 
-        // Only port was set, auto_start should be None
+        // Only port was set, host and auto_start should be None
+        assert!(raw.server.host.is_none());
         assert_eq!(raw.server.port, Some(9000));
         assert!(raw.server.auto_start.is_none());
         assert!(raw.session.default_model.is_none());
@@ -158,6 +187,7 @@ port = 9000
         let raw: RawVibesConfig = toml::from_str("").unwrap();
 
         // Empty config should have all None values
+        assert!(raw.server.host.is_none());
         assert!(raw.server.port.is_none());
         assert!(raw.server.auto_start.is_none());
     }
