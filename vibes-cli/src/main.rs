@@ -24,6 +24,15 @@ struct Cli {
 /// Check if user is requesting top-level help (not subcommand help)
 fn is_top_level_help() -> bool {
     let args: Vec<String> = std::env::args().collect();
+    is_top_level_help_args(&args)
+}
+
+/// Testable version that takes args as parameter
+fn is_top_level_help_args(args: &[String]) -> bool {
+    // No arguments - show help with plugins
+    if args.len() == 1 {
+        return true;
+    }
 
     // Check for --help or -h as first argument after program name
     // e.g., "vibes --help" or "vibes -h"
@@ -98,5 +107,38 @@ async fn main() -> Result<()> {
         Commands::Sessions(args) => commands::sessions::run(args).await,
         Commands::Tunnel(args) => commands::tunnel::run(args),
         Commands::External(args) => commands::plugin_dispatch::run(args),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_no_args_shows_help() {
+        // Just the program name, no arguments - should show help
+        let args = vec!["vibes".to_string()];
+        assert!(
+            is_top_level_help_args(&args),
+            "vibes with no args should show help"
+        );
+    }
+
+    #[test]
+    fn test_help_flag_shows_help() {
+        let args = vec!["vibes".to_string(), "--help".to_string()];
+        assert!(is_top_level_help_args(&args));
+
+        let args = vec!["vibes".to_string(), "-h".to_string()];
+        assert!(is_top_level_help_args(&args));
+    }
+
+    #[test]
+    fn test_subcommand_does_not_show_top_help() {
+        let args = vec!["vibes".to_string(), "plugin".to_string()];
+        assert!(
+            !is_top_level_help_args(&args),
+            "vibes plugin should not show top-level help"
+        );
     }
 }
