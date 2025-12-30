@@ -88,7 +88,6 @@ pub struct PluginContext {
     plugin_name: String,
     plugin_dir: PathBuf,
     config: PluginConfig,
-    registered_commands: Vec<RegisteredCommand>,
     /// Commands pending registration (using CommandSpec)
     pending_commands: Vec<CommandSpec>,
     /// Routes pending registration
@@ -104,12 +103,6 @@ pub struct PluginContext {
 pub struct PluginConfig {
     values: HashMap<String, toml::Value>,
     dirty: bool,
-}
-
-/// A command registered by a plugin
-pub struct RegisteredCommand {
-    /// Command name
-    pub name: String,
 }
 
 /// Arguments passed to a command handler
@@ -128,7 +121,6 @@ impl PluginContext {
             plugin_name,
             plugin_dir,
             config: PluginConfig::new(),
-            registered_commands: Vec::new(),
             pending_commands: Vec::new(),
             pending_routes: Vec::new(),
             harness: None,
@@ -142,7 +134,6 @@ impl PluginContext {
             plugin_name,
             plugin_dir,
             config,
-            registered_commands: Vec::new(),
             pending_commands: Vec::new(),
             pending_routes: Vec::new(),
             harness: None,
@@ -204,22 +195,6 @@ impl PluginContext {
     /// Get a mutable reference to the config (for internal use by PluginHost)
     pub fn config_mut(&mut self) -> &mut PluginConfig {
         &mut self.config
-    }
-
-    // ─── Command Registration ────────────────────────────────────────
-
-    /// Register a command that this plugin provides
-    ///
-    /// The command will be available as `vibes <plugin-name> <command-name>`
-    pub fn register_command(&mut self, name: &str) {
-        self.registered_commands.push(RegisteredCommand {
-            name: name.to_string(),
-        });
-    }
-
-    /// Get the list of registered commands
-    pub fn registered_commands(&self) -> &[RegisteredCommand] {
-        &self.registered_commands
     }
 
     // ─── CommandSpec Registration ─────────────────────────────────────
@@ -466,19 +441,6 @@ mod tests {
     fn test_config_load_missing_file() {
         let config = PluginConfig::load(Path::new("/nonexistent/path/config.toml")).unwrap();
         assert!(config.values.is_empty());
-    }
-
-    #[test]
-    fn test_command_registration() {
-        let mut ctx = PluginContext::new("test".to_string(), PathBuf::from("/tmp"));
-
-        ctx.register_command("hello");
-        ctx.register_command("goodbye");
-
-        let commands = ctx.registered_commands();
-        assert_eq!(commands.len(), 2);
-        assert_eq!(commands[0].name, "hello");
-        assert_eq!(commands[1].name, "goodbye");
     }
 
     // ─── CommandSpec Registration Tests ─────────────────────────────────
