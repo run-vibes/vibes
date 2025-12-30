@@ -6,6 +6,10 @@ license.workspace = true
 repository.workspace = true
 description = "Continual learning storage for vibes"
 
+[lib]
+# Build as both a Rust library and a loadable plugin
+crate-type = ["rlib", "cdylib"]
+
 [dependencies]
 # Storage
 cozo = { version = "0.7", default-features = false, features = ["storage-rocksdb", "rayon"] }
