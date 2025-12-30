@@ -41,8 +41,8 @@ pub fn run(args: Vec<String>) -> Result<()> {
         ));
     }
 
-    // Check for --help flag
-    if wants_help(&args) {
+    // Show help if --help flag or plugin name only (no subcommand)
+    if wants_help(&args) || args.len() == 1 {
         // Collect commands for this plugin from the registry
         let commands: Vec<_> = host
             .command_registry()
@@ -288,6 +288,26 @@ mod tests {
             "levels".into()
         ]));
         assert!(!wants_help(&["groove".into()]));
+    }
+
+    #[test]
+    fn test_run_plugin_name_only_shows_help() {
+        // When only the plugin name is provided (no subcommand), show help
+        let result = run(vec!["groove".into()]);
+
+        // Should succeed (show help) or fail with "Unknown plugin" if not installed
+        // Should NOT fail with "Unknown command" trying to dispatch
+        match result {
+            Ok(()) => {} // Help was shown
+            Err(e) => {
+                let msg = e.to_string();
+                assert!(
+                    msg.contains("Unknown plugin"),
+                    "Should show help or unknown plugin error, got: {}",
+                    msg
+                );
+            }
+        }
     }
 
     #[test]
