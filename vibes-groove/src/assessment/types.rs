@@ -199,18 +199,13 @@ impl std::fmt::Display for InjectionMethod {
 }
 
 /// The type of AI harness being used.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 pub enum HarnessType {
     /// Claude Code CLI.
+    #[default]
     ClaudeCode,
     /// Other harness type (name provided).
     Other(String),
-}
-
-impl Default for HarnessType {
-    fn default() -> Self {
-        Self::ClaudeCode
-    }
 }
 
 impl HarnessType {
