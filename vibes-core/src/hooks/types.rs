@@ -113,6 +113,29 @@ impl HookEvent {
     }
 }
 
+/// Response to send back to Claude Code for injection hooks
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct HookResponse {
+    /// Additional context to inject into Claude's conversation
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub additional_context: Option<String>,
+}
+
+impl HookResponse {
+    /// Create an empty response (no injection)
+    pub fn empty() -> Self {
+        Self::default()
+    }
+
+    /// Create a response with additional context
+    pub fn with_context(context: impl Into<String>) -> Self {
+        Self {
+            additional_context: Some(context.into()),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -227,5 +250,28 @@ mod tests {
             session_id: None,
         });
         assert!(!stop.supports_response());
+    }
+
+    #[test]
+    fn test_hook_response_serialization() {
+        let response = HookResponse {
+            additional_context: Some("## groove Learnings\n\n- Use pytest".to_string()),
+        };
+
+        let json = serde_json::to_string(&response).unwrap();
+        assert!(json.contains("additionalContext"));
+        assert!(json.contains("groove"));
+
+        let parsed: HookResponse = serde_json::from_str(&json).unwrap();
+        assert!(parsed.additional_context.unwrap().contains("pytest"));
+    }
+
+    #[test]
+    fn test_hook_response_empty() {
+        let response = HookResponse::empty();
+        let json = serde_json::to_string(&response).unwrap();
+        // Empty response should still be valid JSON
+        let parsed: HookResponse = serde_json::from_str(&json).unwrap();
+        assert!(parsed.additional_context.is_none());
     }
 }
