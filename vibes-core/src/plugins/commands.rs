@@ -60,6 +60,25 @@ impl CommandRegistry {
         self.commands.get(path)
     }
 
+    /// Find the longest matching command path
+    ///
+    /// Given a path like `["groove", "trust", "role", "admin"]`, this finds
+    /// the longest registered command (e.g., `["groove", "trust", "role"]`)
+    /// and returns the match length so the caller knows where arguments begin.
+    ///
+    /// Returns (command, match_length) if found, where match_length is the
+    /// number of path elements that form the command.
+    pub fn find_longest_match(&self, path: &[String]) -> Option<(&RegisteredPluginCommand, usize)> {
+        // Try progressively shorter prefixes until we find a match
+        for len in (1..=path.len()).rev() {
+            let prefix = &path[..len];
+            if let Some(cmd) = self.commands.get(prefix) {
+                return Some((cmd, len));
+            }
+        }
+        None
+    }
+
     /// Get all registered commands
     pub fn all_commands(&self) -> impl Iterator<Item = (&[String], &RegisteredPluginCommand)> {
         self.commands.iter().map(|(k, v)| (k.as_slice(), v))
@@ -203,5 +222,47 @@ mod tests {
     fn test_default_creates_empty_registry() {
         let registry = CommandRegistry::default();
         assert_eq!(registry.all_commands().count(), 0);
+    }
+
+    #[test]
+    fn test_find_longest_match() {
+        let mut registry = CommandRegistry::new();
+
+        let commands = vec![
+            CommandSpec {
+                path: vec!["trust".into(), "levels".into()],
+                description: "Show levels".into(),
+                args: vec![],
+            },
+            CommandSpec {
+                path: vec!["trust".into(), "role".into()],
+                description: "Show role".into(),
+                args: vec![],
+            },
+        ];
+
+        registry.register("groove", commands);
+
+        // Exact match
+        let path: Vec<String> = vec!["groove".into(), "trust".into(), "levels".into()];
+        let (cmd, len) = registry.find_longest_match(&path).unwrap();
+        assert_eq!(cmd.plugin_name, "groove");
+        assert_eq!(len, 3);
+
+        // Path with extra args
+        let path: Vec<String> = vec![
+            "groove".into(),
+            "trust".into(),
+            "role".into(),
+            "admin".into(),
+        ];
+        let (cmd, len) = registry.find_longest_match(&path).unwrap();
+        assert_eq!(cmd.plugin_name, "groove");
+        assert_eq!(len, 3); // "groove", "trust", "role" - "admin" is an arg
+        assert_eq!(&path[len..], &["admin".to_string()]);
+
+        // No match
+        let path: Vec<String> = vec!["unknown".into(), "cmd".into()];
+        assert!(registry.find_longest_match(&path).is_none());
     }
 }

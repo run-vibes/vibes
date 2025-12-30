@@ -37,6 +37,9 @@ enum Commands {
     Sessions(commands::sessions::SessionsArgs),
     /// Manage Cloudflare Tunnel
     Tunnel(commands::tunnel::TunnelArgs),
+    /// Plugin commands (e.g., `vibes groove trust levels`)
+    #[command(external_subcommand)]
+    External(Vec<String>),
 }
 
 #[tokio::main]
@@ -54,5 +57,6 @@ async fn main() -> Result<()> {
         Commands::Serve(args) => commands::serve::run(args).await,
         Commands::Sessions(args) => commands::sessions::run(args).await,
         Commands::Tunnel(args) => commands::tunnel::run(args),
+        Commands::External(args) => commands::plugin_dispatch::run(args),
     }
 }
