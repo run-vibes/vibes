@@ -5,6 +5,7 @@
 //! adaptive parameters, and semantic search capabilities.
 
 // Module declarations - commented out until implemented
+pub mod capture;
 pub mod config;
 pub mod error;
 pub mod export;
