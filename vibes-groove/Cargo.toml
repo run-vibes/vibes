@@ -16,7 +16,7 @@ cozo = { version = "0.7", default-features = false, features = ["storage-rocksdb
 
 # Async
 async-trait.workspace = true
-tokio = { workspace = true, features = ["sync"] }
+tokio = { workspace = true, features = ["sync", "rt"] }
 
 # Serialization
 serde.workspace = true

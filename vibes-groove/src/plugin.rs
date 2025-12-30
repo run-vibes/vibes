@@ -9,9 +9,25 @@ use vibes_plugin_api::{
     PluginManifest, RouteRequest, RouteResponse, RouteSpec,
 };
 
+use crate::CozoStore;
 use crate::paths::GroovePaths;
 use crate::security::load_policy_or_default;
 use crate::security::{OrgRole, Policy, ReviewOutcome, TrustLevel};
+
+/// Initialize the groove database at the configured path
+///
+/// Creates and initializes the CozoDB database with the groove schema.
+/// This is called during `groove init` to ensure the database is ready.
+pub fn init_database(paths: &GroovePaths) -> Result<(), crate::GrooveError> {
+    let rt = tokio::runtime::Runtime::new()
+        .map_err(|e| crate::GrooveError::Database(format!("Failed to create runtime: {}", e)))?;
+
+    rt.block_on(async {
+        // Open (and create if needed) the database - this also runs schema migrations
+        let _store = CozoStore::open(&paths.db_path).await?;
+        Ok(())
+    })
+}
 
 // ============================================================================
 // Response Types (mirrored from vibes-server for independence)
@@ -429,6 +445,20 @@ impl GroovePlugin {
             "✓ Created learnings directory: {}\n",
             paths.learnings_dir.display()
         ));
+
+        // Initialize database
+        match init_database(&paths) {
+            Ok(()) => {
+                output.push_str(&format!(
+                    "✓ Initialized database: {}\n",
+                    paths.db_path.display()
+                ));
+            }
+            Err(e) => {
+                output.push_str(&format!("⚠ Could not initialize database: {}\n", e));
+                output.push_str("  Database will be created on first use.\n");
+            }
+        }
 
         // Install hooks
         let hook_config = HookInstallerConfig::default();
@@ -1216,5 +1246,23 @@ mod tests {
         };
         let result = plugin.handle_route(HttpMethod::Get, "/unknown", request, &mut ctx);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_init_database_creates_db_file() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let paths = crate::paths::GroovePaths::from_base(temp_dir.path().to_path_buf());
+
+        // Database should not exist before init
+        assert!(
+            !paths.db_path.exists(),
+            "Database should not exist before init"
+        );
+
+        // Initialize database
+        init_database(&paths).expect("Database initialization should succeed");
+
+        // Database should exist after init
+        assert!(paths.db_path.exists(), "Database should exist after init");
     }
 }
