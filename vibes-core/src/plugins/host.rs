@@ -7,7 +7,8 @@ use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use vibes_plugin_api::{
-    API_VERSION, CommandArgs, CommandOutput, Plugin, PluginConfig, PluginContext, PluginManifest,
+    API_VERSION, CommandArgs, CommandOutput, HttpMethod, Plugin, PluginConfig, PluginContext,
+    PluginManifest, RouteRequest, RouteResponse,
 };
 
 use super::commands::CommandRegistry;
@@ -415,6 +416,33 @@ impl PluginHost {
         plugin
             .instance
             .handle_command(path, args, &mut plugin.context)
+            .map_err(PluginHostError::InitFailed)
+    }
+
+    /// Dispatch an HTTP route to the appropriate plugin
+    pub fn dispatch_route(
+        &mut self,
+        plugin_name: &str,
+        method: HttpMethod,
+        path: &str,
+        request: RouteRequest,
+    ) -> Result<RouteResponse, PluginHostError> {
+        let plugin =
+            self.plugins
+                .get_mut(plugin_name)
+                .ok_or_else(|| PluginHostError::NotFound {
+                    name: plugin_name.to_string(),
+                })?;
+
+        if plugin.state != PluginState::Loaded {
+            return Err(PluginHostError::NotFound {
+                name: plugin_name.to_string(),
+            });
+        }
+
+        plugin
+            .instance
+            .handle_route(method, path, request, &mut plugin.context)
             .map_err(PluginHostError::InitFailed)
     }
 }
