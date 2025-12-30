@@ -23,4 +23,7 @@ mod types;
 
 pub use installer::{HookInstaller, HookInstallerConfig, InstallError};
 pub use receiver::{HookReceiver, HookReceiverConfig};
-pub use types::{HookEvent, HookType, PostToolUseData, PreToolUseData, StopData};
+pub use types::{
+    HookEvent, HookType, PostToolUseData, PreToolUseData, SessionStartData, StopData,
+    UserPromptSubmitData,
+};
