@@ -173,7 +173,7 @@ impl PluginHost {
     }
 
     /// Load a single plugin from its directory
-    fn load_plugin(&self, dir: &Path, name: &str) -> Result<LoadedPlugin, PluginHostError> {
+    fn load_plugin(&mut self, dir: &Path, name: &str) -> Result<LoadedPlugin, PluginHostError> {
         // 1. Find library file
         let lib_path = self.find_library(dir, name)?;
 
@@ -216,6 +216,38 @@ impl PluginHost {
         let mut instance = instance;
         instance.on_load(&mut context)?;
 
+        // 7. Validate command registrations
+        for spec in context.pending_commands() {
+            if let Some(existing) = self
+                .command_registry
+                .check_conflict(&manifest.name, &spec.path)
+            {
+                return Err(PluginHostError::CommandConflict {
+                    command: spec.path.join(" "),
+                    existing_plugin: existing.to_string(),
+                    new_plugin: manifest.name.clone(),
+                });
+            }
+        }
+
+        // 8. Validate route registrations
+        for spec in context.pending_routes() {
+            if let Some(existing) = self.route_registry.check_conflict(&manifest.name, spec) {
+                return Err(PluginHostError::RouteConflict {
+                    route: format!("{:?} {}", spec.method, spec.path),
+                    existing_plugin: existing.to_string(),
+                    new_plugin: manifest.name.clone(),
+                });
+            }
+        }
+
+        // 9. Commit registrations
+        let commands = context.take_pending_commands();
+        let routes = context.take_pending_routes();
+
+        self.command_registry.register(&manifest.name, commands);
+        self.route_registry.register(&manifest.name, routes);
+
         Ok(LoadedPlugin {
             manifest,
             instance,
@@ -223,6 +255,21 @@ impl PluginHost {
             _library: library,
             state: PluginState::Loaded,
         })
+    }
+
+    /// Unload a plugin and clean up its registrations
+    pub fn unload_plugin(&mut self, name: &str) -> Result<(), PluginHostError> {
+        if self.plugins.remove(name).is_none() {
+            return Err(PluginHostError::NotFound {
+                name: name.to_string(),
+            });
+        }
+
+        // Clean up registrations
+        self.command_registry.unregister(name);
+        self.route_registry.unregister(name);
+
+        Ok(())
     }
 
     /// Find the library file in a plugin directory
