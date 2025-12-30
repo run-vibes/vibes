@@ -341,6 +341,487 @@ impl Default for AssessmentContext {
     }
 }
 
+// =============================================================================
+// Three-Tier Assessment Event Types
+// =============================================================================
+
+/// A lightweight signal detected in a message.
+///
+/// These signals are detected per-message with <10ms latency and form the
+/// foundation of the assessment system's signal detection.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum LightweightSignal {
+    /// Negative sentiment detected (e.g., frustration, confusion).
+    Negative {
+        /// The pattern that matched.
+        pattern: String,
+        /// Confidence score (0.0 to 1.0).
+        confidence: f64,
+    },
+    /// Positive sentiment detected (e.g., satisfaction, success).
+    Positive {
+        /// The pattern that matched.
+        pattern: String,
+        /// Confidence score (0.0 to 1.0).
+        confidence: f64,
+    },
+    /// A tool call failed.
+    ToolFailure {
+        /// Name of the tool that failed.
+        tool_name: String,
+    },
+    /// User corrected Claude's output.
+    Correction,
+    /// User requested a retry.
+    Retry,
+    /// Build/test status changed.
+    BuildStatus {
+        /// Whether the build/tests passed.
+        passed: bool,
+    },
+}
+
+/// Lightweight assessment event (per-message).
+///
+/// These events are emitted for every message in the session and carry
+/// lightweight signals that can be aggregated for trend analysis.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LightweightEvent {
+    /// Full attribution context.
+    pub context: AssessmentContext,
+
+    /// Index of the message in the session (0-based).
+    pub message_idx: u32,
+
+    /// Signals detected in this message.
+    pub signals: Vec<LightweightSignal>,
+
+    /// Exponential moving average of frustration (0.0 to 1.0).
+    pub frustration_ema: f64,
+
+    /// Exponential moving average of success indicators (0.0 to 1.0).
+    pub success_ema: f64,
+}
+
+impl LightweightEvent {
+    /// Create a new lightweight event.
+    #[must_use]
+    pub fn new(context: AssessmentContext, message_idx: u32) -> Self {
+        Self {
+            context,
+            message_idx,
+            signals: Vec::new(),
+            frustration_ema: 0.0,
+            success_ema: 0.0,
+        }
+    }
+
+    /// Add a signal to the event.
+    #[must_use]
+    pub fn with_signal(mut self, signal: LightweightSignal) -> Self {
+        self.signals.push(signal);
+        self
+    }
+
+    /// Set the frustration EMA.
+    #[must_use]
+    pub fn with_frustration_ema(mut self, ema: f64) -> Self {
+        self.frustration_ema = ema;
+        self
+    }
+
+    /// Set the success EMA.
+    #[must_use]
+    pub fn with_success_ema(mut self, ema: f64) -> Self {
+        self.success_ema = ema;
+        self
+    }
+}
+
+/// What triggered a checkpoint assessment.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(tag = "type", content = "value", rename_all = "snake_case")]
+pub enum CheckpointTrigger {
+    /// Triggered after N messages.
+    MessageCount(u32),
+    /// Triggered at a task boundary.
+    TaskBoundary,
+    /// Triggered by a git commit.
+    GitCommit,
+    /// Triggered by a successful build.
+    BuildPass,
+    /// Triggered when the session pauses.
+    SessionPause,
+}
+
+/// UUIDv7 wrapper for checkpoint IDs.
+///
+/// Similar to EventId but specifically for checkpoint identification.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct CheckpointId(Uuid);
+
+impl CheckpointId {
+    /// Create a new time-ordered checkpoint ID using UUIDv7.
+    #[must_use]
+    pub fn new() -> Self {
+        Self(Uuid::now_v7())
+    }
+
+    /// Get the underlying UUID.
+    #[must_use]
+    pub fn as_uuid(&self) -> Uuid {
+        self.0
+    }
+
+    /// Extract the timestamp from the UUIDv7.
+    #[must_use]
+    pub fn timestamp(&self) -> Option<DateTime<Utc>> {
+        self.0.get_timestamp().map(|ts| {
+            let (secs, nanos) = ts.to_unix();
+            DateTime::from_timestamp(secs as i64, nanos).unwrap_or_else(Utc::now)
+        })
+    }
+}
+
+impl Default for CheckpointId {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl From<Uuid> for CheckpointId {
+    fn from(uuid: Uuid) -> Self {
+        Self(uuid)
+    }
+}
+
+impl std::fmt::Display for CheckpointId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+/// Token usage metrics for a message segment.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct TokenMetrics {
+    /// Total tokens used in the segment.
+    pub total_tokens: u64,
+
+    /// Ratio of correction-related tokens to total (0.0 to 1.0).
+    pub correction_ratio: f64,
+
+    /// Number of retry attempts in the segment.
+    pub retry_count: u32,
+}
+
+impl TokenMetrics {
+    /// Create new token metrics.
+    #[must_use]
+    pub fn new(total_tokens: u64, correction_ratio: f64, retry_count: u32) -> Self {
+        Self {
+            total_tokens,
+            correction_ratio,
+            retry_count,
+        }
+    }
+}
+
+/// Medium assessment event (checkpoint summary).
+///
+/// These events are emitted asynchronously, typically every ~10 messages,
+/// and provide aggregated insights over a segment of the session.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MediumEvent {
+    /// Full attribution context.
+    pub context: AssessmentContext,
+
+    /// Unique identifier for this checkpoint.
+    pub checkpoint_id: CheckpointId,
+
+    /// Message range covered by this checkpoint (start, end exclusive).
+    pub message_range: (u32, u32),
+
+    /// What triggered this checkpoint.
+    pub trigger: CheckpointTrigger,
+
+    /// Brief summary of the segment.
+    pub summary: String,
+
+    /// Token usage metrics for the segment.
+    pub token_metrics: TokenMetrics,
+
+    /// Overall score for the segment (-1.0 to 1.0).
+    pub segment_score: f64,
+
+    /// IDs of learnings that were referenced/used in this segment.
+    pub learnings_referenced: Vec<LearningId>,
+}
+
+impl MediumEvent {
+    /// Create a new medium event.
+    #[must_use]
+    pub fn new(
+        context: AssessmentContext,
+        message_range: (u32, u32),
+        trigger: CheckpointTrigger,
+    ) -> Self {
+        Self {
+            context,
+            checkpoint_id: CheckpointId::new(),
+            message_range,
+            trigger,
+            summary: String::new(),
+            token_metrics: TokenMetrics::default(),
+            segment_score: 0.0,
+            learnings_referenced: Vec::new(),
+        }
+    }
+
+    /// Set the summary.
+    #[must_use]
+    pub fn with_summary(mut self, summary: impl Into<String>) -> Self {
+        self.summary = summary.into();
+        self
+    }
+
+    /// Set the token metrics.
+    #[must_use]
+    pub fn with_token_metrics(mut self, metrics: TokenMetrics) -> Self {
+        self.token_metrics = metrics;
+        self
+    }
+
+    /// Set the segment score.
+    #[must_use]
+    pub fn with_segment_score(mut self, score: f64) -> Self {
+        self.segment_score = score;
+        self
+    }
+
+    /// Add referenced learnings.
+    #[must_use]
+    pub fn with_learnings_referenced(mut self, learnings: Vec<LearningId>) -> Self {
+        self.learnings_referenced = learnings;
+        self
+    }
+}
+
+/// Session outcome classification.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Outcome {
+    /// The task was completed successfully.
+    Success,
+    /// The task was partially completed.
+    Partial,
+    /// The task failed.
+    Failure,
+    /// The task was abandoned before completion.
+    Abandoned,
+}
+
+impl Outcome {
+    /// Check if this is a successful outcome.
+    #[must_use]
+    pub fn is_success(&self) -> bool {
+        matches!(self, Self::Success)
+    }
+
+    /// Check if this is any form of completion (success or partial).
+    #[must_use]
+    pub fn is_completed(&self) -> bool {
+        matches!(self, Self::Success | Self::Partial)
+    }
+}
+
+/// Attribution score for a learning (-1.0 to 1.0).
+///
+/// - Positive values indicate the learning helped
+/// - Negative values indicate the learning hindered
+/// - Zero indicates neutral/unknown impact
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct AttributionScore(f64);
+
+impl AttributionScore {
+    /// Create a new attribution score, clamping to [-1.0, 1.0].
+    #[must_use]
+    pub fn new(score: f64) -> Self {
+        Self(score.clamp(-1.0, 1.0))
+    }
+
+    /// Get the underlying score value.
+    #[must_use]
+    pub fn value(&self) -> f64 {
+        self.0
+    }
+
+    /// Check if this is a positive attribution.
+    #[must_use]
+    pub fn is_positive(&self) -> bool {
+        self.0 > 0.0
+    }
+
+    /// Check if this is a negative attribution.
+    #[must_use]
+    pub fn is_negative(&self) -> bool {
+        self.0 < 0.0
+    }
+}
+
+impl Default for AttributionScore {
+    fn default() -> Self {
+        Self(0.0)
+    }
+}
+
+impl From<f64> for AttributionScore {
+    fn from(value: f64) -> Self {
+        Self::new(value)
+    }
+}
+
+/// A candidate for learning extraction from a session.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExtractionCandidate {
+    /// Message range where the potential learning was observed.
+    pub message_range: (u32, u32),
+
+    /// Description of the potential learning.
+    pub description: String,
+
+    /// Confidence that this should be extracted (0.0 to 1.0).
+    pub confidence: f64,
+}
+
+impl ExtractionCandidate {
+    /// Create a new extraction candidate.
+    #[must_use]
+    pub fn new(message_range: (u32, u32), description: impl Into<String>, confidence: f64) -> Self {
+        Self {
+            message_range,
+            description: description.into(),
+            confidence: confidence.clamp(0.0, 1.0),
+        }
+    }
+}
+
+/// Heavy assessment event (full session analysis).
+///
+/// These events are emitted at session end (sampled) and provide
+/// comprehensive analysis including outcome classification and
+/// extraction candidates.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HeavyEvent {
+    /// Full attribution context.
+    pub context: AssessmentContext,
+
+    /// The overall session outcome.
+    pub outcome: Outcome,
+
+    /// Summary of what the task was trying to accomplish.
+    pub task_summary: String,
+
+    /// Trajectory of frustration over the session (aggregated EMAs).
+    pub frustration_trajectory: Vec<f64>,
+
+    /// Attribution scores for each learning that was active.
+    pub learning_attributions: std::collections::HashMap<LearningId, AttributionScore>,
+
+    /// Candidates for new learning extraction.
+    pub extraction_candidates: Vec<ExtractionCandidate>,
+}
+
+impl HeavyEvent {
+    /// Create a new heavy event.
+    #[must_use]
+    pub fn new(context: AssessmentContext, outcome: Outcome) -> Self {
+        Self {
+            context,
+            outcome,
+            task_summary: String::new(),
+            frustration_trajectory: Vec::new(),
+            learning_attributions: std::collections::HashMap::new(),
+            extraction_candidates: Vec::new(),
+        }
+    }
+
+    /// Set the task summary.
+    #[must_use]
+    pub fn with_task_summary(mut self, summary: impl Into<String>) -> Self {
+        self.task_summary = summary.into();
+        self
+    }
+
+    /// Set the frustration trajectory.
+    #[must_use]
+    pub fn with_frustration_trajectory(mut self, trajectory: Vec<f64>) -> Self {
+        self.frustration_trajectory = trajectory;
+        self
+    }
+
+    /// Add a learning attribution.
+    #[must_use]
+    pub fn with_attribution(mut self, learning_id: LearningId, score: AttributionScore) -> Self {
+        self.learning_attributions.insert(learning_id, score);
+        self
+    }
+
+    /// Add extraction candidates.
+    #[must_use]
+    pub fn with_extraction_candidates(mut self, candidates: Vec<ExtractionCandidate>) -> Self {
+        self.extraction_candidates = candidates;
+        self
+    }
+}
+
+/// Union type for all assessment event tiers.
+///
+/// This allows a single stream to carry all assessment events while
+/// maintaining type safety and tier identification.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "tier", rename_all = "snake_case")]
+pub enum AssessmentEvent {
+    /// Per-message lightweight assessment.
+    Lightweight(LightweightEvent),
+    /// Checkpoint medium assessment.
+    Medium(MediumEvent),
+    /// Full session heavy assessment.
+    Heavy(HeavyEvent),
+}
+
+impl AssessmentEvent {
+    /// Get the session ID for this event.
+    #[must_use]
+    pub fn session_id(&self) -> &SessionId {
+        match self {
+            Self::Lightweight(e) => &e.context.session_id,
+            Self::Medium(e) => &e.context.session_id,
+            Self::Heavy(e) => &e.context.session_id,
+        }
+    }
+
+    /// Get the event ID for this event.
+    #[must_use]
+    pub fn event_id(&self) -> &EventId {
+        match self {
+            Self::Lightweight(e) => &e.context.event_id,
+            Self::Medium(e) => &e.context.event_id,
+            Self::Heavy(e) => &e.context.event_id,
+        }
+    }
+
+    /// Get the assessment context for this event.
+    #[must_use]
+    pub fn context(&self) -> &AssessmentContext {
+        match self {
+            Self::Lightweight(e) => &e.context,
+            Self::Medium(e) => &e.context,
+            Self::Heavy(e) => &e.context,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -542,5 +1023,334 @@ mod tests {
             let parsed: HarnessType = serde_json::from_str(&json).expect("should deserialize");
             assert_eq!(parsed, harness_type);
         }
+    }
+
+    // =========================================================================
+    // Three-Tier Assessment Event Tests
+    // =========================================================================
+
+    #[test]
+    fn test_lightweight_signal_serialization() {
+        let signals = [
+            LightweightSignal::Negative {
+                pattern: "frustrated".into(),
+                confidence: 0.85,
+            },
+            LightweightSignal::Positive {
+                pattern: "thanks".into(),
+                confidence: 0.95,
+            },
+            LightweightSignal::ToolFailure {
+                tool_name: "bash".into(),
+            },
+            LightweightSignal::Correction,
+            LightweightSignal::Retry,
+            LightweightSignal::BuildStatus { passed: true },
+        ];
+
+        for signal in signals {
+            let json = serde_json::to_string(&signal).expect("should serialize");
+            let parsed: LightweightSignal =
+                serde_json::from_str(&json).expect("should deserialize");
+            assert_eq!(parsed, signal);
+        }
+    }
+
+    #[test]
+    fn test_lightweight_signal_json_structure() {
+        // Verify the tagged structure
+        let signal = LightweightSignal::Negative {
+            pattern: "error".into(),
+            confidence: 0.9,
+        };
+        let json = serde_json::to_string(&signal).expect("should serialize");
+        assert!(json.contains("\"type\":\"negative\""));
+        assert!(json.contains("\"pattern\":\"error\""));
+        assert!(json.contains("\"confidence\":0.9"));
+
+        // Check unit variants
+        let correction = LightweightSignal::Correction;
+        let json = serde_json::to_string(&correction).expect("should serialize");
+        assert!(json.contains("\"type\":\"correction\""));
+    }
+
+    #[test]
+    fn test_lightweight_event_serialization_roundtrip() {
+        let ctx = AssessmentContext::new("lightweight-test");
+        let event = LightweightEvent::new(ctx, 5)
+            .with_signal(LightweightSignal::Negative {
+                pattern: "ugh".into(),
+                confidence: 0.7,
+            })
+            .with_signal(LightweightSignal::Retry)
+            .with_frustration_ema(0.35)
+            .with_success_ema(0.65);
+
+        let json = serde_json::to_string(&event).expect("should serialize");
+        let parsed: LightweightEvent = serde_json::from_str(&json).expect("should deserialize");
+
+        assert_eq!(parsed.message_idx, 5);
+        assert_eq!(parsed.signals.len(), 2);
+        assert!((parsed.frustration_ema - 0.35).abs() < f64::EPSILON);
+        assert!((parsed.success_ema - 0.65).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_checkpoint_trigger_serialization() {
+        let triggers = [
+            CheckpointTrigger::MessageCount(10),
+            CheckpointTrigger::TaskBoundary,
+            CheckpointTrigger::GitCommit,
+            CheckpointTrigger::BuildPass,
+            CheckpointTrigger::SessionPause,
+        ];
+
+        for trigger in triggers {
+            let json = serde_json::to_string(&trigger).expect("should serialize");
+            let parsed: CheckpointTrigger =
+                serde_json::from_str(&json).expect("should deserialize");
+            assert_eq!(parsed, trigger);
+        }
+    }
+
+    #[test]
+    fn test_checkpoint_id_is_time_ordered() {
+        let id1 = CheckpointId::new();
+        std::thread::sleep(std::time::Duration::from_millis(2));
+        let id2 = CheckpointId::new();
+
+        assert_eq!(id1.as_uuid().get_version_num(), 7);
+        assert_eq!(id2.as_uuid().get_version_num(), 7);
+        assert!(id1.as_uuid() < id2.as_uuid());
+    }
+
+    #[test]
+    fn test_medium_event_serialization_roundtrip() {
+        let learning_id = Uuid::now_v7();
+        let ctx = AssessmentContext::new("medium-test").with_learnings(vec![learning_id]);
+
+        let event = MediumEvent::new(ctx, (0, 10), CheckpointTrigger::MessageCount(10))
+            .with_summary("Completed database setup")
+            .with_token_metrics(TokenMetrics::new(5000, 0.1, 2))
+            .with_segment_score(0.8)
+            .with_learnings_referenced(vec![learning_id]);
+
+        let json = serde_json::to_string(&event).expect("should serialize");
+        let parsed: MediumEvent = serde_json::from_str(&json).expect("should deserialize");
+
+        assert_eq!(parsed.message_range, (0, 10));
+        assert_eq!(parsed.trigger, CheckpointTrigger::MessageCount(10));
+        assert_eq!(parsed.summary, "Completed database setup");
+        assert_eq!(parsed.token_metrics.total_tokens, 5000);
+        assert!((parsed.token_metrics.correction_ratio - 0.1).abs() < f64::EPSILON);
+        assert_eq!(parsed.token_metrics.retry_count, 2);
+        assert!((parsed.segment_score - 0.8).abs() < f64::EPSILON);
+        assert_eq!(parsed.learnings_referenced.len(), 1);
+    }
+
+    #[test]
+    fn test_outcome_variants() {
+        assert!(Outcome::Success.is_success());
+        assert!(Outcome::Success.is_completed());
+
+        assert!(!Outcome::Partial.is_success());
+        assert!(Outcome::Partial.is_completed());
+
+        assert!(!Outcome::Failure.is_success());
+        assert!(!Outcome::Failure.is_completed());
+
+        assert!(!Outcome::Abandoned.is_success());
+        assert!(!Outcome::Abandoned.is_completed());
+    }
+
+    #[test]
+    fn test_outcome_serialization() {
+        let outcomes = [
+            Outcome::Success,
+            Outcome::Partial,
+            Outcome::Failure,
+            Outcome::Abandoned,
+        ];
+
+        for outcome in outcomes {
+            let json = serde_json::to_string(&outcome).expect("should serialize");
+            let parsed: Outcome = serde_json::from_str(&json).expect("should deserialize");
+            assert_eq!(parsed, outcome);
+        }
+    }
+
+    #[test]
+    fn test_attribution_score_clamps_to_range() {
+        // Values within range should be preserved
+        let score = AttributionScore::new(0.5);
+        assert!((score.value() - 0.5).abs() < f64::EPSILON);
+
+        let neg_score = AttributionScore::new(-0.5);
+        assert!((neg_score.value() - (-0.5)).abs() < f64::EPSILON);
+
+        // Values above 1.0 should clamp to 1.0
+        let high = AttributionScore::new(1.5);
+        assert!((high.value() - 1.0).abs() < f64::EPSILON);
+
+        let very_high = AttributionScore::new(100.0);
+        assert!((very_high.value() - 1.0).abs() < f64::EPSILON);
+
+        // Values below -1.0 should clamp to -1.0
+        let low = AttributionScore::new(-1.5);
+        assert!((low.value() - (-1.0)).abs() < f64::EPSILON);
+
+        let very_low = AttributionScore::new(-100.0);
+        assert!((very_low.value() - (-1.0)).abs() < f64::EPSILON);
+
+        // Edge cases
+        let at_max = AttributionScore::new(1.0);
+        assert!((at_max.value() - 1.0).abs() < f64::EPSILON);
+
+        let at_min = AttributionScore::new(-1.0);
+        assert!((at_min.value() - (-1.0)).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_attribution_score_positive_negative() {
+        let positive = AttributionScore::new(0.5);
+        assert!(positive.is_positive());
+        assert!(!positive.is_negative());
+
+        let negative = AttributionScore::new(-0.5);
+        assert!(!negative.is_positive());
+        assert!(negative.is_negative());
+
+        let zero = AttributionScore::new(0.0);
+        assert!(!zero.is_positive());
+        assert!(!zero.is_negative());
+    }
+
+    #[test]
+    fn test_attribution_score_from_f64() {
+        let score: AttributionScore = 0.75.into();
+        assert!((score.value() - 0.75).abs() < f64::EPSILON);
+
+        // Should still clamp
+        let clamped: AttributionScore = 5.0.into();
+        assert!((clamped.value() - 1.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_extraction_candidate_clamps_confidence() {
+        let candidate = ExtractionCandidate::new((0, 5), "A useful pattern", 0.85);
+        assert!((candidate.confidence - 0.85).abs() < f64::EPSILON);
+
+        // Should clamp high values
+        let high = ExtractionCandidate::new((0, 5), "test", 1.5);
+        assert!((high.confidence - 1.0).abs() < f64::EPSILON);
+
+        // Should clamp negative values
+        let low = ExtractionCandidate::new((0, 5), "test", -0.5);
+        assert!((low.confidence - 0.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_heavy_event_serialization_roundtrip() {
+        let learning_id = Uuid::now_v7();
+        let ctx = AssessmentContext::new("heavy-test").with_learnings(vec![learning_id]);
+
+        let event = HeavyEvent::new(ctx, Outcome::Success)
+            .with_task_summary("Implemented authentication flow")
+            .with_frustration_trajectory(vec![0.1, 0.2, 0.15, 0.05])
+            .with_attribution(learning_id, AttributionScore::new(0.8))
+            .with_extraction_candidates(vec![ExtractionCandidate::new(
+                (5, 10),
+                "Use builder pattern for complex types",
+                0.9,
+            )]);
+
+        let json = serde_json::to_string(&event).expect("should serialize");
+        let parsed: HeavyEvent = serde_json::from_str(&json).expect("should deserialize");
+
+        assert_eq!(parsed.outcome, Outcome::Success);
+        assert_eq!(parsed.task_summary, "Implemented authentication flow");
+        assert_eq!(parsed.frustration_trajectory.len(), 4);
+        assert!(parsed.learning_attributions.contains_key(&learning_id));
+        assert!((parsed.learning_attributions[&learning_id].value() - 0.8).abs() < f64::EPSILON);
+        assert_eq!(parsed.extraction_candidates.len(), 1);
+        assert_eq!(
+            parsed.extraction_candidates[0].description,
+            "Use builder pattern for complex types"
+        );
+    }
+
+    #[test]
+    fn test_assessment_event_session_id_works_for_all_variants() {
+        let session_id = "test-session-id";
+
+        // Lightweight
+        let lightweight_ctx = AssessmentContext::new(session_id);
+        let lightweight = AssessmentEvent::Lightweight(LightweightEvent::new(lightweight_ctx, 0));
+        assert_eq!(lightweight.session_id().as_str(), session_id);
+
+        // Medium
+        let medium_ctx = AssessmentContext::new(session_id);
+        let medium = AssessmentEvent::Medium(MediumEvent::new(
+            medium_ctx,
+            (0, 10),
+            CheckpointTrigger::TaskBoundary,
+        ));
+        assert_eq!(medium.session_id().as_str(), session_id);
+
+        // Heavy
+        let heavy_ctx = AssessmentContext::new(session_id);
+        let heavy = AssessmentEvent::Heavy(HeavyEvent::new(heavy_ctx, Outcome::Success));
+        assert_eq!(heavy.session_id().as_str(), session_id);
+    }
+
+    #[test]
+    fn test_assessment_event_event_id_works_for_all_variants() {
+        // Lightweight
+        let lightweight_ctx = AssessmentContext::new("test");
+        let lightweight_event_id = lightweight_ctx.event_id;
+        let lightweight = AssessmentEvent::Lightweight(LightweightEvent::new(lightweight_ctx, 0));
+        assert_eq!(*lightweight.event_id(), lightweight_event_id);
+
+        // Medium
+        let medium_ctx = AssessmentContext::new("test");
+        let medium_event_id = medium_ctx.event_id;
+        let medium = AssessmentEvent::Medium(MediumEvent::new(
+            medium_ctx,
+            (0, 10),
+            CheckpointTrigger::GitCommit,
+        ));
+        assert_eq!(*medium.event_id(), medium_event_id);
+
+        // Heavy
+        let heavy_ctx = AssessmentContext::new("test");
+        let heavy_event_id = heavy_ctx.event_id;
+        let heavy = AssessmentEvent::Heavy(HeavyEvent::new(heavy_ctx, Outcome::Failure));
+        assert_eq!(*heavy.event_id(), heavy_event_id);
+    }
+
+    #[test]
+    fn test_assessment_event_tagged_serialization() {
+        let ctx = AssessmentContext::new("tagged-test");
+        let event = AssessmentEvent::Lightweight(LightweightEvent::new(ctx, 0));
+
+        let json = serde_json::to_string(&event).expect("should serialize");
+        assert!(json.contains("\"tier\":\"lightweight\""));
+
+        let parsed: AssessmentEvent = serde_json::from_str(&json).expect("should deserialize");
+        assert!(matches!(parsed, AssessmentEvent::Lightweight(_)));
+    }
+
+    #[test]
+    fn test_assessment_event_context_accessor() {
+        let learning_id = Uuid::now_v7();
+        let ctx = AssessmentContext::new("context-test").with_learnings(vec![learning_id]);
+
+        let event = AssessmentEvent::Heavy(HeavyEvent::new(ctx.clone(), Outcome::Success));
+
+        // Access context through the accessor
+        let accessed_ctx = event.context();
+        assert_eq!(accessed_ctx.session_id.as_str(), "context-test");
+        assert_eq!(accessed_ctx.active_learnings.len(), 1);
+        assert_eq!(accessed_ctx.active_learnings[0], learning_id);
     }
 }
