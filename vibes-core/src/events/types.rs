@@ -2,6 +2,8 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::hooks::HookEvent;
+
 /// Source of user input for attribution
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
@@ -134,6 +136,12 @@ pub enum VibesEvent {
 
     /// Session was removed
     SessionRemoved { session_id: String, reason: String },
+
+    /// Hook event from Claude Code
+    Hook {
+        session_id: Option<String>,
+        event: HookEvent,
+    },
 }
 
 impl VibesEvent {
@@ -147,6 +155,7 @@ impl VibesEvent {
             VibesEvent::SessionStateChanged { session_id, .. } => Some(session_id),
             VibesEvent::OwnershipTransferred { session_id, .. } => Some(session_id),
             VibesEvent::SessionRemoved { session_id, .. } => Some(session_id),
+            VibesEvent::Hook { session_id, .. } => session_id.as_deref(),
             VibesEvent::ClientConnected { .. } => None,
             VibesEvent::ClientDisconnected { .. } => None,
             VibesEvent::TunnelStateChanged { .. } => None,
@@ -516,5 +525,50 @@ mod tests {
             url: None,
         };
         assert_eq!(event.session_id(), None);
+    }
+
+    // ==================== Hook Event Tests ====================
+
+    #[test]
+    fn vibes_event_hook_serialization_roundtrip() {
+        use crate::hooks::HookEvent;
+        use crate::hooks::PreToolUseData;
+
+        let hook_event = HookEvent::PreToolUse(PreToolUseData {
+            tool_name: "Bash".to_string(),
+            input: r#"{"command": "ls"}"#.to_string(),
+            session_id: Some("sess-123".to_string()),
+        });
+
+        let event = VibesEvent::Hook {
+            session_id: Some("sess-123".to_string()),
+            event: hook_event,
+        };
+
+        let json = serde_json::to_string(&event).unwrap();
+        let parsed: VibesEvent = serde_json::from_str(&json).unwrap();
+
+        assert!(
+            matches!(parsed, VibesEvent::Hook { session_id: Some(id), .. } if id == "sess-123")
+        );
+    }
+
+    #[test]
+    fn vibes_event_hook_session_id_extraction() {
+        use crate::hooks::HookEvent;
+        use crate::hooks::StopData;
+
+        let hook_event = HookEvent::Stop(StopData {
+            transcript_path: None,
+            reason: Some("user".to_string()),
+            session_id: Some("sess-456".to_string()),
+        });
+
+        let event = VibesEvent::Hook {
+            session_id: Some("sess-456".to_string()),
+            event: hook_event,
+        };
+
+        assert_eq!(event.session_id(), Some("sess-456"));
     }
 }

@@ -14,7 +14,7 @@ pub enum HookType {
 }
 
 /// Data from a PreToolUse hook
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PreToolUseData {
     /// The tool being called
     pub tool_name: String,
@@ -25,7 +25,7 @@ pub struct PreToolUseData {
 }
 
 /// Data from a PostToolUse hook
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PostToolUseData {
     /// The tool that was called
     pub tool_name: String,
@@ -40,7 +40,7 @@ pub struct PostToolUseData {
 }
 
 /// Data from a Stop hook
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct StopData {
     /// Path to the transcript JSONL file
     pub transcript_path: Option<String>,
@@ -51,7 +51,7 @@ pub struct StopData {
 }
 
 /// A hook event received from Claude Code
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum HookEvent {
     PreToolUse(PreToolUseData),

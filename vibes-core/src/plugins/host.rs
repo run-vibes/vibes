@@ -474,8 +474,10 @@ fn dispatch_to_plugin(
         | VibesEvent::ClientDisconnected { .. }
         | VibesEvent::TunnelStateChanged { .. }
         | VibesEvent::OwnershipTransferred { .. }
-        | VibesEvent::SessionRemoved { .. } => {
+        | VibesEvent::SessionRemoved { .. }
+        | VibesEvent::Hook { .. } => {
             // These events are not dispatched to plugins (they're client -> server or system events)
+            // Note: Hook events will be handled by a dedicated groove handler in future
         }
     }
     Ok(())
