@@ -3,7 +3,7 @@
 //! Provides consistent paths for groove storage, transcripts, and learnings
 //! across different operating systems.
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 /// Groove file paths with cross-platform support
 #[derive(Debug, Clone)]
@@ -60,7 +60,7 @@ impl GroovePaths {
         Ok(())
     }
 
-    /// Get project-specific learnings file
+    /// Get project-specific learnings file (stored in user data dir by project ID)
     pub fn project_learnings(&self, project_id: &str) -> PathBuf {
         self.learnings_dir.join(format!("{}.md", project_id))
     }
@@ -68,6 +68,26 @@ impl GroovePaths {
     /// Get project-specific transcript archive
     pub fn project_transcripts(&self, project_id: &str) -> PathBuf {
         self.transcripts_dir.join(project_id)
+    }
+
+    /// Get the project-local groove directory
+    ///
+    /// Returns `{project_root}/.vibes/plugins/groove/`
+    /// This is where project-scoped learnings are stored within the project itself.
+    pub fn project_local_dir(project_root: &Path) -> PathBuf {
+        project_root.join(".vibes").join("plugins").join("groove")
+    }
+
+    /// Get the project-local learnings file
+    ///
+    /// Returns `{project_root}/.vibes/plugins/groove/learnings.md`
+    pub fn project_local_learnings(project_root: &Path) -> PathBuf {
+        Self::project_local_dir(project_root).join("learnings.md")
+    }
+
+    /// Ensure project-local groove directories exist
+    pub fn ensure_project_local_dirs(project_root: &Path) -> std::io::Result<()> {
+        std::fs::create_dir_all(Self::project_local_dir(project_root))
     }
 }
 
@@ -167,5 +187,40 @@ mod tests {
         assert!(paths.data_dir.exists());
         assert!(paths.transcripts_dir.exists());
         assert!(paths.learnings_dir.exists());
+    }
+
+    #[test]
+    fn test_project_local_dir_returns_correct_path() {
+        // Project-local groove data lives at {project_root}/.vibes/plugins/groove/
+        let project_root = PathBuf::from("/home/user/my-project");
+        let local_dir = GroovePaths::project_local_dir(&project_root);
+
+        assert_eq!(
+            local_dir,
+            PathBuf::from("/home/user/my-project/.vibes/plugins/groove")
+        );
+    }
+
+    #[test]
+    fn test_project_local_learnings_returns_correct_path() {
+        // Project learnings file at {project_root}/.vibes/plugins/groove/learnings.md
+        let project_root = PathBuf::from("/home/user/my-project");
+        let learnings = GroovePaths::project_local_learnings(&project_root);
+
+        assert_eq!(
+            learnings,
+            PathBuf::from("/home/user/my-project/.vibes/plugins/groove/learnings.md")
+        );
+    }
+
+    #[test]
+    fn test_ensure_project_local_dirs_creates_directories() {
+        let temp = tempfile::tempdir().unwrap();
+        let project_root = temp.path().to_path_buf();
+
+        GroovePaths::ensure_project_local_dirs(&project_root).unwrap();
+
+        let expected_dir = project_root.join(".vibes").join("plugins").join("groove");
+        assert!(expected_dir.exists());
     }
 }
