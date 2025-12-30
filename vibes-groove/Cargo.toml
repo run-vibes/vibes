@@ -39,6 +39,9 @@ sha2 = "0.10"
 hex = "0.4"
 regex = "1"
 
+# Plugin API
+vibes-plugin-api = { path = "../vibes-plugin-api" }
+
 [dev-dependencies]
 tempfile.workspace = true
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }

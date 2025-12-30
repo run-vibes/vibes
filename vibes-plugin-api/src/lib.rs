@@ -193,7 +193,13 @@ macro_rules! export_plugin {
             $crate::API_VERSION
         }
 
+        /// Destroy a plugin instance.
+        ///
+        /// # Safety
+        /// The pointer must have been created by `_vibes_plugin_create` and must
+        /// not have been already destroyed.
         #[unsafe(no_mangle)]
+        #[allow(clippy::not_unsafe_ptr_arg_deref)]
         pub extern "C" fn _vibes_plugin_destroy(ptr: *mut dyn $crate::Plugin) {
             if !ptr.is_null() {
                 unsafe {
