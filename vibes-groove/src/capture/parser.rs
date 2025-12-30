@@ -110,12 +110,18 @@ impl TranscriptParser {
                 Ok(value) => {
                     // Extract message if it has a role
                     if let Some(role) = value.get("role").and_then(|r| r.as_str()) {
+                        // Extract content, handling both string and complex JSON types.
+                        // For strings, we use the raw value. For arrays/objects (e.g., tool
+                        // results with structured data), Value::to_string() produces JSON
+                        // format with quotes and brackets. This preserves structure for
+                        // complex content types that appear in Claude transcripts.
                         let content_text = value
                             .get("content")
                             .map(|c| {
                                 if let Some(s) = c.as_str() {
                                     s.to_string()
                                 } else {
+                                    // Non-string content: serialize as JSON to preserve structure
                                     c.to_string()
                                 }
                             })
@@ -273,5 +279,18 @@ this is not json
     fn test_supported_versions() {
         let parser = TranscriptParser::new();
         assert!(parser.supported_versions().contains(&"1".to_string()));
+    }
+
+    #[test]
+    fn test_non_string_content_serialized_as_json() {
+        // When content is an array or object, it's serialized as JSON to preserve structure
+        let content = r#"{"role": "assistant", "content": ["item1", "item2"]}"#;
+
+        let parser = TranscriptParser::new();
+        let result = parser.parse(content, "test").unwrap();
+
+        assert_eq!(result.messages.len(), 1);
+        // Array content becomes JSON string with brackets and quotes
+        assert_eq!(result.messages[0].content, r#"["item1","item2"]"#);
     }
 }

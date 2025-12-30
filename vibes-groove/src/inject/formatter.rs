@@ -5,6 +5,9 @@
 
 use crate::capture::{ExtractedLearning, LearningCategory};
 
+/// Markdown header prefixes for h1-h6
+const HEADERS: [&str; 6] = ["#", "##", "###", "####", "#####", "######"];
+
 /// A formatted section ready for injection
 #[derive(Debug, Clone)]
 pub struct FormattedSection {
@@ -102,12 +105,13 @@ impl LearningFormatter {
     ) -> FormattedSection {
         let (title, priority) = match category {
             LearningCategory::Context => ("Project Context", 0),
-            LearningCategory::Pattern => ("Learned Patterns", 1),
-            LearningCategory::Technique => ("Preferred Techniques", 2),
-            LearningCategory::Preference => ("User Preferences", 3),
+            LearningCategory::Pattern => ("Project Patterns", 1),
+            LearningCategory::Technique => ("Project Techniques", 2),
+            LearningCategory::Preference => ("Project Preferences", 3),
         };
 
-        let header = "#".repeat(self.header_level as usize);
+        // Use predefined header constant (index 0 = h1, index 1 = h2, etc.)
+        let header = HEADERS[(self.header_level as usize).saturating_sub(1).min(5)];
         let mut content = format!("{} {}\n", header, title);
 
         for learning in learnings {
@@ -118,12 +122,14 @@ impl LearningFormatter {
     }
 
     /// Get the category title
+    ///
+    /// All titles use consistent "Project X" structure for clarity and parallel naming.
     pub fn category_title(category: LearningCategory) -> &'static str {
         match category {
             LearningCategory::Context => "Project Context",
-            LearningCategory::Pattern => "Learned Patterns",
-            LearningCategory::Technique => "Preferred Techniques",
-            LearningCategory::Preference => "User Preferences",
+            LearningCategory::Pattern => "Project Patterns",
+            LearningCategory::Technique => "Project Techniques",
+            LearningCategory::Preference => "Project Preferences",
         }
     }
 }
@@ -150,7 +156,7 @@ mod tests {
 
         let result = formatter.format_for_injection(&learnings);
 
-        assert!(result.contains("## Preferred Techniques"));
+        assert!(result.contains("## Project Techniques"));
         assert!(result.contains("- Use TDD"));
     }
 
@@ -165,11 +171,11 @@ mod tests {
 
         let result = formatter.format_for_injection(&learnings);
 
-        assert!(result.contains("## Learned Patterns"));
+        assert!(result.contains("## Project Patterns"));
         assert!(result.contains("- Pattern A"));
-        assert!(result.contains("## Preferred Techniques"));
+        assert!(result.contains("## Project Techniques"));
         assert!(result.contains("- Technique B"));
-        assert!(result.contains("## User Preferences"));
+        assert!(result.contains("## Project Preferences"));
         assert!(result.contains("- Preference C"));
     }
 
@@ -186,8 +192,8 @@ mod tests {
 
         // Context should come before Pattern which should come before Preference
         let context_pos = result.find("Project Context").unwrap();
-        let pattern_pos = result.find("Learned Patterns").unwrap();
-        let pref_pos = result.find("User Preferences").unwrap();
+        let pattern_pos = result.find("Project Patterns").unwrap();
+        let pref_pos = result.find("Project Preferences").unwrap();
 
         assert!(
             context_pos < pattern_pos,
@@ -206,7 +212,7 @@ mod tests {
 
         let result = formatter.format_for_injection(&learnings);
 
-        assert!(result.contains("### Learned Patterns"));
+        assert!(result.contains("### Project Patterns"));
     }
 
     #[test]
@@ -217,7 +223,7 @@ mod tests {
         let result = formatter.format_for_injection(&learnings);
 
         // Should be clamped to h6
-        assert!(result.contains("###### Learned Patterns"));
+        assert!(result.contains("###### Project Patterns"));
     }
 
     #[test]
@@ -244,26 +250,27 @@ mod tests {
         assert!(result.contains("- Pattern 2"));
         assert!(result.contains("- Pattern 3"));
         // Should only have one Patterns header
-        assert_eq!(result.matches("Learned Patterns").count(), 1);
+        assert_eq!(result.matches("Project Patterns").count(), 1);
     }
 
     #[test]
     fn test_category_title() {
+        // Category titles use consistent "Project X" structure for clarity
         assert_eq!(
             LearningFormatter::category_title(LearningCategory::Context),
             "Project Context"
         );
         assert_eq!(
             LearningFormatter::category_title(LearningCategory::Pattern),
-            "Learned Patterns"
+            "Project Patterns"
         );
         assert_eq!(
             LearningFormatter::category_title(LearningCategory::Technique),
-            "Preferred Techniques"
+            "Project Techniques"
         );
         assert_eq!(
             LearningFormatter::category_title(LearningCategory::Preference),
-            "User Preferences"
+            "Project Preferences"
         );
     }
 }

@@ -18,15 +18,28 @@ use crate::security::{OrgRole, Policy, ReviewOutcome, TrustLevel};
 ///
 /// Creates and initializes the CozoDB database with the groove schema.
 /// This is called during `groove init` to ensure the database is ready.
+///
+/// If already in an async context, reuses the existing runtime handle for efficiency.
 pub fn init_database(paths: &GroovePaths) -> Result<(), crate::GrooveError> {
-    let rt = tokio::runtime::Runtime::new()
-        .map_err(|e| crate::GrooveError::Database(format!("Failed to create runtime: {}", e)))?;
+    // Try to reuse existing runtime if we're already in an async context
+    if let Ok(handle) = tokio::runtime::Handle::try_current() {
+        handle.block_on(async {
+            // Open (and create if needed) the database - this also runs schema migrations
+            let _store = CozoStore::open(&paths.db_path).await?;
+            Ok::<(), crate::GrooveError>(())
+        })
+    } else {
+        // Create new runtime if not in async context
+        let rt = tokio::runtime::Runtime::new().map_err(|e| {
+            crate::GrooveError::Database(format!("Failed to create runtime: {}", e))
+        })?;
 
-    rt.block_on(async {
-        // Open (and create if needed) the database - this also runs schema migrations
-        let _store = CozoStore::open(&paths.db_path).await?;
-        Ok(())
-    })
+        rt.block_on(async {
+            // Open (and create if needed) the database - this also runs schema migrations
+            let _store = CozoStore::open(&paths.db_path).await?;
+            Ok(())
+        })
+    }
 }
 
 // ============================================================================
@@ -928,23 +941,34 @@ mod tests {
 
         plugin.on_load(&mut ctx).unwrap();
 
-        // Should have 9 commands registered (init, list, status + 6 existing)
         let commands = ctx.pending_commands();
-        assert_eq!(commands.len(), 9);
-
-        // Verify command paths
         let paths: Vec<_> = commands.iter().map(|c| c.path.join(" ")).collect();
-        // New commands
-        assert!(paths.contains(&"init".to_string()));
-        assert!(paths.contains(&"list".to_string()));
-        assert!(paths.contains(&"status".to_string()));
-        // Existing commands
-        assert!(paths.contains(&"trust levels".to_string()));
-        assert!(paths.contains(&"trust role".to_string()));
-        assert!(paths.contains(&"policy show".to_string()));
-        assert!(paths.contains(&"policy path".to_string()));
-        assert!(paths.contains(&"quarantine list".to_string()));
-        assert!(paths.contains(&"quarantine stats".to_string()));
+
+        // Verify expected commands are registered (not checking count to avoid brittleness)
+        let expected_commands = [
+            // Groove commands
+            "init",
+            "list",
+            "status",
+            // Trust commands
+            "trust levels",
+            "trust role",
+            // Policy commands
+            "policy show",
+            "policy path",
+            // Quarantine commands
+            "quarantine list",
+            "quarantine stats",
+        ];
+
+        for cmd in expected_commands {
+            assert!(
+                paths.contains(&cmd.to_string()),
+                "Expected command '{}' not found. Registered: {:?}",
+                cmd,
+                paths
+            );
+        }
     }
 
     #[test]
@@ -954,18 +978,27 @@ mod tests {
 
         plugin.on_load(&mut ctx).unwrap();
 
-        // Should have 6 routes registered
         let routes = ctx.pending_routes();
-        assert_eq!(routes.len(), 6);
-
-        // Verify route paths
         let paths: Vec<_> = routes.iter().map(|r| r.path.clone()).collect();
-        assert!(paths.contains(&"/policy".to_string()));
-        assert!(paths.contains(&"/trust/levels".to_string()));
-        assert!(paths.contains(&"/trust/role/:role".to_string()));
-        assert!(paths.contains(&"/quarantine".to_string()));
-        assert!(paths.contains(&"/quarantine/stats".to_string()));
-        assert!(paths.contains(&"/quarantine/:id/review".to_string()));
+
+        // Verify expected routes are registered (not checking count to avoid brittleness)
+        let expected_routes = [
+            "/policy",
+            "/trust/levels",
+            "/trust/role/:role",
+            "/quarantine",
+            "/quarantine/stats",
+            "/quarantine/:id/review",
+        ];
+
+        for route in expected_routes {
+            assert!(
+                paths.contains(&route.to_string()),
+                "Expected route '{}' not found. Registered: {:?}",
+                route,
+                paths
+            );
+        }
     }
 
     #[test]

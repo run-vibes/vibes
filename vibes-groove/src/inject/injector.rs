@@ -166,7 +166,7 @@ mod tests {
     #[test]
     fn test_inject_via_hook_creates_response() {
         let injector = ClaudeCodeInjector::new();
-        let formatted = "## Learned Patterns\n- Use TDD";
+        let formatted = "## Project Patterns\n- Use TDD";
 
         let response = injector.inject_via_hook(formatted);
 

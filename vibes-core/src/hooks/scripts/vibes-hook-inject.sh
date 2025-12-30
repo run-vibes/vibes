@@ -51,10 +51,18 @@ send_and_receive() {
 RESPONSE=$(send_and_receive)
 
 # Output response if we got one, otherwise output empty object
-if [ -n "$RESPONSE" ] && echo "$RESPONSE" | jq -e . >/dev/null 2>&1; then
-    echo "$RESPONSE"
+if [ -n "$RESPONSE" ]; then
+    if echo "$RESPONSE" | jq -e . >/dev/null 2>&1; then
+        echo "$RESPONSE"
+    else
+        # Log invalid JSON response to stderr for debugging
+        echo "[vibes-hook-inject] Warning: Received invalid JSON response, returning empty object" >&2
+        echo "[vibes-hook-inject] Raw response was: $RESPONSE" >&2
+        echo '{}'
+    fi
 else
-    # Return empty response (no injection)
+    # No response received (daemon not running or connection failed)
+    echo '[vibes-hook-inject] Debug: No response from vibes daemon' >&2
     echo '{}'
 fi
 

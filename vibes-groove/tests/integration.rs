@@ -179,8 +179,9 @@ fn test_injector_replaces_existing_groove_section() {
     let temp_dir = TempDir::new().unwrap();
     let claude_md_path = temp_dir.path().join("CLAUDE.md");
 
-    // The injector uses a single marker for start and end
-    let marker = "<!-- vibes-groove-learnings -->";
+    // Use injector's marker to maintain consistency with the implementation
+    let injector = ClaudeCodeInjector::new();
+    let marker = injector.section_marker();
 
     // Create CLAUDE.md with existing groove section
     let initial_content = format!(
@@ -202,7 +203,6 @@ More documentation.
     );
     std::fs::write(&claude_md_path, &initial_content).unwrap();
 
-    let injector = ClaudeCodeInjector::new();
     let new_content = "### Preferences\n- New learning";
 
     let result = injector

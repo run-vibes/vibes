@@ -1,6 +1,9 @@
 //! Hook event types
 //!
 //! These types represent the structured data received from Claude Code hooks.
+//!
+//! All hook data types derive `PartialEq` for consistency and testability.
+//! This allows comparing events in tests and building equality-based logic.
 
 use serde::{Deserialize, Serialize};
 
