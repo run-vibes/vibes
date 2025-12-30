@@ -38,8 +38,13 @@ impl GroovePaths {
     }
 
     /// Get the default data directory for the current platform
-    fn default_data_dir() -> Option<PathBuf> {
-        dirs::data_dir().map(|d| d.join("vibes-groove"))
+    ///
+    /// Returns paths under the vibes plugin namespace:
+    /// - Linux: ~/.local/share/vibes/plugins/groove
+    /// - macOS: ~/Library/Application Support/vibes/plugins/groove
+    /// - Windows: %APPDATA%\vibes\plugins\groove
+    pub(crate) fn default_data_dir() -> Option<PathBuf> {
+        dirs::data_dir().map(|d| d.join("vibes").join("plugins").join("groove"))
     }
 
     /// Claude Code projects directory (where Claude stores session data)
@@ -119,6 +124,37 @@ mod tests {
         assert!(paths.transcripts_dir.starts_with(&paths.data_dir));
         assert!(paths.learnings_dir.starts_with(&paths.data_dir));
         assert!(paths.db_path.starts_with(&paths.data_dir));
+    }
+
+    #[test]
+    fn test_default_data_dir_uses_vibes_plugin_namespace() {
+        // groove data should live under vibes/plugins/groove, not vibes-groove
+        // This follows the vibes plugin architecture where all plugins store
+        // data under the parent vibes/plugins/ namespace
+        let data_dir = GroovePaths::default_data_dir().unwrap();
+
+        // Path should end with vibes/plugins/groove
+        let components: Vec<_> = data_dir.components().collect();
+        let len = components.len();
+
+        assert!(len >= 3, "Path should have at least 3 components");
+
+        // Check the last 3 components are vibes/plugins/groove
+        assert_eq!(
+            components[len - 3].as_os_str(),
+            "vibes",
+            "Third-to-last component should be 'vibes'"
+        );
+        assert_eq!(
+            components[len - 2].as_os_str(),
+            "plugins",
+            "Second-to-last component should be 'plugins'"
+        );
+        assert_eq!(
+            components[len - 1].as_os_str(),
+            "groove",
+            "Last component should be 'groove'"
+        );
     }
 
     #[test]
