@@ -5,8 +5,10 @@
 //! which learnings were active, enabling the attribution engine to answer
 //! "which learnings helped in this session?"
 
+pub mod iggy;
 pub mod log;
 pub mod types;
 
+pub use iggy::{IggyConfig, IggyManager, IggyState};
 pub use log::{AssessmentLog, InMemoryAssessmentLog};
 pub use types::*;
