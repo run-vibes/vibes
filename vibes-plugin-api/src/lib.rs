@@ -128,6 +128,20 @@ pub trait Plugin: Send + Sync {
     ) {
     }
 
+    /// Called when a Claude Code hook event occurs
+    ///
+    /// Hook types: "SessionStart", "UserPromptSubmit", "PreToolUse", "PostToolUse", "Stop"
+    /// Returns optional additional context to inject into the session.
+    fn on_hook(
+        &mut self,
+        _session_id: Option<&str>,
+        _hook_type: &str,
+        _project_path: Option<&str>,
+        _ctx: &mut PluginContext,
+    ) -> Option<String> {
+        None
+    }
+
     // ─── Command Handler ────────────────────────────────────────────
 
     /// Handle a CLI command invocation.

@@ -9,6 +9,7 @@ pub mod capture;
 pub mod config;
 pub mod error;
 pub mod export;
+pub mod inject;
 pub mod paths;
 pub mod plugin;
 pub mod security;

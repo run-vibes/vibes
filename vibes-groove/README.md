@@ -186,9 +186,8 @@ vibes-groove/
 │   │   └── extractor.rs    # LearningExtractor
 │   │
 │   ├── inject/             # Injection pipeline (4.3)
-│   │   ├── adapter.rs      # InjectionAdapter trait
 │   │   ├── formatter.rs    # LearningFormatter
-│   │   └── claude_code.rs  # ClaudeCodeInjector
+│   │   └── injector.rs     # ClaudeCodeInjector
 │   │
 │   └── paths.rs            # GroovePaths (cross-platform)
 │
@@ -231,7 +230,7 @@ vibes daemon start
 | 4.2 Storage Foundation | Complete | CozoDB, Learning types, AdaptiveParam |
 | 4.2.5 Security Foundation | Complete | Trust, provenance, RBAC, quarantine |
 | 4.2.6 Plugin API Extension | Complete | CLI/route registration for plugins |
-| 4.3 Capture & Inject | In Progress | End-to-end learning pipeline |
+| 4.3 Capture & Inject | Complete | End-to-end learning pipeline |
 | 4.4 Assessment Framework | Not Started | Tiered outcome measurement |
 | 4.5 Learning Extraction | Not Started | Semantic analysis, embeddings |
 | 4.6 Attribution Engine | Not Started | Impact measurement |

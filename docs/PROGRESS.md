@@ -22,7 +22,7 @@ This document tracks the implementation progress of vibes against the roadmap de
 | 4.2 Storage Foundation | Complete | [design](plans/14-continual-learning/design.md#42-storage-foundation), [decisions](plans/14-continual-learning/milestone-4.2-decisions.md) | [implementation](plans/14-continual-learning/milestone-4.2-implementation.md) |
 | 4.2.5 Security Foundation | Complete | [design](plans/14-continual-learning/design.md#425-security-foundation--new) | [implementation](plans/14-continual-learning/milestone-4.2.5-implementation.md) |
 | 4.2.6 Plugin API Extension | Complete | — | — |
-| 4.3 Capture & Inject | In progress | [design](plans/14-continual-learning/milestone-4.3-design.md) | — |
+| 4.3 Capture & Inject | Complete | [design](plans/14-continual-learning/milestone-4.3-design.md) | [implementation](plans/14-continual-learning/milestone-4.3-implementation.md) |
 | 4.4 Assessment Framework | Not started | [design](plans/14-continual-learning/design.md#44-assessment-framework--new) | — |
 | 4.5 Learning Extraction | Not started | [design](plans/14-continual-learning/design.md#45-learning-extraction) | — |
 | 4.6 Attribution Engine | Not started | [design](plans/14-continual-learning/design.md#46-attribution-engine--new) | — |
@@ -208,33 +208,31 @@ Note: Auto-detect team/aud moved to Milestone 3.5 (Cloudflare Auth Wizard)
 > **Design:** [milestone-4.3-design.md](plans/14-continual-learning/milestone-4.3-design.md)
 
 **Core Infrastructure:**
-- [ ] Add `VibesEvent::Hook` variant to EventBus
-- [ ] Extend `HookInstaller` for SessionStart, UserPromptSubmit hooks
-- [ ] Add hook response collection to `HookReceiver`
-- [ ] `GroovePaths` with cross-platform support (via `dirs` crate)
+- [x] Add `VibesEvent::Hook` variant to EventBus
+- [x] Extend `HookInstaller` for SessionStart, UserPromptSubmit hooks
+- [x] Add hook response collection to `HookReceiver`
+- [x] `GroovePaths` with cross-platform support (via `dirs` crate)
 
 **Capture Pipeline:**
-- [ ] `SessionCollector` with per-session event buffering
-- [ ] `TranscriptParser` for Claude JSONL format
-- [ ] `LearningExtractor` with MVP regex patterns
-- [ ] Wire groove plugin to EventBus subscription
+- [x] `SessionCollector` with per-session event buffering
+- [x] `TranscriptParser` for Claude JSONL format
+- [x] `LearningExtractor` stub (AI extraction in Milestone 4.5)
+- [x] Wire groove plugin to EventBus subscription
 
 **Injection Pipeline:**
-- [ ] `LearningFormatter` with HTML comment markers
-- [ ] `InjectionAdapter` trait definition
-- [ ] `ClaudeCodeInjector` (learnings.md + hooks)
-- [ ] Hook responses for SessionStart/UserPromptSubmit
+- [x] `LearningFormatter` with markdown sections
+- [x] `ClaudeCodeInjector` (learnings.md + hooks)
+- [x] Hook responses for SessionStart/UserPromptSubmit
 
 **Setup & CLI:**
-- [ ] `GrooveSetup` for first-run initialization
-- [ ] `vibes groove init` command
-- [ ] `vibes groove list` command
-- [ ] `vibes groove status` command
+- [x] `vibes groove init` command
+- [x] `vibes groove list` command
+- [x] `vibes groove status` command
 
 **Documentation:**
-- [ ] End-to-end integration tests
+- [x] End-to-end integration tests
 - [x] vibes-groove/README.md
-- [ ] Update docs/PROGRESS.md on completion
+- [x] Update docs/PROGRESS.md on completion
 
 ### Milestone 4.4: Assessment Framework
 - [ ] Lightweight assessment (every message, <10ms)
@@ -383,3 +381,4 @@ These phases are planned but not yet scheduled.
 | 2025-12-29 | Milestone 4.2.6 (Plugin API Extension) complete - Extended plugin API with command/route registration, added CommandSpec/RouteSpec types, CommandRegistry/RouteRegistry in vibes-core, integrated plugin dispatch in CLI and server, migrated groove to plugin system, bumped plugin API version to 2 |
 | 2025-12-29 | Milestone 4.2 (Storage Foundation) complete - CozoDB storage, Learning types, AdaptiveParam, migrations, all storage layer ready |
 | 2025-12-29 | Milestone 4.3 (Capture & Inject) design complete - three injection channels (CLAUDE.md @import, SessionStart, UserPromptSubmit), unified HTML comment format, per-session buffering, TDD implementation tasks |
+| 2025-12-30 | Milestone 4.3 (Capture & Inject) complete - VibesEvent::Hook, SessionStart/UserPromptSubmit hooks, GroovePaths, SessionCollector, TranscriptParser, LearningExtractor stub, LearningFormatter, ClaudeCodeInjector, groove init/list/status commands, plugin hook integration, integration tests |

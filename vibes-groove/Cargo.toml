@@ -46,6 +46,9 @@ regex = "1"
 # Plugin API
 vibes-plugin-api = { path = "../vibes-plugin-api" }
 
+# Core types (for HookResponse)
+vibes-core = { path = "../vibes-core" }
+
 [dev-dependencies]
 tempfile.workspace = true
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }

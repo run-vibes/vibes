@@ -15,6 +15,19 @@ pub enum HookType {
     UserPromptSubmit,
 }
 
+impl HookType {
+    /// Get the hook type as a string
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            HookType::PreToolUse => "PreToolUse",
+            HookType::PostToolUse => "PostToolUse",
+            HookType::Stop => "Stop",
+            HookType::SessionStart => "SessionStart",
+            HookType::UserPromptSubmit => "UserPromptSubmit",
+        }
+    }
+}
+
 /// Data from a PreToolUse hook
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PreToolUseData {
@@ -110,6 +123,15 @@ impl HookEvent {
             self,
             HookEvent::SessionStart(_) | HookEvent::UserPromptSubmit(_)
         )
+    }
+
+    /// Get the project path from this event, if available
+    pub fn project_path(&self) -> Option<String> {
+        match self {
+            HookEvent::SessionStart(data) => data.project_path.clone(),
+            // Other hook types don't carry project path
+            _ => None,
+        }
     }
 }
 
