@@ -14,6 +14,9 @@ crate-type = ["rlib", "cdylib"]
 # Storage
 cozo = { version = "0.7", default-features = false, features = ["storage-rocksdb", "rayon"] }
 
+# Message streaming (assessment event log)
+iggy = "0.6"
+
 # Async
 async-trait.workspace = true
 tokio = { workspace = true, features = ["sync", "rt"] }
