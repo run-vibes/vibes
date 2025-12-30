@@ -5,6 +5,8 @@
 //! which learnings were active, enabling the attribution engine to answer
 //! "which learnings helped in this session?"
 
+pub mod log;
 pub mod types;
 
+pub use log::{AssessmentLog, InMemoryAssessmentLog};
 pub use types::*;
