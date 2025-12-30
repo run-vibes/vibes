@@ -10,6 +10,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
+use serde_json::json;
 use vibes_plugin_api::{HttpMethod, RouteRequest};
 
 use crate::AppState;
@@ -71,12 +72,15 @@ pub async fn handle_plugin_route(State(state): State<Arc<AppState>>, request: Re
             .status(resp.status)
             .header("Content-Type", resp.content_type)
             .body(Body::from(resp.body))
-            .unwrap(),
-        Err(e) => Response::builder()
-            .status(500)
-            .header("Content-Type", "application/json")
-            .body(Body::from(format!(r#"{{"error":"{}"}}"#, e)))
-            .unwrap(),
+            .expect("Failed to build HTTP response"),
+        Err(e) => {
+            let error_json = json!({"error": e.to_string()});
+            Response::builder()
+                .status(500)
+                .header("Content-Type", "application/json")
+                .body(Body::from(error_json.to_string()))
+                .expect("Failed to build HTTP error response")
+        }
     }
 }
 
