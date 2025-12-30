@@ -32,7 +32,8 @@ pub use types::*;
 
 // Assessment re-exports
 pub use assessment::{
-    AssessmentContext, EventId, HarnessType, InjectionMethod, ProjectId, SessionId, UserId,
+    AssessmentContext, AssessmentProcessor, EventId, HarnessType, InjectionMethod, ProjectId,
+    SessionId, UserId,
 };
 
 // Security re-exports

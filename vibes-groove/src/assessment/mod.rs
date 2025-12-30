@@ -8,6 +8,7 @@
 pub mod config;
 pub mod iggy;
 pub mod log;
+pub mod processor;
 pub mod types;
 
 pub use config::{
@@ -16,4 +17,5 @@ pub use config::{
 };
 pub use iggy::{IggyAssessmentLog, IggyConfig, IggyManager, IggyState};
 pub use log::{AssessmentLog, InMemoryAssessmentLog};
+pub use processor::AssessmentProcessor;
 pub use types::*;
