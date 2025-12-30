@@ -441,7 +441,7 @@ impl LightweightEvent {
 
 /// What triggered a checkpoint assessment.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(tag = "type", content = "value", rename_all = "snake_case")]
+#[serde(rename_all = "snake_case")]
 pub enum CheckpointTrigger {
     /// Triggered after N messages.
     MessageCount(u32),
