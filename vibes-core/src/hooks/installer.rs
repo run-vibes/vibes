@@ -156,6 +156,8 @@ impl HookInstaller {
             ("PreToolUse", "pre-tool-use.sh"),
             ("PostToolUse", "post-tool-use.sh"),
             ("Stop", "stop.sh"),
+            ("SessionStart", "session-start.sh"),
+            ("UserPromptSubmit", "user-prompt-submit.sh"),
         ];
 
         for (hook_type, script_name) in vibes_hooks {
@@ -277,7 +279,7 @@ mod tests {
         let settings: serde_json::Value = serde_json::from_str(&content).unwrap();
 
         let hooks = settings.get("hooks").unwrap().as_array().unwrap();
-        assert_eq!(hooks.len(), 3); // PreToolUse, PostToolUse, Stop
+        assert_eq!(hooks.len(), 5); // PreToolUse, PostToolUse, Stop, SessionStart, UserPromptSubmit
     }
 
     #[test]
@@ -316,9 +318,9 @@ mod tests {
         // Check existing setting preserved
         assert_eq!(settings.get("some_setting").unwrap(), "value");
 
-        // Check hooks array now has 4 entries (1 existing + 3 vibes)
+        // Check hooks array now has 6 entries (1 existing + 5 vibes)
         let hooks = settings.get("hooks").unwrap().as_array().unwrap();
-        assert_eq!(hooks.len(), 4);
+        assert_eq!(hooks.len(), 6);
     }
 
     #[test]
@@ -342,8 +344,8 @@ mod tests {
         let content = fs::read_to_string(claude_dir.join("settings.json")).unwrap();
         let settings: serde_json::Value = serde_json::from_str(&content).unwrap();
 
-        // Should still only have 3 hooks (no duplicates)
+        // Should still only have 5 hooks (no duplicates)
         let hooks = settings.get("hooks").unwrap().as_array().unwrap();
-        assert_eq!(hooks.len(), 3);
+        assert_eq!(hooks.len(), 5);
     }
 }
