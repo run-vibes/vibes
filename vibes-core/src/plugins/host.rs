@@ -8,8 +8,10 @@ use std::time::Duration;
 
 use vibes_plugin_api::{API_VERSION, Plugin, PluginConfig, PluginContext, PluginManifest};
 
+use super::commands::CommandRegistry;
 use super::error::PluginHostError;
 use super::registry::PluginRegistry;
+use super::routes::RouteRegistry;
 use crate::events::{ClaudeEvent, VibesEvent};
 
 /// A loaded plugin with its runtime state
@@ -81,6 +83,10 @@ pub struct PluginHost {
     /// Handler timeout (currently unused, for future timeout implementation)
     #[allow(dead_code)]
     handler_timeout: Duration,
+    /// Registry of plugin CLI commands
+    command_registry: CommandRegistry,
+    /// Registry of plugin HTTP routes
+    route_registry: RouteRegistry,
 }
 
 impl PluginHost {
@@ -101,6 +107,8 @@ impl PluginHost {
             plugin_dirs,
             registry_path: config.user_plugin_dir.join("registry.toml"),
             handler_timeout: config.handler_timeout,
+            command_registry: CommandRegistry::new(),
+            route_registry: RouteRegistry::new(),
         }
     }
 
@@ -323,6 +331,16 @@ impl PluginHost {
     /// Get the number of loaded plugins
     pub fn plugin_count(&self) -> usize {
         self.plugins.len()
+    }
+
+    /// Get read access to the command registry
+    pub fn command_registry(&self) -> &CommandRegistry {
+        &self.command_registry
+    }
+
+    /// Get read access to the route registry
+    pub fn route_registry(&self) -> &RouteRegistry {
+        &self.route_registry
     }
 }
 
