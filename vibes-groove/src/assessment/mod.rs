@@ -9,6 +9,6 @@ pub mod iggy;
 pub mod log;
 pub mod types;
 
-pub use iggy::{IggyConfig, IggyManager, IggyState};
+pub use iggy::{IggyAssessmentLog, IggyConfig, IggyManager, IggyState};
 pub use log::{AssessmentLog, InMemoryAssessmentLog};
 pub use types::*;
