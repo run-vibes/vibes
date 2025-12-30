@@ -6,10 +6,15 @@ use std::panic::AssertUnwindSafe;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
-use vibes_plugin_api::{API_VERSION, Plugin, PluginConfig, PluginContext, PluginManifest};
+use vibes_plugin_api::{
+    API_VERSION, CommandArgs, CommandOutput, HttpMethod, Plugin, PluginConfig, PluginContext,
+    PluginManifest, RouteRequest, RouteResponse,
+};
 
+use super::commands::CommandRegistry;
 use super::error::PluginHostError;
 use super::registry::PluginRegistry;
+use super::routes::RouteRegistry;
 use crate::events::{ClaudeEvent, VibesEvent};
 
 /// A loaded plugin with its runtime state
@@ -81,6 +86,10 @@ pub struct PluginHost {
     /// Handler timeout (currently unused, for future timeout implementation)
     #[allow(dead_code)]
     handler_timeout: Duration,
+    /// Registry of plugin CLI commands
+    command_registry: CommandRegistry,
+    /// Registry of plugin HTTP routes
+    route_registry: RouteRegistry,
 }
 
 impl PluginHost {
@@ -101,6 +110,8 @@ impl PluginHost {
             plugin_dirs,
             registry_path: config.user_plugin_dir.join("registry.toml"),
             handler_timeout: config.handler_timeout,
+            command_registry: CommandRegistry::new(),
+            route_registry: RouteRegistry::new(),
         }
     }
 
@@ -165,7 +176,7 @@ impl PluginHost {
     }
 
     /// Load a single plugin from its directory
-    fn load_plugin(&self, dir: &Path, name: &str) -> Result<LoadedPlugin, PluginHostError> {
+    fn load_plugin(&mut self, dir: &Path, name: &str) -> Result<LoadedPlugin, PluginHostError> {
         // 1. Find library file
         let lib_path = self.find_library(dir, name)?;
 
@@ -208,6 +219,38 @@ impl PluginHost {
         let mut instance = instance;
         instance.on_load(&mut context)?;
 
+        // 7. Validate command registrations
+        for spec in context.pending_commands() {
+            if let Some(existing) = self
+                .command_registry
+                .check_conflict(&manifest.name, &spec.path)
+            {
+                return Err(PluginHostError::CommandConflict {
+                    command: spec.path.join(" "),
+                    existing_plugin: existing.to_string(),
+                    new_plugin: manifest.name.clone(),
+                });
+            }
+        }
+
+        // 8. Validate route registrations
+        for spec in context.pending_routes() {
+            if let Some(existing) = self.route_registry.check_conflict(&manifest.name, spec) {
+                return Err(PluginHostError::RouteConflict {
+                    route: format!("{:?} {}", spec.method, spec.path),
+                    existing_plugin: existing.to_string(),
+                    new_plugin: manifest.name.clone(),
+                });
+            }
+        }
+
+        // 9. Commit registrations
+        let commands = context.take_pending_commands();
+        let routes = context.take_pending_routes();
+
+        self.command_registry.register(&manifest.name, commands);
+        self.route_registry.register(&manifest.name, routes);
+
         Ok(LoadedPlugin {
             manifest,
             instance,
@@ -215,6 +258,21 @@ impl PluginHost {
             _library: library,
             state: PluginState::Loaded,
         })
+    }
+
+    /// Unload a plugin and clean up its registrations
+    pub fn unload_plugin(&mut self, name: &str) -> Result<(), PluginHostError> {
+        if self.plugins.remove(name).is_none() {
+            return Err(PluginHostError::NotFound {
+                name: name.to_string(),
+            });
+        }
+
+        // Clean up registrations
+        self.command_registry.unregister(name);
+        self.route_registry.unregister(name);
+
+        Ok(())
     }
 
     /// Find the library file in a plugin directory
@@ -323,6 +381,69 @@ impl PluginHost {
     /// Get the number of loaded plugins
     pub fn plugin_count(&self) -> usize {
         self.plugins.len()
+    }
+
+    /// Get read access to the command registry
+    pub fn command_registry(&self) -> &CommandRegistry {
+        &self.command_registry
+    }
+
+    /// Get read access to the route registry
+    pub fn route_registry(&self) -> &RouteRegistry {
+        &self.route_registry
+    }
+
+    /// Dispatch a CLI command to the appropriate plugin
+    pub fn dispatch_command(
+        &mut self,
+        plugin_name: &str,
+        path: &[&str],
+        args: &CommandArgs,
+    ) -> Result<CommandOutput, PluginHostError> {
+        let plugin =
+            self.plugins
+                .get_mut(plugin_name)
+                .ok_or_else(|| PluginHostError::NotFound {
+                    name: plugin_name.to_string(),
+                })?;
+
+        if plugin.state != PluginState::Loaded {
+            return Err(PluginHostError::NotFound {
+                name: plugin_name.to_string(),
+            });
+        }
+
+        plugin
+            .instance
+            .handle_command(path, args, &mut plugin.context)
+            .map_err(PluginHostError::InitFailed)
+    }
+
+    /// Dispatch an HTTP route to the appropriate plugin
+    pub fn dispatch_route(
+        &mut self,
+        plugin_name: &str,
+        method: HttpMethod,
+        path: &str,
+        request: RouteRequest,
+    ) -> Result<RouteResponse, PluginHostError> {
+        let plugin =
+            self.plugins
+                .get_mut(plugin_name)
+                .ok_or_else(|| PluginHostError::NotFound {
+                    name: plugin_name.to_string(),
+                })?;
+
+        if plugin.state != PluginState::Loaded {
+            return Err(PluginHostError::NotFound {
+                name: plugin_name.to_string(),
+            });
+        }
+
+        plugin
+            .instance
+            .handle_route(method, path, request, &mut plugin.context)
+            .map_err(PluginHostError::InitFailed)
     }
 }
 

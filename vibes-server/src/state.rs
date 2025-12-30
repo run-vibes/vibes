@@ -31,7 +31,7 @@ const DEFAULT_BROADCAST_CAPACITY: usize = 1000;
 #[derive(Clone)]
 pub struct AppState {
     /// Plugin host for managing plugins
-    pub plugin_host: Arc<PluginHost>,
+    pub plugin_host: Arc<RwLock<PluginHost>>,
     /// Event bus for publishing/subscribing to events
     pub event_bus: Arc<MemoryEventBus>,
     /// Tunnel manager for remote access
@@ -56,7 +56,7 @@ impl AppState {
     /// Create a new AppState with default components
     pub fn new() -> Self {
         let event_bus = Arc::new(MemoryEventBus::new(10_000));
-        let plugin_host = Arc::new(PluginHost::new(PluginHostConfig::default()));
+        let plugin_host = Arc::new(RwLock::new(PluginHost::new(PluginHostConfig::default())));
         let tunnel_manager = Arc::new(RwLock::new(TunnelManager::new(
             TunnelConfig::default(),
             7432,
@@ -104,7 +104,7 @@ impl AppState {
 
     /// Create AppState with custom components (for testing)
     pub fn with_components(
-        plugin_host: Arc<PluginHost>,
+        plugin_host: Arc<RwLock<PluginHost>>,
         event_bus: Arc<MemoryEventBus>,
         tunnel_manager: Arc<RwLock<TunnelManager>>,
     ) -> Self {
@@ -129,6 +129,11 @@ impl AppState {
     /// Get a reference to the tunnel manager
     pub fn tunnel_manager(&self) -> &Arc<RwLock<TunnelManager>> {
         &self.tunnel_manager
+    }
+
+    /// Get a reference to the plugin host
+    pub fn plugin_host(&self) -> &Arc<RwLock<PluginHost>> {
+        &self.plugin_host
     }
 
     /// Subscribe to events broadcast to WebSocket clients
@@ -195,7 +200,7 @@ mod tests {
     #[test]
     fn test_app_state_with_components() {
         let event_bus = Arc::new(MemoryEventBus::new(100));
-        let plugin_host = Arc::new(PluginHost::new(PluginHostConfig::default()));
+        let plugin_host = Arc::new(RwLock::new(PluginHost::new(PluginHostConfig::default())));
         let tunnel_manager = Arc::new(RwLock::new(TunnelManager::new(
             TunnelConfig::default(),
             7432,

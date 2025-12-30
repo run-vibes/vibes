@@ -35,17 +35,21 @@
 //! export_plugin!(MyPlugin);
 //! ```
 
+pub mod command;
 pub mod context;
 pub mod error;
+pub mod http;
 pub mod types;
 
-pub use context::{Capability, Harness, PluginConfig, PluginContext};
+pub use command::{ArgSpec, CommandOutput, CommandSpec};
+pub use context::{Capability, CommandArgs, Harness, PluginConfig, PluginContext};
 pub use error::PluginError;
+pub use http::{HttpMethod, RouteRequest, RouteResponse, RouteSpec};
 pub use types::*;
 
 /// Current plugin API version. Plugins must match this exactly.
 /// This will be checked when loading plugins to ensure compatibility.
-pub const API_VERSION: u32 = 1;
+pub const API_VERSION: u32 = 2;
 
 /// The core plugin trait - implement this to create a vibes plugin.
 ///
@@ -123,6 +127,40 @@ pub trait Plugin: Send + Sync {
         _ctx: &mut PluginContext,
     ) {
     }
+
+    // ─── Command Handler ────────────────────────────────────────────
+
+    /// Handle a CLI command invocation.
+    ///
+    /// Called when a user runs a command registered by this plugin.
+    /// The `path` matches what was registered in `on_load`.
+    ///
+    /// Default: returns UnknownCommand error (override if registering commands)
+    fn handle_command(
+        &mut self,
+        _path: &[&str],
+        _args: &CommandArgs,
+        _ctx: &mut PluginContext,
+    ) -> Result<CommandOutput, PluginError> {
+        Err(PluginError::UnknownCommand("no commands registered".into()))
+    }
+
+    // ─── Route Handler ─────────────────────────────────────────────
+
+    /// Handle an HTTP route invocation.
+    ///
+    /// Called when an HTTP request matches a route registered by this plugin.
+    ///
+    /// Default: returns UnknownRoute error (override if registering routes)
+    fn handle_route(
+        &mut self,
+        _method: HttpMethod,
+        _path: &str,
+        _request: RouteRequest,
+        _ctx: &mut PluginContext,
+    ) -> Result<RouteResponse, PluginError> {
+        Err(PluginError::UnknownRoute("no routes registered".into()))
+    }
 }
 
 /// Export a plugin type for dynamic loading.
@@ -155,7 +193,15 @@ macro_rules! export_plugin {
             $crate::API_VERSION
         }
 
+        /// Destroy a plugin instance.
+        ///
+        /// # Safety
+        /// The pointer must have been created by `_vibes_plugin_create` and must
+        /// not have been already destroyed.
         #[unsafe(no_mangle)]
+        // This function's raw pointer signature is required for stable FFI ABI
+        // compatibility when loading/unloading plugins from dynamic libraries.
+        #[allow(clippy::not_unsafe_ptr_arg_deref)]
         pub extern "C" fn _vibes_plugin_destroy(ptr: *mut dyn $crate::Plugin) {
             if !ptr.is_null() {
                 unsafe {
@@ -169,10 +215,11 @@ macro_rules! export_plugin {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::PathBuf;
 
     #[test]
     fn test_api_version_is_set() {
-        assert_eq!(API_VERSION, 1);
+        assert_eq!(API_VERSION, 2);
     }
 
     #[test]
@@ -185,5 +232,60 @@ mod tests {
     fn test_manifest_default_has_correct_api_version() {
         let manifest = PluginManifest::default();
         assert_eq!(manifest.api_version, API_VERSION);
+    }
+
+    #[test]
+    fn test_plugin_handle_command_default_returns_error() {
+        struct TestPlugin;
+        impl Plugin for TestPlugin {
+            fn manifest(&self) -> PluginManifest {
+                PluginManifest::default()
+            }
+            fn on_load(&mut self, _ctx: &mut PluginContext) -> Result<(), PluginError> {
+                Ok(())
+            }
+            fn on_unload(&mut self) -> Result<(), PluginError> {
+                Ok(())
+            }
+        }
+
+        let mut plugin = TestPlugin;
+        let mut ctx = PluginContext::new("test".into(), PathBuf::from("/tmp"));
+        let args = CommandArgs::default();
+
+        let result = plugin.handle_command(&["foo"], &args, &mut ctx);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_plugin_handle_route_default_returns_error() {
+        use crate::context::PluginContext;
+        use crate::http::{HttpMethod, RouteRequest};
+        use std::collections::HashMap;
+
+        struct TestPlugin;
+        impl Plugin for TestPlugin {
+            fn manifest(&self) -> PluginManifest {
+                PluginManifest::default()
+            }
+            fn on_load(&mut self, _ctx: &mut PluginContext) -> Result<(), PluginError> {
+                Ok(())
+            }
+            fn on_unload(&mut self) -> Result<(), PluginError> {
+                Ok(())
+            }
+        }
+
+        let mut plugin = TestPlugin;
+        let mut ctx = PluginContext::new("test".into(), PathBuf::from("/tmp"));
+        let request = RouteRequest {
+            params: HashMap::new(),
+            query: HashMap::new(),
+            body: vec![],
+            headers: HashMap::new(),
+        };
+
+        let result = plugin.handle_route(HttpMethod::Get, "/foo", request, &mut ctx);
+        assert!(result.is_err());
     }
 }

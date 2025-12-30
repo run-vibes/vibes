@@ -38,10 +38,14 @@
 //! host.disable_plugin("history")?;
 //! ```
 
+mod commands;
 mod error;
 mod host;
 mod registry;
+mod routes;
 
+pub use commands::{CommandRegistry, RegisteredPluginCommand};
 pub use error::PluginHostError;
 pub use host::{PluginHost, PluginHostConfig, PluginInfo, PluginState};
 pub use registry::PluginRegistry;
+pub use routes::{RegisteredPluginRoute, RouteRegistry};

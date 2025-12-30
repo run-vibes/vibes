@@ -4321,6 +4321,7 @@ dependencies = [
  "uuid",
  "vibes-core",
  "vibes-groove",
+ "vibes-plugin-api",
  "vibes-server",
 ]
 
@@ -4374,6 +4375,7 @@ dependencies = [
  "tokio",
  "toml",
  "uuid",
+ "vibes-plugin-api",
 ]
 
 [[package]]
@@ -4423,9 +4425,11 @@ dependencies = [
  "tower",
  "tower-http",
  "tracing",
+ "url",
  "uuid",
  "vibes-core",
  "vibes-groove",
+ "vibes-plugin-api",
 ]
 
 [[package]]

@@ -21,7 +21,7 @@ This document tracks the implementation progress of vibes against the roadmap de
 | 4.1 Harness Introspection | Complete | [design](plans/15-harness-introspection/design.md) | [implementation](plans/15-harness-introspection/implementation.md) |
 | 4.2 Storage Foundation | In progress | [design](plans/14-continual-learning/design.md#42-storage-foundation), [decisions](plans/14-continual-learning/milestone-4.2-decisions.md) | [implementation](plans/14-continual-learning/milestone-4.2-implementation.md) |
 | 4.2.5 Security Foundation | Complete ⚠️ | [design](plans/14-continual-learning/design.md#425-security-foundation--new) | [implementation](plans/14-continual-learning/milestone-4.2.5-implementation.md) |
-| 4.2.6 Plugin API Extension | Not started | — | — |
+| 4.2.6 Plugin API Extension | Complete | — | — |
 | 4.3 Capture & Inject | Not started | [design](plans/14-continual-learning/design.md#43-capture--inject-mvp) | — |
 | 4.4 Assessment Framework | Not started | [design](plans/14-continual-learning/design.md#44-assessment-framework--new) | — |
 | 4.5 Learning Extraction | Not started | [design](plans/14-continual-learning/design.md#45-learning-extraction) | — |
@@ -188,20 +188,20 @@ Note: Auto-detect team/aud moved to Milestone 3.5 (Cloudflare Auth Wizard)
 - [x] REST API endpoints (`/api/groove/*`)
 - [x] Web UI quarantine page with dashboard
 
-> ⚠️ **Technical Debt:** CLI commands and API routes were added directly to `vibes-cli` and `vibes-server` instead of via the plugin system. This will be migrated in Milestone 4.2.6. See [PLAN.md](PLAN.md#architectural-decision-plugin-vs-built-in).
+> **Note:** CLI commands and API routes were originally added directly to `vibes-cli` and `vibes-server`. These were migrated to the plugin system in Milestone 4.2.6.
 
 ### Milestone 4.2.6: Plugin API Extension
 
 > **Prerequisite for remaining groove milestones.** Extends the plugin system so groove (and future plugins) can register CLI commands and HTTP routes.
 
-- [ ] Extend `vibes-plugin-api` to support CLI subcommand registration
-- [ ] Extend `vibes-plugin-api` to support HTTP route registration
-- [ ] Plugin manifest for declaring CLI commands and routes
-- [ ] Dynamic loading of plugin CLI commands in `vibes-cli`
-- [ ] Dynamic mounting of plugin routes in `vibes-server`
-- [ ] Migrate groove CLI commands from `vibes-cli` to `vibes-groove` plugin
-- [ ] Migrate groove API routes from `vibes-server` to `vibes-groove` plugin
-- [ ] Update documentation and examples
+- [x] Extend `vibes-plugin-api` to support CLI subcommand registration
+- [x] Extend `vibes-plugin-api` to support HTTP route registration
+- [x] Plugin manifest for declaring CLI commands and routes
+- [x] Dynamic loading of plugin CLI commands in `vibes-cli`
+- [x] Dynamic mounting of plugin routes in `vibes-server`
+- [x] Migrate groove CLI commands from `vibes-cli` to `vibes-groove` plugin
+- [x] Migrate groove API routes from `vibes-server` to `vibes-groove` plugin
+- [x] Update documentation and examples
 
 ### Milestone 4.3: Capture & Inject (MVP)
 - [ ] `CaptureAdapter` trait for abstract capture
@@ -348,3 +348,4 @@ These phases are planned but not yet scheduled.
 | 2025-12-29 | Documentation updated: PLAN.md with multi-phase milestone conventions (epics), CLAUDE.md updated for Phase 4 status, CURRENT_MILESTONE.md pointer added for groove epic |
 | 2025-12-29 | Milestone 4.2 (Storage Foundation) marked in progress - brainstorm decisions and implementation plan complete, vibes-groove crate ready to implement |
 | 2025-12-29 | Milestone 4.2.5 (Security Foundation) complete - TrustLevel hierarchy, Provenance/ContentHash, ContentSecurityScanner, SecureInjector, AuditLog, OrgRole RBAC, SecureLearningStore, QuarantineManager, CLI commands, REST API, Web UI quarantine page |
+| 2025-12-29 | Milestone 4.2.6 (Plugin API Extension) complete - Extended plugin API with command/route registration, added CommandSpec/RouteSpec types, CommandRegistry/RouteRegistry in vibes-core, integrated plugin dispatch in CLI and server, migrated groove to plugin system, bumped plugin API version to 2 |

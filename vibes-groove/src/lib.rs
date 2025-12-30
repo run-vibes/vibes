@@ -8,6 +8,7 @@
 pub mod config;
 pub mod error;
 pub mod export;
+pub mod plugin;
 pub mod security;
 pub mod storage;
 pub mod store;
@@ -32,3 +33,6 @@ pub use security::{
     SecurityError, SecurityResult, Severity, TrustContext, TrustLevel, TrustSource, Verification,
     VerifiedBy,
 };
+
+// Plugin re-export
+pub use plugin::GroovePlugin;

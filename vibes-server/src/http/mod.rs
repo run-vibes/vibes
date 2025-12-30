@@ -1,7 +1,7 @@
 //! HTTP server module
 
 mod api;
-mod groove;
+pub mod plugins;
 mod push;
 mod static_files;
 
@@ -39,22 +39,6 @@ pub fn create_router(state: Arc<AppState>) -> Router {
         .route("/api/push/subscribe", post(push::subscribe))
         .route("/api/push/subscribe/:id", delete(push::unsubscribe))
         .route("/api/push/subscriptions", get(push::list_subscriptions))
-        // Groove security endpoints
-        .route("/api/groove/policy", get(groove::get_policy))
-        .route("/api/groove/trust/levels", get(groove::get_trust_levels))
-        .route(
-            "/api/groove/trust/role/:role",
-            get(groove::get_role_permissions),
-        )
-        .route("/api/groove/quarantine", get(groove::list_quarantined))
-        .route(
-            "/api/groove/quarantine/stats",
-            get(groove::get_quarantine_stats),
-        )
-        .route(
-            "/api/groove/quarantine/:id/review",
-            post(groove::review_quarantined),
-        )
         .route("/ws", get(ws_handler))
         .layer(middleware::from_fn(auth_middleware))
         .layer(Extension(auth_layer))
