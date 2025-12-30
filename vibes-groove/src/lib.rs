@@ -5,9 +5,12 @@
 //! adaptive parameters, and semantic search capabilities.
 
 // Module declarations - commented out until implemented
+pub mod capture;
 pub mod config;
 pub mod error;
 pub mod export;
+pub mod inject;
+pub mod paths;
 pub mod plugin;
 pub mod security;
 pub mod storage;
@@ -18,6 +21,7 @@ pub mod types;
 pub use config::{EnterpriseConfig, GrooveConfig, ProjectContext};
 pub use error::{GrooveError, Result};
 pub use export::{EXPORT_VERSION, GrooveExport, ImportStats, LearningExport};
+pub use paths::GroovePaths;
 pub use storage::GrooveStorage;
 pub use store::{
     CURRENT_SCHEMA_VERSION, CozoStore, INITIAL_SCHEMA, LearningStore, MIGRATIONS, Migration,

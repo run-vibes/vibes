@@ -213,6 +213,7 @@ pub fn vibes_event_to_server_message(event: &VibesEvent) -> Option<ServerMessage
         VibesEvent::OwnershipTransferred { .. } => None,
         VibesEvent::ClientConnected { .. } => None,
         VibesEvent::ClientDisconnected { .. } => None,
+        VibesEvent::Hook { .. } => None,
     }
 }
 

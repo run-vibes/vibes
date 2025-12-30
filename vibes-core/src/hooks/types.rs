@@ -1,6 +1,9 @@
 //! Hook event types
 //!
 //! These types represent the structured data received from Claude Code hooks.
+//!
+//! All hook data types derive `PartialEq` for consistency and testability.
+//! This allows comparing events in tests and building equality-based logic.
 
 use serde::{Deserialize, Serialize};
 
@@ -11,10 +14,25 @@ pub enum HookType {
     PreToolUse,
     PostToolUse,
     Stop,
+    SessionStart,
+    UserPromptSubmit,
+}
+
+impl HookType {
+    /// Get the hook type as a string
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            HookType::PreToolUse => "PreToolUse",
+            HookType::PostToolUse => "PostToolUse",
+            HookType::Stop => "Stop",
+            HookType::SessionStart => "SessionStart",
+            HookType::UserPromptSubmit => "UserPromptSubmit",
+        }
+    }
 }
 
 /// Data from a PreToolUse hook
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PreToolUseData {
     /// The tool being called
     pub tool_name: String,
@@ -25,7 +43,7 @@ pub struct PreToolUseData {
 }
 
 /// Data from a PostToolUse hook
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PostToolUseData {
     /// The tool that was called
     pub tool_name: String,
@@ -40,7 +58,7 @@ pub struct PostToolUseData {
 }
 
 /// Data from a Stop hook
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct StopData {
     /// Path to the transcript JSONL file
     pub transcript_path: Option<String>,
@@ -50,13 +68,33 @@ pub struct StopData {
     pub session_id: Option<String>,
 }
 
+/// Data from a SessionStart hook
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SessionStartData {
+    /// Optional session ID
+    pub session_id: Option<String>,
+    /// Project path where session started
+    pub project_path: Option<String>,
+}
+
+/// Data from a UserPromptSubmit hook
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct UserPromptSubmitData {
+    /// Optional session ID
+    pub session_id: Option<String>,
+    /// The prompt being submitted
+    pub prompt: String,
+}
+
 /// A hook event received from Claude Code
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum HookEvent {
     PreToolUse(PreToolUseData),
     PostToolUse(PostToolUseData),
     Stop(StopData),
+    SessionStart(SessionStartData),
+    UserPromptSubmit(UserPromptSubmitData),
 }
 
 impl HookEvent {
@@ -66,6 +104,8 @@ impl HookEvent {
             HookEvent::PreToolUse(data) => data.session_id.as_deref(),
             HookEvent::PostToolUse(data) => data.session_id.as_deref(),
             HookEvent::Stop(data) => data.session_id.as_deref(),
+            HookEvent::SessionStart(data) => data.session_id.as_deref(),
+            HookEvent::UserPromptSubmit(data) => data.session_id.as_deref(),
         }
     }
 
@@ -75,6 +115,48 @@ impl HookEvent {
             HookEvent::PreToolUse(_) => HookType::PreToolUse,
             HookEvent::PostToolUse(_) => HookType::PostToolUse,
             HookEvent::Stop(_) => HookType::Stop,
+            HookEvent::SessionStart(_) => HookType::SessionStart,
+            HookEvent::UserPromptSubmit(_) => HookType::UserPromptSubmit,
+        }
+    }
+
+    /// Whether this hook type supports returning a response
+    pub fn supports_response(&self) -> bool {
+        matches!(
+            self,
+            HookEvent::SessionStart(_) | HookEvent::UserPromptSubmit(_)
+        )
+    }
+
+    /// Get the project path from this event, if available
+    pub fn project_path(&self) -> Option<String> {
+        match self {
+            HookEvent::SessionStart(data) => data.project_path.clone(),
+            // Other hook types don't carry project path
+            _ => None,
+        }
+    }
+}
+
+/// Response to send back to Claude Code for injection hooks
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct HookResponse {
+    /// Additional context to inject into Claude's conversation
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub additional_context: Option<String>,
+}
+
+impl HookResponse {
+    /// Create an empty response (no injection)
+    pub fn empty() -> Self {
+        Self::default()
+    }
+
+    /// Create a response with additional context
+    pub fn with_context(context: impl Into<String>) -> Self {
+        Self {
+            additional_context: Some(context.into()),
         }
     }
 }
@@ -141,5 +223,80 @@ mod tests {
             session_id: None,
         });
         assert_eq!(pre.hook_type(), HookType::PreToolUse);
+    }
+
+    #[test]
+    fn test_session_start_serialization() {
+        let data = SessionStartData {
+            session_id: Some("sess-789".to_string()),
+            project_path: Some("/home/user/project".to_string()),
+        };
+        let event = HookEvent::SessionStart(data);
+
+        let json = serde_json::to_string(&event).unwrap();
+        assert!(json.contains("session_start"));
+
+        let parsed: HookEvent = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed.session_id(), Some("sess-789"));
+    }
+
+    #[test]
+    fn test_user_prompt_submit_serialization() {
+        let data = UserPromptSubmitData {
+            session_id: Some("sess-abc".to_string()),
+            prompt: "Help me with Rust".to_string(),
+        };
+        let event = HookEvent::UserPromptSubmit(data);
+
+        let json = serde_json::to_string(&event).unwrap();
+        assert!(json.contains("user_prompt_submit"));
+
+        let parsed: HookEvent = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed.session_id(), Some("sess-abc"));
+    }
+
+    #[test]
+    fn test_hook_supports_response() {
+        let session_start = HookEvent::SessionStart(SessionStartData {
+            session_id: None,
+            project_path: None,
+        });
+        assert!(session_start.supports_response());
+
+        let user_prompt = HookEvent::UserPromptSubmit(UserPromptSubmitData {
+            session_id: None,
+            prompt: "test".to_string(),
+        });
+        assert!(user_prompt.supports_response());
+
+        let stop = HookEvent::Stop(StopData {
+            transcript_path: None,
+            reason: None,
+            session_id: None,
+        });
+        assert!(!stop.supports_response());
+    }
+
+    #[test]
+    fn test_hook_response_serialization() {
+        let response = HookResponse {
+            additional_context: Some("## groove Learnings\n\n- Use pytest".to_string()),
+        };
+
+        let json = serde_json::to_string(&response).unwrap();
+        assert!(json.contains("additionalContext"));
+        assert!(json.contains("groove"));
+
+        let parsed: HookResponse = serde_json::from_str(&json).unwrap();
+        assert!(parsed.additional_context.unwrap().contains("pytest"));
+    }
+
+    #[test]
+    fn test_hook_response_empty() {
+        let response = HookResponse::empty();
+        let json = serde_json::to_string(&response).unwrap();
+        // Empty response should still be valid JSON
+        let parsed: HookResponse = serde_json::from_str(&json).unwrap();
+        assert!(parsed.additional_context.is_none());
     }
 }

@@ -477,6 +477,18 @@ fn dispatch_to_plugin(
         | VibesEvent::SessionRemoved { .. } => {
             // These events are not dispatched to plugins (they're client -> server or system events)
         }
+        VibesEvent::Hook { session_id, event } => {
+            // Dispatch hook events to plugins for processing
+            let hook_type = event.hook_type().as_str();
+            let project_path = event.project_path();
+            let _response = plugin.on_hook(
+                session_id.as_deref(),
+                hook_type,
+                project_path.as_deref(),
+                ctx,
+            );
+            // Response handling will be implemented when hook responses are wired to the receiver
+        }
     }
     Ok(())
 }

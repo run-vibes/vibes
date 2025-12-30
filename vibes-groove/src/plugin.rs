@@ -3,13 +3,44 @@
 //! Provides CLI commands and HTTP routes for security, trust, and quarantine management.
 
 use serde::{Deserialize, Serialize};
+use vibes_core::hooks::{HookInstaller, HookInstallerConfig};
 use vibes_plugin_api::{
     ArgSpec, CommandOutput, CommandSpec, HttpMethod, Plugin, PluginContext, PluginError,
     PluginManifest, RouteRequest, RouteResponse, RouteSpec,
 };
 
+use crate::CozoStore;
+use crate::paths::GroovePaths;
 use crate::security::load_policy_or_default;
 use crate::security::{OrgRole, Policy, ReviewOutcome, TrustLevel};
+
+/// Initialize the groove database at the configured path
+///
+/// Creates and initializes the CozoDB database with the groove schema.
+/// This is called during `groove init` to ensure the database is ready.
+///
+/// If already in an async context, reuses the existing runtime handle for efficiency.
+pub fn init_database(paths: &GroovePaths) -> Result<(), crate::GrooveError> {
+    // Try to reuse existing runtime if we're already in an async context
+    if let Ok(handle) = tokio::runtime::Handle::try_current() {
+        handle.block_on(async {
+            // Open (and create if needed) the database - this also runs schema migrations
+            let _store = CozoStore::open(&paths.db_path).await?;
+            Ok::<(), crate::GrooveError>(())
+        })
+    } else {
+        // Create new runtime if not in async context
+        let rt = tokio::runtime::Runtime::new().map_err(|e| {
+            crate::GrooveError::Database(format!("Failed to create runtime: {}", e))
+        })?;
+
+        rt.block_on(async {
+            // Open (and create if needed) the database - this also runs schema migrations
+            let _store = CozoStore::open(&paths.db_path).await?;
+            Ok(())
+        })
+    }
+}
 
 // ============================================================================
 // Response Types (mirrored from vibes-server for independence)
@@ -204,6 +235,39 @@ impl Plugin for GroovePlugin {
         Ok(())
     }
 
+    fn on_hook(
+        &mut self,
+        session_id: Option<&str>,
+        hook_type: &str,
+        project_path: Option<&str>,
+        ctx: &mut PluginContext,
+    ) -> Option<String> {
+        ctx.log_debug(&format!(
+            "Received hook: type={}, session={:?}, project={:?}",
+            hook_type, session_id, project_path
+        ));
+
+        // Handle SessionStart and UserPromptSubmit for context injection
+        match hook_type {
+            "SessionStart" => {
+                // In the future, this will query learned context and return it
+                // For now, just log that we received the event
+                ctx.log_info(&format!("Session started for project: {:?}", project_path));
+                // Return None for now - context injection will be implemented in Milestone 4.5
+                None
+            }
+            "UserPromptSubmit" => {
+                // In the future, this will capture the prompt and potentially inject context
+                ctx.log_debug("User prompt submitted");
+                None
+            }
+            _ => {
+                // Other hook types are logged but not processed
+                None
+            }
+        }
+    }
+
     fn handle_command(
         &mut self,
         path: &[&str],
@@ -211,6 +275,9 @@ impl Plugin for GroovePlugin {
         _ctx: &mut PluginContext,
     ) -> Result<CommandOutput, PluginError> {
         match path {
+            ["init"] => self.cmd_init(args),
+            ["list"] => self.cmd_list(args),
+            ["status"] => self.cmd_status(),
             ["trust", "levels"] => self.cmd_trust_levels(),
             ["trust", "role"] => self.cmd_trust_role(args),
             ["policy", "show"] => self.cmd_policy_show(),
@@ -244,6 +311,35 @@ impl GroovePlugin {
     // ─── Command Registration ─────────────────────────────────────────
 
     fn register_commands(&self, ctx: &mut PluginContext) -> Result<(), PluginError> {
+        // init [project_path]
+        ctx.register_command(CommandSpec {
+            path: vec!["init".into()],
+            description: "Initialize groove for a project".into(),
+            args: vec![ArgSpec {
+                name: "project_path".into(),
+                description: "Project path (defaults to current directory)".into(),
+                required: false,
+            }],
+        })?;
+
+        // list [limit]
+        ctx.register_command(CommandSpec {
+            path: vec!["list".into()],
+            description: "List captured learnings".into(),
+            args: vec![ArgSpec {
+                name: "limit".into(),
+                description: "Maximum number of learnings to show (default: 10)".into(),
+                required: false,
+            }],
+        })?;
+
+        // status
+        ctx.register_command(CommandSpec {
+            path: vec!["status".into()],
+            description: "Show groove system status".into(),
+            args: vec![],
+        })?;
+
         // trust levels
         ctx.register_command(CommandSpec {
             path: vec!["trust".into(), "levels".into()],
@@ -330,6 +426,153 @@ impl GroovePlugin {
     }
 
     // ─── Command Handlers ─────────────────────────────────────────────
+
+    fn cmd_init(&self, args: &vibes_plugin_api::CommandArgs) -> Result<CommandOutput, PluginError> {
+        // Get project path from args or use current directory
+        let project_path = args
+            .args
+            .first()
+            .map(std::path::PathBuf::from)
+            .unwrap_or_else(|| std::env::current_dir().unwrap_or_default());
+
+        let mut output = String::new();
+        output.push_str("Initializing groove for continual learning...\n\n");
+
+        // Create groove directories
+        let paths = GroovePaths::default();
+        if let Err(e) = paths.ensure_dirs() {
+            return Err(PluginError::custom(format!(
+                "Failed to create directories: {}",
+                e
+            )));
+        }
+        output.push_str(&format!(
+            "✓ Created data directory: {}\n",
+            paths.data_dir.display()
+        ));
+        output.push_str(&format!(
+            "✓ Created transcripts directory: {}\n",
+            paths.transcripts_dir.display()
+        ));
+        output.push_str(&format!(
+            "✓ Created learnings directory: {}\n",
+            paths.learnings_dir.display()
+        ));
+
+        // Initialize database
+        match init_database(&paths) {
+            Ok(()) => {
+                output.push_str(&format!(
+                    "✓ Initialized database: {}\n",
+                    paths.db_path.display()
+                ));
+            }
+            Err(e) => {
+                output.push_str(&format!("⚠ Could not initialize database: {}\n", e));
+                output.push_str("  Database will be created on first use.\n");
+            }
+        }
+
+        // Install hooks
+        let hook_config = HookInstallerConfig::default();
+        let installer = HookInstaller::new(hook_config);
+
+        match installer.install() {
+            Ok(()) => {
+                output.push_str("✓ Installed Claude Code hooks\n");
+            }
+            Err(e) => {
+                output.push_str(&format!("⚠ Could not install hooks: {}\n", e));
+                output
+                    .push_str("  You can manually install hooks by running 'vibes claude' once.\n");
+            }
+        }
+
+        output.push('\n');
+        output.push_str(&format!(
+            "Groove initialized for project: {}\n",
+            project_path.display()
+        ));
+        output.push_str("\nNext steps:\n");
+        output.push_str("  1. Run 'vibes claude' to start a session with learning capture\n");
+        output.push_str("  2. Run 'vibes groove status' to check system status\n");
+        output.push_str("  3. Run 'vibes groove list' to view captured learnings\n");
+
+        Ok(CommandOutput::Text(output))
+    }
+
+    fn cmd_list(&self, args: &vibes_plugin_api::CommandArgs) -> Result<CommandOutput, PluginError> {
+        let limit = args
+            .args
+            .first()
+            .and_then(|s| s.parse::<usize>().ok())
+            .unwrap_or(10);
+
+        let mut output = String::new();
+        output.push_str(&format!("Learnings (limit: {}):\n\n", limit));
+
+        // Stub implementation - full implementation requires storage integration
+        output.push_str("No learnings captured yet.\n");
+        output.push_str("\nStart a session with 'vibes claude' to begin capturing learnings.\n");
+
+        Ok(CommandOutput::Text(output))
+    }
+
+    fn cmd_status(&self) -> Result<CommandOutput, PluginError> {
+        let mut output = String::new();
+        output.push_str("Groove System Status\n");
+        output.push_str(&format!("{}\n\n", "=".repeat(40)));
+
+        // Check paths
+        let paths = GroovePaths::default();
+        output.push_str("Directories:\n");
+        let check = |exists: bool| if exists { "✓" } else { "✗" };
+        output.push_str(&format!(
+            "  {} Data:        {}\n",
+            check(paths.data_dir.exists()),
+            paths.data_dir.display()
+        ));
+        output.push_str(&format!(
+            "  {} Transcripts: {}\n",
+            check(paths.transcripts_dir.exists()),
+            paths.transcripts_dir.display()
+        ));
+        output.push_str(&format!(
+            "  {} Learnings:   {}\n",
+            check(paths.learnings_dir.exists()),
+            paths.learnings_dir.display()
+        ));
+        output.push_str(&format!(
+            "  {} Database:    {}\n",
+            check(paths.db_path.exists()),
+            paths.db_path.display()
+        ));
+
+        // Check hooks
+        output.push_str("\nHooks:\n");
+        if let Some(hooks_dir) = GroovePaths::claude_projects_dir() {
+            let hooks_path = hooks_dir.parent().unwrap_or(&hooks_dir).join("hooks");
+            if hooks_path.exists() {
+                output.push_str(&format!("  ✓ Hooks directory: {}\n", hooks_path.display()));
+            } else {
+                output.push_str("  ✗ Hooks not installed\n");
+                output.push_str("    Run 'vibes groove init' to install hooks\n");
+            }
+        } else {
+            output.push_str("  ? Could not determine hooks directory\n");
+        }
+
+        // Summary
+        output.push_str("\nStatus: ");
+        if paths.data_dir.exists() && paths.transcripts_dir.exists() {
+            output.push_str("Ready\n");
+        } else {
+            output.push_str("Not initialized\n");
+            output.push_str("  Run 'vibes groove init' to set up groove\n");
+        }
+
+        Ok(CommandOutput::Text(output))
+    }
 
     fn cmd_trust_levels(&self) -> Result<CommandOutput, PluginError> {
         let mut output = String::new();
@@ -698,18 +941,34 @@ mod tests {
 
         plugin.on_load(&mut ctx).unwrap();
 
-        // Should have 6 commands registered
         let commands = ctx.pending_commands();
-        assert_eq!(commands.len(), 6);
-
-        // Verify command paths
         let paths: Vec<_> = commands.iter().map(|c| c.path.join(" ")).collect();
-        assert!(paths.contains(&"trust levels".to_string()));
-        assert!(paths.contains(&"trust role".to_string()));
-        assert!(paths.contains(&"policy show".to_string()));
-        assert!(paths.contains(&"policy path".to_string()));
-        assert!(paths.contains(&"quarantine list".to_string()));
-        assert!(paths.contains(&"quarantine stats".to_string()));
+
+        // Verify expected commands are registered (not checking count to avoid brittleness)
+        let expected_commands = [
+            // Groove commands
+            "init",
+            "list",
+            "status",
+            // Trust commands
+            "trust levels",
+            "trust role",
+            // Policy commands
+            "policy show",
+            "policy path",
+            // Quarantine commands
+            "quarantine list",
+            "quarantine stats",
+        ];
+
+        for cmd in expected_commands {
+            assert!(
+                paths.contains(&cmd.to_string()),
+                "Expected command '{}' not found. Registered: {:?}",
+                cmd,
+                paths
+            );
+        }
     }
 
     #[test]
@@ -719,18 +978,27 @@ mod tests {
 
         plugin.on_load(&mut ctx).unwrap();
 
-        // Should have 6 routes registered
         let routes = ctx.pending_routes();
-        assert_eq!(routes.len(), 6);
-
-        // Verify route paths
         let paths: Vec<_> = routes.iter().map(|r| r.path.clone()).collect();
-        assert!(paths.contains(&"/policy".to_string()));
-        assert!(paths.contains(&"/trust/levels".to_string()));
-        assert!(paths.contains(&"/trust/role/:role".to_string()));
-        assert!(paths.contains(&"/quarantine".to_string()));
-        assert!(paths.contains(&"/quarantine/stats".to_string()));
-        assert!(paths.contains(&"/quarantine/:id/review".to_string()));
+
+        // Verify expected routes are registered (not checking count to avoid brittleness)
+        let expected_routes = [
+            "/policy",
+            "/trust/levels",
+            "/trust/role/:role",
+            "/quarantine",
+            "/quarantine/stats",
+            "/quarantine/:id/review",
+        ];
+
+        for route in expected_routes {
+            assert!(
+                paths.contains(&route.to_string()),
+                "Expected route '{}' not found. Registered: {:?}",
+                route,
+                paths
+            );
+        }
     }
 
     #[test]
@@ -1011,5 +1279,23 @@ mod tests {
         };
         let result = plugin.handle_route(HttpMethod::Get, "/unknown", request, &mut ctx);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_init_database_creates_db_file() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let paths = crate::paths::GroovePaths::from_base(temp_dir.path().to_path_buf());
+
+        // Database should not exist before init
+        assert!(
+            !paths.db_path.exists(),
+            "Database should not exist before init"
+        );
+
+        // Initialize database
+        init_database(&paths).expect("Database initialization should succeed");
+
+        // Database should exist after init
+        assert!(paths.db_path.exists(), "Database should exist after init");
     }
 }

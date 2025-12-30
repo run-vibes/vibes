@@ -125,6 +125,10 @@ impl HookInstaller {
     }
 
     /// Update settings.json to register hooks
+    ///
+    /// Claude Code's settings.json uses hooks as an object where:
+    /// - Each key is a hook type (e.g., "PreToolUse", "SessionStart")
+    /// - Each value is an array of hook configurations
     pub fn update_settings(&self, hooks_dir: &Path) -> Result<(), InstallError> {
         let settings_path = self.claude_dir()?.join("settings.json");
 
@@ -142,62 +146,81 @@ impl HookInstaller {
             InstallError::ParseSettings("settings.json is not an object".to_string())
         })?;
 
-        // Get or create hooks array
+        // Get or create hooks object (Claude Code uses object format, not array)
         let hooks = settings_obj
             .entry("hooks")
-            .or_insert_with(|| serde_json::json!([]));
+            .or_insert_with(|| serde_json::json!({}));
 
-        let hooks_array = hooks
-            .as_array_mut()
-            .ok_or_else(|| InstallError::ParseSettings("hooks is not an array".to_string()))?;
+        // Handle migration from legacy array-format hooks to object format
+        let hooks_obj = if hooks.is_object() {
+            hooks.as_object_mut().unwrap()
+        } else if hooks.is_array() {
+            // Preserve existing array-based hooks under a "legacy" key
+            let existing = hooks.clone();
+            *hooks = serde_json::json!({ "legacy": existing });
+            debug!("Migrated legacy array-format hooks to object format");
+            hooks.as_object_mut().ok_or_else(|| {
+                InstallError::ParseSettings(
+                    "failed to migrate legacy array-based hooks to object format".to_string(),
+                )
+            })?
+        } else {
+            return Err(InstallError::ParseSettings(
+                "hooks is neither an object nor an array".to_string(),
+            ));
+        };
 
         // Hook configurations to add
         let vibes_hooks = [
             ("PreToolUse", "pre-tool-use.sh"),
             ("PostToolUse", "post-tool-use.sh"),
             ("Stop", "stop.sh"),
+            ("SessionStart", "session-start.sh"),
+            ("UserPromptSubmit", "user-prompt-submit.sh"),
         ];
 
         for (hook_type, script_name) in vibes_hooks {
             let script_path = hooks_dir.join(script_name);
             let script_path_str = script_path.to_string_lossy().to_string();
 
-            // Check if hook already exists
-            let exists = hooks_array.iter().any(|h| {
-                h.get("matcher")
-                    .and_then(|m| m.get("type"))
-                    .and_then(|t| t.as_str())
-                    == Some(hook_type)
-                    && h.get("hooks")
-                        .and_then(|arr| arr.as_array())
-                        .map(|arr| {
-                            arr.iter().any(|cmd| {
-                                cmd.get("command")
-                                    .and_then(|c| c.as_str())
-                                    .map(|c| c.contains("vibes"))
-                                    .unwrap_or(false)
-                            })
+            // Get or create array for this hook type
+            let hook_type_array = hooks_obj
+                .entry(hook_type)
+                .or_insert_with(|| serde_json::json!([]))
+                .as_array_mut()
+                .ok_or_else(|| {
+                    InstallError::ParseSettings(format!("hooks.{} is not an array", hook_type))
+                })?;
+
+            // Check if vibes hook already exists for this type
+            let vibes_exists = hook_type_array.iter().any(|h| {
+                h.get("hooks")
+                    .and_then(|arr| arr.as_array())
+                    .map(|arr| {
+                        arr.iter().any(|cmd| {
+                            cmd.get("command")
+                                .and_then(|c| c.as_str())
+                                .map(|c| c.contains("vibes"))
+                                .unwrap_or(false)
                         })
-                        .unwrap_or(false)
+                    })
+                    .unwrap_or(false)
             });
 
-            if exists {
+            if vibes_exists {
                 debug!("Hook {} already registered for vibes", hook_type);
                 continue;
             }
 
             // Add new hook configuration
             let hook_config = serde_json::json!({
-                "matcher": {
-                    "type": hook_type
-                },
                 "hooks": [{
                     "type": "command",
                     "command": script_path_str
                 }]
             });
 
-            hooks_array.push(hook_config);
+            hook_type_array.push(hook_config);
             debug!("Added hook configuration for {}", hook_type);
         }
 
@@ -276,8 +299,14 @@ mod tests {
         let content = fs::read_to_string(&settings_path).unwrap();
         let settings: serde_json::Value = serde_json::from_str(&content).unwrap();
 
-        let hooks = settings.get("hooks").unwrap().as_array().unwrap();
-        assert_eq!(hooks.len(), 3); // PreToolUse, PostToolUse, Stop
+        // hooks is an object with 5 hook types as keys
+        let hooks = settings.get("hooks").unwrap().as_object().unwrap();
+        assert_eq!(hooks.len(), 5); // PreToolUse, PostToolUse, Stop, SessionStart, UserPromptSubmit
+        assert!(hooks.contains_key("PreToolUse"));
+        assert!(hooks.contains_key("PostToolUse"));
+        assert!(hooks.contains_key("Stop"));
+        assert!(hooks.contains_key("SessionStart"));
+        assert!(hooks.contains_key("UserPromptSubmit"));
     }
 
     #[test]
@@ -286,13 +315,15 @@ mod tests {
         let claude_dir = temp_dir.path().join(".claude");
         fs::create_dir_all(&claude_dir).unwrap();
 
-        // Write existing settings
+        // Write existing settings with hooks as object (Claude Code's real format)
         let existing = serde_json::json!({
             "some_setting": "value",
-            "hooks": [{
-                "matcher": {"type": "OtherHook"},
-                "hooks": [{"type": "command", "command": "other-script.sh"}]
-            }]
+            "hooks": {
+                "OtherHook": [{
+                    "matcher": "some_matcher",
+                    "hooks": [{"type": "command", "command": "other-script.sh"}]
+                }]
+            }
         });
         fs::write(
             claude_dir.join("settings.json"),
@@ -316,9 +347,11 @@ mod tests {
         // Check existing setting preserved
         assert_eq!(settings.get("some_setting").unwrap(), "value");
 
-        // Check hooks array now has 4 entries (1 existing + 3 vibes)
-        let hooks = settings.get("hooks").unwrap().as_array().unwrap();
-        assert_eq!(hooks.len(), 4);
+        // Check hooks object now has 6 keys (1 existing OtherHook + 5 vibes)
+        let hooks = settings.get("hooks").unwrap().as_object().unwrap();
+        assert_eq!(hooks.len(), 6);
+        assert!(hooks.contains_key("OtherHook"));
+        assert!(hooks.contains_key("PreToolUse"));
     }
 
     #[test]
@@ -342,8 +375,120 @@ mod tests {
         let content = fs::read_to_string(claude_dir.join("settings.json")).unwrap();
         let settings: serde_json::Value = serde_json::from_str(&content).unwrap();
 
-        // Should still only have 3 hooks (no duplicates)
-        let hooks = settings.get("hooks").unwrap().as_array().unwrap();
-        assert_eq!(hooks.len(), 3);
+        // hooks is an object with hook types as keys
+        let hooks = settings.get("hooks").unwrap().as_object().unwrap();
+        // Each hook type should have exactly 1 entry (no duplicates)
+        for (_hook_type, entries) in hooks {
+            assert_eq!(entries.as_array().unwrap().len(), 1);
+        }
+    }
+
+    #[test]
+    fn test_update_settings_handles_object_hooks_format() {
+        // Claude Code's actual settings.json uses hooks as an OBJECT, not an array
+        // Each key is a hook type, each value is an array of hook configs
+        let temp_dir = TempDir::new().unwrap();
+        let claude_dir = temp_dir.path().join(".claude");
+        fs::create_dir_all(&claude_dir).unwrap();
+
+        // Write existing settings with hooks as object (Claude Code's real format)
+        let existing = serde_json::json!({
+            "some_setting": "value",
+            "hooks": {
+                "Notification": [{
+                    "matcher": "idle_prompt",
+                    "hooks": [{"type": "command", "command": "notify-send 'test'"}]
+                }]
+            }
+        });
+        fs::write(
+            claude_dir.join("settings.json"),
+            serde_json::to_string(&existing).unwrap(),
+        )
+        .unwrap();
+
+        let installer = HookInstaller::new(HookInstallerConfig {
+            claude_dir: Some(claude_dir.clone()),
+            overwrite: true,
+        });
+
+        let hooks_dir = claude_dir.join("hooks").join("vibes");
+        fs::create_dir_all(&hooks_dir).unwrap();
+
+        // This should NOT fail - it should handle object format
+        installer.update_settings(&hooks_dir).unwrap();
+
+        let content = fs::read_to_string(claude_dir.join("settings.json")).unwrap();
+        let settings: serde_json::Value = serde_json::from_str(&content).unwrap();
+
+        // Check existing setting preserved
+        assert_eq!(settings.get("some_setting").unwrap(), "value");
+
+        // hooks should still be an object
+        let hooks = settings.get("hooks").unwrap().as_object().unwrap();
+
+        // Original Notification hook should be preserved
+        assert!(hooks.contains_key("Notification"));
+        let notification = hooks.get("Notification").unwrap().as_array().unwrap();
+        assert_eq!(notification.len(), 1);
+
+        // vibes hooks should be added under their respective types
+        assert!(hooks.contains_key("PreToolUse"), "PreToolUse should exist");
+        assert!(
+            hooks.contains_key("SessionStart"),
+            "SessionStart should exist"
+        );
+    }
+
+    #[test]
+    fn test_update_settings_migrates_legacy_array_hooks() {
+        // Test migration of legacy array-format hooks to object format
+        let temp_dir = TempDir::new().unwrap();
+        let claude_dir = temp_dir.path().join(".claude");
+        fs::create_dir_all(&claude_dir).unwrap();
+
+        // Write existing settings with hooks as array (legacy format)
+        let existing = serde_json::json!({
+            "some_setting": "value",
+            "hooks": [
+                {"type": "command", "command": "legacy-script.sh"}
+            ]
+        });
+        fs::write(
+            claude_dir.join("settings.json"),
+            serde_json::to_string(&existing).unwrap(),
+        )
+        .unwrap();
+
+        let installer = HookInstaller::new(HookInstallerConfig {
+            claude_dir: Some(claude_dir.clone()),
+            overwrite: true,
+        });
+
+        let hooks_dir = claude_dir.join("hooks").join("vibes");
+        fs::create_dir_all(&hooks_dir).unwrap();
+
+        // This should migrate the array to object format
+        installer.update_settings(&hooks_dir).unwrap();
+
+        let content = fs::read_to_string(claude_dir.join("settings.json")).unwrap();
+        let settings: serde_json::Value = serde_json::from_str(&content).unwrap();
+
+        // Check existing setting preserved
+        assert_eq!(settings.get("some_setting").unwrap(), "value");
+
+        // hooks should now be an object
+        let hooks = settings.get("hooks").unwrap().as_object().unwrap();
+
+        // Legacy array should be preserved under "legacy" key
+        assert!(
+            hooks.contains_key("legacy"),
+            "Legacy hooks should be preserved"
+        );
+        let legacy = hooks.get("legacy").unwrap().as_array().unwrap();
+        assert_eq!(legacy.len(), 1);
+
+        // vibes hooks should be added
+        assert!(hooks.contains_key("PreToolUse"), "PreToolUse should exist");
     }
 }
