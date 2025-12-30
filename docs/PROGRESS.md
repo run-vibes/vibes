@@ -19,10 +19,10 @@ This document tracks the implementation progress of vibes against the roadmap de
 | 3.4 PTY Backend | Complete | [design](plans/12-pty-backend/design.md) | [implementation](plans/12-pty-backend/implementation.md) |
 | **◉ groove** | | [branding](groove/BRANDING.md) | |
 | 4.1 Harness Introspection | Complete | [design](plans/15-harness-introspection/design.md) | [implementation](plans/15-harness-introspection/implementation.md) |
-| 4.2 Storage Foundation | In progress | [design](plans/14-continual-learning/design.md#42-storage-foundation), [decisions](plans/14-continual-learning/milestone-4.2-decisions.md) | [implementation](plans/14-continual-learning/milestone-4.2-implementation.md) |
-| 4.2.5 Security Foundation | Complete ⚠️ | [design](plans/14-continual-learning/design.md#425-security-foundation--new) | [implementation](plans/14-continual-learning/milestone-4.2.5-implementation.md) |
+| 4.2 Storage Foundation | Complete | [design](plans/14-continual-learning/design.md#42-storage-foundation), [decisions](plans/14-continual-learning/milestone-4.2-decisions.md) | [implementation](plans/14-continual-learning/milestone-4.2-implementation.md) |
+| 4.2.5 Security Foundation | Complete | [design](plans/14-continual-learning/design.md#425-security-foundation--new) | [implementation](plans/14-continual-learning/milestone-4.2.5-implementation.md) |
 | 4.2.6 Plugin API Extension | Complete | — | — |
-| 4.3 Capture & Inject | Not started | [design](plans/14-continual-learning/design.md#43-capture--inject-mvp) | — |
+| 4.3 Capture & Inject | In progress | [design](plans/14-continual-learning/milestone-4.3-design.md) | — |
 | 4.4 Assessment Framework | Not started | [design](plans/14-continual-learning/design.md#44-assessment-framework--new) | — |
 | 4.5 Learning Extraction | Not started | [design](plans/14-continual-learning/design.md#45-learning-extraction) | — |
 | 4.6 Attribution Engine | Not started | [design](plans/14-continual-learning/design.md#46-attribution-engine--new) | — |
@@ -168,11 +168,11 @@ Note: Auto-detect team/aud moved to Milestone 3.5 (Cloudflare Auth Wizard)
 - [x] Integration tests
 
 ### Milestone 4.2: Storage Foundation
-- [ ] CozoDB setup with schema and migrations
-- [ ] `Learning` model with UUIDv7 identifiers
-- [ ] `LearningStorage` trait and CozoDB implementation
-- [ ] `AdaptiveParam` with Bayesian update mechanics
-- [ ] `AdaptiveConfig` for system-wide parameters
+- [x] CozoDB setup with schema and migrations
+- [x] `Learning` model with UUIDv7 identifiers
+- [x] `LearningStorage` trait and CozoDB implementation
+- [x] `AdaptiveParam` with Bayesian update mechanics
+- [x] `AdaptiveConfig` for system-wide parameters
 
 ### Milestone 4.2.5: Security Foundation
 - [x] `TrustLevel` enum (Local → Quarantined hierarchy)
@@ -204,12 +204,37 @@ Note: Auto-detect team/aud moved to Milestone 3.5 (Cloudflare Auth Wizard)
 - [x] Update documentation and examples
 
 ### Milestone 4.3: Capture & Inject (MVP)
-- [ ] `CaptureAdapter` trait for abstract capture
-- [ ] `ClaudeCodeHooksCapture` using stop hooks
-- [ ] `ClaudeJsonlParser` with version detection
-- [ ] `InjectionAdapter` trait for abstract injection
-- [ ] `ClaudeCodeInjector` via CLAUDE.md
-- [ ] Session context preparation with scope hierarchy
+
+> **Design:** [milestone-4.3-design.md](plans/14-continual-learning/milestone-4.3-design.md)
+
+**Core Infrastructure:**
+- [ ] Add `VibesEvent::Hook` variant to EventBus
+- [ ] Extend `HookInstaller` for SessionStart, UserPromptSubmit hooks
+- [ ] Add hook response collection to `HookReceiver`
+- [ ] `GroovePaths` with cross-platform support (via `dirs` crate)
+
+**Capture Pipeline:**
+- [ ] `SessionCollector` with per-session event buffering
+- [ ] `TranscriptParser` for Claude JSONL format
+- [ ] `LearningExtractor` with MVP regex patterns
+- [ ] Wire groove plugin to EventBus subscription
+
+**Injection Pipeline:**
+- [ ] `LearningFormatter` with HTML comment markers
+- [ ] `InjectionAdapter` trait definition
+- [ ] `ClaudeCodeInjector` (learnings.md + hooks)
+- [ ] Hook responses for SessionStart/UserPromptSubmit
+
+**Setup & CLI:**
+- [ ] `GrooveSetup` for first-run initialization
+- [ ] `vibes groove init` command
+- [ ] `vibes groove list` command
+- [ ] `vibes groove status` command
+
+**Documentation:**
+- [ ] End-to-end integration tests
+- [x] vibes-groove/README.md
+- [ ] Update docs/PROGRESS.md on completion
 
 ### Milestone 4.4: Assessment Framework
 - [ ] Lightweight assessment (every message, <10ms)
@@ -255,6 +280,13 @@ Note: Auto-detect team/aud moved to Milestone 3.5 (Cloudflare Auth Wizard)
 - [ ] `CapabilityGapDetector` for surfacing limitations
 - [ ] Emergent pattern discovery and notification
 - [ ] Meta-learning metrics
+
+### Future: Enterprise Scope Integration
+- [ ] System-level learnings path (`/etc/vibes/groove/`)
+- [ ] Integration with Claude.ai admin console API
+- [ ] Org-wide learning sync
+- [ ] Admin approval workflow for shared learnings
+- [ ] Compliance API integration for audit
 
 **Phase 4 Deliverable:** groove - a self-improving system that finds your coding rhythm
 
@@ -349,3 +381,5 @@ These phases are planned but not yet scheduled.
 | 2025-12-29 | Milestone 4.2 (Storage Foundation) marked in progress - brainstorm decisions and implementation plan complete, vibes-groove crate ready to implement |
 | 2025-12-29 | Milestone 4.2.5 (Security Foundation) complete - TrustLevel hierarchy, Provenance/ContentHash, ContentSecurityScanner, SecureInjector, AuditLog, OrgRole RBAC, SecureLearningStore, QuarantineManager, CLI commands, REST API, Web UI quarantine page |
 | 2025-12-29 | Milestone 4.2.6 (Plugin API Extension) complete - Extended plugin API with command/route registration, added CommandSpec/RouteSpec types, CommandRegistry/RouteRegistry in vibes-core, integrated plugin dispatch in CLI and server, migrated groove to plugin system, bumped plugin API version to 2 |
+| 2025-12-29 | Milestone 4.2 (Storage Foundation) complete - CozoDB storage, Learning types, AdaptiveParam, migrations, all storage layer ready |
+| 2025-12-29 | Milestone 4.3 (Capture & Inject) design complete - three injection channels (CLAUDE.md @import, SessionStart, UserPromptSubmit), unified HTML comment format, per-session buffering, TDD implementation tasks |
