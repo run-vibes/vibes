@@ -5,6 +5,7 @@
 //! adaptive parameters, and semantic search capabilities.
 
 // Module declarations - commented out until implemented
+pub mod assessment;
 pub mod capture;
 pub mod config;
 pub mod error;
@@ -28,6 +29,11 @@ pub use store::{
     ParamStore,
 };
 pub use types::*;
+
+// Assessment re-exports
+pub use assessment::{
+    AssessmentContext, EventId, HarnessType, InjectionMethod, ProjectId, SessionId, UserId,
+};
 
 // Security re-exports
 pub use security::{
