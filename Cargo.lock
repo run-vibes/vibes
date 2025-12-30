@@ -4321,6 +4321,7 @@ dependencies = [
  "uuid",
  "vibes-core",
  "vibes-groove",
+ "vibes-plugin-api",
  "vibes-server",
 ]
 
