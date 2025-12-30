@@ -1,5 +1,5 @@
 use anyhow::Result;
-use clap::{Parser, Subcommand};
+use clap::{CommandFactory, Parser, Subcommand};
 
 mod client;
 mod commands;
@@ -19,6 +19,40 @@ struct Cli {
     /// Verbose output
     #[arg(short, long, global = true)]
     verbose: bool,
+}
+
+/// Check if user is requesting top-level help (not subcommand help)
+fn is_top_level_help() -> bool {
+    let args: Vec<String> = std::env::args().collect();
+
+    // Check for --help or -h as first argument after program name
+    // e.g., "vibes --help" or "vibes -h"
+    if args.len() == 2 && (args[1] == "--help" || args[1] == "-h") {
+        return true;
+    }
+
+    // Also handle "vibes -v --help" or "vibes --verbose --help"
+    if args.len() == 3
+        && (args[1] == "-v" || args[1] == "--verbose")
+        && (args[2] == "--help" || args[2] == "-h")
+    {
+        return true;
+    }
+
+    false
+}
+
+/// Print help with plugin commands included
+fn print_help_with_plugins() {
+    let mut cmd = Cli::command();
+    let mut help_str = Vec::new();
+    cmd.write_help(&mut help_str).ok();
+    let base_help = String::from_utf8_lossy(&help_str);
+
+    let plugins = commands::plugin_dispatch::get_plugin_summaries();
+    let full_help = commands::plugin_dispatch::format_top_level_help(&base_help, &plugins);
+
+    print!("{}", full_help);
 }
 
 #[derive(Subcommand)]
@@ -44,6 +78,12 @@ enum Commands {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    // Intercept top-level help to include plugin commands
+    if is_top_level_help() {
+        print_help_with_plugins();
+        return Ok(());
+    }
+
     let cli = Cli::parse();
 
     let filter = if cli.verbose { "debug" } else { "info" };

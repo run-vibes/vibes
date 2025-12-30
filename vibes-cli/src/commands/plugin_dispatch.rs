@@ -173,6 +173,47 @@ fn format_plugin_help(plugin_name: &str, commands: &[vibes_plugin_api::CommandSp
     help
 }
 
+/// Get summaries of all loaded plugins for top-level help
+///
+/// Returns a list of (name, description) tuples
+pub fn get_plugin_summaries() -> Vec<(String, String)> {
+    let config = PluginHostConfig::default();
+    let mut host = PluginHost::new(config);
+
+    if host.load_all().is_err() {
+        return vec![];
+    }
+
+    host.list_plugins(false)
+        .into_iter()
+        .map(|info| (info.name, info.manifest.description))
+        .collect()
+}
+
+/// Format top-level help with plugin commands appended
+pub fn format_top_level_help(base_help: &str, plugins: &[(String, String)]) -> String {
+    if plugins.is_empty() {
+        return base_help.to_string();
+    }
+
+    let mut help = base_help.to_string();
+
+    // Find where to insert plugin commands (before Options or at end)
+    let insert_point = help
+        .find("\nOptions:")
+        .or_else(|| help.find("\n\n"))
+        .unwrap_or(help.len());
+
+    // Build plugin section
+    let mut plugin_section = String::from("\nPlugins:\n");
+    for (name, desc) in plugins {
+        plugin_section.push_str(&format!("  {:12} {}\n", name, desc));
+    }
+
+    help.insert_str(insert_point, &plugin_section);
+    help
+}
+
 fn render_output(output: CommandOutput) {
     match output {
         CommandOutput::Text(text) => println!("{}", text),
@@ -307,5 +348,43 @@ mod tests {
         assert!(help.contains("Show trust level hierarchy"));
         // Should show required args
         assert!(help.contains("<role>") || help.contains("role"));
+    }
+
+    #[test]
+    fn test_get_plugin_summaries_returns_name_and_description() {
+        // This function should return plugin name and description for top-level help
+        let summaries = get_plugin_summaries();
+
+        // Each summary should be (name, description)
+        for (name, desc) in &summaries {
+            assert!(!name.is_empty(), "Plugin name should not be empty");
+            assert!(!desc.is_empty(), "Plugin description should not be empty");
+        }
+
+        // If groove is installed, it should appear
+        // (This test may pass with empty vec if no plugins installed)
+    }
+
+    #[test]
+    fn test_format_top_level_help_includes_plugins() {
+        let base_help = "Usage: vibes <COMMAND>\n\nCommands:\n  auth    Auth stuff\n";
+        let plugins = vec![
+            (
+                "groove".to_string(),
+                "Continual learning system".to_string(),
+            ),
+            ("other".to_string(), "Another plugin".to_string()),
+        ];
+
+        let help = format_top_level_help(base_help, &plugins);
+
+        // Should contain original commands
+        assert!(help.contains("auth"), "Should contain original commands");
+        // Should contain plugin section
+        assert!(
+            help.contains("groove") && help.contains("Continual learning"),
+            "Should contain groove plugin"
+        );
+        assert!(help.contains("other"), "Should contain other plugin");
     }
 }
