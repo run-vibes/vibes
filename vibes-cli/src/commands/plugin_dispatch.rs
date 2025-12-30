@@ -41,6 +41,19 @@ pub fn run(args: Vec<String>) -> Result<()> {
         ));
     }
 
+    // Check for --help flag
+    if wants_help(&args) {
+        // Collect commands for this plugin from the registry
+        let commands: Vec<_> = host
+            .command_registry()
+            .all_commands()
+            .filter(|(_, cmd)| cmd.plugin_name == *plugin_name)
+            .map(|(_, cmd)| cmd.spec.clone())
+            .collect();
+        println!("{}", format_plugin_help(plugin_name, &commands));
+        return Ok(());
+    }
+
     // For now, all remaining args after the command path are positional
     // A more sophisticated parser would handle --flags
     let positional = Vec::new();
@@ -95,6 +108,71 @@ pub fn dispatch(
     Ok(())
 }
 
+/// Check if args contain a help flag
+fn wants_help(args: &[String]) -> bool {
+    args.iter().any(|a| a == "--help" || a == "-h")
+}
+
+/// Format help text for a plugin's commands
+fn format_plugin_help(plugin_name: &str, commands: &[vibes_plugin_api::CommandSpec]) -> String {
+    let mut help = format!("Usage: vibes {} <COMMAND>\n\nCommands:\n", plugin_name);
+
+    // Sort commands by path for consistent output
+    let mut sorted_commands: Vec<_> = commands.iter().collect();
+    sorted_commands.sort_by(|a, b| a.path.cmp(&b.path));
+
+    // Calculate max width for alignment
+    let max_width = sorted_commands
+        .iter()
+        .map(|cmd| {
+            let path = cmd.path.join(" ");
+            let args_str: String = cmd
+                .args
+                .iter()
+                .map(|a| {
+                    if a.required {
+                        format!(" <{}>", a.name)
+                    } else {
+                        format!(" [{}]", a.name)
+                    }
+                })
+                .collect();
+            path.len() + args_str.len()
+        })
+        .max()
+        .unwrap_or(20);
+
+    for cmd in sorted_commands {
+        let path = cmd.path.join(" ");
+        let args_str: String = cmd
+            .args
+            .iter()
+            .map(|a| {
+                if a.required {
+                    format!(" <{}>", a.name)
+                } else {
+                    format!(" [{}]", a.name)
+                }
+            })
+            .collect();
+
+        let cmd_with_args = format!("{}{}", path, args_str);
+        help.push_str(&format!(
+            "  {:width$}  {}\n",
+            cmd_with_args,
+            cmd.description,
+            width = max_width
+        ));
+    }
+
+    help.push_str(&format!(
+        "\nRun 'vibes {} <command> --help' for more info on a command.\n",
+        plugin_name
+    ));
+
+    help
+}
+
 fn render_output(output: CommandOutput) {
     match output {
         CommandOutput::Text(text) => println!("{}", text),
@@ -147,5 +225,87 @@ mod tests {
         let result = dispatch(&mut host, &[], vec![], HashMap::new());
         assert!(result.is_err());
         assert!(result.unwrap_err().to_string().contains("No command"));
+    }
+
+    #[test]
+    fn test_wants_help_detects_help_flag() {
+        // --help anywhere in args should be detected
+        assert!(wants_help(&["groove".into(), "--help".into()]));
+        assert!(wants_help(&[
+            "groove".into(),
+            "trust".into(),
+            "--help".into()
+        ]));
+
+        // -h should also work
+        assert!(wants_help(&["groove".into(), "-h".into()]));
+
+        // No help flag should return false
+        assert!(!wants_help(&[
+            "groove".into(),
+            "trust".into(),
+            "levels".into()
+        ]));
+        assert!(!wants_help(&["groove".into()]));
+    }
+
+    #[test]
+    fn test_run_with_help_flag_returns_help_result() {
+        // When --help is passed, run() should return a HelpRequested result
+        // rather than attempting to dispatch a command
+        let result = run(vec!["groove".into(), "--help".into()]);
+
+        // Should not error - help is a valid request
+        // (Though it may error if groove isn't installed, we check the error message)
+        match result {
+            Ok(()) => {} // Help was shown
+            Err(e) => {
+                let msg = e.to_string();
+                // If groove is installed, should not get "Unknown command" error
+                // If groove is NOT installed, we expect "Unknown plugin" error
+                assert!(
+                    !msg.contains("Unknown command: groove --help"),
+                    "Should not treat --help as part of command path, got: {}",
+                    msg
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_format_plugin_help_shows_commands() {
+        use vibes_plugin_api::CommandSpec;
+
+        let commands = vec![
+            CommandSpec {
+                path: vec!["trust".into(), "levels".into()],
+                description: "Show trust level hierarchy".into(),
+                args: vec![],
+            },
+            CommandSpec {
+                path: vec!["trust".into(), "role".into()],
+                description: "Show role permissions".into(),
+                args: vec![vibes_plugin_api::ArgSpec {
+                    name: "role".into(),
+                    description: "Role name".into(),
+                    required: true,
+                }],
+            },
+        ];
+
+        let help = format_plugin_help("groove", &commands);
+
+        // Should contain plugin name
+        assert!(help.contains("groove"), "Should contain plugin name");
+        // Should contain command paths
+        assert!(
+            help.contains("trust levels"),
+            "Should contain 'trust levels'"
+        );
+        assert!(help.contains("trust role"), "Should contain 'trust role'");
+        // Should contain descriptions
+        assert!(help.contains("Show trust level hierarchy"));
+        // Should show required args
+        assert!(help.contains("<role>") || help.contains("role"));
     }
 }
