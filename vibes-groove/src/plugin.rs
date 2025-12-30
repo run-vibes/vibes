@@ -8,7 +8,8 @@ use vibes_plugin_api::{
     PluginManifest, RouteRequest, RouteResponse, RouteSpec,
 };
 
-use crate::security::{OrgRole, Policy, ReviewOutcome, TrustLevel, load_policy_or_default};
+use crate::security::load_policy_or_default;
+use crate::security::{OrgRole, Policy, ReviewOutcome, TrustLevel};
 
 // ============================================================================
 // Response Types (mirrored from vibes-server for independence)
@@ -244,14 +245,14 @@ impl GroovePlugin {
 
     fn register_commands(&self, ctx: &mut PluginContext) -> Result<(), PluginError> {
         // trust levels
-        ctx.register_command_spec(CommandSpec {
+        ctx.register_command(CommandSpec {
             path: vec!["trust".into(), "levels".into()],
             description: "Show trust level hierarchy".into(),
             args: vec![],
         })?;
 
         // trust role <role>
-        ctx.register_command_spec(CommandSpec {
+        ctx.register_command(CommandSpec {
             path: vec!["trust".into(), "role".into()],
             description: "Show permissions for a role".into(),
             args: vec![ArgSpec {
@@ -262,28 +263,28 @@ impl GroovePlugin {
         })?;
 
         // policy show
-        ctx.register_command_spec(CommandSpec {
+        ctx.register_command(CommandSpec {
             path: vec!["policy".into(), "show".into()],
             description: "Show current security policy".into(),
             args: vec![],
         })?;
 
         // policy path
-        ctx.register_command_spec(CommandSpec {
+        ctx.register_command(CommandSpec {
             path: vec!["policy".into(), "path".into()],
             description: "Show policy file search paths".into(),
             args: vec![],
         })?;
 
         // quarantine list
-        ctx.register_command_spec(CommandSpec {
+        ctx.register_command(CommandSpec {
             path: vec!["quarantine".into(), "list".into()],
             description: "List quarantined learnings".into(),
             args: vec![],
         })?;
 
         // quarantine stats
-        ctx.register_command_spec(CommandSpec {
+        ctx.register_command(CommandSpec {
             path: vec!["quarantine".into(), "stats".into()],
             description: "Show quarantine statistics".into(),
             args: vec![],

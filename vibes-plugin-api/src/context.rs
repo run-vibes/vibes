@@ -205,7 +205,7 @@ impl PluginContext {
     /// `vibes <plugin-name> <path...>`
     ///
     /// Returns error if command path is duplicate within this plugin.
-    pub fn register_command_spec(&mut self, spec: CommandSpec) -> Result<(), PluginError> {
+    pub fn register_command(&mut self, spec: CommandSpec) -> Result<(), PluginError> {
         if self.pending_commands.iter().any(|c| c.path == spec.path) {
             return Err(PluginError::DuplicateCommand(spec.path.join(" ")));
         }
@@ -446,12 +446,12 @@ mod tests {
     // ─── CommandSpec Registration Tests ─────────────────────────────────
 
     #[test]
-    fn test_register_command_spec() {
+    fn test_register_command() {
         use crate::command::CommandSpec;
 
         let mut ctx = PluginContext::new("test".into(), PathBuf::from("/tmp"));
 
-        let result = ctx.register_command_spec(CommandSpec {
+        let result = ctx.register_command(CommandSpec {
             path: vec!["trust".into(), "levels".into()],
             description: "Show trust levels".into(),
             args: vec![],
@@ -462,7 +462,7 @@ mod tests {
     }
 
     #[test]
-    fn test_register_command_spec_duplicate_fails() {
+    fn test_register_command_duplicate_fails() {
         use crate::command::CommandSpec;
 
         let mut ctx = PluginContext::new("test".into(), PathBuf::from("/tmp"));
@@ -473,8 +473,8 @@ mod tests {
             args: vec![],
         };
 
-        ctx.register_command_spec(spec.clone()).unwrap();
-        let result = ctx.register_command_spec(spec);
+        ctx.register_command(spec.clone()).unwrap();
+        let result = ctx.register_command(spec);
 
         assert!(result.is_err());
     }
@@ -485,7 +485,7 @@ mod tests {
 
         let mut ctx = PluginContext::new("test".into(), PathBuf::from("/tmp"));
 
-        ctx.register_command_spec(CommandSpec {
+        ctx.register_command(CommandSpec {
             path: vec!["foo".into()],
             description: "Foo".into(),
             args: vec![],

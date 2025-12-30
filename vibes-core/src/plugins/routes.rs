@@ -118,6 +118,7 @@ impl RouteRegistry {
         path: &str,
     ) -> Option<(&RegisteredPluginRoute, HashMap<String, String>)> {
         for route in &self.routes {
+            // Using let-chains (stable since Rust 1.76) for cleaner pattern matching
             if route.spec.method == method
                 && let Some(params) = route.matcher.match_path(path)
             {

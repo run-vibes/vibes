@@ -199,6 +199,8 @@ macro_rules! export_plugin {
         /// The pointer must have been created by `_vibes_plugin_create` and must
         /// not have been already destroyed.
         #[unsafe(no_mangle)]
+        // This function's raw pointer signature is required for stable FFI ABI
+        // compatibility when loading/unloading plugins from dynamic libraries.
         #[allow(clippy::not_unsafe_ptr_arg_deref)]
         pub extern "C" fn _vibes_plugin_destroy(ptr: *mut dyn $crate::Plugin) {
             if !ptr.is_null() {

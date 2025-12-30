@@ -72,14 +72,20 @@ pub async fn handle_plugin_route(State(state): State<Arc<AppState>>, request: Re
             .status(resp.status)
             .header("Content-Type", resp.content_type)
             .body(Body::from(resp.body))
-            .expect("Failed to build HTTP response"),
+            .unwrap_or_else(|e| {
+                tracing::error!("Failed to build HTTP response: {e}");
+                (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error").into_response()
+            }),
         Err(e) => {
             let error_json = json!({"error": e.to_string()});
             Response::builder()
                 .status(500)
                 .header("Content-Type", "application/json")
                 .body(Body::from(error_json.to_string()))
-                .expect("Failed to build HTTP error response")
+                .unwrap_or_else(|e| {
+                    tracing::error!("Failed to build HTTP error response: {e}");
+                    (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error").into_response()
+                })
         }
     }
 }
