@@ -6,7 +6,9 @@ use std::panic::AssertUnwindSafe;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
-use vibes_plugin_api::{API_VERSION, Plugin, PluginConfig, PluginContext, PluginManifest};
+use vibes_plugin_api::{
+    API_VERSION, CommandArgs, CommandOutput, Plugin, PluginConfig, PluginContext, PluginManifest,
+};
 
 use super::commands::CommandRegistry;
 use super::error::PluginHostError;
@@ -388,6 +390,32 @@ impl PluginHost {
     /// Get read access to the route registry
     pub fn route_registry(&self) -> &RouteRegistry {
         &self.route_registry
+    }
+
+    /// Dispatch a CLI command to the appropriate plugin
+    pub fn dispatch_command(
+        &mut self,
+        plugin_name: &str,
+        path: &[&str],
+        args: &CommandArgs,
+    ) -> Result<CommandOutput, PluginHostError> {
+        let plugin =
+            self.plugins
+                .get_mut(plugin_name)
+                .ok_or_else(|| PluginHostError::NotFound {
+                    name: plugin_name.to_string(),
+                })?;
+
+        if plugin.state != PluginState::Loaded {
+            return Err(PluginHostError::NotFound {
+                name: plugin_name.to_string(),
+            });
+        }
+
+        plugin
+            .instance
+            .handle_command(path, args, &mut plugin.context)
+            .map_err(PluginHostError::InitFailed)
     }
 }
 
