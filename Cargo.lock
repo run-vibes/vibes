@@ -4424,9 +4424,11 @@ dependencies = [
  "tower",
  "tower-http",
  "tracing",
+ "url",
  "uuid",
  "vibes-core",
  "vibes-groove",
+ "vibes-plugin-api",
 ]
 
 [[package]]

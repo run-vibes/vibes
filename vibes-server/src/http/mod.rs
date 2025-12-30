@@ -2,6 +2,7 @@
 
 mod api;
 mod groove;
+pub mod plugins;
 mod push;
 mod static_files;
 
