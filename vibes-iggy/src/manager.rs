@@ -3,7 +3,8 @@
 //! Manages starting, stopping, and supervising the Iggy server process
 //! with automatic health checks and restart capabilities.
 
-use std::process::Child;
+use std::io::{BufRead, BufReader};
+use std::process::{Child, Stdio};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
@@ -82,8 +83,9 @@ impl IggyManager {
 
     /// Start the Iggy server subprocess.
     ///
-    /// Spawns the iggy-server binary with appropriate arguments for
-    /// data directory and TCP port configuration.
+    /// Spawns the iggy-server binary with environment variables for configuration.
+    /// Iggy uses env vars (IGGY_TCP_ADDRESS, IGGY_HTTP_ADDRESS, IGGY_SYSTEM_PATH)
+    /// rather than CLI flags.
     pub async fn start(&self) -> Result<()> {
         let current_state = self.state().await;
         if current_state == IggyState::Running {
@@ -93,22 +95,29 @@ impl IggyManager {
 
         // Set state to starting
         *self.state.write().await = IggyState::Starting;
+
+        // Find the binary
+        let binary_path = self.config.find_binary().ok_or(Error::BinaryNotFound)?;
+
+        let env_vars = self.config.env_vars();
         info!(
-            binary = %self.config.binary_path.display(),
+            binary = %binary_path.display(),
             data_dir = %self.config.data_dir.display(),
-            port = self.config.port,
+            tcp_port = self.config.port,
+            http_port = self.config.http_port,
             "Starting Iggy server"
         );
 
         // Ensure data directory exists
         std::fs::create_dir_all(&self.config.data_dir)?;
 
-        // Spawn the server process
-        let child = std::process::Command::new(&self.config.binary_path)
-            .arg("--data-dir")
-            .arg(&self.config.data_dir)
-            .arg("--tcp-port")
-            .arg(self.config.port.to_string())
+        // Spawn the server process with environment variables
+        // Iggy uses env vars for configuration, not CLI flags
+        // Capture stderr for debugging (stdout goes to /dev/null to avoid noise)
+        let mut child = std::process::Command::new(&binary_path)
+            .envs(&env_vars)
+            .stdout(Stdio::null())
+            .stderr(Stdio::piped())
             .spawn()
             .map_err(|e| {
                 Error::Io(std::io::Error::new(
@@ -118,6 +127,39 @@ impl IggyManager {
             })?;
 
         let pid = child.id();
+
+        // Spawn a thread to log stderr output for debugging
+        if let Some(stderr) = child.stderr.take() {
+            std::thread::spawn(move || {
+                let reader = BufReader::new(stderr);
+                for line in reader.lines() {
+                    match line {
+                        Ok(line) => {
+                            // Check for log level indicators at word boundaries
+                            // to avoid false positives like "The error handler"
+                            let is_error = line.contains(" ERROR ")
+                                || line.starts_with("ERROR ")
+                                || line.contains("[ERROR]");
+                            let is_warn = line.contains(" WARN ")
+                                || line.starts_with("WARN ")
+                                || line.contains("[WARN]");
+
+                            if is_error {
+                                error!(target: "iggy", "{}", line);
+                            } else if is_warn {
+                                warn!(target: "iggy", "{}", line);
+                            } else {
+                                debug!(target: "iggy", "{}", line);
+                            }
+                        }
+                        Err(e) => {
+                            debug!("Error reading iggy stderr: {}", e);
+                            break;
+                        }
+                    }
+                }
+            });
+        }
         *self.process.write().await = Some(child);
         *self.state.write().await = IggyState::Running;
         *self.restart_count.write().await = 0;

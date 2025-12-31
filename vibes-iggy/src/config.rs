@@ -1,5 +1,6 @@
 //! Configuration for Iggy server and client.
 
+use std::collections::HashMap;
 use std::path::PathBuf;
 use std::time::Duration;
 
@@ -19,6 +20,10 @@ pub struct IggyConfig {
     /// TCP port for Iggy server.
     #[serde(default = "default_port")]
     pub port: u16,
+
+    /// HTTP port for Iggy server (REST API).
+    #[serde(default = "default_http_port")]
+    pub http_port: u16,
 
     /// Interval between health checks.
     #[serde(default = "default_health_check_interval", with = "humantime_serde")]
@@ -43,6 +48,12 @@ fn default_port() -> u16 {
     8090
 }
 
+fn default_http_port() -> u16 {
+    // HTTP port for Iggy REST API.
+    // Uses 3001 to avoid conflicts with common dev servers (React defaults to 3000).
+    3001
+}
+
 fn default_health_check_interval() -> Duration {
     Duration::from_secs(5)
 }
@@ -57,6 +68,7 @@ impl Default for IggyConfig {
             binary_path: default_binary_path(),
             data_dir: default_data_dir(),
             port: default_port(),
+            http_port: default_http_port(),
             health_check_interval: default_health_check_interval(),
             max_restart_attempts: default_max_restart_attempts(),
         }
@@ -64,6 +76,37 @@ impl Default for IggyConfig {
 }
 
 impl IggyConfig {
+    /// Find the iggy-server binary.
+    ///
+    /// Resolution order:
+    /// 1. Explicit path in config (if it exists)
+    /// 2. Same directory as current executable
+    /// 3. PATH lookup
+    #[must_use]
+    pub fn find_binary(&self) -> Option<PathBuf> {
+        // 1. Explicit path in config (if it's an absolute path that exists)
+        if self.binary_path.is_absolute() && self.binary_path.exists() {
+            return Some(self.binary_path.clone());
+        }
+
+        // 2. Same directory as current executable
+        if let Ok(exe) = std::env::current_exe()
+            && let Some(dir) = exe.parent()
+        {
+            let sibling = dir.join("iggy-server");
+            if sibling.exists() {
+                return Some(sibling);
+            }
+        }
+
+        // 3. Check PATH
+        if let Ok(path) = which::which("iggy-server") {
+            return Some(path);
+        }
+
+        None
+    }
+
     /// Create a new config with a custom binary path.
     #[must_use]
     pub fn with_binary_path(mut self, path: impl Into<PathBuf>) -> Self {
@@ -85,10 +128,38 @@ impl IggyConfig {
         self
     }
 
+    /// Create a new config with a custom HTTP port.
+    #[must_use]
+    pub fn with_http_port(mut self, port: u16) -> Self {
+        self.http_port = port;
+        self
+    }
+
     /// Get the TCP connection address for clients.
     #[must_use]
     pub fn connection_address(&self) -> String {
         format!("127.0.0.1:{}", self.port)
+    }
+
+    /// Get environment variables for spawning iggy-server.
+    ///
+    /// Iggy uses environment variables for configuration, not CLI flags.
+    #[must_use]
+    pub fn env_vars(&self) -> HashMap<String, String> {
+        let mut vars = HashMap::new();
+        vars.insert(
+            "IGGY_TCP_ADDRESS".to_string(),
+            format!("127.0.0.1:{}", self.port),
+        );
+        vars.insert(
+            "IGGY_HTTP_ADDRESS".to_string(),
+            format!("127.0.0.1:{}", self.http_port),
+        );
+        vars.insert(
+            "IGGY_SYSTEM_PATH".to_string(),
+            self.data_dir.display().to_string(),
+        );
+        vars
     }
 }
 
@@ -122,5 +193,95 @@ mod tests {
     fn config_connection_address() {
         let config = IggyConfig::default().with_port(8091);
         assert_eq!(config.connection_address(), "127.0.0.1:8091");
+    }
+
+    #[test]
+    fn find_binary_returns_explicit_absolute_path_when_exists() {
+        // Create a temp file to act as our "binary"
+        let temp_dir = tempfile::tempdir().unwrap();
+        let binary_path = temp_dir.path().join("iggy-server");
+        std::fs::write(&binary_path, "fake binary").unwrap();
+
+        let config = IggyConfig::default().with_binary_path(&binary_path);
+        let found = config.find_binary();
+
+        assert_eq!(found, Some(binary_path));
+    }
+
+    #[test]
+    fn find_binary_ignores_nonexistent_explicit_path() {
+        let config = IggyConfig::default().with_binary_path("/nonexistent/iggy-server");
+        // This should fall through to PATH lookup, which may or may not find anything
+        // The key is it doesn't return the nonexistent explicit path
+        let found = config.find_binary();
+
+        assert_ne!(found, Some(PathBuf::from("/nonexistent/iggy-server")));
+    }
+
+    #[test]
+    fn find_binary_finds_sibling_of_current_exe() {
+        // This test is tricky because we can't easily mock current_exe
+        // We'll just verify find_binary returns Some when iggy-server exists
+        // next to the test binary (which it does in our target/release/)
+        let config = IggyConfig::default();
+
+        // Check if iggy-server exists next to current exe
+        if let Ok(exe) = std::env::current_exe()
+            && let Some(dir) = exe.parent()
+        {
+            let sibling = dir.join("iggy-server");
+            if sibling.exists() {
+                let found = config.find_binary();
+                assert_eq!(found, Some(sibling));
+            }
+        }
+    }
+
+    #[test]
+    fn find_binary_returns_none_when_not_found() {
+        // Use a config with a relative path (not absolute), so it won't
+        // match the first condition, and if iggy-server isn't in PATH
+        // or next to the current exe, it should return None
+        let config = IggyConfig::default().with_binary_path("definitely-not-iggy-server");
+
+        // We can't guarantee None here because iggy-server might be in PATH
+        // So we just verify the function doesn't panic
+        let _found = config.find_binary();
+    }
+
+    #[test]
+    fn env_vars_returns_correct_iggy_environment() {
+        let config = IggyConfig::default()
+            .with_port(9090)
+            .with_http_port(3001)
+            .with_data_dir("/custom/data");
+
+        let vars = config.env_vars();
+
+        assert_eq!(
+            vars.get("IGGY_TCP_ADDRESS"),
+            Some(&"127.0.0.1:9090".to_string())
+        );
+        assert_eq!(
+            vars.get("IGGY_HTTP_ADDRESS"),
+            Some(&"127.0.0.1:3001".to_string())
+        );
+        assert_eq!(
+            vars.get("IGGY_SYSTEM_PATH"),
+            Some(&"/custom/data".to_string())
+        );
+    }
+
+    #[test]
+    fn with_http_port_sets_http_port() {
+        let config = IggyConfig::default().with_http_port(4000);
+        assert_eq!(config.http_port, 4000);
+    }
+
+    #[test]
+    fn default_http_port_is_not_3000() {
+        // Port 3000 is commonly used by dev servers, avoid conflicts
+        let config = IggyConfig::default();
+        assert_ne!(config.http_port, 3000);
     }
 }

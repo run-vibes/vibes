@@ -47,12 +47,21 @@ fmt-check:
 mutants:
     cargo mutants
 
-# Build
-build: build-web
+# Build (vibes + iggy for debug)
+build: build-web _check-submodules
     cargo build
+    cargo build --manifest-path vendor/iggy/Cargo.toml -p server
+    mkdir -p target/debug
+    cp vendor/iggy/target/debug/iggy-server target/debug/
+    @echo "✓ Built: vibes (debug), iggy-server (debug)"
 
-build-release: build-web
+# Build release (vibes + iggy for release)
+build-release: build-web _check-submodules
     cargo build --release
+    cargo build --release --manifest-path vendor/iggy/Cargo.toml -p server
+    mkdir -p target/release
+    cp vendor/iggy/target/release/iggy-server target/release/
+    @echo "✓ Built: vibes (release), iggy-server (release)"
 
 # Build web-ui (required for server)
 build-web:
@@ -80,6 +89,33 @@ e2e-setup:
 
 # Run all checks (pre-commit)
 pre-commit: fmt-check clippy test
+
+# ─── Submodule Management ────────────────────────────────────────────────────
+
+# Check that submodules are initialized
+_check-submodules:
+    #!/usr/bin/env bash
+    if [[ ! -f vendor/iggy/Cargo.toml ]]; then
+        echo "Error: Git submodules not initialized."
+        echo "Run: git submodule update --init --recursive"
+        exit 1
+    fi
+
+# Full setup for new developers
+setup: setup-hooks
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    # Initialize submodules if needed
+    if [[ ! -f vendor/iggy/Cargo.toml ]]; then
+        echo "Initializing git submodules..."
+        git submodule update --init --recursive
+    fi
+
+    # Install npm deps
+    npm ci
+
+    echo "✓ Setup complete. Run 'just build' to build."
 
 # ─── Plugin Management ───────────────────────────────────────────────────────
 

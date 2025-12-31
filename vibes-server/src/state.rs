@@ -9,7 +9,7 @@ use vibes_core::{
     VapidKeyManager, VibesEvent,
     pty::{PtyConfig, PtyManager},
 };
-use vibes_iggy::{EventLog, InMemoryEventLog};
+use vibes_iggy::{EventLog, IggyConfig, IggyEventLog, IggyManager, InMemoryEventLog};
 
 /// PTY output event for broadcasting to attached clients
 #[derive(Clone, Debug)]
@@ -27,6 +27,10 @@ use crate::middleware::AuthLayer;
 
 /// Default capacity for the event broadcast channel
 const DEFAULT_BROADCAST_CAPACITY: usize = 1000;
+
+/// Grace period for Iggy server startup before attempting connection.
+/// Allows the server process to fully initialize its TCP listener.
+const IGGY_STARTUP_GRACE_MS: u64 = 500;
 
 /// Shared application state accessible by all handlers
 #[derive(Clone)]
@@ -79,6 +83,76 @@ impl AppState {
             subscriptions: None,
             pty_manager,
         }
+    }
+
+    /// Create a new AppState with Iggy-backed persistent storage.
+    ///
+    /// Attempts to start and connect to the bundled Iggy server.
+    /// Falls back to in-memory storage if Iggy is unavailable.
+    pub async fn new_with_iggy() -> Self {
+        let event_log: Arc<dyn EventLog<VibesEvent>> = match Self::try_start_iggy().await {
+            Ok(iggy_log) => {
+                tracing::info!("Using Iggy for persistent event storage");
+                Arc::new(iggy_log)
+            }
+            Err(e) => {
+                tracing::warn!("Iggy unavailable, using in-memory storage: {}", e);
+                Arc::new(InMemoryEventLog::<VibesEvent>::new())
+            }
+        };
+
+        let plugin_host = Arc::new(RwLock::new(PluginHost::new(PluginHostConfig::default())));
+        let tunnel_manager = Arc::new(RwLock::new(TunnelManager::new(
+            TunnelConfig::default(),
+            7432,
+        )));
+        let (event_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
+        let (pty_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
+        let pty_manager = Arc::new(RwLock::new(PtyManager::new(PtyConfig::default())));
+
+        Self {
+            plugin_host,
+            event_log,
+            tunnel_manager,
+            auth_layer: AuthLayer::disabled(),
+            started_at: Utc::now(),
+            event_broadcaster,
+            pty_broadcaster,
+            vapid: None,
+            subscriptions: None,
+            pty_manager,
+        }
+    }
+
+    /// Try to start the Iggy server and create an event log.
+    async fn try_start_iggy() -> Result<IggyEventLog<VibesEvent>, vibes_iggy::Error> {
+        let config = IggyConfig::default();
+
+        // Check if binary is available before trying to start
+        if config.find_binary().is_none() {
+            return Err(vibes_iggy::Error::BinaryNotFound);
+        }
+
+        let manager = Arc::new(IggyManager::new(config));
+        manager.start().await?;
+
+        // Spawn the supervisor loop to monitor the process and handle restarts
+        // The supervisor calls try_wait() which reaps zombie processes
+        let supervisor_manager = Arc::clone(&manager);
+        tokio::spawn(async move {
+            if let Err(e) = supervisor_manager.supervise().await {
+                tracing::error!("Iggy supervisor exited with error: {}", e);
+            }
+        });
+
+        // Give the server a moment to become ready
+        tokio::time::sleep(std::time::Duration::from_millis(IGGY_STARTUP_GRACE_MS)).await;
+
+        // Create event log from the manager
+        let event_log = IggyEventLog::new(manager);
+        event_log.connect().await?;
+
+        Ok(event_log)
     }
 
     /// Configure authentication for this state

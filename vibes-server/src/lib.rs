@@ -39,11 +39,23 @@ pub struct VibesServer {
 }
 
 impl VibesServer {
-    /// Create a new server with default state
+    /// Create a new server with default state (in-memory storage)
     pub fn new(config: ServerConfig) -> Self {
         Self {
             config,
             state: Arc::new(AppState::new()),
+            notification_service: None,
+        }
+    }
+
+    /// Create a new server with Iggy-backed persistent storage.
+    ///
+    /// Attempts to start the bundled Iggy server for persistent event storage.
+    /// Falls back to in-memory storage if Iggy is unavailable.
+    pub async fn new_with_iggy(config: ServerConfig) -> Self {
+        Self {
+            config,
+            state: Arc::new(AppState::new_with_iggy().await),
             notification_service: None,
         }
     }
@@ -66,8 +78,12 @@ impl VibesServer {
             .map_err(|e| ServerError::Internal(format!("Failed to load subscriptions: {}", e)))?;
         let subscriptions = Arc::new(subscriptions);
 
-        // Create state with push notification components
-        let state = Arc::new(AppState::new().with_push(vapid.clone(), subscriptions.clone()));
+        // Create state with Iggy and push notification components
+        let state = Arc::new(
+            AppState::new_with_iggy()
+                .await
+                .with_push(vapid.clone(), subscriptions.clone()),
+        );
 
         // Create notification service
         let notification_config = NotificationConfig::default();
