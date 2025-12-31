@@ -23,7 +23,7 @@ This document tracks the implementation progress of vibes against the roadmap de
 | 4.2.5 Security Foundation | Complete | [design](plans/14-continual-learning/design.md#425-security-foundation--new) | [implementation](plans/14-continual-learning/milestone-4.2.5-implementation.md) |
 | 4.2.6 Plugin API Extension | Complete | — | — |
 | 4.3 Capture & Inject | Complete | [design](plans/14-continual-learning/milestone-4.3-design.md) | [implementation](plans/14-continual-learning/milestone-4.3-implementation.md) |
-| 4.4 Assessment Framework | In progress | [design](plans/14-continual-learning/milestone-4.4-design.md) | [4.4.1](plans/14-continual-learning/milestone-4.4.1-implementation.md) |
+| 4.4 Assessment Framework | Complete | [design](plans/14-continual-learning/milestone-4.4-design.md) | [4.4.1](plans/14-continual-learning/milestone-4.4.1-implementation.md), [4.4.2b](plans/14-continual-learning/milestone-4.4.2b-implementation.md) |
 | 4.5 Learning Extraction | Not started | [design](plans/14-continual-learning/design.md#45-learning-extraction) | — |
 | 4.6 Attribution Engine | Not started | [design](plans/14-continual-learning/design.md#46-attribution-engine--new) | — |
 | 4.7 Adaptive Strategies | Not started | [design](plans/14-continual-learning/design.md#47-adaptive-strategies) | — |
@@ -249,7 +249,7 @@ Note: Auto-detect team/aud moved to Milestone 3.5 (Cloudflare Auth Wizard)
 - [x] `AssessmentProcessor` with fire-and-forget writer
 - [x] Integration tests
 
-**4.4.2a: EventLog Migration (In Progress)**
+**4.4.2a: EventLog Migration (Complete)**
 > **Design:** [milestone-4.4.2a-design.md](plans/14-continual-learning/milestone-4.4.2a-design.md)
 
 - [x] Create `vibes-iggy` crate with EventLog/EventConsumer traits
@@ -257,18 +257,20 @@ Note: Auto-detect team/aud moved to Milestone 3.5 (Cloudflare Auth Wizard)
 - [x] Implement `InMemoryEventLog` for testing
 - [x] Move `vibes-groove/` → `plugins/vibes-groove/`
 - [~] Implement `IggyEventLog` (stub, full SDK integration pending)
-- [ ] Migrate vibes-server subscribers to consumer pattern
-- [ ] Remove `MemoryEventBus` and old `EventBus` trait
+- [x] Migrate vibes-server subscribers to consumer pattern
+- [x] Remove `MemoryEventBus` from vibes-server (EventLog consumers only)
 
-**4.4.2b: Assessment Logic (Pending)**
+**4.4.2b: Assessment Logic (Complete)**
 > **Design:** [milestone-4.4.2b-design.md](plans/14-continual-learning/milestone-4.4.2b-design.md)
 
-- [ ] Lightweight signal detection (linguistic patterns, tool failures)
-- [ ] `CircuitBreaker` with intervention mechanism
-- [ ] Checkpoint manager for medium assessment triggers
-- [ ] `HarnessLLM` for segment summarization
-- [ ] Session end detection and sampling strategy
-- [ ] CLI commands (`vibes groove assess status/history`)
+- [x] Lightweight signal detection (linguistic patterns, tool failures)
+- [x] `CircuitBreaker` with intervention mechanism
+- [x] Checkpoint manager for medium assessment triggers
+- [x] `HarnessLLM` for segment summarization
+- [x] Session end detection and sampling strategy
+- [x] CLI commands (`vibes groove assess status/history`)
+- [x] `HookIntervention` for writing learnings to Claude hooks
+- [x] E2E tests for full assessment pipeline
 
 ### Milestone 4.5: Learning Extraction
 - [ ] Transcript parser for Claude JSONL format
@@ -411,3 +413,4 @@ These phases are planned but not yet scheduled.
 | 2025-12-29 | Milestone 4.3 (Capture & Inject) design complete - three injection channels (CLAUDE.md @import, SessionStart, UserPromptSubmit), unified HTML comment format, per-session buffering, TDD implementation tasks |
 | 2025-12-30 | Milestone 4.3 (Capture & Inject) complete - VibesEvent::Hook, SessionStart/UserPromptSubmit hooks, GroovePaths, SessionCollector, TranscriptParser, LearningExtractor stub, LearningFormatter, ClaudeCodeInjector, groove init/list/status commands, plugin hook integration, integration tests |
 | 2025-12-30 | Milestone 4.4.2a (EventLog Migration) foundation complete - vibes-iggy crate with EventLog/EventConsumer traits, IggyManager/IggyConfig, InMemoryEventLog for testing, IggyEventLog stub, moved vibes-groove to plugins/ directory, vibes-core re-exports EventLog types |
+| 2025-12-30 | Milestone 4.4.2b (Assessment Logic) complete - Lightweight signal detection, CircuitBreaker, CheckpointManager, HarnessLLM, SessionEnd detection, SamplingStrategy, HookIntervention, CLI commands (assess status/history), E2E tests, server consumers (websocket, notification, assessment), removed MemoryEventBus |
