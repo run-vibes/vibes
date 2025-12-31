@@ -37,6 +37,10 @@ jobs:
           cache-all-crates: true
           # Share cache between check and e2e jobs
           shared-key: "rust-cache"
+          # Cache both main workspace and iggy submodule
+          workspaces: |
+            . -> target
+            vendor/iggy -> target
 
       - name: Format check
         run: nix develop --command just fmt-check
@@ -77,6 +81,10 @@ jobs:
         with:
           cache-all-crates: true
           shared-key: "rust-cache"
+          # Cache both main workspace and iggy submodule
+          workspaces: |
+            . -> target
+            vendor/iggy -> target
 
       - name: Build release binary
         run: nix develop --command just build-release
