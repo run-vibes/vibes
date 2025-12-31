@@ -35,7 +35,7 @@ function RootLayout() {
     <div className="app">
       <Header
         navItems={navItems}
-        identity={!isLoading && isAuthenticated && identity ? { email: identity.email, provider: identity.identity_provider } : undefined}
+        identity={isAuthenticated && identity ? { email: identity.email, provider: identity.identity_provider } : undefined}
         isLocal={!isLoading && isLocal}
         theme={theme}
         onThemeToggle={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}

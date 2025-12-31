@@ -76,7 +76,8 @@ async fn handle_firehose(socket: WebSocket, state: Arc<AppState>, query: Firehos
                     // Serialize and send
                     match serde_json::to_string(&event) {
                         Ok(json) => {
-                            if sender.send(Message::Text(json)).await.is_err() {
+                            if let Err(e) = sender.send(Message::Text(json)).await {
+                                warn!("Firehose send failed: {}", e);
                                 break;
                             }
                         }

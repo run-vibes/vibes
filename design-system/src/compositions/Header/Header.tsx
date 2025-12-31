@@ -9,22 +9,30 @@ export interface NavItem {
   isGroove?: boolean;
 }
 
+export interface LinkProps {
+  href: string;
+  className: string;
+  children: ReactNode;
+}
+
 export interface HeaderProps extends HTMLAttributes<HTMLElement> {
   navItems?: NavItem[];
   identity?: { email: string; provider?: string };
   isLocal?: boolean;
   theme?: 'dark' | 'light';
   onThemeToggle?: () => void;
-  renderLink?: (props: { href: string; className: string; children: ReactNode }) => ReactNode;
+  renderLink?: (props: LinkProps) => ReactNode;
 }
+
+const DefaultLink = ({ href, className, children }: LinkProps) => (
+  <a href={href} className={className}>{children}</a>
+);
 
 export const Header = forwardRef<HTMLElement, HeaderProps>(
   ({ navItems = [], identity, isLocal, theme = 'dark', onThemeToggle, renderLink, className = '', ...props }, ref) => {
     const classes = [styles.header, className].filter(Boolean).join(' ');
 
-    const Link = renderLink || (({ href, className, children }: { href: string; className: string; children: ReactNode }) => (
-      <a href={href} className={className}>{children}</a>
-    ));
+    const Link = renderLink ?? DefaultLink;
 
     return (
       <header ref={ref} className={classes} {...props}>
