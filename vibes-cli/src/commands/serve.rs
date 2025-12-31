@@ -109,8 +109,8 @@ async fn run_foreground(settings: &ResolvedSettings) -> Result<()> {
         tracing::warn!("Failed to write daemon state file: {}", e);
     }
 
-    // Create server
-    let server = VibesServer::new(config);
+    // Create server with Iggy persistence
+    let server = VibesServer::new_with_iggy(config).await;
     let result = server.run().await;
 
     // Clear daemon state file on exit
