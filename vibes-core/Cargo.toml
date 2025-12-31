@@ -32,6 +32,7 @@ base64ct = { version = "1", features = ["std"] }
 http = "1"
 portable-pty = "0.8"
 vibes-plugin-api = { path = "../vibes-plugin-api" }
+vibes-iggy = { path = "../vibes-iggy" }
 
 [dev-dependencies]
 tokio-test = "0.4"

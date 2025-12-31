@@ -54,7 +54,10 @@ pub mod tunnel;
 // Re-export key types for convenience
 pub use auth::{AccessConfig, AccessIdentity, AuthContext, AuthError, JwtValidator};
 pub use error::{EventBusError, NotificationError, VibesError};
-pub use events::{ClaudeEvent, EventBus, InputSource, MemoryEventBus, Usage, VibesEvent};
+pub use events::{
+    ClaudeEvent, EventBatch, EventBus, EventConsumer, EventLog, InputSource, MemoryEventBus,
+    Offset, SeekPosition, Usage, VibesEvent,
+};
 pub use hooks::{
     HookEvent, HookInstaller, HookInstallerConfig, HookReceiver, HookReceiverConfig, HookType,
     InstallError, PostToolUseData, PreToolUseData, StopData,
