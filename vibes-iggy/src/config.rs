@@ -49,7 +49,8 @@ fn default_port() -> u16 {
 }
 
 fn default_http_port() -> u16 {
-    // Avoid port 3000 which is commonly used by dev servers (React, etc.)
+    // HTTP port for Iggy REST API.
+    // Uses 3001 to avoid conflicts with common dev servers (React defaults to 3000).
     3001
 }
 

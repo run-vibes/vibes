@@ -135,10 +135,18 @@ impl IggyManager {
                 for line in reader.lines() {
                     match line {
                         Ok(line) => {
-                            // Log errors and warnings, debug for info
-                            if line.contains("ERROR") || line.contains("error") {
+                            // Check for log level indicators at word boundaries
+                            // to avoid false positives like "The error handler"
+                            let is_error = line.contains(" ERROR ")
+                                || line.starts_with("ERROR ")
+                                || line.contains("[ERROR]");
+                            let is_warn = line.contains(" WARN ")
+                                || line.starts_with("WARN ")
+                                || line.contains("[WARN]");
+
+                            if is_error {
                                 error!(target: "iggy", "{}", line);
-                            } else if line.contains("WARN") || line.contains("warn") {
+                            } else if is_warn {
                                 warn!(target: "iggy", "{}", line);
                             } else {
                                 debug!(target: "iggy", "{}", line);

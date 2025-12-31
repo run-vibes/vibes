@@ -28,7 +28,7 @@ git submodule add https://github.com/apache/iggy vendor/iggy
 ```bash
 cd vendor/iggy
 git fetch --tags
-git checkout v0.4.300
+git checkout server-0.6.0
 cd ../..
 ```
 
@@ -54,7 +54,7 @@ ls vendor/iggy/server/     # Should exist
 
 ```bash
 git add .gitmodules vendor/iggy .gitignore
-git commit -m "chore: add iggy as git submodule at v0.4.300"
+git commit -m "chore: add iggy as git submodule at server-0.6.0"
 ```
 
 ---
