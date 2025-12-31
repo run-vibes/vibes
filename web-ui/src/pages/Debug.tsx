@@ -1,5 +1,5 @@
 // web-ui/src/pages/Debug.tsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Panel, Badge, Button, Text } from '@vibes/design-system';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useTunnelStatus } from '../hooks/useTunnelStatus';
@@ -16,28 +16,28 @@ export function DebugPage() {
   const { isConnected, connectionState } = useWebSocket();
   const { data: tunnel, isLoading: tunnelLoading } = useTunnelStatus();
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [nextId, setNextId] = useState(0);
+  const nextIdRef = useRef(0);
 
-  // Add log entry helper
-  const addLog = (level: LogEntry['level'], message: string) => {
+  // Add log entry helper - uses ref to avoid stale closure
+  const addLog = useCallback((level: LogEntry['level'], message: string) => {
+    const id = nextIdRef.current++;
     setLogs((prev) => [
-      { id: nextId, timestamp: new Date(), level, message },
+      { id, timestamp: new Date(), level, message },
       ...prev.slice(0, 99), // Keep last 100 logs
     ]);
-    setNextId((n) => n + 1);
-  };
+  }, []);
 
   // Log WebSocket state changes
   useEffect(() => {
     addLog('info', `WebSocket: ${connectionState}`);
-  }, [connectionState]);
+  }, [connectionState, addLog]);
 
   // Log tunnel state changes
   useEffect(() => {
     if (tunnel) {
       addLog('info', `Tunnel: ${tunnel.state}${tunnel.url ? ` (${tunnel.url})` : ''}`);
     }
-  }, [tunnel?.state, tunnel?.url]);
+  }, [tunnel?.state, tunnel?.url, addLog]);
 
   const clearLogs = () => setLogs([]);
 

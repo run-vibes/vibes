@@ -57,14 +57,14 @@ function QuarantineItem({ item }: { item: QuarantinedLearningSummary }) {
         </div>
         <TrustBadge level={item.trust_level} />
       </div>
-      <div className="quarantine-item-meta">
+      <dl className="quarantine-item-meta">
         <div>
           <dt>Reason:</dt> <dd>{item.reason}</dd>
         </div>
         <div>
           <dt>Quarantined:</dt> <dd>{new Date(item.quarantined_at).toLocaleDateString()}</dd>
         </div>
-      </div>
+      </dl>
       {item.pending_review && (
         <div className="quarantine-item-actions">
           <Button variant="primary">Approve</Button>

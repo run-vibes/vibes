@@ -16,10 +16,10 @@ export function SettingsPage() {
     document.documentElement.setAttribute('data-theme', newTheme);
   };
 
-  // Sync with document on mount
+  // Sync theme with document
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
-  }, []);
+  }, [theme]);
 
   const handleClearStorage = () => {
     if (confirm('Clear all local settings? This cannot be undone.')) {
