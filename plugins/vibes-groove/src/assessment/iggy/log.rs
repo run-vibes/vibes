@@ -10,10 +10,10 @@ use chrono::{DateTime, Utc};
 use tokio::sync::{RwLock, broadcast};
 use tracing::debug;
 
-use super::manager::IggyManager;
 use crate::assessment::log::AssessmentLog;
 use crate::assessment::types::{AssessmentEvent, EventId, SessionId};
 use crate::error::Result;
+use vibes_iggy::IggyManager;
 
 /// Topic names for assessment events in Iggy.
 pub mod topics {
@@ -183,10 +183,10 @@ impl AssessmentLog for IggyAssessmentLog {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::assessment::iggy::manager::IggyConfig;
     use crate::assessment::types::{
         AssessmentContext, CheckpointTrigger, HeavyEvent, LightweightEvent, MediumEvent, Outcome,
     };
+    use vibes_iggy::IggyConfig;
 
     fn make_lightweight_event(session: &str) -> AssessmentEvent {
         AssessmentEvent::Lightweight(LightweightEvent {

@@ -1,11 +1,8 @@
 //! Iggy server subprocess lifecycle management.
 //!
-//! This module manages the Iggy server as a subprocess, handling:
-//! - Server startup and shutdown
-//! - Health monitoring with automatic restarts
-//! - Graceful shutdown on drop
+//! Manages starting, stopping, and supervising the Iggy server process
+//! with automatic health checks and restart capabilities.
 
-use std::path::PathBuf;
 use std::process::Child;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -14,81 +11,8 @@ use std::time::Duration;
 use tokio::sync::RwLock;
 use tracing::{debug, error, info, warn};
 
-use crate::error::{GrooveError, Result};
-use crate::paths::GroovePaths;
-
-/// Configuration for the Iggy server subprocess.
-#[derive(Debug, Clone)]
-pub struct IggyConfig {
-    /// Path to the iggy-server binary.
-    pub binary_path: PathBuf,
-
-    /// Directory where Iggy stores its data.
-    pub data_dir: PathBuf,
-
-    /// TCP port for Iggy server.
-    pub port: u16,
-
-    /// Interval between health checks.
-    pub health_check_interval: Duration,
-
-    /// Maximum number of restart attempts before giving up.
-    pub max_restart_attempts: u32,
-}
-
-impl Default for IggyConfig {
-    fn default() -> Self {
-        // Use vibes plugin data directory for iggy data
-        let data_dir = GroovePaths::default_data_dir()
-            .map(|d| d.join("iggy"))
-            .unwrap_or_else(|| PathBuf::from("/tmp/vibes-groove/iggy"));
-
-        Self {
-            binary_path: PathBuf::from("iggy-server"),
-            data_dir,
-            port: 8090,
-            health_check_interval: Duration::from_secs(5),
-            max_restart_attempts: 3,
-        }
-    }
-}
-
-impl IggyConfig {
-    /// Create a new config with a custom binary path.
-    #[must_use]
-    pub fn with_binary_path(mut self, path: impl Into<PathBuf>) -> Self {
-        self.binary_path = path.into();
-        self
-    }
-
-    /// Create a new config with a custom data directory.
-    #[must_use]
-    pub fn with_data_dir(mut self, path: impl Into<PathBuf>) -> Self {
-        self.data_dir = path.into();
-        self
-    }
-
-    /// Create a new config with a custom port.
-    #[must_use]
-    pub fn with_port(mut self, port: u16) -> Self {
-        self.port = port;
-        self
-    }
-
-    /// Create a new config with a custom health check interval.
-    #[must_use]
-    pub fn with_health_check_interval(mut self, interval: Duration) -> Self {
-        self.health_check_interval = interval;
-        self
-    }
-
-    /// Create a new config with a custom max restart attempts.
-    #[must_use]
-    pub fn with_max_restart_attempts(mut self, attempts: u32) -> Self {
-        self.max_restart_attempts = attempts;
-        self
-    }
-}
+use crate::config::IggyConfig;
+use crate::error::{Error, Result};
 
 /// State of the Iggy server subprocess.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -187,7 +111,7 @@ impl IggyManager {
             .arg(self.config.port.to_string())
             .spawn()
             .map_err(|e| {
-                GrooveError::Io(std::io::Error::new(
+                Error::Io(std::io::Error::new(
                     e.kind(),
                     format!("Failed to spawn iggy-server: {}", e),
                 ))
@@ -242,11 +166,8 @@ impl IggyManager {
 
         if let Some(ref mut child) = *process_guard {
             match child.try_wait() {
-                Ok(None) => true, // Still running
-                Ok(Some(_)) => {
-                    // Process exited
-                    false
-                }
+                Ok(None) => true,     // Still running
+                Ok(Some(_)) => false, // Process exited
                 Err(e) => {
                     error!(error = %e, "Error checking process status");
                     false
@@ -311,10 +232,15 @@ impl IggyManager {
         Ok(())
     }
 
-    /// Get the connection address for clients to connect to the server.
+    /// Signal the supervisor to stop.
+    pub fn signal_shutdown(&self) {
+        self.shutdown.store(true, Ordering::SeqCst);
+    }
+
+    /// Get the connection address for clients.
     #[must_use]
     pub fn connection_address(&self) -> String {
-        format!("127.0.0.1:{}", self.config.port)
+        self.config.connection_address()
     }
 
     /// Get the configuration.
@@ -343,51 +269,8 @@ impl Drop for IggyManager {
 mod tests {
     use super::*;
 
-    #[test]
-    fn iggy_config_default_has_sensible_values() {
-        let config = IggyConfig::default();
-
-        // Binary path should be just the executable name (relies on PATH)
-        assert_eq!(config.binary_path, PathBuf::from("iggy-server"));
-
-        // Port should be 8090
-        assert_eq!(config.port, 8090);
-
-        // Max restart attempts should be 3
-        assert_eq!(config.max_restart_attempts, 3);
-
-        // Health check interval should be 5 seconds
-        assert_eq!(config.health_check_interval, Duration::from_secs(5));
-
-        // Data dir should contain "iggy" somewhere
-        assert!(
-            config.data_dir.to_string_lossy().contains("iggy"),
-            "Data dir should contain 'iggy': {:?}",
-            config.data_dir
-        );
-    }
-
-    #[test]
-    fn iggy_config_builder_pattern() {
-        let config = IggyConfig::default()
-            .with_binary_path("/usr/local/bin/iggy-server")
-            .with_data_dir("/var/lib/iggy")
-            .with_port(9090)
-            .with_health_check_interval(Duration::from_secs(10))
-            .with_max_restart_attempts(5);
-
-        assert_eq!(
-            config.binary_path,
-            PathBuf::from("/usr/local/bin/iggy-server")
-        );
-        assert_eq!(config.data_dir, PathBuf::from("/var/lib/iggy"));
-        assert_eq!(config.port, 9090);
-        assert_eq!(config.health_check_interval, Duration::from_secs(10));
-        assert_eq!(config.max_restart_attempts, 5);
-    }
-
     #[tokio::test]
-    async fn iggy_manager_initial_state_is_stopped() {
+    async fn manager_initial_state_is_stopped() {
         let config = IggyConfig::default();
         let manager = IggyManager::new(config);
 
@@ -395,7 +278,7 @@ mod tests {
     }
 
     #[test]
-    fn iggy_manager_connection_address() {
+    fn manager_connection_address() {
         let config = IggyConfig::default().with_port(8091);
         let manager = IggyManager::new(config);
 
@@ -403,7 +286,7 @@ mod tests {
     }
 
     #[test]
-    fn iggy_state_display() {
+    fn state_display() {
         assert_eq!(format!("{}", IggyState::Stopped), "stopped");
         assert_eq!(format!("{}", IggyState::Starting), "starting");
         assert_eq!(format!("{}", IggyState::Running), "running");
@@ -412,16 +295,15 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn iggy_manager_is_running_returns_false_when_stopped() {
+    async fn manager_is_running_returns_false_when_stopped() {
         let config = IggyConfig::default();
         let manager = IggyManager::new(config);
 
-        // No process started, should return false
         assert!(!manager.is_running().await);
     }
 
     #[test]
-    fn iggy_manager_config_accessor() {
+    fn manager_config_accessor() {
         let config = IggyConfig::default().with_port(9999);
         let manager = IggyManager::new(config);
 

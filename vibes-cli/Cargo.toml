@@ -12,7 +12,7 @@ path = "src/main.rs"
 
 [dependencies]
 vibes-core = { path = "../vibes-core" }
-vibes-groove = { path = "../vibes-groove" }
+vibes-groove = { path = "../plugins/vibes-groove" }
 vibes-plugin-api = { path = "../vibes-plugin-api" }
 vibes-server = { path = "../vibes-server" }
 clap = { version = "4", features = ["derive"] }

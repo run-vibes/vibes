@@ -3,10 +3,11 @@ resolver = "2"
 members = [
     "vibes-cli",
     "vibes-core",
+    "vibes-iggy",
     "vibes-plugin-api",
     "vibes-server",
     "vibes-introspection",
-    "vibes-groove",
+    "plugins/vibes-groove",
 ]
 exclude = ["examples/plugins/hello-plugin"]
 
