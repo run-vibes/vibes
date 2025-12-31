@@ -24,6 +24,8 @@ This document tracks the implementation progress of vibes against the roadmap de
 | 4.2.6 Plugin API Extension | Complete | — | — |
 | 4.3 Capture & Inject | Complete | [design](plans/14-continual-learning/milestone-4.3-design.md) | [implementation](plans/14-continual-learning/milestone-4.3-implementation.md) |
 | 4.4 Assessment Framework | Complete | [design](plans/14-continual-learning/milestone-4.4-design.md) | [4.4.1](plans/14-continual-learning/milestone-4.4.1-implementation.md), [4.4.2b](plans/14-continual-learning/milestone-4.4.2b-implementation.md) |
+| **Infrastructure** | | | |
+| Iggy Bundling | Complete | [design](plans/16-iggy-bundling/design.md) | [implementation](plans/16-iggy-bundling/implementation.md) |
 | 4.5 Learning Extraction | Not started | [design](plans/14-continual-learning/design.md#45-learning-extraction) | — |
 | 4.6 Attribution Engine | Not started | [design](plans/14-continual-learning/design.md#46-attribution-engine--new) | — |
 | 4.7 Adaptive Strategies | Not started | [design](plans/14-continual-learning/design.md#47-adaptive-strategies) | — |
@@ -414,3 +416,4 @@ These phases are planned but not yet scheduled.
 | 2025-12-30 | Milestone 4.3 (Capture & Inject) complete - VibesEvent::Hook, SessionStart/UserPromptSubmit hooks, GroovePaths, SessionCollector, TranscriptParser, LearningExtractor stub, LearningFormatter, ClaudeCodeInjector, groove init/list/status commands, plugin hook integration, integration tests |
 | 2025-12-30 | Milestone 4.4.2a (EventLog Migration) foundation complete - vibes-iggy crate with EventLog/EventConsumer traits, IggyManager/IggyConfig, InMemoryEventLog for testing, IggyEventLog stub, moved vibes-groove to plugins/ directory, vibes-core re-exports EventLog types |
 | 2025-12-30 | Milestone 4.4.2b (Assessment Logic) complete - Lightweight signal detection, CircuitBreaker, CheckpointManager, HarnessLLM, SessionEnd detection, SamplingStrategy, HookIntervention, CLI commands (assess status/history), E2E tests, server consumers (websocket, notification, assessment), removed MemoryEventBus |
+| 2025-12-30 | Iggy Bundling (Infrastructure) complete - Apache Iggy bundled as git submodule at vendor/iggy, iggy-server auto-starts with vibes serve, IggyConfig.find_binary() 3-tier resolution (sibling/PATH/explicit), fallback to InMemoryEventLog when unavailable, just build-all for unified builds, XDG data directory at ~/.local/share/vibes/iggy |
