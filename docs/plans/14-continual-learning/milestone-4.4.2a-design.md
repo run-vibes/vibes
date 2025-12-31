@@ -1,6 +1,6 @@
 # Milestone 4.4.2a: EventLog Migration
 
-> **Status:** Design approved
+> **Status:** ✅ Complete (infrastructure in 4.4.2a, producer wiring in Milestone 18)
 > **Parent:** [milestone-4.4-design.md](milestone-4.4-design.md)
 
 ## Overview
@@ -347,47 +347,48 @@ loop {
 ## Deliverables
 
 1. **vibes-iggy crate**
-   - [ ] EventLog trait definition
-   - [ ] EventConsumer trait definition
-   - [ ] IggyManager (moved from vibes-groove)
-   - [ ] IggyEventLog implementation
-   - [ ] IggyEventConsumer implementation
-   - [ ] Unit tests
+   - [x] EventLog trait definition
+   - [x] EventConsumer trait definition
+   - [x] IggyManager (moved from vibes-groove)
+   - [x] IggyEventLog implementation
+   - [x] IggyEventConsumer implementation
+   - [x] Unit tests
 
 2. **vibes-server migration**
-   - [ ] Replace EventBus with EventLog
-   - [ ] Migrate SessionCollector to consumer
-   - [ ] Migrate WebSocket broadcaster to consumer
-   - [ ] Migrate chat history persister to consumer
-   - [ ] Migrate notification sender to consumer
-   - [ ] Update daemon startup sequence
+   - [x] Replace EventBus with EventLog
+   - [x] Migrate SessionCollector to consumer
+   - [x] Migrate WebSocket broadcaster to consumer
+   - [x] Migrate chat history persister to consumer
+   - [x] Migrate notification sender to consumer
+   - [x] Update daemon startup sequence
+   - [x] Wire event producers to append_event() (Milestone 18)
 
 3. **Structural cleanup**
-   - [ ] Move vibes-groove to plugins/
-   - [ ] Update Cargo.toml workspace members
-   - [ ] Remove IggyManager from vibes-groove
-   - [ ] Remove IggyAssessmentLog from vibes-groove
-   - [ ] Delete MemoryEventBus
-   - [ ] Remove old EventBus trait
+   - [x] Move vibes-groove to plugins/
+   - [x] Update Cargo.toml workspace members
+   - [x] Remove IggyManager from vibes-groove
+   - [x] Remove IggyAssessmentLog from vibes-groove
+   - [x] Delete MemoryEventBus
+   - [x] Remove old EventBus trait
 
 4. **Documentation**
-   - [ ] Update PROGRESS.md
-   - [ ] Update architecture diagrams in PRD
+   - [x] Update PROGRESS.md
+   - [x] Update architecture diagrams in PRD
 
 ---
 
 ## Exit Criteria
 
-- [ ] `vibes-iggy` crate compiles with all tests passing
-- [ ] Iggy server spawns automatically on daemon startup
-- [ ] All vibes-server subscribers migrated to consumer pattern
-- [ ] Events persist across daemon restarts (verified by test)
-- [ ] Late-joiner replay works (web UI reconnect gets history)
-- [ ] Consumer lag observable (each consumer's offset visible)
-- [ ] `vibes-groove` lives in `plugins/` directory
-- [ ] MemoryEventBus and EventBus trait removed
-- [ ] All existing integration tests pass
-- [ ] `just pre-commit` passes
+- [x] `vibes-iggy` crate compiles with all tests passing
+- [x] Iggy server spawns automatically on daemon startup
+- [x] All vibes-server subscribers migrated to consumer pattern
+- [x] Events persist across daemon restarts (verified by test)
+- [x] Late-joiner replay works (web UI reconnect gets history)
+- [x] Consumer lag observable (each consumer's offset visible)
+- [x] `vibes-groove` lives in `plugins/` directory
+- [x] MemoryEventBus and EventBus trait removed
+- [x] All existing integration tests pass
+- [x] `just pre-commit` passes
 
 ---
 

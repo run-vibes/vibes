@@ -422,3 +422,4 @@ These phases are planned but not yet scheduled.
 | 2025-12-31 | Visual System design document created - Comprehensive design spec at docs/design/VISUAL-SYSTEM.md covering warm terminal aesthetic, color system, typography, layouts, Iggy stream views, groove plugin views |
 | 2025-12-31 | groove branding updated - Removed purple palette, aligned with vibes visual system using groove gold (#c9a227) accent |
 | 2025-12-31 | README.md architecture diagram updated - Reflects EventLog/Iggy architecture with consumer pattern (WebSocket, Notification, Assessment consumers) |
+| 2025-12-31 | EventLog wiring complete - Event producers now route through EventLog via append_event(), WebSocket consumer broadcasts to firehose clients, completes consumer-based architecture |
