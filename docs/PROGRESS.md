@@ -249,14 +249,15 @@ Note: Auto-detect team/aud moved to Milestone 3.5 (Cloudflare Auth Wizard)
 - [x] `AssessmentProcessor` with fire-and-forget writer
 - [x] Integration tests
 
-**4.4.2a: EventLog Migration (Pending)**
+**4.4.2a: EventLog Migration (In Progress)**
 > **Design:** [milestone-4.4.2a-design.md](plans/14-continual-learning/milestone-4.4.2a-design.md)
 
-- [ ] Create `vibes-iggy` crate with EventLog/EventConsumer traits
-- [ ] Move `IggyManager` from vibes-groove to vibes-iggy
-- [ ] Implement `IggyEventLog` (producer/consumer model)
+- [x] Create `vibes-iggy` crate with EventLog/EventConsumer traits
+- [x] Move `IggyManager` from vibes-groove to vibes-iggy
+- [x] Implement `InMemoryEventLog` for testing
+- [x] Move `vibes-groove/` → `plugins/vibes-groove/`
+- [~] Implement `IggyEventLog` (stub, full SDK integration pending)
 - [ ] Migrate vibes-server subscribers to consumer pattern
-- [ ] Move `vibes-groove/` → `plugins/vibes-groove/`
 - [ ] Remove `MemoryEventBus` and old `EventBus` trait
 
 **4.4.2b: Assessment Logic (Pending)**
@@ -409,3 +410,4 @@ These phases are planned but not yet scheduled.
 | 2025-12-29 | Milestone 4.2 (Storage Foundation) complete - CozoDB storage, Learning types, AdaptiveParam, migrations, all storage layer ready |
 | 2025-12-29 | Milestone 4.3 (Capture & Inject) design complete - three injection channels (CLAUDE.md @import, SessionStart, UserPromptSubmit), unified HTML comment format, per-session buffering, TDD implementation tasks |
 | 2025-12-30 | Milestone 4.3 (Capture & Inject) complete - VibesEvent::Hook, SessionStart/UserPromptSubmit hooks, GroovePaths, SessionCollector, TranscriptParser, LearningExtractor stub, LearningFormatter, ClaudeCodeInjector, groove init/list/status commands, plugin hook integration, integration tests |
+| 2025-12-30 | Milestone 4.4.2a (EventLog Migration) foundation complete - vibes-iggy crate with EventLog/EventConsumer traits, IggyManager/IggyConfig, InMemoryEventLog for testing, IggyEventLog stub, moved vibes-groove to plugins/ directory, vibes-core re-exports EventLog types |
