@@ -2,13 +2,12 @@
 
 mod common;
 
-use vibes_core::EventBus;
-
 #[tokio::test]
-async fn server_state_has_event_bus() {
+async fn server_state_has_event_log() {
     let (state, _addr) = common::create_test_server().await;
-    // EventBus is always present, verify it works
-    let _rx = state.event_bus.subscribe();
+    // EventLog is always present, verify it works
+    let hwm = state.event_log.high_water_mark();
+    assert_eq!(hwm, 0, "No events initially");
 }
 
 #[tokio::test]

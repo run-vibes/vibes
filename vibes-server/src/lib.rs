@@ -1,7 +1,7 @@
 //! vibes-server - HTTP and WebSocket server for vibes daemon
 //!
-//! This crate provides the server infrastructure that owns the SessionManager,
-//! EventBus, and PluginHost. Both CLI and Web UI connect as WebSocket clients.
+//! This crate provides the server infrastructure that owns the EventLog
+//! and PluginHost. Both CLI and Web UI connect as WebSocket clients.
 
 pub mod consumers;
 mod error;

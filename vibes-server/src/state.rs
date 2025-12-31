@@ -5,8 +5,8 @@ use std::sync::Arc;
 use chrono::{DateTime, Utc};
 use tokio::sync::{RwLock, broadcast};
 use vibes_core::{
-    AccessConfig, MemoryEventBus, PluginHost, PluginHostConfig, SubscriptionStore, TunnelConfig,
-    TunnelManager, VapidKeyManager, VibesEvent,
+    AccessConfig, PluginHost, PluginHostConfig, SubscriptionStore, TunnelConfig, TunnelManager,
+    VapidKeyManager, VibesEvent,
     pty::{PtyConfig, PtyManager},
 };
 use vibes_iggy::{EventLog, InMemoryEventLog};
@@ -33,9 +33,7 @@ const DEFAULT_BROADCAST_CAPACITY: usize = 1000;
 pub struct AppState {
     /// Plugin host for managing plugins
     pub plugin_host: Arc<RwLock<PluginHost>>,
-    /// Event bus for publishing/subscribing to events (being phased out)
-    pub event_bus: Arc<MemoryEventBus>,
-    /// Event log for persistent event storage (replacing event_bus)
+    /// Event log for persistent event storage
     pub event_log: Arc<dyn EventLog<VibesEvent>>,
     /// Tunnel manager for remote access
     pub tunnel_manager: Arc<RwLock<TunnelManager>>,
@@ -58,7 +56,6 @@ pub struct AppState {
 impl AppState {
     /// Create a new AppState with default components
     pub fn new() -> Self {
-        let event_bus = Arc::new(MemoryEventBus::new(10_000));
         let event_log: Arc<dyn EventLog<VibesEvent>> =
             Arc::new(InMemoryEventLog::<VibesEvent>::new());
         let plugin_host = Arc::new(RwLock::new(PluginHost::new(PluginHostConfig::default())));
@@ -72,7 +69,6 @@ impl AppState {
 
         Self {
             plugin_host,
-            event_bus,
             event_log,
             tunnel_manager,
             auth_layer: AuthLayer::disabled(),
@@ -111,7 +107,6 @@ impl AppState {
     /// Create AppState with custom components (for testing)
     pub fn with_components(
         plugin_host: Arc<RwLock<PluginHost>>,
-        event_bus: Arc<MemoryEventBus>,
         tunnel_manager: Arc<RwLock<TunnelManager>>,
     ) -> Self {
         let event_log: Arc<dyn EventLog<VibesEvent>> =
@@ -122,7 +117,6 @@ impl AppState {
 
         Self {
             plugin_host,
-            event_bus,
             event_log,
             tunnel_manager,
             auth_layer: AuthLayer::disabled(),
@@ -215,14 +209,13 @@ mod tests {
 
     #[test]
     fn test_app_state_with_components() {
-        let event_bus = Arc::new(MemoryEventBus::new(100));
         let plugin_host = Arc::new(RwLock::new(PluginHost::new(PluginHostConfig::default())));
         let tunnel_manager = Arc::new(RwLock::new(TunnelManager::new(
             TunnelConfig::default(),
             7432,
         )));
 
-        let state = AppState::with_components(plugin_host, event_bus, tunnel_manager);
+        let state = AppState::with_components(plugin_host, tunnel_manager);
         assert!(state.uptime_seconds() >= 0);
     }
 
