@@ -31,6 +31,38 @@ pub use http::create_router;
 pub use middleware::{AuthLayer, auth_middleware};
 pub use state::{AppState, PtyEvent};
 
+/// Create a future that resolves when a shutdown signal is received.
+///
+/// On Unix, this listens for SIGTERM and SIGINT (Ctrl-C).
+/// On other platforms, this only listens for Ctrl-C.
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        tokio::signal::ctrl_c()
+            .await
+            .expect("failed to install Ctrl+C handler");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+            .expect("failed to install SIGTERM handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        () = ctrl_c => {
+            tracing::info!("Received Ctrl-C, initiating graceful shutdown");
+        }
+        () = terminate => {
+            tracing::info!("Received SIGTERM, initiating graceful shutdown");
+        }
+    }
+}
+
 /// The main vibes server
 pub struct VibesServer {
     config: ServerConfig,
@@ -139,6 +171,22 @@ impl VibesServer {
     /// This is useful for testing where you want to bind to port 0
     /// and get the actual address before starting the server.
     pub async fn run_with_listener(self, listener: TcpListener) -> Result<(), ServerError> {
+        self.run_with_graceful_shutdown(listener, shutdown_signal())
+            .await
+    }
+
+    /// Run the server with a pre-bound listener and custom shutdown signal.
+    ///
+    /// The server will stop accepting new connections when the shutdown signal
+    /// resolves, then clean up resources (including stopping Iggy) before returning.
+    pub async fn run_with_graceful_shutdown<F>(
+        self,
+        listener: TcpListener,
+        shutdown_signal: F,
+    ) -> Result<(), ServerError>
+    where
+        F: std::future::Future<Output = ()> + Send + 'static,
+    {
         let addr = listener
             .local_addr()
             .map_err(|e| ServerError::Internal(e.to_string()))?;
@@ -153,13 +201,20 @@ impl VibesServer {
         self.start_event_log_consumers(self.notification_service.clone())
             .await;
 
+        let state = Arc::clone(&self.state);
         let router = create_router(self.state);
+
         axum::serve(
             listener,
             router.into_make_service_with_connect_info::<SocketAddr>(),
         )
+        .with_graceful_shutdown(shutdown_signal)
         .await
         .map_err(|e| ServerError::Internal(e.to_string()))?;
+
+        // Clean up resources after server stops
+        tracing::info!("Server shutdown initiated, cleaning up resources");
+        state.shutdown().await;
 
         Ok(())
     }
@@ -319,5 +374,47 @@ mod tests {
         let state = Arc::new(AppState::new());
         let server = VibesServer::with_state(config.clone(), state);
         assert_eq!(server.config().port, 9000);
+    }
+
+    #[tokio::test]
+    async fn test_graceful_shutdown_stops_iggy_manager() {
+        use vibes_iggy::{IggyConfig, IggyManager, IggyState};
+
+        // Create a manager (without starting a real process)
+        let config = IggyConfig::default();
+        let manager = Arc::new(IggyManager::new(config));
+
+        // Create state with the manager
+        let state = Arc::new(AppState::new().with_iggy_manager(manager.clone()));
+        let server_config = ServerConfig::new("127.0.0.1", 0); // Port 0 = random available
+        let server = VibesServer::with_state(server_config, Arc::clone(&state));
+
+        // Create a shutdown trigger we can control
+        let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel::<()>();
+
+        // Bind to a random port
+        let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+
+        // Run server in background, passing our shutdown signal
+        let server_handle = tokio::spawn(async move {
+            server
+                .run_with_graceful_shutdown(listener, async {
+                    let _ = shutdown_rx.await;
+                })
+                .await
+        });
+
+        // Give server a moment to start
+        tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+
+        // Trigger shutdown
+        shutdown_tx.send(()).unwrap();
+
+        // Wait for server to finish
+        let result = server_handle.await.unwrap();
+        assert!(result.is_ok());
+
+        // Verify the manager was stopped
+        assert_eq!(manager.state().await, IggyState::Stopped);
     }
 }
