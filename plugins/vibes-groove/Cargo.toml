@@ -21,6 +21,7 @@ vibes-iggy = { path = "../../vibes-iggy" }
 # Async
 async-trait.workspace = true
 tokio = { workspace = true, features = ["sync", "rt"] }
+tokio-util = "0.7"
 
 # Serialization
 serde.workspace = true

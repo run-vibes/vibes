@@ -9,6 +9,7 @@ use vibes_core::{
     TunnelManager, VapidKeyManager, VibesEvent,
     pty::{PtyConfig, PtyManager},
 };
+use vibes_iggy::{EventLog, InMemoryEventLog};
 
 /// PTY output event for broadcasting to attached clients
 #[derive(Clone, Debug)]
@@ -32,8 +33,10 @@ const DEFAULT_BROADCAST_CAPACITY: usize = 1000;
 pub struct AppState {
     /// Plugin host for managing plugins
     pub plugin_host: Arc<RwLock<PluginHost>>,
-    /// Event bus for publishing/subscribing to events
+    /// Event bus for publishing/subscribing to events (being phased out)
     pub event_bus: Arc<MemoryEventBus>,
+    /// Event log for persistent event storage (replacing event_bus)
+    pub event_log: Arc<dyn EventLog<VibesEvent>>,
     /// Tunnel manager for remote access
     pub tunnel_manager: Arc<RwLock<TunnelManager>>,
     /// Authentication layer
@@ -56,6 +59,8 @@ impl AppState {
     /// Create a new AppState with default components
     pub fn new() -> Self {
         let event_bus = Arc::new(MemoryEventBus::new(10_000));
+        let event_log: Arc<dyn EventLog<VibesEvent>> =
+            Arc::new(InMemoryEventLog::<VibesEvent>::new());
         let plugin_host = Arc::new(RwLock::new(PluginHost::new(PluginHostConfig::default())));
         let tunnel_manager = Arc::new(RwLock::new(TunnelManager::new(
             TunnelConfig::default(),
@@ -68,6 +73,7 @@ impl AppState {
         Self {
             plugin_host,
             event_bus,
+            event_log,
             tunnel_manager,
             auth_layer: AuthLayer::disabled(),
             started_at: Utc::now(),
@@ -108,6 +114,8 @@ impl AppState {
         event_bus: Arc<MemoryEventBus>,
         tunnel_manager: Arc<RwLock<TunnelManager>>,
     ) -> Self {
+        let event_log: Arc<dyn EventLog<VibesEvent>> =
+            Arc::new(InMemoryEventLog::<VibesEvent>::new());
         let (event_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let (pty_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let pty_manager = Arc::new(RwLock::new(PtyManager::new(PtyConfig::default())));
@@ -115,6 +123,7 @@ impl AppState {
         Self {
             plugin_host,
             event_bus,
+            event_log,
             tunnel_manager,
             auth_layer: AuthLayer::disabled(),
             started_at: Utc::now(),
@@ -134,6 +143,13 @@ impl AppState {
     /// Get a reference to the plugin host
     pub fn plugin_host(&self) -> &Arc<RwLock<PluginHost>> {
         &self.plugin_host
+    }
+
+    /// Get the event broadcaster sender for consumer integration.
+    ///
+    /// This is used by EventLog consumers to broadcast events to WebSocket clients.
+    pub fn event_broadcaster(&self) -> broadcast::Sender<VibesEvent> {
+        self.event_broadcaster.clone()
     }
 
     /// Subscribe to events broadcast to WebSocket clients
