@@ -1,5 +1,5 @@
 import { test as base } from '@playwright/test';
-import { spawn, spawnSync, ChildProcess } from 'child_process';
+import { spawn, ChildProcess } from 'child_process';
 import { Readable } from 'stream';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -15,23 +15,39 @@ const projectRoot = path.resolve(import.meta.dirname, '../..');
 const testConfigDir = path.join(projectRoot, '.vibes');
 const testConfigPath = path.join(testConfigDir, 'config.toml');
 
+// Find the vibes binary
+// Priority: VIBES_BIN env var > debug build > release build
+function findVibesBinary(): string {
+  // Allow explicit override via environment variable
+  if (process.env.VIBES_BIN) {
+    if (!fs.existsSync(process.env.VIBES_BIN)) {
+      throw new Error(`VIBES_BIN path does not exist: ${process.env.VIBES_BIN}`);
+    }
+    return process.env.VIBES_BIN;
+  }
+
+  // Prefer debug build (faster CI), fallback to release
+  const debugPath = path.join(projectRoot, 'target/debug/vibes');
+  const releasePath = path.join(projectRoot, 'target/release/vibes');
+
+  if (fs.existsSync(debugPath)) {
+    return debugPath;
+  }
+  if (fs.existsSync(releasePath)) {
+    return releasePath;
+  }
+  throw new Error('vibes binary not found. Run "cargo build" or set VIBES_BIN.');
+}
+
 export const test = base.extend<VibesFixture>({
   serverPort: [async ({}, use) => {
-    // Build first to ensure we have the latest
-    const buildResult = spawnSync('cargo', ['build', '--release'], {
-      cwd: projectRoot,
-      stdio: 'inherit',
-      env: process.env
-    });
-
-    if (buildResult.status !== 0) {
-      throw new Error('Failed to build vibes');
-    }
+    const vibesBin = findVibesBinary();
+    console.log(`[vibes] Using binary: ${vibesBin}`);
 
     // Start server on random port
     // Explicitly pass process.env to ensure VIBES_PTY_COMMAND is inherited
     const server = spawn(
-      path.join(projectRoot, 'target/release/vibes'),
+      vibesBin,
       ['serve', '--port', '0'],
       { cwd: projectRoot, env: process.env }
     );
@@ -79,12 +95,13 @@ export const test = base.extend<VibesFixture>({
 
   cli: async ({ serverPort }, use) => {
     const processes: ChildProcess[] = [];
+    const vibesBin = findVibesBinary();
 
     const spawnCli = (...args: string[]) => {
       // Use --no-serve since we have our own server running
       // Set VIBES_CONFIG to point to our test config
       const proc = spawn(
-        path.join(projectRoot, 'target/release/vibes'),
+        vibesBin,
         [...args, '--no-serve'],
         {
           cwd: projectRoot,
