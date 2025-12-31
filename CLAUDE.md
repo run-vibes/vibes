@@ -57,6 +57,48 @@ just setup-hooks      # Enable pre-commit hooks
 | `cargo-mutants` | Mutation testing |
 | `cargo-watch` | Watch mode for development |
 
+## Git Submodules
+
+This project uses a git submodule for Apache Iggy (message streaming):
+
+```
+vendor/iggy/  → github.com/apache/iggy
+```
+
+### First-Time Setup
+
+```bash
+# If you cloned without --recursive:
+git submodule update --init --recursive
+```
+
+### Building
+
+```bash
+just build-all   # Builds vibes + iggy-server
+```
+
+The `iggy-server` binary is copied to `target/release/` alongside vibes.
+
+### Updating Iggy
+
+```bash
+cd vendor/iggy
+git fetch --tags
+git checkout server-0.7.0  # New version
+cd ../..
+git add vendor/iggy
+git commit -m "chore: update iggy to server-0.7.0"
+```
+
+### How It Works
+
+When `vibes serve` starts, it automatically:
+1. Looks for `iggy-server` next to the vibes binary
+2. Spawns it as a subprocess if not running
+3. Connects using the Iggy client SDK
+4. Falls back to in-memory storage if Iggy unavailable
+
 ## Development Commands
 
 **Always prefer `just` commands over direct cargo commands.**

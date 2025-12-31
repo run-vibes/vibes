@@ -353,7 +353,7 @@ git commit -m "chore: update iggy to v0.5.0"
 ## Version Pinning Strategy
 
 Pin to the latest stable Iggy release. As of writing:
-- **Tag**: `v0.4.300`
+- **Tag**: `server-0.6.0`
 - **Compatibility**: Works with iggy SDK 0.6.x (which we use)
 
 Update process:

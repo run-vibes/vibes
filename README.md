@@ -15,6 +15,25 @@ Remote control for your Claude Code sessions.
 - **Plugin System** - Extend vibes with native Rust plugins for custom commands and workflows
 - **Cross-Platform** - Single binary for Linux, macOS, and Windows
 
+## Quick Start
+
+```bash
+# Clone with submodules
+git clone --recursive https://github.com/run-vibes/vibes
+cd vibes
+
+# Enter dev environment (requires Nix)
+direnv allow
+
+# Build everything
+just build-all
+
+# Run
+./target/release/vibes claude
+```
+
+Persistent event storage is automatic - no additional setup required.
+
 ## Usage
 
 ```bash
