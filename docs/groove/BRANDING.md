@@ -193,18 +193,30 @@ groove works with any AI coding assistant. Branding should never be Claude-speci
 
 ---
 
-## Color Palette (Future)
+## Color Palette
 
-For UI/web dashboard contexts:
+groove lives within the vibes visual system (see [VISUAL-SYSTEM.md](../design/VISUAL-SYSTEM.md)) but has its own accent color.
+
+### groove Accent
 
 | Color | Hex | Use |
 |-------|-----|-----|
-| Groove Purple | `#7C3AED` | Primary accent, links |
-| Vinyl Black | `#1A1A2E` | Backgrounds, record visuals |
-| Warm Cream | `#FAF7F2` | Light backgrounds, paper feel |
-| Confident Green | `#10B981` | High confidence indicators |
-| Learning Amber | `#F59E0B` | Medium confidence, in-progress |
-| Muted Gray | `#6B7280` | Secondary text, low confidence |
+| **groove Gold** | `#c9a227` | Primary accent (distinct from vibes amber) |
+
+This gold evokes vinyl records and warmth while remaining distinct from vibes core's amber (`#e6b450`).
+
+### Inherited from vibes
+
+| Color | Hex | Use |
+|-------|-----|-----|
+| Warm Charcoal | `#1a1816` | Backgrounds |
+| Warm Cream | `#f0ebe3` | Primary text |
+| Green | `#7ec699` | High confidence, success |
+| Amber | `#e6b450` | Medium confidence, attention |
+| Red | `#e05252` | Errors, low confidence warnings |
+| Dim Gray | `#6b665c` | Secondary text, muted |
+
+groove uses the ◉ icon in gold for all status indicators and messages.
 
 ---
 
@@ -245,6 +257,7 @@ For UI/web dashboard contexts:
 
 ## Related Documents
 
+- [Visual System](../design/VISUAL-SYSTEM.md) - Complete vibes design system (colors, typography, components)
 - [Continual Learning Design](../plans/14-continual-learning/design.md) - Technical architecture
 - [Harness Introspection Design](../plans/15-harness-introspection/design.md) - Level 0 foundation
 - [PRD](../PRD.md) - Overall vibes product requirements

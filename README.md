@@ -1,7 +1,7 @@
 # vibes
 
 [![CI](https://github.com/run-vibes/vibes/actions/workflows/ci.yml/badge.svg)](https://github.com/run-vibes/vibes/actions/workflows/ci.yml)
-[![Progress](https://img.shields.io/badge/progress-11%2F25%20milestones-blue)](docs/PROGRESS.md)
+[![Progress](https://img.shields.io/badge/progress-18%2F27%20milestones-blue)](docs/PROGRESS.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Remote control for your Claude Code sessions.
@@ -125,7 +125,7 @@ export_plugin!(MyPlugin);
 
 ## Architecture
 
-vibes uses a **daemon-first architecture** with a PTY-based backend. The server owns Claude sessions as persistent PTY processes, and both CLI and Web UI connect as terminal clients.
+vibes uses a **daemon-first architecture** with a PTY-based backend and persistent event streaming. The server owns Claude sessions as persistent PTY processes, and both CLI and Web UI connect as terminal clients.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -141,9 +141,16 @@ vibes uses a **daemon-first architecture** with a PTY-based backend. The server 
 │  │ └──────────┘ │    ClaudeEvents        │  └────────┘ └───────┘ │ │
 │  └──────────────┘           │            └───────────────────────┘ │
 │                             ▼                                      │
-│                    ┌──────────────┐                                │
-│                    │  Event Bus   │──► Analytics, History, iOS     │
-│                    └──────────────┘                                │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │                    EventLog (Iggy)                            │  │
+│  │  Persistent event stream with consumer-based processing       │  │
+│  └───────────┬─────────────────┬─────────────────┬──────────────┘  │
+│              │                 │                 │                  │
+│        ┌─────▼─────┐    ┌──────▼──────┐   ┌─────▼─────┐            │
+│        │ WebSocket │    │ Notification│   │ Assessment│            │
+│        │ Consumer  │    │  Consumer   │   │ Consumer  │            │
+│        │(broadcast)│    │   (push)    │   │ (groove)  │            │
+│        └───────────┘    └─────────────┘   └───────────┘            │
 └─────────────────────────────────────────────────────────────────────┘
          ▲                           ▲
          │ PTY I/O via WebSocket     │ PTY I/O via WebSocket
@@ -160,9 +167,10 @@ vibes uses a **daemon-first architecture** with a PTY-based backend. The server 
 - **Daemon Server** - Background process that owns PTY sessions (survives CLI disconnect)
 - **PTY Manager** - Spawns Claude in persistent pseudo-terminals
 - **Hook Receiver** - Captures structured events via Claude Code hooks
+- **EventLog (Iggy)** - Persistent event stream backed by Apache Iggy message streaming
+- **Consumers** - Independent processors (WebSocket broadcast, push notifications, groove assessment)
 - **CLI Client** - Connects to daemon, proxies PTY I/O to local terminal
 - **Web UI** - xterm.js terminal emulator showing exact CLI experience
-- **Event Bus** - Real-time pub/sub fed by hooks for analytics/history
 
 ## Testing
 
