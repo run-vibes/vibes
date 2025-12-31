@@ -139,6 +139,36 @@ impl AssessmentProcessor {
     pub fn config(&self) -> &AssessmentConfig {
         &self.config
     }
+
+    /// Process a VibesEvent from the EventLog.
+    ///
+    /// This is the main entry point for the assessment consumer. It analyzes
+    /// incoming events and potentially emits assessment events based on
+    /// detected patterns and signals.
+    ///
+    /// The processing pipeline includes:
+    /// - LightweightDetector for per-message signal detection (B1)
+    /// - CircuitBreaker for intervention decisions (B2)
+    /// - SessionBuffer for event collection (B3)
+    /// - CheckpointManager for checkpoint triggers (B4)
+    ///
+    /// Currently a stub that will be implemented in B1-B4.
+    pub async fn process_event(&self, event: &vibes_core::VibesEvent) {
+        if !self.is_enabled() {
+            trace!("Assessment disabled, skipping event processing");
+            return;
+        }
+
+        trace!(event = ?event, "Processing VibesEvent for assessment");
+
+        // TODO(B1): Route to LightweightDetector for signal detection
+        // TODO(B2): Route signals to CircuitBreaker for state management
+        // TODO(B3): Buffer events per session
+        // TODO(B4): Check for checkpoint triggers
+        //
+        // For now, this is a no-op stub. The actual pipeline will be built
+        // incrementally in tasks B1-B4.
+    }
 }
 
 impl Drop for AssessmentProcessor {

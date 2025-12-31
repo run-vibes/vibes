@@ -205,6 +205,18 @@ impl NotificationService {
     pub fn config(&self) -> &NotificationConfig {
         &self.config
     }
+
+    /// Process a single event for notification dispatch.
+    ///
+    /// This is the primary entry point for EventLog consumers.
+    /// Converts the event to a notification if applicable and sends to all subscribers.
+    pub async fn process_event(&self, event: &VibesEvent) {
+        if let Some(notification) = self.event_to_notification(event)
+            && let Err(e) = self.send_to_all(notification).await
+        {
+            error!("Failed to send notifications: {}", e);
+        }
+    }
 }
 
 #[cfg(test)]

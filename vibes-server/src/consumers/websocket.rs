@@ -1,0 +1,107 @@
+//! WebSocket event consumer.
+//!
+//! This consumer reads from the EventLog and broadcasts events to all
+//! connected WebSocket clients via the shared broadcast channel.
+
+use std::time::Duration;
+
+use tokio::sync::broadcast;
+use vibes_core::VibesEvent;
+
+use super::{ConsumerConfig, ConsumerManager, Result};
+
+/// Start the WebSocket consumer that broadcasts events to WebSocket clients.
+///
+/// # Arguments
+///
+/// * `manager` - The consumer manager to spawn the consumer on
+/// * `broadcaster` - The broadcast sender for WebSocket fan-out
+///
+/// # Returns
+///
+/// Returns Ok(()) on success, or an error if the consumer fails to start.
+pub async fn start_websocket_consumer(
+    manager: &mut ConsumerManager,
+    broadcaster: broadcast::Sender<VibesEvent>,
+) -> Result<()> {
+    let config = ConsumerConfig::live("websocket")
+        .with_poll_timeout(Duration::from_millis(50))
+        .with_batch_size(100);
+
+    manager.spawn_broadcast_consumer(config, broadcaster).await
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::Arc;
+    use vibes_iggy::{EventLog, InMemoryEventLog};
+
+    fn make_event(session_id: &str) -> VibesEvent {
+        VibesEvent::SessionCreated {
+            session_id: session_id.to_string(),
+            name: None,
+        }
+    }
+
+    #[tokio::test]
+    async fn test_start_websocket_consumer_receives_live_events() {
+        let log = Arc::new(InMemoryEventLog::<VibesEvent>::new());
+        let mut manager = ConsumerManager::new(log.clone());
+        let (tx, mut rx) = broadcast::channel(100);
+
+        // Start the consumer
+        start_websocket_consumer(&mut manager, tx).await.unwrap();
+
+        // Append an event (after consumer started - live mode)
+        log.append(make_event("live-event")).await.unwrap();
+
+        // Should receive the event
+        let received = tokio::time::timeout(Duration::from_millis(100), rx.recv())
+            .await
+            .expect("should receive within timeout")
+            .expect("should receive event");
+
+        assert!(matches!(
+            received,
+            VibesEvent::SessionCreated { session_id, .. } if session_id == "live-event"
+        ));
+
+        manager.shutdown();
+        manager.wait_for_shutdown().await;
+    }
+
+    #[tokio::test]
+    async fn test_websocket_consumer_ignores_old_events() {
+        let log = Arc::new(InMemoryEventLog::<VibesEvent>::new());
+
+        // Append event BEFORE consumer starts
+        log.append(make_event("old-event")).await.unwrap();
+
+        let mut manager = ConsumerManager::new(log.clone());
+        let (tx, mut rx) = broadcast::channel(100);
+
+        // Start the consumer (live mode - should ignore old events)
+        start_websocket_consumer(&mut manager, tx).await.unwrap();
+
+        // Give consumer time to start
+        tokio::time::sleep(Duration::from_millis(50)).await;
+
+        // Append new event
+        log.append(make_event("new-event")).await.unwrap();
+
+        // Should only receive the new event
+        let received = tokio::time::timeout(Duration::from_millis(100), rx.recv())
+            .await
+            .expect("should receive within timeout")
+            .expect("should receive event");
+
+        assert!(matches!(
+            received,
+            VibesEvent::SessionCreated { session_id, .. } if session_id == "new-event"
+        ));
+
+        manager.shutdown();
+        manager.wait_for_shutdown().await;
+    }
+}

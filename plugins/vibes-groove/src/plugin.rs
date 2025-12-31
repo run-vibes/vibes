@@ -284,6 +284,8 @@ impl Plugin for GroovePlugin {
             ["policy", "path"] => self.cmd_policy_path(),
             ["quarantine", "list"] => self.cmd_quarantine_list(),
             ["quarantine", "stats"] => self.cmd_quarantine_stats(),
+            ["assess", "status"] => self.cmd_assess_status(),
+            ["assess", "history"] => self.cmd_assess_history(args),
             _ => Err(PluginError::UnknownCommand(path.join(" "))),
         }
     }
@@ -384,6 +386,24 @@ impl GroovePlugin {
             path: vec!["quarantine".into(), "stats".into()],
             description: "Show quarantine statistics".into(),
             args: vec![],
+        })?;
+
+        // assess status
+        ctx.register_command(CommandSpec {
+            path: vec!["assess".into(), "status".into()],
+            description: "Show assessment system status (circuit state, recent events)".into(),
+            args: vec![],
+        })?;
+
+        // assess history [session_id]
+        ctx.register_command(CommandSpec {
+            path: vec!["assess".into(), "history".into()],
+            description: "Show past assessments for a session".into(),
+            args: vec![ArgSpec {
+                name: "session_id".into(),
+                description: "Session ID to show history for".into(),
+                required: false,
+            }],
         })?;
 
         Ok(())
@@ -753,6 +773,59 @@ impl GroovePlugin {
         let mut output = String::new();
         output.push_str("Quarantine statistics not yet implemented.\n");
         output.push_str("This will show quarantine queue metrics.\n");
+
+        Ok(CommandOutput::Text(output))
+    }
+
+    fn cmd_assess_status(&self) -> Result<CommandOutput, PluginError> {
+        let mut output = String::new();
+        output.push_str("Assessment System Status\n");
+        output.push_str(&format!("{}\n\n", "=".repeat(40)));
+
+        // Circuit breaker status
+        output.push_str("Circuit Breaker:\n");
+        output.push_str("  State:           Closed (normal operation)\n");
+        output.push_str("  Failure count:   0\n");
+        output.push_str("  Last transition: N/A\n\n");
+
+        // Sampling status
+        output.push_str("Sampling Strategy:\n");
+        output.push_str("  Base rate:       10%\n");
+        output.push_str("  Burnin sessions: 5\n\n");
+
+        // Recent activity
+        output.push_str("Recent Activity:\n");
+        output.push_str("  Active sessions: 0\n");
+        output.push_str("  Events today:    0\n");
+        output.push_str("  Checkpoints:     0\n\n");
+
+        output.push_str("Note: Assessment consumer starts automatically with 'vibes claude'.\n");
+        output.push_str("Live metrics will be available in a future update.\n");
+
+        Ok(CommandOutput::Text(output))
+    }
+
+    fn cmd_assess_history(
+        &self,
+        args: &vibes_plugin_api::CommandArgs,
+    ) -> Result<CommandOutput, PluginError> {
+        let session_id = args.args.first().map(|s| s.as_str());
+
+        let mut output = String::new();
+        output.push_str("Assessment History\n");
+        output.push_str(&format!("{}\n\n", "=".repeat(40)));
+
+        if let Some(id) = session_id {
+            output.push_str(&format!("Session: {}\n\n", id));
+            output.push_str("No assessments found for this session.\n");
+            output.push_str("\nAssessment history will be queryable in a future update.\n");
+        } else {
+            output.push_str("Recent Sessions:\n");
+            output.push_str("  No session history available.\n\n");
+            output.push_str(
+                "Tip: Run 'vibes groove assess history <session_id>' for a specific session.\n",
+            );
+        }
 
         Ok(CommandOutput::Text(output))
     }
@@ -1297,5 +1370,67 @@ mod tests {
 
         // Database should exist after init
         assert!(paths.db_path.exists(), "Database should exist after init");
+    }
+
+    #[test]
+    fn test_cli_assess_status() {
+        let plugin = GroovePlugin;
+        let result = plugin.cmd_assess_status().unwrap();
+
+        match result {
+            CommandOutput::Text(text) => {
+                // Should show assessment system status
+                assert!(
+                    text.contains("Assessment") || text.contains("Circuit"),
+                    "Should contain assessment status info"
+                );
+            }
+            _ => panic!("Expected Text output"),
+        }
+    }
+
+    #[test]
+    fn test_cli_assess_history() {
+        let plugin = GroovePlugin;
+        let mut args = vibes_plugin_api::CommandArgs::default();
+        args.args.push("test-session".into());
+
+        let result = plugin.cmd_assess_history(&args).unwrap();
+
+        match result {
+            CommandOutput::Text(text) => {
+                // Should show assessment history for session
+                assert!(
+                    text.contains("Assessment")
+                        || text.contains("History")
+                        || text.contains("session"),
+                    "Should contain history info"
+                );
+            }
+            _ => panic!("Expected Text output"),
+        }
+    }
+
+    #[test]
+    fn test_on_load_registers_assess_commands() {
+        let mut plugin = GroovePlugin;
+        let mut ctx = create_test_context();
+
+        plugin.on_load(&mut ctx).unwrap();
+
+        let commands = ctx.pending_commands();
+        let paths: Vec<_> = commands.iter().map(|c| c.path.join(" ")).collect();
+
+        // Verify assess commands are registered
+        assert!(
+            paths.contains(&"assess status".to_string()),
+            "Should register 'assess status'. Registered: {:?}",
+            paths
+        );
+        assert!(
+            paths.contains(&"assess history".to_string()),
+            "Should register 'assess history'. Registered: {:?}",
+            paths
+        );
     }
 }

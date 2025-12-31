@@ -1,8 +1,9 @@
 //! vibes-server - HTTP and WebSocket server for vibes daemon
 //!
-//! This crate provides the server infrastructure that owns the SessionManager,
-//! EventBus, and PluginHost. Both CLI and Web UI connect as WebSocket clients.
+//! This crate provides the server infrastructure that owns the EventLog
+//! and PluginHost. Both CLI and Web UI connect as WebSocket clients.
 
+pub mod consumers;
 mod error;
 pub mod http;
 pub mod middleware;
@@ -14,9 +15,15 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use tokio::net::TcpListener;
+use tokio_util::sync::CancellationToken;
 use vibes_core::{
-    EventBus, HookInstaller, HookInstallerConfig, NotificationConfig, NotificationService,
-    SubscriptionStore, VapidKeyManager,
+    HookInstaller, HookInstallerConfig, NotificationConfig, NotificationService, SubscriptionStore,
+    VapidKeyManager,
+};
+
+use consumers::{
+    ConsumerManager, assessment::start_assessment_consumer,
+    notification::start_notification_consumer, websocket::start_websocket_consumer,
 };
 
 pub use error::ServerError;
@@ -125,13 +132,10 @@ impl VibesServer {
         // Install Claude Code hooks
         self.install_hooks();
 
-        // Start event forwarding from event_bus to WebSocket broadcaster
-        self.start_event_forwarding();
-
-        // Start notification service if enabled
-        if let Some(notification_service) = &self.notification_service {
-            self.start_notification_service(notification_service.clone());
-        }
+        // Start EventLog consumer-based event processing
+        // This includes WebSocket consumer and notification consumer
+        self.start_event_log_consumers(self.notification_service.clone())
+            .await;
 
         let router = create_router(self.state);
         axum::serve(
@@ -144,41 +148,54 @@ impl VibesServer {
         Ok(())
     }
 
-    /// Start a background task that forwards events from EventBus to WebSocket broadcaster
-    fn start_event_forwarding(&self) {
-        let state = Arc::clone(&self.state);
-        let mut rx = state.event_bus.subscribe();
+    /// Start EventLog consumers for event processing.
+    ///
+    /// This is the new consumer-based architecture that reads from the EventLog.
+    async fn start_event_log_consumers(
+        &self,
+        notification_service: Option<Arc<NotificationService>>,
+    ) {
+        let event_log = Arc::clone(&self.state.event_log);
+        let broadcaster = self.state.event_broadcaster();
 
-        tokio::spawn(async move {
-            loop {
-                match rx.recv().await {
-                    Ok((_seq, event)) => {
-                        let count = state.broadcast_event(event);
-                        tracing::trace!("Broadcast event to {} WebSocket clients", count);
-                    }
-                    Err(tokio::sync::broadcast::error::RecvError::Closed) => {
-                        tracing::warn!("Event bus channel closed");
-                        break;
-                    }
-                    Err(tokio::sync::broadcast::error::RecvError::Lagged(count)) => {
-                        tracing::warn!("Event forwarding lagged by {} events", count);
-                        // Continue receiving
-                    }
-                }
+        // Create shutdown token for consumers that need it
+        let shutdown = CancellationToken::new();
+
+        let mut manager = ConsumerManager::new(Arc::clone(&event_log));
+
+        // Start WebSocket consumer
+        if let Err(e) = start_websocket_consumer(&mut manager, broadcaster).await {
+            tracing::error!("Failed to start WebSocket consumer: {}", e);
+            return;
+        }
+
+        // Start notification consumer if service is available
+        if let Some(service) = notification_service {
+            if let Err(e) = start_notification_consumer(&mut manager, service).await {
+                tracing::error!("Failed to start notification consumer: {}", e);
+                // Continue without notifications - not fatal
+            } else {
+                tracing::info!("Notification consumer started");
             }
-        });
-    }
+        }
 
-    /// Start the notification service in a background task
-    fn start_notification_service(&self, notification_service: Arc<NotificationService>) {
-        let state = Arc::clone(&self.state);
-        let rx = state.event_bus.subscribe();
+        // Start assessment consumer for pattern detection and learning
+        if let Err(e) = start_assessment_consumer(event_log, shutdown.clone()).await {
+            tracing::error!("Failed to start assessment consumer: {}", e);
+            // Continue without assessment - not fatal
+        } else {
+            tracing::info!("Assessment consumer started");
+        }
 
+        tracing::info!("EventLog consumers started");
+
+        // The manager is moved into the spawned task to keep it alive.
+        // TODO: Replace pending() with proper shutdown signal coordination
         tokio::spawn(async move {
-            notification_service.run(rx).await;
+            let _manager = manager; // Keep manager alive
+            let _shutdown = shutdown; // Keep shutdown token alive
+            std::future::pending::<()>().await;
         });
-
-        tracing::info!("Notification service started");
     }
 
     /// Install Claude Code hooks for structured event capture

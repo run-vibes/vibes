@@ -10,19 +10,25 @@ use std::time::Duration;
 
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
-use tokio::sync::{Mutex, RwLock};
+use tokio::sync::{Notify, RwLock};
 
 use crate::error::Result;
 use crate::traits::{EventBatch, EventConsumer, EventLog, Offset, SeekPosition};
 
-/// In-memory implementation of EventLog for testing.
-pub struct InMemoryEventLog<E> {
-    /// Stored events
+/// Shared state between EventLog and its consumers.
+struct SharedState<E> {
     events: RwLock<Vec<E>>,
-    /// Next offset to assign
-    next_offset: AtomicU64,
-    /// Consumer group offsets
     consumer_offsets: RwLock<HashMap<String, Offset>>,
+    notify: Notify,
+}
+
+/// In-memory implementation of EventLog for testing.
+///
+/// Unlike snapshot-based implementations, this shares the event
+/// vector with consumers so they can see newly appended events.
+pub struct InMemoryEventLog<E> {
+    shared: Arc<SharedState<E>>,
+    next_offset: AtomicU64,
 }
 
 impl<E> InMemoryEventLog<E>
@@ -33,20 +39,23 @@ where
     #[must_use]
     pub fn new() -> Self {
         Self {
-            events: RwLock::new(Vec::new()),
+            shared: Arc::new(SharedState {
+                events: RwLock::new(Vec::new()),
+                consumer_offsets: RwLock::new(HashMap::new()),
+                notify: Notify::new(),
+            }),
             next_offset: AtomicU64::new(0),
-            consumer_offsets: RwLock::new(HashMap::new()),
         }
     }
 
     /// Get the number of events in the log.
     pub async fn len(&self) -> usize {
-        self.events.read().await.len()
+        self.shared.events.read().await.len()
     }
 
     /// Check if the log is empty.
     pub async fn is_empty(&self) -> bool {
-        self.events.read().await.is_empty()
+        self.shared.events.read().await.is_empty()
     }
 }
 
@@ -66,7 +75,8 @@ where
 {
     async fn append(&self, event: E) -> Result<Offset> {
         let offset = self.next_offset.fetch_add(1, Ordering::SeqCst);
-        self.events.write().await.push(event);
+        self.shared.events.write().await.push(event);
+        self.shared.notify.notify_waiters();
         Ok(offset)
     }
 
@@ -77,23 +87,23 @@ where
         }
 
         let first_offset = self.next_offset.fetch_add(count, Ordering::SeqCst);
-        self.events.write().await.extend(events);
+        self.shared.events.write().await.extend(events);
+        self.shared.notify.notify_waiters();
         Ok(first_offset + count - 1)
     }
 
     async fn consumer(&self, group: &str) -> Result<Box<dyn EventConsumer<E>>> {
         // Get or create consumer offset
         let offset = {
-            let offsets = self.consumer_offsets.read().await;
+            let offsets = self.shared.consumer_offsets.read().await;
             offsets.get(group).copied().unwrap_or(0)
         };
 
         Ok(Box::new(InMemoryConsumer {
             group: group.to_string(),
-            events: Arc::new(self.events.read().await.clone()),
+            shared: Arc::clone(&self.shared),
             current_offset: offset,
             committed_offset: offset,
-            log_offsets: Arc::new(Mutex::new(self.consumer_offsets.write().await.clone())),
         }))
     }
 
@@ -103,12 +113,13 @@ where
 }
 
 /// In-memory consumer implementation.
+///
+/// Shares state with the parent EventLog so it can see newly appended events.
 struct InMemoryConsumer<E> {
     group: String,
-    events: Arc<Vec<E>>,
+    shared: Arc<SharedState<E>>,
     current_offset: Offset,
     committed_offset: Offset,
-    log_offsets: Arc<Mutex<HashMap<String, Offset>>>,
 }
 
 #[async_trait]
@@ -116,30 +127,50 @@ impl<E> EventConsumer<E> for InMemoryConsumer<E>
 where
     E: Send + Sync + Clone + 'static,
 {
-    async fn poll(&mut self, max_count: usize, _timeout: Duration) -> Result<EventBatch<E>> {
-        let start = self.current_offset as usize;
-        let end = std::cmp::min(start + max_count, self.events.len());
+    async fn poll(&mut self, max_count: usize, timeout: Duration) -> Result<EventBatch<E>> {
+        let deadline = tokio::time::Instant::now() + timeout;
 
-        if start >= self.events.len() {
-            return Ok(EventBatch::empty());
+        loop {
+            let events = self.shared.events.read().await;
+            let start = self.current_offset as usize;
+            let end = std::cmp::min(start + max_count, events.len());
+
+            if start < events.len() {
+                let batch: Vec<(Offset, E)> = events[start..end]
+                    .iter()
+                    .enumerate()
+                    .map(|(i, e)| ((start + i) as Offset, e.clone()))
+                    .collect();
+
+                if let Some((last_offset, _)) = batch.last() {
+                    self.current_offset = last_offset + 1;
+                }
+
+                return Ok(EventBatch::new(batch));
+            }
+
+            drop(events); // Release lock before waiting
+
+            // Wait for new events or timeout
+            let remaining = deadline.saturating_duration_since(tokio::time::Instant::now());
+            if remaining.is_zero() {
+                return Ok(EventBatch::empty());
+            }
+
+            tokio::select! {
+                _ = self.shared.notify.notified() => {
+                    // New events available, loop to check
+                }
+                _ = tokio::time::sleep(remaining) => {
+                    return Ok(EventBatch::empty());
+                }
+            }
         }
-
-        let events: Vec<(Offset, E)> = self.events[start..end]
-            .iter()
-            .enumerate()
-            .map(|(i, e)| ((start + i) as Offset, e.clone()))
-            .collect();
-
-        if let Some((last_offset, _)) = events.last() {
-            self.current_offset = last_offset + 1;
-        }
-
-        Ok(EventBatch::new(events))
     }
 
     async fn commit(&mut self, offset: Offset) -> Result<()> {
         self.committed_offset = offset;
-        let mut offsets = self.log_offsets.lock().await;
+        let mut offsets = self.shared.consumer_offsets.write().await;
         offsets.insert(self.group.clone(), offset);
         Ok(())
     }
@@ -147,7 +178,7 @@ where
     async fn seek(&mut self, position: SeekPosition) -> Result<()> {
         self.current_offset = match position {
             SeekPosition::Beginning => 0,
-            SeekPosition::End => self.events.len() as Offset,
+            SeekPosition::End => self.shared.events.read().await.len() as Offset,
             SeekPosition::Offset(o) => o,
         };
         Ok(())

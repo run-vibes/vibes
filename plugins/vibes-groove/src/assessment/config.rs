@@ -113,17 +113,26 @@ impl Default for CircuitBreakerConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct LlmConfig {
-    /// Backend to use for LLM calls.
+    /// Whether LLM-based assessment is enabled.
+    pub enabled: bool,
+    /// Backend to use for LLM calls ("harness" for Claude Code subprocess).
     pub backend: String,
     /// Model to use for assessments.
     pub model: String,
+    /// Timeout for LLM calls in seconds.
+    pub timeout_seconds: u32,
+    /// Maximum retries for failed LLM calls.
+    pub max_retries: u32,
 }
 
 impl Default for LlmConfig {
     fn default() -> Self {
         Self {
+            enabled: true,
             backend: "harness".to_string(),
             model: "claude-3-haiku".to_string(),
+            timeout_seconds: 60,
+            max_retries: 2,
         }
     }
 }
@@ -227,8 +236,11 @@ mod tests {
         assert!(config.circuit_breaker.enabled);
         assert_eq!(config.circuit_breaker.cooldown_seconds, 120);
         assert_eq!(config.circuit_breaker.max_interventions_per_session, 3);
+        assert!(config.llm.enabled);
         assert_eq!(config.llm.backend, "harness");
         assert_eq!(config.llm.model, "claude-3-haiku");
+        assert_eq!(config.llm.timeout_seconds, 60);
+        assert_eq!(config.llm.max_retries, 2);
         assert!(config.patterns.negative.is_empty());
         assert!(config.patterns.positive.is_empty());
         assert_eq!(config.retention.lightweight_days, 7);
