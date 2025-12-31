@@ -15,13 +15,15 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use tokio::net::TcpListener;
+use tokio_util::sync::CancellationToken;
 use vibes_core::{
     HookInstaller, HookInstallerConfig, NotificationConfig, NotificationService, SubscriptionStore,
     VapidKeyManager,
 };
 
 use consumers::{
-    ConsumerManager, notification::start_notification_consumer, websocket::start_websocket_consumer,
+    ConsumerManager, assessment::start_assessment_consumer,
+    notification::start_notification_consumer, websocket::start_websocket_consumer,
 };
 
 pub use error::ServerError;
@@ -156,7 +158,10 @@ impl VibesServer {
         let event_log = Arc::clone(&self.state.event_log);
         let broadcaster = self.state.event_broadcaster();
 
-        let mut manager = ConsumerManager::new(event_log);
+        // Create shutdown token for consumers that need it
+        let shutdown = CancellationToken::new();
+
+        let mut manager = ConsumerManager::new(Arc::clone(&event_log));
 
         // Start WebSocket consumer
         if let Err(e) = start_websocket_consumer(&mut manager, broadcaster).await {
@@ -174,6 +179,14 @@ impl VibesServer {
             }
         }
 
+        // Start assessment consumer for pattern detection and learning
+        if let Err(e) = start_assessment_consumer(event_log, shutdown.clone()).await {
+            tracing::error!("Failed to start assessment consumer: {}", e);
+            // Continue without assessment - not fatal
+        } else {
+            tracing::info!("Assessment consumer started");
+        }
+
         tracing::info!("EventLog consumers started");
 
         // The manager is moved into the spawned task to keep it alive
@@ -181,6 +194,7 @@ impl VibesServer {
             // Keep the manager alive until server shutdown
             // In the future, this will be coordinated with server shutdown
             std::future::pending::<()>().await;
+            shutdown.cancel();
             manager.shutdown();
             manager.wait_for_shutdown().await;
         });

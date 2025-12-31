@@ -23,6 +23,7 @@
 //!
 //! Each consumer is "just another consumer" of the EventLog, tracking its own offset.
 
+pub mod assessment;
 pub mod notification;
 pub mod websocket;
 
