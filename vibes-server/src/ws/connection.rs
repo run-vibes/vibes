@@ -12,7 +12,7 @@ use futures::{SinkExt, StreamExt};
 use tokio::sync::broadcast;
 use tracing::{debug, error, info, warn};
 use uuid::Uuid;
-use vibes_core::{AuthContext, InputSource};
+use vibes_core::{AuthContext, InputSource, VibesEvent};
 
 use crate::{AppState, PtyEvent};
 use base64::Engine;
@@ -130,6 +130,11 @@ async fn handle_socket(
         "WebSocket client connected"
     );
 
+    // Broadcast client connected event to firehose subscribers
+    state.broadcast_event(VibesEvent::ClientConnected {
+        client_id: conn_state.client_id.clone(),
+    });
+
     // Send auth context immediately on connection
     let auth_msg = ServerMessage::AuthContext(auth_context);
     if let Ok(json) = serde_json::to_string(&auth_msg)
@@ -200,6 +205,11 @@ async fn handle_socket(
             }
         }
     }
+
+    // Broadcast client disconnected event to firehose subscribers
+    state.broadcast_event(VibesEvent::ClientDisconnected {
+        client_id: conn_state.client_id.clone(),
+    });
 
     info!(
         client_id = %conn_state.client_id,
@@ -305,6 +315,12 @@ async fn handle_text_message(
                     // Detach locally
                     conn_state.detach_pty(&session_id);
 
+                    // Broadcast session removed event to firehose subscribers
+                    state.broadcast_event(VibesEvent::SessionRemoved {
+                        session_id: session_id.clone(),
+                        reason: "killed".to_string(),
+                    });
+
                     // Broadcast removal to all clients
                     let removal_msg = ServerMessage::SessionRemoved {
                         session_id: session_id.clone(),
@@ -341,6 +357,9 @@ async fn handle_text_message(
         } => {
             debug!("PTY attach requested for session: {}", session_id);
 
+            // Clone name before it's moved for potential SessionCreated event
+            let session_name = name.clone();
+
             let mut pty_manager = state.pty_manager.write().await;
 
             // Check if session exists and capture scrollback length for replay limiting
@@ -363,6 +382,12 @@ async fn handle_text_message(
                     match pty_manager.create_session_with_id(session_id.clone(), name, cwd) {
                         Ok(created_id) => {
                             debug!("Created new PTY session: {}", created_id);
+
+                            // Broadcast session created event to firehose subscribers
+                            state.broadcast_event(VibesEvent::SessionCreated {
+                                session_id: created_id.clone(),
+                                name: session_name,
+                            });
 
                             // New session has no scrollback yet
                             conn_state.attach_pty(&session_id, 0);
