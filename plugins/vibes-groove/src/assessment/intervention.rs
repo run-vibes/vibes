@@ -453,7 +453,7 @@ mod tests {
 
         assert!(hook.contains("#!/bin/bash"));
         assert!(hook.contains("# Learning: Test Title"));
-        assert!(hook.contains("echo \"Test content\""));
+        assert!(hook.contains("echo 'Test content'"));
     }
 
     #[test]
