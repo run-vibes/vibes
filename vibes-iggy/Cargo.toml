@@ -18,6 +18,7 @@ humantime-serde = "1"
 
 # Filesystem
 dirs = "5"
+which = "7"
 
 # Iggy SDK
 iggy = "0.6"

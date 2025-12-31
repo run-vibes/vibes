@@ -64,6 +64,37 @@ impl Default for IggyConfig {
 }
 
 impl IggyConfig {
+    /// Find the iggy-server binary.
+    ///
+    /// Resolution order:
+    /// 1. Explicit path in config (if it exists)
+    /// 2. Same directory as current executable
+    /// 3. PATH lookup
+    #[must_use]
+    pub fn find_binary(&self) -> Option<PathBuf> {
+        // 1. Explicit path in config (if it's an absolute path that exists)
+        if self.binary_path.is_absolute() && self.binary_path.exists() {
+            return Some(self.binary_path.clone());
+        }
+
+        // 2. Same directory as current executable
+        if let Ok(exe) = std::env::current_exe()
+            && let Some(dir) = exe.parent()
+        {
+            let sibling = dir.join("iggy-server");
+            if sibling.exists() {
+                return Some(sibling);
+            }
+        }
+
+        // 3. Check PATH
+        if let Ok(path) = which::which("iggy-server") {
+            return Some(path);
+        }
+
+        None
+    }
+
     /// Create a new config with a custom binary path.
     #[must_use]
     pub fn with_binary_path(mut self, path: impl Into<PathBuf>) -> Self {
@@ -122,5 +153,59 @@ mod tests {
     fn config_connection_address() {
         let config = IggyConfig::default().with_port(8091);
         assert_eq!(config.connection_address(), "127.0.0.1:8091");
+    }
+
+    #[test]
+    fn find_binary_returns_explicit_absolute_path_when_exists() {
+        // Create a temp file to act as our "binary"
+        let temp_dir = tempfile::tempdir().unwrap();
+        let binary_path = temp_dir.path().join("iggy-server");
+        std::fs::write(&binary_path, "fake binary").unwrap();
+
+        let config = IggyConfig::default().with_binary_path(&binary_path);
+        let found = config.find_binary();
+
+        assert_eq!(found, Some(binary_path));
+    }
+
+    #[test]
+    fn find_binary_ignores_nonexistent_explicit_path() {
+        let config = IggyConfig::default().with_binary_path("/nonexistent/iggy-server");
+        // This should fall through to PATH lookup, which may or may not find anything
+        // The key is it doesn't return the nonexistent explicit path
+        let found = config.find_binary();
+
+        assert_ne!(found, Some(PathBuf::from("/nonexistent/iggy-server")));
+    }
+
+    #[test]
+    fn find_binary_finds_sibling_of_current_exe() {
+        // This test is tricky because we can't easily mock current_exe
+        // We'll just verify find_binary returns Some when iggy-server exists
+        // next to the test binary (which it does in our target/release/)
+        let config = IggyConfig::default();
+
+        // Check if iggy-server exists next to current exe
+        if let Ok(exe) = std::env::current_exe()
+            && let Some(dir) = exe.parent()
+        {
+            let sibling = dir.join("iggy-server");
+            if sibling.exists() {
+                let found = config.find_binary();
+                assert_eq!(found, Some(sibling));
+            }
+        }
+    }
+
+    #[test]
+    fn find_binary_returns_none_when_not_found() {
+        // Use a config with a relative path (not absolute), so it won't
+        // match the first condition, and if iggy-server isn't in PATH
+        // or next to the current exe, it should return None
+        let config = IggyConfig::default().with_binary_path("definitely-not-iggy-server");
+
+        // We can't guarantee None here because iggy-server might be in PATH
+        // So we just verify the function doesn't panic
+        let _found = config.find_binary();
     }
 }

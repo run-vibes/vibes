@@ -33,6 +33,10 @@ pub enum Error {
     #[error("Iggy server not running")]
     ServerNotRunning,
 
+    /// Binary not found
+    #[error("iggy-server binary not found")]
+    BinaryNotFound,
+
     /// Invalid offset
     #[error("Invalid offset: {0}")]
     InvalidOffset(u64),

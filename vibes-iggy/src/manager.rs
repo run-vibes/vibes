@@ -93,8 +93,12 @@ impl IggyManager {
 
         // Set state to starting
         *self.state.write().await = IggyState::Starting;
+
+        // Find the binary
+        let binary_path = self.config.find_binary().ok_or(Error::BinaryNotFound)?;
+
         info!(
-            binary = %self.config.binary_path.display(),
+            binary = %binary_path.display(),
             data_dir = %self.config.data_dir.display(),
             port = self.config.port,
             "Starting Iggy server"
@@ -104,7 +108,7 @@ impl IggyManager {
         std::fs::create_dir_all(&self.config.data_dir)?;
 
         // Spawn the server process
-        let child = std::process::Command::new(&self.config.binary_path)
+        let child = std::process::Command::new(&binary_path)
             .arg("--data-dir")
             .arg(&self.config.data_dir)
             .arg("--tcp-port")
