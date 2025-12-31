@@ -53,6 +53,36 @@ export const typography = {
   trackingWide: 'var(--tracking-wide)',
 } as const;
 
+export const spacing = {
+  space0: 'var(--space-0)',
+  space1: 'var(--space-1)',
+  space2: 'var(--space-2)',
+  space3: 'var(--space-3)',
+  space4: 'var(--space-4)',
+  space5: 'var(--space-5)',
+  space6: 'var(--space-6)',
+  space8: 'var(--space-8)',
+  space10: 'var(--space-10)',
+  space12: 'var(--space-12)',
+  space16: 'var(--space-16)',
+} as const;
+
+export const radius = {
+  sm: 'var(--radius-sm)',
+  md: 'var(--radius-md)',
+  lg: 'var(--radius-lg)',
+  full: 'var(--radius-full)',
+} as const;
+
+export const transitions = {
+  fast: 'var(--transition-fast)',
+  normal: 'var(--transition-normal)',
+  slow: 'var(--transition-slow)',
+} as const;
+
 export type ColorToken = keyof typeof colors;
 export type GlowToken = keyof typeof glows;
 export type TypographyToken = keyof typeof typography;
+export type SpacingToken = keyof typeof spacing;
+export type RadiusToken = keyof typeof radius;
+export type TransitionToken = keyof typeof transitions;
