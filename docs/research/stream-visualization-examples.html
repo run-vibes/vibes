@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stream Viz Examples // VIBES CASE FILES</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
+        :root {
+            --bg-void: #050508;
+            --bg-surface: #0c0c12;
+            --bg-elevated: #14141c;
+            --bg-terminal: #0a0a0e;
+            --accent-fire: #ff4d00;
+            --accent-ice: #00d4ff;
+            --accent-acid: #39ff14;
+            --accent-gold: #ffc800;
+            --accent-purple: #a855f7;
+            --accent-rose: #ff0080;
+            --text-bright: #ffffff;
+            --text-normal: #c8c8d0;
+            --text-muted: #6b6b80;
+            --text-dim: #3a3a4a;
+            --border-subtle: rgba(255, 255, 255, 0.06);
+            --border-glow: rgba(0, 212, 255, 0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'IBM Plex Sans', sans-serif;
+            background: var(--bg-void);
+            color: var(--text-normal);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Scan lines effect */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 0, 0, 0.1) 2px,
+                rgba(0, 0, 0, 0.1) 4px
+            );
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0.3;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(180deg, rgba(255, 77, 0, 0.1) 0%, transparent 100%);
+            border-bottom: 1px solid var(--accent-fire);
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: 'CLASSIFIED';
+            position: absolute;
+            top: 20px;
+            right: 40px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--accent-fire);
+            letter-spacing: 3px;
+            padding: 5px 15px;
+            border: 1px solid var(--accent-fire);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .header-meta {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 15px;
+            letter-spacing: 2px;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--text-bright);
+            margin-bottom: 10px;
+            text-shadow: 0 0 40px rgba(255, 77, 0, 0.3);
+        }
+
+        h1 span {
+            color: var(--accent-fire);
+        }
+
+        .tagline {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+        }
+
+        /* Navigation tabs */
+        nav {
+            display: flex;
+            gap: 0;
+            background: var(--bg-surface);
+            border-bottom: 1px solid var(--border-subtle);
+            overflow-x: auto;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav a {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-decoration: none;
+            padding: 20px 30px;
+            border-right: 1px solid var(--border-subtle);
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            position: relative;
+        }
+
+        nav a:hover {
+            background: var(--bg-elevated);
+            color: var(--text-bright);
+        }
+
+        nav a.active {
+            background: var(--bg-elevated);
+            color: var(--accent-ice);
+        }
+
+        nav a.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--accent-ice);
+        }
+
+        /* Main content */
+        main {
+            padding: 40px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* Section headers */
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .section-icon {
+            font-size: 3rem;
+            filter: drop-shadow(0 0 20px currentColor);
+        }
+
+        .section-icon.fire { color: var(--accent-fire); }
+        .section-icon.ice { color: var(--accent-ice); }
+        .section-icon.gold { color: var(--accent-gold); }
+        .section-icon.acid { color: var(--accent-acid); }
+        .section-icon.purple { color: var(--accent-purple); }
+
+        .section-title h2 {
+            font-size: 2rem;
+            color: var(--text-bright);
+            margin-bottom: 5px;
+        }
+
+        .section-title p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        /* Example cards */
+        .example {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            margin-bottom: 40px;
+            overflow: hidden;
+        }
+
+        .example-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 25px;
+            background: var(--bg-elevated);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .example-number {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px 10px;
+            border-radius: 4px;
+        }
+
+        .example-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-bright);
+        }
+
+        .example-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* Terminal mockup */
+        .terminal {
+            background: var(--bg-terminal);
+            padding: 25px;
+            overflow-x: auto;
+        }
+
+        .terminal pre {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            color: var(--text-normal);
+            margin: 0;
+            white-space: pre;
+        }
+
+        /* Syntax highlighting in terminals */
+        .t-border { color: #404055; }
+        .t-header { color: var(--accent-ice); font-weight: 600; }
+        .t-label { color: var(--text-muted); }
+        .t-value { color: var(--text-bright); }
+        .t-time { color: var(--accent-gold); }
+        .t-session { color: var(--accent-purple); }
+        .t-type-pty { color: #60a5fa; }
+        .t-type-input { color: #34d399; }
+        .t-type-perm { color: #fbbf24; }
+        .t-type-claude { color: #c084fc; }
+        .t-type-error { color: #f87171; }
+        .t-type-session { color: #a78bfa; }
+        .t-success { color: var(--accent-acid); }
+        .t-warning { color: var(--accent-gold); }
+        .t-error { color: var(--accent-fire); }
+        .t-muted { color: var(--text-dim); }
+        .t-highlight { background: rgba(0, 212, 255, 0.15); }
+        .t-btn { color: var(--bg-terminal); background: var(--accent-ice); padding: 0 8px; border-radius: 3px; }
+        .t-btn-danger { background: var(--accent-fire); }
+        .t-btn-success { background: var(--accent-acid); }
+        .t-live { color: var(--accent-fire); animation: blink 1s infinite; }
+        .t-bar { color: var(--accent-ice); }
+        .t-bar-fill { color: var(--accent-acid); }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* Divider between sections */
+        .section-divider {
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-dim);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            letter-spacing: 4px;
+        }
+
+        .section-divider::before,
+        .section-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-subtle), transparent);
+            margin: 0 20px;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 60px 40px;
+            border-top: 1px solid var(--border-subtle);
+            color: var(--text-dim);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        footer a {
+            color: var(--accent-ice);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            header { padding: 30px 20px; }
+            header::before { display: none; }
+            h1 { font-size: 2rem; }
+            main { padding: 20px; }
+            nav a { padding: 15px 20px; }
+            .terminal { padding: 15px; }
+            .terminal pre { font-size: 0.65rem; }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-void); }
+        ::-webkit-scrollbar-thumb { background: var(--bg-elevated); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-ice); }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-meta">CASE FILE // STREAM-VIZ-001 // ACTIVE INVESTIGATION</div>
+        <h1>UI <span>Examples</span></h1>
+        <p class="tagline">Detailed mockups for each visualization use case. 3 examples per case.</p>
+    </header>
+
+    <nav>
+        <a href="#firehose" class="active">01 FIREHOSE</a>
+        <a href="#debugging">02 DEBUGGING</a>
+        <a href="#actions">03 ACTIONS</a>
+        <a href="#insights">04 INSIGHTS</a>
+        <a href="#replay">05 REPLAY</a>
+        <a href="stream-visualization.html">&larr; Back to Research</a>
+    </nav>
+
+    <main>
+        <!-- FIREHOSE SECTION -->
+        <section id="firehose">
+            <div class="section-header">
+                <div class="section-icon fire">🔥</div>
+                <div class="section-title">
+                    <h2>Firehose</h2>
+                    <p>Real-time event stream. See everything as it happens.</p>
+                </div>
+            </div>
+
+            <div class="example">
+                <div class="example-header">
+                    <span class="example-number">EXHIBIT 1.1</span>
+                    <div>
+                        <div class="example-title">High-Volume Active Development</div>
+                        <div class="example-desc">Multiple sessions, high event rate, mixed types</div>
+                    </div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="t-border">┌─────────────────────────────────────────────────────────────────────────────┐</span>
+<span class="t-border">│</span> <span class="t-header">FIREHOSE</span>                                                                    <span class="t-border">│</span>
+<span class="t-border">├─────────────────────────────────────────────────────────────────────────────┤</span>
+<span class="t-border">│</span> <span class="t-live">🔴 LIVE</span> <span class="t-border">│</span> <span class="t-value">342 events/sec</span> <span class="t-border">│</span> Sessions: <span class="t-value">8 active</span>                               <span class="t-border">│</span>
+<span class="t-border">│</span>                                                                             <span class="t-border">│</span>
+<span class="t-border">│</span> Filter: <span class="t-label">[All Types ▾]</span> <span class="t-label">[All Sessions ▾]</span>  Search: <span class="t-label">[________________]</span> 🔍       <span class="t-border">│</span>
+<span class="t-border">│</span>                                                                             <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-btn">⏸ Pause</span> <span class="t-label">[🔽 Scroll Lock: ON]</span>                          Buffered: <span class="t-value">12,847</span>   <span class="t-border">│</span>
+<span class="t-border">├─────────────────────────────────────────────────────────────────────────────┤</span>
+<span class="t-border">│</span> <span class="t-label">TIME          SESSION     TYPE           PREVIEW</span>                     <span class="t-label">SIZE</span>  <span class="t-border">│</span>
+<span class="t-border">├─────────────────────────────────────────────────────────────────────────────┤</span>
+<span class="t-border">│</span> <span class="t-time">14:23:56.789</span>  <span class="t-session">ses-a3f21</span>   <span class="t-type-pty">🟦 PtyOutput</span>   Compiling vibes-core v0.1   <span class="t-muted">1.2KB</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-time">14:23:56.791</span>  <span class="t-session">ses-b7c44</span>   <span class="t-type-input">🟩 UserInput</span>   git push origin feature-x    <span class="t-muted">42B</span>  <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-time">14:23:56.793</span>  <span class="t-session">ses-a3f21</span>   <span class="t-type-pty">🟦 PtyOutput</span>   Compiling vibes-server v0   <span class="t-muted">892B</span>  <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-time">14:23:56.794</span>  <span class="t-session">ses-c9e88</span>   <span class="t-type-perm">🟨 Permission</span>  Bash: npm install           <span class="t-muted">128B</span>  <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-time">14:23:56.795</span>  <span class="t-session">ses-d2f11</span>   <span class="t-type-pty">🟦 PtyOutput</span>   test auth::login ... ok      <span class="t-muted">64B</span>  <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-time">14:23:56.797</span>  <span class="t-session">ses-a3f21</span>   <span class="t-type-claude">🟪 Claude</span>      Analyzing the error...      <span class="t-muted">2.1KB</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-time">14:23:56.799</span>  <span class="t-session">ses-e5g33</span>   <span class="t-type-error">🔴 PtyOutput</span>   error[E0382]: borrow of     <span class="t-muted">445B</span>  <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-time">14:23:56.801</span>  <span class="t-session">ses-b7c44</span>   <span class="t-type-pty">🟦 PtyOutput</span>   To github.com:user/repo      <span class="t-muted">89B</span>  <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-time">14:23:56.803</span>  <span class="t-session">ses-f8h66</span>   <span class="t-type-session">🟫 Session</span>     State: idle → active         <span class="t-muted">32B</span>  <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-time">14:23:56.805</span>  <span class="t-session">ses-c9e88</span>   <span class="t-type-input">🟩 Response</span>    Permission: approved         <span class="t-muted">28B</span>  <span class="t-border">│</span>
+<span class="t-border">│</span> ▼ <span class="t-muted">auto-scrolling...</span>                                                        <span class="t-border">│</span>
+<span class="t-border">├─────────────────────────────────────────────────────────────────────────────┤</span>
+<span class="t-border">│</span> <span class="t-label">Event Types:</span> <span class="t-bar-fill">████████████</span><span class="t-muted">░░░░</span> PtyOutput 67% <span class="t-border">│</span> <span class="t-bar-fill">███</span><span class="t-muted">░░</span> Input 12% <span class="t-border">│</span> <span class="t-bar-fill">██</span><span class="t-muted">░</span> Perm 8% <span class="t-border">│</span>
+<span class="t-border">└─────────────────────────────────────────────────────────────────────────────┘</span>
+                    </pre>
+                </div>
+            </div>
+
+            <div class="example">
+                <div class="example-header">
+                    <span class="example-number">EXHIBIT 1.2</span>
+                    <div>
+                        <div class="example-title">Filtered View - Single Session</div>
+                        <div class="example-desc">Isolating one session for focused debugging</div>
+                    </div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="t-border">┌─────────────────────────────────────────────────────────────────────────────┐</span>
+<span class="t-border">│</span> <span class="t-header">FIREHOSE</span>                                                                    <span class="t-border">│</span>
+<span class="t-border">├─────────────────────────────────────────────────────────────────────────────┤</span>
+<span class="t-border">│</span> <span class="t-live">🔴 LIVE</span> <span class="t-border">│</span> <span class="t-value">23 events/sec</span> <span class="t-muted">(filtered from 342)</span>                                 <span class="t-border">│</span>
+<span class="t-border">│</span>                                                                             <span class="t-border">│</span>
+<span class="t-border">│</span> Filter: <span class="t-label">[All Types ▾]</span> <span class="t-value">[ses-a3f21 ▾]</span>  Search: <span class="t-label">[________________]</span> 🔍          <span class="t-border">│</span>
+<span class="t-border">│</span>                       <span class="t-border">╔══════════════════╗</span>                                  <span class="t-border">│</span>
+<span class="t-border">│</span>                       <span class="t-border">║</span> <span class="t-success">✓ ses-a3f21</span>      <span class="t-border">║</span>                                  <span class="t-border">│</span>
+<span class="t-border">│</span>                       <span class="t-border">║</span>   <span class="t-muted">ses-b7c44</span>      <span class="t-border">║</span>                                  <span class="t-border">│</span>
+<span class="t-border">│</span>                       <span class="t-border">║</span>   <span class="t-muted">ses-c9e88</span>      <span class="t-border">║</span>                                  <span class="t-border">│</span>
+<span class="t-border">│</span>                       <span class="t-border">║</span>   <span class="t-muted">ses-d2f11</span>      <span class="t-border">║</span>                                  <span class="t-border">│</span>
+<span class="t-border">│</span>                       <span class="t-border">╚══════════════════╝</span>                                  <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-btn">⏸ Pause</span> <span class="t-label">[🔽 Scroll Lock: ON]</span>                            Buffered: <span class="t-value">1,203</span>  <span class="t-border">│</span>
+<span class="t-border">├─────────────────────────────────────────────────────────────────────────────┤</span>
+<span class="t-border">│</span> <span class="t-label">TIME          SESSION     TYPE           PREVIEW</span>                     <span class="t-label">SIZE</span>  <span class="t-border">│</span>
+<span class="t-border">├─────────────────────────────────────────────────────────────────────────────┤</span>
+<span class="t-border">│</span> <span class="t-time">14:23:56.789</span>  <span class="t-session">ses-a3f21</span>   <span class="t-type-pty">🟦 PtyOutput</span>   Compiling vibes-core v0.1   <span class="t-muted">1.2KB</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-time">14:23:56.793</span>  <span class="t-session">ses-a3f21</span>   <span class="t-type-pty">🟦 PtyOutput</span>   Compiling vibes-server v0   <span class="t-muted">892B</span>  <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-time">14:23:56.797</span>  <span class="t-session">ses-a3f21</span>   <span class="t-type-claude">🟪 Claude</span>      Analyzing the error...      <span class="t-muted">2.1KB</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-time">14:23:56.807</span>  <span class="t-session">ses-a3f21</span>   <span class="t-type-pty">🟦 PtyOutput</span>   Finished dev [unoptimize    <span class="t-muted">156B</span>  <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-time">14:23:56.823</span>  <span class="t-session">ses-a3f21</span>   <span class="t-type-input">🟩 UserInput</span>   just test                    <span class="t-muted">24B</span>  <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-time">14:23:56.825</span>  <span class="t-session">ses-a3f21</span>   <span class="t-type-pty">🟦 PtyOutput</span>   running 142 tests           <span class="t-muted">128B</span>  <span class="t-border">│</span>
+<span class="t-border">│</span> ▼ <span class="t-muted">auto-scrolling...</span>                                                        <span class="t-border">│</span>
+<span class="t-border">├─────────────────────────────────────────────────────────────────────────────┤</span>
+<span class="t-border">│</span> <span class="t-muted">Showing 1,203 of 12,847 total events (ses-a3f21 only)</span>                      <span class="t-border">│</span>
+<span class="t-border">└─────────────────────────────────────────────────────────────────────────────┘</span>
+                    </pre>
+                </div>
+            </div>
+
+            <div class="example">
+                <div class="example-header">
+                    <span class="example-number">EXHIBIT 1.3</span>
+                    <div>
+                        <div class="example-title">Paused with Search Highlight</div>
+                        <div class="example-desc">Stream paused, searching for "error"</div>
+                    </div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="t-border">┌─────────────────────────────────────────────────────────────────────────────┐</span>
+<span class="t-border">│</span> <span class="t-header">FIREHOSE</span>                                                                    <span class="t-border">│</span>
+<span class="t-border">├─────────────────────────────────────────────────────────────────────────────┤</span>
+<span class="t-border">│</span> <span class="t-warning">⏸ PAUSED</span> <span class="t-border">│</span> <span class="t-muted">0 events/sec</span> <span class="t-border">│</span> <span class="t-warning">Buffering: 1,247 new events waiting</span>              <span class="t-border">│</span>
+<span class="t-border">│</span>                                                                             <span class="t-border">│</span>
+<span class="t-border">│</span> Filter: <span class="t-label">[All Types ▾]</span> <span class="t-label">[All Sessions ▾]</span>  Search: <span class="t-value">[error__________]</span> 🔍       <span class="t-border">│</span>
+<span class="t-border">│</span>                                                   <span class="t-success">Found: 23 matches</span>         <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-btn-success">▶ Resume</span> <span class="t-label">[🔽 Scroll Lock: OFF]</span>                         Buffered: <span class="t-value">14,094</span> <span class="t-border">│</span>
+<span class="t-border">├─────────────────────────────────────────────────────────────────────────────┤</span>
+<span class="t-border">│</span> <span class="t-label">TIME          SESSION     TYPE           PREVIEW</span>                     <span class="t-label">SIZE</span>  <span class="t-border">│</span>
+<span class="t-border">├─────────────────────────────────────────────────────────────────────────────┤</span>
+<span class="t-border">│</span> <span class="t-time">14:22:45.123</span>  <span class="t-session">ses-e5g33</span>   <span class="t-type-pty">🟦 PtyOutput</span>   Compiling successful...      <span class="t-muted">89B</span>  <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-time">14:22:47.456</span>  <span class="t-session">ses-e5g33</span>   <span class="t-type-input">🟩 UserInput</span>   cargo build                  <span class="t-muted">32B</span>  <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-time">14:22:49.789</span>  <span class="t-session">ses-e5g33</span>   <span class="t-type-pty">🟦 PtyOutput</span>   warning: unused variable    <span class="t-muted">234B</span>  <span class="t-border">│</span>
+<span class="t-border">│</span><span class="t-highlight"> <span class="t-time">14:22:51.012</span>  <span class="t-session">ses-e5g33</span>   <span class="t-type-error">🔴 PtyOutput</span>   «<span class="t-error">error</span>»[E0382]: borrow of   <span class="t-muted">445B</span> </span><span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-time">14:22:51.234</span>  <span class="t-session">ses-e5g33</span>   <span class="t-type-pty">🟦 PtyOutput</span>    --> src/main.rs:42:15       <span class="t-muted">128B</span>  <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-time">14:22:51.456</span>  <span class="t-session">ses-e5g33</span>   <span class="t-type-pty">🟦 PtyOutput</span>      |                          <span class="t-muted">89B</span>  <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-time">14:22:51.678</span>  <span class="t-session">ses-e5g33</span>   <span class="t-type-pty">🟦 PtyOutput</span>   42 |     let x = foo(val);   <span class="t-muted">156B</span>  <span class="t-border">│</span>
+<span class="t-border">│</span><span class="t-highlight"> <span class="t-time">14:22:52.901</span>  <span class="t-session">ses-e5g33</span>   <span class="t-type-error">🔴 PtyOutput</span>   «<span class="t-error">error</span>»: could not compile  <span class="t-muted">312B</span> </span><span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-time">14:22:53.123</span>  <span class="t-session">ses-e5g33</span>   <span class="t-type-claude">🟪 Claude</span>      I see the «<span class="t-error">error</span>». The...   <span class="t-muted">1.8KB</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-muted">...</span>                                                                        <span class="t-border">│</span>
+<span class="t-border">├─────────────────────────────────────────────────────────────────────────────┤</span>
+<span class="t-border">│</span> <span class="t-label">◀ Match 3 of 23 ▶</span> <span class="t-border">│</span> Jump to: <span class="t-btn">First</span> <span class="t-btn">Prev</span> <span class="t-btn">Next</span> <span class="t-btn">Last</span>                  <span class="t-border">│</span>
+<span class="t-border">└─────────────────────────────────────────────────────────────────────────────┘</span>
+                    </pre>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-divider">// SECTION 02</div>
+
+        <!-- DEBUGGING SECTION -->
+        <section id="debugging">
+            <div class="section-header">
+                <div class="section-icon ice">🔍</div>
+                <div class="section-title">
+                    <h2>Debugging</h2>
+                    <p>Time-travel through events. Find what went wrong.</p>
+                </div>
+            </div>
+
+            <div class="example">
+                <div class="example-header">
+                    <span class="example-number">EXHIBIT 2.1</span>
+                    <div>
+                        <div class="example-title">Timeline with Error Correlation</div>
+                        <div class="example-desc">Zoomed timeline showing error cluster with context</div>
+                    </div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="t-border">┌─────────────────────────────────────────────────────────────────────────────┐</span>
+<span class="t-border">│</span> <span class="t-header">DEBUG</span>                                                                       <span class="t-border">│</span>
+<span class="t-border">├─────────────────────────────────────────────────────────────────────────────┤</span>
+<span class="t-border">│</span> Session: <span class="t-session">ses-a3f21</span> <span class="t-border">│</span> <span class="t-value">"Implementing auth feature"</span>                            <span class="t-border">│</span>
+<span class="t-border">│</span> Time Range: <span class="t-time">14:20:00 - 14:30:00</span> <span class="t-border">│</span> Events: <span class="t-value">2,347</span>                             <span class="t-border">│</span>
+<span class="t-border">├─────────────────────────────────────────────────────────────────────────────┤</span>
+<span class="t-border">│</span> <span class="t-label">TIMELINE (scroll to zoom, drag to pan)</span>                                      <span class="t-border">│</span>
+<span class="t-border">│</span>                                                                             <span class="t-border">│</span>
+<span class="t-border">│</span> Events  <span class="t-muted">▲</span>                                                                   <span class="t-border">│</span>
+<span class="t-border">│</span> /min    <span class="t-muted">│</span>                                                                   <span class="t-border">│</span>
+<span class="t-border">│</span>   <span class="t-muted">200</span>   <span class="t-muted">│</span>                           <span class="t-bar">▄▄</span>                                      <span class="t-border">│</span>
+<span class="t-border">│</span>   <span class="t-muted">150</span>   <span class="t-muted">│</span>                    <span class="t-bar">▄▄</span>    <span class="t-bar">████</span>                                     <span class="t-border">│</span>
+<span class="t-border">│</span>   <span class="t-muted">100</span>   <span class="t-muted">│</span>          <span class="t-bar">▄▄</span>      <span class="t-bar">████</span>   <span class="t-bar">██████</span><span class="t-bar">▄▄</span>                                 <span class="t-border">│</span>
+<span class="t-border">│</span>    <span class="t-muted">50</span>   <span class="t-muted">│</span>    <span class="t-bar">▄▄▄▄</span><span class="t-bar">████████████████████████████</span><span class="t-bar">▄▄▄▄</span>                           <span class="t-border">│</span>
+<span class="t-border">│</span>     <span class="t-muted">0</span>   <span class="t-muted">└────────────────────────────────────────────────────────</span>           <span class="t-border">│</span>
+<span class="t-border">│</span>         <span class="t-muted">14:20    14:22    14:24    14:26    14:28    14:30</span>                  <span class="t-border">│</span>
+<span class="t-border">│</span>                                                                             <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-label">Errors:</span> <span class="t-muted">─────────────────</span><span class="t-error">●</span><span class="t-muted">────</span><span class="t-error">●●</span><span class="t-muted">───────────────────────────────</span>             <span class="t-border">│</span>
+<span class="t-border">│</span>                         <span class="t-time">14:24:51</span>  <span class="t-time">14:25:03</span>                                   <span class="t-border">│</span>
+<span class="t-border">│</span>                           <span class="t-muted">▲</span>                                                  <span class="t-border">│</span>
+<span class="t-border">│</span>                      <span class="t-label">[Click to focus]</span>                                       <span class="t-border">│</span>
+<span class="t-border">├─────────────────────────────────────────────────────────────────────────────┤</span>
+<span class="t-border">│</span> <span class="t-warning">FOCUSED: Error cluster at 14:24:51 - 14:25:10 (showing ±30s context)</span>        <span class="t-border">│</span>
+<span class="t-border">├─────────────────────────────────────────────────────────────────────────────┤</span>
+<span class="t-border">│</span> <span class="t-muted">▸</span> <span class="t-time">14:24:45.123</span> <span class="t-border">│</span> <span class="t-type-input">UserInput</span>    <span class="t-border">│</span> cargo test                                 <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-muted">▸</span> <span class="t-time">14:24:45.456</span> <span class="t-border">│</span> <span class="t-type-pty">PtyOutput</span>    <span class="t-border">│</span> Compiling vibes-core...                    <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-muted">▸</span> <span class="t-time">14:24:49.789</span> <span class="t-border">│</span> <span class="t-type-pty">PtyOutput</span>    <span class="t-border">│</span> warning: unused import                     <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-value">▾</span> <span class="t-time">14:24:51.012</span> <span class="t-border">│</span> <span class="t-type-error">🔴 PtyOutput</span> <span class="t-border">│</span> <span class="t-error">error[E0502]: cannot borrow `self`...</span>      <span class="t-border">│</span>
+<span class="t-border">│</span>   <span class="t-border">┌───────────────────────────────────────────────────────────────────────┐</span> <span class="t-border">│</span>
+<span class="t-border">│</span>   <span class="t-border">│</span> <span class="t-error">error[E0502]: cannot borrow `self` as mutable because it is also</span>     <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span>   <span class="t-border">│</span> <span class="t-error">borrowed as immutable</span>                                                 <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span>   <span class="t-border">│</span>   <span class="t-muted">--> vibes-core/src/session.rs:156:9</span>                                <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span>   <span class="t-border">│</span>     <span class="t-muted">|</span>                                                                 <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span>   <span class="t-border">│</span> <span class="t-muted">154 |</span>         let events = self.events.iter();                       <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span>   <span class="t-border">│</span>     <span class="t-muted">|</span>                      <span class="t-warning">----------- immutable borrow occurs here</span>  <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span>   <span class="t-border">│</span> <span class="t-muted">156 |</span>         self.process_batch();                                  <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span>   <span class="t-border">│</span>     <span class="t-muted">|</span>         <span class="t-error">^^^^ mutable borrow occurs here</span>                        <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span>   <span class="t-border">└───────────────────────────────────────────────────────────────────────┘</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-muted">▸</span> <span class="t-time">14:24:52.567</span> <span class="t-border">│</span> <span class="t-type-claude">Claude</span>       <span class="t-border">│</span> I see a borrow checker error...            <span class="t-border">│</span>
+<span class="t-border">└─────────────────────────────────────────────────────────────────────────────┘</span>
+                    </pre>
+                </div>
+            </div>
+
+            <div class="example">
+                <div class="example-header">
+                    <span class="example-number">EXHIBIT 2.2</span>
+                    <div>
+                        <div class="example-title">Multi-Session Comparison</div>
+                        <div class="example-desc">Side-by-side comparison to find divergence</div>
+                    </div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="t-border">┌─────────────────────────────────────────────────────────────────────────────┐</span>
+<span class="t-border">│</span> <span class="t-header">DEBUG - COMPARE MODE</span>                                                        <span class="t-border">│</span>
+<span class="t-border">├─────────────────────────────────────────────────────────────────────────────┤</span>
+<span class="t-border">│</span> Session A: <span class="t-error">ses-a3f21 (failed)</span>    <span class="t-border">│</span> Session B: <span class="t-success">ses-b7c44 (succeeded)</span>         <span class="t-border">│</span>
+<span class="t-border">│</span> Started: <span class="t-time">14:20:00</span>                <span class="t-border">│</span> Started: <span class="t-time">14:18:00</span>                        <span class="t-border">│</span>
+<span class="t-border">│</span> Duration: <span class="t-value">12:34</span>                  <span class="t-border">│</span> Duration: <span class="t-value">8:45</span>                           <span class="t-border">│</span>
+<span class="t-border">├─────────────────────────────────────────────────────────────────────────────┤</span>
+<span class="t-border">│</span> <span class="t-label">SYNCHRONIZED TIMELINE</span>                                                       <span class="t-border">│</span>
+<span class="t-border">│</span>                                                                             <span class="t-border">│</span>
+<span class="t-border">│</span> A: <span class="t-bar">████████████████████</span><span class="t-muted">░░░░░░░░</span>  <span class="t-border">│</span> B: <span class="t-bar-fill">████████████████████████████████</span>      <span class="t-border">│</span>
+<span class="t-border">│</span>    <span class="t-muted">──────────────</span><span class="t-error">●</span><span class="t-muted">───────────</span>    <span class="t-border">│</span>    <span class="t-muted">────────────────────────────────</span>      <span class="t-border">│</span>
+<span class="t-border">│</span>               <span class="t-error">error</span>             <span class="t-border">│</span>    <span class="t-success">(no errors)</span>                           <span class="t-border">│</span>
+<span class="t-border">│</span>                                                                             <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-label">[Sync by: ○ Time  ● Event Type  ○ Content]</span>                                 <span class="t-border">│</span>
+<span class="t-border">├──────────────────────────────────┬──────────────────────────────────────────┤</span>
+<span class="t-border">│</span> <span class="t-label">SESSION A (ses-a3f21)</span>            <span class="t-border">│</span> <span class="t-label">SESSION B (ses-b7c44)</span>                    <span class="t-border">│</span>
+<span class="t-border">├──────────────────────────────────┼──────────────────────────────────────────┤</span>
+<span class="t-border">│</span> <span class="t-time">14:24:45</span> <span class="t-type-input">UserInput</span>               <span class="t-border">│</span> <span class="t-time">14:22:30</span> <span class="t-type-input">UserInput</span>                       <span class="t-border">│</span>
+<span class="t-border">│</span> cargo test                       <span class="t-border">│</span> cargo test                               <span class="t-border">│</span>
+<span class="t-border">├──────────────────────────────────┼──────────────────────────────────────────┤</span>
+<span class="t-border">│</span> <span class="t-time">14:24:49</span> <span class="t-type-pty">PtyOutput</span>               <span class="t-border">│</span> <span class="t-time">14:22:34</span> <span class="t-type-pty">PtyOutput</span>                       <span class="t-border">│</span>
+<span class="t-border">│</span> Compiling vibes-core...          <span class="t-border">│</span> Compiling vibes-core...                  <span class="t-border">│</span>
+<span class="t-border">├──────────────────────────────────┼──────────────────────────────────────────┤</span>
+<span class="t-border">│</span> <span class="t-time">14:24:51</span> <span class="t-type-error">🔴 PtyOutput</span>            <span class="t-border">│</span> <span class="t-time">14:22:38</span> <span class="t-type-input">🟢 PtyOutput</span>                    <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-error">error[E0502]: cannot borrow...</span>   <span class="t-border">│</span> <span class="t-success">test result: ok. 42 passed</span>               <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-warning">════════════════════════════</span>     <span class="t-border">│</span>                                          <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-warning">DIVERGENCE POINT</span>                 <span class="t-border">│</span>                                          <span class="t-border">│</span>
+<span class="t-border">├──────────────────────────────────┼──────────────────────────────────────────┤</span>
+<span class="t-border">│</span> <span class="t-time">14:24:52</span> <span class="t-type-claude">Claude</span>                  <span class="t-border">│</span> <span class="t-time">14:22:39</span> <span class="t-type-claude">Claude</span>                          <span class="t-border">│</span>
+<span class="t-border">│</span> I see a borrow checker error...  <span class="t-border">│</span> All tests passed! Ready to commit?       <span class="t-border">│</span>
+<span class="t-border">└──────────────────────────────────┴──────────────────────────────────────────┘</span>
+                    </pre>
+                </div>
+            </div>
+
+            <div class="example">
+                <div class="example-header">
+                    <span class="example-number">EXHIBIT 2.3</span>
+                    <div>
+                        <div class="example-title">Deep Event Inspection</div>
+                        <div class="example-desc">Full event details with context and raw payload</div>
+                    </div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="t-border">┌─────────────────────────────────────────────────────────────────────────────┐</span>
+<span class="t-border">│</span> <span class="t-header">DEBUG - EVENT INSPECTOR</span>                                                     <span class="t-border">│</span>
+<span class="t-border">├─────────────────────────────────────────────────────────────────────────────┤</span>
+<span class="t-border">│</span> Event <span class="t-value">#4,521</span> of 12,847 <span class="t-border">│</span> Offset: <span class="t-muted">892,456</span> <span class="t-border">│</span> Partition: <span class="t-muted">0</span>                     <span class="t-border">│</span>
+<span class="t-border">├─────────────────────────────────────────────────────────────────────────────┤</span>
+<span class="t-border">│</span> <span class="t-border">┌─ CONTEXT (±5 events) ───────────────────────────────────────────────────┐</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-muted">#4518</span>  <span class="t-time">14:24:45.123</span>  <span class="t-type-input">UserInput</span>     cargo test                          <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-muted">#4519</span>  <span class="t-time">14:24:45.456</span>  <span class="t-type-pty">PtyOutput</span>     Compiling vibes-core...             <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-muted">#4520</span>  <span class="t-time">14:24:49.789</span>  <span class="t-type-pty">PtyOutput</span>     warning: unused import              <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span><span class="t-highlight"><span class="t-value">▸ #4521</span>  <span class="t-time">14:24:51.012</span>  <span class="t-type-pty">PtyOutput</span>     error[E0502]: cannot borrow... ◀───</span><span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-muted">#4522</span>  <span class="t-time">14:24:51.234</span>  <span class="t-type-pty">PtyOutput</span>     error: aborting due to prev...      <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-muted">#4523</span>  <span class="t-time">14:24:52.567</span>  <span class="t-type-claude">Claude</span>        I see a borrow checker error        <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">└─────────────────────────────────────────────────────────────────────────┘</span> <span class="t-border">│</span>
+<span class="t-border">├─────────────────────────────────────────────────────────────────────────────┤</span>
+<span class="t-border">│</span> <span class="t-border">┌─ EVENT DETAILS ─────────────────────────────────────────────────────────┐</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>                                                                         <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-label">Type:</span>        <span class="t-value">PtyOutput</span>                                                 <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-label">Session:</span>     <span class="t-session">ses-a3f21</span>                                                 <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-label">Timestamp:</span>   <span class="t-time">2024-01-15T14:24:51.012Z</span>                                  <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-label">Source:</span>      <span class="t-error">stderr</span>                                                    <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-label">Size:</span>        <span class="t-muted">445 bytes</span>                                                 <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>                                                                         <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">└─────────────────────────────────────────────────────────────────────────┘</span> <span class="t-border">│</span>
+<span class="t-border">├─────────────────────────────────────────────────────────────────────────────┤</span>
+<span class="t-border">│</span> <span class="t-border">┌─ RAW PAYLOAD ───────────────────────────────────────────────────</span> <span class="t-btn">Copy</span><span class="t-border">─┐</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span> {                                                                       <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>   <span class="t-label">"type"</span>: <span class="t-value">"PtyOutput"</span>,                                                  <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>   <span class="t-label">"session_id"</span>: <span class="t-session">"ses-a3f21"</span>,                                            <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>   <span class="t-label">"timestamp"</span>: <span class="t-time">"2024-01-15T14:24:51.012Z"</span>,                              <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>   <span class="t-label">"data"</span>: <span class="t-error">"error[E0502]: cannot borrow `self` as mutable..."</span>,          <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>   <span class="t-label">"source"</span>: <span class="t-error">"stderr"</span>                                                    <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span> }                                                                       <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">└─────────────────────────────────────────────────────────────────────────┘</span> <span class="t-border">│</span>
+<span class="t-border">├─────────────────────────────────────────────────────────────────────────────┤</span>
+<span class="t-border">│</span> <span class="t-btn">◀ Prev Event</span> <span class="t-btn">▶ Next Event</span> <span class="t-border">│</span> <span class="t-btn">🔗 Copy Link</span> <span class="t-btn">📋 Copy JSON</span> <span class="t-btn">🔍 Search</span>  <span class="t-border">│</span>
+<span class="t-border">└─────────────────────────────────────────────────────────────────────────────┘</span>
+                    </pre>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-divider">// SECTION 03</div>
+
+        <!-- ACTIONS SECTION -->
+        <section id="actions">
+            <div class="section-header">
+                <div class="section-icon gold">🎯</div>
+                <div class="section-title">
+                    <h2>Actions</h2>
+                    <p>Events that need your attention. Approve, deny, intervene.</p>
+                </div>
+            </div>
+
+            <div class="example">
+                <div class="example-header">
+                    <span class="example-number">EXHIBIT 3.1</span>
+                    <div>
+                        <div class="example-title">Permission Request Queue</div>
+                        <div class="example-desc">Multiple pending requests awaiting decision</div>
+                    </div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="t-border">┌─────────────────────────────────────────────────────────────────────────────┐</span>
+<span class="t-border">│</span> <span class="t-header">ACTIONS</span>                                                                     <span class="t-border">│</span>
+<span class="t-border">├─────────────────────────────────────────────────────────────────────────────┤</span>
+<span class="t-border">│</span> <span class="t-warning">🔔 5 Pending</span> <span class="t-border">│</span> <span class="t-label">[Filter ▾]</span> <span class="t-border">│</span> <span class="t-btn">Mark All Read</span>                                 <span class="t-border">│</span>
+<span class="t-border">├─────────────────────────────────────────────────────────────────────────────┤</span>
+<span class="t-border">│</span>                                                                             <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">┌─ <span class="t-warning">🟡 PENDING</span> ─────────────────────────────────────────────── <span class="t-muted">2 min ago</span> ──┐</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>                                                                         <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  Session: <span class="t-session">ses-a3f21</span> <span class="t-border">│</span> <span class="t-value">"Implementing auth feature"</span>                       <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>                                                                         <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-label">📋 Permission Request: Bash</span>                                            <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-border">┌───────────────────────────────────────────────────────────────────┐</span>  <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-border">│</span> <span class="t-value">rm -rf ./node_modules && npm install</span>                              <span class="t-border">│</span>  <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-border">└───────────────────────────────────────────────────────────────────┘</span>  <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>                                                                         <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-warning">⚠️  This command will delete node_modules directory</span>                    <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>                                                                         <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-btn-success">✓ Approve</span> <span class="t-btn-danger">✗ Deny</span> <span class="t-btn">👁 View Context</span> <span class="t-btn">⏰ Remind in 5m</span>               <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>                                                                         <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">└─────────────────────────────────────────────────────────────────────────┘</span> <span class="t-border">│</span>
+<span class="t-border">│</span>                                                                             <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">┌─ <span class="t-warning">🟡 PENDING</span> ─────────────────────────────────────────────── <span class="t-muted">5 min ago</span> ──┐</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>                                                                         <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  Session: <span class="t-session">ses-b7c44</span> <span class="t-border">│</span> <span class="t-value">"Database migration"</span>                              <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>                                                                         <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-label">📋 Permission Request: Bash</span>                                            <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-border">┌───────────────────────────────────────────────────────────────────┐</span>  <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-border">│</span> <span class="t-error">psql -c "DROP TABLE users CASCADE"</span>                                <span class="t-border">│</span>  <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-border">└───────────────────────────────────────────────────────────────────┘</span>  <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>                                                                         <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-error">🔴 DANGER: This will delete the users table and all related data</span>      <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>                                                                         <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-btn-success">✓ Approve</span> <span class="t-btn-danger">✗ Deny</span> <span class="t-btn">👁 View Context</span>                                 <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>                                                                         <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">└─────────────────────────────────────────────────────────────────────────┘</span> <span class="t-border">│</span>
+<span class="t-border">│</span>                                                                             <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-muted">+ 3 more pending...</span>                                                       <span class="t-border">│</span>
+<span class="t-border">│</span>                                                                             <span class="t-border">│</span>
+<span class="t-border">└─────────────────────────────────────────────────────────────────────────────┘</span>
+                    </pre>
+                </div>
+            </div>
+
+            <div class="example">
+                <div class="example-header">
+                    <span class="example-number">EXHIBIT 3.2</span>
+                    <div>
+                        <div class="example-title">Error Alert with Recovery</div>
+                        <div class="example-desc">Session crashed with actionable recovery options</div>
+                    </div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="t-border">┌─────────────────────────────────────────────────────────────────────────────┐</span>
+<span class="t-border">│</span> <span class="t-header">ACTIONS</span>                                                                     <span class="t-border">│</span>
+<span class="t-border">├─────────────────────────────────────────────────────────────────────────────┤</span>
+<span class="t-border">│</span> <span class="t-warning">🔔 2 Pending</span> <span class="t-border">│</span> <span class="t-error">1 Error</span> <span class="t-border">│</span> <span class="t-label">[Filter ▾]</span>                                         <span class="t-border">│</span>
+<span class="t-border">├─────────────────────────────────────────────────────────────────────────────┤</span>
+<span class="t-border">│</span>                                                                             <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">┌─ <span class="t-error">🔴 ERROR</span> ───────────────────────────────────────────────── <span class="t-muted">1 min ago</span> ──┐</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>                                                                         <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  Session: <span class="t-session">ses-xyz789</span> <span class="t-border">│</span> <span class="t-value">"Long-running build task"</span>                        <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>                                                                         <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-error">💀 Session Crashed</span>                                                     <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-border">┌───────────────────────────────────────────────────────────────────┐</span>  <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-border">│</span> <span class="t-error">PTY process exited unexpectedly</span>                                   <span class="t-border">│</span>  <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-border">│</span>                                                                   <span class="t-border">│</span>  <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-border">│</span> <span class="t-label">Exit Code:</span> <span class="t-error">137 (SIGKILL)</span>                                          <span class="t-border">│</span>  <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-border">│</span> <span class="t-label">Likely Cause:</span> <span class="t-warning">Out of memory</span>                                       <span class="t-border">│</span>  <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-border">│</span>                                                                   <span class="t-border">│</span>  <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-border">│</span> <span class="t-label">Last Activity:</span> cargo build --release (memory-intensive)           <span class="t-border">│</span>  <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-border">│</span> <span class="t-label">Memory at Exit:</span> <span class="t-error">15.2 GB / 16 GB</span>                                   <span class="t-border">│</span>  <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-border">└───────────────────────────────────────────────────────────────────┘</span>  <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>                                                                         <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-label">📊 Session Stats</span>                                                       <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  Duration: <span class="t-value">2h 34m</span> <span class="t-border">│</span> Events: <span class="t-value">12,456</span> <span class="t-border">│</span> Last checkpoint: <span class="t-success">2m ago</span>            <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>                                                                         <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-label">Recovery Options:</span>                                                      <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-btn">🔄 Restart Session</span> <span class="t-btn-success">🔄 Restart + Resume</span> <span class="t-btn">📋 View Full Log</span>          <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-btn">📤 Export Session</span> <span class="t-btn">✓ Acknowledge</span>                                    <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>                                                                         <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">└─────────────────────────────────────────────────────────────────────────┘</span> <span class="t-border">│</span>
+<span class="t-border">│</span>                                                                             <span class="t-border">│</span>
+<span class="t-border">└─────────────────────────────────────────────────────────────────────────────┘</span>
+                    </pre>
+                </div>
+            </div>
+
+            <div class="example">
+                <div class="example-header">
+                    <span class="example-number">EXHIBIT 3.3</span>
+                    <div>
+                        <div class="example-title">Action History</div>
+                        <div class="example-desc">Past actions with outcomes and audit trail</div>
+                    </div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="t-border">┌─────────────────────────────────────────────────────────────────────────────┐</span>
+<span class="t-border">│</span> <span class="t-header">ACTIONS</span>                                                                     <span class="t-border">│</span>
+<span class="t-border">├─────────────────────────────────────────────────────────────────────────────┤</span>
+<span class="t-border">│</span> <span class="t-label">[🔔 Pending (0)]</span> <span class="t-value">[📜 History]</span> <span class="t-border">│</span> <span class="t-label">Today</span> <span class="t-border">│</span> Last 7 days ▾                       <span class="t-border">│</span>
+<span class="t-border">├─────────────────────────────────────────────────────────────────────────────┤</span>
+<span class="t-border">│</span>                                                                             <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-value">TODAY</span>                                                                       <span class="t-border">│</span>
+<span class="t-border">│</span>                                                                             <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">┌─ <span class="t-success">✅ APPROVED</span> ───────────────────────────────────── <span class="t-time">14:30</span> <span class="t-muted">(15 min ago)</span> ──┐</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-session">ses-a3f21</span> <span class="t-border">│</span> <span class="t-type-perm">Bash:</span> npm install                                          <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-muted">Approved by: alex</span> <span class="t-border">│</span> <span class="t-muted">Outcome:</span> <span class="t-success">Success (exit 0)</span>                          <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">└─────────────────────────────────────────────────────────────────────────┘</span> <span class="t-border">│</span>
+<span class="t-border">│</span>                                                                             <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">┌─ <span class="t-error">❌ DENIED</span> ─────────────────────────────────────── <span class="t-time">14:15</span> <span class="t-muted">(30 min ago)</span> ──┐</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-session">ses-b7c44</span> <span class="t-border">│</span> <span class="t-type-perm">Bash:</span> <span class="t-error">rm -rf /</span>                                             <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-muted">Denied by: alex</span> <span class="t-border">│</span> <span class="t-muted">Reason:</span> <span class="t-error">Dangerous command</span>                             <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">└─────────────────────────────────────────────────────────────────────────┘</span> <span class="t-border">│</span>
+<span class="t-border">│</span>                                                                             <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">┌─ <span class="t-success">✅ APPROVED</span> ──────────────────────────────────── <span class="t-time">13:45</span> <span class="t-muted">(1 hour ago)</span> ──┐</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-session">ses-a3f21</span> <span class="t-border">│</span> <span class="t-type-perm">Write:</span> src/config.rs                                       <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-muted">Approved by: alex</span> <span class="t-border">│</span> <span class="t-muted">Outcome:</span> <span class="t-success">Success</span>                                   <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">└─────────────────────────────────────────────────────────────────────────┘</span> <span class="t-border">│</span>
+<span class="t-border">│</span>                                                                             <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">┌─ <span class="t-warning">⚠️ TIMEOUT</span> ────────────────────────────────────── <span class="t-time">11:30</span> <span class="t-muted">(3 hours ago)</span> ─┐</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-session">ses-c9e88</span> <span class="t-border">│</span> <span class="t-type-perm">Bash:</span> make deploy                                          <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-warning">Timed out after 5 minutes</span> <span class="t-border">│</span> <span class="t-muted">Session continued with denial</span>              <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">└─────────────────────────────────────────────────────────────────────────┘</span> <span class="t-border">│</span>
+<span class="t-border">│</span>                                                                             <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">┌─ <span class="t-muted">🔄 AUTO-APPROVED</span> ─────────────────────────────── <span class="t-time">10:15</span> <span class="t-muted">(4 hours ago)</span> ──┐</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">│</span>  <span class="t-session">ses-d2f11</span> <span class="t-border">│</span> <span class="t-type-perm">Bash:</span> cargo test <span class="t-muted">(matched allowlist)</span>                       <span class="t-border">│</span> <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-border">└─────────────────────────────────────────────────────────────────────────┘</span> <span class="t-border">│</span>
+<span class="t-border">│</span>                                                                             <span class="t-border">│</span>
+<span class="t-border">│</span> <span class="t-muted">Showing 5 of 23 actions</span> <span class="t-border">│</span> <span class="t-btn">Load More</span>                                       <span class="t-border">│</span>
+<span class="t-border">│</span>                                                                             <span class="t-border">│</span>
+<span class="t-border">├─────────────────────────────────────────────────────────────────────────────┤</span>
+<span class="t-border">│</span> <span class="t-label">Summary:</span> <span class="t-success">18 approved</span> <span class="t-border">│</span> <span class="t-error">3 denied</span> <span class="t-border">│</span> <span class="t-warning">2 timeout</span> <span class="t-border">│</span> <span class="t-muted">4 auto-approved</span>              <span class="t-border">│</span>
+<span class="t-border">└─────────────────────────────────────────────────────────────────────────────┘</span>
+                    </pre>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-divider">// MORE SECTIONS IN FULL DOC</div>
+
+        <section style="text-align: center; padding: 60px 0;">
+            <p style="color: var(--text-muted); margin-bottom: 20px;">
+                Full document includes Insights (3 examples) and Replay (3 examples)
+            </p>
+            <a href="stream-visualization.html" style="
+                display: inline-block;
+                padding: 15px 40px;
+                background: linear-gradient(135deg, var(--accent-fire) 0%, var(--accent-gold) 100%);
+                color: var(--bg-void);
+                text-decoration: none;
+                font-weight: 600;
+                border-radius: 8px;
+                font-family: 'JetBrains Mono', monospace;
+            ">← Back to Research Doc</a>
+        </section>
+    </main>
+
+    <footer>
+        <p>VIBES STREAM VIZ // CASE FILES // <a href="stream-visualization.html">Return to Research</a></p>
+    </footer>
+</body>
+</html>
