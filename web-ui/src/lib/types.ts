@@ -64,6 +64,29 @@ export interface AccessIdentity {
 }
 
 // ============================================================
+// VibesEvent - matches vibes-core/src/events/types.rs
+// ============================================================
+
+export type VibesEvent =
+  | { type: 'claude'; session_id: string; event: ClaudeEvent }
+  | { type: 'user_input'; session_id: string; content: string; source: InputSource }
+  | { type: 'permission_response'; session_id: string; request_id: string; approved: boolean }
+  | { type: 'session_created'; session_id: string; name?: string }
+  | { type: 'session_state_changed'; session_id: string; state: string }
+  | { type: 'client_connected'; client_id: string }
+  | { type: 'client_disconnected'; client_id: string }
+  | { type: 'tunnel_state_changed'; state: string; url?: string }
+  | { type: 'ownership_transferred'; session_id: string; new_owner_id: string }
+  | { type: 'session_removed'; session_id: string; reason: string }
+  | { type: 'hook'; session_id?: string; event: HookEvent };
+
+export type HookEvent =
+  | { type: 'pre_tool_use'; tool_name: string; input: string; session_id?: string }
+  | { type: 'post_tool_use'; tool_name: string; input: string; output: string; session_id?: string }
+  | { type: 'notification'; title: string; body: string; session_id?: string }
+  | { type: 'stop'; transcript_path?: string; reason?: string; session_id?: string };
+
+// ============================================================
 // Claude Events - matches vibes-core/src/events/types.rs
 // ============================================================
 

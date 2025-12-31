@@ -1,0 +1,63 @@
+/* design-system/src/tokens/colors.css */
+
+:root {
+  /* === Base Palette (Dark Theme) === */
+  --color-bg-base: #1a1816;
+  --color-bg-surface: #242220;
+  --color-bg-elevated: #2e2c29;
+  --color-bg-overlay: rgba(26, 24, 22, 0.95);
+
+  /* === Text === */
+  --color-text-primary: #f0ebe3;
+  --color-text-secondary: #a39e93;
+  --color-text-dim: #6b665c;
+  --color-text-inverse: #1a1816;
+
+  /* === Semantic Colors === */
+  --color-accent: #e6b450;
+  --color-success: #7ec699;
+  --color-warning: #e6b450;
+  --color-error: #e05252;
+  --color-info: #7eb8c9;
+
+  /* === Plugin Accents === */
+  --color-groove: #c9a227;
+
+  /* === Borders === */
+  --color-border: #3d3a36;
+  --color-border-subtle: #2e2c29;
+  --color-border-strong: #4d4a46;
+
+  /* === Interactive States === */
+  --color-hover: rgba(230, 180, 80, 0.1);
+  --color-active: rgba(230, 180, 80, 0.2);
+  --color-focus: rgba(230, 180, 80, 0.4);
+
+  /* === Glow Effects === */
+  --glow-amber: 0 0 20px rgba(230, 180, 80, 0.15);
+  --glow-success: 0 0 20px rgba(126, 198, 153, 0.15);
+  --glow-error: 0 0 20px rgba(224, 82, 82, 0.15);
+}
+
+/* === Light Theme === */
+[data-theme="light"] {
+  --color-bg-base: #f5f2ed;
+  --color-bg-surface: #ffffff;
+  --color-bg-elevated: #f9f7f4;
+  --color-bg-overlay: rgba(245, 242, 237, 0.95);
+
+  --color-text-primary: #1a1816;
+  --color-text-secondary: #4a4640;
+  --color-text-dim: #6b665c;
+  --color-text-inverse: #f0ebe3;
+
+  --color-border: #d4d0c8;
+  --color-border-subtle: #e8e4dc;
+  --color-border-strong: #b8b4ac;
+
+  --color-hover: rgba(26, 24, 22, 0.05);
+  --color-active: rgba(26, 24, 22, 0.1);
+  --color-focus: rgba(230, 180, 80, 0.3);
+
+  --glow-amber: 0 0 20px rgba(230, 180, 80, 0.1);
+}

@@ -1,0 +1,33 @@
+/* design-system/src/primitives/Text/Text.module.css */
+.text {
+  margin: 0;
+  font-family: var(--font-sans);
+  line-height: var(--leading-normal);
+}
+
+/* Intensity */
+.high {
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+.normal {
+  color: var(--color-text-secondary);
+}
+
+.dim {
+  color: var(--color-text-dim);
+}
+
+/* Monospace */
+.mono {
+  font-family: var(--font-mono);
+}
+
+/* Sizes */
+.xs { font-size: var(--text-xs); }
+.sm { font-size: var(--text-sm); }
+.base { font-size: var(--text-base); }
+.lg { font-size: var(--text-lg); }
+.xl { font-size: var(--text-xl); }
+.xxl { font-size: var(--text-2xl); }

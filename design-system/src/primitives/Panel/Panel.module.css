@@ -1,0 +1,45 @@
+/* design-system/src/primitives/Panel/Panel.module.css */
+.panel {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.default {
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+}
+
+.elevated {
+  background-color: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-strong);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.inset {
+  background-color: var(--color-bg-base);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.title {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.content {
+  padding: var(--space-4);
+}
+
+.noPadding .content {
+  padding: 0;
+}

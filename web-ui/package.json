@@ -11,6 +11,7 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@vibes/design-system": "*",
     "@tanstack/react-query": "^5",
     "@tanstack/react-router": "^1",
     "@xterm/addon-fit": "^0.11.0",
