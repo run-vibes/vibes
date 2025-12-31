@@ -36,5 +36,23 @@ export const glows = {
   error: 'var(--glow-error)',
 } as const;
 
+export const typography = {
+  fontMono: 'var(--font-mono)',
+  fontSans: 'var(--font-sans)',
+  textXs: 'var(--text-xs)',
+  textSm: 'var(--text-sm)',
+  textBase: 'var(--text-base)',
+  textLg: 'var(--text-lg)',
+  textXl: 'var(--text-xl)',
+  text2xl: 'var(--text-2xl)',
+  leadingTight: 'var(--leading-tight)',
+  leadingNormal: 'var(--leading-normal)',
+  leadingRelaxed: 'var(--leading-relaxed)',
+  trackingTight: 'var(--tracking-tight)',
+  trackingNormal: 'var(--tracking-normal)',
+  trackingWide: 'var(--tracking-wide)',
+} as const;
+
 export type ColorToken = keyof typeof colors;
 export type GlowToken = keyof typeof glows;
+export type TypographyToken = keyof typeof typography;

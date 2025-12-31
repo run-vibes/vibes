@@ -1,4 +1,4 @@
 /* design-system/src/tokens/index.css */
 @import './colors.css';
-/* @import './typography.css'; - added in next task */
+@import './typography.css';
 /* @import './spacing.css'; - added in next task */
