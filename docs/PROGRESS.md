@@ -23,7 +23,7 @@ This document tracks the implementation progress of vibes against the roadmap de
 | 4.2.5 Security Foundation | Complete | [design](plans/14-continual-learning/design.md#425-security-foundation--new) | [implementation](plans/14-continual-learning/milestone-4.2.5-implementation.md) |
 | 4.2.6 Plugin API Extension | Complete | — | — |
 | 4.3 Capture & Inject | Complete | [design](plans/14-continual-learning/milestone-4.3-design.md) | [implementation](plans/14-continual-learning/milestone-4.3-implementation.md) |
-| 4.4 Assessment Framework | Not started | [design](plans/14-continual-learning/design.md#44-assessment-framework--new) | — |
+| 4.4 Assessment Framework | In progress | [design](plans/14-continual-learning/milestone-4.4-design.md) | [4.4.1](plans/14-continual-learning/milestone-4.4.1-implementation.md) |
 | 4.5 Learning Extraction | Not started | [design](plans/14-continual-learning/design.md#45-learning-extraction) | — |
 | 4.6 Attribution Engine | Not started | [design](plans/14-continual-learning/design.md#46-attribution-engine--new) | — |
 | 4.7 Adaptive Strategies | Not started | [design](plans/14-continual-learning/design.md#47-adaptive-strategies) | — |
@@ -235,12 +235,27 @@ Note: Auto-detect team/aud moved to Milestone 3.5 (Cloudflare Auth Wizard)
 - [x] Update docs/PROGRESS.md on completion
 
 ### Milestone 4.4: Assessment Framework
-- [ ] Lightweight assessment (every message, <10ms)
-- [ ] Medium assessment (checkpoints, async LLM)
-- [ ] Heavy assessment (session end, sampled 20%)
+
+> **Design:** [milestone-4.4-design.md](plans/14-continual-learning/milestone-4.4-design.md)
+
+**4.4.1: Infrastructure (Complete)**
+- [x] Add Iggy dependency for assessment event log
+- [x] Assessment event types with full attribution context
+- [x] Three-tier event types (Lightweight, Medium, Heavy)
+- [x] `AssessmentLog` trait with in-memory implementation
+- [x] `IggyManager` for subprocess lifecycle management
+- [x] `IggyAssessmentLog` implementation (stub for Iggy SDK)
+- [x] Assessment configuration schema
+- [x] `AssessmentProcessor` with fire-and-forget writer
+- [x] Integration tests
+
+**4.4.2: Assessment Logic (Pending)**
+- [ ] Lightweight signal detection (linguistic patterns, tool failures)
+- [ ] Medium checkpoint summarization (async LLM)
+- [ ] Heavy session analysis (sampled)
 - [ ] `CircuitBreaker` for real-time intervention
-- [ ] Outcome signals: token metrics, linguistic patterns, behavioral
-- [ ] `SamplingConfig` with burn-in and boost conditions
+- [ ] CLI commands (`vibes groove assess status/history`)
+- [ ] EventBus integration (parallel subscriber)
 
 ### Milestone 4.5: Learning Extraction
 - [ ] Transcript parser for Claude JSONL format
