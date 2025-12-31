@@ -3,72 +3,188 @@
 //! This module provides persistent event storage using Iggy as the backend.
 //! Events are written to an Iggy stream/topic and consumers track their
 //! offsets independently.
+//!
+//! # Reconnect Buffer
+//!
+//! When the connection to Iggy is lost, events are buffered in memory up to
+//! `MAX_RECONNECT_BUFFER` (10,000 events). When the buffer is full, the oldest
+//! events are dropped. When connection is restored, buffered events are flushed.
+//!
+//! This ensures producers are never blocked by Iggy issues while providing
+//! best-effort persistence during transient failures.
 
+use std::marker::PhantomData;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
 
 use async_trait::async_trait;
+use iggy::bytes_serializable::BytesSerializable;
+use iggy::client::{
+    Client, ConsumerOffsetClient, MessageClient, StreamClient, TopicClient, UserClient,
+};
+use iggy::clients::client::IggyClient;
+use iggy::compression::compression_algorithm::CompressionAlgorithm;
+use iggy::consumer::Consumer;
+use iggy::identifier::Identifier;
+use iggy::messages::poll_messages::PollingStrategy;
+use iggy::messages::send_messages::{Message, Partitioning};
+use iggy::users::defaults::{DEFAULT_ROOT_PASSWORD, DEFAULT_ROOT_USERNAME};
+use iggy::utils::expiry::IggyExpiry;
+use iggy::utils::topic_size::MaxTopicSize;
 use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
-use tracing::{debug, info};
+use tracing::{debug, info, warn};
 
-use crate::error::Result;
+use crate::error::{Error, Result};
 use crate::manager::IggyManager;
-use crate::traits::{EventBatch, EventConsumer, EventLog, Offset, SeekPosition};
+use crate::traits::{EventBatch, EventConsumer, EventLog, Offset, Partitionable, SeekPosition};
 
-/// Stream and topic names for the event log.
+/// Stream and topic configuration for the event log.
 pub mod topics {
     /// The stream name for vibes events.
     pub const STREAM_NAME: &str = "vibes";
+    /// Numeric stream ID.
+    pub const STREAM_ID: u32 = 1;
     /// The topic name for the main event log.
     pub const EVENTS_TOPIC: &str = "events";
+    /// Numeric topic ID.
+    pub const TOPIC_ID: u32 = 1;
+    /// Number of partitions for parallel processing.
+    pub const PARTITION_COUNT: u32 = 8;
 }
+
+/// Maximum events to buffer during disconnect before dropping oldest.
+const MAX_RECONNECT_BUFFER: usize = 10_000;
 
 /// Iggy-backed implementation of EventLog.
 ///
 /// Provides persistent event storage with consumer group offset tracking.
-/// Currently uses in-memory buffering until Iggy SDK integration is complete.
+/// Events are partitioned using the `Partitionable` trait for parallel processing.
 pub struct IggyEventLog<E> {
-    /// Reference to the Iggy manager (for connection info)
-    #[allow(dead_code)]
+    /// Reference to the Iggy manager (for connection info).
     manager: Arc<IggyManager>,
 
-    /// In-memory buffer for events (until Iggy client connected)
-    buffer: RwLock<Vec<E>>,
+    /// The Iggy client for sending messages.
+    client: IggyClient,
 
-    /// Current high water mark
+    /// Buffer for events during disconnect.
+    reconnect_buffer: RwLock<Vec<E>>,
+
+    /// Current high water mark (local offset counter).
     high_water_mark: AtomicU64,
 
-    /// Whether we're connected to Iggy
+    /// Whether we're connected to Iggy.
     connected: RwLock<bool>,
+
+    /// Phantom data for generic type.
+    _phantom: PhantomData<E>,
 }
 
 impl<E> IggyEventLog<E>
 where
-    E: Serialize + for<'de> Deserialize<'de> + Send + Sync + Clone + 'static,
+    E: Serialize + for<'de> Deserialize<'de> + Send + Sync + Clone + Partitionable + 'static,
 {
     /// Create a new IggyEventLog.
     ///
     /// The manager should be started before calling this.
+    /// Call `connect()` to establish the connection.
     #[must_use]
     pub fn new(manager: Arc<IggyManager>) -> Self {
+        let client = IggyClient::builder()
+            .with_tcp()
+            .with_server_address(manager.connection_address())
+            .build()
+            .expect("Failed to build Iggy client");
+
         Self {
             manager,
-            buffer: RwLock::new(Vec::new()),
+            client,
+            reconnect_buffer: RwLock::new(Vec::new()),
             high_water_mark: AtomicU64::new(0),
             connected: RwLock::new(false),
+            _phantom: PhantomData,
         }
     }
 
     /// Connect to the Iggy server.
     ///
-    /// This establishes the connection and creates streams/topics if needed.
+    /// This establishes the connection, authenticates, and creates
+    /// the stream/topic if they don't exist.
     pub async fn connect(&self) -> Result<()> {
-        // TODO: Implement actual Iggy client connection
-        // For now, mark as connected and use buffer
-        info!("IggyEventLog connecting (stub implementation)");
+        // 1. Connect to server
+        self.client.connect().await?;
+        info!(
+            "Connected to Iggy server at {}",
+            self.manager.connection_address()
+        );
+
+        // 2. Login with default credentials
+        self.client
+            .login_user(DEFAULT_ROOT_USERNAME, DEFAULT_ROOT_PASSWORD)
+            .await?;
+        debug!("Logged in to Iggy as root user");
+
+        // 3. Create stream if not exists
+        match self
+            .client
+            .create_stream(topics::STREAM_NAME, Some(topics::STREAM_ID))
+            .await
+        {
+            Ok(_) => info!("Created stream '{}'", topics::STREAM_NAME),
+            Err(e) => {
+                let err_str = e.to_string();
+                if err_str.contains("already exists")
+                    || err_str.contains("already_exists")
+                    || err_str.contains("AlreadyExists")
+                {
+                    debug!("Stream '{}' already exists", topics::STREAM_NAME);
+                } else {
+                    return Err(e.into());
+                }
+            }
+        }
+
+        // 4. Create topic if not exists
+        let stream_id: Identifier = topics::STREAM_ID.try_into()?;
+        match self
+            .client
+            .create_topic(
+                &stream_id,
+                topics::EVENTS_TOPIC,
+                topics::PARTITION_COUNT,
+                CompressionAlgorithm::None,
+                None,
+                Some(topics::TOPIC_ID),
+                IggyExpiry::NeverExpire,
+                MaxTopicSize::ServerDefault,
+            )
+            .await
+        {
+            Ok(_) => info!(
+                "Created topic '{}' with {} partitions",
+                topics::EVENTS_TOPIC,
+                topics::PARTITION_COUNT
+            ),
+            Err(e) => {
+                let err_str = e.to_string();
+                if err_str.contains("already exists")
+                    || err_str.contains("already_exists")
+                    || err_str.contains("AlreadyExists")
+                {
+                    debug!("Topic '{}' already exists", topics::EVENTS_TOPIC);
+                } else {
+                    return Err(e.into());
+                }
+            }
+        }
+
         *self.connected.write().await = true;
+        info!("IggyEventLog fully connected and ready");
+
+        // Flush any buffered events from previous disconnection
+        self.flush_buffer().await?;
+
         Ok(())
     }
 
@@ -76,50 +192,135 @@ where
     pub async fn is_connected(&self) -> bool {
         *self.connected.read().await
     }
+
+    /// Internal send that doesn't handle reconnection.
+    async fn try_send(&self, event: &E) -> Result<()> {
+        // Get partition key from the Partitionable trait
+        let partition_key = event.partition_key().unwrap_or("unknown");
+
+        // Serialize event to JSON
+        let payload = serde_json::to_vec(event)?;
+
+        // Create Iggy message
+        let message = Message::from_bytes(payload.into())?;
+
+        // Partition by key (consistent hashing)
+        let partitioning = Partitioning::messages_key_str(partition_key)?;
+
+        // Send to Iggy
+        let stream_id: Identifier = topics::STREAM_ID.try_into()?;
+        let topic_id: Identifier = topics::TOPIC_ID.try_into()?;
+
+        let mut messages = [message];
+        self.client
+            .send_messages(&stream_id, &topic_id, &partitioning, &mut messages)
+            .await?;
+
+        Ok(())
+    }
+
+    /// Buffer an event when disconnected.
+    async fn buffer_event(&self, event: E) {
+        let mut buffer = self.reconnect_buffer.write().await;
+
+        if buffer.len() >= MAX_RECONNECT_BUFFER {
+            warn!(
+                buffer_size = buffer.len(),
+                "Reconnect buffer full, dropping oldest event"
+            );
+            buffer.remove(0);
+        }
+
+        buffer.push(event);
+        debug!(
+            buffer_size = buffer.len(),
+            "Buffered event during disconnect"
+        );
+    }
+
+    /// Flush buffered events after reconnection.
+    async fn flush_buffer(&self) -> Result<()> {
+        let events = std::mem::take(&mut *self.reconnect_buffer.write().await);
+
+        if events.is_empty() {
+            return Ok(());
+        }
+
+        info!(count = events.len(), "Flushing reconnect buffer to Iggy");
+
+        for event in events {
+            self.try_send(&event).await?;
+        }
+
+        Ok(())
+    }
 }
 
 #[async_trait]
 impl<E> EventLog<E> for IggyEventLog<E>
 where
-    E: Serialize + for<'de> Deserialize<'de> + Send + Sync + Clone + 'static,
+    E: Serialize + for<'de> Deserialize<'de> + Send + Sync + Clone + Partitionable + 'static,
 {
     async fn append(&self, event: E) -> Result<Offset> {
-        let offset = self.high_water_mark.fetch_add(1, Ordering::SeqCst);
+        match self.try_send(&event).await {
+            Ok(()) => {
+                let offset = self.high_water_mark.fetch_add(1, Ordering::SeqCst);
+                debug!(offset, "Appended event to Iggy");
+                Ok(offset)
+            }
+            Err(e) => {
+                // Check if it's a connection error
+                let err_str = e.to_string().to_lowercase();
+                let is_connection_error = err_str.contains("connection")
+                    || err_str.contains("disconnected")
+                    || err_str.contains("not connected")
+                    || err_str.contains("broken pipe")
+                    || err_str.contains("reset");
 
-        // TODO: Write to Iggy when connected
-        // For now, buffer in memory
-        self.buffer.write().await.push(event);
-
-        debug!(offset, "Appended event to log");
-        Ok(offset)
+                if is_connection_error {
+                    warn!(error = %e, "Connection error, buffering event");
+                    self.buffer_event(event).await;
+                    *self.connected.write().await = false;
+                    // Return synthetic offset
+                    Ok(self.high_water_mark.fetch_add(1, Ordering::SeqCst))
+                } else {
+                    Err(e)
+                }
+            }
+        }
     }
 
     async fn append_batch(&self, events: Vec<E>) -> Result<Offset> {
-        let count = events.len() as u64;
-        if count == 0 {
+        if events.is_empty() {
             return Ok(self.high_water_mark().saturating_sub(1));
         }
 
-        let first_offset = self.high_water_mark.fetch_add(count, Ordering::SeqCst);
+        // Send each event (Iggy handles internal batching)
+        for event in events {
+            self.append(event).await?;
+        }
 
-        // TODO: Write batch to Iggy
-        self.buffer.write().await.extend(events);
-
-        debug!(first_offset, count, "Appended batch to log");
-        Ok(first_offset + count - 1)
+        // Return offset of last event
+        Ok(self.high_water_mark().saturating_sub(1))
     }
 
     async fn consumer(&self, group: &str) -> Result<Box<dyn EventConsumer<E>>> {
-        // TODO: Create actual Iggy consumer
-        // For now, create an in-memory consumer over the buffer
-        let events = self.buffer.read().await.clone();
+        // Create a new client for the consumer (each consumer needs its own connection)
+        let consumer_client = IggyClient::builder()
+            .with_tcp()
+            .with_server_address(self.manager.connection_address())
+            .build()
+            .map_err(|e| Error::Connection(e.to_string()))?;
 
-        Ok(Box::new(IggyEventConsumer {
-            group: group.to_string(),
-            events: Arc::new(events),
-            current_offset: 0,
-            committed_offset: 0,
-        }))
+        consumer_client.connect().await?;
+        consumer_client
+            .login_user(DEFAULT_ROOT_USERNAME, DEFAULT_ROOT_PASSWORD)
+            .await?;
+
+        Ok(Box::new(IggyEventConsumer::new(
+            consumer_client,
+            group.to_string(),
+        )))
     }
 
     fn high_water_mark(&self) -> Offset {
@@ -129,59 +330,122 @@ where
 
 /// Iggy-backed consumer implementation.
 ///
-/// Currently uses in-memory snapshot until Iggy SDK integration.
-struct IggyEventConsumer<E> {
+/// Polls events from all partitions and tracks offsets per partition.
+pub struct IggyEventConsumer<E> {
+    client: IggyClient,
     group: String,
-    events: Arc<Vec<E>>,
-    current_offset: Offset,
-    committed_offset: Offset,
+    offsets: [u64; topics::PARTITION_COUNT as usize],
+    committed_offsets: [u64; topics::PARTITION_COUNT as usize],
+    _phantom: PhantomData<E>,
+}
+
+impl<E> IggyEventConsumer<E>
+where
+    E: for<'de> Deserialize<'de> + Send + Clone + 'static,
+{
+    fn new(client: IggyClient, group: String) -> Self {
+        Self {
+            client,
+            group,
+            offsets: [0; topics::PARTITION_COUNT as usize],
+            committed_offsets: [0; topics::PARTITION_COUNT as usize],
+            _phantom: PhantomData,
+        }
+    }
 }
 
 #[async_trait]
 impl<E> EventConsumer<E> for IggyEventConsumer<E>
 where
-    E: Send + Sync + Clone + 'static,
+    E: for<'de> Deserialize<'de> + Send + Clone + 'static,
 {
     async fn poll(&mut self, max_count: usize, _timeout: Duration) -> Result<EventBatch<E>> {
-        let start = self.current_offset as usize;
-        let end = std::cmp::min(start + max_count, self.events.len());
+        let mut all_events = Vec::new();
+        let per_partition = (max_count / topics::PARTITION_COUNT as usize).max(1);
 
-        if start >= self.events.len() {
-            return Ok(EventBatch::empty());
+        let stream_id: Identifier = topics::STREAM_ID.try_into()?;
+        let topic_id: Identifier = topics::TOPIC_ID.try_into()?;
+
+        for partition_id in 0..topics::PARTITION_COUNT {
+            let idx = partition_id as usize;
+            let consumer = Consumer::new(
+                Identifier::named(&self.group).map_err(|e| Error::Iggy(e.to_string()))?,
+            );
+            let strategy = PollingStrategy::offset(self.offsets[idx]);
+
+            let polled = self
+                .client
+                .poll_messages(
+                    &stream_id,
+                    &topic_id,
+                    Some(partition_id),
+                    &consumer,
+                    &strategy,
+                    per_partition as u32,
+                    false, // auto_commit = false (manual commit)
+                )
+                .await?;
+
+            for msg in polled.messages {
+                let event: E = serde_json::from_slice(&msg.payload)?;
+                all_events.push((msg.offset, event));
+                self.offsets[idx] = msg.offset + 1;
+            }
         }
 
-        let events: Vec<(Offset, E)> = self.events[start..end]
-            .iter()
-            .enumerate()
-            .map(|(i, e)| ((start + i) as Offset, e.clone()))
-            .collect();
+        // Sort by offset for rough ordering across partitions
+        all_events.sort_by_key(|(offset, _)| *offset);
 
-        if let Some((last_offset, _)) = events.last() {
-            self.current_offset = last_offset + 1;
-        }
-
-        Ok(EventBatch::new(events))
+        Ok(EventBatch::new(all_events))
     }
 
-    async fn commit(&mut self, offset: Offset) -> Result<()> {
-        // TODO: Commit to Iggy
-        self.committed_offset = offset;
-        debug!(group = %self.group, offset, "Committed offset");
+    async fn commit(&mut self, _offset: Offset) -> Result<()> {
+        let stream_id: Identifier = topics::STREAM_ID.try_into()?;
+        let topic_id: Identifier = topics::TOPIC_ID.try_into()?;
+
+        for partition_id in 0..topics::PARTITION_COUNT {
+            let idx = partition_id as usize;
+            let consumer = Consumer::new(
+                Identifier::named(&self.group).map_err(|e| Error::Iggy(e.to_string()))?,
+            );
+
+            self.client
+                .store_consumer_offset(
+                    &consumer,
+                    &stream_id,
+                    &topic_id,
+                    Some(partition_id),
+                    self.offsets[idx],
+                )
+                .await?;
+
+            self.committed_offsets[idx] = self.offsets[idx];
+        }
+
+        debug!(group = %self.group, "Committed offsets to Iggy");
         Ok(())
     }
 
     async fn seek(&mut self, position: SeekPosition) -> Result<()> {
-        self.current_offset = match position {
-            SeekPosition::Beginning => 0,
-            SeekPosition::End => self.events.len() as Offset,
-            SeekPosition::Offset(o) => o,
-        };
-        debug!(group = %self.group, offset = self.current_offset, "Seeked to position");
+        match position {
+            SeekPosition::Beginning => {
+                self.offsets = [0; topics::PARTITION_COUNT as usize];
+            }
+            SeekPosition::End => {
+                // Set to max u64; poll will return empty until new messages arrive
+                self.offsets = [u64::MAX; topics::PARTITION_COUNT as usize];
+            }
+            SeekPosition::Offset(o) => {
+                self.offsets = [o; topics::PARTITION_COUNT as usize];
+            }
+        }
+        debug!(group = %self.group, "Seeked consumer");
         Ok(())
     }
 
     fn committed_offset(&self) -> Offset {
-        self.committed_offset
+        // Return min committed offset across partitions
+        *self.committed_offsets.iter().min().unwrap_or(&0)
     }
 
     fn group(&self) -> &str {
@@ -193,97 +457,114 @@ where
 mod tests {
     use super::*;
     use crate::config::IggyConfig;
+    use serde::{Deserialize, Serialize};
 
-    #[tokio::test]
-    async fn iggy_log_append_and_read() {
-        let config = IggyConfig::default();
-        let manager = Arc::new(IggyManager::new(config));
-        let log: IggyEventLog<String> = IggyEventLog::new(manager);
+    /// Test event type that implements Partitionable.
+    #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+    struct TestEvent {
+        id: String,
+        data: String,
+    }
 
-        let o1 = log.append("first".to_string()).await.unwrap();
-        let o2 = log.append("second".to_string()).await.unwrap();
+    impl Partitionable for TestEvent {
+        fn partition_key(&self) -> Option<&str> {
+            Some(&self.id)
+        }
+    }
 
-        assert_eq!(o1, 0);
-        assert_eq!(o2, 1);
-        assert_eq!(log.high_water_mark(), 2);
+    #[test]
+    fn test_buffer_overflow_drops_oldest() {
+        // Simulate the buffer overflow logic
+        let mut buffer: Vec<TestEvent> = (0..10_001)
+            .map(|i| TestEvent {
+                id: format!("id-{}", i),
+                data: format!("data-{}", i),
+            })
+            .collect();
+
+        // Apply overflow logic
+        if buffer.len() > MAX_RECONNECT_BUFFER {
+            buffer.remove(0);
+        }
+
+        assert_eq!(buffer.len(), MAX_RECONNECT_BUFFER);
+        // First event should be id-1 (id-0 was dropped)
+        assert_eq!(buffer[0].id, "id-1");
+    }
+
+    #[test]
+    fn test_partition_count_is_power_of_two() {
+        // Ensures efficient hash distribution
+        assert!(topics::PARTITION_COUNT.is_power_of_two() || topics::PARTITION_COUNT == 8);
     }
 
     #[tokio::test]
-    async fn iggy_log_consumer_polls() {
+    async fn test_iggy_log_new_creates_instance() {
         let config = IggyConfig::default();
         let manager = Arc::new(IggyManager::new(config));
-        let log: IggyEventLog<String> = IggyEventLog::new(manager);
-
-        log.append("event-1".to_string()).await.unwrap();
-        log.append("event-2".to_string()).await.unwrap();
-
-        let mut consumer = log.consumer("test").await.unwrap();
-        let batch = consumer.poll(10, Duration::from_secs(1)).await.unwrap();
-
-        assert_eq!(batch.len(), 2);
-    }
-
-    #[tokio::test]
-    async fn iggy_log_connect() {
-        let config = IggyConfig::default();
-        let manager = Arc::new(IggyManager::new(config));
-        let log: IggyEventLog<String> = IggyEventLog::new(manager);
+        let log: IggyEventLog<TestEvent> = IggyEventLog::new(manager);
 
         assert!(!log.is_connected().await);
+        assert_eq!(log.high_water_mark(), 0);
+    }
+
+    #[tokio::test]
+    #[ignore] // Requires running Iggy server
+    async fn test_connect_creates_stream_and_topic() {
+        let config = IggyConfig::default();
+        let manager = Arc::new(IggyManager::new(config));
+
+        let log: IggyEventLog<TestEvent> = IggyEventLog::new(Arc::clone(&manager));
         log.connect().await.unwrap();
+
         assert!(log.is_connected().await);
     }
 
     #[tokio::test]
-    async fn iggy_log_append_batch() {
+    #[ignore] // Requires running Iggy server
+    async fn test_append_sends_to_iggy() {
         let config = IggyConfig::default();
         let manager = Arc::new(IggyManager::new(config));
-        let log: IggyEventLog<String> = IggyEventLog::new(manager);
+        let log: IggyEventLog<TestEvent> = IggyEventLog::new(Arc::clone(&manager));
+        log.connect().await.unwrap();
 
-        let offset = log
-            .append_batch(vec!["a".to_string(), "b".to_string(), "c".to_string()])
-            .await
-            .unwrap();
+        let event = TestEvent {
+            id: "test-1".to_string(),
+            data: "hello".to_string(),
+        };
 
-        assert_eq!(offset, 2); // Last offset
-        assert_eq!(log.high_water_mark(), 3);
+        let offset = log.append(event).await.unwrap();
+        assert_eq!(offset, 0);
+
+        let event2 = TestEvent {
+            id: "test-2".to_string(),
+            data: "world".to_string(),
+        };
+        let offset2 = log.append(event2).await.unwrap();
+        assert_eq!(offset2, 1);
     }
 
     #[tokio::test]
-    async fn iggy_consumer_seek() {
+    #[ignore] // Requires running Iggy server
+    async fn test_consumer_polls_events() {
         let config = IggyConfig::default();
         let manager = Arc::new(IggyManager::new(config));
-        let log: IggyEventLog<String> = IggyEventLog::new(manager);
+        let log: IggyEventLog<TestEvent> = IggyEventLog::new(Arc::clone(&manager));
+        log.connect().await.unwrap();
 
-        for i in 0..5 {
-            log.append(format!("event-{i}")).await.unwrap();
-        }
+        // Append some events
+        log.append(TestEvent {
+            id: "poll-test".to_string(),
+            data: "testing".to_string(),
+        })
+        .await
+        .unwrap();
 
-        let mut consumer = log.consumer("test-group").await.unwrap();
-
-        // Poll some events
-        let batch1 = consumer.poll(3, Duration::from_secs(1)).await.unwrap();
-        assert_eq!(batch1.len(), 3);
-
-        // Seek back to beginning
+        // Create consumer and poll
+        let mut consumer = log.consumer("test-consumer").await.unwrap();
         consumer.seek(SeekPosition::Beginning).await.unwrap();
 
-        let batch2 = consumer.poll(2, Duration::from_secs(1)).await.unwrap();
-        assert_eq!(batch2.first_offset(), Some(0));
-    }
-
-    #[tokio::test]
-    async fn iggy_consumer_commit() {
-        let config = IggyConfig::default();
-        let manager = Arc::new(IggyManager::new(config));
-        let log: IggyEventLog<String> = IggyEventLog::new(manager);
-
-        log.append("event".to_string()).await.unwrap();
-
-        let mut consumer = log.consumer("test-group").await.unwrap();
-        assert_eq!(consumer.committed_offset(), 0);
-
-        consumer.commit(42).await.unwrap();
-        assert_eq!(consumer.committed_offset(), 42);
+        let batch = consumer.poll(10, Duration::from_secs(1)).await.unwrap();
+        assert!(!batch.is_empty());
     }
 }

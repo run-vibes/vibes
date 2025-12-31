@@ -24,4 +24,4 @@ pub use error::{Error, Result};
 pub use iggy_log::IggyEventLog;
 pub use manager::{IggyManager, IggyState};
 pub use memory::InMemoryEventLog;
-pub use traits::{EventBatch, EventConsumer, EventLog, Offset, SeekPosition};
+pub use traits::{EventBatch, EventConsumer, EventLog, Offset, Partitionable, SeekPosition};

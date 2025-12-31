@@ -1,6 +1,7 @@
 //! Event type definitions
 
 use serde::{Deserialize, Serialize};
+use vibes_iggy::Partitionable;
 
 use crate::hooks::HookEvent;
 
@@ -160,6 +161,12 @@ impl VibesEvent {
             VibesEvent::ClientDisconnected { .. } => None,
             VibesEvent::TunnelStateChanged { .. } => None,
         }
+    }
+}
+
+impl Partitionable for VibesEvent {
+    fn partition_key(&self) -> Option<&str> {
+        self.session_id()
     }
 }
 

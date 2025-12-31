@@ -30,7 +30,7 @@ Result: Events are lost on restart despite Iggy server running.
 | **Consumer model** | Poll all partitions | Simple API, can add consumer groups later |
 | **Offset commit** | Manual | Control over exactly when offsets advance |
 | **Error handling** | Lazy reconnect with buffer | Non-blocking producers, graceful recovery |
-| **Generic type** | Specialize for VibesEvent | YAGNI - only used with VibesEvent |
+| **Generic type** | Generic with Partitionable trait | Avoids cyclic dependency while enabling partition by session_id |
 
 ---
 
