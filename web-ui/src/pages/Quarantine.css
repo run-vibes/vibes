@@ -1,0 +1,241 @@
+/* web-ui/src/pages/Quarantine.css */
+.quarantine-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: 0;
+}
+
+.quarantine-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.quarantine-header h1 {
+  font-family: var(--font-mono);
+  font-size: var(--text-xl);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--space-3);
+}
+
+.stat-card {
+  padding: var(--space-4);
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.stat-value {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+}
+
+.stat-value.total { color: var(--color-info); }
+.stat-value.pending { color: var(--color-warning); }
+.stat-value.approved { color: var(--color-success); }
+.stat-value.rejected { color: var(--color-error); }
+.stat-value.escalated { color: var(--color-groove); }
+
+.stat-label {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  margin-top: var(--space-1);
+}
+
+/* Trust Badge */
+.trust-badge {
+  display: inline-block;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: 500;
+}
+
+.trust-badge.local { background-color: #10B98120; color: #10B981; }
+.trust-badge.private-cloud { background-color: #6366F120; color: #6366F1; }
+.trust-badge.org-verified { background-color: #3B82F620; color: #3B82F6; }
+.trust-badge.org-unverified { background-color: #8B5CF620; color: #8B5CF6; }
+.trust-badge.public-verified { background-color: #F59E0B20; color: #F59E0B; }
+.trust-badge.public-unverified { background-color: #EF444420; color: #EF4444; }
+.trust-badge.quarantined { background-color: #6B728020; color: #6B7280; }
+
+/* Quarantine Item */
+.quarantine-item {
+  padding: var(--space-4);
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.quarantine-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.quarantine-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.quarantine-item-description {
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.quarantine-item-id {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-dim);
+  margin-top: var(--space-1);
+}
+
+.quarantine-item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  font-size: var(--text-sm);
+}
+
+.quarantine-item-meta dt {
+  color: var(--color-text-secondary);
+}
+
+.quarantine-item-meta dd {
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.quarantine-item-actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+/* Trust Levels */
+.trust-levels-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-3);
+}
+
+.trust-level-card {
+  padding: var(--space-3);
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.trust-level-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.trust-level-score {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.trust-level-description {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  margin-top: var(--space-2);
+}
+
+/* Policy Section */
+.policy-header {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.policy-header:hover {
+  color: var(--color-accent);
+}
+
+.policy-content {
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  margin-top: var(--space-3);
+}
+
+.policy-section {
+  margin-top: var(--space-4);
+}
+
+.policy-section:first-child {
+  margin-top: 0;
+}
+
+.policy-section h3 {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-2) 0;
+}
+
+.policy-section dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-1) var(--space-4);
+  font-size: var(--text-sm);
+}
+
+.policy-section dt {
+  color: var(--color-text-secondary);
+}
+
+.policy-section dd {
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+/* Empty State */
+.empty-state {
+  padding: var(--space-8);
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .quarantine-item-header {
+    flex-direction: column;
+  }
+
+  .quarantine-item-meta {
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .quarantine-item-actions {
+    flex-wrap: wrap;
+  }
+}
