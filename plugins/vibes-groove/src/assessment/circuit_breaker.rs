@@ -54,20 +54,15 @@ use super::config::CircuitBreakerConfig;
 use super::types::{LightweightEvent, LightweightSignal, SessionId};
 
 /// State of the circuit breaker.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum CircuitState {
     /// Normal operation - monitoring for issues.
+    #[default]
     Closed,
     /// Threshold exceeded - intervention triggered, now in cooldown.
     Open,
     /// Cooldown expired - testing if session has recovered.
     HalfOpen,
-}
-
-impl Default for CircuitState {
-    fn default() -> Self {
-        Self::Closed
-    }
 }
 
 /// Transition event emitted when state changes.
