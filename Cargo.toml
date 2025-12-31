@@ -7,7 +7,7 @@ members = [
     "vibes-plugin-api",
     "vibes-server",
     "vibes-introspection",
-    "vibes-groove",
+    "plugins/vibes-groove",
 ]
 exclude = ["examples/plugins/hello-plugin"]
 
