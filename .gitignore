@@ -22,6 +22,9 @@ target
 # Node.js
 node_modules/
 
+# Iggy submodule build artifacts
+vendor/iggy/target/
+
 # RustRover
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
 #  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
