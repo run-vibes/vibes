@@ -1,17 +1,6 @@
 /* Import design-system tokens */
 @import '@vibes/design-system/tokens';
 
-/* Compatibility mappings from old token names to design-system tokens */
-:root {
-  /* Map old names to new design-system tokens */
-  --color-bg: var(--color-bg-base);
-  --color-surface: var(--color-bg-surface);
-  --color-text: var(--color-text-primary);
-  --color-text-muted: var(--color-text-secondary);
-  --color-muted: var(--color-text-secondary);
-  --color-purple: #8250df;
-}
-
 /* Base reset and app layout */
 * {
   box-sizing: border-box;
@@ -341,7 +330,7 @@ body {
 /* Remote messages (from CLI or other clients) */
 .message-remote.message-user {
   background-color: rgba(130, 80, 223, 0.1);
-  border-left: 3px solid var(--color-purple);
+  border-left: 3px solid #8250df;
 }
 
 .message-source {
