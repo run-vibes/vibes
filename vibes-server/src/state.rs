@@ -55,6 +55,8 @@ pub struct AppState {
     pub pty_manager: Arc<RwLock<PtyManager>>,
     /// Broadcast channel for PTY output distribution
     pty_broadcaster: broadcast::Sender<PtyEvent>,
+    /// Iggy manager for subprocess lifecycle (optional, only when using Iggy storage)
+    iggy_manager: Option<Arc<IggyManager>>,
 }
 
 impl AppState {
@@ -82,6 +84,7 @@ impl AppState {
             vapid: None,
             subscriptions: None,
             pty_manager,
+            iggy_manager: None,
         }
     }
 
@@ -90,16 +93,17 @@ impl AppState {
     /// Attempts to start and connect to the bundled Iggy server.
     /// Falls back to in-memory storage if Iggy is unavailable.
     pub async fn new_with_iggy() -> Self {
-        let event_log: Arc<dyn EventLog<VibesEvent>> = match Self::try_start_iggy().await {
-            Ok(iggy_log) => {
-                tracing::info!("Using Iggy for persistent event storage");
-                Arc::new(iggy_log)
-            }
-            Err(e) => {
-                tracing::warn!("Iggy unavailable, using in-memory storage: {}", e);
-                Arc::new(InMemoryEventLog::<VibesEvent>::new())
-            }
-        };
+        let (event_log, iggy_manager): (Arc<dyn EventLog<VibesEvent>>, Option<Arc<IggyManager>>) =
+            match Self::try_start_iggy().await {
+                Ok((log, manager)) => {
+                    tracing::info!("Using Iggy for persistent event storage");
+                    (Arc::new(log), Some(manager))
+                }
+                Err(e) => {
+                    tracing::warn!("Iggy unavailable, using in-memory storage: {}", e);
+                    (Arc::new(InMemoryEventLog::<VibesEvent>::new()), None)
+                }
+            };
 
         let plugin_host = Arc::new(RwLock::new(PluginHost::new(PluginHostConfig::default())));
         let tunnel_manager = Arc::new(RwLock::new(TunnelManager::new(
@@ -121,11 +125,15 @@ impl AppState {
             vapid: None,
             subscriptions: None,
             pty_manager,
+            iggy_manager,
         }
     }
 
     /// Try to start the Iggy server and create an event log.
-    async fn try_start_iggy() -> Result<IggyEventLog<VibesEvent>, vibes_iggy::Error> {
+    ///
+    /// Returns both the event log and a reference to the manager for shutdown.
+    async fn try_start_iggy()
+    -> Result<(IggyEventLog<VibesEvent>, Arc<IggyManager>), vibes_iggy::Error> {
         let config = IggyConfig::default();
 
         // Check if binary is available before trying to start
@@ -148,11 +156,11 @@ impl AppState {
         // Give the server a moment to become ready
         tokio::time::sleep(std::time::Duration::from_millis(IGGY_STARTUP_GRACE_MS)).await;
 
-        // Create event log from the manager
-        let event_log = IggyEventLog::new(manager);
+        // Create event log from the manager (cloning the Arc)
+        let event_log = IggyEventLog::new(Arc::clone(&manager));
         event_log.connect().await?;
 
-        Ok(event_log)
+        Ok((event_log, manager))
     }
 
     /// Configure authentication for this state
@@ -200,6 +208,27 @@ impl AppState {
             vapid: None,
             subscriptions: None,
             pty_manager,
+            iggy_manager: None,
+        }
+    }
+
+    /// Set the Iggy manager for shutdown coordination
+    #[must_use]
+    pub fn with_iggy_manager(mut self, manager: Arc<IggyManager>) -> Self {
+        self.iggy_manager = Some(manager);
+        self
+    }
+
+    /// Gracefully shutdown the server, stopping all managed subprocesses.
+    ///
+    /// This should be called before the server exits to ensure clean termination
+    /// of the Iggy server subprocess.
+    pub async fn shutdown(&self) {
+        if let Some(manager) = &self.iggy_manager {
+            tracing::info!("Stopping Iggy server subprocess");
+            if let Err(e) = manager.stop().await {
+                tracing::error!("Error stopping Iggy server: {}", e);
+            }
         }
     }
 
@@ -382,5 +411,31 @@ mod tests {
             }
             _ => panic!("Expected SessionStateChanged"),
         }
+    }
+
+    // ==================== Shutdown Tests ====================
+
+    #[tokio::test]
+    async fn test_shutdown_stops_iggy_manager() {
+        // Create an IggyManager without starting a process
+        let config = IggyConfig::default();
+        let manager = Arc::new(IggyManager::new(config));
+
+        // Create AppState with the manager
+        let state = AppState::new().with_iggy_manager(manager.clone());
+
+        // Call shutdown
+        state.shutdown().await;
+
+        // Verify the manager's shutdown signal was set
+        assert_eq!(manager.state().await, vibes_iggy::IggyState::Stopped);
+    }
+
+    #[tokio::test]
+    async fn test_shutdown_without_iggy_is_safe() {
+        // AppState without Iggy should not panic on shutdown
+        let state = AppState::new();
+        state.shutdown().await;
+        // No panic = success
     }
 }
