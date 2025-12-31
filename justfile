@@ -81,6 +81,47 @@ e2e-setup:
 # Run all checks (pre-commit)
 pre-commit: fmt-check clippy test
 
+# ─── Submodule & Iggy Build ──────────────────────────────────────────────────
+
+# Check that submodules are initialized
+_check-submodules:
+    #!/usr/bin/env bash
+    if [[ ! -f vendor/iggy/Cargo.toml ]]; then
+        echo "Error: Git submodules not initialized."
+        echo "Run: git submodule update --init --recursive"
+        exit 1
+    fi
+
+# Build iggy-server from submodule
+build-iggy: _check-submodules
+    cargo build --release --manifest-path vendor/iggy/Cargo.toml -p server
+    mkdir -p target/release
+    cp vendor/iggy/target/release/iggy-server target/release/
+    @echo "✓ iggy-server built and copied to target/release/"
+
+# Build everything (vibes + iggy)
+build-all: build-web _check-submodules
+    cargo build --release
+    cargo build --release --manifest-path vendor/iggy/Cargo.toml -p server
+    cp vendor/iggy/target/release/iggy-server target/release/
+    @echo "✓ Built: vibes, vibes-server, iggy-server"
+
+# Full setup for new developers
+setup: setup-hooks
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    # Initialize submodules if needed
+    if [[ ! -f vendor/iggy/Cargo.toml ]]; then
+        echo "Initializing git submodules..."
+        git submodule update --init --recursive
+    fi
+
+    # Install npm deps
+    npm ci
+
+    echo "✓ Setup complete. Run 'just build-all' to build."
+
 # ─── Plugin Management ───────────────────────────────────────────────────────
 
 # Install groove plugin (build, copy, and enable)
