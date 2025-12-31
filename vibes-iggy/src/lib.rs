@@ -14,10 +14,12 @@
 pub mod config;
 pub mod error;
 pub mod manager;
+pub mod memory;
 pub mod traits;
 
 // Re-exports
 pub use config::IggyConfig;
 pub use error::{Error, Result};
 pub use manager::{IggyManager, IggyState};
+pub use memory::InMemoryEventLog;
 pub use traits::{EventBatch, EventConsumer, EventLog, Offset, SeekPosition};
