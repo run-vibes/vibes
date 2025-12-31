@@ -189,14 +189,12 @@ impl VibesServer {
 
         tracing::info!("EventLog consumers started");
 
-        // The manager is moved into the spawned task to keep it alive
+        // The manager is moved into the spawned task to keep it alive.
+        // TODO: Replace pending() with proper shutdown signal coordination
         tokio::spawn(async move {
-            // Keep the manager alive until server shutdown
-            // In the future, this will be coordinated with server shutdown
+            let _manager = manager; // Keep manager alive
+            let _shutdown = shutdown; // Keep shutdown token alive
             std::future::pending::<()>().await;
-            shutdown.cancel();
-            manager.shutdown();
-            manager.wait_for_shutdown().await;
         });
     }
 

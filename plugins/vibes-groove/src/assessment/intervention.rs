@@ -317,6 +317,19 @@ fn sanitize_filename(s: &str) -> String {
         .collect()
 }
 
+/// Escape a string for safe use in a shell script.
+///
+/// Uses single quotes which prevent interpretation of all special characters
+/// except single quotes themselves. Embedded single quotes are escaped using
+/// the standard shell idiom: end the single-quoted string, add an escaped
+/// single quote, and start a new single-quoted string.
+///
+/// Example: "don't" -> 'don'\''t'
+fn shell_escape(s: &str) -> String {
+    // Replace ' with '\'' (end quote, escaped quote, start quote)
+    format!("'{}'", s.replace('\'', "'\\''"))
+}
+
 /// Generate a Claude Code hook script.
 fn generate_claude_hook(learning: &Learning) -> String {
     let tags = if learning.tags.is_empty() {
@@ -325,31 +338,29 @@ fn generate_claude_hook(learning: &Learning) -> String {
         format!("\n# Tags: {}", learning.tags.join(", "))
     };
 
-    // Use format! with escaped quotes to avoid raw string delimiter issues
+    // Use shell_escape for safe content injection
     format!(
         "#!/bin/bash\n\
          # vibes-groove learning hook\n\
          # Learning ID: {id}{tags}\n\
          \n\
-         echo \"## Learning: {title}\"\n\
+         echo {title}\n\
          echo \"\"\n\
-         echo \"{content}\"\n",
+         echo {content}\n",
         id = learning.id,
         tags = tags,
-        title = learning.title,
-        content = learning.content.replace('"', "\\\""),
+        title = shell_escape(&format!("## Learning: {}", learning.title)),
+        content = shell_escape(&learning.content),
     )
 }
 
 /// Generate a simple hook script.
 fn generate_simple_hook(learning: &Learning) -> String {
+    // Use shell_escape for safe content injection
     format!(
-        r#"#!/bin/bash
-# Learning: {title}
-echo "{content}"
-"#,
+        "#!/bin/bash\n# Learning: {title}\necho {content}\n",
         title = learning.title,
-        content = learning.content.replace('"', r#"\""#),
+        content = shell_escape(&learning.content),
     )
 }
 
@@ -598,5 +609,32 @@ mod tests {
             "interventions are disabled"
         );
         assert!(InterventionError::LimitReached(3).to_string().contains("3"));
+    }
+
+    #[test]
+    fn test_shell_escape_basic() {
+        // Simple string
+        assert_eq!(shell_escape("hello"), "'hello'");
+    }
+
+    #[test]
+    fn test_shell_escape_single_quotes() {
+        // Single quotes are escaped
+        assert_eq!(shell_escape("don't"), "'don'\\''t'");
+    }
+
+    #[test]
+    fn test_shell_escape_special_chars() {
+        // All special characters are safe in single quotes
+        assert_eq!(shell_escape("$HOME"), "'$HOME'");
+        assert_eq!(shell_escape("`ls`"), "'`ls`'");
+        assert_eq!(shell_escape("$(whoami)"), "'$(whoami)'");
+        assert_eq!(shell_escape("a\nb"), "'a\nb'");
+        assert_eq!(shell_escape("\"double\""), "'\"double\"'");
+    }
+
+    #[test]
+    fn test_shell_escape_empty() {
+        assert_eq!(shell_escape(""), "''");
     }
 }
