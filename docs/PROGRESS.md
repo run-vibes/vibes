@@ -259,7 +259,7 @@ Note: Auto-detect team/aud moved to Milestone 3.5 (Cloudflare Auth Wizard)
 - [x] Move `IggyManager` from vibes-groove to vibes-iggy
 - [x] Implement `InMemoryEventLog` for testing
 - [x] Move `vibes-groove/` → `plugins/vibes-groove/`
-- [~] Implement `IggyEventLog` (stub, full SDK integration pending)
+- [x] Implement `IggyEventLog` with full Iggy SDK integration
 - [x] Migrate vibes-server subscribers to consumer pattern
 - [x] Remove `MemoryEventBus` from vibes-server (EventLog consumers only)
 
@@ -423,3 +423,4 @@ These phases are planned but not yet scheduled.
 | 2025-12-31 | groove branding updated - Removed purple palette, aligned with vibes visual system using groove gold (#c9a227) accent |
 | 2025-12-31 | README.md architecture diagram updated - Reflects EventLog/Iggy architecture with consumer pattern (WebSocket, Notification, Assessment consumers) |
 | 2025-12-31 | EventLog wiring complete - Event producers now route through EventLog via append_event(), WebSocket consumer broadcasts to firehose clients, completes consumer-based architecture |
+| 2025-12-31 | Iggy SDK integration complete - IggyEventLog now uses real Iggy SDK (TCP transport, default auth, 8 partitions by session_id), Partitionable trait for partition key extraction, lazy reconnect with 10K event buffer, IggyEventConsumer with multi-partition polling and manual offset commit, integration tests |
