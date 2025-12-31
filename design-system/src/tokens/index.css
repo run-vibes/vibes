@@ -1,4 +1,4 @@
-/* Design System Tokens
- * CSS custom properties for colors, typography, and spacing.
- * Will be populated in Task 1.2+
- */
+/* design-system/src/tokens/index.css */
+@import './colors.css';
+/* @import './typography.css'; - added in next task */
+/* @import './spacing.css'; - added in next task */

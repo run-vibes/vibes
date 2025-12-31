@@ -22,6 +22,10 @@ target
 # Node.js
 node_modules/
 
+# Build outputs
+build/
+dist/
+
 # Iggy submodule build artifacts
 vendor/iggy/target/
 
