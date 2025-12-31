@@ -249,13 +249,25 @@ Note: Auto-detect team/aud moved to Milestone 3.5 (Cloudflare Auth Wizard)
 - [x] `AssessmentProcessor` with fire-and-forget writer
 - [x] Integration tests
 
-**4.4.2: Assessment Logic (Pending)**
+**4.4.2a: EventLog Migration (Pending)**
+> **Design:** [milestone-4.4.2a-design.md](plans/14-continual-learning/milestone-4.4.2a-design.md)
+
+- [ ] Create `vibes-iggy` crate with EventLog/EventConsumer traits
+- [ ] Move `IggyManager` from vibes-groove to vibes-iggy
+- [ ] Implement `IggyEventLog` (producer/consumer model)
+- [ ] Migrate vibes-server subscribers to consumer pattern
+- [ ] Move `vibes-groove/` → `plugins/vibes-groove/`
+- [ ] Remove `MemoryEventBus` and old `EventBus` trait
+
+**4.4.2b: Assessment Logic (Pending)**
+> **Design:** [milestone-4.4.2b-design.md](plans/14-continual-learning/milestone-4.4.2b-design.md)
+
 - [ ] Lightweight signal detection (linguistic patterns, tool failures)
-- [ ] Medium checkpoint summarization (async LLM)
-- [ ] Heavy session analysis (sampled)
-- [ ] `CircuitBreaker` for real-time intervention
+- [ ] `CircuitBreaker` with intervention mechanism
+- [ ] Checkpoint manager for medium assessment triggers
+- [ ] `HarnessLLM` for segment summarization
+- [ ] Session end detection and sampling strategy
 - [ ] CLI commands (`vibes groove assess status/history`)
-- [ ] EventBus integration (parallel subscriber)
 
 ### Milestone 4.5: Learning Extraction
 - [ ] Transcript parser for Claude JSONL format
