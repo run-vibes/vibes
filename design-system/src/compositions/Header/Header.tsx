@@ -21,6 +21,7 @@ export interface HeaderProps extends HTMLAttributes<HTMLElement> {
   isLocal?: boolean;
   theme?: 'dark' | 'light';
   onThemeToggle?: () => void;
+  settingsHref?: string;
   renderLink?: (props: LinkProps) => ReactNode;
 }
 
@@ -29,7 +30,7 @@ const DefaultLink = ({ href, className, children }: LinkProps) => (
 );
 
 export const Header = forwardRef<HTMLElement, HeaderProps>(
-  ({ navItems = [], identity, isLocal, theme = 'dark', onThemeToggle, renderLink, className = '', ...props }, ref) => {
+  ({ navItems = [], identity, isLocal, theme = 'dark', onThemeToggle, settingsHref, renderLink, className = '', ...props }, ref) => {
     const classes = [styles.header, className].filter(Boolean).join(' ');
 
     const Link = renderLink ?? DefaultLink;
@@ -65,6 +66,11 @@ export const Header = forwardRef<HTMLElement, HeaderProps>(
             >
               {theme === 'dark' ? '☀' : '🌙'}
             </button>
+          )}
+          {settingsHref && (
+            <Link href={settingsHref} className={styles.settingsLink}>
+              ⚙
+            </Link>
           )}
         </div>
       </header>

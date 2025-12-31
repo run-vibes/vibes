@@ -52,6 +52,7 @@ function RootLayout() {
         isLocal={!isLoading && isLocal}
         theme={theme}
         onThemeToggle={() => handleThemeChange(theme === 'dark' ? 'light' : 'dark')}
+        settingsHref="/settings"
         renderLink={({ href, className, children }) => (
           <Link to={href} className={className}>{children}</Link>
         )}
