@@ -1,15 +1,17 @@
+import { useState, useEffect } from 'react'
 import {
   createRouter,
   createRootRoute,
   createRoute,
   Outlet,
   Link,
+  useLocation,
 } from '@tanstack/react-router'
+import { Header } from '@vibes/design-system'
 import { ClaudeSessions } from './pages/ClaudeSessions'
 import { ClaudeSession } from './pages/ClaudeSession'
 import { StatusPage } from './pages/Status'
 import { QuarantinePage } from './pages/Quarantine'
-import { TunnelBadge } from './components/TunnelBadge'
 import { useAuth } from './hooks/useAuth'
 import { useWebSocket } from './hooks/useWebSocket'
 
@@ -17,29 +19,30 @@ import { useWebSocket } from './hooks/useWebSocket'
 function RootLayout() {
   const { addMessageHandler } = useWebSocket();
   const { identity, isLocal, isAuthenticated, isLoading } = useAuth({ addMessageHandler });
+  const location = useLocation();
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  const navItems = [
+    { label: 'Sessions', href: '/claude', isActive: location.pathname.startsWith('/claude') },
+    { label: 'Groove', href: '/groove', isGroove: true, isActive: location.pathname.startsWith('/groove') },
+  ];
 
   return (
     <div className="app">
-      <header className="header">
-        <nav>
-          <Link to="/" className="logo">vibes</Link>
-          <Link to="/claude">Sessions</Link>
-          <Link to="/groove">Groove</Link>
-          <TunnelBadge />
-          <div className="header-auth">
-            {isLoading ? null : isLocal ? (
-              <span className="badge badge-local">Local</span>
-            ) : isAuthenticated && identity ? (
-              <div className="identity">
-                <span className="identity-email">{identity.email}</span>
-                {identity.identity_provider && (
-                  <span className="identity-provider">via {identity.identity_provider}</span>
-                )}
-              </div>
-            ) : null}
-          </div>
-        </nav>
-      </header>
+      <Header
+        navItems={navItems}
+        identity={!isLoading && isAuthenticated && identity ? { email: identity.email, provider: identity.identity_provider } : undefined}
+        isLocal={!isLoading && isLocal}
+        theme={theme}
+        onThemeToggle={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
+        renderLink={({ href, className, children }) => (
+          <Link to={href} className={className}>{children}</Link>
+        )}
+      />
       <main className="main">
         <Outlet />
       </main>
