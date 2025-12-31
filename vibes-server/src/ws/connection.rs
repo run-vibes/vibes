@@ -130,8 +130,8 @@ async fn handle_socket(
         "WebSocket client connected"
     );
 
-    // Broadcast client connected event to firehose subscribers
-    state.broadcast_event(VibesEvent::ClientConnected {
+    // Append client connected event to EventLog for consumer processing
+    state.append_event(VibesEvent::ClientConnected {
         client_id: conn_state.client_id.clone(),
     });
 
@@ -206,8 +206,8 @@ async fn handle_socket(
         }
     }
 
-    // Broadcast client disconnected event to firehose subscribers
-    state.broadcast_event(VibesEvent::ClientDisconnected {
+    // Append client disconnected event to EventLog for consumer processing
+    state.append_event(VibesEvent::ClientDisconnected {
         client_id: conn_state.client_id.clone(),
     });
 
@@ -315,8 +315,8 @@ async fn handle_text_message(
                     // Detach locally
                     conn_state.detach_pty(&session_id);
 
-                    // Broadcast session removed event to firehose subscribers
-                    state.broadcast_event(VibesEvent::SessionRemoved {
+                    // Append session removed event to EventLog for consumer processing
+                    state.append_event(VibesEvent::SessionRemoved {
                         session_id: session_id.clone(),
                         reason: "killed".to_string(),
                     });
@@ -383,8 +383,8 @@ async fn handle_text_message(
                         Ok(created_id) => {
                             debug!("Created new PTY session: {}", created_id);
 
-                            // Broadcast session created event to firehose subscribers
-                            state.broadcast_event(VibesEvent::SessionCreated {
+                            // Append session created event to EventLog for consumer processing
+                            state.append_event(VibesEvent::SessionCreated {
                                 session_id: created_id.clone(),
                                 name: session_name,
                             });

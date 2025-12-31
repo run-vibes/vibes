@@ -257,7 +257,30 @@ impl AppState {
         self.event_broadcaster.subscribe()
     }
 
-    /// Publish an event to all subscribed WebSocket clients
+    /// Append an event to the EventLog.
+    ///
+    /// This is the primary way to publish events. The event will be:
+    /// 1. Persisted to the EventLog (Iggy when available, in-memory otherwise)
+    /// 2. Picked up by consumers (WebSocket, Notification, Assessment)
+    /// 3. Broadcast to connected clients via the WebSocket consumer
+    ///
+    /// This method spawns a task to avoid blocking the caller.
+    /// If persistence fails, the error is logged but not propagated.
+    pub fn append_event(&self, event: VibesEvent) {
+        let event_log = Arc::clone(&self.event_log);
+        tokio::spawn(async move {
+            if let Err(e) = event_log.append(event).await {
+                tracing::warn!("Failed to append event to EventLog: {}", e);
+            }
+        });
+    }
+
+    /// Broadcast an event to all subscribed WebSocket clients.
+    ///
+    /// **Internal API:** Event producers should NOT call this directly.
+    /// Use [`append_event`] instead, which writes to the EventLog.
+    /// The WebSocket consumer will then call this method after reading
+    /// from the log.
     ///
     /// Returns the number of receivers that received the event.
     /// Returns 0 if there are no active subscribers.
@@ -437,5 +460,41 @@ mod tests {
         let state = AppState::new();
         state.shutdown().await;
         // No panic = success
+    }
+
+    // ==================== Event Appending Tests ====================
+
+    #[tokio::test]
+    async fn test_append_event_writes_to_log() {
+        use vibes_iggy::SeekPosition;
+
+        let state = AppState::new();
+
+        let event = VibesEvent::SessionCreated {
+            session_id: "test-session".to_string(),
+            name: Some("Test".to_string()),
+        };
+
+        state.append_event(event);
+
+        // Give the spawned task time to complete
+        tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+
+        // Create a consumer and verify the event is in the log
+        let mut consumer = state.event_log.consumer("test-reader").await.unwrap();
+        consumer.seek(SeekPosition::Beginning).await.unwrap();
+
+        let batch = consumer
+            .poll(10, std::time::Duration::from_millis(100))
+            .await
+            .unwrap();
+        assert_eq!(batch.events.len(), 1);
+
+        match &batch.events[0].1 {
+            VibesEvent::SessionCreated { session_id, .. } => {
+                assert_eq!(session_id, "test-session");
+            }
+            _ => panic!("Expected SessionCreated event"),
+        }
     }
 }
