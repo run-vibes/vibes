@@ -1,9 +1,9 @@
 //! Iggy integration for assessment event log.
 //!
-//! Manages Iggy server subprocess and provides event log implementation.
+//! Re-exports IggyManager and types from vibes-iggy crate.
 
 pub mod log;
-pub mod manager;
 
+// Re-export from vibes-iggy
 pub use log::IggyAssessmentLog;
-pub use manager::{IggyConfig, IggyManager, IggyState};
+pub use vibes_iggy::{IggyConfig, IggyManager, IggyState};

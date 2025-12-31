@@ -5383,6 +5383,7 @@ dependencies = [
  "tracing",
  "uuid",
  "vibes-core",
+ "vibes-iggy",
  "vibes-plugin-api",
 ]
 

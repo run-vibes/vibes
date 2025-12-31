@@ -16,6 +16,7 @@ cozo = { version = "0.7", default-features = false, features = ["storage-rocksdb
 
 # Message streaming (assessment event log)
 iggy = "0.6"
+vibes-iggy = { path = "../../vibes-iggy" }
 
 # Async
 async-trait.workspace = true
