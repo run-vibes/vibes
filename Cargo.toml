@@ -3,6 +3,7 @@ resolver = "2"
 members = [
     "vibes-cli",
     "vibes-core",
+    "vibes-iggy",
     "vibes-plugin-api",
     "vibes-server",
     "vibes-introspection",

@@ -1,0 +1,32 @@
+[package]
+name = "vibes-iggy"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Iggy-backed event log for vibes"
+
+[dependencies]
+# Async runtime
+tokio = { workspace = true }
+async-trait.workspace = true
+
+# Serialization
+serde.workspace = true
+serde_json.workspace = true
+
+# Iggy SDK
+iggy = "0.6"
+
+# Error handling
+thiserror.workspace = true
+
+# Logging
+tracing.workspace = true
+
+# Time
+chrono.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["test-util", "macros"] }
+tempfile.workspace = true
