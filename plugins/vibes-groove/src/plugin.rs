@@ -799,8 +799,8 @@ impl GroovePlugin {
         output.push_str("  Events today:    0\n");
         output.push_str("  Checkpoints:     0\n\n");
 
-        output.push_str("Note: Full assessment status requires active assessment consumer.\n");
-        output.push_str("Run 'vibes serve' to start the assessment system.\n");
+        output.push_str("Note: Assessment consumer starts automatically with 'vibes claude'.\n");
+        output.push_str("Live metrics will be available in a future update.\n");
 
         Ok(CommandOutput::Text(output))
     }
@@ -818,7 +818,7 @@ impl GroovePlugin {
         if let Some(id) = session_id {
             output.push_str(&format!("Session: {}\n\n", id));
             output.push_str("No assessments found for this session.\n");
-            output.push_str("\nAssessment history is stored in Iggy when the server is running.\n");
+            output.push_str("\nAssessment history will be queryable in a future update.\n");
         } else {
             output.push_str("Recent Sessions:\n");
             output.push_str("  No session history available.\n\n");
