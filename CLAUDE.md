@@ -75,10 +75,11 @@ git submodule update --init --recursive
 ### Building
 
 ```bash
-just build-all   # Builds vibes + iggy-server
+just build           # Debug build (vibes + iggy-server)
+just build-release   # Release build (vibes + iggy-server)
 ```
 
-The `iggy-server` binary is copied to `target/release/` alongside vibes.
+The `iggy-server` binary is copied to `target/debug/` or `target/release/` alongside vibes.
 
 ### Updating Iggy
 

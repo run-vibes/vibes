@@ -25,11 +25,15 @@ cd vibes
 # Enter dev environment (requires Nix)
 direnv allow
 
-# Build everything
-just build-all
+# Build (release)
+just build-release
 
 # Run
 ./target/release/vibes claude
+
+# Or for development (debug build)
+just build
+cargo run -p vibes-cli -- claude
 ```
 
 Persistent event storage is automatic - no additional setup required.

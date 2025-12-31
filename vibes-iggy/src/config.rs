@@ -1,5 +1,6 @@
 //! Configuration for Iggy server and client.
 
+use std::collections::HashMap;
 use std::path::PathBuf;
 use std::time::Duration;
 
@@ -19,6 +20,10 @@ pub struct IggyConfig {
     /// TCP port for Iggy server.
     #[serde(default = "default_port")]
     pub port: u16,
+
+    /// HTTP port for Iggy server (REST API).
+    #[serde(default = "default_http_port")]
+    pub http_port: u16,
 
     /// Interval between health checks.
     #[serde(default = "default_health_check_interval", with = "humantime_serde")]
@@ -43,6 +48,11 @@ fn default_port() -> u16 {
     8090
 }
 
+fn default_http_port() -> u16 {
+    // Avoid port 3000 which is commonly used by dev servers (React, etc.)
+    3001
+}
+
 fn default_health_check_interval() -> Duration {
     Duration::from_secs(5)
 }
@@ -57,6 +67,7 @@ impl Default for IggyConfig {
             binary_path: default_binary_path(),
             data_dir: default_data_dir(),
             port: default_port(),
+            http_port: default_http_port(),
             health_check_interval: default_health_check_interval(),
             max_restart_attempts: default_max_restart_attempts(),
         }
@@ -116,10 +127,38 @@ impl IggyConfig {
         self
     }
 
+    /// Create a new config with a custom HTTP port.
+    #[must_use]
+    pub fn with_http_port(mut self, port: u16) -> Self {
+        self.http_port = port;
+        self
+    }
+
     /// Get the TCP connection address for clients.
     #[must_use]
     pub fn connection_address(&self) -> String {
         format!("127.0.0.1:{}", self.port)
+    }
+
+    /// Get environment variables for spawning iggy-server.
+    ///
+    /// Iggy uses environment variables for configuration, not CLI flags.
+    #[must_use]
+    pub fn env_vars(&self) -> HashMap<String, String> {
+        let mut vars = HashMap::new();
+        vars.insert(
+            "IGGY_TCP_ADDRESS".to_string(),
+            format!("127.0.0.1:{}", self.port),
+        );
+        vars.insert(
+            "IGGY_HTTP_ADDRESS".to_string(),
+            format!("127.0.0.1:{}", self.http_port),
+        );
+        vars.insert(
+            "IGGY_SYSTEM_PATH".to_string(),
+            self.data_dir.display().to_string(),
+        );
+        vars
     }
 }
 
@@ -207,5 +246,41 @@ mod tests {
         // We can't guarantee None here because iggy-server might be in PATH
         // So we just verify the function doesn't panic
         let _found = config.find_binary();
+    }
+
+    #[test]
+    fn env_vars_returns_correct_iggy_environment() {
+        let config = IggyConfig::default()
+            .with_port(9090)
+            .with_http_port(3001)
+            .with_data_dir("/custom/data");
+
+        let vars = config.env_vars();
+
+        assert_eq!(
+            vars.get("IGGY_TCP_ADDRESS"),
+            Some(&"127.0.0.1:9090".to_string())
+        );
+        assert_eq!(
+            vars.get("IGGY_HTTP_ADDRESS"),
+            Some(&"127.0.0.1:3001".to_string())
+        );
+        assert_eq!(
+            vars.get("IGGY_SYSTEM_PATH"),
+            Some(&"/custom/data".to_string())
+        );
+    }
+
+    #[test]
+    fn with_http_port_sets_http_port() {
+        let config = IggyConfig::default().with_http_port(4000);
+        assert_eq!(config.http_port, 4000);
+    }
+
+    #[test]
+    fn default_http_port_is_not_3000() {
+        // Port 3000 is commonly used by dev servers, avoid conflicts
+        let config = IggyConfig::default();
+        assert_ne!(config.http_port, 3000);
     }
 }

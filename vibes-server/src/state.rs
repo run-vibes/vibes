@@ -129,14 +129,23 @@ impl AppState {
             return Err(vibes_iggy::Error::BinaryNotFound);
         }
 
-        let manager = IggyManager::new(config);
+        let manager = Arc::new(IggyManager::new(config));
         manager.start().await?;
+
+        // Spawn the supervisor loop to monitor the process and handle restarts
+        // The supervisor calls try_wait() which reaps zombie processes
+        let supervisor_manager = Arc::clone(&manager);
+        tokio::spawn(async move {
+            if let Err(e) = supervisor_manager.supervise().await {
+                tracing::error!("Iggy supervisor exited with error: {}", e);
+            }
+        });
 
         // Give the server a moment to become ready
         tokio::time::sleep(std::time::Duration::from_millis(500)).await;
 
         // Create event log from the manager
-        let event_log = IggyEventLog::new(Arc::new(manager));
+        let event_log = IggyEventLog::new(manager);
         event_log.connect().await?;
 
         Ok(event_log)

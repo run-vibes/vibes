@@ -11,7 +11,7 @@ use vibes_server::AppState;
 #[tokio::test]
 async fn test_new_with_iggy_falls_back_when_binary_missing() {
     // This test expects iggy-server to NOT be available in most test environments
-    // (CI, dev without build-all). It should fall back to in-memory storage.
+    // (CI, dev without `just build`). It should fall back to in-memory storage.
     let state = AppState::new_with_iggy().await;
 
     // The state should be created successfully regardless of Iggy availability
