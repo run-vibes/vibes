@@ -2,8 +2,8 @@
 // Tokens
 export * from './tokens';
 
-// Primitives (added in subsequent tasks)
-// export * from './primitives';
+// Primitives
+export * from './primitives';
 
 // Compositions (added in subsequent tasks)
 // export * from './compositions';
