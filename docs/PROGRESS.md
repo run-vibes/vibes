@@ -27,6 +27,7 @@ This document tracks the implementation progress of vibes against the roadmap de
 | **Infrastructure** | | | |
 | Iggy Bundling | Complete | [design](plans/16-iggy-bundling/design.md) | [implementation](plans/16-iggy-bundling/implementation.md) |
 | Visual System | Complete | [design](design/VISUAL-SYSTEM.md) | — |
+| Event CLI | Complete | [design](plans/19-event-cli/design.md) | [implementation](plans/19-event-cli/implementation.md) |
 | 4.5 Learning Extraction | Not started | [design](plans/14-continual-learning/design.md#45-learning-extraction) | — |
 | 4.6 Attribution Engine | Not started | [design](plans/14-continual-learning/design.md#46-attribution-engine--new) | — |
 | 4.7 Adaptive Strategies | Not started | [design](plans/14-continual-learning/design.md#47-adaptive-strategies) | — |
@@ -424,3 +425,4 @@ These phases are planned but not yet scheduled.
 | 2025-12-31 | README.md architecture diagram updated - Reflects EventLog/Iggy architecture with consumer pattern (WebSocket, Notification, Assessment consumers) |
 | 2025-12-31 | EventLog wiring complete - Event producers now route through EventLog via append_event(), WebSocket consumer broadcasts to firehose clients, completes consumer-based architecture |
 | 2025-12-31 | Iggy SDK integration complete - IggyEventLog now uses real Iggy SDK (TCP transport, default auth, 8 partitions by session_id), Partitionable trait for partition key extraction, lazy reconnect with 10K event buffer, IggyEventConsumer with multi-partition polling and manual offset commit, integration tests |
+| 2026-01-01 | Event CLI (Milestone 19) complete - `vibes event send` command for writing events to Iggy HTTP API, IggyHttpClient with JWT auth and token caching, removed HookReceiver in favor of direct CLI→Iggy architecture, hook scripts updated to use `vibes event send` |
