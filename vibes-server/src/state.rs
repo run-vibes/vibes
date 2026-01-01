@@ -128,13 +128,52 @@ impl AppState {
         })
     }
 
+    /// Create AppState with Iggy using custom configuration.
+    ///
+    /// This is useful for tests that need isolated ports and data directories.
+    #[doc(hidden)]
+    pub async fn new_with_iggy_config(iggy_config: IggyConfig) -> Result<Self, vibes_iggy::Error> {
+        let (log, manager) = Self::try_start_iggy_with_config(iggy_config).await?;
+        tracing::info!("Using Iggy for persistent event storage");
+        let event_log: Arc<dyn EventLog<VibesEvent>> = Arc::new(log);
+        let iggy_manager = Some(manager);
+
+        let plugin_host = Arc::new(RwLock::new(PluginHost::new(PluginHostConfig::default())));
+        let tunnel_manager = Arc::new(RwLock::new(TunnelManager::new(
+            TunnelConfig::default(),
+            7432,
+        )));
+        let (event_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
+        let (pty_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
+        let pty_manager = Arc::new(RwLock::new(PtyManager::new(PtyConfig::default())));
+
+        Ok(Self {
+            plugin_host,
+            event_log,
+            tunnel_manager,
+            auth_layer: AuthLayer::disabled(),
+            started_at: Utc::now(),
+            event_broadcaster,
+            pty_broadcaster,
+            vapid: None,
+            subscriptions: None,
+            pty_manager,
+            iggy_manager,
+        })
+    }
+
     /// Try to start the Iggy server and create an event log.
     ///
     /// Returns both the event log and a reference to the manager for shutdown.
     async fn try_start_iggy()
     -> Result<(IggyEventLog<VibesEvent>, Arc<IggyManager>), vibes_iggy::Error> {
-        let config = IggyConfig::default();
+        Self::try_start_iggy_with_config(IggyConfig::default()).await
+    }
 
+    /// Try to start the Iggy server with custom configuration.
+    async fn try_start_iggy_with_config(
+        config: IggyConfig,
+    ) -> Result<(IggyEventLog<VibesEvent>, Arc<IggyManager>), vibes_iggy::Error> {
         // Check if binary is available before trying to start
         if config.find_binary().is_none() {
             return Err(vibes_iggy::Error::BinaryNotFound);
