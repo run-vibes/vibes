@@ -144,6 +144,7 @@ impl IggyConfig {
     /// Get environment variables for spawning iggy-server.
     ///
     /// Iggy uses environment variables for configuration, not CLI flags.
+    /// Sets default root credentials (iggy/iggy) for development use.
     #[must_use]
     pub fn env_vars(&self) -> HashMap<String, String> {
         let mut vars = HashMap::new();
@@ -159,6 +160,10 @@ impl IggyConfig {
             "IGGY_SYSTEM_PATH".to_string(),
             self.data_dir.display().to_string(),
         );
+        // Set default root credentials for local development
+        // These match the SDK's DEFAULT_ROOT_USERNAME/DEFAULT_ROOT_PASSWORD
+        vars.insert("IGGY_ROOT_USERNAME".to_string(), "iggy".to_string());
+        vars.insert("IGGY_ROOT_PASSWORD".to_string(), "iggy".to_string());
         vars
     }
 }

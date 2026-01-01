@@ -1,12 +1,26 @@
 //! Integration tests requiring a running Iggy server.
 //!
-//! Run with: cargo test -p vibes-iggy --test integration -- --ignored
-//!
 //! These tests validate the full Iggy SDK integration including:
 //! - Connection and authentication
 //! - Stream/topic creation
 //! - Event append with partitioning
 //! - Consumer polling and offset commit
+//!
+//! # Running Tests
+//!
+//! Option 1: Use an externally running server (recommended for development):
+//! ```bash
+//! # Start server manually first:
+//! IGGY_TCP_ADDRESS=127.0.0.1:8091 IGGY_ROOT_USERNAME=iggy IGGY_ROOT_PASSWORD=iggy ./target/debug/iggy-server
+//!
+//! # Run tests:
+//! IGGY_TEST_PORT=8091 cargo test -p vibes-iggy --test integration -- --ignored
+//! ```
+//!
+//! Option 2: Let tests start the server (requires sufficient memory for 48 shards):
+//! ```bash
+//! cargo test -p vibes-iggy --test integration -- --ignored
+//! ```
 
 use std::sync::Arc;
 use std::time::Duration;
@@ -27,20 +41,41 @@ impl Partitionable for TestEvent {
     }
 }
 
-async fn setup() -> (Arc<IggyManager>, IggyEventLog<TestEvent>) {
+/// Set up test environment.
+///
+/// If `IGGY_TEST_PORT` is set, connects to an externally running server.
+/// Otherwise, starts a new server instance (requires sufficient memory).
+async fn setup() -> (Option<Arc<IggyManager>>, IggyEventLog<TestEvent>) {
+    // Check if using external server
+    if let Ok(port) = std::env::var("IGGY_TEST_PORT") {
+        let port: u16 = port.parse().expect("Invalid IGGY_TEST_PORT");
+
+        let config = IggyConfig::default().with_port(port);
+        let manager = Arc::new(IggyManager::new(config));
+
+        let log = IggyEventLog::new(Arc::clone(&manager));
+        log.connect()
+            .await
+            .expect("Failed to connect to external server");
+
+        return (None, log); // Don't return manager to prevent shutdown
+    }
+
+    // Start our own server
+    eprintln!("Starting internal Iggy server...");
     let config = IggyConfig::default();
     let manager = Arc::new(IggyManager::new(config));
 
     // Start Iggy server
     manager.start().await.expect("Failed to start Iggy");
 
-    // Wait for startup
-    tokio::time::sleep(Duration::from_millis(500)).await;
+    // Wait for startup (may need more time if memory-constrained)
+    tokio::time::sleep(Duration::from_millis(2000)).await;
 
     let log = IggyEventLog::new(Arc::clone(&manager));
     log.connect().await.expect("Failed to connect");
 
-    (manager, log)
+    (Some(manager), log)
 }
 
 #[tokio::test]

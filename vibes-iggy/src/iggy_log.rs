@@ -40,6 +40,14 @@ use crate::error::{Error, Result};
 use crate::manager::IggyManager;
 use crate::traits::{EventBatch, EventConsumer, EventLog, Offset, Partitionable, SeekPosition};
 
+/// Check if an Iggy error indicates a resource already exists.
+fn is_already_exists_error(e: &iggy::error::IggyError) -> bool {
+    let err_str = e.to_string();
+    err_str.contains("already exists")
+        || err_str.contains("already_exists")
+        || err_str.contains("AlreadyExists")
+}
+
 /// Stream and topic configuration for the event log.
 pub mod topics {
     /// The stream name for vibes events.
@@ -112,41 +120,41 @@ where
     /// This establishes the connection, authenticates, and creates
     /// the stream/topic if they don't exist.
     pub async fn connect(&self) -> Result<()> {
-        // 1. Connect to server
+        // Connect to server
         self.client.connect().await?;
         info!(
             "Connected to Iggy server at {}",
             self.manager.connection_address()
         );
 
-        // 2. Login with default credentials
+        // Login with default credentials
         self.client
             .login_user(DEFAULT_ROOT_USERNAME, DEFAULT_ROOT_PASSWORD)
             .await?;
         debug!("Logged in to Iggy as root user");
 
-        // 3. Create stream if not exists
-        match self
-            .client
-            .create_stream(topics::STREAM_NAME, Some(topics::STREAM_ID))
-            .await
-        {
-            Ok(_) => info!("Created stream '{}'", topics::STREAM_NAME),
-            Err(e) => {
-                let err_str = e.to_string();
-                if err_str.contains("already exists")
-                    || err_str.contains("already_exists")
-                    || err_str.contains("AlreadyExists")
-                {
-                    debug!("Stream '{}' already exists", topics::STREAM_NAME);
-                } else {
-                    return Err(e.into());
+        // Get or create stream
+        let streams = self.client.get_streams().await?;
+        let stream_id: Identifier = topics::STREAM_ID.try_into()?;
+        let stream_exists = streams.iter().any(|s| s.id == topics::STREAM_ID);
+
+        if stream_exists {
+            debug!("Stream '{}' already exists", topics::STREAM_NAME);
+        } else {
+            match self
+                .client
+                .create_stream(topics::STREAM_NAME, Some(topics::STREAM_ID))
+                .await
+            {
+                Ok(_) => info!("Created stream '{}'", topics::STREAM_NAME),
+                Err(e) if is_already_exists_error(&e) => {
+                    debug!("Stream already exists (concurrent creation)");
                 }
+                Err(e) => return Err(e.into()),
             }
         }
 
-        // 4. Create topic if not exists
-        let stream_id: Identifier = topics::STREAM_ID.try_into()?;
+        // Get or create topic
         match self
             .client
             .create_topic(
@@ -166,17 +174,10 @@ where
                 topics::EVENTS_TOPIC,
                 topics::PARTITION_COUNT
             ),
-            Err(e) => {
-                let err_str = e.to_string();
-                if err_str.contains("already exists")
-                    || err_str.contains("already_exists")
-                    || err_str.contains("AlreadyExists")
-                {
-                    debug!("Topic '{}' already exists", topics::EVENTS_TOPIC);
-                } else {
-                    return Err(e.into());
-                }
+            Err(e) if is_already_exists_error(&e) => {
+                debug!("Topic already exists");
             }
+            Err(e) => return Err(e.into()),
         }
 
         *self.connected.write().await = true;
@@ -566,5 +567,38 @@ mod tests {
 
         let batch = consumer.poll(10, Duration::from_secs(1)).await.unwrap();
         assert!(!batch.is_empty());
+    }
+}
+
+#[cfg(test)]
+mod manual_tests {
+    use super::*;
+
+    /// Test that we can connect to a running Iggy server on port 8091.
+    /// Run with: IGGY_TEST_PORT=8091 cargo test -p vibes-iggy manual_connect -- --ignored --nocapture
+    #[tokio::test]
+    #[ignore]
+    async fn manual_connect_to_running_server() {
+        let port: u16 = std::env::var("IGGY_TEST_PORT")
+            .unwrap_or_else(|_| "8091".to_string())
+            .parse()
+            .unwrap();
+
+        println!("Connecting to port {}...", port);
+
+        let client = IggyClient::builder()
+            .with_tcp()
+            .with_server_address(format!("127.0.0.1:{}", port))
+            .build()
+            .expect("Failed to build client");
+
+        client.connect().await.expect("Failed to connect");
+        println!("Connected!");
+
+        client
+            .login_user(DEFAULT_ROOT_USERNAME, DEFAULT_ROOT_PASSWORD)
+            .await
+            .expect("Failed to login");
+        println!("Logged in successfully with iggy/iggy!");
     }
 }
