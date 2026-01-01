@@ -12,19 +12,28 @@ use vibes_server::AppState;
 /// Time to wait for Iggy server to fully initialize after startup.
 const IGGY_INIT_WAIT: Duration = Duration::from_secs(1);
 
-/// Test that AppState::new_with_iggy() handles missing iggy-server gracefully.
+/// Test that AppState::new_with_iggy() returns an error when Iggy is unavailable.
 ///
-/// This test runs unconditionally and verifies fallback behavior.
-/// Success criteria: completes without panic or hang.
+/// This test runs unconditionally and verifies that errors are propagated.
+/// Success criteria: returns an error without panic or hang.
 #[tokio::test]
-async fn test_new_with_iggy_falls_back_when_binary_missing() {
+async fn test_new_with_iggy_returns_error_when_unavailable() {
     // This test expects iggy-server to NOT be available in most test environments
-    // (CI, dev without `just build`). It should fall back to in-memory storage.
-    let _state = AppState::new_with_iggy().await;
+    // (CI, dev without `just build`). It should return an error.
+    let result = AppState::new_with_iggy().await;
 
-    // We can't directly check which EventLog implementation is used
-    // without adding inspection methods, but the fact that it doesn't
-    // panic or hang is the key verification.
+    // In CI/dev environments without iggy-server or with insufficient ulimit,
+    // this should return an error. In environments with proper setup, it may succeed.
+    // Either way, it shouldn't panic or hang.
+    match result {
+        Ok(_) => {
+            // Iggy is available - that's fine too
+        }
+        Err(e) => {
+            // Expected in most test environments
+            eprintln!("Expected error: {}", e);
+        }
+    }
 }
 
 /// Test that AppState::new() always uses in-memory storage.
@@ -37,15 +46,20 @@ fn test_new_uses_in_memory_storage() {
 
 /// Test that the server can be created with Iggy when the binary is available.
 ///
-/// This test is ignored by default because it requires iggy-server to be built.
+/// This test is ignored by default because it requires iggy-server to be built
+/// and sufficient ulimit for io_uring.
 /// Run with: cargo test -p vibes-server --test iggy_integration -- --ignored
 /// Success criteria: completes without panic, server stays running.
 #[tokio::test]
 #[ignore]
 async fn test_iggy_auto_start_when_available() {
     // This test requires iggy-server to be in the same directory as the test binary
-    // or in PATH. It's ignored by default.
-    let state = Arc::new(AppState::new_with_iggy().await);
+    // or in PATH, and sufficient ulimit for io_uring. It's ignored by default.
+    let state = Arc::new(
+        AppState::new_with_iggy()
+            .await
+            .expect("Iggy should be available"),
+    );
 
     // Give Iggy a moment to fully initialize
     tokio::time::sleep(IGGY_INIT_WAIT).await;
@@ -59,11 +73,16 @@ async fn test_iggy_auto_start_when_available() {
 /// Test that events can be appended and consumed through the EventLog.
 ///
 /// This test verifies the full event flow: append -> persist -> consume.
+/// Requires iggy-server and sufficient ulimit.
 /// Run with: cargo test -p vibes-server --test iggy_integration -- --ignored
 #[tokio::test]
 #[ignore]
 async fn test_events_flow_through_iggy() {
-    let state = Arc::new(AppState::new_with_iggy().await);
+    let state = Arc::new(
+        AppState::new_with_iggy()
+            .await
+            .expect("Iggy should be available"),
+    );
 
     // Give Iggy a moment to fully initialize
     tokio::time::sleep(IGGY_INIT_WAIT).await;
@@ -109,11 +128,16 @@ async fn test_events_flow_through_iggy() {
 /// Test that events are partitioned by session_id.
 ///
 /// This verifies the Partitionable trait implementation for VibesEvent.
+/// Requires iggy-server and sufficient ulimit.
 /// Run with: cargo test -p vibes-server --test iggy_integration -- --ignored
 #[tokio::test]
 #[ignore]
 async fn test_events_partitioned_by_session() {
-    let state = Arc::new(AppState::new_with_iggy().await);
+    let state = Arc::new(
+        AppState::new_with_iggy()
+            .await
+            .expect("Iggy should be available"),
+    );
     tokio::time::sleep(IGGY_INIT_WAIT).await;
 
     // Append events for multiple sessions

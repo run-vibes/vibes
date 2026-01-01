@@ -19,19 +19,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
 
 use async_trait::async_trait;
-use iggy::bytes_serializable::BytesSerializable;
-use iggy::client::{
-    Client, ConsumerOffsetClient, MessageClient, StreamClient, TopicClient, UserClient,
-};
-use iggy::clients::client::IggyClient;
-use iggy::compression::compression_algorithm::CompressionAlgorithm;
-use iggy::consumer::Consumer;
-use iggy::identifier::Identifier;
-use iggy::messages::poll_messages::PollingStrategy;
-use iggy::messages::send_messages::{Message, Partitioning};
-use iggy::users::defaults::{DEFAULT_ROOT_PASSWORD, DEFAULT_ROOT_USERNAME};
-use iggy::utils::expiry::IggyExpiry;
-use iggy::utils::topic_size::MaxTopicSize;
+use iggy::prelude::*;
 use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 use tracing::{debug, info, warn};
@@ -41,7 +29,7 @@ use crate::manager::IggyManager;
 use crate::traits::{EventBatch, EventConsumer, EventLog, Offset, Partitionable, SeekPosition};
 
 /// Check if an Iggy error indicates a resource already exists.
-fn is_already_exists_error(e: &iggy::error::IggyError) -> bool {
+fn is_already_exists_error(e: &IggyError) -> bool {
     let err_str = e.to_string();
     err_str.contains("already exists")
         || err_str.contains("already_exists")
@@ -52,12 +40,8 @@ fn is_already_exists_error(e: &iggy::error::IggyError) -> bool {
 pub mod topics {
     /// The stream name for vibes events.
     pub const STREAM_NAME: &str = "vibes";
-    /// Numeric stream ID.
-    pub const STREAM_ID: u32 = 1;
     /// The topic name for the main event log.
     pub const EVENTS_TOPIC: &str = "events";
-    /// Numeric topic ID.
-    pub const TOPIC_ID: u32 = 1;
     /// Number of partitions for parallel processing.
     pub const PARTITION_COUNT: u32 = 8;
 }
@@ -135,17 +119,14 @@ where
 
         // Get or create stream
         let streams = self.client.get_streams().await?;
-        let stream_id: Identifier = topics::STREAM_ID.try_into()?;
-        let stream_exists = streams.iter().any(|s| s.id == topics::STREAM_ID);
+        let stream_id = Identifier::named(topics::STREAM_NAME)
+            .map_err(|e| Error::Iggy(format!("Invalid stream name: {}", e)))?;
+        let stream_exists = streams.iter().any(|s| s.name == topics::STREAM_NAME);
 
         if stream_exists {
             debug!("Stream '{}' already exists", topics::STREAM_NAME);
         } else {
-            match self
-                .client
-                .create_stream(topics::STREAM_NAME, Some(topics::STREAM_ID))
-                .await
-            {
+            match self.client.create_stream(topics::STREAM_NAME).await {
                 Ok(_) => info!("Created stream '{}'", topics::STREAM_NAME),
                 Err(e) if is_already_exists_error(&e) => {
                     debug!("Stream already exists (concurrent creation)");
@@ -162,8 +143,7 @@ where
                 topics::EVENTS_TOPIC,
                 topics::PARTITION_COUNT,
                 CompressionAlgorithm::None,
-                None,
-                Some(topics::TOPIC_ID),
+                None, // replication_factor
                 IggyExpiry::NeverExpire,
                 MaxTopicSize::ServerDefault,
             )
@@ -203,7 +183,7 @@ where
         let payload = serde_json::to_vec(event)?;
 
         // Create Iggy message
-        let message = Message::from_bytes(payload.into())?;
+        let message = IggyMessage::from_bytes(payload.into())?;
 
         // Partition by key (consistent hashing)
         let partitioning = Partitioning::messages_key_str(partition_key).map_err(|e| {
@@ -214,8 +194,10 @@ where
         })?;
 
         // Send to Iggy
-        let stream_id: Identifier = topics::STREAM_ID.try_into()?;
-        let topic_id: Identifier = topics::TOPIC_ID.try_into()?;
+        let stream_id = Identifier::named(topics::STREAM_NAME)
+            .map_err(|e| Error::Iggy(format!("Invalid stream name: {}", e)))?;
+        let topic_id = Identifier::named(topics::EVENTS_TOPIC)
+            .map_err(|e| Error::Iggy(format!("Invalid topic name: {}", e)))?;
 
         let mut messages = [message];
         self.client
@@ -369,8 +351,10 @@ where
         let mut all_events = Vec::new();
         let per_partition = (max_count / topics::PARTITION_COUNT as usize).max(1);
 
-        let stream_id: Identifier = topics::STREAM_ID.try_into()?;
-        let topic_id: Identifier = topics::TOPIC_ID.try_into()?;
+        let stream_id = Identifier::named(topics::STREAM_NAME)
+            .map_err(|e| Error::Iggy(format!("Invalid stream name: {}", e)))?;
+        let topic_id = Identifier::named(topics::EVENTS_TOPIC)
+            .map_err(|e| Error::Iggy(format!("Invalid topic name: {}", e)))?;
 
         for partition_id in 0..topics::PARTITION_COUNT {
             let idx = partition_id as usize;
@@ -415,8 +399,8 @@ where
 
             for msg in polled.messages {
                 let event: E = serde_json::from_slice(&msg.payload)?;
-                all_events.push((msg.offset, event));
-                self.offsets[idx] = msg.offset + 1;
+                all_events.push((msg.header.offset, event));
+                self.offsets[idx] = msg.header.offset + 1;
             }
         }
 
@@ -427,8 +411,10 @@ where
     }
 
     async fn commit(&mut self, _offset: Offset) -> Result<()> {
-        let stream_id: Identifier = topics::STREAM_ID.try_into()?;
-        let topic_id: Identifier = topics::TOPIC_ID.try_into()?;
+        let stream_id = Identifier::named(topics::STREAM_NAME)
+            .map_err(|e| Error::Iggy(format!("Invalid stream name: {}", e)))?;
+        let topic_id = Identifier::named(topics::EVENTS_TOPIC)
+            .map_err(|e| Error::Iggy(format!("Invalid topic name: {}", e)))?;
 
         for partition_id in 0..topics::PARTITION_COUNT {
             let idx = partition_id as usize;

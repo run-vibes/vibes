@@ -9,7 +9,9 @@ use vibes_core::{
     VapidKeyManager, VibesEvent,
     pty::{PtyConfig, PtyManager},
 };
-use vibes_iggy::{EventLog, IggyConfig, IggyEventLog, IggyManager, InMemoryEventLog};
+use vibes_iggy::{
+    EventLog, IggyConfig, IggyEventLog, IggyManager, InMemoryEventLog, run_preflight_checks,
+};
 
 /// PTY output event for broadcasting to attached clients
 #[derive(Clone, Debug)]
@@ -91,19 +93,16 @@ impl AppState {
     /// Create a new AppState with Iggy-backed persistent storage.
     ///
     /// Attempts to start and connect to the bundled Iggy server.
-    /// Falls back to in-memory storage if Iggy is unavailable.
-    pub async fn new_with_iggy() -> Self {
-        let (event_log, iggy_manager): (Arc<dyn EventLog<VibesEvent>>, Option<Arc<IggyManager>>) =
-            match Self::try_start_iggy().await {
-                Ok((log, manager)) => {
-                    tracing::info!("Using Iggy for persistent event storage");
-                    (Arc::new(log), Some(manager))
-                }
-                Err(e) => {
-                    tracing::warn!("Iggy unavailable, using in-memory storage: {}", e);
-                    (Arc::new(InMemoryEventLog::<VibesEvent>::new()), None)
-                }
-            };
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if Iggy cannot be started (missing binary, insufficient
+    /// system resources like ulimit, connection failure, etc.)
+    pub async fn new_with_iggy() -> Result<Self, vibes_iggy::Error> {
+        let (log, manager) = Self::try_start_iggy().await?;
+        tracing::info!("Using Iggy for persistent event storage");
+        let event_log: Arc<dyn EventLog<VibesEvent>> = Arc::new(log);
+        let iggy_manager = Some(manager);
 
         let plugin_host = Arc::new(RwLock::new(PluginHost::new(PluginHostConfig::default())));
         let tunnel_manager = Arc::new(RwLock::new(TunnelManager::new(
@@ -114,7 +113,7 @@ impl AppState {
         let (pty_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let pty_manager = Arc::new(RwLock::new(PtyManager::new(PtyConfig::default())));
 
-        Self {
+        Ok(Self {
             plugin_host,
             event_log,
             tunnel_manager,
@@ -126,7 +125,7 @@ impl AppState {
             subscriptions: None,
             pty_manager,
             iggy_manager,
-        }
+        })
     }
 
     /// Try to start the Iggy server and create an event log.
@@ -140,6 +139,9 @@ impl AppState {
         if config.find_binary().is_none() {
             return Err(vibes_iggy::Error::BinaryNotFound);
         }
+
+        // Check system requirements (ulimit for io_uring)
+        run_preflight_checks()?;
 
         let manager = Arc::new(IggyManager::new(config));
         manager.start().await?;

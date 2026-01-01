@@ -20,8 +20,13 @@ humantime-serde = "1"
 dirs = "5"
 which = "7"
 
+# System info (for ulimit checks)
+rlimit = "0.10"
+
 # Iggy SDK
-iggy = "0.6"
+# NOTE: Server server-0.6.0 uses SDK 0.8.x protocol (confusing versioning).
+# SDK 0.6.x on crates.io is outdated and incompatible.
+iggy = "0.8"
 
 # Error handling
 thiserror.workspace = true
