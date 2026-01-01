@@ -521,65 +521,8 @@ mod tests {
         assert_eq!(log.high_water_mark(), 0);
     }
 
-    #[tokio::test]
-    #[ignore] // Requires running Iggy server
-    async fn test_connect_creates_stream_and_topic() {
-        let config = IggyConfig::default();
-        let manager = Arc::new(IggyManager::new(config));
-
-        let log: IggyEventLog<TestEvent> = IggyEventLog::new(Arc::clone(&manager));
-        log.connect().await.unwrap();
-
-        assert!(log.is_connected().await);
-    }
-
-    #[tokio::test]
-    #[ignore] // Requires running Iggy server
-    async fn test_append_sends_to_iggy() {
-        let config = IggyConfig::default();
-        let manager = Arc::new(IggyManager::new(config));
-        let log: IggyEventLog<TestEvent> = IggyEventLog::new(Arc::clone(&manager));
-        log.connect().await.unwrap();
-
-        let event = TestEvent {
-            id: "test-1".to_string(),
-            data: "hello".to_string(),
-        };
-
-        let offset = log.append(event).await.unwrap();
-        assert_eq!(offset, 0);
-
-        let event2 = TestEvent {
-            id: "test-2".to_string(),
-            data: "world".to_string(),
-        };
-        let offset2 = log.append(event2).await.unwrap();
-        assert_eq!(offset2, 1);
-    }
-
-    #[tokio::test]
-    #[ignore] // Requires running Iggy server
-    async fn test_consumer_polls_events() {
-        let config = IggyConfig::default();
-        let manager = Arc::new(IggyManager::new(config));
-        let log: IggyEventLog<TestEvent> = IggyEventLog::new(Arc::clone(&manager));
-        log.connect().await.unwrap();
-
-        // Append some events
-        log.append(TestEvent {
-            id: "poll-test".to_string(),
-            data: "testing".to_string(),
-        })
-        .await
-        .unwrap();
-
-        // Create consumer and poll
-        let mut consumer = log.consumer("test-consumer").await.unwrap();
-        consumer.seek(SeekPosition::Beginning).await.unwrap();
-
-        let batch = consumer.poll(10, Duration::from_secs(1)).await.unwrap();
-        assert!(!batch.is_empty());
-    }
+    // Note: Integration tests for IggyEventLog (connect, append, poll) are in
+    // vibes-iggy/tests/integration.rs which properly starts the Iggy server.
 }
 
 #[cfg(test)]
