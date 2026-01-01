@@ -12,3 +12,14 @@ test-threads = "num-cpus"
 # Slow test timeout - tests that take longer than this are killed
 # This catches tests that hang waiting for unavailable resources (e.g., Iggy server)
 slow-timeout = { period = "10s", terminate-after = 1 }
+
+# Test groups for filtering
+# Run with: cargo nextest run --filter-expr 'not test-group(iggy-server)'
+# Or: cargo nextest run -E 'test-group(iggy-server)'
+[test-groups.iggy-server]
+max-threads = 1  # Run serially - they share the same Iggy server
+
+[[profile.default.overrides]]
+filter = "binary_id(vibes-iggy::integration)"
+test-group = "iggy-server"
+slow-timeout = { period = "30s", terminate-after = 1 }  # Integration tests need more time

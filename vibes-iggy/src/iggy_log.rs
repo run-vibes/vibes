@@ -182,8 +182,11 @@ where
         // Serialize event to JSON
         let payload = serde_json::to_vec(event)?;
 
-        // Create Iggy message
-        let message = IggyMessage::from_bytes(payload.into())?;
+        // Create Iggy message using builder pattern
+        let message = IggyMessage::builder()
+            .payload(payload.into())
+            .build()
+            .map_err(|e| Error::Iggy(e.to_string()))?;
 
         // Partition by key (consistent hashing)
         let partitioning = Partitioning::messages_key_str(partition_key).map_err(|e| {
@@ -324,6 +327,9 @@ pub struct IggyEventConsumer<E> {
     group: String,
     offsets: [u64; topics::PARTITION_COUNT as usize],
     committed_offsets: [u64; topics::PARTITION_COUNT as usize],
+    /// Track which partitions have been polled (i.e., have data).
+    /// Only consider these partitions when computing committed_offset().
+    active_partitions: [bool; topics::PARTITION_COUNT as usize],
     _phantom: PhantomData<E>,
 }
 
@@ -337,6 +343,7 @@ where
             group,
             offsets: [0; topics::PARTITION_COUNT as usize],
             committed_offsets: [0; topics::PARTITION_COUNT as usize],
+            active_partitions: [false; topics::PARTITION_COUNT as usize],
             _phantom: PhantomData,
         }
     }
@@ -396,6 +403,11 @@ where
                     return Err(e.into());
                 }
             };
+
+            if !polled.messages.is_empty() {
+                // Mark this partition as active (has data)
+                self.active_partitions[idx] = true;
+            }
 
             for msg in polled.messages {
                 let event: E = serde_json::from_slice(&msg.payload)?;
@@ -457,8 +469,15 @@ where
     }
 
     fn committed_offset(&self) -> Offset {
-        // Return min committed offset across partitions
-        *self.committed_offsets.iter().min().unwrap_or(&0)
+        // Return min committed offset across active partitions only.
+        // Partitions that have never received data are excluded from the calculation.
+        self.committed_offsets
+            .iter()
+            .zip(self.active_partitions.iter())
+            .filter(|(_, active)| **active)
+            .map(|(offset, _)| *offset)
+            .min()
+            .unwrap_or(0)
     }
 
     fn group(&self) -> &str {

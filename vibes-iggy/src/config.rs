@@ -121,7 +121,8 @@ impl IggyConfig {
     /// Resolution order:
     /// 1. Explicit path in config (if it exists)
     /// 2. Same directory as current executable
-    /// 3. PATH lookup
+    /// 3. Workspace target directory (for tests running from target/debug/deps/)
+    /// 4. PATH lookup
     #[must_use]
     pub fn find_binary(&self) -> Option<PathBuf> {
         // 1. Explicit path in config (if it's an absolute path that exists)
@@ -137,9 +138,25 @@ impl IggyConfig {
             if sibling.exists() {
                 return Some(sibling);
             }
+
+            // 3. Workspace target directory (tests run from target/debug/deps/)
+            // Walk up looking for target/debug/iggy-server or target/release/iggy-server
+            let mut current = dir;
+            while let Some(parent) = current.parent() {
+                // Check if this is a target directory
+                if current.file_name().is_some_and(|n| n == "target") {
+                    for profile in ["debug", "release"] {
+                        let binary = current.join(profile).join("iggy-server");
+                        if binary.exists() {
+                            return Some(binary);
+                        }
+                    }
+                }
+                current = parent;
+            }
         }
 
-        // 3. Check PATH
+        // 4. Check PATH
         if let Ok(path) = which::which("iggy-server") {
             return Some(path);
         }
