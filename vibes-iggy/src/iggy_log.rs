@@ -485,24 +485,46 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_buffer_overflow_drops_oldest() {
-        // Simulate the buffer overflow logic
-        let mut buffer: Vec<TestEvent> = (0..10_001)
-            .map(|i| TestEvent {
-                id: format!("id-{}", i),
-                data: format!("data-{}", i),
-            })
-            .collect();
-
-        // Apply overflow logic
-        if buffer.len() > MAX_RECONNECT_BUFFER {
-            buffer.remove(0);
+    // Test helpers - only available in tests
+    impl<E> IggyEventLog<E>
+    where
+        E: Serialize + for<'de> Deserialize<'de> + Send + Sync + Clone + Partitionable + 'static,
+    {
+        /// Get the current reconnect buffer length (test only).
+        async fn buffer_len(&self) -> usize {
+            self.reconnect_buffer.read().await.len()
         }
 
-        assert_eq!(buffer.len(), MAX_RECONNECT_BUFFER);
-        // First event should be id-1 (id-0 was dropped)
-        assert_eq!(buffer[0].id, "id-1");
+        /// Get the first event in the buffer (test only).
+        async fn buffer_first(&self) -> Option<E> {
+            self.reconnect_buffer.read().await.first().cloned()
+        }
+    }
+
+    #[tokio::test]
+    async fn test_buffer_overflow_drops_oldest() {
+        let config = IggyConfig::default();
+        let manager = Arc::new(IggyManager::new(config));
+        let log: IggyEventLog<TestEvent> = IggyEventLog::new(manager);
+
+        // Buffer MAX_RECONNECT_BUFFER + 1 events
+        for i in 0..=MAX_RECONNECT_BUFFER {
+            let event = TestEvent {
+                id: format!("id-{}", i),
+                data: format!("data-{}", i),
+            };
+            log.buffer_event(event).await;
+        }
+
+        // Buffer should be at max capacity
+        assert_eq!(log.buffer_len().await, MAX_RECONNECT_BUFFER);
+
+        // First event (id-0) should have been dropped, id-1 should be first
+        let first = log
+            .buffer_first()
+            .await
+            .expect("buffer should not be empty");
+        assert_eq!(first.id, "id-1", "oldest event should have been dropped");
     }
 
     #[test]
@@ -523,37 +545,4 @@ mod tests {
 
     // Note: Integration tests for IggyEventLog (connect, append, poll) are in
     // vibes-iggy/tests/integration.rs which properly starts the Iggy server.
-}
-
-#[cfg(test)]
-mod manual_tests {
-    use super::*;
-
-    /// Test that we can connect to a running Iggy server on port 8091.
-    /// Run with: IGGY_TEST_PORT=8091 cargo test -p vibes-iggy manual_connect -- --ignored --nocapture
-    #[tokio::test]
-    #[ignore]
-    async fn manual_connect_to_running_server() {
-        let port: u16 = std::env::var("IGGY_TEST_PORT")
-            .unwrap_or_else(|_| "8091".to_string())
-            .parse()
-            .unwrap();
-
-        println!("Connecting to port {}...", port);
-
-        let client = IggyClient::builder()
-            .with_tcp()
-            .with_server_address(format!("127.0.0.1:{}", port))
-            .build()
-            .expect("Failed to build client");
-
-        client.connect().await.expect("Failed to connect");
-        println!("Connected!");
-
-        client
-            .login_user(DEFAULT_ROOT_USERNAME, DEFAULT_ROOT_PASSWORD)
-            .await
-            .expect("Failed to login");
-        println!("Logged in successfully with iggy/iggy!");
-    }
 }
