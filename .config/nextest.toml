@@ -1,0 +1,10 @@
+# Nextest configuration
+# https://nexte.st/docs/configuration/
+
+[store]
+dir = "target/nextest"
+
+# Default profile settings
+[profile.default]
+# Use the number of logical CPUs by default
+test-threads = "num-cpus"
