@@ -110,7 +110,7 @@ async fn run_foreground(settings: &ResolvedSettings) -> Result<()> {
     }
 
     // Create server with Iggy persistence
-    let server = VibesServer::new_with_iggy(config).await;
+    let server = VibesServer::new_with_iggy(config).await?;
     let result = server.run().await;
 
     // Clear daemon state file on exit

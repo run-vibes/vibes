@@ -15,6 +15,7 @@
         rust = pkgs.rust-bin.stable.latest.default.override {
           extensions = [ "rust-src" "rust-analyzer" ];
         };
+        isLinux = pkgs.stdenv.isLinux;
       in {
         devShells.default = pkgs.mkShell {
           buildInputs = [
@@ -28,6 +29,9 @@
             pkgs.llvmPackages.libclang
             pkgs.zstd
             pkgs.pkg-config
+          ] ++ pkgs.lib.optionals isLinux [
+            # mold is a faster linker (Linux only)
+            pkgs.mold
           ];
 
           # Required for bindgen to find libclang
@@ -38,6 +42,12 @@
             echo "  just          - list commands"
             echo "  just test     - run tests"
             echo "  just dev      - watch mode"
+          '' + pkgs.lib.optionalString isLinux ''
+            # Use mold linker on Linux for faster linking
+            export CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=clang
+            export CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUSTFLAGS="-C link-arg=-fuse-ld=mold"
+            export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=clang
+            export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUSTFLAGS="-C link-arg=-fuse-ld=mold"
           '';
         };
       });

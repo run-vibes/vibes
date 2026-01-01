@@ -31,3 +31,4 @@ vibes-plugin-api = { path = "../vibes-plugin-api" }
 
 [dev-dependencies]
 axum-test = "16"
+tempfile.workspace = true

@@ -32,6 +32,24 @@ pub struct IggyConfig {
     /// Maximum number of restart attempts before giving up.
     #[serde(default = "default_max_restart_attempts")]
     pub max_restart_attempts: u32,
+
+    /// Number of shards (worker threads) for Iggy.
+    /// Default is "4" to avoid consuming all CPU cores.
+    /// Iggy's default "all" would use every core on the system.
+    #[serde(default = "default_cpu_allocation")]
+    pub cpu_allocation: String,
+
+    /// Memory pool size for Iggy's buffer management.
+    /// Default is "512 MiB" (Iggy's minimum) to avoid excessive memory use.
+    /// Iggy's default is "4 GiB".
+    #[serde(default = "default_memory_pool_size")]
+    pub memory_pool_size: String,
+
+    /// Bucket capacity for memory pool allocation.
+    /// Default is 128 (Iggy's minimum) for conservative memory use.
+    /// Iggy's default is 8192.
+    #[serde(default = "default_bucket_capacity")]
+    pub bucket_capacity: u32,
 }
 
 fn default_binary_path() -> PathBuf {
@@ -62,6 +80,25 @@ fn default_max_restart_attempts() -> u32 {
     3
 }
 
+fn default_cpu_allocation() -> String {
+    // Use 4 shards instead of "all" to avoid consuming every CPU core.
+    // Iggy's default "all" would spawn one shard per core (e.g., 48 on a workstation),
+    // which causes OutOfMemory panics when each shard tries to allocate buffers.
+    "4".to_string()
+}
+
+fn default_memory_pool_size() -> String {
+    // Use Iggy's minimum (512 MiB) instead of the 4 GiB default.
+    // This is sufficient for vibes' use case (event streaming for a single user).
+    "512 MiB".to_string()
+}
+
+fn default_bucket_capacity() -> u32 {
+    // Use Iggy's minimum (128) instead of the 8192 default.
+    // Reduces memory footprint for local development use.
+    128
+}
+
 impl Default for IggyConfig {
     fn default() -> Self {
         Self {
@@ -71,6 +108,9 @@ impl Default for IggyConfig {
             http_port: default_http_port(),
             health_check_interval: default_health_check_interval(),
             max_restart_attempts: default_max_restart_attempts(),
+            cpu_allocation: default_cpu_allocation(),
+            memory_pool_size: default_memory_pool_size(),
+            bucket_capacity: default_bucket_capacity(),
         }
     }
 }
@@ -81,7 +121,8 @@ impl IggyConfig {
     /// Resolution order:
     /// 1. Explicit path in config (if it exists)
     /// 2. Same directory as current executable
-    /// 3. PATH lookup
+    /// 3. Workspace target directory (for tests running from target/debug/deps/)
+    /// 4. PATH lookup
     #[must_use]
     pub fn find_binary(&self) -> Option<PathBuf> {
         // 1. Explicit path in config (if it's an absolute path that exists)
@@ -97,9 +138,25 @@ impl IggyConfig {
             if sibling.exists() {
                 return Some(sibling);
             }
+
+            // 3. Workspace target directory (tests run from target/debug/deps/)
+            // Walk up looking for target/debug/iggy-server or target/release/iggy-server
+            let mut current = dir;
+            while let Some(parent) = current.parent() {
+                // Check if this is a target directory
+                if current.file_name().is_some_and(|n| n == "target") {
+                    for profile in ["debug", "release"] {
+                        let binary = current.join(profile).join("iggy-server");
+                        if binary.exists() {
+                            return Some(binary);
+                        }
+                    }
+                }
+                current = parent;
+            }
         }
 
-        // 3. Check PATH
+        // 4. Check PATH
         if let Ok(path) = which::which("iggy-server") {
             return Some(path);
         }
@@ -135,6 +192,27 @@ impl IggyConfig {
         self
     }
 
+    /// Create a new config with a custom CPU allocation (number of shards).
+    #[must_use]
+    pub fn with_cpu_allocation(mut self, allocation: impl Into<String>) -> Self {
+        self.cpu_allocation = allocation.into();
+        self
+    }
+
+    /// Create a new config with a custom memory pool size.
+    #[must_use]
+    pub fn with_memory_pool_size(mut self, size: impl Into<String>) -> Self {
+        self.memory_pool_size = size.into();
+        self
+    }
+
+    /// Create a new config with a custom bucket capacity.
+    #[must_use]
+    pub fn with_bucket_capacity(mut self, capacity: u32) -> Self {
+        self.bucket_capacity = capacity;
+        self
+    }
+
     /// Get the TCP connection address for clients.
     #[must_use]
     pub fn connection_address(&self) -> String {
@@ -144,6 +222,8 @@ impl IggyConfig {
     /// Get environment variables for spawning iggy-server.
     ///
     /// Iggy uses environment variables for configuration, not CLI flags.
+    /// Sets default root credentials (iggy/iggy) for development use.
+    /// Configures resource limits to prevent excessive CPU/memory usage.
     #[must_use]
     pub fn env_vars(&self) -> HashMap<String, String> {
         let mut vars = HashMap::new();
@@ -158,6 +238,23 @@ impl IggyConfig {
         vars.insert(
             "IGGY_SYSTEM_PATH".to_string(),
             self.data_dir.display().to_string(),
+        );
+        // Set default root credentials for local development
+        // These match the SDK's DEFAULT_ROOT_USERNAME/DEFAULT_ROOT_PASSWORD
+        vars.insert("IGGY_ROOT_USERNAME".to_string(), "iggy".to_string());
+        vars.insert("IGGY_ROOT_PASSWORD".to_string(), "iggy".to_string());
+        // Resource control: limit CPU and memory usage
+        vars.insert(
+            "IGGY_SYSTEM_SHARDING_CPU_ALLOCATION".to_string(),
+            self.cpu_allocation.clone(),
+        );
+        vars.insert(
+            "IGGY_SYSTEM_MEMORY_POOL_SIZE".to_string(),
+            self.memory_pool_size.clone(),
+        );
+        vars.insert(
+            "IGGY_SYSTEM_MEMORY_POOL_BUCKET_CAPACITY".to_string(),
+            self.bucket_capacity.to_string(),
         );
         vars
     }
@@ -283,5 +380,76 @@ mod tests {
         // Port 3000 is commonly used by dev servers, avoid conflicts
         let config = IggyConfig::default();
         assert_ne!(config.http_port, 3000);
+    }
+
+    // ==================== Resource Control Tests ====================
+
+    #[test]
+    fn default_cpu_allocation_is_conservative() {
+        // Default should NOT use all cores - that's the bug we're fixing
+        let config = IggyConfig::default();
+        assert_eq!(config.cpu_allocation, "4");
+    }
+
+    #[test]
+    fn default_memory_pool_size_is_minimum() {
+        // Use minimum viable memory (512 MiB) not the 4 GiB default
+        let config = IggyConfig::default();
+        assert_eq!(config.memory_pool_size, "512 MiB");
+    }
+
+    #[test]
+    fn default_bucket_capacity_is_minimum() {
+        // Use minimum bucket capacity (128) not the 8192 default
+        let config = IggyConfig::default();
+        assert_eq!(config.bucket_capacity, 128);
+    }
+
+    #[test]
+    fn with_cpu_allocation_sets_value() {
+        let config = IggyConfig::default().with_cpu_allocation("8");
+        assert_eq!(config.cpu_allocation, "8");
+    }
+
+    #[test]
+    fn with_memory_pool_size_sets_value() {
+        let config = IggyConfig::default().with_memory_pool_size("1 GiB");
+        assert_eq!(config.memory_pool_size, "1 GiB");
+    }
+
+    #[test]
+    fn with_bucket_capacity_sets_value() {
+        let config = IggyConfig::default().with_bucket_capacity(256);
+        assert_eq!(config.bucket_capacity, 256);
+    }
+
+    #[test]
+    fn env_vars_includes_cpu_allocation() {
+        let config = IggyConfig::default().with_cpu_allocation("2");
+        let vars = config.env_vars();
+        assert_eq!(
+            vars.get("IGGY_SYSTEM_SHARDING_CPU_ALLOCATION"),
+            Some(&"2".to_string())
+        );
+    }
+
+    #[test]
+    fn env_vars_includes_memory_pool_size() {
+        let config = IggyConfig::default().with_memory_pool_size("1 GiB");
+        let vars = config.env_vars();
+        assert_eq!(
+            vars.get("IGGY_SYSTEM_MEMORY_POOL_SIZE"),
+            Some(&"1 GiB".to_string())
+        );
+    }
+
+    #[test]
+    fn env_vars_includes_bucket_capacity() {
+        let config = IggyConfig::default().with_bucket_capacity(256);
+        let vars = config.env_vars();
+        assert_eq!(
+            vars.get("IGGY_SYSTEM_MEMORY_POOL_BUCKET_CAPACITY"),
+            Some(&"256".to_string())
+        );
     }
 }

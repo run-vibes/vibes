@@ -45,3 +45,5 @@ default = []
 integration = []
 # Integration tests that require Claude CLI and API key
 integration_claude = ["integration"]
+# Integration tests that require running Iggy server
+integration_iggy = ["integration"]

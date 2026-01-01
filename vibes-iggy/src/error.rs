@@ -40,10 +40,14 @@ pub enum Error {
     /// Invalid offset
     #[error("Invalid offset: {0}")]
     InvalidOffset(u64),
+
+    /// Connection timeout (usually due to SDK/server protocol mismatch)
+    #[error("Connection timed out (SDK/server protocol mismatch)")]
+    ConnectionTimeout,
 }
 
-impl From<iggy::error::IggyError> for Error {
-    fn from(err: iggy::error::IggyError) -> Self {
+impl From<iggy::prelude::IggyError> for Error {
+    fn from(err: iggy::prelude::IggyError) -> Self {
         Error::Iggy(err.to_string())
     }
 }

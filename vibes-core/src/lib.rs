@@ -4,7 +4,7 @@
 //!
 //! - **PTY management** - [`pty::PtyManager`] for spawning and managing Claude PTY sessions
 //! - **Event system** - [`EventBus`] trait and [`MemoryEventBus`] for real-time event distribution
-//! - **Hooks integration** - [`HookReceiver`] for structured data capture from Claude Code
+//! - **Hooks integration** - [`HookEvent`] types for structured data capture from Claude Code
 //! - **Event types** - [`ClaudeEvent`] and [`VibesEvent`] for typed event handling
 //!
 //! # Quick Start
@@ -59,8 +59,8 @@ pub use events::{
     Offset, SeekPosition, Usage, VibesEvent,
 };
 pub use hooks::{
-    HookEvent, HookInstaller, HookInstallerConfig, HookReceiver, HookReceiverConfig, HookType,
-    InstallError, PostToolUseData, PreToolUseData, StopData,
+    HookEvent, HookInstaller, HookInstallerConfig, HookType, InstallError, PostToolUseData,
+    PreToolUseData, StopData,
 };
 pub use notifications::{
     NotificationConfig, NotificationData, NotificationEvent, NotificationService, PushNotification,

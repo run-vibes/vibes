@@ -119,9 +119,175 @@ pub struct TunnelConfigSection {
     pub hostname: Option<String>,
 }
 
+/// Default HTTP port for Iggy REST API
+/// Uses 3001 to avoid conflicts with common dev servers (React defaults to 3000)
+pub const DEFAULT_IGGY_HTTP_PORT: u16 = 3001;
+
+/// Configuration for connecting to Iggy HTTP API
+#[derive(Debug, Clone, Deserialize)]
+pub struct IggyClientConfig {
+    /// Iggy server host
+    pub host: String,
+
+    /// Iggy HTTP port (REST API)
+    pub http_port: u16,
+
+    /// Username for Iggy authentication
+    pub username: String,
+
+    /// Password for Iggy authentication
+    pub password: String,
+}
+
+impl Default for IggyClientConfig {
+    fn default() -> Self {
+        Self {
+            host: "127.0.0.1".to_string(),
+            http_port: DEFAULT_IGGY_HTTP_PORT,
+            username: "iggy".to_string(),
+            password: "iggy".to_string(),
+        }
+    }
+}
+
+impl IggyClientConfig {
+    /// Load from environment variables, falling back to defaults.
+    ///
+    /// Environment variables:
+    /// - `VIBES_IGGY_HOST` (default: `127.0.0.1`)
+    /// - `VIBES_IGGY_HTTP_PORT` (default: `3001`)
+    /// - `VIBES_IGGY_USERNAME` (default: `iggy`)
+    /// - `VIBES_IGGY_PASSWORD` (default: `iggy`)
+    #[must_use]
+    pub fn from_env() -> Self {
+        Self {
+            host: std::env::var("VIBES_IGGY_HOST").unwrap_or_else(|_| "127.0.0.1".to_string()),
+            http_port: std::env::var("VIBES_IGGY_HTTP_PORT")
+                .ok()
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(DEFAULT_IGGY_HTTP_PORT),
+            username: std::env::var("VIBES_IGGY_USERNAME").unwrap_or_else(|_| "iggy".to_string()),
+            password: std::env::var("VIBES_IGGY_PASSWORD").unwrap_or_else(|_| "iggy".to_string()),
+        }
+    }
+
+    /// Get the base URL for HTTP requests
+    #[must_use]
+    #[allow(dead_code)]
+    pub fn base_url(&self) -> String {
+        format!("http://{}:{}", self.host, self.http_port)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // ==================== IggyClientConfig Tests ====================
+
+    #[test]
+    fn iggy_config_default_values() {
+        let config = IggyClientConfig::default();
+
+        assert_eq!(config.host, "127.0.0.1");
+        assert_eq!(config.http_port, DEFAULT_IGGY_HTTP_PORT);
+        assert_eq!(config.http_port, 3001);
+        assert_eq!(config.username, "iggy");
+        assert_eq!(config.password, "iggy");
+    }
+
+    #[test]
+    fn iggy_config_base_url() {
+        let config = IggyClientConfig::default();
+        assert_eq!(config.base_url(), "http://127.0.0.1:3001");
+
+        let custom = IggyClientConfig {
+            host: "iggy.example.com".to_string(),
+            http_port: 8080,
+            ..Default::default()
+        };
+        assert_eq!(custom.base_url(), "http://iggy.example.com:8080");
+    }
+
+    #[test]
+    fn iggy_config_from_env_uses_defaults_when_no_env() {
+        // Clear any existing env vars (they shouldn't be set in test env)
+        // SAFETY: Tests run with --test-threads=1 to prevent concurrent access
+        unsafe {
+            std::env::remove_var("VIBES_IGGY_HOST");
+            std::env::remove_var("VIBES_IGGY_HTTP_PORT");
+            std::env::remove_var("VIBES_IGGY_USERNAME");
+            std::env::remove_var("VIBES_IGGY_PASSWORD");
+        }
+
+        let config = IggyClientConfig::from_env();
+
+        assert_eq!(config.host, "127.0.0.1");
+        assert_eq!(config.http_port, 3001);
+        assert_eq!(config.username, "iggy");
+        assert_eq!(config.password, "iggy");
+    }
+
+    #[test]
+    fn iggy_config_from_env_reads_host() {
+        // SAFETY: Tests run with --test-threads=1 to prevent concurrent access
+        unsafe {
+            std::env::set_var("VIBES_IGGY_HOST", "remote.iggy.io");
+        }
+        let config = IggyClientConfig::from_env();
+        unsafe {
+            std::env::remove_var("VIBES_IGGY_HOST");
+        }
+
+        assert_eq!(config.host, "remote.iggy.io");
+    }
+
+    #[test]
+    fn iggy_config_from_env_reads_http_port() {
+        // SAFETY: Tests run with --test-threads=1 to prevent concurrent access
+        unsafe {
+            std::env::set_var("VIBES_IGGY_HTTP_PORT", "9000");
+        }
+        let config = IggyClientConfig::from_env();
+        unsafe {
+            std::env::remove_var("VIBES_IGGY_HTTP_PORT");
+        }
+
+        assert_eq!(config.http_port, 9000);
+    }
+
+    #[test]
+    fn iggy_config_from_env_invalid_port_uses_default() {
+        // SAFETY: Tests run with --test-threads=1 to prevent concurrent access
+        unsafe {
+            std::env::set_var("VIBES_IGGY_HTTP_PORT", "not-a-number");
+        }
+        let config = IggyClientConfig::from_env();
+        unsafe {
+            std::env::remove_var("VIBES_IGGY_HTTP_PORT");
+        }
+
+        assert_eq!(config.http_port, DEFAULT_IGGY_HTTP_PORT);
+    }
+
+    #[test]
+    fn iggy_config_from_env_reads_credentials() {
+        // SAFETY: Tests run with --test-threads=1 to prevent concurrent access
+        unsafe {
+            std::env::set_var("VIBES_IGGY_USERNAME", "admin");
+            std::env::set_var("VIBES_IGGY_PASSWORD", "secret123");
+        }
+        let config = IggyClientConfig::from_env();
+        unsafe {
+            std::env::remove_var("VIBES_IGGY_USERNAME");
+            std::env::remove_var("VIBES_IGGY_PASSWORD");
+        }
+
+        assert_eq!(config.username, "admin");
+        assert_eq!(config.password, "secret123");
+    }
+
+    // ==================== VibesConfig Tests ====================
 
     #[test]
     fn test_default_values() {

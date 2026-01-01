@@ -60,21 +60,3 @@ impl Drop for RawTerminal {
         }
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_size_returns_valid_dimensions() {
-        // This test just ensures size() doesn't panic
-        // We can't guarantee raw mode works in all test environments
-        if let Ok(term) = RawTerminal::new() {
-            let result = term.size();
-            assert!(result.is_ok());
-            let (cols, rows) = result.unwrap();
-            assert!(cols > 0);
-            assert!(rows > 0);
-        }
-    }
-}

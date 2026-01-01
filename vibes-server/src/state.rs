@@ -9,7 +9,9 @@ use vibes_core::{
     VapidKeyManager, VibesEvent,
     pty::{PtyConfig, PtyManager},
 };
-use vibes_iggy::{EventLog, IggyConfig, IggyEventLog, IggyManager, InMemoryEventLog};
+use vibes_iggy::{
+    EventLog, IggyConfig, IggyEventLog, IggyManager, InMemoryEventLog, run_preflight_checks,
+};
 
 /// PTY output event for broadcasting to attached clients
 #[derive(Clone, Debug)]
@@ -91,19 +93,16 @@ impl AppState {
     /// Create a new AppState with Iggy-backed persistent storage.
     ///
     /// Attempts to start and connect to the bundled Iggy server.
-    /// Falls back to in-memory storage if Iggy is unavailable.
-    pub async fn new_with_iggy() -> Self {
-        let (event_log, iggy_manager): (Arc<dyn EventLog<VibesEvent>>, Option<Arc<IggyManager>>) =
-            match Self::try_start_iggy().await {
-                Ok((log, manager)) => {
-                    tracing::info!("Using Iggy for persistent event storage");
-                    (Arc::new(log), Some(manager))
-                }
-                Err(e) => {
-                    tracing::warn!("Iggy unavailable, using in-memory storage: {}", e);
-                    (Arc::new(InMemoryEventLog::<VibesEvent>::new()), None)
-                }
-            };
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if Iggy cannot be started (missing binary, insufficient
+    /// system resources like ulimit, connection failure, etc.)
+    pub async fn new_with_iggy() -> Result<Self, vibes_iggy::Error> {
+        let (log, manager) = Self::try_start_iggy().await?;
+        tracing::info!("Using Iggy for persistent event storage");
+        let event_log: Arc<dyn EventLog<VibesEvent>> = Arc::new(log);
+        let iggy_manager = Some(manager);
 
         let plugin_host = Arc::new(RwLock::new(PluginHost::new(PluginHostConfig::default())));
         let tunnel_manager = Arc::new(RwLock::new(TunnelManager::new(
@@ -114,7 +113,7 @@ impl AppState {
         let (pty_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let pty_manager = Arc::new(RwLock::new(PtyManager::new(PtyConfig::default())));
 
-        Self {
+        Ok(Self {
             plugin_host,
             event_log,
             tunnel_manager,
@@ -126,7 +125,41 @@ impl AppState {
             subscriptions: None,
             pty_manager,
             iggy_manager,
-        }
+        })
+    }
+
+    /// Create AppState with Iggy using custom configuration.
+    ///
+    /// This is useful for tests that need isolated ports and data directories.
+    #[doc(hidden)]
+    pub async fn new_with_iggy_config(iggy_config: IggyConfig) -> Result<Self, vibes_iggy::Error> {
+        let (log, manager) = Self::try_start_iggy_with_config(iggy_config).await?;
+        tracing::info!("Using Iggy for persistent event storage");
+        let event_log: Arc<dyn EventLog<VibesEvent>> = Arc::new(log);
+        let iggy_manager = Some(manager);
+
+        let plugin_host = Arc::new(RwLock::new(PluginHost::new(PluginHostConfig::default())));
+        let tunnel_manager = Arc::new(RwLock::new(TunnelManager::new(
+            TunnelConfig::default(),
+            7432,
+        )));
+        let (event_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
+        let (pty_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
+        let pty_manager = Arc::new(RwLock::new(PtyManager::new(PtyConfig::default())));
+
+        Ok(Self {
+            plugin_host,
+            event_log,
+            tunnel_manager,
+            auth_layer: AuthLayer::disabled(),
+            started_at: Utc::now(),
+            event_broadcaster,
+            pty_broadcaster,
+            vapid: None,
+            subscriptions: None,
+            pty_manager,
+            iggy_manager,
+        })
     }
 
     /// Try to start the Iggy server and create an event log.
@@ -134,12 +167,20 @@ impl AppState {
     /// Returns both the event log and a reference to the manager for shutdown.
     async fn try_start_iggy()
     -> Result<(IggyEventLog<VibesEvent>, Arc<IggyManager>), vibes_iggy::Error> {
-        let config = IggyConfig::default();
+        Self::try_start_iggy_with_config(IggyConfig::default()).await
+    }
 
+    /// Try to start the Iggy server with custom configuration.
+    async fn try_start_iggy_with_config(
+        config: IggyConfig,
+    ) -> Result<(IggyEventLog<VibesEvent>, Arc<IggyManager>), vibes_iggy::Error> {
         // Check if binary is available before trying to start
         if config.find_binary().is_none() {
             return Err(vibes_iggy::Error::BinaryNotFound);
         }
+
+        // Check system requirements (ulimit for io_uring)
+        run_preflight_checks()?;
 
         let manager = Arc::new(IggyManager::new(config));
         manager.start().await?;
@@ -257,7 +298,30 @@ impl AppState {
         self.event_broadcaster.subscribe()
     }
 
-    /// Publish an event to all subscribed WebSocket clients
+    /// Append an event to the EventLog.
+    ///
+    /// This is the primary way to publish events. The event will be:
+    /// 1. Persisted to the EventLog (Iggy when available, in-memory otherwise)
+    /// 2. Picked up by consumers (WebSocket, Notification, Assessment)
+    /// 3. Broadcast to connected clients via the WebSocket consumer
+    ///
+    /// This method spawns a task to avoid blocking the caller.
+    /// If persistence fails, the error is logged but not propagated.
+    pub fn append_event(&self, event: VibesEvent) {
+        let event_log = Arc::clone(&self.event_log);
+        tokio::spawn(async move {
+            if let Err(e) = event_log.append(event).await {
+                tracing::warn!("Failed to append event to EventLog: {}", e);
+            }
+        });
+    }
+
+    /// Broadcast an event to all subscribed WebSocket clients.
+    ///
+    /// **Internal API:** Event producers should NOT call this directly.
+    /// Use [`append_event`] instead, which writes to the EventLog.
+    /// The WebSocket consumer will then call this method after reading
+    /// from the log.
     ///
     /// Returns the number of receivers that received the event.
     /// Returns 0 if there are no active subscribers.
@@ -437,5 +501,41 @@ mod tests {
         let state = AppState::new();
         state.shutdown().await;
         // No panic = success
+    }
+
+    // ==================== Event Appending Tests ====================
+
+    #[tokio::test]
+    async fn test_append_event_writes_to_log() {
+        use vibes_iggy::SeekPosition;
+
+        let state = AppState::new();
+
+        let event = VibesEvent::SessionCreated {
+            session_id: "test-session".to_string(),
+            name: Some("Test".to_string()),
+        };
+
+        state.append_event(event);
+
+        // Give the spawned task time to complete
+        tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+
+        // Create a consumer and verify the event is in the log
+        let mut consumer = state.event_log.consumer("test-reader").await.unwrap();
+        consumer.seek(SeekPosition::Beginning).await.unwrap();
+
+        let batch = consumer
+            .poll(10, std::time::Duration::from_millis(100))
+            .await
+            .unwrap();
+        assert_eq!(batch.events.len(), 1);
+
+        match &batch.events[0].1 {
+            VibesEvent::SessionCreated { session_id, .. } => {
+                assert_eq!(session_id, "test-session");
+            }
+            _ => panic!("Expected SessionCreated event"),
+        }
     }
 }

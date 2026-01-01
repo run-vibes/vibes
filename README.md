@@ -38,6 +38,26 @@ cargo run -p vibes-cli -- claude
 
 Persistent event storage is automatic - no additional setup required.
 
+### Linux: io_uring Requirement
+
+On Linux, the event storage system (Iggy) uses io_uring for high-performance async I/O. This requires sufficient locked memory:
+
+```bash
+# Check current limit
+ulimit -l
+
+# If less than 64 MB, increase it:
+ulimit -l unlimited
+```
+
+For persistent configuration, add to `/etc/security/limits.conf`:
+```
+* soft memlock unlimited
+* hard memlock unlimited
+```
+
+If the limit is insufficient, vibes will display a helpful error message and refuse to start until the system is configured correctly.
+
 ## Usage
 
 ```bash

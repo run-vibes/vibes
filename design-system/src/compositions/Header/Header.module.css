@@ -79,3 +79,17 @@
   background-color: var(--color-hover);
   color: var(--color-text-primary);
 }
+
+.settingsLink {
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+  font-size: var(--text-base);
+}
+
+.settingsLink:hover {
+  background-color: var(--color-hover);
+  color: var(--color-text-primary);
+}

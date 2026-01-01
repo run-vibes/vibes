@@ -116,6 +116,50 @@ fn vibes_claude_without_prompt_enters_interactive_mode() {
     );
 }
 
+/// Test that vibes event send --help shows usage
+#[test]
+fn vibes_event_send_help_works() {
+    let output = Command::new("cargo")
+        .args(["run", "-p", "vibes-cli", "--", "event", "send", "--help"])
+        .output()
+        .expect("Failed to run vibes event send --help");
+
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("--type"));
+    assert!(stdout.contains("--data"));
+    assert!(stdout.contains("--session"));
+    assert!(stdout.contains("--stream"));
+    assert!(stdout.contains("--topic"));
+}
+
+/// Test that vibes event send without required args fails properly
+#[test]
+fn vibes_event_send_requires_type() {
+    let output = Command::new("cargo")
+        .args([
+            "run",
+            "-p",
+            "vibes-cli",
+            "--",
+            "event",
+            "send",
+            "--data",
+            "{}",
+        ])
+        .output()
+        .expect("Failed to run vibes event send");
+
+    // Should fail because --type is required
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("--type") || stderr.contains("required"),
+        "Expected error about --type, got: {}",
+        stderr
+    );
+}
+
 // Note: Tests that actually call Claude require Claude CLI to be installed
 // and a valid API key. These tests are intentionally kept separate.
 
@@ -142,5 +186,76 @@ mod claude_tests {
         assert!(output.status.success());
         let stdout = String::from_utf8_lossy(&output.stdout).to_lowercase();
         assert!(stdout.contains("hello"));
+    }
+}
+
+/// Tests that require a running Iggy server
+#[cfg(feature = "integration_iggy")]
+mod iggy_tests {
+    use super::*;
+
+    /// Test that vibes event send writes to Iggy
+    ///
+    /// Requires:
+    /// - Iggy server running on localhost:3001
+    /// - VIBES_IGGY_USERNAME and VIBES_IGGY_PASSWORD set (or defaults: iggy/iggy)
+    #[test]
+    fn vibes_event_send_writes_to_iggy() {
+        // Send a hook event
+        let output = Command::new("cargo")
+            .args([
+                "run",
+                "-p",
+                "vibes-cli",
+                "--",
+                "event",
+                "send",
+                "--type",
+                "hook",
+                "--session",
+                "integration-test",
+                "--data",
+                r#"{"type":"session_start","session_id":"integration-test"}"#,
+            ])
+            .output()
+            .expect("Failed to run vibes event send");
+
+        assert!(
+            output.status.success(),
+            "Event send failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+
+        // Note: Verifying the message was actually written to Iggy
+        // would require reading from the topic - left as manual verification
+    }
+
+    /// Test that session-state events require --session
+    #[test]
+    fn vibes_event_send_session_state_requires_session() {
+        let output = Command::new("cargo")
+            .args([
+                "run",
+                "-p",
+                "vibes-cli",
+                "--",
+                "event",
+                "send",
+                "--type",
+                "session-state",
+                "--data",
+                r#"{"state":"Processing"}"#,
+            ])
+            .output()
+            .expect("Failed to run vibes event send");
+
+        // Should fail because session-state requires --session
+        assert!(!output.status.success());
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains("session") || stderr.contains("required"),
+            "Expected error about --session, got: {}",
+            stderr
+        );
     }
 }

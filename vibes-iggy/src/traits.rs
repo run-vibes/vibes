@@ -10,6 +10,19 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::Result;
 
+/// Trait for events that can be partitioned by a key.
+///
+/// This enables consistent hashing of events to partitions based on
+/// a logical key (e.g., session_id). Events with the same key always
+/// go to the same partition, preserving ordering within that key.
+pub trait Partitionable {
+    /// Returns the partition key for this event.
+    ///
+    /// Events with the same key will be routed to the same partition.
+    /// Returns `None` if no key is available (uses round-robin).
+    fn partition_key(&self) -> Option<&str>;
+}
+
 /// Monotonically increasing position in the event log.
 ///
 /// Offsets are assigned sequentially as events are appended.

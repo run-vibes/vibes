@@ -86,8 +86,10 @@ jobs:
             . -> target
             vendor/iggy -> target
 
-      - name: Build release binary
-        run: nix develop --command just build-release
+      - name: Build debug binary
+        # Debug build is much faster (~2m vs 16m) and sufficient for E2E
+        # since we're using VIBES_MOCK_PTY mode anyway
+        run: nix develop --command cargo build
 
       - name: Install Playwright browsers
         run: nix develop --command just e2e-setup

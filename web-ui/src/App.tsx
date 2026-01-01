@@ -12,6 +12,10 @@ import { ClaudeSessions } from './pages/ClaudeSessions'
 import { ClaudeSession } from './pages/ClaudeSession'
 import { StatusPage } from './pages/Status'
 import { QuarantinePage } from './pages/Quarantine'
+import { FirehosePage } from './pages/Firehose'
+import { DebugPage } from './pages/Debug'
+import { StreamsPage } from './pages/Streams'
+import { SettingsPage } from './pages/Settings'
 import { useAuth } from './hooks/useAuth'
 import { useWebSocket } from './hooks/useWebSocket'
 
@@ -20,14 +24,23 @@ function RootLayout() {
   const { addMessageHandler } = useWebSocket();
   const { identity, isLocal, isAuthenticated, isLoading } = useAuth({ addMessageHandler });
   const location = useLocation();
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    const saved = localStorage.getItem('vibes-theme');
+    return (saved === 'light' || saved === 'dark') ? saved : 'dark';
+  });
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
+  const handleThemeChange = (newTheme: 'dark' | 'light') => {
+    setTheme(newTheme);
+    localStorage.setItem('vibes-theme', newTheme);
+  };
+
   const navItems = [
     { label: 'Sessions', href: '/claude', isActive: location.pathname.startsWith('/claude') },
+    { label: 'Streams', href: '/streams', isActive: location.pathname === '/streams' || location.pathname.startsWith('/firehose') || location.pathname.startsWith('/debug') },
     { label: 'Groove', href: '/groove', isGroove: true, isActive: location.pathname.startsWith('/groove') },
   ];
 
@@ -38,7 +51,8 @@ function RootLayout() {
         identity={isAuthenticated && identity ? { email: identity.email, provider: identity.identity_provider } : undefined}
         isLocal={!isLoading && isLocal}
         theme={theme}
-        onThemeToggle={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
+        onThemeToggle={() => handleThemeChange(theme === 'dark' ? 'light' : 'dark')}
+        settingsHref="/settings"
         renderLink={({ href, className, children }) => (
           <Link to={href} className={className}>{children}</Link>
         )}
@@ -98,8 +112,42 @@ const grooveRoute = createRoute({
   component: QuarantinePage,
 })
 
+const streamsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/streams',
+  component: StreamsPage,
+})
+
+const firehoseRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/firehose',
+  component: FirehosePage,
+})
+
+const debugRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/debug',
+  component: DebugPage,
+})
+
+const settingsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/settings',
+  component: SettingsPage,
+})
+
 // Create route tree and router
-const routeTree = rootRoute.addChildren([indexRoute, claudeRoute, sessionRoute, statusRoute, grooveRoute])
+const routeTree = rootRoute.addChildren([
+  indexRoute,
+  claudeRoute,
+  sessionRoute,
+  statusRoute,
+  grooveRoute,
+  streamsRoute,
+  firehoseRoute,
+  debugRoute,
+  settingsRoute,
+])
 
 export const router = createRouter({ routeTree })
 
