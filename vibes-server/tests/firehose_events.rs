@@ -55,8 +55,21 @@ async fn broadcasts_session_created_on_attach() {
     // Connect and create a session
     let mut client = TestClient::connect(addr).await;
 
-    // Consume ClientConnected event first (if it exists)
-    let _ = tokio::time::timeout(Duration::from_millis(100), events_rx.recv()).await;
+    // Consume and verify ClientConnected event first
+    let client_connected_event = tokio::time::timeout(Duration::from_secs(1), events_rx.recv())
+        .await
+        .expect("Timeout waiting for ClientConnected event")
+        .expect("Channel closed before ClientConnected event");
+
+    match client_connected_event {
+        VibesEvent::ClientConnected { client_id } => {
+            assert!(!client_id.is_empty(), "client_id should not be empty");
+        }
+        other => panic!(
+            "Expected ClientConnected before SessionCreated, got {:?}",
+            other
+        ),
+    }
 
     let session_id = client.create_session(Some("test-session")).await;
 

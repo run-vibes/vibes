@@ -9,6 +9,7 @@ export function SettingsPage() {
     const saved = localStorage.getItem('vibes-theme');
     return (saved === 'light' || saved === 'dark') ? saved : 'dark';
   });
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   const handleThemeChange = (newTheme: 'dark' | 'light') => {
     setTheme(newTheme);
@@ -22,10 +23,12 @@ export function SettingsPage() {
   }, [theme]);
 
   const handleClearStorage = () => {
-    if (confirm('Clear all local settings? This cannot be undone.')) {
-      localStorage.clear();
-      window.location.reload();
-    }
+    setShowClearConfirm(true);
+  };
+
+  const confirmClearStorage = () => {
+    localStorage.clear();
+    window.location.reload();
   };
 
   return (
@@ -72,9 +75,23 @@ export function SettingsPage() {
               <Text intensity="dim">Remove all cached settings and preferences</Text>
             </div>
             <div className="setting-control">
-              <Button variant="secondary" onClick={handleClearStorage}>
-                Clear Storage
-              </Button>
+              {showClearConfirm ? (
+                <div className="confirm-dialog">
+                  <Text intensity="dim">Clear all settings?</Text>
+                  <div className="confirm-buttons">
+                    <Button variant="secondary" onClick={() => setShowClearConfirm(false)}>
+                      Cancel
+                    </Button>
+                    <Button variant="primary" onClick={confirmClearStorage}>
+                      Confirm
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button variant="secondary" onClick={handleClearStorage}>
+                  Clear Storage
+                </Button>
+              )}
             </div>
           </div>
         </Panel>

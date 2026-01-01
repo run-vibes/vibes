@@ -70,6 +70,13 @@
 .trust-badge.public-unverified { background-color: #EF444420; color: #EF4444; }
 .trust-badge.quarantined { background-color: #6B728020; color: #6B7280; }
 
+/* Quarantine List */
+.quarantine-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
 /* Quarantine Item */
 .quarantine-item {
   padding: var(--space-4);
@@ -106,9 +113,9 @@
 }
 
 .quarantine-item-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-4);
+  display: grid;
+  grid-template-columns: auto 1fr auto 1fr;
+  gap: var(--space-1) var(--space-2);
   font-size: var(--text-sm);
 }
 
@@ -119,6 +126,7 @@
 .quarantine-item-meta dd {
   color: var(--color-text-primary);
   margin: 0;
+  margin-right: var(--space-4);
 }
 
 .quarantine-item-actions {

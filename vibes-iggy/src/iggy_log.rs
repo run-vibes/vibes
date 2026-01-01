@@ -206,7 +206,12 @@ where
         let message = Message::from_bytes(payload.into())?;
 
         // Partition by key (consistent hashing)
-        let partitioning = Partitioning::messages_key_str(partition_key)?;
+        let partitioning = Partitioning::messages_key_str(partition_key).map_err(|e| {
+            Error::Iggy(format!(
+                "Failed to create partition key '{}': {}",
+                partition_key, e
+            ))
+        })?;
 
         // Send to Iggy
         let stream_id: Identifier = topics::STREAM_ID.try_into()?;
@@ -374,7 +379,7 @@ where
             );
             let strategy = PollingStrategy::offset(self.offsets[idx]);
 
-            let polled = self
+            let polled = match self
                 .client
                 .poll_messages(
                     &stream_id,
@@ -385,7 +390,28 @@ where
                     per_partition as u32,
                     false, // auto_commit = false (manual commit)
                 )
-                .await?;
+                .await
+            {
+                Ok(messages) => messages,
+                Err(e) => {
+                    // Handle invalid offset errors (e.g., messages were purged)
+                    let err_str = e.to_string().to_lowercase();
+                    if err_str.contains("offset")
+                        || err_str.contains("not found")
+                        || err_str.contains("invalid")
+                    {
+                        warn!(
+                            partition = partition_id,
+                            offset = self.offsets[idx],
+                            error = %e,
+                            "Invalid offset, resetting to beginning of partition"
+                        );
+                        self.offsets[idx] = 0;
+                        continue; // Skip this partition for this poll cycle
+                    }
+                    return Err(e.into());
+                }
+            };
 
             for msg in polled.messages {
                 let event: E = serde_json::from_slice(&msg.payload)?;

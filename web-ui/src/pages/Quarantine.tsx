@@ -58,12 +58,10 @@ function QuarantineItem({ item }: { item: QuarantinedLearningSummary }) {
         <TrustBadge level={item.trust_level} />
       </div>
       <dl className="quarantine-item-meta">
-        <div>
-          <dt>Reason:</dt> <dd>{item.reason}</dd>
-        </div>
-        <div>
-          <dt>Quarantined:</dt> <dd>{new Date(item.quarantined_at).toLocaleDateString()}</dd>
-        </div>
+        <dt>Reason:</dt>
+        <dd>{item.reason}</dd>
+        <dt>Quarantined:</dt>
+        <dd>{new Date(item.quarantined_at).toLocaleDateString()}</dd>
       </dl>
       {item.pending_review && (
         <div className="quarantine-item-actions">
@@ -212,7 +210,7 @@ export function QuarantinePage() {
         {listLoading ? (
           <Text intensity="dim">Loading quarantined items...</Text>
         ) : quarantined && quarantined.items.length > 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+          <div className="quarantine-list">
             {quarantined.items.map((item) => (
               <QuarantineItem key={item.id} item={item} />
             ))}
