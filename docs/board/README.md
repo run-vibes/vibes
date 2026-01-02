@@ -18,7 +18,7 @@ Stories:
 - [x] [feat-01-backend-pagination](in-progress/milestone-36-firehose-infinite-scroll/stories/feat-01-backend-pagination.md)
 - [x] [feat-02-backend-filters](in-progress/milestone-36-firehose-infinite-scroll/stories/feat-02-backend-filters.md)
 - [x] [feat-03-frontend-hook](in-progress/milestone-36-firehose-infinite-scroll/stories/feat-03-frontend-hook.md)
-- [ ] [feat-04-virtual-scroll](in-progress/milestone-36-firehose-infinite-scroll/stories/feat-04-virtual-scroll.md)
+- [x] [feat-04-virtual-scroll](in-progress/milestone-36-firehose-infinite-scroll/stories/feat-04-virtual-scroll.md)
 - [ ] [feat-05-ui-polish](in-progress/milestone-36-firehose-infinite-scroll/stories/feat-05-ui-polish.md)
 - [x] [feat-06-uuidv7-sequencing](in-progress/milestone-36-firehose-infinite-scroll/stories/feat-06-uuidv7-sequencing.md)
 
