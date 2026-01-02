@@ -160,6 +160,19 @@ where
             Err(e) => return Err(e.into()),
         }
 
+        // Query the topic to get the actual message count
+        // This initializes high_water_mark correctly on server restart
+        let topic_id = Identifier::named(topics::EVENTS_TOPIC)
+            .map_err(|e| Error::Iggy(format!("Invalid topic name: {}", e)))?;
+        if let Some(topic_details) = self.client.get_topic(&stream_id, &topic_id).await? {
+            let message_count = topic_details.messages_count;
+            self.high_water_mark.store(message_count, Ordering::SeqCst);
+            info!(
+                "Initialized high_water_mark to {} from existing topic",
+                message_count
+            );
+        }
+
         *self.connected.write().await = true;
         info!("IggyEventLog fully connected and ready");
 
