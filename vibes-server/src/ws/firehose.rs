@@ -33,26 +33,64 @@ pub struct FirehoseQuery {
     pub session: Option<String>,
 }
 
-/// Server-to-client message: single live event with offset
-#[derive(Debug, Serialize)]
-#[serde(tag = "type", rename = "event")]
-pub struct FirehoseEventMessage {
+/// Event with offset - used inside batches (no type tag)
+#[derive(Debug, Clone, Serialize)]
+pub struct EventWithOffset {
     /// The event offset in the EventLog
     pub offset: Offset,
     /// The event data
     pub event: VibesEvent,
 }
 
+/// Server-to-client message: single live event with offset
+#[derive(Debug, Serialize)]
+pub struct FirehoseEventMessage {
+    /// Message type discriminator
+    #[serde(rename = "type")]
+    pub msg_type: &'static str,
+    /// The event offset in the EventLog
+    pub offset: Offset,
+    /// The event data
+    pub event: VibesEvent,
+}
+
+impl FirehoseEventMessage {
+    pub fn new(offset: Offset, event: VibesEvent) -> Self {
+        Self {
+            msg_type: "event",
+            offset,
+            event,
+        }
+    }
+}
+
 /// Server-to-client message: batch of events (initial load or pagination)
 #[derive(Debug, Serialize)]
-#[serde(tag = "type", rename = "events_batch")]
 pub struct FirehoseEventsBatch {
+    /// Message type discriminator
+    #[serde(rename = "type")]
+    pub msg_type: &'static str,
     /// The events in this batch with their offsets
-    pub events: Vec<FirehoseEventMessage>,
+    pub events: Vec<EventWithOffset>,
     /// The oldest offset in this batch (for pagination)
     pub oldest_offset: Option<Offset>,
     /// Whether there are more events before this batch
     pub has_more: bool,
+}
+
+impl FirehoseEventsBatch {
+    pub fn new(
+        events: Vec<EventWithOffset>,
+        oldest_offset: Option<Offset>,
+        has_more: bool,
+    ) -> Self {
+        Self {
+            msg_type: "events_batch",
+            events,
+            oldest_offset,
+            has_more,
+        }
+    }
 }
 
 /// Client-to-server messages for the firehose WebSocket
@@ -119,14 +157,14 @@ async fn handle_firehose(socket: WebSocket, state: Arc<AppState>, query: Firehos
     let filtered_events: Vec<_> = historical_events
         .into_iter()
         .filter(|(_, event)| matches_filters(event, &filter_types, &filter_session))
-        .map(|(offset, event)| FirehoseEventMessage { offset, event })
+        .map(|(offset, event)| EventWithOffset { offset, event })
         .collect();
 
-    let batch = FirehoseEventsBatch {
-        oldest_offset: filtered_events.first().map(|e| e.offset),
-        events: filtered_events,
+    let batch = FirehoseEventsBatch::new(
+        filtered_events.clone(),
+        filtered_events.first().map(|e| e.offset),
         has_more,
-    };
+    );
 
     if let Err(e) = send_json(&mut sender, &batch).await {
         warn!("Firehose send failed (initial batch): {}", e);
@@ -163,7 +201,7 @@ async fn handle_firehose(socket: WebSocket, state: Arc<AppState>, query: Firehos
                             continue;
                         }
 
-                        let msg = FirehoseEventMessage { offset, event };
+                        let msg = FirehoseEventMessage::new(offset, event);
                         if let Err(e) = send_json(&mut sender, &msg).await {
                             warn!("Firehose send failed: {}", e);
                             break;
@@ -208,14 +246,14 @@ where
             let filtered_events: Vec<_> = events
                 .into_iter()
                 .filter(|(_, event)| matches_filters(event, filter_types, filter_session))
-                .map(|(offset, event)| FirehoseEventMessage { offset, event })
+                .map(|(offset, event)| EventWithOffset { offset, event })
                 .collect();
 
-            let batch = FirehoseEventsBatch {
-                oldest_offset: filtered_events.first().map(|e| e.offset),
-                events: filtered_events,
+            let batch = FirehoseEventsBatch::new(
+                filtered_events.clone(),
+                filtered_events.first().map(|e| e.offset),
                 has_more,
-            };
+            );
 
             send_json(sender, &batch)
                 .await
@@ -236,14 +274,14 @@ where
             let filtered_events: Vec<_> = events
                 .into_iter()
                 .filter(|(_, event)| matches_filters(event, filter_types, filter_session))
-                .map(|(offset, event)| FirehoseEventMessage { offset, event })
+                .map(|(offset, event)| EventWithOffset { offset, event })
                 .collect();
 
-            let batch = FirehoseEventsBatch {
-                oldest_offset: filtered_events.first().map(|e| e.offset),
-                events: filtered_events,
+            let batch = FirehoseEventsBatch::new(
+                filtered_events.clone(),
+                filtered_events.first().map(|e| e.offset),
                 has_more,
-            };
+            );
 
             send_json(sender, &batch)
                 .await
@@ -405,6 +443,76 @@ async fn load_events_before_offset(
 mod tests {
     use super::*;
     use vibes_core::ClaudeEvent;
+
+    // Serialization format tests - prevent regression of message format bugs
+
+    #[test]
+    fn events_batch_serializes_without_nested_type_tags() {
+        // CRITICAL: Events inside batches must NOT have "type": "event" nested inside them
+        // This was a bug where serde's tag attribute incorrectly tagged nested events
+        let events = vec![
+            EventWithOffset {
+                offset: 10,
+                event: VibesEvent::ClientConnected {
+                    client_id: "c1".to_string(),
+                },
+            },
+            EventWithOffset {
+                offset: 11,
+                event: VibesEvent::SessionCreated {
+                    session_id: "s1".to_string(),
+                    name: Some("Test".to_string()),
+                },
+            },
+        ];
+
+        let batch = FirehoseEventsBatch::new(events, Some(10), true);
+        let json = serde_json::to_string(&batch).unwrap();
+
+        // Parse and verify structure
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+
+        // Top-level type should be "events_batch"
+        assert_eq!(parsed["type"], "events_batch");
+
+        // Events array should exist
+        let events_arr = parsed["events"].as_array().unwrap();
+        assert_eq!(events_arr.len(), 2);
+
+        // Each event should have offset and event fields, but NO top-level "type" in the wrapper
+        let first = &events_arr[0];
+        assert_eq!(first["offset"], 10);
+        assert!(first["event"].is_object());
+        // The wrapper itself should not have a "type" field (only the inner event does)
+        assert!(
+            first.get("type").is_none(),
+            "EventWithOffset should not have a 'type' field - only the inner event should"
+        );
+
+        // The inner event should have its own type tag (from VibesEvent's serde)
+        assert_eq!(first["event"]["type"], "client_connected");
+    }
+
+    #[test]
+    fn single_event_message_serializes_with_type_at_top_level() {
+        let msg = FirehoseEventMessage::new(
+            42,
+            VibesEvent::ClientConnected {
+                client_id: "c1".to_string(),
+            },
+        );
+        let json = serde_json::to_string(&msg).unwrap();
+
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+
+        // Top-level type should be "event" (the message type)
+        assert_eq!(parsed["type"], "event");
+        assert_eq!(parsed["offset"], 42);
+
+        // The event field should contain the actual event with its own type
+        assert_eq!(parsed["event"]["type"], "client_connected");
+        assert_eq!(parsed["event"]["client_id"], "c1");
+    }
 
     #[tokio::test]
     async fn load_historical_events_returns_last_n_events_with_offsets() {

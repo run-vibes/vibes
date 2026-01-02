@@ -76,7 +76,7 @@ typecheck-web:
 
 # Run web-ui tests
 test-web:
-    npm test --workspace=web-ui
+    npm test --workspace=web-ui -- --run
 
 # Install npm dependencies (uses workspaces)
 npm-install:

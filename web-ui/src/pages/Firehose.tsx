@@ -1,6 +1,6 @@
 // web-ui/src/pages/Firehose.tsx
-import { useState, useMemo, useCallback } from 'react';
-import { StreamView, EventInspector, Button, Badge } from '@vibes/design-system';
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { StreamView, EventInspector, Badge } from '@vibes/design-system';
 import type { StreamEvent, InspectorEvent, ContextEvent } from '@vibes/design-system';
 import { useFirehose } from '../hooks/useFirehose';
 import type { VibesEvent } from '../lib/types';
@@ -8,9 +8,9 @@ import './Firehose.css';
 
 const EVENT_TYPES = ['SESSION', 'CLAUDE', 'TOOL', 'HOOK', 'ERROR', 'ASSESS'] as const;
 
-function vibesEventToStreamEvent(event: VibesEvent, index: number): StreamEvent {
+function vibesEventToStreamEvent(event: VibesEvent, _index: number, offset: number): StreamEvent {
   const baseEvent = {
-    id: `${index}`,
+    id: `${offset}`,
     timestamp: new Date(),
   };
 
@@ -69,27 +69,33 @@ export function FirehosePage() {
   const {
     events: rawEvents,
     isConnected,
-    isPaused,
+    isFollowing,
+    isLoadingOlder,
     error,
-    pause,
-    resume,
-    clear,
-  } = useFirehose({
-    types: selectedTypes.length > 0 ? selectedTypes : undefined,
-    session: sessionFilter || undefined,
-    bufferSize: 500,
-  });
+    setFilters,
+    setIsFollowing,
+  } = useFirehose();
+
+  // Send filter updates to server when local filters change
+  useEffect(() => {
+    setFilters({
+      types: selectedTypes.length > 0 ? selectedTypes : null,
+      sessionId: sessionFilter || null,
+    });
+  }, [selectedTypes, sessionFilter, setFilters]);
 
   const streamEvents = useMemo(
-    () => rawEvents.map((e, i) => vibesEventToStreamEvent(e, i)),
+    () => rawEvents.map((e, i) => vibesEventToStreamEvent(e.event, i, e.offset)),
     [rawEvents]
   );
 
   const selectedEvent = useMemo((): InspectorEvent | null => {
     if (!selectedEventId) return null;
-    const idx = parseInt(selectedEventId, 10);
-    const raw = rawEvents[idx];
-    const stream = streamEvents[idx];
+    const eventIndex = rawEvents.findIndex((e) => String(e.offset) === selectedEventId);
+    if (eventIndex === -1) return null;
+
+    const raw = rawEvents[eventIndex];
+    const stream = streamEvents[eventIndex];
     if (!raw || !stream) return null;
 
     return {
@@ -97,19 +103,20 @@ export function FirehosePage() {
       timestamp: stream.timestamp,
       type: stream.type,
       session: stream.session,
-      payload: raw,
+      payload: raw.event,
     };
   }, [selectedEventId, rawEvents, streamEvents]);
 
   const contextEvents = useMemo((): ContextEvent[] => {
     if (!selectedEventId) return [];
-    const idx = parseInt(selectedEventId, 10);
-    const context: ContextEvent[] = [];
+    const eventIndex = rawEvents.findIndex((e) => String(e.offset) === selectedEventId);
+    if (eventIndex === -1) return [];
 
-    for (let i = Math.max(0, idx - 2); i <= Math.min(streamEvents.length - 1, idx + 2); i++) {
+    const context: ContextEvent[] = [];
+    for (let i = Math.max(0, eventIndex - 2); i <= Math.min(streamEvents.length - 1, eventIndex + 2); i++) {
       const e = streamEvents[i];
       context.push({
-        offset: i - idx,
+        offset: i - eventIndex,
         timestamp: e.timestamp,
         type: e.type,
         summary: e.summary,
@@ -117,7 +124,7 @@ export function FirehosePage() {
     }
 
     return context;
-  }, [selectedEventId, streamEvents]);
+  }, [selectedEventId, rawEvents, streamEvents]);
 
   const toggleType = useCallback((type: string) => {
     setSelectedTypes((prev) =>
@@ -131,6 +138,10 @@ export function FirehosePage() {
     }
   }, [selectedEvent]);
 
+  const handleJumpToLatest = useCallback(() => {
+    setIsFollowing(true);
+  }, [setIsFollowing]);
+
   return (
     <div className="firehose-page">
       <div className="firehose-header">
@@ -142,7 +153,8 @@ export function FirehosePage() {
             ) : (
               <Badge status="error">Disconnected</Badge>
             )}
-            {isPaused && <Badge status="warning">Paused</Badge>}
+            {!isFollowing && <Badge status="warning">Paused</Badge>}
+            {isLoadingOlder && <Badge status="idle">Loading...</Badge>}
             {error && <Badge status="error">{error.message}</Badge>}
           </div>
         </div>
@@ -167,21 +179,6 @@ export function FirehosePage() {
             onChange={(e) => setSessionFilter(e.target.value)}
             className="session-filter"
           />
-
-          <div className="firehose-actions">
-            {isPaused ? (
-              <Button variant="primary" onClick={resume}>
-                ▶ Resume
-              </Button>
-            ) : (
-              <Button variant="secondary" onClick={pause}>
-                ⏸ Pause
-              </Button>
-            )}
-            <Button variant="ghost" onClick={clear}>
-              Clear
-            </Button>
-          </div>
         </div>
       </div>
 
@@ -191,10 +188,15 @@ export function FirehosePage() {
             events={streamEvents}
             title="Event Stream"
             isLive={isConnected}
-            isPaused={isPaused}
+            isPaused={!isFollowing}
             selectedId={selectedEventId ?? undefined}
             onEventClick={(e) => setSelectedEventId(e.id)}
           />
+          {!isFollowing && (
+            <button className="jump-to-latest" onClick={handleJumpToLatest}>
+              ↓ Jump to latest
+            </button>
+          )}
         </div>
 
         <div className="firehose-inspector">
