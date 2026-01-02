@@ -7,8 +7,9 @@
 ### [milestone-26-assessment-framework](in-progress/milestone-26-assessment-framework/)
 
 Stories:
-- [ ] [feat-01-eventlog-migration](in-progress/milestone-26-assessment-framework/stories/feat-01-eventlog-migration.md)
-- [ ] [feat-02-assessment-logic](in-progress/milestone-26-assessment-framework/stories/feat-02-assessment-logic.md)
+- [ ] [chore-01-eventbus-cleanup](in-progress/milestone-26-assessment-framework/stories/chore-01-eventbus-cleanup.md)
+- [ ] [chore-03-integration-testing](in-progress/milestone-26-assessment-framework/stories/chore-03-integration-testing.md)
+- [ ] [feat-02-processor-wiring](in-progress/milestone-26-assessment-framework/stories/feat-02-processor-wiring.md)
 
 
 ---
