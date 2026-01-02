@@ -1,6 +1,6 @@
 ---
 created: 2026-01-02
-status: in-progress
+status: done
 ---
 
 # feat: UUIDv7 Global Event Sequencing
@@ -95,12 +95,12 @@ UUIDv7 provides:
 
 ## Acceptance Criteria
 
-- [ ] All VibesEvent instances have a unique UUIDv7 event_id
-- [ ] event_id appears in WebSocket message JSON
-- [ ] Design system has unified `DisplayEvent` type (single source of truth)
-- [ ] Frontend uses event_id for unique identification
-- [ ] Row selection in firehose works correctly (no multi-select bugs)
-- [ ] All tests pass
+- [x] All VibesEvent instances have a unique UUIDv7 event_id
+- [x] event_id appears in WebSocket message JSON
+- [x] Design system has unified `DisplayEvent` type (single source of truth)
+- [x] Frontend uses event_id for unique identification
+- [x] Row selection in firehose works correctly (no multi-select bugs)
+- [x] All tests pass
 
 ## Completion
 

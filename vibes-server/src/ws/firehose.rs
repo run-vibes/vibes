@@ -41,8 +41,7 @@ pub struct EventWithOffset {
     pub event_id: Uuid,
     /// The event offset in the EventLog (partition-scoped, use event_id for uniqueness)
     pub offset: Offset,
-    /// The event data
-    #[serde(flatten)]
+    /// The event data (nested to match FirehoseEventMessage structure)
     pub event: VibesEvent,
 }
 
@@ -468,8 +467,8 @@ mod tests {
     // Serialization format tests - prevent regression of message format bugs
 
     #[test]
-    fn events_batch_serializes_with_event_id_and_flattened_event() {
-        // Test that events in batches include event_id and flatten the event fields
+    fn events_batch_serializes_with_event_id_and_nested_event() {
+        // Test that events in batches include event_id and nested event object
         let stored1 = make_stored_event(VibesEvent::ClientConnected {
             client_id: "c1".to_string(),
         });
@@ -496,13 +495,13 @@ mod tests {
         let events_arr = parsed["events"].as_array().unwrap();
         assert_eq!(events_arr.len(), 2);
 
-        // Each event should have event_id, offset, and flattened event fields
+        // Each event should have event_id, offset, and nested event object
         let first = &events_arr[0];
         assert_eq!(first["offset"], 10);
         assert!(first["event_id"].is_string()); // UUIDv7 as string
-        // Event type should be at top level due to flatten
-        assert_eq!(first["type"], "client_connected");
-        assert_eq!(first["client_id"], "c1");
+        // Event should be nested (matching FirehoseEventMessage structure)
+        assert_eq!(first["event"]["type"], "client_connected");
+        assert_eq!(first["event"]["client_id"], "c1");
     }
 
     #[test]
