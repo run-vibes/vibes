@@ -4,8 +4,11 @@
 
 ## 🔨 In Progress
 
-### [milestone-14-continual-learning](in-progress/milestone-14-continual-learning/)
-**groove** - The continual learning system that finds your coding rhythm.
+### [milestone-26-assessment-framework](in-progress/milestone-26-assessment-framework/)
+
+Stories:
+- [ ] [feat-01-eventlog-migration](in-progress/milestone-26-assessment-framework/stories/feat-01-eventlog-migration.md)
+- [ ] [feat-02-assessment-logic](in-progress/milestone-26-assessment-framework/stories/feat-02-assessment-logic.md)
 
 
 ---
@@ -24,10 +27,15 @@
 
 ## 📥 Backlog
 
-- [milestone-20-setup-wizards](backlog/milestone-20-setup-wizards/) *(design only)*
-- [milestone-21-default-plugins](backlog/milestone-21-default-plugins/) *(design only)*
-- [milestone-22-cli-enhancements](backlog/milestone-22-cli-enhancements/) *(design only)*
-- [milestone-23-ios-app](backlog/milestone-23-ios-app/) *(design only)*
+- [milestone-27-learning-extraction](backlog/milestone-27-learning-extraction/) *(design only)*
+- [milestone-28-attribution-engine](backlog/milestone-28-attribution-engine/) *(design only)*
+- [milestone-29-adaptive-strategies](backlog/milestone-29-adaptive-strategies/) *(design only)*
+- [milestone-30-groove-dashboard](backlog/milestone-30-groove-dashboard/) *(design only)*
+- [milestone-31-open-world-adaptation](backlog/milestone-31-open-world-adaptation/) *(design only)*
+- [milestone-32-setup-wizards](backlog/milestone-32-setup-wizards/) *(design only)*
+- [milestone-33-default-plugins](backlog/milestone-33-default-plugins/) *(design only)*
+- [milestone-34-cli-enhancements](backlog/milestone-34-cli-enhancements/) *(design only)*
+- [milestone-35-ios-app](backlog/milestone-35-ios-app/) *(design only)*
 
 ---
 
@@ -37,8 +45,6 @@
 <summary>View completed work</summary>
 
 - [bug-0001-cwd-propagation](done/bug-0001-cwd-propagation.md)
-- [chore-0001-kanban-board-design](done/chore-0001-kanban-board-design.md)
-- [chore-0002-kanban-board-implementation](done/chore-0002-kanban-board-implementation.md)
 - [milestone-01-core-proxy](done/milestone-01-core-proxy/)
 - [milestone-02-cli](done/milestone-02-cli/)
 - [milestone-03-plugin-foundation](done/milestone-03-plugin-foundation/)
@@ -52,11 +58,17 @@
 - [milestone-11-test-coverage](done/milestone-11-test-coverage/)
 - [milestone-12-pty-backend](done/milestone-12-pty-backend/)
 - [milestone-13-scrollback-simplification](done/milestone-13-scrollback-simplification/)
+- [milestone-14-kanban-board](done/milestone-14-kanban-board/)
 - [milestone-15-harness-introspection](done/milestone-15-harness-introspection/)
 - [milestone-16-iggy-bundling](done/milestone-16-iggy-bundling/)
 - [milestone-17-web-ui-modernization](done/milestone-17-web-ui-modernization/)
-- [milestone-18-eventlog-wiring](done/milestone-18-eventlog-wiring/)
 - [milestone-18-iggy-sdk-integration](done/milestone-18-iggy-sdk-integration/)
-- [milestone-19-event-cli](done/milestone-19-event-cli/)
+- [milestone-19-eventlog-wiring](done/milestone-19-eventlog-wiring/)
+- [milestone-20-event-cli](done/milestone-20-event-cli/)
+- [milestone-21-storage-foundation](done/milestone-21-storage-foundation/)
+- [milestone-22-security-foundation](done/milestone-22-security-foundation/)
+- [milestone-23-plugin-api-extension](done/milestone-23-plugin-api-extension/)
+- [milestone-24-capture-inject](done/milestone-24-capture-inject/)
+- [milestone-25-assessment-types](done/milestone-25-assessment-types/)
 
 </details>
