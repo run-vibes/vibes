@@ -37,12 +37,15 @@ const typeToClass: Record<string, string> = {
 };
 
 function formatTime(date: Date): string {
-  return date.toLocaleTimeString('en-US', {
+  const time = date.toLocaleTimeString('en-US', {
     hour12: false,
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
   });
+  // Add milliseconds for precise event ordering visibility
+  const ms = date.getMilliseconds().toString().padStart(3, '0');
+  return `${time}.${ms}`;
 }
 
 // Threshold in pixels for triggering load more
