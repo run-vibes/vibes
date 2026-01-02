@@ -92,21 +92,6 @@ export function StreamsPage() {
               </div>
             </Panel>
           </Link>
-
-          <Link to="/status" className="stream-card-link">
-            <Panel title="Status" className="stream-card">
-              <div className="stream-card-content">
-                <div className="stream-icon">📡</div>
-                <Text intensity="dim">
-                  Tunnel status and notification settings
-                </Text>
-                <div className="stream-stats">
-                  <span className="stat-value">{tunnel?.url ? '●' : '○'}</span>
-                  <span className="stat-label">{tunnel?.url ? 'active' : 'inactive'}</span>
-                </div>
-              </div>
-            </Panel>
-          </Link>
         </div>
 
         {Object.keys(eventCounts).length > 0 && (

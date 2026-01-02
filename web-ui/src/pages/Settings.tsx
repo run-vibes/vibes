@@ -2,9 +2,11 @@
 import { useState, useEffect } from 'react';
 import { Panel, Button, Text } from '@vibes/design-system';
 import { NotificationSettings } from '../components/NotificationSettings';
+import { useTunnelStatus } from '../hooks/useTunnelStatus';
 import './Settings.css';
 
 export function SettingsPage() {
+  const { data: tunnel, isLoading: tunnelLoading, error: tunnelError } = useTunnelStatus();
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     const saved = localStorage.getItem('vibes-theme');
     return (saved === 'light' || saved === 'dark') ? saved : 'dark';
@@ -68,6 +70,63 @@ export function SettingsPage() {
           <NotificationSettings />
         </Panel>
 
+        <Panel title="Tunnel" className="settings-panel">
+          {tunnelLoading && <Text intensity="dim">Loading...</Text>}
+          {tunnelError && <Text intensity="dim" style={{ color: 'var(--color-error)' }}>Error loading tunnel status</Text>}
+          {tunnel && (
+            <div className="tunnel-status">
+              <div className="setting-row">
+                <div className="setting-info">
+                  <div className="setting-label">State</div>
+                </div>
+                <div className="setting-control">
+                  <TunnelStatusBadge state={tunnel.state} />
+                </div>
+              </div>
+              <div className="setting-row">
+                <div className="setting-info">
+                  <div className="setting-label">Mode</div>
+                </div>
+                <div className="setting-control">
+                  <Text intensity="dim">{tunnel.mode || 'Not configured'}</Text>
+                </div>
+              </div>
+              {tunnel.url && (
+                <div className="setting-row">
+                  <div className="setting-info">
+                    <div className="setting-label">URL</div>
+                  </div>
+                  <div className="setting-control">
+                    <a href={tunnel.url} target="_blank" rel="noopener noreferrer">
+                      {tunnel.url}
+                    </a>
+                  </div>
+                </div>
+              )}
+              {tunnel.tunnel_name && (
+                <div className="setting-row">
+                  <div className="setting-info">
+                    <div className="setting-label">Tunnel Name</div>
+                  </div>
+                  <div className="setting-control">
+                    <Text intensity="dim">{tunnel.tunnel_name}</Text>
+                  </div>
+                </div>
+              )}
+              {tunnel.error && (
+                <div className="setting-row">
+                  <div className="setting-info">
+                    <div className="setting-label">Error</div>
+                  </div>
+                  <div className="setting-control">
+                    <Text intensity="dim" style={{ color: 'var(--color-error)' }}>{tunnel.error}</Text>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </Panel>
+
         <Panel title="Data & Storage" className="settings-panel">
           <div className="setting-row">
             <div className="setting-info">
@@ -113,5 +172,35 @@ export function SettingsPage() {
         </Panel>
       </div>
     </div>
+  );
+}
+
+function TunnelStatusBadge({ state }: { state: string }) {
+  const colors: Record<string, string> = {
+    disabled: '#9CA3AF',
+    starting: '#F59E0B',
+    connected: '#10B981',
+    reconnecting: '#F59E0B',
+    failed: '#EF4444',
+    stopped: '#9CA3AF',
+  };
+
+  return (
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '0.5rem',
+        padding: '0.25rem 0.75rem',
+        borderRadius: '9999px',
+        backgroundColor: `${colors[state] || '#9CA3AF'}20`,
+        color: colors[state] || '#9CA3AF',
+        fontSize: '0.875rem',
+        fontWeight: 500,
+      }}
+    >
+      <span style={{ fontSize: '0.5rem' }}>●</span>
+      {state}
+    </span>
   );
 }
