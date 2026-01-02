@@ -1,4 +1,4 @@
-# Milestone 4.5: learning-extraction 
+# Milestone 27: learning-extraction 
 
 > Semantic analysis and embedding extraction for learnings
 

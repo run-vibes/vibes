@@ -1,4 +1,4 @@
-# Milestone 4.9: open-world-adaptation 
+# Milestone 31: open-world-adaptation 
 
 > Novelty detection and distribution shift handling
 

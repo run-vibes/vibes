@@ -1,4 +1,4 @@
-# Milestone 4.7: adaptive-strategies 
+# Milestone 29: adaptive-strategies 
 
 > Thompson sampling for learning selection
 

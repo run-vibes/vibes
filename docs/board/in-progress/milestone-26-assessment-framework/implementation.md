@@ -1,4 +1,4 @@
-# Milestone 4.4.2: Assessment Framework - Implementation Plan
+# Milestone 26: Assessment Framework - Implementation Plan
 
 > **For Claude:** Work through stories in order. Use superpowers:executing-plans for each story.
 

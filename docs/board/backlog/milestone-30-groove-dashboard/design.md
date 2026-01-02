@@ -1,4 +1,4 @@
-# Milestone 4.8: groove-dashboard 
+# Milestone 30: groove-dashboard 
 
 > Observability UI for learning system
 
