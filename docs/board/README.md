@@ -7,7 +7,7 @@
 ### [milestone-26-assessment-framework](in-progress/milestone-26-assessment-framework/)
 
 Stories:
-- [ ] [chore-01-eventbus-cleanup](in-progress/milestone-26-assessment-framework/stories/chore-01-eventbus-cleanup.md)
+- [x] [chore-01-eventbus-cleanup](in-progress/milestone-26-assessment-framework/stories/chore-01-eventbus-cleanup.md)
 - [ ] [chore-03-integration-testing](in-progress/milestone-26-assessment-framework/stories/chore-03-integration-testing.md)
 - [ ] [feat-02-processor-wiring](in-progress/milestone-26-assessment-framework/stories/feat-02-processor-wiring.md)
 

@@ -15,6 +15,22 @@ generate:
 
     cd "{{board_dir}}"
 
+    # Helper: get status from frontmatter (returns "done", "in-progress", or "pending")
+    get_status() {
+        local file="$1"
+        grep -m1 "^status:" "$file" 2>/dev/null | sed 's/status: *//' | tr -d ' ' || echo "pending"
+    }
+
+    # Helper: render checkbox based on status
+    story_checkbox() {
+        local status=$(get_status "$1")
+        if [[ "$status" == "done" ]]; then
+            echo "[x]"
+        else
+            echo "[ ]"
+        fi
+    }
+
     echo "# Planning Board"
     echo ""
     echo "> Auto-generated from directory structure. Run \`just board\` to update."
@@ -40,7 +56,8 @@ generate:
                 for story in "${item}stories"/*.md; do
                     [[ -f "$story" ]] || continue
                     sname=$(basename "$story" .md)
-                    echo "- [ ] [$sname](in-progress/$name/stories/$sname.md)"
+                    checkbox=$(story_checkbox "$story")
+                    echo "- $checkbox [$sname](in-progress/$name/stories/$sname.md)"
                 done
             fi
             echo ""
@@ -71,7 +88,8 @@ generate:
                 for story in "${item}stories"/*.md; do
                     [[ -f "$story" ]] || continue
                     sname=$(basename "$story" .md)
-                    echo "- [ ] [$sname](ready/$name/stories/$sname.md)"
+                    checkbox=$(story_checkbox "$story")
+                    echo "- $checkbox [$sname](ready/$name/stories/$sname.md)"
                 done
             fi
             echo ""
