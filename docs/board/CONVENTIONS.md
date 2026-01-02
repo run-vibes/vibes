@@ -374,66 +374,82 @@ new-crate = "1.0"            # Purpose
 
 ## Phase 2: Implementation Plan
 
-After design approval, create an `implementation.md` with step-by-step tasks.
+After design approval, break the milestone into **stories**—focused deliverables that can be implemented and merged independently.
 
-### Implementation Plan Template
+### When to Use Stories vs Single Implementation
+
+| Approach | When to Use |
+|----------|-------------|
+| **Stories** | Milestone has 3+ distinct deliverables, work can be parallelized, each piece merits its own PR |
+| **Single implementation.md** | Small milestone, linear dependencies, single contributor |
+
+### Story Structure
+
+```
+docs/board/<column>/milestone-NN-name/
+├── design.md              # Architecture decisions (from Phase 1)
+└── stories/
+    ├── story-01-types.md      # Core type definitions
+    ├── story-02-storage.md    # Persistence layer
+    └── story-03-api.md        # HTTP endpoints
+```
+
+### Story Template
 
 ```markdown
-# Milestone X.Y: [Feature Name] - Implementation Plan
-
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
-
-**Goal:** [One sentence describing the outcome]
-
-**Architecture:** [Brief recap of key design decisions]
-
-**Tech Stack:** [Relevant technologies]
-
+---
+created: 2024-01-15
+status: pending  # pending | in-progress | done
 ---
 
-## Task 1: [Task Name]
+# Story: [Focused Deliverable]
+
+> **For Claude:** Use superpowers:executing-plans to implement this story.
+
+## Goal
+
+[One sentence: what this story delivers]
+
+## Context
+
+[Reference design.md section, key decisions that apply]
+
+## Tasks
+
+Each task ends with a commit:
+
+### Task 1: [Name]
 
 **Files:**
 - Create: `path/to/new/file.rs`
 - Modify: `path/to/existing.rs`
 
-**Step 1: [Action]**
+**Steps:**
+1. [Action with expected outcome]
+2. [Action with expected outcome]
+3. Run tests: `cargo test -p vibes-core module_name`
+4. Commit: `feat(module): description`
 
-[Description or code]
-
-```rust
-// Code example
-pub struct NewType { ... }
-```
-
-**Step 2: [Action]**
+### Task 2: [Name]
 
 ...
 
-**Step N: Run tests**
+## Acceptance Criteria
 
-Run: `cargo test -p vibes-core module_name`
-Expected: All tests pass
+- [ ] All tests pass
+- [ ] Code reviewed and merged
+- [ ] [Feature-specific criterion]
+```
 
-**Step N+1: Commit**
+### Creating Stories
 
 ```bash
-git add path/to/files
-git commit -m "feat(module): description"
+# Create story files manually in the stories/ directory
+mkdir -p docs/board/in-progress/milestone-14-continual-learning/stories
+touch docs/board/in-progress/milestone-14-continual-learning/stories/story-01-types.md
 ```
 
----
-
-## Task 2: [Next Task]
-
-...
-
----
-
-## Summary
-
-[What was accomplished, total tasks/commits, next steps]
-```
+The board generator automatically lists stories as checklists under their parent milestone.
 
 ### Key Principles
 
