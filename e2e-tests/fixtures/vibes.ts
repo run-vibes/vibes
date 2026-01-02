@@ -3,6 +3,7 @@ import { spawn, ChildProcess } from 'child_process';
 import { Readable } from 'stream';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as os from 'os';
 
 export type VibesFixture = {
   serverUrl: string;
@@ -39,17 +40,54 @@ function findVibesBinary(): string {
   throw new Error('vibes binary not found. Run "cargo build" or set VIBES_BIN.');
 }
 
+// Get a random port by binding to port 0 and reading the assigned port
+async function getRandomPort(): Promise<number> {
+  const { createServer } = await import('net');
+  return new Promise((resolve, reject) => {
+    const server = createServer();
+    server.listen(0, '127.0.0.1', () => {
+      const addr = server.address();
+      if (addr && typeof addr === 'object') {
+        const port = addr.port;
+        server.close(() => resolve(port));
+      } else {
+        reject(new Error('Failed to get port'));
+      }
+    });
+    server.on('error', reject);
+  });
+}
+
 export const test = base.extend<VibesFixture>({
   serverPort: [async ({}, use) => {
     const vibesBin = findVibesBinary();
     console.log(`[vibes] Using binary: ${vibesBin}`);
 
-    // Start server on random port
-    // Explicitly pass process.env to ensure VIBES_PTY_COMMAND is inherited
+    // Create isolated temp directory for Iggy data
+    const testId = `vibes-e2e-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const iggyDataDir = path.join(os.tmpdir(), testId);
+    fs.mkdirSync(iggyDataDir, { recursive: true });
+
+    // Get random ports for Iggy to avoid conflicts between parallel tests
+    const iggyPort = await getRandomPort();
+    const iggyHttpPort = await getRandomPort();
+
+    console.log(`[vibes] Using Iggy data dir: ${iggyDataDir}`);
+    console.log(`[vibes] Using Iggy ports: TCP=${iggyPort}, HTTP=${iggyHttpPort}`);
+
+    // Start server on random port with isolated Iggy config
     const server = spawn(
       vibesBin,
       ['serve', '--port', '0'],
-      { cwd: projectRoot, env: process.env }
+      {
+        cwd: projectRoot,
+        env: {
+          ...process.env,
+          VIBES_IGGY_DATA_DIR: iggyDataDir,
+          VIBES_IGGY_PORT: String(iggyPort),
+          VIBES_IGGY_HTTP_PORT: String(iggyHttpPort),
+        }
+      }
     );
 
     // Log server stderr for debugging
@@ -84,6 +122,14 @@ export const test = base.extend<VibesFixture>({
       } else {
         fs.unlinkSync(testConfigPath);
       }
+    } catch {
+      // Ignore cleanup errors
+    }
+
+    // Clean up Iggy data directory
+    try {
+      fs.rmSync(iggyDataDir, { recursive: true, force: true });
+      console.log(`[vibes] Cleaned up: ${iggyDataDir}`);
     } catch {
       // Ignore cleanup errors
     }

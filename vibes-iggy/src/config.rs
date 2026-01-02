@@ -57,16 +57,32 @@ fn default_binary_path() -> PathBuf {
 }
 
 fn default_data_dir() -> PathBuf {
+    // Allow override via environment variable for test isolation
+    if let Ok(path) = std::env::var("VIBES_IGGY_DATA_DIR") {
+        return PathBuf::from(path);
+    }
     dirs::data_dir()
         .map(|d| d.join("vibes").join("iggy"))
         .unwrap_or_else(|| PathBuf::from("/tmp/vibes/iggy"))
 }
 
 fn default_port() -> u16 {
+    // Allow override via environment variable for test isolation
+    if let Ok(port) = std::env::var("VIBES_IGGY_PORT")
+        && let Ok(p) = port.parse()
+    {
+        return p;
+    }
     8090
 }
 
 fn default_http_port() -> u16 {
+    // Allow override via environment variable for test isolation
+    if let Ok(port) = std::env::var("VIBES_IGGY_HTTP_PORT")
+        && let Ok(p) = port.parse()
+    {
+        return p;
+    }
     // HTTP port for Iggy REST API.
     // Uses 3001 to avoid conflicts with common dev servers (React defaults to 3000).
     3001
