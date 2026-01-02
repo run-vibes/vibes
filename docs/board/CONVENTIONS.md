@@ -58,29 +58,33 @@ When adding new functionality that could be a separate feature, **always evaluat
 |----------|--------|----------|
 | Is this a first-party core feature? | Maybe | Yes |
 | Should users be able to disable it? | Yes | No |
-| Does it need CLI subcommands? | Plugin (requires API extension) | Built-in |
-| Does it need HTTP routes? | Plugin (requires API extension) | Built-in |
+| Does it need CLI subcommands? | Yes (plugins can register) | No preference |
+| Does it need HTTP routes? | Yes (plugins can register) | No preference |
 | Is it specific to certain use cases? | Yes | No |
 | Would third parties want similar features? | Yes | No |
 
-### Current Plugin API Limitations
+### Plugin API Capabilities
 
-As of Milestone 4.2.5, the `vibes-plugin-api` supports:
-- Session lifecycle hooks (`on_session_created`, `on_turn_complete`, etc.)
-- Event subscription
+The `vibes-plugin-api` (v2) supports:
 
-It does **not yet** support:
-- Registering CLI subcommands
-- Registering HTTP routes
-- Deep server integration
+- **Session lifecycle hooks** — `on_session_created`, `on_turn_complete`, `on_hook`, etc.
+- **CLI command registration** — `ctx.register_command(CommandSpec { ... })` → `vibes <plugin> <command>`
+- **HTTP route registration** — `ctx.register_route(RouteSpec { ... })` → `/api/plugins/<plugin>/...`
+- **Configuration** — Persistent key-value store with TOML serialization
+- **Logging** — Plugin-prefixed logging via tracing
 
-**If your feature needs CLI commands or HTTP routes and should be a plugin**, the plugin API must first be extended (see Milestone 4.2.6).
+Plugins implement `handle_command()` and `handle_route()` on the `Plugin` trait to respond to registered commands and routes.
 
 ### Example: groove
 
-The groove continual learning system was initially implemented with direct CLI commands in `vibes-cli` and HTTP routes in `vibes-server`. This is **technical debt** that should be migrated to the plugin system once the plugin API supports CLI/HTTP registration.
+The **groove** continual learning plugin demonstrates proper plugin architecture:
 
-**Lesson learned:** Identify plugin vs built-in during the design phase, not after implementation.
+- **CLI commands** registered via `register_command()` → `vibes groove init`, `vibes groove status`, etc.
+- **HTTP routes** registered via `register_route()` → `/api/plugins/groove/...`
+- **Event hooks** — `on_hook()` captures Claude Code events for learning extraction
+- **Configuration** — Stores scope and injection preferences
+
+This pattern should be followed for all new feature plugins.
 
 ## Plan Directory Structure
 
