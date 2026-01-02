@@ -63,19 +63,6 @@ function RootLayout() {
   )
 }
 
-// Home page
-function HomePage() {
-  return (
-    <div className="page">
-      <h1>vibes</h1>
-      <p>Remote control for your AI sessions</p>
-      <Link to="/sessions" className="button">
-        View Sessions
-      </Link>
-    </div>
-  )
-}
-
 // Define routes
 const rootRoute = createRootRoute({
   component: RootLayout,
@@ -84,7 +71,7 @@ const rootRoute = createRootRoute({
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
-  component: HomePage,
+  component: StreamsPage,
 })
 
 const sessionsRoute = createRoute({
