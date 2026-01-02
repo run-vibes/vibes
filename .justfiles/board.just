@@ -27,7 +27,7 @@ generate:
         for item in in-progress/*/; do
             [[ -d "$item" ]] || continue
             name=$(basename "$item")
-            echo "### $name"
+            echo "### [$name](in-progress/$name/)"
             if [[ -f "${item}design.md" ]]; then
                 # Extract first non-empty, non-heading line as description
                 desc=$(grep -m1 "^>" "${item}design.md" 2>/dev/null | sed 's/^> *//' || echo "")
@@ -40,7 +40,7 @@ generate:
                 for story in "${item}stories"/*.md; do
                     [[ -f "$story" ]] || continue
                     sname=$(basename "$story" .md)
-                    echo "- [ ] $sname"
+                    echo "- [ ] [$sname](in-progress/$name/stories/$sname.md)"
                 done
             fi
             echo ""
@@ -48,7 +48,7 @@ generate:
         for item in in-progress/*.md; do
             [[ -f "$item" ]] || continue
             name=$(basename "$item" .md)
-            echo "- [~] $name"
+            echo "- [~] [$name](in-progress/$name.md)"
         done
     else
         echo "*No items in progress*"
@@ -64,12 +64,14 @@ generate:
         for item in ready/*/; do
             [[ -d "$item" ]] || continue
             name=$(basename "$item")
-            echo "### $name"
+            echo "### [$name](ready/$name/)"
             if [[ -d "${item}stories" ]]; then
+                echo ""
+                echo "Stories:"
                 for story in "${item}stories"/*.md; do
                     [[ -f "$story" ]] || continue
                     sname=$(basename "$story" .md)
-                    echo "- [ ] $sname"
+                    echo "- [ ] [$sname](ready/$name/stories/$sname.md)"
                 done
             fi
             echo ""
@@ -77,7 +79,7 @@ generate:
         for item in ready/*.md; do
             [[ -f "$item" ]] || continue
             name=$(basename "$item" .md)
-            echo "- [ ] $name"
+            echo "- [ ] [$name](ready/$name.md)"
         done
     else
         echo "*No items ready*"
@@ -94,10 +96,11 @@ generate:
             [[ -e "$item" ]] || continue
             if [[ -d "$item" ]]; then
                 name=$(basename "$item")
+                echo "- [x] [$name](review/$name/)"
             else
                 name=$(basename "$item" .md)
+                echo "- [x] [$name](review/$name.md)"
             fi
-            echo "- [x] $name"
         done
     else
         echo "*No items in review*"
@@ -115,13 +118,13 @@ generate:
             if [[ -d "$item" ]]; then
                 name=$(basename "$item")
                 if [[ ! -f "${item}implementation.md" ]]; then
-                    echo "- $name *(design only)*"
+                    echo "- [$name](backlog/$name/) *(design only)*"
                 else
-                    echo "- $name"
+                    echo "- [$name](backlog/$name/)"
                 fi
             else
                 name=$(basename "$item" .md)
-                echo "- $name"
+                echo "- [$name](backlog/$name.md)"
             fi
         done
     else
@@ -142,10 +145,11 @@ generate:
             [[ -e "$item" ]] || continue
             if [[ -d "$item" ]]; then
                 name=$(basename "$item")
+                echo "- [$name](done/$name/)"
             else
                 name=$(basename "$item" .md)
+                echo "- [$name](done/$name.md)"
             fi
-            echo "- $name"
         done
     else
         echo "*No completed items*"
