@@ -2,6 +2,25 @@
 
 This document describes how to use the kanban planning board at `docs/board/`.
 
+## Index
+
+| Section | Description |
+|---------|-------------|
+| [Board Structure](#board-structure) | Directory layout and columns |
+| [Commands](#commands) | `just board` command reference |
+| [Work Item Types](#work-item-types) | Milestones, stories, features, bugs, chores |
+| [When to Create a Plan](#when-to-create-a-plan) | Planning vs just doing |
+| [Architectural Decision: Plugin vs Built-in](#architectural-decision-plugin-vs-built-in) | Where new features belong |
+| [Plan Directory Structure](#plan-directory-structure) | File organization for milestones |
+| [Phase 1: Design Document](#phase-1-design-document) | Architecture and design decisions |
+| [Phase 2: Implementation Plan](#phase-2-implementation-plan) | Stories and task breakdown |
+| [Using Plans with Claude Code](#using-plans-with-claude-code) | Superpowers skills for execution |
+| [Rust-Specific Conventions](#rust-specific-conventions) | Crate organization and patterns |
+| [Best Practices](#best-practices) | Do's and don'ts |
+| [Plan Review Checklist](#plan-review-checklist) | Pre-implementation verification |
+
+---
+
 ## Board Structure
 
 ```
