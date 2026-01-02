@@ -1,7 +1,7 @@
 # vibes
 
 [![CI](https://github.com/run-vibes/vibes/actions/workflows/ci.yml/badge.svg)](https://github.com/run-vibes/vibes/actions/workflows/ci.yml)
-[![Progress](https://img.shields.io/badge/progress-18%2F27%20milestones-blue)](docs/board/README.md)
+[![Board](https://img.shields.io/badge/📋_board-view-blue)](docs/board/README.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Remote control for your Claude Code sessions.
