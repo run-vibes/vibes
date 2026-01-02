@@ -32,7 +32,7 @@ async fn broadcasts_client_connected_on_websocket_connect() {
         .expect("Channel closed");
 
     match event {
-        VibesEvent::ClientConnected { client_id } => {
+        (_offset, VibesEvent::ClientConnected { client_id }) => {
             assert!(!client_id.is_empty(), "client_id should not be empty");
         }
         other => panic!("Expected ClientConnected, got {:?}", other),
@@ -62,7 +62,7 @@ async fn broadcasts_session_created_on_attach() {
         .expect("Channel closed before ClientConnected event");
 
     match client_connected_event {
-        VibesEvent::ClientConnected { client_id } => {
+        (_offset, VibesEvent::ClientConnected { client_id }) => {
             assert!(!client_id.is_empty(), "client_id should not be empty");
         }
         other => panic!(
@@ -80,10 +80,13 @@ async fn broadcasts_session_created_on_attach() {
         .expect("Channel closed");
 
     match event {
-        VibesEvent::SessionCreated {
-            session_id: event_session_id,
-            name,
-        } => {
+        (
+            _offset,
+            VibesEvent::SessionCreated {
+                session_id: event_session_id,
+                name,
+            },
+        ) => {
             assert_eq!(event_session_id, session_id);
             assert_eq!(name, Some("test-session".to_string()));
         }
@@ -115,7 +118,7 @@ async fn broadcasts_client_disconnected_on_websocket_close() {
         .expect("Channel closed");
 
     match event {
-        VibesEvent::ClientDisconnected { client_id } => {
+        (_offset, VibesEvent::ClientDisconnected { client_id }) => {
             assert!(!client_id.is_empty(), "client_id should not be empty");
         }
         other => panic!("Expected ClientDisconnected, got {:?}", other),
@@ -158,10 +161,13 @@ async fn broadcasts_session_removed_on_kill() {
         .expect("Channel closed");
 
     match event {
-        VibesEvent::SessionRemoved {
-            session_id: event_session_id,
-            reason,
-        } => {
+        (
+            _offset,
+            VibesEvent::SessionRemoved {
+                session_id: event_session_id,
+                reason,
+            },
+        ) => {
             assert_eq!(event_session_id, session_id);
             assert!(!reason.is_empty(), "reason should not be empty");
         }

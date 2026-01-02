@@ -10,7 +10,7 @@ use vibes_core::{
     pty::{PtyConfig, PtyManager},
 };
 use vibes_iggy::{
-    EventLog, IggyConfig, IggyEventLog, IggyManager, InMemoryEventLog, run_preflight_checks,
+    EventLog, IggyConfig, IggyEventLog, IggyManager, InMemoryEventLog, Offset, run_preflight_checks,
 };
 
 /// PTY output event for broadcasting to attached clients
@@ -47,8 +47,8 @@ pub struct AppState {
     pub auth_layer: AuthLayer,
     /// When the server started
     pub started_at: DateTime<Utc>,
-    /// Broadcast channel for WebSocket event distribution
-    event_broadcaster: broadcast::Sender<VibesEvent>,
+    /// Broadcast channel for WebSocket event distribution (offset, event)
+    event_broadcaster: broadcast::Sender<(Offset, VibesEvent)>,
     /// VAPID key manager for push notifications (optional)
     pub vapid: Option<Arc<VapidKeyManager>>,
     /// Push subscription store (optional)
@@ -286,15 +286,15 @@ impl AppState {
     /// Get the event broadcaster sender for consumer integration.
     ///
     /// This is used by EventLog consumers to broadcast events to WebSocket clients.
-    pub fn event_broadcaster(&self) -> broadcast::Sender<VibesEvent> {
+    pub fn event_broadcaster(&self) -> broadcast::Sender<(Offset, VibesEvent)> {
         self.event_broadcaster.clone()
     }
 
     /// Subscribe to events broadcast to WebSocket clients
     ///
-    /// Returns a receiver that will receive all VibesEvents published
+    /// Returns a receiver that will receive (offset, event) tuples published
     /// through the event broadcaster.
-    pub fn subscribe_events(&self) -> broadcast::Receiver<VibesEvent> {
+    pub fn subscribe_events(&self) -> broadcast::Receiver<(Offset, VibesEvent)> {
         self.event_broadcaster.subscribe()
     }
 
@@ -316,7 +316,7 @@ impl AppState {
         });
     }
 
-    /// Broadcast an event to all subscribed WebSocket clients.
+    /// Broadcast an event with its offset to all subscribed WebSocket clients.
     ///
     /// **Internal API:** Event producers should NOT call this directly.
     /// Use [`append_event`] instead, which writes to the EventLog.
@@ -325,8 +325,8 @@ impl AppState {
     ///
     /// Returns the number of receivers that received the event.
     /// Returns 0 if there are no active subscribers.
-    pub fn broadcast_event(&self, event: VibesEvent) -> usize {
-        self.event_broadcaster.send(event).unwrap_or(0)
+    pub fn broadcast_event(&self, offset: Offset, event: VibesEvent) -> usize {
+        self.event_broadcaster.send((offset, event)).unwrap_or(0)
     }
 
     /// Subscribe to PTY events broadcast to WebSocket clients
@@ -410,7 +410,7 @@ mod tests {
             session_id: "sess-1".to_string(),
             name: None,
         };
-        let count = state.broadcast_event(event);
+        let count = state.broadcast_event(0, event);
         assert_eq!(count, 0);
     }
 
@@ -426,10 +426,11 @@ mod tests {
             },
         };
 
-        let count = state.broadcast_event(event.clone());
+        let count = state.broadcast_event(42, event.clone());
         assert_eq!(count, 1);
 
-        let received = receiver.recv().await.unwrap();
+        let (offset, received) = receiver.recv().await.unwrap();
+        assert_eq!(offset, 42);
         match received {
             VibesEvent::Claude { session_id, event } => {
                 assert_eq!(session_id, "sess-1");
@@ -453,12 +454,15 @@ mod tests {
             state: "processing".to_string(),
         };
 
-        let count = state.broadcast_event(event);
+        let count = state.broadcast_event(99, event);
         assert_eq!(count, 2);
 
-        // Both receivers should get the event
-        let received1 = receiver1.recv().await.unwrap();
-        let received2 = receiver2.recv().await.unwrap();
+        // Both receivers should get the event with offset
+        let (offset1, received1) = receiver1.recv().await.unwrap();
+        let (offset2, received2) = receiver2.recv().await.unwrap();
+
+        assert_eq!(offset1, 99);
+        assert_eq!(offset2, 99);
 
         match received1 {
             VibesEvent::SessionStateChanged { session_id, state } => {
