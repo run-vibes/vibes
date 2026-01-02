@@ -11,6 +11,7 @@ Stories:
 - [ ] [chore-03-integration-testing](in-progress/milestone-26-assessment-framework/stories/chore-03-integration-testing.md)
 - [ ] [feat-02-processor-wiring](in-progress/milestone-26-assessment-framework/stories/feat-02-processor-wiring.md)
 
+- [~] [bug-0002-firehose-not-loading-historical-events](in-progress/bug-0002-firehose-not-loading-historical-events.md)
 
 ---
 
@@ -28,7 +29,6 @@ Stories:
 
 ## 📥 Backlog
 
-- [bug-0002-firehose-not-loading-historical-events](backlog/bug-0002-firehose-not-loading-historical-events.md)
 - [milestone-27-learning-extraction](backlog/milestone-27-learning-extraction/) *(design only)*
 - [milestone-28-attribution-engine](backlog/milestone-28-attribution-engine/) *(design only)*
 - [milestone-29-adaptive-strategies](backlog/milestone-29-adaptive-strategies/) *(design only)*
