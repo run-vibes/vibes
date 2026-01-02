@@ -47,6 +47,7 @@ Stories:
 <summary>View completed work</summary>
 
 - [bug-0001-cwd-propagation](done/bug-0001-cwd-propagation.md)
+- [bug-0002-firehose-not-loading-historical-events](done/bug-0002-firehose-not-loading-historical-events.md)
 - [milestone-01-core-proxy](done/milestone-01-core-proxy/)
 - [milestone-02-cli](done/milestone-02-cli/)
 - [milestone-03-plugin-foundation](done/milestone-03-plugin-foundation/)

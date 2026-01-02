@@ -2,6 +2,7 @@
 
 > Updated when items move to done. Most recent first.
 
+| 2026-01-01 | bug-0002-firehose-not-loading-historical-events | Fix firehose to load last 100 historical events on WebSocket connection |
 | Date | Item | Summary |
 |------|------|---------|
 | 2026-01-01 | kanban-board-migration | Migrate planning to kanban board structure |

@@ -4,6 +4,7 @@
 //! optionally filtered by event type and/or session ID.
 
 use std::sync::Arc;
+use std::time::Duration;
 
 use axum::{
     extract::{
@@ -17,6 +18,7 @@ use serde::Deserialize;
 use tokio::sync::broadcast;
 use tracing::warn;
 use vibes_core::VibesEvent;
+use vibes_iggy::SeekPosition;
 
 use crate::AppState;
 
@@ -40,40 +42,60 @@ pub async fn firehose_ws(
     ws.on_upgrade(move |socket| handle_firehose(socket, state, query))
 }
 
+/// Number of historical events to send on firehose connection
+const HISTORICAL_EVENT_COUNT: u64 = 100;
+
 async fn handle_firehose(socket: WebSocket, state: Arc<AppState>, query: FirehoseQuery) {
     let (mut sender, mut receiver) = socket.split();
-    let mut events_rx = state.subscribe_events();
 
     // Parse filter types
-    let filter_types: Option<Vec<String>> = query.types.map(|t| {
+    let filter_types: Option<Vec<String>> = query.types.as_ref().map(|t| {
         t.split(',')
             .map(|s| s.trim().to_lowercase())
             .filter(|s| !s.is_empty())
             .collect()
     });
-    let filter_session = query.session;
+    let filter_session = query.session.clone();
+
+    // Subscribe to broadcast BEFORE loading historical events to avoid gaps
+    let mut events_rx = state.subscribe_events();
+
+    // Load historical events from EventLog
+    let historical_events = load_historical_events(&state, HISTORICAL_EVENT_COUNT).await;
+
+    // Clone filters for the send task
+    let filter_types_clone = filter_types.clone();
+    let filter_session_clone = filter_session.clone();
 
     // Spawn task to forward events to WebSocket
     let send_task = tokio::spawn(async move {
+        // First, send historical events
+        for event in historical_events {
+            if !matches_filters(&event, &filter_types_clone, &filter_session_clone) {
+                continue;
+            }
+
+            match serde_json::to_string(&event) {
+                Ok(json) => {
+                    if let Err(e) = sender.send(Message::Text(json)).await {
+                        warn!("Firehose send failed (historical): {}", e);
+                        return;
+                    }
+                }
+                Err(e) => {
+                    warn!("Failed to serialize historical event: {}", e);
+                }
+            }
+        }
+
+        // Then stream live events from broadcast
         loop {
             match events_rx.recv().await {
                 Ok(event) => {
-                    // Apply type filter
-                    if let Some(ref types) = filter_types {
-                        let event_type = event_type_name(&event).to_lowercase();
-                        if !types.iter().any(|t| event_type.contains(t)) {
-                            continue;
-                        }
-                    }
-
-                    // Apply session filter (uses VibesEvent's built-in method)
-                    if let Some(ref session) = filter_session
-                        && event.session_id() != Some(session.as_str())
-                    {
+                    if !matches_filters(&event, &filter_types_clone, &filter_session_clone) {
                         continue;
                     }
 
-                    // Serialize and send
                     match serde_json::to_string(&event) {
                         Ok(json) => {
                             if let Err(e) = sender.send(Message::Text(json)).await {
@@ -104,6 +126,30 @@ async fn handle_firehose(socket: WebSocket, state: Arc<AppState>, query: Firehos
     send_task.abort();
 }
 
+/// Check if an event matches the filter criteria
+fn matches_filters(
+    event: &VibesEvent,
+    filter_types: &Option<Vec<String>>,
+    filter_session: &Option<String>,
+) -> bool {
+    // Apply type filter
+    if let Some(types) = filter_types {
+        let event_type = event_type_name(event).to_lowercase();
+        if !types.iter().any(|t| event_type.contains(t)) {
+            return false;
+        }
+    }
+
+    // Apply session filter
+    if let Some(session) = filter_session
+        && event.session_id() != Some(session.as_str())
+    {
+        return false;
+    }
+
+    true
+}
+
 /// Get the event type name for filtering
 fn event_type_name(event: &VibesEvent) -> &'static str {
     match event {
@@ -121,10 +167,118 @@ fn event_type_name(event: &VibesEvent) -> &'static str {
     }
 }
 
+/// Load the last N events from the EventLog.
+///
+/// Returns events in chronological order (oldest first).
+async fn load_historical_events(state: &AppState, count: u64) -> Vec<VibesEvent> {
+    let hwm = state.event_log.high_water_mark();
+    if hwm == 0 {
+        return Vec::new();
+    }
+
+    let start_offset = hwm.saturating_sub(count);
+
+    // Create a temporary consumer to read historical events
+    let consumer_group = format!("firehose-historical-{}", uuid::Uuid::new_v4());
+    let mut consumer = match state.event_log.consumer(&consumer_group).await {
+        Ok(c) => c,
+        Err(e) => {
+            warn!("Failed to create historical event consumer: {}", e);
+            return Vec::new();
+        }
+    };
+
+    // Seek to the start position
+    if let Err(e) = consumer.seek(SeekPosition::Offset(start_offset)).await {
+        warn!("Failed to seek historical consumer: {}", e);
+        return Vec::new();
+    }
+
+    // Poll for events (short timeout since they should already exist)
+    match consumer
+        .poll(count as usize, Duration::from_millis(100))
+        .await
+    {
+        Ok(batch) => batch.into_iter().map(|(_offset, event)| event).collect(),
+        Err(e) => {
+            warn!("Failed to poll historical events: {}", e);
+            Vec::new()
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use vibes_core::ClaudeEvent;
+
+    #[tokio::test]
+    async fn load_historical_events_returns_last_n_events() {
+        use crate::AppState;
+
+        // Create state with in-memory event log
+        let state = AppState::new();
+
+        // Append 5 events to the EventLog
+        for i in 0..5 {
+            let event = VibesEvent::SessionCreated {
+                session_id: format!("session-{}", i),
+                name: Some(format!("Session {}", i)),
+            };
+            state.event_log.append(event).await.unwrap();
+        }
+
+        // Load last 3 events
+        let events = load_historical_events(&state, 3).await;
+
+        // Should get the last 3 events (sessions 2, 3, 4)
+        assert_eq!(events.len(), 3);
+
+        // Verify they're the correct events (last 3)
+        if let VibesEvent::SessionCreated { session_id, .. } = &events[0] {
+            assert_eq!(session_id, "session-2");
+        } else {
+            panic!("Expected SessionCreated event");
+        }
+
+        if let VibesEvent::SessionCreated { session_id, .. } = &events[2] {
+            assert_eq!(session_id, "session-4");
+        } else {
+            panic!("Expected SessionCreated event");
+        }
+    }
+
+    #[tokio::test]
+    async fn load_historical_events_returns_all_when_fewer_than_requested() {
+        use crate::AppState;
+
+        let state = AppState::new();
+
+        // Append only 2 events
+        for i in 0..2 {
+            let event = VibesEvent::SessionCreated {
+                session_id: format!("session-{}", i),
+                name: None,
+            };
+            state.event_log.append(event).await.unwrap();
+        }
+
+        // Request 100 events but only 2 exist
+        let events = load_historical_events(&state, 100).await;
+
+        assert_eq!(events.len(), 2);
+    }
+
+    #[tokio::test]
+    async fn load_historical_events_returns_empty_when_no_events() {
+        use crate::AppState;
+
+        let state = AppState::new();
+
+        let events = load_historical_events(&state, 100).await;
+
+        assert!(events.is_empty());
+    }
 
     #[test]
     fn event_type_name_returns_correct_names() {
