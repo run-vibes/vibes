@@ -1,5 +1,8 @@
 # vibes task runner
 
+# Planning board management
+mod board '.justfiles/board.just'
+
 # Default: show available commands
 default:
     @just --list

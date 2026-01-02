@@ -20,7 +20,7 @@ A utility application that proxies Claude Code with remote access capabilities, 
 
 ### Current State
 
-**Phases 1-3 are complete** (11 milestones). See [docs/PROGRESS.md](docs/PROGRESS.md) for details.
+**Phases 1-3 are complete** (11 milestones). See [docs/board/README.md](docs/board/README.md) for details.
 
 Key capabilities:
 - `vibes claude` proxies Claude Code with PTY-based terminal (full CLI parity)
@@ -36,7 +36,7 @@ Key capabilities:
 **Current: Phase 4 (vibes groove)** - The continual learning system:
 - Milestone 4.1 (Harness Introspection) ✓ complete
 - Milestone 4.2 (Storage Foundation) in progress
-- See [groove design](docs/plans/14-continual-learning/design.md) and [branding](docs/groove/BRANDING.md)
+- See [groove design](docs/board/14-continual-learning/design.md) and [branding](docs/groove/BRANDING.md)
 
 ## Development Environment
 
@@ -135,45 +135,35 @@ just test-integration    # Requires Claude CLI
 just test-all            # Unit + integration tests
 ```
 
-## Planning Process
+## Planning & Tracking
 
-**See [docs/PLAN.md](docs/PLAN.md) for full planning conventions.**
+**Use the board to track all work:**
 
-Plans are required for new milestones and significant features. Skip planning for bug fixes, small changes, and documentation updates.
-
-### When to Create a Plan
-
-| Create Plan | Skip Planning |
-|-------------|---------------|
-| New milestone | Bug fixes with obvious solutions |
-| New crate or module | Single-file changes |
-| Architectural changes | Documentation updates |
-| External integrations | Test additions for existing code |
-
-### Plan Directory Structure
-
-```
-docs/plans/
-├── 01-core-proxy/              # Standard milestone (design.md + implementation.md)
-├── ...
-├── 14-continual-learning/      # Multi-phase epic (see PLAN.md)
-│   ├── design.md               # Unified design for all sub-milestones
-│   ├── milestone-4.2-decisions.md
-│   └── milestone-4.2-implementation.md
-└── 15-harness-introspection/   # Standard milestone
-    ├── design.md
-    └── implementation.md
+```bash
+just board                        # Regenerate board view
+just board new feat "description" # Create new feature
+just board new milestone "name"   # Create new milestone
+just board start <item>           # Begin work (→ in-progress)
+just board review <item>          # Ready for review (→ review)
+just board done <item>            # Complete (→ done + changelog)
+just board status                 # Show counts per column
 ```
 
-**Note:** For large epics with 3+ internal sub-milestones, see "Multi-Phase Milestones" in [docs/PLAN.md](docs/PLAN.md).
+**Before starting any task:**
+1. Check `docs/board/in-progress/` for current work
+2. If starting new work, use `just board start` or `just board new`
 
-### Planning Workflow
+**Board structure:**
+```
+docs/board/
+├── backlog/       # Future work and ideas
+├── ready/         # Designed, ready to implement
+├── in-progress/   # Currently being worked on
+├── review/        # Awaiting review/merge
+└── done/          # Completed work
+```
 
-1. **Brainstorm first**: Use `superpowers:brainstorming` skill to explore options
-2. **Write design.md**: Capture architecture decisions, types, and trade-offs
-3. **Get approval**: PR or discussion before implementation
-4. **Write implementation.md**: Step-by-step tasks with TDD pattern
-5. **Execute plan**: Use `superpowers:executing-plans` skill
+See [docs/board/CONVENTIONS.md](docs/board/CONVENTIONS.md) for full planning conventions.
 
 ## Development Workflow
 
@@ -189,7 +179,7 @@ docs/plans/
 ### Workflow for New Features
 
 1. **Brainstorm**: Use `superpowers:brainstorming` to explore options and trade-offs
-2. **Plan**: Write `design.md` then `implementation.md` (see [docs/PLAN.md](docs/PLAN.md))
+2. **Plan**: Write `design.md` then `implementation.md` (see [docs/board/CONVENTIONS.md](docs/board/CONVENTIONS.md))
 3. **Execute**: Use `superpowers:executing-plans` skill with the plan
 4. **Implement with TDD**: Use `superpowers:test-driven-development` for each task
 5. **Fix issues**: Use `superpowers:systematic-debugging` - never guess at fixes
@@ -205,17 +195,29 @@ docs/plans/
 
 **This workflow is mandatory.** Do not skip skills or try to implement without following this process.
 
-## Completing Implementation Work
+## Completing Work
 
-**REQUIRED:** When implementation is complete, always create a Pull Request:
+**REQUIRED:** When implementation is complete:
 
-1. Verify all tests pass: `just test`
-2. Run pre-commit checks: `just pre-commit`
-3. Commit changes with conventional commit message
-4. Push to origin: `git push -u origin <branch-name>`
-5. Create PR: `gh pr create --title "<type>: <description>" --body "..."`
+1. **Verify quality:**
+   - Run `just test` — all tests pass
+   - Run `just pre-commit` — fmt, clippy, tests
 
-**Never leave completed work uncommitted or unpushed.** All implementation work should result in a PR for review.
+2. **Update the board:**
+   - Run `just board done <item>`
+   - Enter a one-line changelog summary when prompted
+   - This moves the item to `done/` and updates CHANGELOG.md
+
+3. **Commit and push:**
+   - Commit with conventional commit message
+   - Push to origin: `git push -u origin <branch-name>`
+
+4. **Create PR:**
+   - `gh pr create --title "<type>: <description>" --body "..."`
+
+**Never leave completed work:**
+- Uncommitted or unpushed
+- Still in `in-progress/` after merging
 
 ## Testing Philosophy (TDD)
 
@@ -254,9 +256,8 @@ All checks must pass before work is considered done.
 ## Progress Tracking
 
 When completing work that corresponds to a roadmap item:
-1. Update [docs/PROGRESS.md](docs/PROGRESS.md) to mark the item complete
-2. Change `[ ]` to `[x]` for completed items, or `[~]` for in-progress items
-3. Add an entry to the Changelog table at the bottom with the date and change
+1. Use `just board done <item>` to move the item to done and update changelog
+2. See [docs/board/README.md](docs/board/README.md) for overall project status
 
 ## Git Commit Conventions
 
