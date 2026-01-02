@@ -4,39 +4,44 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**vibes** - Remote control for your Claude Code sessions
+**vibes** — The vibe engineering mech suit.
 
-A utility application that proxies Claude Code with remote access capabilities, plugin system, and cross-platform support (CLI, native GUI, web UI). See [docs/PRD.md](docs/PRD.md) for full product requirements.
+vibes augments *you*—the human developer—with AI-powered superpowers: remote session control, persistent context, and a learning system that remembers what works. You stay in command; vibes amplifies your reach.
+
+See [docs/PRD.md](docs/PRD.md) for full product requirements.
 
 ### Key Architecture
 
 - **vibes-core**: Shared Rust library (sessions, events, plugins, auth, tunnel, notifications)
 - **vibes-server**: HTTP/WebSocket server (axum-based)
 - **vibes-cli**: CLI binary consuming vibes-core, connects to daemon via WebSocket
+- **vibes-iggy**: EventLog implementation backed by Apache Iggy message streaming
 - **vibes-plugin-api**: Published crate for plugin authors
-- **vibes-introspection**: Harness detection and capability discovery (Level 0 for groove)
-- **vibes-groove**: Continual learning plugin (in development)
+- **vibes-introspection**: Harness detection and capability discovery
+- **vibes-groove**: Continual learning plugin (in development, under `plugins/`)
 - **web-ui**: TanStack frontend embedded in binary via rust-embed
 
 ### Current State
 
-**Phases 1-3 are complete** (11 milestones). See [docs/board/README.md](docs/board/README.md) for details.
+**Phases 1-3 complete.** See [docs/board/README.md](docs/board/README.md) for details.
 
-Key capabilities:
+Core capabilities:
 - `vibes claude` proxies Claude Code with PTY-based terminal (full CLI parity)
 - Daemon architecture: server owns state, CLI + Web UI are WebSocket clients
 - Plugin system with dynamic native Rust library loading
 - Cloudflare Tunnel integration for remote access
 - Cloudflare Access JWT authentication with localhost bypass
 - Web Push notifications for session events
-- Persistent chat history with FTS5 full-text search
+- EventLog persistence via Apache Iggy
 - Multi-session support with real-time updates
 - CLI ↔ Web UI mirroring with source attribution
 
-**Current: Phase 4 (vibes groove)** - The continual learning system:
-- Milestone 4.1 (Harness Introspection) ✓ complete
-- Milestone 4.2 (Storage Foundation) in progress
-- See [groove design](docs/board/14-continual-learning/design.md) and [branding](docs/groove/BRANDING.md)
+**Current: Phase 4 (groove)** — The continual learning system:
+- 4.1 Harness Introspection ✓
+- 4.2 Storage Foundation ✓
+- 4.3 Capture & Inject ✓
+- 4.4 Assessment Framework 🔄 in progress
+- See [groove design](docs/board/in-progress/milestone-14-continual-learning/design.md) and [branding](docs/groove/BRANDING.md)
 
 ## Development Environment
 
