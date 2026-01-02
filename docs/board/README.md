@@ -28,6 +28,7 @@ Stories:
 
 ## 📥 Backlog
 
+- [feat-0004-firehose-infinite-scroll](backlog/feat-0004-firehose-infinite-scroll.md)
 - [milestone-27-learning-extraction](backlog/milestone-27-learning-extraction/) *(design only)*
 - [milestone-28-attribution-engine](backlog/milestone-28-attribution-engine/) *(design only)*
 - [milestone-29-adaptive-strategies](backlog/milestone-29-adaptive-strategies/) *(design only)*
