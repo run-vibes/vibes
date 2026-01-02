@@ -67,6 +67,15 @@ pub enum FirehoseClientMessage {
         #[serde(default)]
         limit: Option<u64>,
     },
+    /// Update the active filters for this connection
+    SetFilters {
+        /// Filter by event types (e.g., ["Claude", "SessionCreated"])
+        #[serde(default)]
+        types: Option<Vec<String>>,
+        /// Filter by session ID
+        #[serde(default)]
+        session: Option<String>,
+    },
 }
 
 /// Default limit for fetch_older requests
@@ -87,14 +96,14 @@ const HISTORICAL_EVENT_COUNT: u64 = 100;
 async fn handle_firehose(socket: WebSocket, state: Arc<AppState>, query: FirehoseQuery) {
     let (mut sender, mut receiver) = socket.split();
 
-    // Parse filter types
-    let filter_types: Option<Vec<String>> = query.types.as_ref().map(|t| {
+    // Parse filter types (mutable for dynamic filter updates)
+    let mut filter_types: Option<Vec<String>> = query.types.as_ref().map(|t| {
         t.split(',')
             .map(|s| s.trim().to_lowercase())
             .filter(|s| !s.is_empty())
             .collect()
     });
-    let filter_session = query.session.clone();
+    let mut filter_session = query.session.clone();
 
     // Subscribe to broadcast BEFORE loading historical events to avoid gaps
     let mut events_rx = state.subscribe_events();
@@ -135,8 +144,8 @@ async fn handle_firehose(socket: WebSocket, state: Arc<AppState>, query: Firehos
                             &text,
                             &state,
                             &mut sender,
-                            &filter_types,
-                            &filter_session,
+                            &mut filter_types,
+                            &mut filter_session,
                         ).await {
                             warn!("Failed to handle client message: {}", e);
                         }
@@ -175,8 +184,8 @@ async fn handle_client_message<S>(
     text: &str,
     state: &AppState,
     sender: &mut S,
-    filter_types: &Option<Vec<String>>,
-    filter_session: &Option<String>,
+    filter_types: &mut Option<Vec<String>>,
+    filter_session: &mut Option<String>,
 ) -> Result<(), String>
 where
     S: SinkExt<Message> + Unpin,
@@ -192,6 +201,34 @@ where
         } => {
             let count = limit.unwrap_or(DEFAULT_FETCH_LIMIT);
             let events = load_events_before_offset(state, before_offset, count).await;
+
+            let oldest_offset = events.first().map(|(offset, _)| *offset);
+            let has_more = oldest_offset.is_some_and(|o| o > 0);
+
+            let filtered_events: Vec<_> = events
+                .into_iter()
+                .filter(|(_, event)| matches_filters(event, filter_types, filter_session))
+                .map(|(offset, event)| FirehoseEventMessage { offset, event })
+                .collect();
+
+            let batch = FirehoseEventsBatch {
+                oldest_offset: filtered_events.first().map(|e| e.offset),
+                events: filtered_events,
+                has_more,
+            };
+
+            send_json(sender, &batch)
+                .await
+                .map_err(|e| format!("Failed to send batch: {}", e))?;
+        }
+
+        FirehoseClientMessage::SetFilters { types, session } => {
+            // Update filters - normalize types to lowercase
+            *filter_types = types.map(|t| t.into_iter().map(|s| s.to_lowercase()).collect());
+            *filter_session = session;
+
+            // Send fresh batch of latest events with new filters
+            let events = load_historical_events(state, HISTORICAL_EVENT_COUNT).await;
 
             let oldest_offset = events.first().map(|(offset, _)| *offset);
             let has_more = oldest_offset.is_some_and(|o| o > 0);
@@ -495,6 +532,7 @@ mod tests {
                 assert_eq!(before_offset, 100);
                 assert_eq!(limit, Some(50));
             }
+            _ => panic!("Expected FetchOlder"),
         }
     }
 
@@ -510,6 +548,7 @@ mod tests {
                 assert_eq!(before_offset, 100);
                 assert_eq!(limit, None);
             }
+            _ => panic!("Expected FetchOlder"),
         }
     }
 
@@ -589,5 +628,48 @@ mod tests {
         let events = load_events_before_offset(&state, 0, 100).await;
 
         assert!(events.is_empty());
+    }
+
+    #[test]
+    fn firehose_client_message_set_filters_deserializes() {
+        let msg: FirehoseClientMessage = serde_json::from_str(
+            r#"{"type":"set_filters","types":["Claude","SessionCreated"],"session":"sess-123"}"#,
+        )
+        .unwrap();
+        match msg {
+            FirehoseClientMessage::SetFilters { types, session } => {
+                assert_eq!(
+                    types,
+                    Some(vec!["Claude".to_string(), "SessionCreated".to_string()])
+                );
+                assert_eq!(session, Some("sess-123".to_string()));
+            }
+            _ => panic!("Expected SetFilters"),
+        }
+    }
+
+    #[test]
+    fn firehose_client_message_set_filters_with_empty_filters() {
+        let msg: FirehoseClientMessage = serde_json::from_str(r#"{"type":"set_filters"}"#).unwrap();
+        match msg {
+            FirehoseClientMessage::SetFilters { types, session } => {
+                assert!(types.is_none());
+                assert!(session.is_none());
+            }
+            _ => panic!("Expected SetFilters"),
+        }
+    }
+
+    #[test]
+    fn firehose_client_message_set_filters_clears_with_null() {
+        let msg: FirehoseClientMessage =
+            serde_json::from_str(r#"{"type":"set_filters","types":null,"session":null}"#).unwrap();
+        match msg {
+            FirehoseClientMessage::SetFilters { types, session } => {
+                assert!(types.is_none());
+                assert!(session.is_none());
+            }
+            _ => panic!("Expected SetFilters"),
+        }
     }
 }
