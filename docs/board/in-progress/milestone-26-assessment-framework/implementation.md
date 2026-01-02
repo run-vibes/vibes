@@ -21,11 +21,13 @@ What remains is cleanup, integration, and validation.
 
 ## Stories
 
-| # | Story | Description | Status |
-|---|-------|-------------|--------|
-| 1 | [chore-01-eventbus-cleanup](stories/chore-01-eventbus-cleanup.md) | Remove dead EventBus code from vibes-core | pending |
-| 2 | [feat-02-processor-wiring](stories/feat-02-processor-wiring.md) | Wire assessment components in processor | pending |
-| 3 | [chore-03-integration-testing](stories/chore-03-integration-testing.md) | Validate full pipeline end-to-end | pending |
+| # | Story | Description |
+|---|-------|-------------|
+| 1 | [chore-01-eventbus-cleanup](stories/chore-01-eventbus-cleanup.md) | Remove dead EventBus code from vibes-core |
+| 2 | [feat-02-processor-wiring](stories/feat-02-processor-wiring.md) | Wire assessment components in processor |
+| 3 | [chore-03-integration-testing](stories/chore-03-integration-testing.md) | Validate full pipeline end-to-end |
+
+> **Status:** Check story frontmatter or run `just board` for current status.
 
 ## Dependencies
 
