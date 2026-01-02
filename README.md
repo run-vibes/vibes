@@ -4,16 +4,17 @@
 [![Board](https://img.shields.io/badge/📋_board-view-blue)](docs/board/README.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Remote control for your Claude Code sessions.
+The vibe engineering mech suit.
 
-**vibes** wraps Claude Code with remote access, session management, and a plugin ecosystem — control your AI coding sessions from anywhere.
+**vibes** augments *you*—the human developer—with AI-powered superpowers: remote session control, persistent context, and a learning system that remembers what works. You stay in command; vibes amplifies your reach.
 
 ## Features
 
-- **Remote Access** - Control Claude Code sessions from your phone, tablet, or any device via web UI
-- **Session Mirroring** - Real-time sync between your terminal and remote devices
-- **Plugin System** - Extend vibes with native Rust plugins for custom commands and workflows
-- **Cross-Platform** - Single binary for Linux, macOS, and Windows
+- **Remote Access** — Control Claude Code sessions from your phone, tablet, or any device via web UI
+- **Session Mirroring** — Real-time sync between your terminal and remote devices
+- **Plugin System** — Extend vibes with native Rust plugins for custom commands and workflows
+- **Continual Learning** — groove learns your patterns and preferences across sessions
+- **Cross-Platform** — Single binary for Linux, macOS, and Windows
 
 ## Quick Start
 
@@ -36,7 +37,7 @@ just build
 cargo run -p vibes-cli -- claude
 ```
 
-Persistent event storage is automatic - no additional setup required.
+Persistent event storage is automatic—no additional setup required.
 
 ### Linux: io_uring Requirement
 
@@ -81,138 +82,7 @@ vibes config path                        # Show config file locations
 # Web UI available at http://localhost:7432
 ```
 
-## Plugins
-
-vibes supports native Rust plugins for extending functionality. Plugins can react to session events, track token usage, log conversations, and more.
-
-```bash
-# List installed plugins
-vibes plugin list
-
-# Enable/disable plugins
-vibes plugin enable analytics
-vibes plugin disable history
-
-# Show plugin details
-vibes plugin info my-plugin
-```
-
-### Plugin Directory
-
-Plugins are installed to `~/.config/vibes/plugins/`:
-
-```
-~/.config/vibes/plugins/
-├── registry.toml           # Tracks enabled plugins
-└── my-plugin/
-    ├── my-plugin.0.1.0.so  # Versioned binary
-    ├── my-plugin.so        # Symlink to current version
-    └── config.toml         # Plugin configuration
-```
-
-### Writing Plugins
-
-See the [example plugin](examples/plugins/hello-plugin/) for a complete working example.
-
-```rust
-use vibes_plugin_api::{export_plugin, Plugin, PluginContext, PluginError, PluginManifest};
-
-#[derive(Default)]
-pub struct MyPlugin;
-
-impl Plugin for MyPlugin {
-    fn manifest(&self) -> PluginManifest {
-        PluginManifest {
-            name: "my-plugin".to_string(),
-            version: "0.1.0".to_string(),
-            description: "My custom plugin".to_string(),
-            ..Default::default()
-        }
-    }
-
-    fn on_load(&mut self, ctx: &mut PluginContext) -> Result<(), PluginError> {
-        ctx.log_info("Plugin loaded!");
-        Ok(())
-    }
-
-    fn on_unload(&mut self) -> Result<(), PluginError> {
-        Ok(())
-    }
-}
-
-export_plugin!(MyPlugin);
-```
-
-## Architecture
-
-vibes uses a **daemon-first architecture** with a PTY-based backend and persistent event streaming. The server owns Claude sessions as persistent PTY processes, and both CLI and Web UI connect as terminal clients.
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                      vibes daemon (server)                          │
-│                        localhost:7432                               │
-├─────────────────────────────────────────────────────────────────────┤
-│  ┌──────────────┐    ┌──────────────┐    ┌───────────────────────┐ │
-│  │ PTY Manager  │◄───│ Hook Receiver│    │   WebSocket Server    │ │
-│  │              │    │   (events)   │    │                       │ │
-│  │ ┌──────────┐ │    └──────┬───────┘    │  ┌────────┐ ┌───────┐ │ │
-│  │ │ claude   │ │           │            │  │  CLI   │ │  Web  │ │ │
-│  │ │  (PTY)   │ │    structured          │  │terminal│ │xterm  │ │ │
-│  │ └──────────┘ │    ClaudeEvents        │  └────────┘ └───────┘ │ │
-│  └──────────────┘           │            └───────────────────────┘ │
-│                             ▼                                      │
-│  ┌──────────────────────────────────────────────────────────────┐  │
-│  │                    EventLog (Iggy)                            │  │
-│  │  Persistent event stream with consumer-based processing       │  │
-│  └───────────┬─────────────────┬─────────────────┬──────────────┘  │
-│              │                 │                 │                  │
-│        ┌─────▼─────┐    ┌──────▼──────┐   ┌─────▼─────┐            │
-│        │ WebSocket │    │ Notification│   │ Assessment│            │
-│        │ Consumer  │    │  Consumer   │   │ Consumer  │            │
-│        │(broadcast)│    │   (push)    │   │ (groove)  │            │
-│        └───────────┘    └─────────────┘   └───────────┘            │
-└─────────────────────────────────────────────────────────────────────┘
-         ▲                           ▲
-         │ PTY I/O via WebSocket     │ PTY I/O via WebSocket
-         │                           │
-┌────────┴────────┐         ┌────────┴────────┐
-│  vibes claude   │         │   Web Browser   │
-│  (CLI client)   │         │   (xterm.js)    │
-│  Raw terminal   │         │   Terminal UI   │
-└─────────────────┘         └─────────────────┘
-```
-
-**Key components:**
-
-- **Daemon Server** - Background process that owns PTY sessions (survives CLI disconnect)
-- **PTY Manager** - Spawns Claude in persistent pseudo-terminals
-- **Hook Receiver** - Captures structured events via Claude Code hooks
-- **EventLog (Iggy)** - Persistent event stream backed by Apache Iggy message streaming
-- **Consumers** - Independent processors (WebSocket broadcast, push notifications, groove assessment)
-- **CLI Client** - Connects to daemon, proxies PTY I/O to local terminal
-- **Web UI** - xterm.js terminal emulator showing exact CLI experience
-
 ## Testing
-
-vibes uses a three-layer testing pyramid:
-
-```
-┌─────────────────────────────────────────────────────────┐
-│           E2E Tests (e2e-tests/)                        │
-│  Playwright: Browser + CLI + Server integration         │
-│  Critical user journeys, runs on PR/main                │
-├─────────────────────────────────────────────────────────┤
-│        Integration Tests (crate/tests/)                 │
-│  WebSocket protocol, server config, concurrency         │
-│  In-process, runs in CI                                 │
-├─────────────────────────────────────────────────────────┤
-│           Unit Tests (#[cfg(test)])                     │
-│  Logic correctness, edge cases, MockBackend-based       │
-│  Fast, isolated, no I/O                                 │
-└─────────────────────────────────────────────────────────┘
-```
-
-### Running Tests
 
 ```bash
 # Unit + integration tests (recommended for development)
@@ -228,32 +98,31 @@ just test-e2e
 just pre-commit
 ```
 
-### Test Infrastructure
-
-- **MockBackend** - Scripted Claude responses for unit tests
-- **SlowMockBackend** - Delayed responses for concurrency tests
-- **TestClient** - WebSocket client for protocol testing
-- **Playwright** - Browser automation for e2e tests
-
 ## Documentation
 
-- [Product Requirements Document](docs/PRD.md) - Full design, architecture, and roadmap
-- [Planning Board](docs/board/README.md) - Kanban board tracking implementation status
-- [Planning Conventions](docs/board/CONVENTIONS.md) - How to create design and implementation plans
-- [CLAUDE.md](CLAUDE.md) - Development guidance for contributors
+- [Architecture](docs/ARCHITECTURE.md) — System design, event flow, and component overview
+- [Plugins](docs/PLUGINS.md) — Plugin system and in-tree plugins (including groove)
+- [Roadmap](docs/ROADMAP.md) — Development phases and milestone tracking
+- [Product Requirements](docs/PRD.md) — Full design specifications
+- [Planning Board](docs/board/README.md) — Kanban board tracking implementation status
+- [Planning Conventions](docs/board/CONVENTIONS.md) — How to create design and implementation plans
+- [CLAUDE.md](CLAUDE.md) — Development guidance for contributors
 
-## Roadmap
+## Glossary
 
-| Phase | Description | Status |
-|-------|-------------|--------|
-| [**1. Foundation**](docs/board/done/) | Claude Code proxy, plugin system, local web UI | ✅ Complete |
-| [**2. Remote Access**](docs/board/done/) | Cloudflare Tunnel, authentication, push notifications | ✅ Complete |
-| [**3. Multi-Client**](docs/board/done/) | PTY backend, xterm.js UI, multi-session, mirroring | ✅ Complete |
-| [**4. Continual Learning**](docs/board/in-progress/) | Self-improving assistant that learns from every session | 🔄 In Progress |
-| [**5. Polish**](docs/board/backlog/) | Setup wizards, default plugins, iOS app | ⏳ Planned |
-
-See [Planning Board](docs/board/README.md) for detailed milestone tracking and [Changelog](docs/board/CHANGELOG.md) for history.
+| Term | Definition |
+|------|------------|
+| **vibes** | The mech suit—wraps Claude Code with remote access, persistence, and plugins |
+| **daemon** | Background server that owns PTY sessions and persists across CLI disconnects |
+| **session** | A Claude Code conversation running in a persistent PTY |
+| **groove** | Continual learning plugin that remembers what works and injects it into future sessions |
+| **EventLog** | Persistent event stream backed by Apache Iggy |
+| **consumer** | Independent processor that reads from the EventLog (WebSocket, notifications, assessment) |
+| **PTY** | Pseudo-terminal—real terminal emulation for full escape sequence support |
+| **hook** | Claude Code extension point; vibes uses hooks to capture structured events |
+| **learning** | A captured pattern or preference that groove injects into future contexts |
+| **harness** | Any AI coding assistant (Claude Code, Cursor, etc.)—groove is harness-agnostic |
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
+MIT License — see [LICENSE](LICENSE) for details.
