@@ -70,16 +70,18 @@ The board supports four item types, organized hierarchically:
 Large deliverables that span multiple work sessions. Milestones contain a design doc, an implementation plan that indexes the stories, and one or more **stories** that break the work into mergeable chunks.
 
 ```
-docs/board/backlog/milestone-14-continual-learning/
+docs/board/in-progress/milestone-26-assessment-framework/
 ├── design.md              # Architecture and decisions
 ├── implementation.md      # Story index with links and sequence
 └── stories/               # Child work items (1 or more)
-    ├── feat-01-storage.md
-    ├── feat-02-capture.md
+    ├── feat-01-eventlog.md
+    ├── feat-02-assessment.md
     └── chore-03-cleanup.md
 ```
 
-**Create with:** `just board new milestone "Continual Learning"`
+**Numbering:** Milestones use sequential numbers (01, 02, 03...) that indicate priority order. Numbers flow from done → in-progress → backlog. Periodically reconcile numbers when milestones complete or priorities change.
+
+**Create with:** `just board new milestone "Assessment Framework"`
 
 ### Stories
 
@@ -135,26 +137,31 @@ Skip planning for:
 
 ## Plan Directory Structure
 
-Plans live in `docs/board/` with numbered directories matching milestones.
+Plans live in `docs/board/<column>/` within milestone directories.
 
 ```
 docs/board/
-├── 01-core-proxy/
-│   ├── design.md           # Architecture and design decisions
-│   └── implementation.md   # Step-by-step implementation guide
-├── 02-cli/
-│   ├── design.md
-│   └── implementation.md
-├── ...
-└── 08-chat-history/        # Next milestone
-    ├── design.md
-    └── implementation.md
+├── backlog/
+│   └── milestone-27-learning-extraction/
+│       └── design.md                    # Design only until ready
+├── in-progress/
+│   └── milestone-26-assessment-framework/
+│       ├── design.md                    # Architecture decisions
+│       ├── implementation.md            # Story index
+│       └── stories/
+│           ├── feat-01-eventlog.md
+│           └── feat-02-assessment.md
+└── done/
+    └── milestone-25-assessment-types/
+        ├── design.md
+        └── implementation.md
 ```
 
 **Naming:**
-- Prefix with zero-padded number (01, 02, 03...)
+- Prefix with zero-padded number (01, 02, 03... up to 99)
 - Use kebab-case for the name
 - Keep names short but descriptive
+- Numbers should be sequential across all columns
 
 ## Phase 1: Design Document
 
@@ -163,7 +170,7 @@ Before implementation, create a `design.md` that captures architectural decision
 ### Design Document Template
 
 ````markdown
-# Milestone X.Y: [Feature Name] - Design Document
+# Milestone NN: [Feature Name] - Design Document
 
 > [One-line summary of what this enables]
 
@@ -289,7 +296,7 @@ docs/board/<column>/milestone-NN-name/
 The `implementation.md` serves as the entry point and index for the milestone's stories:
 
 ```markdown
-# Milestone X.Y: [Name] - Implementation Plan
+# Milestone NN: [Name] - Implementation Plan
 
 > **For Claude:** Work through stories in order. Use superpowers:executing-plans for each story.
 
