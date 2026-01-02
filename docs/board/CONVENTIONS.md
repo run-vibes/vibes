@@ -36,16 +36,16 @@ The board supports four item types, organized hierarchically:
 
 ### Milestones
 
-Large deliverables that span multiple work sessions. Milestones contain design docs, implementation plans, and optionally **stories**.
+Large deliverables that span multiple work sessions. Milestones contain a design doc, an implementation plan that indexes the stories, and one or more **stories** that break the work into mergeable chunks.
 
 ```
 docs/board/backlog/milestone-14-continual-learning/
 ├── design.md              # Architecture and decisions
-├── implementation.md      # Step-by-step tasks (optional)
-└── stories/               # Child work items (optional)
-    ├── story-01-storage.md
-    ├── story-02-capture.md
-    └── story-03-inject.md
+├── implementation.md      # Story index with links and sequence
+└── stories/               # Child work items (1 or more)
+    ├── feat-01-storage.md
+    ├── feat-02-capture.md
+    └── chore-03-cleanup.md
 ```
 
 **Create with:** `just board new milestone "Continual Learning"`
@@ -54,7 +54,15 @@ docs/board/backlog/milestone-14-continual-learning/
 
 Focused work items that live within a milestone. Stories break large milestones into reviewable chunks—each story can be implemented and merged independently.
 
-**Structure:** `docs/board/<column>/milestone-XX-name/stories/story-NN-description.md`
+**Naming:** Stories use the same prefixes as standalone items (`feat-`, `bug-`, `chore-`) with a sequence number:
+
+```
+stories/
+├── feat-01-core-types.md      # New functionality
+├── feat-02-api-endpoints.md   # More new functionality
+├── bug-03-edge-case.md        # Fix discovered during implementation
+└── chore-04-docs.md           # Documentation, cleanup
+```
 
 **When to use stories:**
 - Milestone spans 3+ distinct deliverables
@@ -68,7 +76,7 @@ created: 2024-01-15
 status: pending  # pending | in-progress | done
 ---
 
-# Story: [Description]
+# [Type]: [Description]
 
 ## Goal
 
@@ -374,24 +382,53 @@ new-crate = "1.0"            # Purpose
 
 ## Phase 2: Implementation Plan
 
-After design approval, break the milestone into **stories**—focused deliverables that can be implemented and merged independently.
+After design approval, create an `implementation.md` that breaks the milestone into **stories**—focused deliverables that can be implemented and merged independently.
 
-### When to Use Stories vs Single Implementation
-
-| Approach | When to Use |
-|----------|-------------|
-| **Stories** | Milestone has 3+ distinct deliverables, work can be parallelized, each piece merits its own PR |
-| **Single implementation.md** | Small milestone, linear dependencies, single contributor |
-
-### Story Structure
+### Milestone Structure
 
 ```
 docs/board/<column>/milestone-NN-name/
 ├── design.md              # Architecture decisions (from Phase 1)
+├── implementation.md      # Story index with sequence and links
 └── stories/
-    ├── story-01-types.md      # Core type definitions
-    ├── story-02-storage.md    # Persistence layer
-    └── story-03-api.md        # HTTP endpoints
+    ├── feat-01-types.md       # Core type definitions
+    ├── feat-02-storage.md     # Persistence layer
+    └── feat-03-api.md         # HTTP endpoints
+```
+
+### Implementation Plan Template
+
+The `implementation.md` serves as the entry point and index for the milestone's stories:
+
+```markdown
+# Milestone X.Y: [Name] - Implementation Plan
+
+> **For Claude:** Work through stories in order. Use superpowers:executing-plans for each story.
+
+**Goal:** [One sentence describing the milestone outcome]
+
+**Design:** See [design.md](design.md) for architecture decisions.
+
+---
+
+## Stories
+
+| # | Story | Description | Status |
+|---|-------|-------------|--------|
+| 1 | [feat-01-types](stories/feat-01-types.md) | Core type definitions | pending |
+| 2 | [feat-02-storage](stories/feat-02-storage.md) | Persistence layer | pending |
+| 3 | [feat-03-api](stories/feat-03-api.md) | HTTP endpoints | pending |
+
+## Dependencies
+
+- Story 2 depends on Story 1 (types must exist before storage)
+- Story 3 can run in parallel with Story 2
+
+## Completion Criteria
+
+- [ ] All stories merged
+- [ ] Integration tests passing
+- [ ] Documentation updated
 ```
 
 ### Story Template
@@ -402,7 +439,7 @@ created: 2024-01-15
 status: pending  # pending | in-progress | done
 ---
 
-# Story: [Focused Deliverable]
+# [Type]: [Focused Deliverable]
 
 > **For Claude:** Use superpowers:executing-plans to implement this story.
 
@@ -446,7 +483,7 @@ Each task ends with a commit:
 ```bash
 # Create story files manually in the stories/ directory
 mkdir -p docs/board/in-progress/milestone-14-continual-learning/stories
-touch docs/board/in-progress/milestone-14-continual-learning/stories/story-01-types.md
+touch docs/board/in-progress/milestone-14-continual-learning/stories/feat-01-types.md
 ```
 
 The board generator automatically lists stories as checklists under their parent milestone.
