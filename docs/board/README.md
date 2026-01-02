@@ -28,7 +28,6 @@ Stories:
 
 ## 📥 Backlog
 
-- [bug-0002-firehose-not-loading-historical-events](backlog/bug-0002-firehose-not-loading-historical-events.md)
 - [milestone-27-learning-extraction](backlog/milestone-27-learning-extraction/) *(design only)*
 - [milestone-28-attribution-engine](backlog/milestone-28-attribution-engine/) *(design only)*
 - [milestone-29-adaptive-strategies](backlog/milestone-29-adaptive-strategies/) *(design only)*

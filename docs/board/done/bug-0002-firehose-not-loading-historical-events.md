@@ -1,5 +1,6 @@
 ---
 created: 2026-01-01
+status: done
 ---
 
 # bug-0002: Firehose Not Loading Historical Events
@@ -35,6 +36,6 @@ This leverages Iggy's persistent log—there's no reason to lose historical cont
 
 ## Acceptance Criteria
 
-- [ ] Firehose shows last N historical events on page load
-- [ ] New events stream in real-time after initial load
-- [ ] Works correctly after daemon restart (events persist in Iggy)
+- [x] Firehose shows last N historical events on page load
+- [x] New events stream in real-time after initial load
+- [x] Works correctly after daemon restart (events persist in Iggy)
