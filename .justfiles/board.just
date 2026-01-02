@@ -6,7 +6,10 @@ board_dir := source_directory() / ".." / "docs" / "board"
 
 # Default: regenerate the board README
 default:
-    @just board generate
+    #!/usr/bin/env bash
+    cd "{{board_dir}}"
+    just board generate > README.md
+    echo "✓ Board README.md updated"
 
 # Generate README.md from directory structure
 generate:

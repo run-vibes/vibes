@@ -8,9 +8,8 @@ import {
   useLocation,
 } from '@tanstack/react-router'
 import { Header } from '@vibes/design-system'
-import { ClaudeSessions } from './pages/ClaudeSessions'
-import { ClaudeSession } from './pages/ClaudeSession'
-import { StatusPage } from './pages/Status'
+import { Sessions } from './pages/Sessions'
+import { Session } from './pages/Session'
 import { QuarantinePage } from './pages/Quarantine'
 import { FirehosePage } from './pages/Firehose'
 import { DebugPage } from './pages/Debug'
@@ -39,8 +38,6 @@ function RootLayout() {
   };
 
   const navItems = [
-    { label: 'Sessions', href: '/claude', isActive: location.pathname.startsWith('/claude') },
-    { label: 'Streams', href: '/streams', isActive: location.pathname === '/streams' || location.pathname.startsWith('/firehose') || location.pathname.startsWith('/debug') },
     { label: 'Groove', href: '/groove', isGroove: true, isActive: location.pathname.startsWith('/groove') },
   ];
 
@@ -64,19 +61,6 @@ function RootLayout() {
   )
 }
 
-// Home page
-function HomePage() {
-  return (
-    <div className="page">
-      <h1>vibes</h1>
-      <p>Remote control for your Claude Code sessions</p>
-      <Link to="/claude" className="button">
-        View Sessions
-      </Link>
-    </div>
-  )
-}
-
 // Define routes
 const rootRoute = createRootRoute({
   component: RootLayout,
@@ -85,25 +69,19 @@ const rootRoute = createRootRoute({
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
-  component: HomePage,
+  component: StreamsPage,
 })
 
-const claudeRoute = createRoute({
+const sessionsRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/claude',
-  component: ClaudeSessions,
+  path: '/sessions',
+  component: Sessions,
 })
 
 const sessionRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/claude/$sessionId',
-  component: ClaudeSession,
-})
-
-const statusRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/status',
-  component: StatusPage,
+  path: '/sessions/$sessionId',
+  component: Session,
 })
 
 const grooveRoute = createRoute({
@@ -139,9 +117,8 @@ const settingsRoute = createRoute({
 // Create route tree and router
 const routeTree = rootRoute.addChildren([
   indexRoute,
-  claudeRoute,
+  sessionsRoute,
   sessionRoute,
-  statusRoute,
   grooveRoute,
   streamsRoute,
   firehoseRoute,

@@ -55,7 +55,7 @@ export function SessionCard({
   };
 
   return (
-    <Link to="/claude/$sessionId" params={{ sessionId: id }} className="session-card">
+    <Link to="/sessions/$sessionId" params={{ sessionId: id }} className="session-card">
       <div className="session-card-header">
         <h3>
           {displayName}

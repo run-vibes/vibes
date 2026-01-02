@@ -27,7 +27,7 @@ export function TunnelBadge() {
     : status.error || config.tooltip;
 
   return (
-    <Link to="/status" style={{ textDecoration: 'none' }}>
+    <Link to="/settings" style={{ textDecoration: 'none' }}>
       <span
         style={{
           color: config.color,

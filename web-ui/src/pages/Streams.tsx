@@ -78,31 +78,16 @@ export function StreamsPage() {
             </Panel>
           </Link>
 
-          <Link to="/claude" className="stream-card-link">
+          <Link to="/sessions" className="stream-card-link">
             <Panel title="Sessions" className="stream-card">
               <div className="stream-card-content">
                 <div className="stream-icon">💬</div>
                 <Text intensity="dim">
-                  Manage and monitor Claude Code sessions
+                  Manage and monitor active sessions
                 </Text>
                 <div className="stream-stats">
                   <span className="stat-value">→</span>
                   <span className="stat-label">view sessions</span>
-                </div>
-              </div>
-            </Panel>
-          </Link>
-
-          <Link to="/status" className="stream-card-link">
-            <Panel title="Status" className="stream-card">
-              <div className="stream-card-content">
-                <div className="stream-icon">📡</div>
-                <Text intensity="dim">
-                  Tunnel status and notification settings
-                </Text>
-                <div className="stream-stats">
-                  <span className="stat-value">{tunnel?.url ? '●' : '○'}</span>
-                  <span className="stat-label">{tunnel?.url ? 'active' : 'inactive'}</span>
                 </div>
               </div>
             </Panel>

@@ -1,5 +1,5 @@
 /**
- * Claude session page - displays a PTY terminal for interacting with Claude
+ * Session page - displays a PTY terminal for interacting with a session
  */
 import { useParams, Link } from '@tanstack/react-router';
 import { useEffect, useRef, useState, useCallback } from 'react';
@@ -9,8 +9,8 @@ import type { ServerMessage } from '../lib/types';
 
 type ConnectionState = 'connecting' | 'attached' | 'exited' | 'error';
 
-export function ClaudeSession() {
-  const { sessionId } = useParams({ from: '/claude/$sessionId' });
+export function Session() {
+  const { sessionId } = useParams({ from: '/sessions/$sessionId' });
   const { isConnected, addMessageHandler, send } = useWebSocket();
 
   const [connectionState, setConnectionState] = useState<ConnectionState>('connecting');
@@ -134,7 +134,7 @@ export function ClaudeSession() {
   return (
     <div className="page session-detail terminal-page">
       <div className="session-header">
-        <Link to="/claude" className="back-link">&larr; Sessions</Link>
+        <Link to="/sessions" className="back-link">&larr; Sessions</Link>
         <h1>Session {sessionId.slice(0, 8)}</h1>
         <span className="terminal-size">{terminalSize.cols}x{terminalSize.rows}</span>
         <ConnectionStatus state={connectionState} exitCode={exitCode} />
