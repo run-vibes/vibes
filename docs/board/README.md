@@ -37,8 +37,8 @@
 <summary>View completed work</summary>
 
 - [bug-0001-cwd-propagation](done/bug-0001-cwd-propagation.md)
-- [chore-kanban-board-design](done/chore-kanban-board-design.md)
-- [chore-kanban-board-implementation](done/chore-kanban-board-implementation.md)
+- [chore-0001-kanban-board-design](done/chore-0001-kanban-board-design.md)
+- [chore-0002-kanban-board-implementation](done/chore-0002-kanban-board-implementation.md)
 - [milestone-01-core-proxy](done/milestone-01-core-proxy/)
 - [milestone-02-cli](done/milestone-02-cli/)
 - [milestone-03-plugin-foundation](done/milestone-03-plugin-foundation/)
