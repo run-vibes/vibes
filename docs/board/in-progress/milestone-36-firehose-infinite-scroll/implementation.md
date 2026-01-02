@@ -21,6 +21,7 @@ created: 2026-01-02
 | 3 | [feat-03-frontend-hook](stories/feat-03-frontend-hook.md) | Rewrite useFirehose with offset tracking |
 | 4 | [feat-04-virtual-scroll](stories/feat-04-virtual-scroll.md) | Virtualized scroll view with @tanstack/react-virtual |
 | 5 | [feat-05-ui-polish](stories/feat-05-ui-polish.md) | Filters, timestamps, remove pause/clear |
+| 6 | [feat-06-uuidv7-sequencing](stories/feat-06-uuidv7-sequencing.md) | UUIDv7 global event IDs for unique identification |
 
 > **Status:** Check story frontmatter or run `just board` for current status.
 
@@ -36,11 +37,14 @@ Story 3 (frontend hook) ◄───┘
 Story 4 (virtual scroll)
     ↓
 Story 5 (UI polish)
+
+Story 6 (UUIDv7 sequencing) ─── independent, fixes row selection bug
 ```
 
 - Story 3 depends on Stories 1 & 2 (backend must support pagination/filters)
 - Story 4 depends on Story 3 (hook must provide data)
 - Story 5 depends on Story 4 (view must exist for polish)
+- Story 6 is independent (fixes unique ID bug from partitioned offsets)
 
 ## Completion Criteria
 

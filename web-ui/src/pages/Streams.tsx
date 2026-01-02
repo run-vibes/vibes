@@ -9,11 +9,11 @@ import './Streams.css';
 export function StreamsPage() {
   const { isConnected } = useWebSocket();
   const { data: tunnel } = useTunnelStatus();
-  const { events, isConnected: firehoseConnected } = useFirehose({ bufferSize: 10 });
+  const { events, isConnected: firehoseConnected } = useFirehose();
 
   // Count events by type
   const eventCounts = events.reduce((acc, e) => {
-    const type = e.type.replace(/_/g, ' ');
+    const type = e.event.type.replace(/_/g, ' ');
     acc[type] = (acc[type] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);

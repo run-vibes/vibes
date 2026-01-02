@@ -14,11 +14,12 @@ use axum::{
     response::Response,
 };
 use futures::{SinkExt, StreamExt};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tokio::sync::broadcast;
 use tracing::warn;
-use vibes_core::VibesEvent;
-use vibes_iggy::SeekPosition;
+use uuid::Uuid;
+use vibes_core::{StoredEvent, VibesEvent};
+use vibes_iggy::{Offset, SeekPosition};
 
 use crate::AppState;
 
@@ -32,6 +33,108 @@ pub struct FirehoseQuery {
     #[serde(default)]
     pub session: Option<String>,
 }
+
+/// Event with offset - used inside batches (no type tag)
+#[derive(Debug, Clone, Serialize)]
+pub struct EventWithOffset {
+    /// Globally unique, time-ordered event identifier (UUIDv7)
+    pub event_id: Uuid,
+    /// The event offset in the EventLog (partition-scoped, use event_id for uniqueness)
+    pub offset: Offset,
+    /// The event data
+    #[serde(flatten)]
+    pub event: VibesEvent,
+}
+
+impl EventWithOffset {
+    pub fn new(stored: StoredEvent, offset: Offset) -> Self {
+        Self {
+            event_id: stored.event_id,
+            offset,
+            event: stored.event,
+        }
+    }
+}
+
+/// Server-to-client message: single live event with offset
+#[derive(Debug, Serialize)]
+pub struct FirehoseEventMessage {
+    /// Message type discriminator
+    #[serde(rename = "type")]
+    pub msg_type: &'static str,
+    /// Globally unique, time-ordered event identifier (UUIDv7)
+    pub event_id: Uuid,
+    /// The event offset in the EventLog (partition-scoped, use event_id for uniqueness)
+    pub offset: Offset,
+    /// The event data (nested to avoid type field conflict)
+    pub event: VibesEvent,
+}
+
+impl FirehoseEventMessage {
+    pub fn new(offset: Offset, stored: StoredEvent) -> Self {
+        Self {
+            msg_type: "event",
+            event_id: stored.event_id,
+            offset,
+            event: stored.event,
+        }
+    }
+}
+
+/// Server-to-client message: batch of events (initial load or pagination)
+#[derive(Debug, Serialize)]
+pub struct FirehoseEventsBatch {
+    /// Message type discriminator
+    #[serde(rename = "type")]
+    pub msg_type: &'static str,
+    /// The events in this batch with their offsets
+    pub events: Vec<EventWithOffset>,
+    /// The oldest offset in this batch (for pagination)
+    pub oldest_offset: Option<Offset>,
+    /// Whether there are more events before this batch
+    pub has_more: bool,
+}
+
+impl FirehoseEventsBatch {
+    pub fn new(
+        events: Vec<EventWithOffset>,
+        oldest_offset: Option<Offset>,
+        has_more: bool,
+    ) -> Self {
+        Self {
+            msg_type: "events_batch",
+            events,
+            oldest_offset,
+            has_more,
+        }
+    }
+}
+
+/// Client-to-server messages for the firehose WebSocket
+#[derive(Debug, Deserialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum FirehoseClientMessage {
+    /// Request older events before a given offset
+    FetchOlder {
+        /// Load events before this offset (exclusive)
+        before_offset: Offset,
+        /// Maximum number of events to return (default: 100)
+        #[serde(default)]
+        limit: Option<u64>,
+    },
+    /// Update the active filters for this connection
+    SetFilters {
+        /// Filter by event types (e.g., ["Claude", "SessionCreated"])
+        #[serde(default)]
+        types: Option<Vec<String>>,
+        /// Filter by session ID
+        #[serde(default)]
+        session: Option<String>,
+    },
+}
+
+/// Default limit for fetch_older requests
+const DEFAULT_FETCH_LIMIT: u64 = 100;
 
 /// WebSocket upgrade handler for firehose
 pub async fn firehose_ws(
@@ -48,82 +151,176 @@ const HISTORICAL_EVENT_COUNT: u64 = 100;
 async fn handle_firehose(socket: WebSocket, state: Arc<AppState>, query: FirehoseQuery) {
     let (mut sender, mut receiver) = socket.split();
 
-    // Parse filter types
-    let filter_types: Option<Vec<String>> = query.types.as_ref().map(|t| {
+    // Parse filter types (mutable for dynamic filter updates)
+    let mut filter_types: Option<Vec<String>> = query.types.as_ref().map(|t| {
         t.split(',')
             .map(|s| s.trim().to_lowercase())
             .filter(|s| !s.is_empty())
             .collect()
     });
-    let filter_session = query.session.clone();
+    let mut filter_session = query.session.clone();
 
     // Subscribe to broadcast BEFORE loading historical events to avoid gaps
     let mut events_rx = state.subscribe_events();
 
-    // Load historical events from EventLog
+    // Load historical events from EventLog (with offsets)
     let historical_events = load_historical_events(&state, HISTORICAL_EVENT_COUNT).await;
 
-    // Clone filters for the send task
-    let filter_types_clone = filter_types.clone();
-    let filter_session_clone = filter_session.clone();
+    // Determine if there's more history before the oldest loaded event
+    let oldest_offset = historical_events.first().map(|(offset, _)| *offset);
+    let has_more = oldest_offset.is_some_and(|o| o > 0);
 
-    // Spawn task to forward events to WebSocket
-    let send_task = tokio::spawn(async move {
-        // First, send historical events
-        for event in historical_events {
-            if !matches_filters(&event, &filter_types_clone, &filter_session_clone) {
-                continue;
+    // Send initial batch of historical events
+    let filtered_events: Vec<_> = historical_events
+        .into_iter()
+        .filter(|(_, stored)| matches_filters(&stored.event, &filter_types, &filter_session))
+        .map(|(offset, stored)| EventWithOffset::new(stored, offset))
+        .collect();
+
+    let batch = FirehoseEventsBatch::new(
+        filtered_events.clone(),
+        filtered_events.first().map(|e| e.offset),
+        has_more,
+    );
+
+    if let Err(e) = send_json(&mut sender, &batch).await {
+        warn!("Firehose send failed (initial batch): {}", e);
+        return;
+    }
+
+    // Main event loop: handle both incoming messages and broadcast events
+    loop {
+        tokio::select! {
+            // Handle incoming client messages
+            msg = receiver.next() => {
+                match msg {
+                    Some(Ok(Message::Text(text))) => {
+                        if let Err(e) = handle_client_message(
+                            &text,
+                            &state,
+                            &mut sender,
+                            &mut filter_types,
+                            &mut filter_session,
+                        ).await {
+                            warn!("Failed to handle client message: {}", e);
+                        }
+                    }
+                    Some(Ok(Message::Close(_))) | None => break,
+                    _ => {} // Ignore other message types
+                }
             }
 
-            match serde_json::to_string(&event) {
-                Ok(json) => {
-                    if let Err(e) = sender.send(Message::Text(json)).await {
-                        warn!("Firehose send failed (historical): {}", e);
-                        return;
+            // Handle broadcast events
+            result = events_rx.recv() => {
+                match result {
+                    Ok((offset, stored)) => {
+                        if !matches_filters(&stored.event, &filter_types, &filter_session) {
+                            continue;
+                        }
+
+                        let msg = FirehoseEventMessage::new(offset, stored);
+                        if let Err(e) = send_json(&mut sender, &msg).await {
+                            warn!("Firehose send failed: {}", e);
+                            break;
+                        }
                     }
-                }
-                Err(e) => {
-                    warn!("Failed to serialize historical event: {}", e);
+                    Err(broadcast::error::RecvError::Closed) => break,
+                    Err(broadcast::error::RecvError::Lagged(n)) => {
+                        warn!("Firehose client lagged by {} events", n);
+                    }
                 }
             }
         }
+    }
+}
 
-        // Then stream live events from broadcast
-        loop {
-            match events_rx.recv().await {
-                Ok(event) => {
-                    if !matches_filters(&event, &filter_types_clone, &filter_session_clone) {
-                        continue;
-                    }
+/// Handle a client message from the WebSocket
+async fn handle_client_message<S>(
+    text: &str,
+    state: &AppState,
+    sender: &mut S,
+    filter_types: &mut Option<Vec<String>>,
+    filter_session: &mut Option<String>,
+) -> Result<(), String>
+where
+    S: SinkExt<Message> + Unpin,
+    S::Error: std::fmt::Display,
+{
+    let msg: FirehoseClientMessage =
+        serde_json::from_str(text).map_err(|e| format!("Invalid message: {}", e))?;
 
-                    match serde_json::to_string(&event) {
-                        Ok(json) => {
-                            if let Err(e) = sender.send(Message::Text(json)).await {
-                                warn!("Firehose send failed: {}", e);
-                                break;
-                            }
-                        }
-                        Err(e) => {
-                            warn!("Failed to serialize event: {}", e);
-                        }
-                    }
-                }
-                Err(broadcast::error::RecvError::Closed) => break,
-                Err(broadcast::error::RecvError::Lagged(n)) => {
-                    warn!("Firehose client lagged by {} events", n);
-                }
-            }
+    match msg {
+        FirehoseClientMessage::FetchOlder {
+            before_offset,
+            limit,
+        } => {
+            let count = limit.unwrap_or(DEFAULT_FETCH_LIMIT);
+            let events = load_events_before_offset(state, before_offset, count).await;
+
+            let oldest_offset = events.first().map(|(offset, _)| *offset);
+            let has_more = oldest_offset.is_some_and(|o| o > 0);
+
+            let filtered_events: Vec<_> = events
+                .into_iter()
+                .filter(|(_, stored)| matches_filters(&stored.event, filter_types, filter_session))
+                .map(|(offset, stored)| EventWithOffset::new(stored, offset))
+                .collect();
+
+            let batch = FirehoseEventsBatch::new(
+                filtered_events.clone(),
+                filtered_events.first().map(|e| e.offset),
+                has_more,
+            );
+
+            send_json(sender, &batch)
+                .await
+                .map_err(|e| format!("Failed to send batch: {}", e))?;
         }
-    });
 
-    // Handle incoming messages (just for close detection)
-    while let Some(Ok(msg)) = receiver.next().await {
-        if matches!(msg, Message::Close(_)) {
-            break;
+        FirehoseClientMessage::SetFilters { types, session } => {
+            // Update filters - normalize types to lowercase
+            *filter_types = types.map(|t| t.into_iter().map(|s| s.to_lowercase()).collect());
+            *filter_session = session;
+
+            // Send fresh batch of latest events with new filters
+            let events = load_historical_events(state, HISTORICAL_EVENT_COUNT).await;
+
+            let oldest_offset = events.first().map(|(offset, _)| *offset);
+            let has_more = oldest_offset.is_some_and(|o| o > 0);
+
+            let filtered_events: Vec<_> = events
+                .into_iter()
+                .filter(|(_, stored)| matches_filters(&stored.event, filter_types, filter_session))
+                .map(|(offset, stored)| EventWithOffset::new(stored, offset))
+                .collect();
+
+            let batch = FirehoseEventsBatch::new(
+                filtered_events.clone(),
+                filtered_events.first().map(|e| e.offset),
+                has_more,
+            );
+
+            send_json(sender, &batch)
+                .await
+                .map_err(|e| format!("Failed to send batch: {}", e))?;
         }
     }
 
-    send_task.abort();
+    Ok(())
+}
+
+/// Helper to serialize and send a JSON message
+async fn send_json<S, T>(sender: &mut S, msg: &T) -> Result<(), String>
+where
+    S: SinkExt<Message> + Unpin,
+    S::Error: std::fmt::Display,
+    T: Serialize,
+{
+    let json = serde_json::to_string(msg).map_err(|e| format!("Serialize error: {}", e))?;
+    sender
+        .send(Message::Text(json))
+        .await
+        .map_err(|e| format!("Send error: {}", e))
 }
 
 /// Check if an event matches the filter criteria
@@ -169,8 +366,8 @@ fn event_type_name(event: &VibesEvent) -> &'static str {
 
 /// Load the last N events from the EventLog.
 ///
-/// Returns events in chronological order (oldest first).
-async fn load_historical_events(state: &AppState, count: u64) -> Vec<VibesEvent> {
+/// Returns stored events in chronological order (oldest first) with their offsets.
+async fn load_historical_events(state: &AppState, count: u64) -> Vec<(Offset, StoredEvent)> {
     let hwm = state.event_log.high_water_mark();
     if hwm == 0 {
         return Vec::new();
@@ -199,9 +396,61 @@ async fn load_historical_events(state: &AppState, count: u64) -> Vec<VibesEvent>
         .poll(count as usize, Duration::from_millis(100))
         .await
     {
-        Ok(batch) => batch.into_iter().map(|(_offset, event)| event).collect(),
+        Ok(batch) => batch.into_iter().collect(),
         Err(e) => {
             warn!("Failed to poll historical events: {}", e);
+            Vec::new()
+        }
+    }
+}
+
+/// Load events before a specific offset from the EventLog.
+///
+/// Returns stored events in chronological order (oldest first) with their offsets.
+/// Used for pagination - fetching older events when scrolling up.
+async fn load_events_before_offset(
+    state: &AppState,
+    before_offset: Offset,
+    count: u64,
+) -> Vec<(Offset, StoredEvent)> {
+    if before_offset == 0 {
+        return Vec::new();
+    }
+
+    // Calculate the range to fetch
+    let end_offset = before_offset; // exclusive
+    let start_offset = end_offset.saturating_sub(count);
+
+    // Create a temporary consumer
+    let consumer_group = format!("firehose-pagination-{}", uuid::Uuid::new_v4());
+    let mut consumer = match state.event_log.consumer(&consumer_group).await {
+        Ok(c) => c,
+        Err(e) => {
+            warn!("Failed to create pagination consumer: {}", e);
+            return Vec::new();
+        }
+    };
+
+    // Seek to the start position
+    if let Err(e) = consumer.seek(SeekPosition::Offset(start_offset)).await {
+        warn!("Failed to seek pagination consumer: {}", e);
+        return Vec::new();
+    }
+
+    // Calculate how many events to fetch (may be fewer if start_offset was clamped)
+    let events_to_fetch = (end_offset - start_offset) as usize;
+
+    // Poll for events
+    match consumer
+        .poll(events_to_fetch, Duration::from_millis(100))
+        .await
+    {
+        Ok(batch) => batch
+            .into_iter()
+            .filter(|(offset, _)| *offset < before_offset)
+            .collect(),
+        Err(e) => {
+            warn!("Failed to poll pagination events: {}", e);
             Vec::new()
         }
     }
@@ -212,36 +461,107 @@ mod tests {
     use super::*;
     use vibes_core::ClaudeEvent;
 
+    fn make_stored_event(event: VibesEvent) -> StoredEvent {
+        StoredEvent::new(event)
+    }
+
+    // Serialization format tests - prevent regression of message format bugs
+
+    #[test]
+    fn events_batch_serializes_with_event_id_and_flattened_event() {
+        // Test that events in batches include event_id and flatten the event fields
+        let stored1 = make_stored_event(VibesEvent::ClientConnected {
+            client_id: "c1".to_string(),
+        });
+        let stored2 = make_stored_event(VibesEvent::SessionCreated {
+            session_id: "s1".to_string(),
+            name: Some("Test".to_string()),
+        });
+
+        let events = vec![
+            EventWithOffset::new(stored1.clone(), 10),
+            EventWithOffset::new(stored2.clone(), 11),
+        ];
+
+        let batch = FirehoseEventsBatch::new(events, Some(10), true);
+        let json = serde_json::to_string(&batch).unwrap();
+
+        // Parse and verify structure
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+
+        // Top-level type should be "events_batch"
+        assert_eq!(parsed["type"], "events_batch");
+
+        // Events array should exist
+        let events_arr = parsed["events"].as_array().unwrap();
+        assert_eq!(events_arr.len(), 2);
+
+        // Each event should have event_id, offset, and flattened event fields
+        let first = &events_arr[0];
+        assert_eq!(first["offset"], 10);
+        assert!(first["event_id"].is_string()); // UUIDv7 as string
+        // Event type should be at top level due to flatten
+        assert_eq!(first["type"], "client_connected");
+        assert_eq!(first["client_id"], "c1");
+    }
+
+    #[test]
+    fn single_event_message_serializes_with_event_id_and_nested_event() {
+        let stored = make_stored_event(VibesEvent::ClientConnected {
+            client_id: "c1".to_string(),
+        });
+        let event_id = stored.event_id;
+
+        let msg = FirehoseEventMessage::new(42, stored);
+        let json = serde_json::to_string(&msg).unwrap();
+
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+
+        // Top-level type should be "event" (the message type)
+        assert_eq!(parsed["type"], "event");
+        assert_eq!(parsed["offset"], 42);
+        // event_id should be present at top level
+        assert_eq!(parsed["event_id"], event_id.to_string());
+        // Event should be nested (not flattened) to avoid type field conflict
+        assert_eq!(parsed["event"]["type"], "client_connected");
+        assert_eq!(parsed["event"]["client_id"], "c1");
+    }
+
     #[tokio::test]
-    async fn load_historical_events_returns_last_n_events() {
+    async fn load_historical_events_returns_last_n_events_with_offsets() {
         use crate::AppState;
 
         // Create state with in-memory event log
         let state = AppState::new();
 
-        // Append 5 events to the EventLog
+        // Append 5 events to the EventLog (state.append_event wraps in StoredEvent)
         for i in 0..5 {
-            let event = VibesEvent::SessionCreated {
+            let stored = make_stored_event(VibesEvent::SessionCreated {
                 session_id: format!("session-{}", i),
                 name: Some(format!("Session {}", i)),
-            };
-            state.event_log.append(event).await.unwrap();
+            });
+            state.event_log.append(stored).await.unwrap();
         }
 
         // Load last 3 events
         let events = load_historical_events(&state, 3).await;
 
-        // Should get the last 3 events (sessions 2, 3, 4)
+        // Should get the last 3 events (sessions 2, 3, 4) with offsets
         assert_eq!(events.len(), 3);
 
-        // Verify they're the correct events (last 3)
-        if let VibesEvent::SessionCreated { session_id, .. } = &events[0] {
+        // Verify offsets (should be 2, 3, 4)
+        assert_eq!(events[0].0, 2);
+        assert_eq!(events[1].0, 3);
+        assert_eq!(events[2].0, 4);
+
+        // Verify they're the correct events (last 3) - now accessing .event
+        if let VibesEvent::SessionCreated { session_id, .. } = &events[0].1.event {
             assert_eq!(session_id, "session-2");
         } else {
             panic!("Expected SessionCreated event");
         }
 
-        if let VibesEvent::SessionCreated { session_id, .. } = &events[2] {
+        if let VibesEvent::SessionCreated { session_id, .. } = &events[2].1.event {
             assert_eq!(session_id, "session-4");
         } else {
             panic!("Expected SessionCreated event");
@@ -256,17 +576,20 @@ mod tests {
 
         // Append only 2 events
         for i in 0..2 {
-            let event = VibesEvent::SessionCreated {
+            let stored = make_stored_event(VibesEvent::SessionCreated {
                 session_id: format!("session-{}", i),
                 name: None,
-            };
-            state.event_log.append(event).await.unwrap();
+            });
+            state.event_log.append(stored).await.unwrap();
         }
 
         // Request 100 events but only 2 exist
         let events = load_historical_events(&state, 100).await;
 
         assert_eq!(events.len(), 2);
+        // Offsets should be 0 and 1
+        assert_eq!(events[0].0, 0);
+        assert_eq!(events[1].0, 1);
     }
 
     #[tokio::test]
@@ -315,5 +638,159 @@ mod tests {
             serde_json::from_str(r#"{"types":"Claude,UserInput","session":"sess-123"}"#).unwrap();
         assert_eq!(query.types, Some("Claude,UserInput".to_string()));
         assert_eq!(query.session, Some("sess-123".to_string()));
+    }
+
+    #[test]
+    fn firehose_client_message_fetch_older_deserializes() {
+        let msg: FirehoseClientMessage =
+            serde_json::from_str(r#"{"type":"fetch_older","before_offset":100,"limit":50}"#)
+                .unwrap();
+        match msg {
+            FirehoseClientMessage::FetchOlder {
+                before_offset,
+                limit,
+            } => {
+                assert_eq!(before_offset, 100);
+                assert_eq!(limit, Some(50));
+            }
+            _ => panic!("Expected FetchOlder"),
+        }
+    }
+
+    #[test]
+    fn firehose_client_message_fetch_older_with_default_limit() {
+        let msg: FirehoseClientMessage =
+            serde_json::from_str(r#"{"type":"fetch_older","before_offset":100}"#).unwrap();
+        match msg {
+            FirehoseClientMessage::FetchOlder {
+                before_offset,
+                limit,
+            } => {
+                assert_eq!(before_offset, 100);
+                assert_eq!(limit, None);
+            }
+            _ => panic!("Expected FetchOlder"),
+        }
+    }
+
+    #[tokio::test]
+    async fn load_events_before_offset_returns_events_before_given_offset() {
+        use crate::AppState;
+
+        let state = AppState::new();
+
+        // Append 10 events (offsets 0-9)
+        for i in 0..10 {
+            let stored = make_stored_event(VibesEvent::SessionCreated {
+                session_id: format!("session-{}", i),
+                name: Some(format!("Session {}", i)),
+            });
+            state.event_log.append(stored).await.unwrap();
+        }
+
+        // Load 3 events before offset 7 (should get offsets 4, 5, 6)
+        let events = load_events_before_offset(&state, 7, 3).await;
+
+        assert_eq!(events.len(), 3);
+
+        // Verify offsets are 4, 5, 6 (in chronological order)
+        assert_eq!(events[0].0, 4);
+        assert_eq!(events[1].0, 5);
+        assert_eq!(events[2].0, 6);
+
+        // Verify they're the correct events
+        if let VibesEvent::SessionCreated { session_id, .. } = &events[0].1.event {
+            assert_eq!(session_id, "session-4");
+        } else {
+            panic!("Expected SessionCreated event");
+        }
+    }
+
+    #[tokio::test]
+    async fn load_events_before_offset_handles_beginning_of_log() {
+        use crate::AppState;
+
+        let state = AppState::new();
+
+        // Append 5 events (offsets 0-4)
+        for i in 0..5 {
+            let stored = make_stored_event(VibesEvent::SessionCreated {
+                session_id: format!("session-{}", i),
+                name: None,
+            });
+            state.event_log.append(stored).await.unwrap();
+        }
+
+        // Load 100 events before offset 3 (should only get offsets 0, 1, 2)
+        let events = load_events_before_offset(&state, 3, 100).await;
+
+        assert_eq!(events.len(), 3);
+        assert_eq!(events[0].0, 0);
+        assert_eq!(events[1].0, 1);
+        assert_eq!(events[2].0, 2);
+    }
+
+    #[tokio::test]
+    async fn load_events_before_offset_returns_empty_when_at_beginning() {
+        use crate::AppState;
+
+        let state = AppState::new();
+
+        // Append some events
+        for i in 0..5 {
+            let stored = make_stored_event(VibesEvent::SessionCreated {
+                session_id: format!("session-{}", i),
+                name: None,
+            });
+            state.event_log.append(stored).await.unwrap();
+        }
+
+        // Load events before offset 0 (should be empty)
+        let events = load_events_before_offset(&state, 0, 100).await;
+
+        assert!(events.is_empty());
+    }
+
+    #[test]
+    fn firehose_client_message_set_filters_deserializes() {
+        let msg: FirehoseClientMessage = serde_json::from_str(
+            r#"{"type":"set_filters","types":["Claude","SessionCreated"],"session":"sess-123"}"#,
+        )
+        .unwrap();
+        match msg {
+            FirehoseClientMessage::SetFilters { types, session } => {
+                assert_eq!(
+                    types,
+                    Some(vec!["Claude".to_string(), "SessionCreated".to_string()])
+                );
+                assert_eq!(session, Some("sess-123".to_string()));
+            }
+            _ => panic!("Expected SetFilters"),
+        }
+    }
+
+    #[test]
+    fn firehose_client_message_set_filters_with_empty_filters() {
+        let msg: FirehoseClientMessage = serde_json::from_str(r#"{"type":"set_filters"}"#).unwrap();
+        match msg {
+            FirehoseClientMessage::SetFilters { types, session } => {
+                assert!(types.is_none());
+                assert!(session.is_none());
+            }
+            _ => panic!("Expected SetFilters"),
+        }
+    }
+
+    #[test]
+    fn firehose_client_message_set_filters_clears_with_null() {
+        let msg: FirehoseClientMessage =
+            serde_json::from_str(r#"{"type":"set_filters","types":null,"session":null}"#).unwrap();
+        match msg {
+            FirehoseClientMessage::SetFilters { types, session } => {
+                assert!(types.is_none());
+                assert!(session.is_none());
+            }
+            _ => panic!("Expected SetFilters"),
+        }
     }
 }

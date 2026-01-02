@@ -28,10 +28,11 @@ pub async fn start_notification_consumer(
         .with_poll_timeout(Duration::from_millis(100))
         .with_batch_size(50);
 
-    let handler: EventHandler = Arc::new(move |event| {
+    let handler: EventHandler = Arc::new(move |stored| {
         let service = notification_service.clone();
         Box::pin(async move {
-            service.process_event(&event).await;
+            // Extract inner event - NotificationService works with VibesEvent
+            service.process_event(&stored.event).await;
         })
     });
 
@@ -41,11 +42,12 @@ pub async fn start_notification_consumer(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use vibes_core::StoredEvent;
     use vibes_iggy::InMemoryEventLog;
 
     #[tokio::test]
     async fn test_notification_consumer_config() {
-        let log = Arc::new(InMemoryEventLog::<vibes_core::VibesEvent>::new());
+        let log = Arc::new(InMemoryEventLog::<StoredEvent>::new());
         let manager = ConsumerManager::new(log);
 
         // We can't use a real NotificationService without VAPID keys,

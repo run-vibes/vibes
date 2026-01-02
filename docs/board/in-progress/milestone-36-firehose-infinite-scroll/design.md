@@ -21,6 +21,7 @@ The firehose currently loads the last 100 events and buffers up to 500 in memory
 | **Pause button** | Remove | Scrolling up is natural pause; not needed |
 | **Clear button** | Remove | Events are persistent; clearing doesn't make sense |
 | **Virtual scrolling** | @tanstack/react-virtual | Handles 100K+ events, proven library |
+| **Event ID** | UUIDv7 | Globally unique, time-ordered; offsets are per-partition in Iggy |
 
 ---
 
@@ -181,9 +182,10 @@ No new Rust dependencies required.
 
 ## Deliverables
 
-- [ ] Backend: `fetch_older` and `set_filters` message handlers
-- [ ] Backend: Offset field in all event messages
-- [ ] Frontend: Rewritten useFirehose hook with offset tracking
+- [x] Backend: `fetch_older` and `set_filters` message handlers
+- [x] Backend: Offset field in all event messages
+- [ ] Backend: UUIDv7 `event_id` field on all events (globally unique identifier)
+- [x] Frontend: Rewritten useFirehose hook with offset tracking
 - [ ] Frontend: Virtualized scroll view with position preservation
 - [ ] Frontend: Working filters (type, session, search)
 - [ ] Frontend: "Jump to latest" floating button

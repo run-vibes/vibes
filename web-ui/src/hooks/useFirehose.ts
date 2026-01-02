@@ -1,59 +1,171 @@
 /**
- * Hook for connecting to the firehose WebSocket endpoint
+ * Hook for connecting to the firehose WebSocket endpoint with infinite scroll support
+ *
+ * Features:
+ * - Offset tracking for pagination
+ * - Server-side filtering
+ * - Auto-follow with manual scroll detection
+ * - Fetch older events on demand
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { VibesEvent } from '../lib/types';
 
+/**
+ * Raw firehose event from the server with its offset and unique ID
+ */
+export interface FirehoseEvent {
+  /** Globally unique, time-ordered event ID (UUIDv7) */
+  event_id: string;
+  /** Partition-scoped offset (not unique across partitions, use event_id for keying) */
+  offset: number;
+  event: VibesEvent;
+}
+
+/**
+ * Filter state for server-side event filtering
+ */
+export interface FirehoseFilters {
+  types: string[] | null;
+  sessionId: string | null;
+}
+
+/**
+ * State model for the firehose hook
+ */
+export interface FirehoseState {
+  events: FirehoseEvent[];
+  oldestOffset: number | null;
+  newestOffset: number | null;
+  isLoadingOlder: boolean;
+  isFollowing: boolean;
+  hasMore: boolean;
+  filters: FirehoseFilters;
+}
+
 export interface FirehoseOptions {
-  /** Event types to filter (e.g., ['Claude', 'Hook']) */
-  types?: string[];
-  /** Session ID to filter */
-  session?: string;
-  /** Maximum events to keep in buffer */
-  bufferSize?: number;
-  /** Auto-connect on mount */
+  /** Auto-connect on mount (default: true) */
   autoConnect?: boolean;
 }
 
-export interface UseFirehoseReturn {
-  events: VibesEvent[];
+export interface UseFirehoseReturn extends FirehoseState {
   isConnected: boolean;
-  isPaused: boolean;
   error: Error | null;
   connect: () => void;
   disconnect: () => void;
-  pause: () => void;
-  resume: () => void;
-  clear: () => void;
+  fetchOlder: () => void;
+  setFilters: (filters: Partial<FirehoseFilters>) => void;
+  setIsFollowing: (value: boolean) => void;
 }
 
-export function useFirehose(options: FirehoseOptions = {}): UseFirehoseReturn {
-  const { types, session, bufferSize = 1000, autoConnect = true } = options;
+/**
+ * Server to client message types
+ */
+interface EventsBatchMessage {
+  type: 'events_batch';
+  events: FirehoseEvent[];
+  oldest_offset: number | null;
+  has_more: boolean;
+}
 
-  const [events, setEvents] = useState<VibesEvent[]>([]);
+interface LiveEventMessage {
+  type: 'event';
+  /** Globally unique, time-ordered event ID (UUIDv7) */
+  event_id: string;
+  offset: number;
+  event: VibesEvent;
+}
+
+type FirehoseServerMessage = EventsBatchMessage | LiveEventMessage;
+
+/**
+ * Client to server message types
+ */
+interface FetchOlderMessage {
+  type: 'fetch_older';
+  before_offset: number;
+  limit?: number;
+}
+
+interface SetFiltersMessage {
+  type: 'set_filters';
+  types?: string[];
+  session?: string;
+}
+
+type FirehoseClientMessage = FetchOlderMessage | SetFiltersMessage;
+
+export function useFirehose(options: FirehoseOptions = {}): UseFirehoseReturn {
+  const { autoConnect = true } = options;
+
+  // Core state
+  const [events, setEvents] = useState<FirehoseEvent[]>([]);
+  const [oldestOffset, setOldestOffset] = useState<number | null>(null);
+  const [newestOffset, setNewestOffset] = useState<number | null>(null);
+  const [isLoadingOlder, setIsLoadingOlder] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(true);
+  const [hasMore, setHasMore] = useState(false);
+  const [filters, setFiltersState] = useState<FirehoseFilters>({
+    types: null,
+    sessionId: null,
+  });
+
+  // Connection state
   const [isConnected, setIsConnected] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
+  // Refs
   const wsRef = useRef<WebSocket | null>(null);
-  const bufferRef = useRef<VibesEvent[]>([]);
-  const isPausedRef = useRef(isPaused);
+  const isLoadingOlderRef = useRef(false);
 
-  // Keep ref in sync with state
+  // Keep ref in sync
   useEffect(() => {
-    isPausedRef.current = isPaused;
-  }, [isPaused]);
+    isLoadingOlderRef.current = isLoadingOlder;
+  }, [isLoadingOlder]);
+
+  const sendMessage = useCallback((msg: FirehoseClientMessage) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify(msg));
+    }
+  }, []);
+
+  const handleMessage = useCallback((data: string) => {
+    try {
+      const msg = JSON.parse(data) as FirehoseServerMessage;
+
+      if (msg.type === 'events_batch') {
+        const batchEvents = msg.events;
+
+        if (isLoadingOlderRef.current) {
+          // Prepend older events
+          setEvents((prev) => [...batchEvents, ...prev]);
+          setIsLoadingOlder(false);
+        } else {
+          // Initial batch or filter reset - replace all events
+          setEvents(batchEvents);
+        }
+
+        // Update offsets
+        setOldestOffset(msg.oldest_offset);
+        if (batchEvents.length > 0) {
+          const maxOffset = Math.max(...batchEvents.map((e) => e.offset));
+          setNewestOffset((prev) => (prev === null ? maxOffset : Math.max(prev, maxOffset)));
+        }
+        setHasMore(msg.has_more);
+      } else if (msg.type === 'event') {
+        // Live event - append
+        setEvents((prev) => [...prev, { event_id: msg.event_id, offset: msg.offset, event: msg.event }]);
+        setNewestOffset(msg.offset);
+      }
+    } catch (e) {
+      console.error('Failed to parse firehose message:', e);
+    }
+  }, []);
 
   const connect = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
 
-    const params = new URLSearchParams();
-    if (types?.length) params.set('types', types.join(','));
-    if (session) params.set('session', session);
-
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const queryString = params.toString();
-    const url = `${protocol}//${window.location.host}/ws/firehose${queryString ? `?${queryString}` : ''}`;
+    const url = `${protocol}//${window.location.host}/ws/firehose`;
 
     const ws = new WebSocket(url);
     wsRef.current = ws;
@@ -72,21 +184,9 @@ export function useFirehose(options: FirehoseOptions = {}): UseFirehoseReturn {
     };
 
     ws.onmessage = (event) => {
-      try {
-        const vibesEvent = JSON.parse(event.data) as VibesEvent;
-
-        // Always buffer (for resume)
-        bufferRef.current = [...bufferRef.current.slice(-(bufferSize - 1)), vibesEvent];
-
-        // Only update state if not paused
-        if (!isPausedRef.current) {
-          setEvents((prev) => [...prev.slice(-(bufferSize - 1)), vibesEvent]);
-        }
-      } catch (e) {
-        console.error('Failed to parse firehose event:', e);
-      }
+      handleMessage(event.data);
     };
-  }, [types, session, bufferSize]);
+  }, [handleMessage]);
 
   const disconnect = useCallback(() => {
     wsRef.current?.close();
@@ -94,20 +194,52 @@ export function useFirehose(options: FirehoseOptions = {}): UseFirehoseReturn {
     setIsConnected(false);
   }, []);
 
-  const pause = useCallback(() => {
-    setIsPaused(true);
-  }, []);
+  const fetchOlder = useCallback(() => {
+    // Guard: don't fetch if already loading, no more history, or no oldest offset
+    if (isLoadingOlderRef.current || !hasMore || oldestOffset === null) {
+      return;
+    }
 
-  const resume = useCallback(() => {
-    // Sync buffer to events on resume
-    setEvents(bufferRef.current);
-    setIsPaused(false);
-  }, []);
+    // Set ref immediately to prevent duplicate calls
+    isLoadingOlderRef.current = true;
+    setIsLoadingOlder(true);
+    sendMessage({
+      type: 'fetch_older',
+      before_offset: oldestOffset,
+    });
+  }, [hasMore, oldestOffset, sendMessage]);
 
-  const clear = useCallback(() => {
-    setEvents([]);
-    bufferRef.current = [];
-  }, []);
+  const setFilters = useCallback(
+    (newFilters: Partial<FirehoseFilters>) => {
+      // Use functional update to avoid dependency on filters state
+      // This prevents infinite loops when setFilters is used in useEffect
+      setFiltersState((prev) => {
+        const updated: FirehoseFilters = {
+          types: newFilters.types ?? prev.types,
+          sessionId: newFilters.sessionId ?? prev.sessionId,
+        };
+
+        // Send to server (inside functional update to access computed value)
+        sendMessage({
+          type: 'set_filters',
+          types: updated.types ?? undefined,
+          session: updated.sessionId ?? undefined,
+        });
+
+        return updated;
+      });
+
+      // Clear current events - server will send fresh batch
+      setEvents([]);
+      setOldestOffset(null);
+      setNewestOffset(null);
+      setHasMore(false);
+
+      // Reset following on filter change
+      setIsFollowing(true);
+    },
+    [sendMessage]
+  );
 
   // Auto-connect
   useEffect(() => {
@@ -121,13 +253,18 @@ export function useFirehose(options: FirehoseOptions = {}): UseFirehoseReturn {
 
   return {
     events,
+    oldestOffset,
+    newestOffset,
+    isLoadingOlder,
+    isFollowing,
+    hasMore,
+    filters,
     isConnected,
-    isPaused,
     error,
     connect,
     disconnect,
-    pause,
-    resume,
-    clear,
+    fetchOlder,
+    setFilters,
+    setIsFollowing,
   };
 }

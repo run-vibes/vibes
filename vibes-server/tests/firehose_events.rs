@@ -31,7 +31,7 @@ async fn broadcasts_client_connected_on_websocket_connect() {
         .expect("Timeout waiting for event")
         .expect("Channel closed");
 
-    match event {
+    match event.1.event {
         VibesEvent::ClientConnected { client_id } => {
             assert!(!client_id.is_empty(), "client_id should not be empty");
         }
@@ -61,11 +61,11 @@ async fn broadcasts_session_created_on_attach() {
         .expect("Timeout waiting for ClientConnected event")
         .expect("Channel closed before ClientConnected event");
 
-    match client_connected_event {
+    match client_connected_event.1.event {
         VibesEvent::ClientConnected { client_id } => {
             assert!(!client_id.is_empty(), "client_id should not be empty");
         }
-        other => panic!(
+        ref other => panic!(
             "Expected ClientConnected before SessionCreated, got {:?}",
             other
         ),
@@ -79,7 +79,7 @@ async fn broadcasts_session_created_on_attach() {
         .expect("Timeout waiting for SessionCreated event")
         .expect("Channel closed");
 
-    match event {
+    match event.1.event {
         VibesEvent::SessionCreated {
             session_id: event_session_id,
             name,
@@ -87,7 +87,7 @@ async fn broadcasts_session_created_on_attach() {
             assert_eq!(event_session_id, session_id);
             assert_eq!(name, Some("test-session".to_string()));
         }
-        other => panic!("Expected SessionCreated, got {:?}", other),
+        ref other => panic!("Expected SessionCreated, got {:?}", other),
     }
 }
 
@@ -114,7 +114,7 @@ async fn broadcasts_client_disconnected_on_websocket_close() {
         .expect("Timeout waiting for ClientDisconnected event")
         .expect("Channel closed");
 
-    match event {
+    match event.1.event {
         VibesEvent::ClientDisconnected { client_id } => {
             assert!(!client_id.is_empty(), "client_id should not be empty");
         }
@@ -157,7 +157,7 @@ async fn broadcasts_session_removed_on_kill() {
         .expect("Timeout waiting for SessionRemoved event")
         .expect("Channel closed");
 
-    match event {
+    match event.1.event {
         VibesEvent::SessionRemoved {
             session_id: event_session_id,
             reason,
@@ -165,6 +165,6 @@ async fn broadcasts_session_removed_on_kill() {
             assert_eq!(event_session_id, session_id);
             assert!(!reason.is_empty(), "reason should not be empty");
         }
-        other => panic!("Expected SessionRemoved, got {:?}", other),
+        ref other => panic!("Expected SessionRemoved, got {:?}", other),
     }
 }

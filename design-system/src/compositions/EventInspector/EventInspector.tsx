@@ -1,27 +1,11 @@
 // design-system/src/compositions/EventInspector/EventInspector.tsx
 import { forwardRef, HTMLAttributes } from 'react';
 import { Button } from '../../primitives/Button';
+import type { DisplayEvent, ContextEvent } from '../../events';
 import styles from './EventInspector.module.css';
 
-export interface InspectorEvent {
-  id: string;
-  timestamp: Date;
-  type: string;
-  session?: string;
-  sessionName?: string;
-  offset?: number;
-  payload?: unknown;
-}
-
-export interface ContextEvent {
-  offset: number;
-  timestamp: Date;
-  type: string;
-  summary: string;
-}
-
 export interface EventInspectorProps extends HTMLAttributes<HTMLDivElement> {
-  event: InspectorEvent | null;
+  event: DisplayEvent | null;
   contextEvents?: ContextEvent[];
   onCopyJson?: () => void;
   onClose?: () => void;
@@ -136,7 +120,7 @@ export const EventInspector = forwardRef<HTMLDivElement, EventInspectorProps>(
               <div className={styles.contextEvents}>
                 {contextEvents.map((ctx, i) => {
                   const ctxTypeClass = typeToClass[ctx.type.toUpperCase()] || '';
-                  const isCurrent = ctx.offset === 0;
+                  const isCurrent = ctx.relativePosition === 0;
 
                   return (
                     <div
@@ -144,7 +128,7 @@ export const EventInspector = forwardRef<HTMLDivElement, EventInspectorProps>(
                       className={`${styles.contextEvent} ${isCurrent ? styles.currentEvent : ''}`}
                     >
                       <span className={styles.contextOffset}>
-                        {ctx.offset === 0 ? '►' : ctx.offset > 0 ? `+${ctx.offset}` : ctx.offset}
+                        {ctx.relativePosition === 0 ? '►' : ctx.relativePosition > 0 ? `+${ctx.relativePosition}` : ctx.relativePosition}
                       </span>
                       <span className={styles.contextTime}>{formatTime(ctx.timestamp)}</span>
                       <span className={`${styles.contextType} ${ctxTypeClass ? styles[ctxTypeClass] : ''}`}>

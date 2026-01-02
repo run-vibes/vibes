@@ -1,6 +1,6 @@
 ---
 created: 2026-01-02
-status: pending
+status: done
 ---
 
 # feat: Backend Filter Support
@@ -57,11 +57,11 @@ See [design.md](../design.md) for filter protocol specification. Filters should 
 
 ## Acceptance Criteria
 
-- [ ] `set_filters` message updates connection filter state
-- [ ] Live events respect active filters
-- [ ] `fetch_older` respects active filters
-- [ ] Filter change triggers fresh latest batch
-- [ ] All tests pass
+- [x] `set_filters` message updates connection filter state
+- [x] Live events respect active filters
+- [x] `fetch_older` respects active filters
+- [x] Filter change triggers fresh latest batch
+- [x] All tests pass
 
 ## Completion
 

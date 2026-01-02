@@ -1,6 +1,7 @@
 //! Event type definitions
 
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 use vibes_iggy::Partitionable;
 
 use crate::hooks::HookEvent;
@@ -167,6 +168,43 @@ impl VibesEvent {
 impl Partitionable for VibesEvent {
     fn partition_key(&self) -> Option<&str> {
         self.session_id()
+    }
+}
+
+/// A VibesEvent with a globally unique UUIDv7 identifier.
+///
+/// This wrapper is used for storage in the EventLog. The event_id provides
+/// a globally unique, time-ordered identifier that works across Iggy partitions
+/// (unlike partition-scoped offsets).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct StoredEvent {
+    /// Globally unique, time-ordered event identifier (UUIDv7)
+    pub event_id: Uuid,
+    /// The event payload
+    #[serde(flatten)]
+    pub event: VibesEvent,
+}
+
+impl StoredEvent {
+    /// Create a new StoredEvent with a fresh UUIDv7 identifier.
+    #[must_use]
+    pub fn new(event: VibesEvent) -> Self {
+        Self {
+            event_id: Uuid::now_v7(),
+            event,
+        }
+    }
+
+    /// Get the session ID from the inner event.
+    #[must_use]
+    pub fn session_id(&self) -> Option<&str> {
+        self.event.session_id()
+    }
+}
+
+impl Partitionable for StoredEvent {
+    fn partition_key(&self) -> Option<&str> {
+        self.event.partition_key()
     }
 }
 
@@ -577,5 +615,109 @@ mod tests {
         };
 
         assert_eq!(event.session_id(), Some("sess-456"));
+    }
+
+    // ==================== StoredEvent Tests ====================
+
+    #[test]
+    fn stored_event_new_generates_uuidv7() {
+        let event = VibesEvent::ClientConnected {
+            client_id: "c1".to_string(),
+        };
+        let stored = StoredEvent::new(event);
+
+        // UUIDv7 has version 7 in bits 48-51
+        assert_eq!(stored.event_id.get_version_num(), 7);
+    }
+
+    #[test]
+    fn stored_event_ids_are_unique() {
+        let event1 = StoredEvent::new(VibesEvent::ClientConnected {
+            client_id: "c1".to_string(),
+        });
+        let event2 = StoredEvent::new(VibesEvent::ClientConnected {
+            client_id: "c2".to_string(),
+        });
+
+        assert_ne!(event1.event_id, event2.event_id);
+    }
+
+    #[test]
+    fn stored_event_ids_are_time_ordered() {
+        let event1 = StoredEvent::new(VibesEvent::ClientConnected {
+            client_id: "c1".to_string(),
+        });
+        // Small delay to ensure different timestamp
+        std::thread::sleep(std::time::Duration::from_millis(1));
+        let event2 = StoredEvent::new(VibesEvent::ClientConnected {
+            client_id: "c2".to_string(),
+        });
+
+        // UUIDv7 is lexicographically sortable by time
+        assert!(event1.event_id < event2.event_id);
+    }
+
+    #[test]
+    fn stored_event_session_id_delegates_to_inner() {
+        let event = StoredEvent::new(VibesEvent::SessionCreated {
+            session_id: "sess-123".to_string(),
+            name: None,
+        });
+
+        assert_eq!(event.session_id(), Some("sess-123"));
+    }
+
+    #[test]
+    fn stored_event_partition_key_delegates_to_inner() {
+        let event = StoredEvent::new(VibesEvent::SessionCreated {
+            session_id: "sess-123".to_string(),
+            name: None,
+        });
+
+        assert_eq!(event.partition_key(), Some("sess-123"));
+    }
+
+    #[test]
+    fn stored_event_serialization_flattens_event() {
+        let event = StoredEvent::new(VibesEvent::ClientConnected {
+            client_id: "c1".to_string(),
+        });
+        let json = serde_json::to_string(&event).unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+
+        // event_id should be at top level
+        assert!(parsed["event_id"].is_string());
+
+        // Inner event fields should be flattened (not nested under "event")
+        assert_eq!(parsed["type"], "client_connected");
+        assert_eq!(parsed["client_id"], "c1");
+
+        // Should NOT have a nested "event" object
+        assert!(parsed.get("event").is_none());
+    }
+
+    #[test]
+    fn stored_event_deserialization_roundtrip() {
+        let original = StoredEvent::new(VibesEvent::SessionCreated {
+            session_id: "sess-456".to_string(),
+            name: Some("Test Session".to_string()),
+        });
+
+        let json = serde_json::to_string(&original).unwrap();
+        let parsed: StoredEvent = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(parsed.event_id, original.event_id);
+        assert_eq!(parsed.event, original.event);
+    }
+
+    #[test]
+    fn stored_event_clone_preserves_event_id() {
+        let original = StoredEvent::new(VibesEvent::ClientConnected {
+            client_id: "c1".to_string(),
+        });
+        let cloned = original.clone();
+
+        assert_eq!(original.event_id, cloned.event_id);
+        assert_eq!(original.event, cloned.event);
     }
 }

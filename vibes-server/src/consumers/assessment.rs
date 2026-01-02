@@ -10,6 +10,7 @@
 use std::sync::Arc;
 
 use tokio_util::sync::CancellationToken;
+use vibes_core::StoredEvent;
 use vibes_groove::assessment::{
     AssessmentConfig, AssessmentConsumerConfig, AssessmentProcessor, InMemoryAssessmentLog,
     assessment_consumer_loop,
@@ -29,7 +30,7 @@ use super::Result;
 ///
 /// Returns Ok(()) on success, or an error if the consumer fails to start.
 pub async fn start_assessment_consumer(
-    event_log: Arc<dyn EventLog<vibes_core::VibesEvent>>,
+    event_log: Arc<dyn EventLog<StoredEvent>>,
     shutdown: CancellationToken,
 ) -> Result<()> {
     // Create assessment log (in-memory for now, will use Iggy later)
@@ -71,11 +72,19 @@ pub async fn start_assessment_consumer(
 mod tests {
     use super::*;
     use std::time::Duration;
+    use vibes_core::VibesEvent;
     use vibes_iggy::InMemoryEventLog;
+
+    fn make_stored_event(session_id: &str) -> StoredEvent {
+        StoredEvent::new(VibesEvent::SessionCreated {
+            session_id: session_id.to_string(),
+            name: None,
+        })
+    }
 
     #[tokio::test]
     async fn test_assessment_consumer_starts() {
-        let log = Arc::new(InMemoryEventLog::<vibes_core::VibesEvent>::new());
+        let log = Arc::new(InMemoryEventLog::<StoredEvent>::new());
         let shutdown = CancellationToken::new();
 
         // Start consumer
@@ -100,17 +109,14 @@ mod tests {
 
     #[tokio::test]
     async fn test_assessment_consumer_processes_events() {
-        let log = Arc::new(InMemoryEventLog::<vibes_core::VibesEvent>::new());
+        let log = Arc::new(InMemoryEventLog::<StoredEvent>::new());
         let shutdown = CancellationToken::new();
 
         // Append some events before starting consumer
         for i in 0..3 {
-            log.append(vibes_core::VibesEvent::SessionCreated {
-                session_id: format!("session-{i}"),
-                name: None,
-            })
-            .await
-            .unwrap();
+            log.append(make_stored_event(&format!("session-{i}")))
+                .await
+                .unwrap();
         }
 
         // Start consumer

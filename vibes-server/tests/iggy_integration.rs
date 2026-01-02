@@ -9,7 +9,7 @@
 use std::sync::Arc;
 use std::time::Duration;
 use tempfile::TempDir;
-use vibes_core::VibesEvent;
+use vibes_core::{StoredEvent, VibesEvent};
 use vibes_iggy::{IggyConfig, SeekPosition};
 use vibes_server::AppState;
 
@@ -124,8 +124,16 @@ async fn test_events_flow_through_iggy() {
         state: "active".to_string(),
     };
 
-    state.event_log.append(event1.clone()).await.unwrap();
-    state.event_log.append(event2.clone()).await.unwrap();
+    state
+        .event_log
+        .append(StoredEvent::new(event1.clone()))
+        .await
+        .unwrap();
+    state
+        .event_log
+        .append(StoredEvent::new(event2.clone()))
+        .await
+        .unwrap();
 
     // Wait for events to be flushed
     tokio::time::sleep(Duration::from_millis(100)).await;
@@ -151,7 +159,7 @@ async fn test_events_flow_through_iggy() {
     );
 
     // Verify the events match what we sent
-    let events: Vec<_> = batch.into_iter().map(|(_, e)| e).collect();
+    let events: Vec<_> = batch.into_iter().map(|(_, stored)| stored.event).collect();
     assert!(events.contains(&event1), "Should contain event1");
     assert!(events.contains(&event2), "Should contain event2");
 
@@ -181,10 +189,10 @@ async fn test_events_partitioned_by_session() {
         let session = format!("partition-test-session-{}", i % 3);
         state
             .event_log
-            .append(VibesEvent::SessionCreated {
+            .append(StoredEvent::new(VibesEvent::SessionCreated {
                 session_id: session,
                 name: None,
-            })
+            }))
             .await
             .unwrap();
     }

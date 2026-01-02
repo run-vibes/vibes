@@ -1,4 +1,7 @@
 // Design System entry point
+// Event types
+export * from './events';
+
 // Tokens
 export * from './tokens';
 

@@ -1,9 +1,10 @@
 // design-system/src/compositions/StreamView/StreamView.stories.tsx
 import { useState } from 'react';
 import '../../tokens/index.css';
-import { StreamView, StreamEvent } from './StreamView';
+import { StreamView } from './StreamView';
+import type { DisplayEvent } from '../../events';
 
-const mockEvents: StreamEvent[] = [
+const mockEvents: DisplayEvent[] = [
   { id: '1', timestamp: new Date(Date.now() - 60000), type: 'SESSION', session: 'sess-abc', summary: 'Created "auth-refactor"' },
   { id: '2', timestamp: new Date(Date.now() - 55000), type: 'CLAUDE', session: 'sess-abc', summary: 'Let me analyze the authentication flow...' },
   { id: '3', timestamp: new Date(Date.now() - 50000), type: 'TOOL', session: 'sess-abc', summary: 'Read src/lib.rs (2.1kb)' },
