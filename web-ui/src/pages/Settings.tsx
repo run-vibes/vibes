@@ -101,11 +101,11 @@ export function SettingsPage() {
             <div className="about-logo">vibes</div>
             <Text intensity="dim">Remote control for your Claude Code sessions</Text>
             <div className="about-links">
-              <a href="https://github.com/anthropics/vibes" target="_blank" rel="noopener noreferrer">
+              <a href="https://github.com/run-vibes/vibes" target="_blank" rel="noopener noreferrer">
                 GitHub
               </a>
               <span>•</span>
-              <a href="https://github.com/anthropics/vibes/issues" target="_blank" rel="noopener noreferrer">
+              <a href="https://github.com/run-vibes/vibes/issues" target="_blank" rel="noopener noreferrer">
                 Report Issue
               </a>
             </div>
