@@ -4,8 +4,11 @@
 
 ## 🔨 In Progress
 
-### [milestone-14-continual-learning](in-progress/milestone-14-continual-learning/)
-**groove** - The continual learning system that finds your coding rhythm.
+### [milestone-29-assessment-framework](in-progress/milestone-29-assessment-framework/)
+
+Stories:
+- [ ] [feat-01-eventlog-migration](in-progress/milestone-29-assessment-framework/stories/feat-01-eventlog-migration.md)
+- [ ] [feat-02-assessment-logic](in-progress/milestone-29-assessment-framework/stories/feat-02-assessment-logic.md)
 
 
 ---
@@ -28,6 +31,11 @@
 - [milestone-21-default-plugins](backlog/milestone-21-default-plugins/) *(design only)*
 - [milestone-22-cli-enhancements](backlog/milestone-22-cli-enhancements/) *(design only)*
 - [milestone-23-ios-app](backlog/milestone-23-ios-app/) *(design only)*
+- [milestone-30-learning-extraction](backlog/milestone-30-learning-extraction/) *(design only)*
+- [milestone-31-attribution-engine](backlog/milestone-31-attribution-engine/) *(design only)*
+- [milestone-32-adaptive-strategies](backlog/milestone-32-adaptive-strategies/) *(design only)*
+- [milestone-33-groove-dashboard](backlog/milestone-33-groove-dashboard/) *(design only)*
+- [milestone-34-open-world-adaptation](backlog/milestone-34-open-world-adaptation/) *(design only)*
 
 ---
 
@@ -58,5 +66,10 @@
 - [milestone-18-eventlog-wiring](done/milestone-18-eventlog-wiring/)
 - [milestone-18-iggy-sdk-integration](done/milestone-18-iggy-sdk-integration/)
 - [milestone-19-event-cli](done/milestone-19-event-cli/)
+- [milestone-24-storage-foundation](done/milestone-24-storage-foundation/)
+- [milestone-25-security-foundation](done/milestone-25-security-foundation/)
+- [milestone-26-plugin-api-extension](done/milestone-26-plugin-api-extension/)
+- [milestone-27-capture-inject](done/milestone-27-capture-inject/)
+- [milestone-28-assessment-types](done/milestone-28-assessment-types/)
 
 </details>
