@@ -28,7 +28,6 @@ Stories:
 
 ## 📥 Backlog
 
-- [feat-0004-firehose-infinite-scroll](backlog/feat-0004-firehose-infinite-scroll.md)
 - [milestone-27-learning-extraction](backlog/milestone-27-learning-extraction/) *(design only)*
 - [milestone-28-attribution-engine](backlog/milestone-28-attribution-engine/) *(design only)*
 - [milestone-29-adaptive-strategies](backlog/milestone-29-adaptive-strategies/) *(design only)*
@@ -38,6 +37,7 @@ Stories:
 - [milestone-33-default-plugins](backlog/milestone-33-default-plugins/) *(design only)*
 - [milestone-34-cli-enhancements](backlog/milestone-34-cli-enhancements/) *(design only)*
 - [milestone-35-ios-app](backlog/milestone-35-ios-app/) *(design only)*
+- [milestone-36-firehose-infinite-scroll](backlog/milestone-36-firehose-infinite-scroll/)
 
 ---
 
