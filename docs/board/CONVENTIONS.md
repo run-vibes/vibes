@@ -162,7 +162,7 @@ Before implementation, create a `design.md` that captures architectural decision
 
 ### Design Document Template
 
-```markdown
+````markdown
 # Milestone X.Y: [Feature Name] - Design Document
 
 > [One-line summary of what this enables]
@@ -245,7 +245,7 @@ new-crate = "1.0"            # Purpose
 - [ ] Server integration
 - [ ] Tests passing
 - [ ] Documentation updated
-```
+````
 
 ### Key Elements
 
