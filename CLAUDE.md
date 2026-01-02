@@ -79,6 +79,19 @@ The `iggy-server` binary is copied alongside vibes in `target/`.
 6. Run `just pre-commit` and address issues
 7. Complete: update story/board, commit, push, create PR
 
+### Design Document Location (IMPORTANT)
+
+**Override for `superpowers:brainstorming` skill:** Do NOT write designs to `docs/plans/`. That path doesn't exist in this project.
+
+All designs go in `docs/board/` following CONVENTIONS.md:
+
+| Size | Structure |
+|------|-----------|
+| **Small feature** | Single file: `docs/board/backlog/feat-NNNN-name.md` (design embedded) |
+| **Large feature** | Milestone directory: `docs/board/backlog/milestone-NN-name/design.md` |
+
+Use `just board new feat "name"` or `just board new milestone "name"` to create the correct structure.
+
 ### Bug Fixes
 
 1. Use `superpowers:systematic-debugging` to investigate
