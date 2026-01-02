@@ -13,7 +13,7 @@ use web_push_native::{Auth, WebPushBuilder};
 
 use super::{NotificationConfig, PushNotification, SubscriptionStore, VapidKeyManager};
 use crate::NotificationError;
-use crate::events::{ClaudeEvent, EventSeq, VibesEvent};
+use crate::events::{ClaudeEvent, VibesEvent};
 
 /// Service that sends push notifications based on vibes events
 pub struct NotificationService {
@@ -40,7 +40,7 @@ impl NotificationService {
 
     /// Start listening to events and sending notifications
     #[allow(clippy::collapsible_if)] // Prefer readability over collapsed let chains for side effects
-    pub async fn run(&self, mut event_rx: broadcast::Receiver<(EventSeq, VibesEvent)>) {
+    pub async fn run(&self, mut event_rx: broadcast::Receiver<(u64, VibesEvent)>) {
         info!("NotificationService started");
 
         loop {

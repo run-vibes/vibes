@@ -371,6 +371,14 @@ Each task ends with a commit:
 - [ ] All tests pass
 - [ ] Code reviewed and merged
 - [ ] [Feature-specific criterion]
+
+## Completion
+
+> **IMPORTANT:** After all acceptance criteria are met:
+
+1. Update this file's frontmatter: `status: done`
+2. Regenerate board: `just board`
+3. Commit, push, and create PR
 ```
 
 ### Key Principles
@@ -438,13 +446,17 @@ Then invoke:
 /superpowers:execute-plan
 ```
 
-### Verification Workflow
+### Completing a Story
 
-After completing implementation:
+After implementing all tasks:
 
-1. Run `just pre-commit` (fmt + clippy + test)
-2. Move board item to done column
-3. Create PR with conventional commit title
+1. **Verify:** Run `just pre-commit` (fmt + clippy + test)
+2. **Update story:** Set frontmatter `status: done`
+3. **Update board:** Run `just board` to regenerate README.md
+4. **Commit:** Include story status change in commit
+5. **Push and PR:** Create PR with conventional commit title
+
+> **Claude must always update the story status and regenerate the board before creating a PR.**
 
 ---
 

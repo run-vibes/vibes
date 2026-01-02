@@ -3,7 +3,7 @@
 //! This crate provides the foundational components for vibes:
 //!
 //! - **PTY management** - [`pty::PtyManager`] for spawning and managing Claude PTY sessions
-//! - **Event system** - [`EventBus`] trait and [`MemoryEventBus`] for real-time event distribution
+//! - **Event system** - [`EventLog`] trait for persistent event streaming via Iggy
 //! - **Hooks integration** - [`HookEvent`] types for structured data capture from Claude Code
 //! - **Event types** - [`ClaudeEvent`] and [`VibesEvent`] for typed event handling
 //!
@@ -53,10 +53,10 @@ pub mod tunnel;
 
 // Re-export key types for convenience
 pub use auth::{AccessConfig, AccessIdentity, AuthContext, AuthError, JwtValidator};
-pub use error::{EventBusError, NotificationError, VibesError};
+pub use error::{NotificationError, VibesError};
 pub use events::{
-    ClaudeEvent, EventBatch, EventBus, EventConsumer, EventLog, InputSource, MemoryEventBus,
-    Offset, SeekPosition, Usage, VibesEvent,
+    ClaudeEvent, EventBatch, EventConsumer, EventLog, InputSource, Offset, SeekPosition, Usage,
+    VibesEvent,
 };
 pub use hooks::{
     HookEvent, HookInstaller, HookInstallerConfig, HookType, InstallError, PostToolUseData,
