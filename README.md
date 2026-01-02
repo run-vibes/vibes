@@ -8,6 +8,14 @@ The vibe engineering mech suit.
 
 **vibes** augments *you*—the human developer—with AI-powered superpowers: remote session control, persistent context, and a learning system that remembers what works. You stay in command; vibes amplifies your reach.
 
+## Getting Started
+
+- [Features](#features) — What vibes does
+- [Quick Start](#quick-start) — Install and run
+- [Usage](#usage) — CLI commands and examples
+- [Documentation](#documentation) — Architecture, plugins, and roadmap
+- [Glossary](docs/GLOSSARY.md) — Key terms explained
+
 ## Features
 
 - **Remote Access** — Control Claude Code sessions from your phone, tablet, or any device via web UI
@@ -107,21 +115,7 @@ just pre-commit
 - [Planning Board](docs/board/README.md) — Kanban board tracking implementation status
 - [Planning Conventions](docs/board/CONVENTIONS.md) — How to create design and implementation plans
 - [CLAUDE.md](CLAUDE.md) — Development guidance for contributors
-
-## Glossary
-
-| Term | Definition |
-|------|------------|
-| **vibes** | The mech suit—wraps Claude Code with remote access, persistence, and plugins |
-| **daemon** | Background server that owns PTY sessions and persists across CLI disconnects |
-| **session** | A Claude Code conversation running in a persistent PTY |
-| **groove** | Continual learning plugin that remembers what works and injects it into future sessions |
-| **EventLog** | Persistent event stream backed by Apache Iggy |
-| **consumer** | Independent processor that reads from the EventLog (WebSocket, notifications, assessment) |
-| **PTY** | Pseudo-terminal—real terminal emulation for full escape sequence support |
-| **hook** | Claude Code extension point; vibes uses hooks to capture structured events |
-| **learning** | A captured pattern or preference that groove injects into future contexts |
-| **harness** | Any AI coding assistant (Claude Code, Cursor, etc.)—groove is harness-agnostic |
+- [Glossary](docs/GLOSSARY.md) — Key terms explained
 
 ## License
 
