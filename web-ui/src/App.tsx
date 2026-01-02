@@ -10,7 +10,6 @@ import {
 import { Header } from '@vibes/design-system'
 import { ClaudeSessions } from './pages/ClaudeSessions'
 import { ClaudeSession } from './pages/ClaudeSession'
-import { StatusPage } from './pages/Status'
 import { QuarantinePage } from './pages/Quarantine'
 import { FirehosePage } from './pages/Firehose'
 import { DebugPage } from './pages/Debug'
@@ -100,12 +99,6 @@ const sessionRoute = createRoute({
   component: ClaudeSession,
 })
 
-const statusRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/status',
-  component: StatusPage,
-})
-
 const grooveRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/groove',
@@ -141,7 +134,6 @@ const routeTree = rootRoute.addChildren([
   indexRoute,
   claudeRoute,
   sessionRoute,
-  statusRoute,
   grooveRoute,
   streamsRoute,
   firehoseRoute,
