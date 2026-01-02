@@ -70,6 +70,14 @@ build-release: build-web _check-submodules
 build-web:
     npm run build
 
+# TypeScript type check (no emit)
+typecheck-web:
+    npm run typecheck --workspace=web-ui
+
+# Run web-ui tests
+test-web:
+    npm test --workspace=web-ui
+
 # Install npm dependencies (uses workspaces)
 npm-install:
     npm ci
@@ -91,7 +99,7 @@ e2e-setup:
     npx playwright install chromium --with-deps
 
 # Run all checks (pre-commit)
-pre-commit: fmt-check clippy test
+pre-commit: fmt-check clippy test typecheck-web test-web
 
 # ─── Submodule Management ────────────────────────────────────────────────────
 

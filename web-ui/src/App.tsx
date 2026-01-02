@@ -38,7 +38,6 @@ function RootLayout() {
   };
 
   const navItems = [
-    { label: 'Streams', href: '/', isActive: location.pathname === '/' || location.pathname === '/streams' || location.pathname.startsWith('/firehose') || location.pathname.startsWith('/debug') },
     { label: 'Groove', href: '/groove', isGroove: true, isActive: location.pathname.startsWith('/groove') },
   ];
 
