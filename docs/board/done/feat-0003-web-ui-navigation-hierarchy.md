@@ -1,6 +1,6 @@
 ---
 created: 2026-01-02
-status: pending
+status: done
 ---
 
 # feat-0003: Web UI Navigation Hierarchy
@@ -113,10 +113,10 @@ Routes:
 
 ## Acceptance Criteria
 
-- [ ] Visiting `/` shows streams index (firehose, debug, sessions cards)
-- [ ] `/sessions` shows harness-agnostic session list
-- [ ] Top nav has only: Streams, Groove (and Settings icon)
-- [ ] Tunnel status visible in Settings page
-- [ ] No `/status` route exists
-- [ ] About links point to `run-vibes/vibes`
-- [ ] All internal navigation works correctly
+- [x] Visiting `/` shows streams index (firehose, debug, sessions cards)
+- [x] `/sessions` shows harness-agnostic session list
+- [x] Top nav has only: Groove (and Settings icon) — Streams is now home
+- [x] Tunnel status visible in Settings page
+- [x] No `/status` route exists
+- [x] About links point to `run-vibes/vibes`
+- [x] All internal navigation works correctly
