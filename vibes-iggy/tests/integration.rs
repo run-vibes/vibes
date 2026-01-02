@@ -26,7 +26,39 @@
 //! avoid interference with production data.
 
 use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Duration;
+
+/// Port pool for test isolation.
+///
+/// Each test gets a unique pair of ports (TCP and HTTP) from this pool.
+/// The pool provides 32 port pairs, which is more than enough for parallel tests.
+mod port_pool {
+    use super::*;
+
+    /// Base port for the pool (in ephemeral range)
+    const BASE_PORT: u16 = 50000;
+
+    /// Number of port pairs available (each test needs 2 ports: TCP + HTTP)
+    const POOL_SIZE: usize = 32;
+
+    /// Port spacing between allocations (2 ports per test: TCP and HTTP)
+    const PORT_SPACING: u16 = 2;
+
+    /// Global counter for port allocation
+    static NEXT_SLOT: AtomicUsize = AtomicUsize::new(0);
+
+    /// Allocate a unique port pair for a test.
+    ///
+    /// Returns (tcp_port, http_port). The allocation wraps around after
+    /// POOL_SIZE allocations, but tests complete before wrap-around in practice.
+    pub fn allocate() -> (u16, u16) {
+        let slot = NEXT_SLOT.fetch_add(1, Ordering::SeqCst) % POOL_SIZE;
+        let tcp_port = BASE_PORT + (slot as u16 * PORT_SPACING);
+        let http_port = tcp_port + 1;
+        (tcp_port, http_port)
+    }
+}
 
 use serde::{Deserialize, Serialize};
 use tempfile::TempDir;
@@ -81,11 +113,13 @@ async fn setup() -> (TestHarness, IggyEventLog<TestEvent>) {
         return (harness, log);
     }
 
-    // Start our own server with isolated temp directory and random port
-    // Using a random port in the high range avoids conflicts with any existing Iggy servers
-    let tcp_port = 49152 + (std::process::id() % 16384) as u16;
-    let http_port = tcp_port + 1;
-    eprintln!("Starting internal Iggy server on port {}...", tcp_port);
+    // Start our own server with isolated temp directory and unique port from pool
+    let (tcp_port, http_port) = port_pool::allocate();
+    eprintln!(
+        "Starting internal Iggy server on port {} (pid={})...",
+        tcp_port,
+        std::process::id()
+    );
     let temp_dir = TempDir::new().expect("Failed to create temp directory");
 
     let config = IggyConfig::default()
