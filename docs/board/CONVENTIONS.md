@@ -36,11 +36,12 @@ The board supports four item types, organized hierarchically:
 
 ### Milestones
 
-Large deliverables that span multiple work sessions. Milestones contain a design doc and one or more **stories** that break the work into mergeable chunks.
+Large deliverables that span multiple work sessions. Milestones contain a design doc, an implementation plan that indexes the stories, and one or more **stories** that break the work into mergeable chunks.
 
 ```
 docs/board/backlog/milestone-14-continual-learning/
 ├── design.md              # Architecture and decisions
+├── implementation.md      # Story index with links and sequence
 └── stories/               # Child work items (1 or more)
     ├── feat-01-storage.md
     ├── feat-02-capture.md
@@ -381,17 +382,53 @@ new-crate = "1.0"            # Purpose
 
 ## Phase 2: Implementation Plan
 
-After design approval, break the milestone into **stories**—focused deliverables that can be implemented and merged independently. Every milestone has one or more stories.
+After design approval, create an `implementation.md` that breaks the milestone into **stories**—focused deliverables that can be implemented and merged independently.
 
-### Story Structure
+### Milestone Structure
 
 ```
 docs/board/<column>/milestone-NN-name/
 ├── design.md              # Architecture decisions (from Phase 1)
+├── implementation.md      # Story index with sequence and links
 └── stories/
     ├── feat-01-types.md       # Core type definitions
     ├── feat-02-storage.md     # Persistence layer
     └── feat-03-api.md         # HTTP endpoints
+```
+
+### Implementation Plan Template
+
+The `implementation.md` serves as the entry point and index for the milestone's stories:
+
+```markdown
+# Milestone X.Y: [Name] - Implementation Plan
+
+> **For Claude:** Work through stories in order. Use superpowers:executing-plans for each story.
+
+**Goal:** [One sentence describing the milestone outcome]
+
+**Design:** See [design.md](design.md) for architecture decisions.
+
+---
+
+## Stories
+
+| # | Story | Description | Status |
+|---|-------|-------------|--------|
+| 1 | [feat-01-types](stories/feat-01-types.md) | Core type definitions | pending |
+| 2 | [feat-02-storage](stories/feat-02-storage.md) | Persistence layer | pending |
+| 3 | [feat-03-api](stories/feat-03-api.md) | HTTP endpoints | pending |
+
+## Dependencies
+
+- Story 2 depends on Story 1 (types must exist before storage)
+- Story 3 can run in parallel with Story 2
+
+## Completion Criteria
+
+- [ ] All stories merged
+- [ ] Integration tests passing
+- [ ] Documentation updated
 ```
 
 ### Story Template
