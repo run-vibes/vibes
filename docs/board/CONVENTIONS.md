@@ -30,6 +30,79 @@ docs/board/
 
 ---
 
+## Work Item Types
+
+The board supports four item types, organized hierarchically:
+
+### Milestones
+
+Large deliverables that span multiple work sessions. Milestones contain design docs, implementation plans, and optionally **stories**.
+
+```
+docs/board/backlog/milestone-14-continual-learning/
+├── design.md              # Architecture and decisions
+├── implementation.md      # Step-by-step tasks (optional)
+└── stories/               # Child work items (optional)
+    ├── story-01-storage.md
+    ├── story-02-capture.md
+    └── story-03-inject.md
+```
+
+**Create with:** `just board new milestone "Continual Learning"`
+
+### Stories
+
+Focused work items that live within a milestone. Stories break large milestones into reviewable chunks—each story can be implemented and merged independently.
+
+**Structure:** `docs/board/<column>/milestone-XX-name/stories/story-NN-description.md`
+
+**When to use stories:**
+- Milestone spans 3+ distinct deliverables
+- Work can be parallelized across contributors
+- Each piece merits its own PR and review cycle
+
+**Story file template:**
+```markdown
+---
+created: 2024-01-15
+status: pending  # pending | in-progress | done
+---
+
+# Story: [Description]
+
+## Goal
+
+[What this story delivers]
+
+## Tasks
+
+- [ ] Task 1
+- [ ] Task 2
+
+## Acceptance Criteria
+
+- [ ] Criterion 1
+- [ ] Criterion 2
+```
+
+The board generator lists stories as checklists under their parent milestone.
+
+### Features, Bugs, and Chores
+
+Standalone items that don't warrant a full milestone structure.
+
+| Type | Prefix | Use Case |
+|------|--------|----------|
+| `feat` | `feat-NNNN-` | New functionality, enhancements |
+| `bug` | `bug-NNNN-` | Defects, unexpected behavior |
+| `chore` | `chore-NNNN-` | Maintenance, refactoring, tooling |
+
+**Create with:** `just board new feat "Add session export"`, `just board new bug "Fix auth timeout"`
+
+These are single markdown files (not directories) unless they grow complex enough to warrant design docs.
+
+---
+
 ## When to Create a Plan
 
 Create a plan when:
@@ -58,29 +131,33 @@ When adding new functionality that could be a separate feature, **always evaluat
 |----------|--------|----------|
 | Is this a first-party core feature? | Maybe | Yes |
 | Should users be able to disable it? | Yes | No |
-| Does it need CLI subcommands? | Plugin (requires API extension) | Built-in |
-| Does it need HTTP routes? | Plugin (requires API extension) | Built-in |
+| Does it need CLI subcommands? | Yes (plugins can register) | No preference |
+| Does it need HTTP routes? | Yes (plugins can register) | No preference |
 | Is it specific to certain use cases? | Yes | No |
 | Would third parties want similar features? | Yes | No |
 
-### Current Plugin API Limitations
+### Plugin API Capabilities
 
-As of Milestone 4.2.5, the `vibes-plugin-api` supports:
-- Session lifecycle hooks (`on_session_created`, `on_turn_complete`, etc.)
-- Event subscription
+The `vibes-plugin-api` (v2) supports:
 
-It does **not yet** support:
-- Registering CLI subcommands
-- Registering HTTP routes
-- Deep server integration
+- **Session lifecycle hooks** — `on_session_created`, `on_turn_complete`, `on_hook`, etc.
+- **CLI command registration** — `ctx.register_command(CommandSpec { ... })` → `vibes <plugin> <command>`
+- **HTTP route registration** — `ctx.register_route(RouteSpec { ... })` → `/api/plugins/<plugin>/...`
+- **Configuration** — Persistent key-value store with TOML serialization
+- **Logging** — Plugin-prefixed logging via tracing
 
-**If your feature needs CLI commands or HTTP routes and should be a plugin**, the plugin API must first be extended (see Milestone 4.2.6).
+Plugins implement `handle_command()` and `handle_route()` on the `Plugin` trait to respond to registered commands and routes.
 
 ### Example: groove
 
-The groove continual learning system was initially implemented with direct CLI commands in `vibes-cli` and HTTP routes in `vibes-server`. This is **technical debt** that should be migrated to the plugin system once the plugin API supports CLI/HTTP registration.
+The **groove** continual learning plugin demonstrates proper plugin architecture:
 
-**Lesson learned:** Identify plugin vs built-in during the design phase, not after implementation.
+- **CLI commands** registered via `register_command()` → `vibes groove init`, `vibes groove status`, etc.
+- **HTTP routes** registered via `register_route()` → `/api/plugins/groove/...`
+- **Event hooks** — `on_hook()` captures Claude Code events for learning extraction
+- **Configuration** — Stores scope and injection preferences
+
+This pattern should be followed for all new feature plugins.
 
 ## Plan Directory Structure
 
@@ -297,66 +374,82 @@ new-crate = "1.0"            # Purpose
 
 ## Phase 2: Implementation Plan
 
-After design approval, create an `implementation.md` with step-by-step tasks.
+After design approval, break the milestone into **stories**—focused deliverables that can be implemented and merged independently.
 
-### Implementation Plan Template
+### When to Use Stories vs Single Implementation
+
+| Approach | When to Use |
+|----------|-------------|
+| **Stories** | Milestone has 3+ distinct deliverables, work can be parallelized, each piece merits its own PR |
+| **Single implementation.md** | Small milestone, linear dependencies, single contributor |
+
+### Story Structure
+
+```
+docs/board/<column>/milestone-NN-name/
+├── design.md              # Architecture decisions (from Phase 1)
+└── stories/
+    ├── story-01-types.md      # Core type definitions
+    ├── story-02-storage.md    # Persistence layer
+    └── story-03-api.md        # HTTP endpoints
+```
+
+### Story Template
 
 ```markdown
-# Milestone X.Y: [Feature Name] - Implementation Plan
-
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
-
-**Goal:** [One sentence describing the outcome]
-
-**Architecture:** [Brief recap of key design decisions]
-
-**Tech Stack:** [Relevant technologies]
-
+---
+created: 2024-01-15
+status: pending  # pending | in-progress | done
 ---
 
-## Task 1: [Task Name]
+# Story: [Focused Deliverable]
+
+> **For Claude:** Use superpowers:executing-plans to implement this story.
+
+## Goal
+
+[One sentence: what this story delivers]
+
+## Context
+
+[Reference design.md section, key decisions that apply]
+
+## Tasks
+
+Each task ends with a commit:
+
+### Task 1: [Name]
 
 **Files:**
 - Create: `path/to/new/file.rs`
 - Modify: `path/to/existing.rs`
 
-**Step 1: [Action]**
+**Steps:**
+1. [Action with expected outcome]
+2. [Action with expected outcome]
+3. Run tests: `cargo test -p vibes-core module_name`
+4. Commit: `feat(module): description`
 
-[Description or code]
-
-```rust
-// Code example
-pub struct NewType { ... }
-```
-
-**Step 2: [Action]**
+### Task 2: [Name]
 
 ...
 
-**Step N: Run tests**
+## Acceptance Criteria
 
-Run: `cargo test -p vibes-core module_name`
-Expected: All tests pass
+- [ ] All tests pass
+- [ ] Code reviewed and merged
+- [ ] [Feature-specific criterion]
+```
 
-**Step N+1: Commit**
+### Creating Stories
 
 ```bash
-git add path/to/files
-git commit -m "feat(module): description"
+# Create story files manually in the stories/ directory
+mkdir -p docs/board/in-progress/milestone-14-continual-learning/stories
+touch docs/board/in-progress/milestone-14-continual-learning/stories/story-01-types.md
 ```
 
----
-
-## Task 2: [Next Task]
-
-...
-
----
-
-## Summary
-
-[What was accomplished, total tasks/commits, next steps]
-```
+The board generator automatically lists stories as checklists under their parent milestone.
 
 ### Key Principles
 
@@ -619,99 +712,3 @@ Before implementing, verify:
 - [ ] New dependencies are documented
 - [ ] Board item updated when complete
 
----
-
-## Milestone Numbering
-
-| Phase | Milestone | Plan Directory |
-|-------|-----------|----------------|
-| 1 | 1.1 Core Proxy | 01-core-proxy |
-| 1 | 1.2 CLI | 02-cli |
-| 1 | 1.3 Plugin Foundation | 03-plugin-foundation |
-| 1 | 1.4 Server + Web UI | 04-server-web-ui |
-| 2 | 2.1 Cloudflare Tunnel | 05-cloudflare-tunnel |
-| 2 | 2.2 Cloudflare Access | 06-cloudflare-access |
-| 2 | 2.3 Push Notifications | 07-push-notifications |
-| 3 | 3.1 Chat History | 08-chat-history |
-| 3 | 3.2 Multi-Session Support | 09-multi-session |
-| 3 | 3.3 CLI - Web Mirroring | 10-cli-web-mirroring |
-| 3 | 3.4 PTY Backend | 12-pty-backend |
-| 4 | 4.1-4.9 Continual Learning | 14-continual-learning |
-| 4 | 4.1 Harness Introspection | 15-harness-introspection |
-| 5 | 5.1 Setup Wizards | (planned) |
-| 5 | 5.2 Default Plugins | (planned) |
-| 5 | 5.3 CLI Enhancements | (planned) |
-| 5 | 5.4 iOS App | (planned) |
-
-When starting a new milestone:
-1. Create the directory under `docs/board/`
-2. Write `design.md` first with architecture decisions
-3. Get design approved (PR or discussion)
-4. Write `implementation.md` with step-by-step tasks
-5. Reference any new ADRs added to `docs/PRD.md`
-
----
-
-## Multi-Phase Milestones (Epics)
-
-Some milestones are too large to fit the standard `design.md` + `implementation.md` pattern. These "epic" milestones contain multiple internal sub-milestones that each require their own implementation planning.
-
-### When to Use Multi-Phase Structure
-
-Use this structure when:
-- A feature spans **3+ internal milestones**
-- The design document exceeds 30KB
-- Different sub-milestones require different technical decisions
-- Sub-milestones may be executed by different people or in parallel
-
-### Multi-Phase Directory Structure
-
-```
-docs/board/NN-epic-name/
-├── design.md                          # Unified design covering ALL sub-milestones
-├── milestone-X.Y-decisions.md         # Brainstorm decisions for sub-milestone X.Y
-├── milestone-X.Y-implementation.md    # Implementation plan for sub-milestone X.Y
-├── milestone-X.Z-decisions.md         # (optional) for next sub-milestone
-└── milestone-X.Z-implementation.md    # Implementation plan for X.Z
-```
-
-### File Naming Conventions
-
-| File | Purpose | When to Create |
-|------|---------|----------------|
-| `design.md` | Comprehensive architecture for the epic | At epic start |
-| `milestone-X.Y-decisions.md` | Captures decisions from brainstorming session | After brainstorming sub-milestone |
-| `milestone-X.Y-implementation.md` | Step-by-step tasks for sub-milestone | When starting implementation |
-
-### Example: vibes groove (Milestone 14)
-
-groove is an epic spanning milestones 4.1-4.9:
-
-```
-docs/board/14-continual-learning/
-├── design.md                              # 98KB covering all 10 sub-milestones
-├── milestone-4.2-decisions.md             # Storage decisions from brainstorm
-└── milestone-4.2-implementation.md        # 20 tasks for storage foundation
-```
-
-The unified `design.md` links to sections via anchors (e.g., `design.md#42-storage-foundation`).
-
-### Multi-Phase Workflow
-
-1. **Create unified design.md** covering the entire epic architecture
-2. **For each sub-milestone:**
-   a. Use `superpowers:brainstorming` to explore options
-   b. Capture decisions in `milestone-X.Y-decisions.md`
-   c. Write `milestone-X.Y-implementation.md` with tasks
-   d. Execute using `superpowers:executing-plans`
-3. **Track progress** in board columns with sub-milestone granularity
-
-### Design Document Sections for Multi-Phase
-
-The unified design.md should include:
-- **Milestone Index** - Table linking to each sub-milestone section
-- **Level Progression** - Dependencies between sub-milestones
-- **Core Types** - Shared types used across sub-milestones
-- **Architecture Diagram** - How sub-milestones connect
-
-Each sub-milestone section in design.md should have an anchor (e.g., `## 4.2 Storage Foundation {#42-storage-foundation}`) for linking from board items
