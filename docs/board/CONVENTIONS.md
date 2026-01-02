@@ -279,6 +279,10 @@ new-crate = "1.0"            # Purpose
 
 After design approval, create an `implementation.md` that breaks the milestone into **stories**—focused deliverables that can be implemented and merged independently.
 
+### Source of Truth
+
+**Story frontmatter is the single source of truth for status.** The `implementation.md` is a navigation index only—it links to stories but does not track their status. Run `just board` to see current status in the README.
+
 ### Milestone Structure
 
 ```
@@ -308,11 +312,13 @@ The `implementation.md` serves as the entry point and index for the milestone's 
 
 ## Stories
 
-| # | Story | Description | Status |
-|---|-------|-------------|--------|
-| 1 | [feat-01-types](stories/feat-01-types.md) | Core type definitions | pending |
-| 2 | [feat-02-storage](stories/feat-02-storage.md) | Persistence layer | pending |
-| 3 | [feat-03-api](stories/feat-03-api.md) | HTTP endpoints | pending |
+| # | Story | Description |
+|---|-------|-------------|
+| 1 | [feat-01-types](stories/feat-01-types.md) | Core type definitions |
+| 2 | [feat-02-storage](stories/feat-02-storage.md) | Persistence layer |
+| 3 | [feat-03-api](stories/feat-03-api.md) | HTTP endpoints |
+
+> **Status:** Check story frontmatter or run `just board` for current status.
 
 ## Dependencies
 
