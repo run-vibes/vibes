@@ -55,8 +55,8 @@ pub mod tunnel;
 pub use auth::{AccessConfig, AccessIdentity, AuthContext, AuthError, JwtValidator};
 pub use error::{NotificationError, VibesError};
 pub use events::{
-    ClaudeEvent, EventBatch, EventConsumer, EventLog, InputSource, Offset, SeekPosition, Usage,
-    VibesEvent,
+    ClaudeEvent, EventBatch, EventConsumer, EventLog, InputSource, Offset, SeekPosition,
+    StoredEvent, Usage, VibesEvent,
 };
 pub use hooks::{
     HookEvent, HookInstaller, HookInstallerConfig, HookType, InstallError, PostToolUseData,

@@ -1,16 +1,16 @@
 // web-ui/src/pages/Firehose.tsx
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { StreamView, EventInspector, Badge } from '@vibes/design-system';
-import type { StreamEvent, InspectorEvent, ContextEvent } from '@vibes/design-system';
+import type { DisplayEvent, ContextEvent } from '@vibes/design-system';
 import { useFirehose } from '../hooks/useFirehose';
 import type { VibesEvent } from '../lib/types';
 import './Firehose.css';
 
 const EVENT_TYPES = ['SESSION', 'CLAUDE', 'TOOL', 'HOOK', 'ERROR', 'ASSESS'] as const;
 
-function vibesEventToStreamEvent(event: VibesEvent, _index: number, offset: number): StreamEvent {
+function toDisplayEvent(event: VibesEvent, eventId: string): DisplayEvent {
   const baseEvent = {
-    id: `${offset}`,
+    id: eventId,
     timestamp: new Date(),
   };
 
@@ -84,39 +84,42 @@ export function FirehosePage() {
     });
   }, [selectedTypes, sessionFilter, setFilters]);
 
-  const streamEvents = useMemo(
-    () => rawEvents.map((e, i) => vibesEventToStreamEvent(e.event, i, e.offset)),
+  const displayEvents = useMemo(
+    () => rawEvents.map((e) => toDisplayEvent(e.event, e.event_id)),
     [rawEvents]
   );
 
-  const selectedEvent = useMemo((): InspectorEvent | null => {
+  const selectedEvent = useMemo((): DisplayEvent | null => {
     if (!selectedEventId) return null;
-    const eventIndex = rawEvents.findIndex((e) => String(e.offset) === selectedEventId);
-    if (eventIndex === -1) return null;
+    // Find event by event_id (UUIDv7)
+    const rawIndex = rawEvents.findIndex((e) => e.event_id === selectedEventId);
+    if (rawIndex === -1) return null;
 
-    const raw = rawEvents[eventIndex];
-    const stream = streamEvents[eventIndex];
-    if (!raw || !stream) return null;
+    const raw = rawEvents[rawIndex];
+    const display = displayEvents[rawIndex];
+    if (!raw || !display) return null;
 
     return {
-      id: stream.id,
-      timestamp: stream.timestamp,
-      type: stream.type,
-      session: stream.session,
+      id: display.id,
+      timestamp: display.timestamp,
+      type: display.type,
+      summary: display.summary,
+      session: display.session,
       payload: raw.event,
     };
-  }, [selectedEventId, rawEvents, streamEvents]);
+  }, [selectedEventId, rawEvents, displayEvents]);
 
   const contextEvents = useMemo((): ContextEvent[] => {
     if (!selectedEventId) return [];
-    const eventIndex = rawEvents.findIndex((e) => String(e.offset) === selectedEventId);
+    // Find index by event_id (UUIDv7)
+    const eventIndex = rawEvents.findIndex((e) => e.event_id === selectedEventId);
     if (eventIndex === -1) return [];
 
     const context: ContextEvent[] = [];
-    for (let i = Math.max(0, eventIndex - 2); i <= Math.min(streamEvents.length - 1, eventIndex + 2); i++) {
-      const e = streamEvents[i];
+    for (let i = Math.max(0, eventIndex - 2); i <= Math.min(displayEvents.length - 1, eventIndex + 2); i++) {
+      const e = displayEvents[i];
       context.push({
-        offset: i - eventIndex,
+        relativePosition: i - eventIndex,
         timestamp: e.timestamp,
         type: e.type,
         summary: e.summary,
@@ -124,7 +127,7 @@ export function FirehosePage() {
     }
 
     return context;
-  }, [selectedEventId, rawEvents, streamEvents]);
+  }, [selectedEventId, rawEvents, displayEvents]);
 
   const toggleType = useCallback((type: string) => {
     setSelectedTypes((prev) =>
@@ -185,7 +188,7 @@ export function FirehosePage() {
       <div className="firehose-content">
         <div className="firehose-stream">
           <StreamView
-            events={streamEvents}
+            events={displayEvents}
             title="Event Stream"
             isLive={isConnected}
             isPaused={!isFollowing}

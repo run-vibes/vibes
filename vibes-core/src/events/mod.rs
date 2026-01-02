@@ -3,7 +3,7 @@
 pub mod types;
 
 // Re-export key types for convenience
-pub use types::{ClaudeEvent, InputSource, Usage, VibesEvent};
+pub use types::{ClaudeEvent, InputSource, StoredEvent, Usage, VibesEvent};
 
 // Re-export EventLog types from vibes-iggy
 pub use vibes_iggy::{EventBatch, EventConsumer, EventLog, Offset, SeekPosition};

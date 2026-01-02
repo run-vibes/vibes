@@ -5,8 +5,8 @@ use std::sync::Arc;
 use chrono::{DateTime, Utc};
 use tokio::sync::{RwLock, broadcast};
 use vibes_core::{
-    AccessConfig, PluginHost, PluginHostConfig, SubscriptionStore, TunnelConfig, TunnelManager,
-    VapidKeyManager, VibesEvent,
+    AccessConfig, PluginHost, PluginHostConfig, StoredEvent, SubscriptionStore, TunnelConfig,
+    TunnelManager, VapidKeyManager, VibesEvent,
     pty::{PtyConfig, PtyManager},
 };
 use vibes_iggy::{
@@ -40,15 +40,15 @@ pub struct AppState {
     /// Plugin host for managing plugins
     pub plugin_host: Arc<RwLock<PluginHost>>,
     /// Event log for persistent event storage
-    pub event_log: Arc<dyn EventLog<VibesEvent>>,
+    pub event_log: Arc<dyn EventLog<StoredEvent>>,
     /// Tunnel manager for remote access
     pub tunnel_manager: Arc<RwLock<TunnelManager>>,
     /// Authentication layer
     pub auth_layer: AuthLayer,
     /// When the server started
     pub started_at: DateTime<Utc>,
-    /// Broadcast channel for WebSocket event distribution (offset, event)
-    event_broadcaster: broadcast::Sender<(Offset, VibesEvent)>,
+    /// Broadcast channel for WebSocket event distribution (offset, stored_event)
+    event_broadcaster: broadcast::Sender<(Offset, StoredEvent)>,
     /// VAPID key manager for push notifications (optional)
     pub vapid: Option<Arc<VapidKeyManager>>,
     /// Push subscription store (optional)
@@ -64,8 +64,8 @@ pub struct AppState {
 impl AppState {
     /// Create a new AppState with default components
     pub fn new() -> Self {
-        let event_log: Arc<dyn EventLog<VibesEvent>> =
-            Arc::new(InMemoryEventLog::<VibesEvent>::new());
+        let event_log: Arc<dyn EventLog<StoredEvent>> =
+            Arc::new(InMemoryEventLog::<StoredEvent>::new());
         let plugin_host = Arc::new(RwLock::new(PluginHost::new(PluginHostConfig::default())));
         let tunnel_manager = Arc::new(RwLock::new(TunnelManager::new(
             TunnelConfig::default(),
@@ -101,7 +101,7 @@ impl AppState {
     pub async fn new_with_iggy() -> Result<Self, vibes_iggy::Error> {
         let (log, manager) = Self::try_start_iggy().await?;
         tracing::info!("Using Iggy for persistent event storage");
-        let event_log: Arc<dyn EventLog<VibesEvent>> = Arc::new(log);
+        let event_log: Arc<dyn EventLog<StoredEvent>> = Arc::new(log);
         let iggy_manager = Some(manager);
 
         let plugin_host = Arc::new(RwLock::new(PluginHost::new(PluginHostConfig::default())));
@@ -135,7 +135,7 @@ impl AppState {
     pub async fn new_with_iggy_config(iggy_config: IggyConfig) -> Result<Self, vibes_iggy::Error> {
         let (log, manager) = Self::try_start_iggy_with_config(iggy_config).await?;
         tracing::info!("Using Iggy for persistent event storage");
-        let event_log: Arc<dyn EventLog<VibesEvent>> = Arc::new(log);
+        let event_log: Arc<dyn EventLog<StoredEvent>> = Arc::new(log);
         let iggy_manager = Some(manager);
 
         let plugin_host = Arc::new(RwLock::new(PluginHost::new(PluginHostConfig::default())));
@@ -166,14 +166,14 @@ impl AppState {
     ///
     /// Returns both the event log and a reference to the manager for shutdown.
     async fn try_start_iggy()
-    -> Result<(IggyEventLog<VibesEvent>, Arc<IggyManager>), vibes_iggy::Error> {
+    -> Result<(IggyEventLog<StoredEvent>, Arc<IggyManager>), vibes_iggy::Error> {
         Self::try_start_iggy_with_config(IggyConfig::default()).await
     }
 
     /// Try to start the Iggy server with custom configuration.
     async fn try_start_iggy_with_config(
         config: IggyConfig,
-    ) -> Result<(IggyEventLog<VibesEvent>, Arc<IggyManager>), vibes_iggy::Error> {
+    ) -> Result<(IggyEventLog<StoredEvent>, Arc<IggyManager>), vibes_iggy::Error> {
         // Check if binary is available before trying to start
         if config.find_binary().is_none() {
             return Err(vibes_iggy::Error::BinaryNotFound);
@@ -232,8 +232,8 @@ impl AppState {
         plugin_host: Arc<RwLock<PluginHost>>,
         tunnel_manager: Arc<RwLock<TunnelManager>>,
     ) -> Self {
-        let event_log: Arc<dyn EventLog<VibesEvent>> =
-            Arc::new(InMemoryEventLog::<VibesEvent>::new());
+        let event_log: Arc<dyn EventLog<StoredEvent>> =
+            Arc::new(InMemoryEventLog::<StoredEvent>::new());
         let (event_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let (pty_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let pty_manager = Arc::new(RwLock::new(PtyManager::new(PtyConfig::default())));
@@ -286,37 +286,39 @@ impl AppState {
     /// Get the event broadcaster sender for consumer integration.
     ///
     /// This is used by EventLog consumers to broadcast events to WebSocket clients.
-    pub fn event_broadcaster(&self) -> broadcast::Sender<(Offset, VibesEvent)> {
+    pub fn event_broadcaster(&self) -> broadcast::Sender<(Offset, StoredEvent)> {
         self.event_broadcaster.clone()
     }
 
     /// Subscribe to events broadcast to WebSocket clients
     ///
-    /// Returns a receiver that will receive (offset, event) tuples published
+    /// Returns a receiver that will receive (offset, stored_event) tuples published
     /// through the event broadcaster.
-    pub fn subscribe_events(&self) -> broadcast::Receiver<(Offset, VibesEvent)> {
+    pub fn subscribe_events(&self) -> broadcast::Receiver<(Offset, StoredEvent)> {
         self.event_broadcaster.subscribe()
     }
 
     /// Append an event to the EventLog.
     ///
     /// This is the primary way to publish events. The event will be:
-    /// 1. Persisted to the EventLog (Iggy when available, in-memory otherwise)
-    /// 2. Picked up by consumers (WebSocket, Notification, Assessment)
-    /// 3. Broadcast to connected clients via the WebSocket consumer
+    /// 1. Wrapped in a StoredEvent with a unique UUIDv7 event_id
+    /// 2. Persisted to the EventLog (Iggy when available, in-memory otherwise)
+    /// 3. Picked up by consumers (WebSocket, Notification, Assessment)
+    /// 4. Broadcast to connected clients via the WebSocket consumer
     ///
     /// This method spawns a task to avoid blocking the caller.
     /// If persistence fails, the error is logged but not propagated.
     pub fn append_event(&self, event: VibesEvent) {
         let event_log = Arc::clone(&self.event_log);
+        let stored = StoredEvent::new(event);
         tokio::spawn(async move {
-            if let Err(e) = event_log.append(event).await {
+            if let Err(e) = event_log.append(stored).await {
                 tracing::warn!("Failed to append event to EventLog: {}", e);
             }
         });
     }
 
-    /// Broadcast an event with its offset to all subscribed WebSocket clients.
+    /// Broadcast a stored event with its offset to all subscribed WebSocket clients.
     ///
     /// **Internal API:** Event producers should NOT call this directly.
     /// Use [`append_event`] instead, which writes to the EventLog.
@@ -325,8 +327,8 @@ impl AppState {
     ///
     /// Returns the number of receivers that received the event.
     /// Returns 0 if there are no active subscribers.
-    pub fn broadcast_event(&self, offset: Offset, event: VibesEvent) -> usize {
-        self.event_broadcaster.send((offset, event)).unwrap_or(0)
+    pub fn broadcast_event(&self, offset: Offset, stored: StoredEvent) -> usize {
+        self.event_broadcaster.send((offset, stored)).unwrap_or(0)
     }
 
     /// Subscribe to PTY events broadcast to WebSocket clients
@@ -406,11 +408,11 @@ mod tests {
     async fn test_broadcast_event_with_no_subscribers_returns_zero() {
         let state = AppState::new();
         // No subscribers, should return 0
-        let event = VibesEvent::SessionCreated {
+        let stored = StoredEvent::new(VibesEvent::SessionCreated {
             session_id: "sess-1".to_string(),
             name: None,
-        };
-        let count = state.broadcast_event(0, event);
+        });
+        let count = state.broadcast_event(0, stored);
         assert_eq!(count, 0);
     }
 
@@ -419,19 +421,21 @@ mod tests {
         let state = AppState::new();
         let mut receiver = state.subscribe_events();
 
-        let event = VibesEvent::Claude {
+        let stored = StoredEvent::new(VibesEvent::Claude {
             session_id: "sess-1".to_string(),
             event: ClaudeEvent::TextDelta {
                 text: "Hello".to_string(),
             },
-        };
+        });
+        let expected_event_id = stored.event_id;
 
-        let count = state.broadcast_event(42, event.clone());
+        let count = state.broadcast_event(42, stored);
         assert_eq!(count, 1);
 
         let (offset, received) = receiver.recv().await.unwrap();
         assert_eq!(offset, 42);
-        match received {
+        assert_eq!(received.event_id, expected_event_id);
+        match &received.event {
             VibesEvent::Claude { session_id, event } => {
                 assert_eq!(session_id, "sess-1");
                 match event {
@@ -449,12 +453,12 @@ mod tests {
         let mut receiver1 = state.subscribe_events();
         let mut receiver2 = state.subscribe_events();
 
-        let event = VibesEvent::SessionStateChanged {
+        let stored = StoredEvent::new(VibesEvent::SessionStateChanged {
             session_id: "sess-1".to_string(),
             state: "processing".to_string(),
-        };
+        });
 
-        let count = state.broadcast_event(99, event);
+        let count = state.broadcast_event(99, stored);
         assert_eq!(count, 2);
 
         // Both receivers should get the event with offset
@@ -464,7 +468,7 @@ mod tests {
         assert_eq!(offset1, 99);
         assert_eq!(offset2, 99);
 
-        match received1 {
+        match &received1.event {
             VibesEvent::SessionStateChanged { session_id, state } => {
                 assert_eq!(session_id, "sess-1");
                 assert_eq!(state, "processing");
@@ -472,7 +476,7 @@ mod tests {
             _ => panic!("Expected SessionStateChanged"),
         }
 
-        match received2 {
+        match &received2.event {
             VibesEvent::SessionStateChanged { session_id, state } => {
                 assert_eq!(session_id, "sess-1");
                 assert_eq!(state, "processing");
@@ -535,7 +539,13 @@ mod tests {
             .unwrap();
         assert_eq!(batch.events.len(), 1);
 
-        match &batch.events[0].1 {
+        let stored = &batch.events[0].1;
+
+        // Verify the event has a valid UUIDv7 event_id
+        assert_eq!(stored.event_id.get_version(), Some(uuid::Version::SortRand));
+
+        // Verify the inner event data
+        match &stored.event {
             VibesEvent::SessionCreated { session_id, .. } => {
                 assert_eq!(session_id, "test-session");
             }

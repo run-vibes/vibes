@@ -17,7 +17,8 @@ use futures::{SinkExt, StreamExt};
 use serde::{Deserialize, Serialize};
 use tokio::sync::broadcast;
 use tracing::warn;
-use vibes_core::VibesEvent;
+use uuid::Uuid;
+use vibes_core::{StoredEvent, VibesEvent};
 use vibes_iggy::{Offset, SeekPosition};
 
 use crate::AppState;
@@ -36,10 +37,23 @@ pub struct FirehoseQuery {
 /// Event with offset - used inside batches (no type tag)
 #[derive(Debug, Clone, Serialize)]
 pub struct EventWithOffset {
-    /// The event offset in the EventLog
+    /// Globally unique, time-ordered event identifier (UUIDv7)
+    pub event_id: Uuid,
+    /// The event offset in the EventLog (partition-scoped, use event_id for uniqueness)
     pub offset: Offset,
     /// The event data
+    #[serde(flatten)]
     pub event: VibesEvent,
+}
+
+impl EventWithOffset {
+    pub fn new(stored: StoredEvent, offset: Offset) -> Self {
+        Self {
+            event_id: stored.event_id,
+            offset,
+            event: stored.event,
+        }
+    }
 }
 
 /// Server-to-client message: single live event with offset
@@ -48,18 +62,21 @@ pub struct FirehoseEventMessage {
     /// Message type discriminator
     #[serde(rename = "type")]
     pub msg_type: &'static str,
-    /// The event offset in the EventLog
+    /// Globally unique, time-ordered event identifier (UUIDv7)
+    pub event_id: Uuid,
+    /// The event offset in the EventLog (partition-scoped, use event_id for uniqueness)
     pub offset: Offset,
-    /// The event data
+    /// The event data (nested to avoid type field conflict)
     pub event: VibesEvent,
 }
 
 impl FirehoseEventMessage {
-    pub fn new(offset: Offset, event: VibesEvent) -> Self {
+    pub fn new(offset: Offset, stored: StoredEvent) -> Self {
         Self {
             msg_type: "event",
+            event_id: stored.event_id,
             offset,
-            event,
+            event: stored.event,
         }
     }
 }
@@ -156,8 +173,8 @@ async fn handle_firehose(socket: WebSocket, state: Arc<AppState>, query: Firehos
     // Send initial batch of historical events
     let filtered_events: Vec<_> = historical_events
         .into_iter()
-        .filter(|(_, event)| matches_filters(event, &filter_types, &filter_session))
-        .map(|(offset, event)| EventWithOffset { offset, event })
+        .filter(|(_, stored)| matches_filters(&stored.event, &filter_types, &filter_session))
+        .map(|(offset, stored)| EventWithOffset::new(stored, offset))
         .collect();
 
     let batch = FirehoseEventsBatch::new(
@@ -196,12 +213,12 @@ async fn handle_firehose(socket: WebSocket, state: Arc<AppState>, query: Firehos
             // Handle broadcast events
             result = events_rx.recv() => {
                 match result {
-                    Ok((offset, event)) => {
-                        if !matches_filters(&event, &filter_types, &filter_session) {
+                    Ok((offset, stored)) => {
+                        if !matches_filters(&stored.event, &filter_types, &filter_session) {
                             continue;
                         }
 
-                        let msg = FirehoseEventMessage::new(offset, event);
+                        let msg = FirehoseEventMessage::new(offset, stored);
                         if let Err(e) = send_json(&mut sender, &msg).await {
                             warn!("Firehose send failed: {}", e);
                             break;
@@ -245,8 +262,8 @@ where
 
             let filtered_events: Vec<_> = events
                 .into_iter()
-                .filter(|(_, event)| matches_filters(event, filter_types, filter_session))
-                .map(|(offset, event)| EventWithOffset { offset, event })
+                .filter(|(_, stored)| matches_filters(&stored.event, filter_types, filter_session))
+                .map(|(offset, stored)| EventWithOffset::new(stored, offset))
                 .collect();
 
             let batch = FirehoseEventsBatch::new(
@@ -273,8 +290,8 @@ where
 
             let filtered_events: Vec<_> = events
                 .into_iter()
-                .filter(|(_, event)| matches_filters(event, filter_types, filter_session))
-                .map(|(offset, event)| EventWithOffset { offset, event })
+                .filter(|(_, stored)| matches_filters(&stored.event, filter_types, filter_session))
+                .map(|(offset, stored)| EventWithOffset::new(stored, offset))
                 .collect();
 
             let batch = FirehoseEventsBatch::new(
@@ -349,8 +366,8 @@ fn event_type_name(event: &VibesEvent) -> &'static str {
 
 /// Load the last N events from the EventLog.
 ///
-/// Returns events in chronological order (oldest first) with their offsets.
-async fn load_historical_events(state: &AppState, count: u64) -> Vec<(Offset, VibesEvent)> {
+/// Returns stored events in chronological order (oldest first) with their offsets.
+async fn load_historical_events(state: &AppState, count: u64) -> Vec<(Offset, StoredEvent)> {
     let hwm = state.event_log.high_water_mark();
     if hwm == 0 {
         return Vec::new();
@@ -389,13 +406,13 @@ async fn load_historical_events(state: &AppState, count: u64) -> Vec<(Offset, Vi
 
 /// Load events before a specific offset from the EventLog.
 ///
-/// Returns events in chronological order (oldest first) with their offsets.
+/// Returns stored events in chronological order (oldest first) with their offsets.
 /// Used for pagination - fetching older events when scrolling up.
 async fn load_events_before_offset(
     state: &AppState,
     before_offset: Offset,
     count: u64,
-) -> Vec<(Offset, VibesEvent)> {
+) -> Vec<(Offset, StoredEvent)> {
     if before_offset == 0 {
         return Vec::new();
     }
@@ -444,26 +461,26 @@ mod tests {
     use super::*;
     use vibes_core::ClaudeEvent;
 
+    fn make_stored_event(event: VibesEvent) -> StoredEvent {
+        StoredEvent::new(event)
+    }
+
     // Serialization format tests - prevent regression of message format bugs
 
     #[test]
-    fn events_batch_serializes_without_nested_type_tags() {
-        // CRITICAL: Events inside batches must NOT have "type": "event" nested inside them
-        // This was a bug where serde's tag attribute incorrectly tagged nested events
+    fn events_batch_serializes_with_event_id_and_flattened_event() {
+        // Test that events in batches include event_id and flatten the event fields
+        let stored1 = make_stored_event(VibesEvent::ClientConnected {
+            client_id: "c1".to_string(),
+        });
+        let stored2 = make_stored_event(VibesEvent::SessionCreated {
+            session_id: "s1".to_string(),
+            name: Some("Test".to_string()),
+        });
+
         let events = vec![
-            EventWithOffset {
-                offset: 10,
-                event: VibesEvent::ClientConnected {
-                    client_id: "c1".to_string(),
-                },
-            },
-            EventWithOffset {
-                offset: 11,
-                event: VibesEvent::SessionCreated {
-                    session_id: "s1".to_string(),
-                    name: Some("Test".to_string()),
-                },
-            },
+            EventWithOffset::new(stored1.clone(), 10),
+            EventWithOffset::new(stored2.clone(), 11),
         ];
 
         let batch = FirehoseEventsBatch::new(events, Some(10), true);
@@ -479,28 +496,23 @@ mod tests {
         let events_arr = parsed["events"].as_array().unwrap();
         assert_eq!(events_arr.len(), 2);
 
-        // Each event should have offset and event fields, but NO top-level "type" in the wrapper
+        // Each event should have event_id, offset, and flattened event fields
         let first = &events_arr[0];
         assert_eq!(first["offset"], 10);
-        assert!(first["event"].is_object());
-        // The wrapper itself should not have a "type" field (only the inner event does)
-        assert!(
-            first.get("type").is_none(),
-            "EventWithOffset should not have a 'type' field - only the inner event should"
-        );
-
-        // The inner event should have its own type tag (from VibesEvent's serde)
-        assert_eq!(first["event"]["type"], "client_connected");
+        assert!(first["event_id"].is_string()); // UUIDv7 as string
+        // Event type should be at top level due to flatten
+        assert_eq!(first["type"], "client_connected");
+        assert_eq!(first["client_id"], "c1");
     }
 
     #[test]
-    fn single_event_message_serializes_with_type_at_top_level() {
-        let msg = FirehoseEventMessage::new(
-            42,
-            VibesEvent::ClientConnected {
-                client_id: "c1".to_string(),
-            },
-        );
+    fn single_event_message_serializes_with_event_id_and_nested_event() {
+        let stored = make_stored_event(VibesEvent::ClientConnected {
+            client_id: "c1".to_string(),
+        });
+        let event_id = stored.event_id;
+
+        let msg = FirehoseEventMessage::new(42, stored);
         let json = serde_json::to_string(&msg).unwrap();
 
         let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
@@ -508,8 +520,9 @@ mod tests {
         // Top-level type should be "event" (the message type)
         assert_eq!(parsed["type"], "event");
         assert_eq!(parsed["offset"], 42);
-
-        // The event field should contain the actual event with its own type
+        // event_id should be present at top level
+        assert_eq!(parsed["event_id"], event_id.to_string());
+        // Event should be nested (not flattened) to avoid type field conflict
         assert_eq!(parsed["event"]["type"], "client_connected");
         assert_eq!(parsed["event"]["client_id"], "c1");
     }
@@ -521,13 +534,13 @@ mod tests {
         // Create state with in-memory event log
         let state = AppState::new();
 
-        // Append 5 events to the EventLog
+        // Append 5 events to the EventLog (state.append_event wraps in StoredEvent)
         for i in 0..5 {
-            let event = VibesEvent::SessionCreated {
+            let stored = make_stored_event(VibesEvent::SessionCreated {
                 session_id: format!("session-{}", i),
                 name: Some(format!("Session {}", i)),
-            };
-            state.event_log.append(event).await.unwrap();
+            });
+            state.event_log.append(stored).await.unwrap();
         }
 
         // Load last 3 events
@@ -541,14 +554,14 @@ mod tests {
         assert_eq!(events[1].0, 3);
         assert_eq!(events[2].0, 4);
 
-        // Verify they're the correct events (last 3)
-        if let VibesEvent::SessionCreated { session_id, .. } = &events[0].1 {
+        // Verify they're the correct events (last 3) - now accessing .event
+        if let VibesEvent::SessionCreated { session_id, .. } = &events[0].1.event {
             assert_eq!(session_id, "session-2");
         } else {
             panic!("Expected SessionCreated event");
         }
 
-        if let VibesEvent::SessionCreated { session_id, .. } = &events[2].1 {
+        if let VibesEvent::SessionCreated { session_id, .. } = &events[2].1.event {
             assert_eq!(session_id, "session-4");
         } else {
             panic!("Expected SessionCreated event");
@@ -563,11 +576,11 @@ mod tests {
 
         // Append only 2 events
         for i in 0..2 {
-            let event = VibesEvent::SessionCreated {
+            let stored = make_stored_event(VibesEvent::SessionCreated {
                 session_id: format!("session-{}", i),
                 name: None,
-            };
-            state.event_log.append(event).await.unwrap();
+            });
+            state.event_log.append(stored).await.unwrap();
         }
 
         // Request 100 events but only 2 exist
@@ -668,11 +681,11 @@ mod tests {
 
         // Append 10 events (offsets 0-9)
         for i in 0..10 {
-            let event = VibesEvent::SessionCreated {
+            let stored = make_stored_event(VibesEvent::SessionCreated {
                 session_id: format!("session-{}", i),
                 name: Some(format!("Session {}", i)),
-            };
-            state.event_log.append(event).await.unwrap();
+            });
+            state.event_log.append(stored).await.unwrap();
         }
 
         // Load 3 events before offset 7 (should get offsets 4, 5, 6)
@@ -686,7 +699,7 @@ mod tests {
         assert_eq!(events[2].0, 6);
 
         // Verify they're the correct events
-        if let VibesEvent::SessionCreated { session_id, .. } = &events[0].1 {
+        if let VibesEvent::SessionCreated { session_id, .. } = &events[0].1.event {
             assert_eq!(session_id, "session-4");
         } else {
             panic!("Expected SessionCreated event");
@@ -701,11 +714,11 @@ mod tests {
 
         // Append 5 events (offsets 0-4)
         for i in 0..5 {
-            let event = VibesEvent::SessionCreated {
+            let stored = make_stored_event(VibesEvent::SessionCreated {
                 session_id: format!("session-{}", i),
                 name: None,
-            };
-            state.event_log.append(event).await.unwrap();
+            });
+            state.event_log.append(stored).await.unwrap();
         }
 
         // Load 100 events before offset 3 (should only get offsets 0, 1, 2)
@@ -725,11 +738,11 @@ mod tests {
 
         // Append some events
         for i in 0..5 {
-            let event = VibesEvent::SessionCreated {
+            let stored = make_stored_event(VibesEvent::SessionCreated {
                 session_id: format!("session-{}", i),
                 name: None,
-            };
-            state.event_log.append(event).await.unwrap();
+            });
+            state.event_log.append(stored).await.unwrap();
         }
 
         // Load events before offset 0 (should be empty)

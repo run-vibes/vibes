@@ -1,23 +1,16 @@
 // design-system/src/compositions/StreamView/StreamView.tsx
 import { forwardRef, HTMLAttributes, useEffect, useRef } from 'react';
+import type { DisplayEvent } from '../../events';
 import styles from './StreamView.module.css';
 
-export interface StreamEvent {
-  id: string;
-  timestamp: Date;
-  type: string;
-  session?: string;
-  summary: string;
-}
-
 export interface StreamViewProps extends HTMLAttributes<HTMLDivElement> {
-  events: StreamEvent[];
+  events: DisplayEvent[];
   title?: string;
   isLive?: boolean;
   isPaused?: boolean;
   autoScroll?: boolean;
   selectedId?: string;
-  onEventClick?: (event: StreamEvent) => void;
+  onEventClick?: (event: DisplayEvent) => void;
 }
 
 const typeToClass: Record<string, string> = {

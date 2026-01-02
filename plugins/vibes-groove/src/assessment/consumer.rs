@@ -10,7 +10,7 @@ use std::time::Duration;
 
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, error, info, trace};
-use vibes_core::VibesEvent;
+use vibes_core::StoredEvent;
 use vibes_iggy::{EventConsumer, Offset, SeekPosition};
 
 use super::AssessmentProcessor;
@@ -94,7 +94,7 @@ pub enum ConsumerResult {
 /// Returns `ConsumerResult::Shutdown` on graceful shutdown, or
 /// `ConsumerResult::Error` if an unrecoverable error occurred.
 pub async fn assessment_consumer_loop(
-    mut consumer: Box<dyn EventConsumer<VibesEvent>>,
+    mut consumer: Box<dyn EventConsumer<StoredEvent>>,
     processor: Arc<AssessmentProcessor>,
     config: AssessmentConsumerConfig,
     shutdown: CancellationToken,
@@ -127,9 +127,9 @@ pub async fn assessment_consumer_loop(
                         debug!(group = %config.group, count = batch.len(), "Processing batch");
 
                         let mut last_offset: Option<Offset> = None;
-                        for (offset, event) in batch {
-                            // Dispatch to processor for analysis
-                            processor.process_event(&event).await;
+                        for (offset, stored) in batch {
+                            // Extract inner event and dispatch to processor for analysis
+                            processor.process_event(&stored.event).await;
                             last_offset = Some(offset);
                         }
 
@@ -156,23 +156,24 @@ pub async fn assessment_consumer_loop(
 mod tests {
     use super::*;
     use std::sync::atomic::{AtomicUsize, Ordering};
+    use vibes_core::VibesEvent;
     use vibes_iggy::{EventLog, InMemoryEventLog};
 
-    fn make_event(session_id: &str) -> VibesEvent {
-        VibesEvent::SessionCreated {
+    fn make_stored_event(session_id: &str) -> StoredEvent {
+        StoredEvent::new(VibesEvent::SessionCreated {
             session_id: session_id.to_string(),
             name: None,
-        }
+        })
     }
 
     #[tokio::test]
     async fn test_assessment_consumer_processes_events() {
         // Setup: EventLog with some events
-        let log = Arc::new(InMemoryEventLog::<VibesEvent>::new());
+        let log = Arc::new(InMemoryEventLog::<StoredEvent>::new());
 
         // Append events before starting consumer
         for i in 0..5 {
-            log.append(make_event(&format!("session-{i}")))
+            log.append(make_stored_event(&format!("session-{i}")))
                 .await
                 .unwrap();
         }
@@ -211,11 +212,11 @@ mod tests {
     #[tokio::test]
     async fn test_assessment_consumer_commits_after_batch() {
         // Setup: EventLog with events
-        let log = Arc::new(InMemoryEventLog::<VibesEvent>::new());
+        let log = Arc::new(InMemoryEventLog::<StoredEvent>::new());
 
         // Append events
         for i in 0..3 {
-            log.append(make_event(&format!("commit-test-{i}")))
+            log.append(make_stored_event(&format!("commit-test-{i}")))
                 .await
                 .unwrap();
         }
@@ -249,10 +250,12 @@ mod tests {
     #[tokio::test]
     async fn test_assessment_consumer_respects_shutdown() {
         // Setup: EventLog
-        let log = Arc::new(InMemoryEventLog::<VibesEvent>::new());
+        let log = Arc::new(InMemoryEventLog::<StoredEvent>::new());
 
         // Append one event
-        log.append(make_event("shutdown-test")).await.unwrap();
+        log.append(make_stored_event("shutdown-test"))
+            .await
+            .unwrap();
 
         // Create consumer
         let consumer = log.consumer("shutdown-test-group").await.unwrap();
@@ -328,11 +331,11 @@ mod tests {
     #[tokio::test]
     async fn test_assessment_consumer_processes_all_historical_events() {
         // Setup: EventLog with events added BEFORE consumer starts
-        let log = Arc::new(InMemoryEventLog::<VibesEvent>::new());
+        let log = Arc::new(InMemoryEventLog::<StoredEvent>::new());
 
         // Append events before creating consumer
         for i in 0..10 {
-            log.append(make_event(&format!("historical-{i}")))
+            log.append(make_stored_event(&format!("historical-{i}")))
                 .await
                 .unwrap();
         }

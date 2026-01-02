@@ -8,6 +8,7 @@ describe('EventInspector', () => {
     id: 'evt-7f3a8b2c-1234',
     timestamp: new Date('2024-12-31T14:32:03.012Z'),
     type: 'ERROR',
+    summary: 'Permission denied: /etc/passwd',
     session: 'sess-abc',
     sessionName: 'auth-refactor',
     payload: {

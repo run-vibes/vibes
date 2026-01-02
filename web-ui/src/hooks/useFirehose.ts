@@ -11,9 +11,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { VibesEvent } from '../lib/types';
 
 /**
- * A stream event with its offset from the EventLog
+ * Raw firehose event from the server with its offset and unique ID
  */
-export interface StreamEvent {
+export interface FirehoseEvent {
+  /** Globally unique, time-ordered event ID (UUIDv7) */
+  event_id: string;
+  /** Partition-scoped offset (not unique across partitions, use event_id for keying) */
   offset: number;
   event: VibesEvent;
 }
@@ -30,7 +33,7 @@ export interface FirehoseFilters {
  * State model for the firehose hook
  */
 export interface FirehoseState {
-  events: StreamEvent[];
+  events: FirehoseEvent[];
   oldestOffset: number | null;
   newestOffset: number | null;
   isLoadingOlder: boolean;
@@ -59,13 +62,15 @@ export interface UseFirehoseReturn extends FirehoseState {
  */
 interface EventsBatchMessage {
   type: 'events_batch';
-  events: StreamEvent[];
+  events: FirehoseEvent[];
   oldest_offset: number | null;
   has_more: boolean;
 }
 
 interface LiveEventMessage {
   type: 'event';
+  /** Globally unique, time-ordered event ID (UUIDv7) */
+  event_id: string;
   offset: number;
   event: VibesEvent;
 }
@@ -93,7 +98,7 @@ export function useFirehose(options: FirehoseOptions = {}): UseFirehoseReturn {
   const { autoConnect = true } = options;
 
   // Core state
-  const [events, setEvents] = useState<StreamEvent[]>([]);
+  const [events, setEvents] = useState<FirehoseEvent[]>([]);
   const [oldestOffset, setOldestOffset] = useState<number | null>(null);
   const [newestOffset, setNewestOffset] = useState<number | null>(null);
   const [isLoadingOlder, setIsLoadingOlder] = useState(false);
@@ -148,7 +153,7 @@ export function useFirehose(options: FirehoseOptions = {}): UseFirehoseReturn {
         setHasMore(msg.has_more);
       } else if (msg.type === 'event') {
         // Live event - append
-        setEvents((prev) => [...prev, { offset: msg.offset, event: msg.event }]);
+        setEvents((prev) => [...prev, { event_id: msg.event_id, offset: msg.offset, event: msg.event }]);
         setNewestOffset(msg.offset);
       }
     } catch (e) {

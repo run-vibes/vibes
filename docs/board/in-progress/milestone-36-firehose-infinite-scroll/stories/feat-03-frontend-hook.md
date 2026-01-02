@@ -1,6 +1,6 @@
 ---
 created: 2026-01-02
-status: pending
+status: done
 ---
 
 # feat: Rewrite useFirehose Hook
@@ -73,12 +73,12 @@ See [design.md](../design.md) for state model. The current hook buffers events i
 
 ## Acceptance Criteria
 
-- [ ] Hook tracks oldest and newest offsets
-- [ ] Initial batch populates state correctly
-- [ ] `fetchOlder()` requests more history
-- [ ] `setFilters()` sends filter update to server
-- [ ] `isFollowing` state managed correctly
-- [ ] All tests pass
+- [x] Hook tracks oldest and newest offsets
+- [x] Initial batch populates state correctly
+- [x] `fetchOlder()` requests more history
+- [x] `setFilters()` sends filter update to server
+- [x] `isFollowing` state managed correctly
+- [x] All tests pass
 
 ## Completion
 
