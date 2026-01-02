@@ -30,6 +30,79 @@ docs/board/
 
 ---
 
+## Work Item Types
+
+The board supports four item types, organized hierarchically:
+
+### Milestones
+
+Large deliverables that span multiple work sessions. Milestones contain design docs, implementation plans, and optionally **stories**.
+
+```
+docs/board/backlog/milestone-14-continual-learning/
+├── design.md              # Architecture and decisions
+├── implementation.md      # Step-by-step tasks (optional)
+└── stories/               # Child work items (optional)
+    ├── story-01-storage.md
+    ├── story-02-capture.md
+    └── story-03-inject.md
+```
+
+**Create with:** `just board new milestone "Continual Learning"`
+
+### Stories
+
+Focused work items that live within a milestone. Stories break large milestones into reviewable chunks—each story can be implemented and merged independently.
+
+**Structure:** `docs/board/<column>/milestone-XX-name/stories/story-NN-description.md`
+
+**When to use stories:**
+- Milestone spans 3+ distinct deliverables
+- Work can be parallelized across contributors
+- Each piece merits its own PR and review cycle
+
+**Story file template:**
+```markdown
+---
+created: 2024-01-15
+status: pending  # pending | in-progress | done
+---
+
+# Story: [Description]
+
+## Goal
+
+[What this story delivers]
+
+## Tasks
+
+- [ ] Task 1
+- [ ] Task 2
+
+## Acceptance Criteria
+
+- [ ] Criterion 1
+- [ ] Criterion 2
+```
+
+The board generator lists stories as checklists under their parent milestone.
+
+### Features, Bugs, and Chores
+
+Standalone items that don't warrant a full milestone structure.
+
+| Type | Prefix | Use Case |
+|------|--------|----------|
+| `feat` | `feat-NNNN-` | New functionality, enhancements |
+| `bug` | `bug-NNNN-` | Defects, unexpected behavior |
+| `chore` | `chore-NNNN-` | Maintenance, refactoring, tooling |
+
+**Create with:** `just board new feat "Add session export"`, `just board new bug "Fix auth timeout"`
+
+These are single markdown files (not directories) unless they grow complex enough to warrant design docs.
+
+---
+
 ## When to Create a Plan
 
 Create a plan when:
