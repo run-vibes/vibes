@@ -1,6 +1,6 @@
 ---
 created: 2026-01-01
-status: pending
+status: done
 ---
 
 # Chore: Remove Dead EventBus Code
@@ -65,7 +65,7 @@ cargo test -p vibes-core
 
 ## Acceptance Criteria
 
-- [ ] No EventBus code remains in vibes-core
-- [ ] `cargo check` passes
-- [ ] `cargo test` passes
-- [ ] No other crates break
+- [x] No EventBus code remains in vibes-core
+- [x] `cargo check` passes
+- [x] `cargo test` passes
+- [x] No other crates break

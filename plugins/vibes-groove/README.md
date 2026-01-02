@@ -11,8 +11,8 @@ groove is a vibes plugin that captures what works in your Claude Code sessions a
 │                            vibes daemon                                  │
 │                                                                          │
 │  ┌──────────────┐    ┌──────────────┐    ┌──────────────────────────┐  │
-│  │ HookReceiver │───▶│   EventBus   │───▶│     groove plugin        │  │
-│  │ (extended)   │    │ + HookEvents │    │                          │  │
+│  │ HookReceiver │───▶│   EventLog   │───▶│     groove plugin        │  │
+│  │ (extended)   │    │  (via Iggy)  │    │                          │  │
 │  └──────────────┘    └──────────────┘    │  ┌────────────────────┐  │  │
 │         ▲                                │  │  SessionCollector  │  │  │
 │         │                                │  │  (buffers events)  │  │  │
