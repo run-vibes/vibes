@@ -4,22 +4,36 @@ This document describes how to use the kanban planning board at `docs/board/`.
 
 ## Index
 
+### The Board
 | Section | Description |
 |---------|-------------|
 | [Board Structure](#board-structure) | Directory layout and columns |
 | [Commands](#commands) | `just board` command reference |
 | [Work Item Types](#work-item-types) | Milestones, stories, features, bugs, chores |
+
+### Planning
+| Section | Description |
+|---------|-------------|
 | [When to Create a Plan](#when-to-create-a-plan) | Planning vs just doing |
-| [Architectural Decision: Plugin vs Built-in](#architectural-decision-plugin-vs-built-in) | Where new features belong |
 | [Plan Directory Structure](#plan-directory-structure) | File organization for milestones |
 | [Phase 1: Design Document](#phase-1-design-document) | Architecture and design decisions |
 | [Phase 2: Implementation Plan](#phase-2-implementation-plan) | Stories and task breakdown |
+
+### Execution
+| Section | Description |
+|---------|-------------|
 | [Using Plans with Claude Code](#using-plans-with-claude-code) | Superpowers skills for execution |
-| [Rust-Specific Conventions](#rust-specific-conventions) | Crate organization and patterns |
+
+### Standards
+| Section | Description |
+|---------|-------------|
+| [Architectural Decision: Plugin vs Built-in](#architectural-decision-plugin-vs-built-in) | Where new features belong |
 | [Best Practices](#best-practices) | Do's and don'ts |
 | [Plan Review Checklist](#plan-review-checklist) | Pre-implementation verification |
 
 ---
+
+# The Board
 
 ## Board Structure
 
@@ -46,8 +60,6 @@ docs/board/
 | `just board review <item>` | Move to review |
 | `just board done <item>` | Move to done + changelog |
 | `just board status` | Show counts per column |
-
----
 
 ## Work Item Types
 
@@ -83,36 +95,7 @@ stories/
 └── chore-04-docs.md           # Documentation, cleanup
 ```
 
-**When to use stories:**
-- Milestone spans 3+ distinct deliverables
-- Work can be parallelized across contributors
-- Each piece merits its own PR and review cycle
-
-**Story file template:**
-```markdown
----
-created: 2024-01-15
-status: pending  # pending | in-progress | done
----
-
-# [Type]: [Description]
-
-## Goal
-
-[What this story delivers]
-
-## Tasks
-
-- [ ] Task 1
-- [ ] Task 2
-
-## Acceptance Criteria
-
-- [ ] Criterion 1
-- [ ] Criterion 2
-```
-
-The board generator lists stories as checklists under their parent milestone.
+See [Phase 2: Implementation Plan](#phase-2-implementation-plan) for the full story template.
 
 ### Features, Bugs, and Chores
 
@@ -129,6 +112,8 @@ Standalone items that don't warrant a full milestone structure.
 These are single markdown files (not directories) unless they grow complex enough to warrant design docs.
 
 ---
+
+# Planning
 
 ## When to Create a Plan
 
@@ -147,44 +132,6 @@ Skip planning for:
 - Documentation updates
 - Single-file changes
 - Test additions for existing code
-
-## Architectural Decision: Plugin vs Built-in
-
-When adding new functionality that could be a separate feature, **always evaluate whether it should be a plugin** before implementing it directly in vibes-cli or vibes-server.
-
-### Decision Framework
-
-| Question | Plugin | Built-in |
-|----------|--------|----------|
-| Is this a first-party core feature? | Maybe | Yes |
-| Should users be able to disable it? | Yes | No |
-| Does it need CLI subcommands? | Yes (plugins can register) | No preference |
-| Does it need HTTP routes? | Yes (plugins can register) | No preference |
-| Is it specific to certain use cases? | Yes | No |
-| Would third parties want similar features? | Yes | No |
-
-### Plugin API Capabilities
-
-The `vibes-plugin-api` (v2) supports:
-
-- **Session lifecycle hooks** — `on_session_created`, `on_turn_complete`, `on_hook`, etc.
-- **CLI command registration** — `ctx.register_command(CommandSpec { ... })` → `vibes <plugin> <command>`
-- **HTTP route registration** — `ctx.register_route(RouteSpec { ... })` → `/api/plugins/<plugin>/...`
-- **Configuration** — Persistent key-value store with TOML serialization
-- **Logging** — Plugin-prefixed logging via tracing
-
-Plugins implement `handle_command()` and `handle_route()` on the `Plugin` trait to respond to registered commands and routes.
-
-### Example: groove
-
-The **groove** continual learning plugin demonstrates proper plugin architecture:
-
-- **CLI commands** registered via `register_command()` → `vibes groove init`, `vibes groove status`, etc.
-- **HTTP routes** registered via `register_route()` → `/api/plugins/groove/...`
-- **Event hooks** — `on_hook()` captures Claude Code events for learning extraction
-- **Configuration** — Stores scope and injection preferences
-
-This pattern should be followed for all new feature plugins.
 
 ## Plan Directory Structure
 
@@ -208,7 +155,6 @@ docs/board/
 - Prefix with zero-padded number (01, 02, 03...)
 - Use kebab-case for the name
 - Keep names short but descriptive
-- Number should match milestone (e.g., Milestone 3.1 → 08-xxx)
 
 ## Phase 1: Design Document
 
@@ -229,17 +175,14 @@ Before implementation, create a `design.md` that captures architectural decision
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| **Plugin vs Built-in** | [Plugin / Built-in] | [See framework above - explain why this is/isn't a plugin] |
+| **Plugin vs Built-in** | [Plugin / Built-in] | [See decision framework] |
 | [Decision Area] | [Choice Made] | [Why] |
-| ... | ... | ... |
 
-> **Required:** Every design document must explicitly address the Plugin vs Built-in decision. See the [decision framework](#architectural-decision-plugin-vs-built-in) above.
+> **Required:** Every design document must explicitly address the Plugin vs Built-in decision. See [Architectural Decision: Plugin vs Built-in](#architectural-decision-plugin-vs-built-in).
 
 ---
 
 ## Architecture
-
-### [Component/Flow Name]
 
 [Diagrams using ASCII art or Mermaid]
 
@@ -254,33 +197,15 @@ Before implementation, create a `design.md` that captures architectural decision
 | Component | Location | Responsibility |
 |-----------|----------|----------------|
 | [Name] | vibes-core | [What it does] |
-| ... | ... | ... |
 
 ---
 
 ## Types and Interfaces
 
-### Core Types
-
 ```rust
 /// Description of the type
 pub struct MyType {
-    /// Field description
     pub field: String,
-}
-
-impl MyType {
-    /// Method description
-    pub fn new() -> Self { ... }
-}
-```
-
-### Trait Design
-
-```rust
-#[async_trait]
-pub trait MyTrait: Send + Sync {
-    async fn method(&self) -> Result<()>;
 }
 ```
 
@@ -295,40 +220,9 @@ GET  /api/resource           # Description
 POST /api/resource           # Description
 ```
 
-### WebSocket Messages (if applicable)
-
-```typescript
-// Server → Client
-{ "type": "event_name", "data": { ... } }
-```
-
----
-
-## Crate Structure
-
-### New/Modified Files
-
-```
-vibes/
-├── vibes-core/
-│   └── src/
-│       └── new_module/      # NEW MODULE
-│           ├── mod.rs
-│           └── ...
-├── vibes-server/
-│   └── src/
-│       └── ...              # Modified: add routes
-└── vibes-cli/
-    └── src/
-        └── commands/
-            └── ...          # Modified: add flag
-```
-
 ---
 
 ## Dependencies
-
-### vibes-core/Cargo.toml
 
 ```toml
 [dependencies]
@@ -339,48 +233,25 @@ new-crate = "1.0"            # Purpose
 
 ## Testing Strategy
 
-### Unit Tests
-
 | Component | Test Coverage |
 |-----------|---------------|
 | [Name] | [What to test] |
-
-### Integration Tests
-
-| Test | Description |
-|------|-------------|
-| [Name] | [What it verifies] |
 
 ---
 
 ## Deliverables
 
-### Milestone X.Y Checklist
-
-**Backend (vibes-core):**
-- [ ] Item 1
-- [ ] Item 2
-
-**Server (vibes-server):**
-- [ ] Item 1
-
-**CLI (vibes-cli):**
-- [ ] Item 1
-
-**Web UI:**
-- [ ] Item 1
-
-**Documentation:**
-- [ ] Design document
-- [ ] Update board when complete
+- [ ] Backend implementation
+- [ ] Server integration
+- [ ] Tests passing
+- [ ] Documentation updated
 ```
 
 ### Key Elements
 
 1. **Decisions Table** — Quick reference for all major choices
 2. **Rationale** — Explain *why* not just *what*
-3. **Code Examples** — Show actual Rust types and traits
-4. **Trade-offs** — Document what was considered and rejected
+3. **Trade-offs** — Document what was considered and rejected
 
 ### Example: Decision Documentation
 
@@ -394,10 +265,8 @@ new-crate = "1.0"            # Purpose
 - File-backed JSON (simple but no queries)
 - SQLite (queries + persistence + single file)
 
-**Rationale:** SQLite provides structured queries for history search while maintaining single-file simplicity. The `rusqlite` crate is mature and well-tested.
+**Rationale:** SQLite provides structured queries for history search while maintaining single-file simplicity.
 ```
-
----
 
 ## Phase 2: Implementation Plan
 
@@ -497,68 +366,17 @@ Each task ends with a commit:
 - [ ] [Feature-specific criterion]
 ```
 
-### Creating Stories
-
-```bash
-# Create story files manually in the stories/ directory
-mkdir -p docs/board/in-progress/milestone-14-continual-learning/stories
-touch docs/board/in-progress/milestone-14-continual-learning/stories/feat-01-types.md
-```
-
-The board generator automatically lists stories as checklists under their parent milestone.
-
 ### Key Principles
 
 #### 1. Test-Driven Development
 
 For new modules and utilities, follow TDD:
 
-```markdown
-**Step 1: Write the failing test**
-
-```rust
-// vibes-core/src/history/store.rs
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[tokio::test]
-    async fn test_store_session() {
-        let temp_dir = tempfile::tempdir().unwrap();
-        let store = HistoryStore::open(temp_dir.path()).await.unwrap();
-
-        store.save_session(&session).await.unwrap();
-
-        let loaded = store.get_session(&session.id).await.unwrap();
-        assert_eq!(loaded.id, session.id);
-    }
-}
-```
-
-**Step 2: Run test to verify it fails**
-
-Run: `cargo test -p vibes-core history`
-Expected: FAIL with "cannot find value `HistoryStore`"
-
-**Step 3: Write the implementation**
-
-```rust
-pub struct HistoryStore {
-    db: Connection,
-}
-
-impl HistoryStore {
-    pub async fn open(path: &Path) -> Result<Self> { ... }
-    pub async fn save_session(&self, session: &Session) -> Result<()> { ... }
-}
-```
-
-**Step 4: Run test to verify it passes**
-
-Run: `cargo test -p vibes-core history`
-Expected: PASS
-```
+1. Write the failing test first
+2. Run test to verify it fails
+3. Write the implementation
+4. Run test to verify it passes
+5. Commit
 
 #### 2. Small, Focused Tasks
 
@@ -570,27 +388,20 @@ Each task should:
 
 #### 3. Explicit Verification
 
-Include expected outcomes:
+Include expected outcomes for each step:
 
 ```markdown
-**Step 5: Run tests**
-
 Run: `cargo test -p vibes-core`
-Expected: All tests pass (including new tests)
+Expected: All tests pass
 ```
 
 #### 4. Commit After Each Task
 
-```markdown
-**Step 6: Commit**
-
-```bash
-git add vibes-core/src/history/
-git commit -m "feat(history): add HistoryStore with SQLite backend"
-```
-```
+Every task ends with a commit using conventional commit format.
 
 ---
+
+# Execution
 
 ## Using Plans with Claude Code
 
@@ -601,25 +412,18 @@ git commit -m "feat(history): add HistoryStore with SQLite backend"
    /superpowers:brainstorm
    ```
 
-2. **Epic Detection** — Before writing any documents, ask:
-   - Will this feature require **3+ internal milestones**?
-   - Is the design likely to exceed **30KB**?
-   - Will different sub-milestones need **separate brainstorming sessions**?
+2. Explore the codebase to understand existing patterns
 
-   If **yes to any**, use the [Multi-Phase Milestones](#multi-phase-milestones-epics) structure from the start.
+3. Write the design document discussing options
 
-3. Explore the codebase to understand existing patterns
-
-4. Write the design document discussing options
-
-5. Create the implementation plan with specific tasks
+4. Create the implementation plan with stories
 
 ### Executing a Plan
 
 Reference the skill at the top of the implementation plan:
 
 ```markdown
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
+> **For Claude:** Use superpowers:executing-plans to implement this plan.
 ```
 
 Then invoke:
@@ -637,111 +441,51 @@ After completing implementation:
 
 ---
 
-## Rust-Specific Conventions
+# Standards
 
-### Error Handling
+## Architectural Decision: Plugin vs Built-in
 
-Use `thiserror` for library errors:
+When adding new functionality that could be a separate feature, **always evaluate whether it should be a plugin** before implementing it directly in vibes-cli or vibes-server.
 
-```rust
-#[derive(Debug, thiserror::Error)]
-pub enum HistoryError {
-    #[error("database error: {0}")]
-    Database(#[from] rusqlite::Error),
+### Decision Framework
 
-    #[error("session not found: {0}")]
-    NotFound(String),
-}
-```
+| Question | Plugin | Built-in |
+|----------|--------|----------|
+| Is this a first-party core feature? | Maybe | Yes |
+| Should users be able to disable it? | Yes | No |
+| Does it need CLI subcommands? | Yes (plugins can register) | No preference |
+| Does it need HTTP routes? | Yes (plugins can register) | No preference |
+| Is it specific to certain use cases? | Yes | No |
+| Would third parties want similar features? | Yes | No |
 
-Use `anyhow` in binaries (vibes-cli) for context:
+### Plugin API Capabilities
 
-```rust
-session.save()
-    .context("failed to save session")?;
-```
+The `vibes-plugin-api` (v2) supports:
 
-### Trait Design
+- **Session lifecycle hooks** — `on_session_created`, `on_turn_complete`, `on_hook`, etc.
+- **CLI command registration** — `ctx.register_command(CommandSpec { ... })` → `vibes <plugin> <command>`
+- **HTTP route registration** — `ctx.register_route(RouteSpec { ... })` → `/api/plugins/<plugin>/...`
+- **Configuration** — Persistent key-value store with TOML serialization
+- **Logging** — Plugin-prefixed logging via tracing
 
-Prefer trait objects for extensibility:
+### Example: groove
 
-```rust
-#[async_trait]
-pub trait Storage: Send + Sync {
-    async fn save(&self, key: &str, data: &[u8]) -> Result<()>;
-    async fn load(&self, key: &str) -> Result<Option<Vec<u8>>>;
-}
+The **groove** continual learning plugin demonstrates proper plugin architecture:
 
-// Implementations
-pub struct FileStorage { ... }
-pub struct MemoryStorage { ... }
-```
-
-### Testing Patterns
-
-Use `#[tokio::test]` for async tests:
-
-```rust
-#[tokio::test]
-async fn test_async_operation() {
-    let result = async_fn().await;
-    assert!(result.is_ok());
-}
-```
-
-Use `tempfile` for filesystem tests:
-
-```rust
-#[tokio::test]
-async fn test_file_persistence() {
-    let temp_dir = tempfile::tempdir().unwrap();
-    let store = Store::new(temp_dir.path());
-    // ... test ...
-}
-```
-
-Use `MockBackend` for Claude interaction tests:
-
-```rust
-#[tokio::test]
-async fn test_session_flow() {
-    let backend = MockBackend::new(vec![
-        MockResponse::text("Hello"),
-        MockResponse::complete(),
-    ]);
-    let session = Session::with_backend(backend);
-    // ... test ...
-}
-```
-
-### Module Organization
-
-Follow this pattern for new modules:
-
-```
-vibes-core/src/new_feature/
-├── mod.rs          # Module exports and documentation
-├── types.rs        # Type definitions
-├── store.rs        # Persistence (if applicable)
-├── service.rs      # Business logic
-└── error.rs        # Feature-specific errors (optional)
-```
-
-Each file should have `#[cfg(test)] mod tests { ... }` at the bottom.
-
----
+- **CLI commands** registered via `register_command()` → `vibes groove init`, `vibes groove status`
+- **HTTP routes** registered via `register_route()` → `/api/plugins/groove/...`
+- **Event hooks** — `on_hook()` captures Claude Code events for learning extraction
+- **Configuration** — Stores scope and injection preferences
 
 ## Best Practices
 
 ### Do
 
-- Break large features into multiple tasks
-- Include Rust code snippets for complex patterns
+- Break large features into multiple stories
 - Document the "why" alongside the "what"
 - Specify exact file paths
-- Include verification steps (cargo commands)
+- Include verification steps
 - Follow TDD for testable code
-- Add to workspace dependencies when adding crates
 
 ### Don't
 
@@ -750,9 +494,6 @@ Each file should have `#[cfg(test)] mod tests { ... }` at the bottom.
 - Leave decisions implicit
 - Forget commit instructions
 - Skip verification steps
-- Add dependencies without documenting why
-
----
 
 ## Plan Review Checklist
 
@@ -760,11 +501,9 @@ Before implementing, verify:
 
 - [ ] Design document captures all major decisions
 - [ ] Trade-offs are documented
-- [ ] Implementation tasks are small and focused
+- [ ] Stories are small and focused
 - [ ] Each task ends with a commit
 - [ ] TDD pattern used for testable code
 - [ ] Verification steps are explicit
 - [ ] File paths are complete and accurate
-- [ ] New dependencies are documented
 - [ ] Board item updated when complete
-
