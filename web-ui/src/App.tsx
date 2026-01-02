@@ -38,8 +38,7 @@ function RootLayout() {
   };
 
   const navItems = [
-    { label: 'Sessions', href: '/sessions', isActive: location.pathname.startsWith('/sessions') },
-    { label: 'Streams', href: '/streams', isActive: location.pathname === '/streams' || location.pathname.startsWith('/firehose') || location.pathname.startsWith('/debug') },
+    { label: 'Streams', href: '/', isActive: location.pathname === '/' || location.pathname === '/streams' || location.pathname.startsWith('/firehose') || location.pathname.startsWith('/debug') },
     { label: 'Groove', href: '/groove', isGroove: true, isActive: location.pathname.startsWith('/groove') },
   ];
 
