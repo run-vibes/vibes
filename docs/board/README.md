@@ -15,7 +15,7 @@ Stories:
 Transform the firehose from a live event buffer to a full-featured log viewer with infinite scroll through the entire eventlog history.
 
 Stories:
-- [ ] [feat-01-backend-pagination](in-progress/milestone-36-firehose-infinite-scroll/stories/feat-01-backend-pagination.md)
+- [x] [feat-01-backend-pagination](in-progress/milestone-36-firehose-infinite-scroll/stories/feat-01-backend-pagination.md)
 - [ ] [feat-02-backend-filters](in-progress/milestone-36-firehose-infinite-scroll/stories/feat-02-backend-filters.md)
 - [ ] [feat-03-frontend-hook](in-progress/milestone-36-firehose-infinite-scroll/stories/feat-03-frontend-hook.md)
 - [ ] [feat-04-virtual-scroll](in-progress/milestone-36-firehose-infinite-scroll/stories/feat-04-virtual-scroll.md)

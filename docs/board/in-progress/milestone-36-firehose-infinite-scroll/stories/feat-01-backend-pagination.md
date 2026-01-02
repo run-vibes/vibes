@@ -1,6 +1,6 @@
 ---
 created: 2026-01-02
-status: pending
+status: done
 ---
 
 # feat: Backend Pagination Support
@@ -58,11 +58,11 @@ See [design.md](../design.md) for WebSocket protocol specification. The firehose
 
 ## Acceptance Criteria
 
-- [ ] All event messages include offset field
-- [ ] `fetch_older` message returns older events with correct offsets
-- [ ] `has_more` flag correctly indicates more history available
-- [ ] Initial connection sends batch of latest events
-- [ ] All tests pass
+- [x] All event messages include offset field
+- [x] `fetch_older` message returns older events with correct offsets
+- [x] `has_more` flag correctly indicates more history available
+- [x] Initial connection sends batch of latest events
+- [x] All tests pass
 
 ## Completion
 
