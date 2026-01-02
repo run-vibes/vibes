@@ -217,6 +217,15 @@ where
                 // Set ALL partitions to the same offset (like broken Iggy behavior)
                 self.current_offsets = [o; PARTITION_COUNT];
             }
+            SeekPosition::FromEnd(n) => {
+                // Seek each partition independently to (partition_hwm - n)
+                // This is the correct per-partition behavior
+                let partitions = self.shared.partitions.read().await;
+                for (i, partition) in partitions.iter().enumerate() {
+                    let partition_len = partition.events.len() as u64;
+                    self.current_offsets[i] = partition_len.saturating_sub(n);
+                }
+            }
         }
         Ok(())
     }

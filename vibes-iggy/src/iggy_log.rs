@@ -476,6 +476,29 @@ where
             SeekPosition::Offset(o) => {
                 self.offsets = [o; topics::PARTITION_COUNT as usize];
             }
+            SeekPosition::FromEnd(n) => {
+                // Query topic to get per-partition current offsets
+                let stream_id = Identifier::named(topics::STREAM_NAME)
+                    .map_err(|e| Error::Iggy(format!("Invalid stream name: {}", e)))?;
+                let topic_id = Identifier::named(topics::EVENTS_TOPIC)
+                    .map_err(|e| Error::Iggy(format!("Invalid topic name: {}", e)))?;
+
+                if let Some(topic_details) = self.client.get_topic(&stream_id, &topic_id).await? {
+                    // Initialize all offsets to 0 first
+                    self.offsets = [0; topics::PARTITION_COUNT as usize];
+
+                    // Set each partition's offset to (current_offset - n), clamped to 0
+                    for partition in topic_details.partitions {
+                        let idx = partition.id as usize;
+                        if idx < topics::PARTITION_COUNT as usize {
+                            self.offsets[idx] = partition.current_offset.saturating_sub(n);
+                        }
+                    }
+                } else {
+                    // Topic doesn't exist, start from beginning
+                    self.offsets = [0; topics::PARTITION_COUNT as usize];
+                }
+            }
         }
         debug!(group = %self.group, "Seeked consumer");
         Ok(())

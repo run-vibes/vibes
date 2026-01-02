@@ -372,8 +372,6 @@ async fn load_historical_events(state: &AppState, count: u64) -> Vec<(Offset, St
         return Vec::new();
     }
 
-    let start_offset = hwm.saturating_sub(count);
-
     // Create a temporary consumer to read historical events
     let consumer_group = format!("firehose-historical-{}", uuid::Uuid::new_v4());
     let mut consumer = match state.event_log.consumer(&consumer_group).await {
@@ -384,13 +382,15 @@ async fn load_historical_events(state: &AppState, count: u64) -> Vec<(Offset, St
         }
     };
 
-    // Seek to the start position
-    if let Err(e) = consumer.seek(SeekPosition::Offset(start_offset)).await {
+    // Seek backwards from end: each partition seeks back by count events
+    // This ensures we have enough events even with uneven partition distribution
+    // We limit via poll(count) anyway, so overshooting is fine
+    if let Err(e) = consumer.seek(SeekPosition::FromEnd(count)).await {
         warn!("Failed to seek historical consumer: {}", e);
         return Vec::new();
     }
 
-    // Poll for events (short timeout since they should already exist)
+    // Poll for events
     let mut events: Vec<(Offset, StoredEvent)> = match consumer
         .poll(count as usize, Duration::from_millis(100))
         .await
@@ -403,7 +403,6 @@ async fn load_historical_events(state: &AppState, count: u64) -> Vec<(Offset, St
     };
 
     // Sort by event_id (UUIDv7 timestamp) for correct cross-partition ordering
-    // Partition-local offsets are meaningless for global ordering
     events.sort_by_key(|(_, stored)| stored.event_id);
 
     events

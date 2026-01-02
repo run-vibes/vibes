@@ -98,6 +98,14 @@ pub enum SeekPosition {
     End,
     /// Specific offset in the log.
     Offset(Offset),
+    /// N events before the end of each partition.
+    ///
+    /// For partitioned logs, this calculates per-partition:
+    /// `seek_offset = partition_hwm.saturating_sub(n)`
+    ///
+    /// This is useful for loading the last N events across all partitions,
+    /// working backwards from the most recent.
+    FromEnd(u64),
 }
 
 /// The event log - append-only, durable storage for events.
