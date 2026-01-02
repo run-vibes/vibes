@@ -1,7 +1,7 @@
 # vibes
 
 [![CI](https://github.com/run-vibes/vibes/actions/workflows/ci.yml/badge.svg)](https://github.com/run-vibes/vibes/actions/workflows/ci.yml)
-[![Progress](https://img.shields.io/badge/progress-18%2F27%20milestones-blue)](docs/PROGRESS.md)
+[![Progress](https://img.shields.io/badge/progress-18%2F27%20milestones-blue)](docs/board/README.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Remote control for your Claude Code sessions.
@@ -238,21 +238,21 @@ just pre-commit
 ## Documentation
 
 - [Product Requirements Document](docs/PRD.md) - Full design, architecture, and roadmap
-- [Progress Tracker](docs/PROGRESS.md) - Implementation status and changelog
-- [Planning Conventions](docs/PLAN.md) - How to create design and implementation plans
+- [Planning Board](docs/board/README.md) - Kanban board tracking implementation status
+- [Planning Conventions](docs/board/CONVENTIONS.md) - How to create design and implementation plans
 - [CLAUDE.md](CLAUDE.md) - Development guidance for contributors
 
 ## Roadmap
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [**1. Foundation**](docs/PROGRESS.md#phase-1-foundation-mvp) | Claude Code proxy, plugin system, local web UI | ✅ Complete |
-| [**2. Remote Access**](docs/PROGRESS.md#phase-2-remote-access) | Cloudflare Tunnel, authentication, push notifications | ✅ Complete |
-| [**3. Multi-Client**](docs/PROGRESS.md#phase-3-multi-client-experience-) | PTY backend, xterm.js UI, multi-session, mirroring | ✅ Complete |
-| [**4. Continual Learning**](docs/PROGRESS.md#phase-4-continual-learning) | Self-improving assistant that learns from every session | 🔄 In Progress |
-| [**5. Polish**](docs/PROGRESS.md#phase-5-polish--ecosystem) | Setup wizards, default plugins, iOS app | ⏳ Planned |
+| [**1. Foundation**](docs/board/done/) | Claude Code proxy, plugin system, local web UI | ✅ Complete |
+| [**2. Remote Access**](docs/board/done/) | Cloudflare Tunnel, authentication, push notifications | ✅ Complete |
+| [**3. Multi-Client**](docs/board/done/) | PTY backend, xterm.js UI, multi-session, mirroring | ✅ Complete |
+| [**4. Continual Learning**](docs/board/in-progress/) | Self-improving assistant that learns from every session | 🔄 In Progress |
+| [**5. Polish**](docs/board/backlog/) | Setup wizards, default plugins, iOS app | ⏳ Planned |
 
-See [PROGRESS.md](docs/PROGRESS.md) for detailed milestone tracking and changelog.
+See [Planning Board](docs/board/README.md) for detailed milestone tracking and [Changelog](docs/board/CHANGELOG.md) for history.
 
 ## License
 
