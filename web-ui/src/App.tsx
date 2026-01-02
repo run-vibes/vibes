@@ -8,8 +8,8 @@ import {
   useLocation,
 } from '@tanstack/react-router'
 import { Header } from '@vibes/design-system'
-import { ClaudeSessions } from './pages/ClaudeSessions'
-import { ClaudeSession } from './pages/ClaudeSession'
+import { Sessions } from './pages/Sessions'
+import { Session } from './pages/Session'
 import { QuarantinePage } from './pages/Quarantine'
 import { FirehosePage } from './pages/Firehose'
 import { DebugPage } from './pages/Debug'
@@ -38,7 +38,7 @@ function RootLayout() {
   };
 
   const navItems = [
-    { label: 'Sessions', href: '/claude', isActive: location.pathname.startsWith('/claude') },
+    { label: 'Sessions', href: '/sessions', isActive: location.pathname.startsWith('/sessions') },
     { label: 'Streams', href: '/streams', isActive: location.pathname === '/streams' || location.pathname.startsWith('/firehose') || location.pathname.startsWith('/debug') },
     { label: 'Groove', href: '/groove', isGroove: true, isActive: location.pathname.startsWith('/groove') },
   ];
@@ -68,8 +68,8 @@ function HomePage() {
   return (
     <div className="page">
       <h1>vibes</h1>
-      <p>Remote control for your Claude Code sessions</p>
-      <Link to="/claude" className="button">
+      <p>Remote control for your AI sessions</p>
+      <Link to="/sessions" className="button">
         View Sessions
       </Link>
     </div>
@@ -87,16 +87,16 @@ const indexRoute = createRoute({
   component: HomePage,
 })
 
-const claudeRoute = createRoute({
+const sessionsRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/claude',
-  component: ClaudeSessions,
+  path: '/sessions',
+  component: Sessions,
 })
 
 const sessionRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/claude/$sessionId',
-  component: ClaudeSession,
+  path: '/sessions/$sessionId',
+  component: Session,
 })
 
 const grooveRoute = createRoute({
@@ -132,7 +132,7 @@ const settingsRoute = createRoute({
 // Create route tree and router
 const routeTree = rootRoute.addChildren([
   indexRoute,
-  claudeRoute,
+  sessionsRoute,
   sessionRoute,
   grooveRoute,
   streamsRoute,

@@ -46,4 +46,11 @@ describe('StreamsPage', () => {
     expect(cardTitles).toContain('Debug Console');
     expect(cardTitles).toContain('Sessions');
   });
+
+  test('Sessions card links to /sessions', () => {
+    render(<StreamsPage />);
+
+    const sessionsLink = screen.getByRole('link', { name: /sessions/i });
+    expect(sessionsLink).toHaveAttribute('href', '/sessions');
+  });
 });

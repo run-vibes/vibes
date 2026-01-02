@@ -78,12 +78,12 @@ export function StreamsPage() {
             </Panel>
           </Link>
 
-          <Link to="/claude" className="stream-card-link">
+          <Link to="/sessions" className="stream-card-link">
             <Panel title="Sessions" className="stream-card">
               <div className="stream-card-content">
                 <div className="stream-icon">💬</div>
                 <Text intensity="dim">
-                  Manage and monitor Claude Code sessions
+                  Manage and monitor active sessions
                 </Text>
                 <div className="stream-stats">
                   <span className="stat-value">→</span>
