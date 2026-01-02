@@ -11,7 +11,6 @@ Stories:
 - [ ] [chore-03-integration-testing](in-progress/milestone-26-assessment-framework/stories/chore-03-integration-testing.md)
 - [ ] [feat-02-processor-wiring](in-progress/milestone-26-assessment-framework/stories/feat-02-processor-wiring.md)
 
-- [~] [bug-0002-firehose-not-loading-historical-events](in-progress/bug-0002-firehose-not-loading-historical-events.md)
 
 ---
 
@@ -47,6 +46,7 @@ Stories:
 <summary>View completed work</summary>
 
 - [bug-0001-cwd-propagation](done/bug-0001-cwd-propagation.md)
+- [bug-0002-firehose-not-loading-historical-events](done/bug-0002-firehose-not-loading-historical-events.md)
 - [milestone-01-core-proxy](done/milestone-01-core-proxy/)
 - [milestone-02-cli](done/milestone-02-cli/)
 - [milestone-03-plugin-foundation](done/milestone-03-plugin-foundation/)
