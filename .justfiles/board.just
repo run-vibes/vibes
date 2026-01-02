@@ -21,7 +21,7 @@ generate:
     echo ""
 
     # In Progress
-    echo "## In Progress"
+    echo "## 🔨 In Progress"
     echo ""
     if [[ -d in-progress ]] && [[ -n "$(ls -A in-progress 2>/dev/null)" ]]; then
         for item in in-progress/*/; do
@@ -58,7 +58,7 @@ generate:
     echo ""
 
     # Ready
-    echo "## Ready"
+    echo "## 📋 Ready"
     echo ""
     if [[ -d ready ]] && [[ -n "$(ls -A ready 2>/dev/null)" ]]; then
         for item in ready/*/; do
@@ -89,7 +89,7 @@ generate:
     echo ""
 
     # Review
-    echo "## Review"
+    echo "## 👀 Review"
     echo ""
     if [[ -d review ]] && [[ -n "$(ls -A review 2>/dev/null)" ]]; then
         for item in review/*.md review/*/; do
@@ -110,7 +110,7 @@ generate:
     echo ""
 
     # Backlog
-    echo "## Backlog"
+    echo "## 📥 Backlog"
     echo ""
     if [[ -d backlog ]] && [[ -n "$(ls -A backlog 2>/dev/null)" ]]; then
         for item in backlog/*.md backlog/*/; do
@@ -135,7 +135,7 @@ generate:
     echo ""
 
     # Done (collapsed)
-    echo "## Done"
+    echo "## ✅ Done"
     echo ""
     echo "<details>"
     echo "<summary>View completed work</summary>"

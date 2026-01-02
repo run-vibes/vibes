@@ -2,7 +2,7 @@
 
 > Auto-generated from directory structure. Run `just board` to update.
 
-## In Progress
+## 🔨 In Progress
 
 ### [milestone-14-continual-learning](in-progress/milestone-14-continual-learning/)
 **groove** - The continual learning system that finds your coding rhythm.
@@ -10,19 +10,19 @@
 
 ---
 
-## Ready
+## 📋 Ready
 
 *No items ready*
 
 ---
 
-## Review
+## 👀 Review
 
 *No items in review*
 
 ---
 
-## Backlog
+## 📥 Backlog
 
 - [milestone-20-setup-wizards](backlog/milestone-20-setup-wizards/) *(design only)*
 - [milestone-21-default-plugins](backlog/milestone-21-default-plugins/) *(design only)*
@@ -31,7 +31,7 @@
 
 ---
 
-## Done
+## ✅ Done
 
 <details>
 <summary>View completed work</summary>
