@@ -1,6 +1,34 @@
 # Planning Conventions
 
-This document describes how to create design and implementation plans for the vibes project when working with Claude Code.
+This document describes how to use the kanban planning board at `docs/board/`.
+
+## Board Structure
+
+```
+docs/board/
+├── README.md          # Auto-generated board view
+├── CHANGELOG.md       # Updated when items complete
+├── CONVENTIONS.md     # This file
+├── backlog/           # Future work
+├── ready/             # Designed, ready to implement
+├── in-progress/       # Currently being worked on
+├── review/            # Awaiting review/merge
+└── done/              # Completed work
+```
+
+## Commands
+
+| Command | Action |
+|---------|--------|
+| `just board` | Regenerate README.md |
+| `just board new feat "desc"` | Create feature in backlog |
+| `just board new milestone "name"` | Create milestone in backlog |
+| `just board start <item>` | Move to in-progress |
+| `just board review <item>` | Move to review |
+| `just board done <item>` | Move to done + changelog |
+| `just board status` | Show counts per column |
+
+---
 
 ## When to Create a Plan
 
@@ -56,10 +84,10 @@ The groove continual learning system was initially implemented with direct CLI c
 
 ## Plan Directory Structure
 
-Plans live in `docs/plans/` with numbered directories matching milestones.
+Plans live in `docs/board/` with numbered directories matching milestones.
 
 ```
-docs/plans/
+docs/board/
 ├── 01-core-proxy/
 │   ├── design.md           # Architecture and design decisions
 │   └── implementation.md   # Step-by-step implementation guide
@@ -101,7 +129,7 @@ Before implementation, create a `design.md` that captures architectural decision
 | [Decision Area] | [Choice Made] | [Why] |
 | ... | ... | ... |
 
-> ⚠️ **Required:** Every design document must explicitly address the Plugin vs Built-in decision. See the [decision framework](#architectural-decision-plugin-vs-built-in) above.
+> **Required:** Every design document must explicitly address the Plugin vs Built-in decision. See the [decision framework](#architectural-decision-plugin-vs-built-in) above.
 
 ---
 
@@ -240,7 +268,7 @@ new-crate = "1.0"            # Purpose
 
 **Documentation:**
 - [ ] Design document
-- [ ] Update PROGRESS.md
+- [ ] Update board when complete
 ```
 
 ### Key Elements
@@ -455,7 +483,7 @@ Then invoke:
 After completing implementation:
 
 1. Run `just pre-commit` (fmt + clippy + test)
-2. Update [PROGRESS.md](PROGRESS.md) with completed items
+2. Move board item to done column
 3. Create PR with conventional commit title
 
 ---
@@ -589,7 +617,7 @@ Before implementing, verify:
 - [ ] Verification steps are explicit
 - [ ] File paths are complete and accurate
 - [ ] New dependencies are documented
-- [ ] PROGRESS.md update is included
+- [ ] Board item updated when complete
 
 ---
 
@@ -606,7 +634,7 @@ Before implementing, verify:
 | 2 | 2.3 Push Notifications | 07-push-notifications |
 | 3 | 3.1 Chat History | 08-chat-history |
 | 3 | 3.2 Multi-Session Support | 09-multi-session |
-| 3 | 3.3 CLI ↔ Web Mirroring | 10-cli-web-mirroring |
+| 3 | 3.3 CLI - Web Mirroring | 10-cli-web-mirroring |
 | 3 | 3.4 PTY Backend | 12-pty-backend |
 | 4 | 4.1-4.9 Continual Learning | 14-continual-learning |
 | 4 | 4.1 Harness Introspection | 15-harness-introspection |
@@ -616,7 +644,7 @@ Before implementing, verify:
 | 5 | 5.4 iOS App | (planned) |
 
 When starting a new milestone:
-1. Create the directory under `docs/plans/`
+1. Create the directory under `docs/board/`
 2. Write `design.md` first with architecture decisions
 3. Get design approved (PR or discussion)
 4. Write `implementation.md` with step-by-step tasks
@@ -639,7 +667,7 @@ Use this structure when:
 ### Multi-Phase Directory Structure
 
 ```
-docs/plans/NN-epic-name/
+docs/board/NN-epic-name/
 ├── design.md                          # Unified design covering ALL sub-milestones
 ├── milestone-X.Y-decisions.md         # Brainstorm decisions for sub-milestone X.Y
 ├── milestone-X.Y-implementation.md    # Implementation plan for sub-milestone X.Y
@@ -660,7 +688,7 @@ docs/plans/NN-epic-name/
 groove is an epic spanning milestones 4.1-4.9:
 
 ```
-docs/plans/14-continual-learning/
+docs/board/14-continual-learning/
 ├── design.md                              # 98KB covering all 10 sub-milestones
 ├── milestone-4.2-decisions.md             # Storage decisions from brainstorm
 └── milestone-4.2-implementation.md        # 20 tasks for storage foundation
@@ -676,7 +704,7 @@ The unified `design.md` links to sections via anchors (e.g., `design.md#42-stora
    b. Capture decisions in `milestone-X.Y-decisions.md`
    c. Write `milestone-X.Y-implementation.md` with tasks
    d. Execute using `superpowers:executing-plans`
-3. **Track progress** in PROGRESS.md with sub-milestone granularity
+3. **Track progress** in board columns with sub-milestone granularity
 
 ### Design Document Sections for Multi-Phase
 
@@ -686,4 +714,4 @@ The unified design.md should include:
 - **Core Types** - Shared types used across sub-milestones
 - **Architecture Diagram** - How sub-milestones connect
 
-Each sub-milestone section in design.md should have an anchor (e.g., `## 4.2 Storage Foundation {#42-storage-foundation}`) for linking from PROGRESS.md
+Each sub-milestone section in design.md should have an anchor (e.g., `## 4.2 Storage Foundation {#42-storage-foundation}`) for linking from board items
