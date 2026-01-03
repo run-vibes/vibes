@@ -254,6 +254,34 @@ impl AppState {
         self
     }
 
+    /// Create AppState with a custom plugin host (for testing)
+    #[cfg(test)]
+    pub fn with_plugin_host(plugin_host: Arc<RwLock<PluginHost>>) -> Self {
+        let event_log: Arc<dyn EventLog<StoredEvent>> =
+            Arc::new(InMemoryEventLog::<StoredEvent>::new());
+        let tunnel_manager = Arc::new(RwLock::new(TunnelManager::new(
+            TunnelConfig::default(),
+            7432,
+        )));
+        let (event_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
+        let (pty_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
+        let pty_manager = Arc::new(RwLock::new(PtyManager::new(PtyConfig::default())));
+
+        Self {
+            plugin_host,
+            event_log,
+            tunnel_manager,
+            auth_layer: AuthLayer::disabled(),
+            started_at: Utc::now(),
+            event_broadcaster,
+            pty_broadcaster,
+            vapid: None,
+            subscriptions: None,
+            pty_manager,
+            iggy_manager: None,
+        }
+    }
+
     /// Create AppState with custom components (for testing)
     pub fn with_components(
         plugin_host: Arc<RwLock<PluginHost>>,

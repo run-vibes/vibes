@@ -90,4 +90,36 @@ mod tests {
             body
         );
     }
+
+    #[tokio::test]
+    async fn test_groove_routes_work_when_plugin_loaded() {
+        use std::sync::Arc;
+        use tokio::sync::RwLock;
+        use vibes_core::{PluginHost, PluginHostConfig};
+
+        // Create plugin host and load plugins
+        let config = PluginHostConfig::default();
+        let mut host = PluginHost::new(config);
+
+        // Load all plugins (including groove)
+        host.load_all().expect("Failed to load plugins");
+
+        // Create state with the loaded plugin host
+        let state = AppState::with_plugin_host(Arc::new(RwLock::new(host)));
+        let router = create_router(Arc::new(state));
+        let server =
+            TestServer::new(router.into_make_service_with_connect_info::<SocketAddr>()).unwrap();
+
+        // Request groove trust levels - should return 200 with JSON
+        let response = server.get("/api/groove/trust/levels").await;
+        response.assert_status_ok();
+
+        // Verify it's JSON with trust level data
+        let body = response.text();
+        assert!(
+            body.contains("levels") && body.contains("Local"),
+            "Groove route should return trust levels JSON. Got: {}",
+            body
+        );
+    }
 }
