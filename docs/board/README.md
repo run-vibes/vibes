@@ -11,18 +11,6 @@ Stories:
 - [ ] [chore-03-integration-testing](in-progress/milestone-26-assessment-framework/stories/chore-03-integration-testing.md)
 - [ ] [feat-02-processor-wiring](in-progress/milestone-26-assessment-framework/stories/feat-02-processor-wiring.md)
 
-### [milestone-36-firehose-infinite-scroll](in-progress/milestone-36-firehose-infinite-scroll/)
-Transform the firehose from a live event buffer to a full-featured log viewer with infinite scroll through the entire eventlog history.
-
-Stories:
-- [x] [feat-01-backend-pagination](in-progress/milestone-36-firehose-infinite-scroll/stories/feat-01-backend-pagination.md)
-- [x] [feat-02-backend-filters](in-progress/milestone-36-firehose-infinite-scroll/stories/feat-02-backend-filters.md)
-- [x] [feat-03-frontend-hook](in-progress/milestone-36-firehose-infinite-scroll/stories/feat-03-frontend-hook.md)
-- [x] [feat-04-virtual-scroll](in-progress/milestone-36-firehose-infinite-scroll/stories/feat-04-virtual-scroll.md)
-- [x] [feat-05-ui-polish](in-progress/milestone-36-firehose-infinite-scroll/stories/feat-05-ui-polish.md)
-- [x] [feat-06-uuidv7-sequencing](in-progress/milestone-36-firehose-infinite-scroll/stories/feat-06-uuidv7-sequencing.md)
-- [x] [refactor-01-single-partition](in-progress/milestone-36-firehose-infinite-scroll/stories/refactor-01-single-partition.md)
-
 
 ---
 
@@ -85,5 +73,6 @@ Stories:
 - [milestone-23-plugin-api-extension](done/milestone-23-plugin-api-extension/)
 - [milestone-24-capture-inject](done/milestone-24-capture-inject/)
 - [milestone-25-assessment-types](done/milestone-25-assessment-types/)
+- [milestone-36-firehose-infinite-scroll](done/milestone-36-firehose-infinite-scroll/)
 
 </details>
