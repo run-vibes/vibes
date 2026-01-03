@@ -223,9 +223,11 @@ export function useFirehose(options: FirehoseOptions = {}): UseFirehoseReturn {
       // Use functional update to avoid dependency on filters state
       // This prevents infinite loops when setFilters is used in useEffect
       setFiltersState((prev) => {
+        // Use !== undefined instead of ?? to allow explicit null values to clear filters
+        // (The ?? operator treats null as nullish and falls back to prev value)
         const updated: FirehoseFilters = {
-          types: newFilters.types ?? prev.types,
-          sessionId: newFilters.sessionId ?? prev.sessionId,
+          types: newFilters.types !== undefined ? newFilters.types : prev.types,
+          sessionId: newFilters.sessionId !== undefined ? newFilters.sessionId : prev.sessionId,
         };
 
         // Send to server (inside functional update to access computed value)
