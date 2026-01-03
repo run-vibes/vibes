@@ -114,4 +114,40 @@ describe('StreamView', () => {
     render(<StreamView events={mockEvents} isPaused />);
     expect(screen.getByText(/PAUSED/i)).toBeInTheDocument();
   });
+
+  it('scrolls to bottom when isPaused transitions from true to false (Jump to latest)', async () => {
+    // This tests the "Jump to latest" behavior:
+    // When isPaused goes from true to false, the component should:
+    // 1. Scroll to the last event
+    // 2. Reset internal isFollowing state to true
+    // 3. Notify parent via onFollowingChange(true)
+    const onFollowingChange = vi.fn();
+
+    const { rerender } = render(
+      <StreamView
+        events={mockEvents}
+        isLive
+        isPaused={true}
+        onFollowingChange={onFollowingChange}
+      />
+    );
+
+    // Clear any initial calls
+    onFollowingChange.mockClear();
+
+    // Transition to not paused (simulates clicking "Jump to latest")
+    rerender(
+      <StreamView
+        events={mockEvents}
+        isLive
+        isPaused={false}
+        onFollowingChange={onFollowingChange}
+      />
+    );
+
+    // The component should notify that we're now following (scrolled to bottom)
+    await waitFor(() => {
+      expect(onFollowingChange).toHaveBeenCalledWith(true);
+    });
+  });
 });

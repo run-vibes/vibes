@@ -1,6 +1,6 @@
 ---
 created: 2026-01-02
-status: pending
+status: done
 ---
 
 # feat: UI Polish and Cleanup
