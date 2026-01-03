@@ -331,15 +331,14 @@ where
 
 /// Iggy-backed consumer implementation.
 ///
-/// Polls events from all partitions and tracks offsets per partition.
+/// Polls events from partition 0 and tracks a single offset.
 pub struct IggyEventConsumer<E> {
     client: IggyClient,
     group: String,
-    offsets: [u64; topics::PARTITION_COUNT as usize],
-    committed_offsets: [u64; topics::PARTITION_COUNT as usize],
-    /// Track which partitions have been polled (i.e., have data).
-    /// Only consider these partitions when computing committed_offset().
-    active_partitions: [bool; topics::PARTITION_COUNT as usize],
+    /// Current read position in partition 0.
+    offset: u64,
+    /// Last committed offset.
+    committed_offset: u64,
     _phantom: PhantomData<E>,
 }
 
@@ -351,9 +350,8 @@ where
         Self {
             client,
             group,
-            offsets: [0; topics::PARTITION_COUNT as usize],
-            committed_offsets: [0; topics::PARTITION_COUNT as usize],
-            active_partitions: [false; topics::PARTITION_COUNT as usize],
+            offset: 0,
+            committed_offset: 0,
             _phantom: PhantomData,
         }
     }
@@ -365,71 +363,55 @@ where
     E: for<'de> Deserialize<'de> + Send + Clone + 'static,
 {
     async fn poll(&mut self, max_count: usize, _timeout: Duration) -> Result<EventBatch<E>> {
-        let mut all_events = Vec::new();
-        let per_partition = (max_count / topics::PARTITION_COUNT as usize).max(1);
-
         let stream_id = Identifier::named(topics::STREAM_NAME)
             .map_err(|e| Error::Iggy(format!("Invalid stream name: {}", e)))?;
         let topic_id = Identifier::named(topics::EVENTS_TOPIC)
             .map_err(|e| Error::Iggy(format!("Invalid topic name: {}", e)))?;
+        let consumer =
+            Consumer::new(Identifier::named(&self.group).map_err(|e| Error::Iggy(e.to_string()))?);
+        let strategy = PollingStrategy::offset(self.offset);
 
-        for partition_id in 0..topics::PARTITION_COUNT {
-            let idx = partition_id as usize;
-            let consumer = Consumer::new(
-                Identifier::named(&self.group).map_err(|e| Error::Iggy(e.to_string()))?,
-            );
-            let strategy = PollingStrategy::offset(self.offsets[idx]);
-
-            let polled = match self
-                .client
-                .poll_messages(
-                    &stream_id,
-                    &topic_id,
-                    Some(partition_id),
-                    &consumer,
-                    &strategy,
-                    per_partition as u32,
-                    false, // auto_commit = false (manual commit)
-                )
-                .await
-            {
-                Ok(messages) => messages,
-                Err(e) => {
-                    // Handle invalid offset errors (e.g., messages were purged)
-                    let err_str = e.to_string().to_lowercase();
-                    if err_str.contains("offset")
-                        || err_str.contains("not found")
-                        || err_str.contains("invalid")
-                    {
-                        warn!(
-                            partition = partition_id,
-                            offset = self.offsets[idx],
-                            error = %e,
-                            "Invalid offset, resetting to beginning of partition"
-                        );
-                        self.offsets[idx] = 0;
-                        continue; // Skip this partition for this poll cycle
-                    }
-                    return Err(e.into());
+        let polled = match self
+            .client
+            .poll_messages(
+                &stream_id,
+                &topic_id,
+                Some(0), // partition 0
+                &consumer,
+                &strategy,
+                max_count as u32,
+                false, // auto_commit = false (manual commit)
+            )
+            .await
+        {
+            Ok(messages) => messages,
+            Err(e) => {
+                // Handle invalid offset errors (e.g., messages were purged)
+                let err_str = e.to_string().to_lowercase();
+                if err_str.contains("offset")
+                    || err_str.contains("not found")
+                    || err_str.contains("invalid")
+                {
+                    warn!(
+                        offset = self.offset,
+                        error = %e,
+                        "Invalid offset, resetting to beginning"
+                    );
+                    self.offset = 0;
+                    return Ok(EventBatch::new(Vec::new()));
                 }
-            };
-
-            if !polled.messages.is_empty() {
-                // Mark this partition as active (has data)
-                self.active_partitions[idx] = true;
+                return Err(e.into());
             }
+        };
 
-            for msg in polled.messages {
-                let event: E = serde_json::from_slice(&msg.payload)?;
-                all_events.push((msg.header.offset, event));
-                self.offsets[idx] = msg.header.offset + 1;
-            }
+        let mut events = Vec::with_capacity(polled.messages.len());
+        for msg in polled.messages {
+            let event: E = serde_json::from_slice(&msg.payload)?;
+            events.push((msg.header.offset, event));
+            self.offset = msg.header.offset + 1;
         }
 
-        // Sort by offset for rough ordering across partitions
-        all_events.sort_by_key(|(offset, _)| *offset);
-
-        Ok(EventBatch::new(all_events))
+        Ok(EventBatch::new(events))
     }
 
     async fn commit(&mut self, _offset: Offset) -> Result<()> {
@@ -437,80 +419,56 @@ where
             .map_err(|e| Error::Iggy(format!("Invalid stream name: {}", e)))?;
         let topic_id = Identifier::named(topics::EVENTS_TOPIC)
             .map_err(|e| Error::Iggy(format!("Invalid topic name: {}", e)))?;
+        let consumer =
+            Consumer::new(Identifier::named(&self.group).map_err(|e| Error::Iggy(e.to_string()))?);
 
-        for partition_id in 0..topics::PARTITION_COUNT {
-            let idx = partition_id as usize;
-            let consumer = Consumer::new(
-                Identifier::named(&self.group).map_err(|e| Error::Iggy(e.to_string()))?,
-            );
+        self.client
+            .store_consumer_offset(&consumer, &stream_id, &topic_id, Some(0), self.offset)
+            .await?;
 
-            self.client
-                .store_consumer_offset(
-                    &consumer,
-                    &stream_id,
-                    &topic_id,
-                    Some(partition_id),
-                    self.offsets[idx],
-                )
-                .await?;
-
-            self.committed_offsets[idx] = self.offsets[idx];
-        }
-
-        debug!(group = %self.group, "Committed offsets to Iggy");
+        self.committed_offset = self.offset;
+        debug!(group = %self.group, offset = self.offset, "Committed offset to Iggy");
         Ok(())
     }
 
     async fn seek(&mut self, position: SeekPosition) -> Result<()> {
         match position {
             SeekPosition::Beginning => {
-                self.offsets = [0; topics::PARTITION_COUNT as usize];
+                self.offset = 0;
             }
             SeekPosition::End => {
                 // Set to max u64; poll will return empty until new messages arrive
-                self.offsets = [u64::MAX; topics::PARTITION_COUNT as usize];
+                self.offset = u64::MAX;
             }
             SeekPosition::Offset(o) => {
-                self.offsets = [o; topics::PARTITION_COUNT as usize];
+                self.offset = o;
             }
             SeekPosition::FromEnd(n) => {
-                // Query topic to get per-partition current offsets
+                // Query topic to get current offset
                 let stream_id = Identifier::named(topics::STREAM_NAME)
                     .map_err(|e| Error::Iggy(format!("Invalid stream name: {}", e)))?;
                 let topic_id = Identifier::named(topics::EVENTS_TOPIC)
                     .map_err(|e| Error::Iggy(format!("Invalid topic name: {}", e)))?;
 
                 if let Some(topic_details) = self.client.get_topic(&stream_id, &topic_id).await? {
-                    // Initialize all offsets to 0 first
-                    self.offsets = [0; topics::PARTITION_COUNT as usize];
-
-                    // Set each partition's offset to (current_offset - n), clamped to 0
-                    for partition in topic_details.partitions {
-                        let idx = partition.id as usize;
-                        if idx < topics::PARTITION_COUNT as usize {
-                            self.offsets[idx] = partition.current_offset.saturating_sub(n);
-                        }
+                    // Get partition 0's current offset
+                    if let Some(partition) = topic_details.partitions.first() {
+                        self.offset = partition.current_offset.saturating_sub(n);
+                    } else {
+                        self.offset = 0;
                     }
                 } else {
                     // Topic doesn't exist, start from beginning
-                    self.offsets = [0; topics::PARTITION_COUNT as usize];
+                    self.offset = 0;
                 }
             }
         }
-        debug!(group = %self.group, "Seeked consumer");
+        debug!(group = %self.group, offset = self.offset, "Seeked consumer");
         Ok(())
     }
 
     fn committed_offset(&self) -> Offset {
-        // Return min committed offset across active partitions only.
-        // Partitions that have never received data are excluded from the calculation.
-        self.committed_offsets
-            .iter()
-            .zip(self.active_partitions.iter())
-            .filter(|(_, active)| **active)
-            .map(|(offset, _)| *offset)
-            .min()
-            .unwrap_or(0)
+        self.committed_offset
     }
 
     fn group(&self) -> &str {
