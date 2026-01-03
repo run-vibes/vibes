@@ -3,7 +3,7 @@
 //! These tests validate the full Iggy SDK integration including:
 //! - Connection and authentication
 //! - Stream/topic creation
-//! - Event append with partitioning
+//! - Event append
 //! - Consumer polling and offset commit
 //!
 //! # Running Tests
@@ -168,7 +168,7 @@ async fn test_append_and_poll_roundtrip() {
 async fn test_partition_by_session_id() {
     let (_harness, log) = setup().await;
 
-    // Append events for different sessions
+    // Append events for different sessions (partition key is ignored with single partition)
     for i in 0..10 {
         log.append(TestEvent {
             session_id: format!("session-{}", i % 3), // 3 different sessions
@@ -179,18 +179,13 @@ async fn test_partition_by_session_id() {
     }
 
     // Wait for Iggy to flush events to disk
-    // NOTE: The poll implementation currently ignores the timeout parameter,
-    // so we need this explicit delay to ensure events are available.
-    // 500ms gives Iggy time to persist all events across partitions.
     tokio::time::sleep(Duration::from_millis(500)).await;
 
-    // All events should be retrievable
-    // Note: With 8 partitions, per_partition = poll_count / 8.
-    // We need per_partition >= 4 to get all events, so poll at least 32.
+    // All events should be retrievable from the single partition
     let mut consumer = log.consumer("partition-test").await.unwrap();
     consumer.seek(SeekPosition::Beginning).await.unwrap();
 
-    let batch = consumer.poll(40, Duration::from_secs(1)).await.unwrap();
+    let batch = consumer.poll(20, Duration::from_secs(1)).await.unwrap();
     assert!(batch.len() >= 10, "Should retrieve all 10 events");
 }
 
