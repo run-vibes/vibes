@@ -1,6 +1,6 @@
 ---
 created: 2026-01-03
-status: pending
+status: done
 ---
 
 # Fix: Events Don't Flow from Claude Hooks to Firehose
@@ -11,48 +11,45 @@ status: pending
 
 When running `vibes claude`, no session or assessment events appear in the firehose websocket. The websocket connection itself works (connection events appear), but Claude session events (MessageReceived, SessionStarted, etc.) and assessment events (LightweightSignal, etc.) are missing.
 
-## Investigation Path
+## Root Cause Found
 
-Trace the event flow through each component:
+**Off-by-one error in `SeekPosition::End` for empty topics.**
 
+In `vibes-iggy/src/iggy_log.rs`, when seeking to `End` on an empty topic:
+1. `partition.current_offset` is 0 (default value for empty topics)
+2. We computed `self.offset = 0 + 1 = 1`
+3. First message via HTTP gets offset **0**
+4. Consumer polling from offset **1** misses the event at offset 0
+
+This explains why the WebSocket consumer (which uses `SeekPosition::End` for live mode) missed all hook events - when the topic was empty at server start, it was waiting for offset 1 while events went to offset 0.
+
+## Fix
+
+Check `messages_count` to distinguish empty topics from topics with messages:
+
+```rust
+SeekPosition::End => {
+    if topic_details.messages_count == 0 {
+        // Topic is empty - start from 0 to catch the first message
+        self.offset = 0;
+    } else {
+        // Topic has messages - start from one past the last
+        self.offset = partition.current_offset.saturating_add(1);
+    }
+}
 ```
-Claude hooks → vibes-server HTTP/WS → EventLog (Iggy) → Firehose consumer → WebSocket broadcast
-```
-
-### 1. Are hooks installed and firing?
-
-- Check `~/.claude/hooks/` for vibes hooks
-- Add logging to confirm hooks execute on Claude events
-- Verify hooks can reach the vibes server
-
-### 2. Is the server receiving hook calls?
-
-- Check server logs for incoming hook requests
-- Verify the hook endpoint exists and is reachable
-
-### 3. Are events written to Iggy?
-
-- Check Iggy topics for events
-- Verify the EventLog writer is connected
-- Look for errors in event persistence
-
-### 4. Is the firehose consumer reading?
-
-- Verify consumer is subscribed to correct topics
-- Check consumer logs for activity
-- Confirm events are being broadcast to websocket
 
 ## Tasks
 
-- [ ] Trace hook installation in `vibes claude`
-- [ ] Verify hook → server communication
-- [ ] Check EventLog writes to Iggy
-- [ ] Verify firehose consumer subscription
-- [ ] Fix the broken link in the chain
-- [ ] Add E2E test: Claude event → firehose websocket
+- [x] Trace hook installation in `vibes claude` (hooks work, HTTP API receives events)
+- [x] Verify hook → server communication (HTTP → Iggy works)
+- [x] Check EventLog writes to Iggy (TCP consumer reads events correctly)
+- [x] Verify firehose consumer subscription (SeekPosition::End was the issue)
+- [x] Fix the broken link in the chain (fixed off-by-one in iggy_log.rs)
+- [x] Add E2E tests: `test_http_events_received_by_tcp_consumer` and `test_http_events_received_by_live_consumer`
 
 ## Acceptance Criteria
 
-- Running `vibes claude` and sending a message shows events in the firehose
-- Both session events and assessment events appear
-- Events appear in real-time (< 1 second latency)
+- [x] Running `vibes claude` and sending a message shows events in the firehose
+- [x] Both session events and assessment events appear
+- [x] Events appear in real-time (< 1 second latency)

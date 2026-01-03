@@ -534,8 +534,14 @@ where
                 // Query topic to get current offset, then set to end
                 if let Some(topic_details) = self.client.get_topic(&stream_id, &topic_id).await? {
                     if let Some(partition) = topic_details.partitions.first() {
-                        // Set to one past the last message so poll returns empty until new messages
-                        self.offset = partition.current_offset.saturating_add(1);
+                        if topic_details.messages_count == 0 {
+                            // Topic is empty - start from 0 to catch the first message
+                            // Without this check, we'd set offset=1 and miss offset=0
+                            self.offset = 0;
+                        } else {
+                            // Topic has messages - start from one past the last
+                            self.offset = partition.current_offset.saturating_add(1);
+                        }
                     } else {
                         self.offset = 0;
                     }

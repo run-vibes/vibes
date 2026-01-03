@@ -218,3 +218,308 @@ async fn test_events_partitioned_by_session() {
 
     drop(temp_dir);
 }
+
+/// Test that events sent via HTTP are received by TCP consumer.
+///
+/// This reproduces the exact flow: CLI hooks → HTTP → Iggy → TCP consumer.
+/// Requires iggy-server and sufficient ulimit.
+/// Run with: cargo test -p vibes-server --test iggy_integration -- --ignored
+#[tokio::test]
+#[ignore]
+async fn test_http_events_received_by_tcp_consumer() {
+    use base64::Engine;
+    use reqwest::Client;
+    use serde::{Deserialize, Serialize};
+    use vibes_core::hooks::{HookEvent, SessionStartData};
+
+    // HTTP client request types (replicate from vibes-cli since it's a binary crate)
+    #[derive(Serialize)]
+    struct LoginRequest {
+        username: String,
+        password: String,
+    }
+
+    #[derive(Deserialize)]
+    struct LoginResponse {
+        access_token: AccessToken,
+    }
+
+    #[derive(Deserialize)]
+    struct AccessToken {
+        token: String,
+    }
+
+    #[derive(Serialize)]
+    struct SendMessagesRequest {
+        partitioning: Partitioning,
+        messages: Vec<Message>,
+    }
+
+    #[derive(Serialize)]
+    struct Partitioning {
+        kind: &'static str,
+        value: String,
+    }
+
+    #[derive(Serialize)]
+    struct Message {
+        payload: String,
+    }
+
+    let temp_dir = TempDir::new().expect("Failed to create temp directory");
+    let config = test_iggy_config(&temp_dir);
+    let http_port = config.http_port;
+    let base_url = format!("http://127.0.0.1:{}", http_port);
+
+    let state = Arc::new(
+        AppState::new_with_iggy_config(config)
+            .await
+            .expect("Iggy should be available"),
+    );
+    tokio::time::sleep(IGGY_INIT_WAIT).await;
+
+    // Create HTTP client and login (like CLI would)
+    let client = Client::new();
+
+    // Login to get JWT token
+    let login_response: LoginResponse = client
+        .post(format!("{}/users/login", base_url))
+        .json(&LoginRequest {
+            username: "iggy".to_string(),
+            password: "iggy".to_string(),
+        })
+        .send()
+        .await
+        .expect("Login request should succeed")
+        .json()
+        .await
+        .expect("Login response should parse");
+
+    let token = login_response.access_token.token;
+
+    // Send event via HTTP (like hooks do)
+    let hook_event = VibesEvent::Hook {
+        session_id: Some("test-session".to_string()),
+        event: HookEvent::SessionStart(SessionStartData {
+            session_id: Some("test-session".to_string()),
+            project_path: Some("/test".to_string()),
+        }),
+    };
+    let serialized = serde_json::to_vec(&StoredEvent::new(hook_event.clone())).unwrap();
+    let encoded = base64::engine::general_purpose::STANDARD.encode(&serialized);
+
+    let send_response = client
+        .post(format!("{}/streams/vibes/topics/events/messages", base_url))
+        .bearer_auth(&token)
+        .json(&SendMessagesRequest {
+            partitioning: Partitioning {
+                kind: "balanced",
+                value: String::new(),
+            },
+            messages: vec![Message { payload: encoded }],
+        })
+        .send()
+        .await
+        .expect("Send message request should succeed");
+
+    assert!(
+        send_response.status().is_success(),
+        "Send message should succeed: {:?}",
+        send_response.text().await
+    );
+
+    // Wait for event to propagate through Iggy
+    tokio::time::sleep(Duration::from_millis(500)).await;
+
+    // Create TCP consumer and poll for the event
+    let mut consumer = state
+        .event_log
+        .consumer("http-to-tcp-test")
+        .await
+        .expect("Consumer creation should work");
+    consumer
+        .seek(SeekPosition::Beginning)
+        .await
+        .expect("Seek should work");
+
+    let batch = consumer
+        .poll(10, Duration::from_secs(1))
+        .await
+        .expect("Poll should work");
+
+    // Verify we received the HTTP-sent event
+    assert!(
+        !batch.is_empty(),
+        "TCP consumer should receive event sent via HTTP. Got empty batch."
+    );
+
+    let received_events: Vec<_> = batch.into_iter().map(|(_, stored)| stored.event).collect();
+    let found = received_events.iter().any(|e| match e {
+        VibesEvent::Hook { session_id, .. } => session_id.as_deref() == Some("test-session"),
+        _ => false,
+    });
+
+    assert!(
+        found,
+        "Should find the hook event sent via HTTP. Received: {:?}",
+        received_events
+    );
+
+    drop(temp_dir);
+}
+
+/// Test that events sent via HTTP are received by a TCP consumer in LIVE mode.
+///
+/// This reproduces the WebSocket consumer scenario:
+/// - Consumer seeks to End (live mode) BEFORE any events are sent
+/// - Events are sent via HTTP (like CLI hooks)
+/// - Consumer polls and should receive new events
+///
+/// This is the critical path for firehose to work with CLI hooks.
+/// Requires iggy-server and sufficient ulimit.
+/// Run with: cargo test -p vibes-server --test iggy_integration -- --ignored
+#[tokio::test]
+#[ignore]
+async fn test_http_events_received_by_live_consumer() {
+    use base64::Engine;
+    use reqwest::Client;
+    use serde::{Deserialize, Serialize};
+    use vibes_core::hooks::{HookEvent, SessionStartData};
+
+    // HTTP client request types
+    #[derive(Serialize)]
+    struct LoginRequest {
+        username: String,
+        password: String,
+    }
+
+    #[derive(Deserialize)]
+    struct LoginResponse {
+        access_token: AccessToken,
+    }
+
+    #[derive(Deserialize)]
+    struct AccessToken {
+        token: String,
+    }
+
+    #[derive(Serialize)]
+    struct SendMessagesRequest {
+        partitioning: Partitioning,
+        messages: Vec<Message>,
+    }
+
+    #[derive(Serialize)]
+    struct Partitioning {
+        kind: &'static str,
+        value: String,
+    }
+
+    #[derive(Serialize)]
+    struct Message {
+        payload: String,
+    }
+
+    let temp_dir = TempDir::new().expect("Failed to create temp directory");
+    let config = test_iggy_config(&temp_dir);
+    let http_port = config.http_port;
+    let base_url = format!("http://127.0.0.1:{}", http_port);
+
+    let state = Arc::new(
+        AppState::new_with_iggy_config(config)
+            .await
+            .expect("Iggy should be available"),
+    );
+    tokio::time::sleep(IGGY_INIT_WAIT).await;
+
+    // Create TCP consumer and seek to END (live mode) BEFORE sending events
+    let mut consumer = state
+        .event_log
+        .consumer("live-http-test")
+        .await
+        .expect("Consumer creation should work");
+
+    // This is what the WebSocket consumer does - seek to end for live events only
+    consumer
+        .seek(SeekPosition::End)
+        .await
+        .expect("Seek to End should work");
+
+    // Now send event via HTTP (like CLI hooks would)
+    let client = Client::new();
+
+    let login_response: LoginResponse = client
+        .post(format!("{}/users/login", base_url))
+        .json(&LoginRequest {
+            username: "iggy".to_string(),
+            password: "iggy".to_string(),
+        })
+        .send()
+        .await
+        .expect("Login request should succeed")
+        .json()
+        .await
+        .expect("Login response should parse");
+
+    let token = login_response.access_token.token;
+
+    let hook_event = VibesEvent::Hook {
+        session_id: Some("live-test-session".to_string()),
+        event: HookEvent::SessionStart(SessionStartData {
+            session_id: Some("live-test-session".to_string()),
+            project_path: Some("/test".to_string()),
+        }),
+    };
+    let serialized = serde_json::to_vec(&StoredEvent::new(hook_event.clone())).unwrap();
+    let encoded = base64::engine::general_purpose::STANDARD.encode(&serialized);
+
+    let send_response = client
+        .post(format!("{}/streams/vibes/topics/events/messages", base_url))
+        .bearer_auth(&token)
+        .json(&SendMessagesRequest {
+            partitioning: Partitioning {
+                kind: "balanced",
+                value: String::new(),
+            },
+            messages: vec![Message { payload: encoded }],
+        })
+        .send()
+        .await
+        .expect("Send message request should succeed");
+
+    assert!(
+        send_response.status().is_success(),
+        "Send message should succeed: {:?}",
+        send_response.text().await
+    );
+
+    // Wait for event to propagate through Iggy
+    tokio::time::sleep(Duration::from_millis(500)).await;
+
+    // Now poll - should receive the event that arrived AFTER seeking to End
+    let batch = consumer
+        .poll(10, Duration::from_secs(1))
+        .await
+        .expect("Poll should work");
+
+    // This is the critical assertion - live consumer should see HTTP-sent events
+    assert!(
+        !batch.is_empty(),
+        "LIVE consumer (SeekPosition::End) should receive event sent via HTTP. \
+         This is the exact scenario for firehose receiving CLI hook events. Got empty batch."
+    );
+
+    let received_events: Vec<_> = batch.into_iter().map(|(_, stored)| stored.event).collect();
+    let found = received_events.iter().any(|e| match e {
+        VibesEvent::Hook { session_id, .. } => session_id.as_deref() == Some("live-test-session"),
+        _ => false,
+    });
+
+    assert!(
+        found,
+        "Should find the hook event sent via HTTP. Received: {:?}",
+        received_events
+    );
+
+    drop(temp_dir);
+}

@@ -11,7 +11,7 @@ Stories:
 - [ ] [chore-03-integration-testing](in-progress/milestone-26-assessment-framework/stories/chore-03-integration-testing.md)
 - [ ] [feat-02-processor-wiring](in-progress/milestone-26-assessment-framework/stories/feat-02-processor-wiring.md)
 - [x] [fix-04-plugin-route-mounting](in-progress/milestone-26-assessment-framework/stories/fix-04-plugin-route-mounting.md)
-- [ ] [fix-05-event-flow-to-firehose](in-progress/milestone-26-assessment-framework/stories/fix-05-event-flow-to-firehose.md)
+- [x] [fix-05-event-flow-to-firehose](in-progress/milestone-26-assessment-framework/stories/fix-05-event-flow-to-firehose.md)
 
 
 ---
