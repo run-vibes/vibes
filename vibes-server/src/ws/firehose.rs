@@ -372,8 +372,6 @@ async fn load_historical_events(state: &AppState, count: u64) -> Vec<(Offset, St
         return Vec::new();
     }
 
-    let start_offset = hwm.saturating_sub(count);
-
     // Create a temporary consumer to read historical events
     let consumer_group = format!("firehose-historical-{}", uuid::Uuid::new_v4());
     let mut consumer = match state.event_log.consumer(&consumer_group).await {
@@ -384,14 +382,16 @@ async fn load_historical_events(state: &AppState, count: u64) -> Vec<(Offset, St
         }
     };
 
-    // Seek to the start position
-    if let Err(e) = consumer.seek(SeekPosition::Offset(start_offset)).await {
+    // Seek backwards from end: each partition seeks back by count events
+    // This ensures we have enough events even with uneven partition distribution
+    // We limit via poll(count) anyway, so overshooting is fine
+    if let Err(e) = consumer.seek(SeekPosition::FromEnd(count)).await {
         warn!("Failed to seek historical consumer: {}", e);
         return Vec::new();
     }
 
-    // Poll for events (short timeout since they should already exist)
-    match consumer
+    // Poll for events
+    let mut events: Vec<(Offset, StoredEvent)> = match consumer
         .poll(count as usize, Duration::from_millis(100))
         .await
     {
@@ -400,7 +400,12 @@ async fn load_historical_events(state: &AppState, count: u64) -> Vec<(Offset, St
             warn!("Failed to poll historical events: {}", e);
             Vec::new()
         }
-    }
+    };
+
+    // Sort by event_id (UUIDv7 timestamp) for correct cross-partition ordering
+    events.sort_by_key(|(_, stored)| stored.event_id);
+
+    events
 }
 
 /// Load events before a specific offset from the EventLog.
@@ -440,7 +445,7 @@ async fn load_events_before_offset(
     let events_to_fetch = (end_offset - start_offset) as usize;
 
     // Poll for events
-    match consumer
+    let mut events: Vec<(Offset, StoredEvent)> = match consumer
         .poll(events_to_fetch, Duration::from_millis(100))
         .await
     {
@@ -452,7 +457,12 @@ async fn load_events_before_offset(
             warn!("Failed to poll pagination events: {}", e);
             Vec::new()
         }
-    }
+    };
+
+    // Sort by event_id (UUIDv7 timestamp) for correct cross-partition ordering
+    events.sort_by_key(|(_, stored)| stored.event_id);
+
+    events
 }
 
 #[cfg(test)]
@@ -791,5 +801,105 @@ mod tests {
             }
             _ => panic!("Expected SetFilters"),
         }
+    }
+
+    #[tokio::test]
+    async fn load_historical_events_returns_events_sorted_by_event_id() {
+        use crate::AppState;
+
+        // Create state with in-memory event log
+        let state = AppState::new();
+
+        // Append several events rapidly (they'll get sequential UUIDv7 event_ids)
+        for i in 0..10 {
+            let stored = make_stored_event(VibesEvent::SessionCreated {
+                session_id: format!("session-{}", i),
+                name: Some(format!("Session {}", i)),
+            });
+            state.event_log.append(stored).await.unwrap();
+        }
+
+        // Load all events
+        let events = load_historical_events(&state, 100).await;
+        assert_eq!(events.len(), 10);
+
+        // Verify events are sorted by event_id (UUIDv7 is time-ordered)
+        // Each subsequent event_id should be >= previous (UUIDv7 is monotonic)
+        for i in 1..events.len() {
+            let prev_id = events[i - 1].1.event_id;
+            let curr_id = events[i].1.event_id;
+            assert!(
+                curr_id >= prev_id,
+                "Events should be sorted by event_id (UUIDv7 timestamp). \
+                 Event {} has id {} which is less than event {} with id {}",
+                i,
+                curr_id,
+                i - 1,
+                prev_id
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn load_historical_events_sorts_by_event_id_across_partitions() {
+        use crate::AppState;
+        use std::sync::Arc;
+        use vibes_iggy::PartitionedInMemoryEventLog;
+
+        // Create state with partitioned in-memory event log (simulates Iggy behavior)
+        let partitioned_log = Arc::new(PartitionedInMemoryEventLog::new());
+        let state = AppState::with_event_log(partitioned_log);
+
+        // Create events with different session_ids to distribute across partitions.
+        // Each session_id hashes to a different partition.
+        // Events are created with UUIDv7 event_ids in creation order.
+        let mut event_ids = Vec::new();
+        for i in 0..16 {
+            // Alternate between two session patterns to ensure cross-partition distribution
+            let session_id = if i % 2 == 0 {
+                format!("session-a-{}", i)
+            } else {
+                format!("session-b-{}", i)
+            };
+            let stored = make_stored_event(VibesEvent::SessionCreated {
+                session_id,
+                name: Some(format!("Session {}", i)),
+            });
+            event_ids.push(stored.event_id);
+            state.event_log.append(stored).await.unwrap();
+        }
+
+        // Load all events
+        let events = load_historical_events(&state, 100).await;
+        assert_eq!(
+            events.len(),
+            16,
+            "Should load all 16 events from partitions"
+        );
+
+        // Verify events are sorted by event_id (UUIDv7 timestamp), NOT by offset
+        // The partition consumer returns events sorted by offset which is WRONG
+        // because offsets are partition-local. The load_historical_events function
+        // should re-sort by event_id.
+        for i in 1..events.len() {
+            let prev_id = events[i - 1].1.event_id;
+            let curr_id = events[i].1.event_id;
+            assert!(
+                curr_id >= prev_id,
+                "Events should be sorted by event_id (UUIDv7 timestamp) across partitions. \
+                 Event {} has id {} which is less than event {} with id {}",
+                i,
+                curr_id,
+                i - 1,
+                prev_id
+            );
+        }
+
+        // Additionally verify the order matches creation order (since UUIDv7 is monotonic)
+        let loaded_ids: Vec<_> = events.iter().map(|(_, s)| s.event_id).collect();
+        assert_eq!(
+            loaded_ids, event_ids,
+            "Events should be in creation order (UUIDv7 is monotonic)"
+        );
     }
 }

@@ -4,6 +4,7 @@ import { StreamView, EventInspector, Badge } from '@vibes/design-system';
 import type { DisplayEvent, ContextEvent } from '@vibes/design-system';
 import { useFirehose } from '../hooks/useFirehose';
 import type { VibesEvent } from '../lib/types';
+import { extractTimestampFromUuidv7 } from '../lib/uuidv7';
 import './Firehose.css';
 
 const EVENT_TYPES = ['SESSION', 'CLAUDE', 'TOOL', 'HOOK', 'ERROR', 'ASSESS'] as const;
@@ -11,7 +12,8 @@ const EVENT_TYPES = ['SESSION', 'CLAUDE', 'TOOL', 'HOOK', 'ERROR', 'ASSESS'] as 
 function toDisplayEvent(event: VibesEvent, eventId: string): DisplayEvent {
   const baseEvent = {
     id: eventId,
-    timestamp: new Date(),
+    // Extract timestamp from UUIDv7 event_id for accurate, consistent ordering
+    timestamp: extractTimestampFromUuidv7(eventId),
   };
 
   switch (event.type) {

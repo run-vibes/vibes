@@ -180,6 +180,10 @@ where
             SeekPosition::Beginning => 0,
             SeekPosition::End => self.shared.events.read().await.len() as Offset,
             SeekPosition::Offset(o) => o,
+            SeekPosition::FromEnd(n) => {
+                let len = self.shared.events.read().await.len() as u64;
+                len.saturating_sub(n)
+            }
         };
         Ok(())
     }
@@ -342,5 +346,48 @@ mod tests {
         // Consumer B should still start from beginning
         let batch_b = consumer_b.poll(2, Duration::from_secs(1)).await.unwrap();
         assert_eq!(batch_b.first_offset(), Some(0));
+    }
+
+    #[tokio::test]
+    async fn consumer_seek_from_end() {
+        let log: InMemoryEventLog<String> = InMemoryEventLog::new();
+        // Append 10 events (offsets 0-9)
+        for i in 0..10 {
+            log.append(format!("event-{i}")).await.unwrap();
+        }
+
+        let mut consumer = log.consumer("test-group").await.unwrap();
+
+        // Seek to 3 events before the end (should start at offset 7)
+        consumer.seek(SeekPosition::FromEnd(3)).await.unwrap();
+
+        let batch = consumer.poll(10, Duration::from_secs(1)).await.unwrap();
+
+        // Should get events at offsets 7, 8, 9 (last 3)
+        assert_eq!(batch.len(), 3);
+        assert_eq!(batch.first_offset(), Some(7));
+        assert_eq!(batch.last_offset(), Some(9));
+    }
+
+    #[tokio::test]
+    async fn consumer_seek_from_end_with_more_than_available() {
+        let log: InMemoryEventLog<String> = InMemoryEventLog::new();
+        // Append 5 events (offsets 0-4)
+        for i in 0..5 {
+            log.append(format!("event-{i}")).await.unwrap();
+        }
+
+        let mut consumer = log.consumer("test-group").await.unwrap();
+
+        // Request 100 events before end, but only 5 exist
+        // Should clamp to beginning (offset 0)
+        consumer.seek(SeekPosition::FromEnd(100)).await.unwrap();
+
+        let batch = consumer.poll(10, Duration::from_secs(1)).await.unwrap();
+
+        // Should get all 5 events
+        assert_eq!(batch.len(), 5);
+        assert_eq!(batch.first_offset(), Some(0));
+        assert_eq!(batch.last_offset(), Some(4));
     }
 }

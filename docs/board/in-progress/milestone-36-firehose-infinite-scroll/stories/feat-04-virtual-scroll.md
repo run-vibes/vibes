@@ -1,6 +1,6 @@
 ---
 created: 2026-01-02
-status: pending
+status: done
 ---
 
 # feat: Virtualized Scroll View
@@ -72,11 +72,11 @@ See [design.md](../design.md) for UX requirements. Virtual scrolling is essentia
 
 ## Acceptance Criteria
 
-- [ ] Virtual scrolling handles 10K+ events without performance issues
-- [ ] Scrolling to top triggers pagination request
-- [ ] Scroll position preserved when older events load
-- [ ] Auto-follow works correctly (scroll up breaks, scroll to bottom resumes)
-- [ ] All tests pass
+- [x] Virtual scrolling handles 10K+ events without performance issues
+- [x] Scrolling to top triggers pagination request
+- [x] Scroll position preserved when older events load
+- [x] Auto-follow works correctly (scroll up breaks, scroll to bottom resumes)
+- [x] All tests pass
 
 ## Completion
 

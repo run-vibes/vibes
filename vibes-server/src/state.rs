@@ -90,6 +90,33 @@ impl AppState {
         }
     }
 
+    /// Create a new AppState with a custom EventLog (for testing)
+    #[cfg(test)]
+    pub fn with_event_log(event_log: Arc<dyn EventLog<StoredEvent>>) -> Self {
+        let plugin_host = Arc::new(RwLock::new(PluginHost::new(PluginHostConfig::default())));
+        let tunnel_manager = Arc::new(RwLock::new(TunnelManager::new(
+            TunnelConfig::default(),
+            7432,
+        )));
+        let (event_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
+        let (pty_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
+        let pty_manager = Arc::new(RwLock::new(PtyManager::new(PtyConfig::default())));
+
+        Self {
+            plugin_host,
+            event_log,
+            tunnel_manager,
+            auth_layer: AuthLayer::disabled(),
+            started_at: Utc::now(),
+            event_broadcaster,
+            pty_broadcaster,
+            vapid: None,
+            subscriptions: None,
+            pty_manager,
+            iggy_manager: None,
+        }
+    }
+
     /// Create a new AppState with Iggy-backed persistent storage.
     ///
     /// Attempts to start and connect to the bundled Iggy server.
