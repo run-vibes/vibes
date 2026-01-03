@@ -641,3 +641,158 @@ async fn test_vibes_event_send_cli_to_consumer() {
 
     drop(temp_dir);
 }
+
+/// Test that injection hook events (session_start, user_prompt_submit) flow to firehose.
+///
+/// This tests the full injection hook path:
+/// 1. Hook script builds JSON with type field (simulated)
+/// 2. Calls `vibes event send --type hook`
+/// 3. CLI deserializes as HookEvent and wraps in VibesEvent::Hook + StoredEvent
+/// 4. Sends to Iggy HTTP
+/// 5. Consumer polls and receives correctly typed event
+///
+/// This validates the fix for injection hooks not sending events to Iggy
+/// (they were trying to use a Unix socket that no longer exists).
+///
+/// Requires iggy-server and the vibes binary to be built.
+/// Run with: cargo test -p vibes-server --test iggy_integration -- --ignored
+#[tokio::test]
+#[ignore]
+async fn test_injection_hook_events_flow_to_firehose() {
+    use std::process::Command;
+    use vibes_core::hooks::HookEvent;
+
+    let temp_dir = TempDir::new().expect("Failed to create temp directory");
+    let tcp_port = 50102; // Unique ports for this test
+    let http_port = 50103;
+
+    let config = IggyConfig::default()
+        .with_data_dir(temp_dir.path())
+        .with_port(tcp_port)
+        .with_http_port(http_port);
+
+    let state = Arc::new(
+        AppState::new_with_iggy_config(config)
+            .await
+            .expect("Iggy should be available"),
+    );
+
+    tokio::time::sleep(Duration::from_millis(1000)).await;
+
+    // Create consumer in live mode (like firehose)
+    let mut consumer = state
+        .event_log
+        .consumer("injection-hook-test")
+        .await
+        .expect("Consumer creation should work");
+    consumer
+        .seek(SeekPosition::End)
+        .await
+        .expect("Seek should work");
+
+    let vibes_binary = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .unwrap()
+        .join("target/debug/vibes");
+
+    assert!(
+        vibes_binary.exists(),
+        "vibes binary not found at {:?}. Run `cargo build` first.",
+        vibes_binary
+    );
+
+    // Test 1: session_start event (like vibes-hook-inject.sh produces for session-start.sh)
+    let session_start_json = r#"{"type":"session_start","session_id":"inject-test-sess","project_path":"/test/project"}"#;
+
+    let output = Command::new(&vibes_binary)
+        .args([
+            "event",
+            "send",
+            "--type",
+            "hook",
+            "--session",
+            "inject-test-sess",
+            "--data",
+            session_start_json,
+        ])
+        .env("VIBES_IGGY_HOST", "127.0.0.1")
+        .env("VIBES_IGGY_HTTP_PORT", http_port.to_string())
+        .env("VIBES_IGGY_USERNAME", "iggy")
+        .env("VIBES_IGGY_PASSWORD", "iggy")
+        .output()
+        .expect("Failed to run vibes event send");
+
+    assert!(
+        output.status.success(),
+        "session_start event send should succeed. stderr: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+
+    // Test 2: user_prompt_submit event (like vibes-hook-inject.sh produces for user-prompt-submit.sh)
+    let user_prompt_json = r#"{"type":"user_prompt_submit","session_id":"inject-test-sess","prompt":"Help me with Rust"}"#;
+
+    let output = Command::new(&vibes_binary)
+        .args([
+            "event",
+            "send",
+            "--type",
+            "hook",
+            "--session",
+            "inject-test-sess",
+            "--data",
+            user_prompt_json,
+        ])
+        .env("VIBES_IGGY_HOST", "127.0.0.1")
+        .env("VIBES_IGGY_HTTP_PORT", http_port.to_string())
+        .env("VIBES_IGGY_USERNAME", "iggy")
+        .env("VIBES_IGGY_PASSWORD", "iggy")
+        .output()
+        .expect("Failed to run vibes event send");
+
+    assert!(
+        output.status.success(),
+        "user_prompt_submit event send should succeed. stderr: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+
+    // Wait for events to propagate
+    tokio::time::sleep(Duration::from_millis(500)).await;
+
+    // Poll for events
+    let batch = consumer
+        .poll(10, Duration::from_secs(2))
+        .await
+        .expect("Poll should work");
+
+    assert!(
+        batch.len() >= 2,
+        "Should receive at least 2 hook events. Got {} events.",
+        batch.len()
+    );
+
+    let received_events: Vec<_> = batch.into_iter().map(|(_, stored)| stored.event).collect();
+
+    // Verify session_start event
+    let found_session_start = received_events.iter().any(|e| match e {
+        VibesEvent::Hook { event, .. } => matches!(event, HookEvent::SessionStart(_)),
+        _ => false,
+    });
+    assert!(
+        found_session_start,
+        "Should find session_start hook event. Received: {:?}",
+        received_events
+    );
+
+    // Verify user_prompt_submit event
+    let found_prompt = received_events.iter().any(|e| match e {
+        VibesEvent::Hook { event, .. } => matches!(event, HookEvent::UserPromptSubmit(_)),
+        _ => false,
+    });
+    assert!(
+        found_prompt,
+        "Should find user_prompt_submit hook event. Received: {:?}",
+        received_events
+    );
+
+    drop(temp_dir);
+}
