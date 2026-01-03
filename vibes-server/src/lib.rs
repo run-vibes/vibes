@@ -203,6 +203,9 @@ impl VibesServer {
         // Install Claude Code hooks
         self.install_hooks();
 
+        // Load plugins
+        self.load_plugins().await;
+
         // Start EventLog consumer-based event processing
         // This includes WebSocket consumer and notification consumer
         self.start_event_log_consumers(self.notification_service.clone())
@@ -287,6 +290,22 @@ impl VibesServer {
             Err(e) => {
                 // Log error but don't fail startup - hooks are optional
                 tracing::warn!("Failed to install Claude Code hooks: {}", e);
+            }
+        }
+    }
+
+    /// Load all available plugins
+    async fn load_plugins(&self) {
+        let mut plugin_host = self.state.plugin_host().write().await;
+
+        match plugin_host.load_all() {
+            Ok(()) => {
+                let count = plugin_host.list_plugins(false).len();
+                tracing::info!("Loaded {} plugins", count);
+            }
+            Err(e) => {
+                // Log error but don't fail startup - plugins are optional
+                tracing::warn!("Failed to load plugins: {}", e);
             }
         }
     }

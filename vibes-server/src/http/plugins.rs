@@ -9,6 +9,7 @@ use axum::{
     extract::{Request, State},
     http::StatusCode,
     response::{IntoResponse, Response},
+    routing::any,
 };
 use serde_json::json;
 use vibes_plugin_api::{HttpMethod, RouteRequest};
@@ -108,6 +109,10 @@ fn extract_headers(headers: &axum::http::HeaderMap) -> HashMap<String, String> {
 }
 
 /// Create router for plugin routes
+///
+/// Uses a wildcard route `/api/*path` to catch all plugin API requests.
+/// This must be merged into the main router BEFORE the static file fallback
+/// so plugin routes get priority over SPA routing.
 pub fn plugin_router() -> Router<Arc<AppState>> {
-    Router::new().fallback(handle_plugin_route)
+    Router::new().route("/api/*path", any(handle_plugin_route))
 }

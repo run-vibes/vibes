@@ -1,6 +1,6 @@
 ---
 created: 2026-01-03
-status: pending
+status: done
 ---
 
 # Fix: Plugin Routes Return HTML Instead of JSON
@@ -41,9 +41,10 @@ Or use a more explicit nest path if preferred.
 
 ## Tasks
 
-- [ ] Mount `plugin_router()` in `create_router()`
-- [ ] Verify `/api/groove/policy` returns JSON
-- [ ] Add test for plugin route handling
+- [x] Mount `plugin_router()` in `create_router()`
+- [x] Add test for plugin route handling (`test_plugin_routes_return_json_not_html`)
+- [x] Add test for groove routes when loaded (`test_groove_routes_work_when_plugin_loaded`)
+- [x] Load plugins on server startup via `load_plugins()` method
 
 ## Acceptance Criteria
 
