@@ -26,6 +26,8 @@ What remains is cleanup, integration, and validation.
 | 1 | [chore-01-eventbus-cleanup](stories/chore-01-eventbus-cleanup.md) | Remove dead EventBus code from vibes-core |
 | 2 | [feat-02-processor-wiring](stories/feat-02-processor-wiring.md) | Wire assessment components in processor |
 | 3 | [chore-03-integration-testing](stories/chore-03-integration-testing.md) | Validate full pipeline end-to-end |
+| 4 | [fix-04-plugin-route-mounting](stories/fix-04-plugin-route-mounting.md) | Fix plugin API routes returning HTML |
+| 5 | [fix-05-event-flow-to-firehose](stories/fix-05-event-flow-to-firehose.md) | Fix events not flowing to firehose |
 
 > **Status:** Check story frontmatter or run `just board` for current status.
 
@@ -34,6 +36,8 @@ What remains is cleanup, integration, and validation.
 - Story 1 can run independently (cleanup)
 - Story 2 is the main integration work
 - Story 3 depends on Story 2
+- Story 4 is independent (blocks web UI testing)
+- Story 5 is independent (blocks E2E validation)
 
 ## Completion Criteria
 
@@ -41,6 +45,8 @@ What remains is cleanup, integration, and validation.
 - [ ] Assessment processor routes events through all components
 - [ ] CLI commands show real assessment data
 - [ ] Integration tests validate full pipeline
+- [ ] Plugin API routes return JSON (not HTML)
+- [ ] Events flow from Claude hooks through to firehose
 - [ ] `just pre-commit` passes
 
 ## Reference
