@@ -357,10 +357,10 @@ fn matches_filters(
     filter_types: &Option<Vec<String>>,
     filter_session: &Option<String>,
 ) -> bool {
-    // Apply type filter
+    // Apply type filter - match against display categories (session, claude, hook, etc.)
     if let Some(types) = filter_types {
-        let event_type = event_type_name(event).to_lowercase();
-        if !types.iter().any(|t| event_type.contains(t)) {
+        let category = event_display_category(event);
+        if !types.iter().any(|t| t == category) {
             return false;
         }
     }
@@ -375,20 +375,28 @@ fn matches_filters(
     true
 }
 
-/// Get the event type name for filtering
-fn event_type_name(event: &VibesEvent) -> &'static str {
+/// Get the display category for an event.
+///
+/// These categories match the frontend's event type chips (SESSION, CLAUDE, TOOL, HOOK, etc.)
+/// rather than the Rust enum variant names.
+fn event_display_category(event: &VibesEvent) -> &'static str {
     match event {
-        VibesEvent::Claude { .. } => "Claude",
-        VibesEvent::UserInput { .. } => "UserInput",
-        VibesEvent::PermissionResponse { .. } => "PermissionResponse",
-        VibesEvent::SessionCreated { .. } => "SessionCreated",
-        VibesEvent::SessionStateChanged { .. } => "SessionStateChanged",
-        VibesEvent::ClientConnected { .. } => "ClientConnected",
-        VibesEvent::ClientDisconnected { .. } => "ClientDisconnected",
-        VibesEvent::TunnelStateChanged { .. } => "TunnelStateChanged",
-        VibesEvent::OwnershipTransferred { .. } => "OwnershipTransferred",
-        VibesEvent::SessionRemoved { .. } => "SessionRemoved",
-        VibesEvent::Hook { .. } => "Hook",
+        // Session-related events
+        VibesEvent::SessionCreated { .. }
+        | VibesEvent::SessionStateChanged { .. }
+        | VibesEvent::ClientConnected { .. }
+        | VibesEvent::ClientDisconnected { .. }
+        | VibesEvent::TunnelStateChanged { .. }
+        | VibesEvent::OwnershipTransferred { .. }
+        | VibesEvent::SessionRemoved { .. } => "session",
+
+        // Claude/AI interaction events
+        VibesEvent::Claude { .. }
+        | VibesEvent::UserInput { .. }
+        | VibesEvent::PermissionResponse { .. } => "claude",
+
+        // Hook events
+        VibesEvent::Hook { .. } => "hook",
     }
 }
 
@@ -708,25 +716,38 @@ mod tests {
     }
 
     #[test]
-    fn event_type_name_returns_correct_names() {
+    fn event_display_category_returns_correct_categories() {
+        // Claude events map to "claude" category
         let event = VibesEvent::Claude {
             session_id: "test".to_string(),
             event: ClaudeEvent::TurnStart,
         };
-        assert_eq!(event_type_name(&event), "Claude");
-
-        let event = VibesEvent::SessionCreated {
-            session_id: "test".to_string(),
-            name: None,
-        };
-        assert_eq!(event_type_name(&event), "SessionCreated");
+        assert_eq!(event_display_category(&event), "claude");
 
         let event = VibesEvent::UserInput {
             session_id: "test".to_string(),
             content: "hello".to_string(),
             source: Default::default(),
         };
-        assert_eq!(event_type_name(&event), "UserInput");
+        assert_eq!(event_display_category(&event), "claude");
+
+        // Session-related events map to "session" category
+        let event = VibesEvent::SessionCreated {
+            session_id: "test".to_string(),
+            name: None,
+        };
+        assert_eq!(event_display_category(&event), "session");
+
+        let event = VibesEvent::ClientConnected {
+            client_id: "c1".to_string(),
+        };
+        assert_eq!(event_display_category(&event), "session");
+
+        let event = VibesEvent::TunnelStateChanged {
+            state: "connected".to_string(),
+            url: None,
+        };
+        assert_eq!(event_display_category(&event), "session");
     }
 
     #[test]

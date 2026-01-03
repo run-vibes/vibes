@@ -138,6 +138,23 @@ export const StreamView = forwardRef<HTMLDivElement, StreamViewProps>(
       // This is handled by the virtualizer automatically when items change
     }, [events]);
 
+    // Track previous isPaused value to detect transitions
+    const prevIsPausedRef = useRef(isPaused);
+
+    // Handle "Jump to latest" - when isPaused goes from true to false,
+    // scroll to the end and reset following state
+    useEffect(() => {
+      const wasPaused = prevIsPausedRef.current;
+      prevIsPausedRef.current = isPaused;
+
+      // If transitioning from paused to not paused (user clicked "Jump to latest")
+      if (wasPaused && !isPaused && events.length > 0) {
+        virtualizer.scrollToIndex(events.length - 1, { align: 'end' });
+        isFollowingRef.current = true;
+        onFollowingChange?.(true);
+      }
+    }, [isPaused, events.length, virtualizer, onFollowingChange]);
+
     return (
       <div ref={ref} className={classes} {...props}>
         <div className={styles.header}>

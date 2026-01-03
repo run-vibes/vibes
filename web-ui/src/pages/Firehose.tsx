@@ -65,7 +65,7 @@ function summarizeHookEvent(event: unknown): string {
 
 export function FirehosePage() {
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
-  const [sessionFilter, setSessionFilter] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
 
   const {
@@ -90,16 +90,25 @@ export function FirehosePage() {
       isInitialMount.current = false;
       return;
     }
+    // Only send type filters to server; search is client-side
     setFilters({
       types: selectedTypes.length > 0 ? selectedTypes : null,
-      sessionId: sessionFilter || null,
+      sessionId: null,
     });
-  }, [selectedTypes, sessionFilter, setFilters]);
+  }, [selectedTypes, setFilters]);
 
-  const displayEvents = useMemo(
-    () => rawEvents.map((e) => toDisplayEvent(e.event, e.event_id)),
-    [rawEvents]
-  );
+  // Convert raw events to display format, then apply client-side search filter
+  const displayEvents = useMemo(() => {
+    const events = rawEvents.map((e) => toDisplayEvent(e.event, e.event_id));
+
+    // Apply client-side search filter
+    if (!searchQuery.trim()) {
+      return events;
+    }
+
+    const query = searchQuery.toLowerCase();
+    return events.filter((e) => e.summary.toLowerCase().includes(query));
+  }, [rawEvents, searchQuery]);
 
   const selectedEvent = useMemo((): DisplayEvent | null => {
     if (!selectedEventId) return null;
@@ -189,10 +198,10 @@ export function FirehosePage() {
 
           <input
             type="text"
-            placeholder="Filter by session..."
-            value={sessionFilter}
-            onChange={(e) => setSessionFilter(e.target.value)}
-            className="session-filter"
+            placeholder="Search events..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="search-input"
           />
         </div>
       </div>
@@ -209,6 +218,7 @@ export function FirehosePage() {
             onLoadMore={fetchOlder}
             isLoadingMore={isLoadingOlder}
             hasMore={hasMore}
+            onFollowingChange={setIsFollowing}
           />
           {!isFollowing && (
             <button className="jump-to-latest" onClick={handleJumpToLatest}>

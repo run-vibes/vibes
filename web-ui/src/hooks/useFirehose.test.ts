@@ -547,6 +547,34 @@ describe('useFirehose', () => {
 
       expect(result.current.isFollowing).toBe(true);
     });
+
+    it('clears types filter when set to null', async () => {
+      const { result } = renderHook(() => useFirehose());
+      const ws = getLastMockWs();
+
+      act(() => {
+        ws.simulateOpen();
+      });
+
+      // Set a filter first
+      act(() => {
+        result.current.setFilters({ types: ['HOOK'] });
+      });
+
+      expect(result.current.filters.types).toEqual(['HOOK']);
+
+      // Clear the filter by setting to null
+      act(() => {
+        result.current.setFilters({ types: null });
+      });
+
+      // Types should be null, not ['HOOK']
+      expect(result.current.filters.types).toBeNull();
+
+      // Verify the message sent to server has no types field (cleared)
+      const lastMessage = JSON.parse(ws.sentMessages[ws.sentMessages.length - 1]);
+      expect(lastMessage.types).toBeUndefined();
+    });
   });
 
   describe('isFollowing state', () => {
