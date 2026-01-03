@@ -21,6 +21,7 @@ Stories:
 - [x] [feat-04-virtual-scroll](in-progress/milestone-36-firehose-infinite-scroll/stories/feat-04-virtual-scroll.md)
 - [ ] [feat-05-ui-polish](in-progress/milestone-36-firehose-infinite-scroll/stories/feat-05-ui-polish.md)
 - [x] [feat-06-uuidv7-sequencing](in-progress/milestone-36-firehose-infinite-scroll/stories/feat-06-uuidv7-sequencing.md)
+- [ ] [refactor-01-single-partition](in-progress/milestone-36-firehose-infinite-scroll/stories/refactor-01-single-partition.md)
 
 
 ---

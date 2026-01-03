@@ -167,7 +167,9 @@ impl ConsumerManager {
                         match result {
                             Ok(batch) => {
                                 if batch.is_empty() {
-                                    trace!(group = %group, "Empty batch, continuing");
+                                    trace!(group = %group, "Empty batch, waiting before retry");
+                                    // Sleep to prevent tight loop when caught up
+                                    tokio::time::sleep(config.poll_timeout).await;
                                     continue;
                                 }
 
@@ -239,7 +241,9 @@ impl ConsumerManager {
                         match result {
                             Ok(batch) => {
                                 if batch.is_empty() {
-                                    trace!(group = %group, "Empty batch, continuing");
+                                    trace!(group = %group, "Empty batch, waiting before retry");
+                                    // Sleep to prevent tight loop when caught up
+                                    tokio::time::sleep(config.poll_timeout).await;
                                     continue;
                                 }
 

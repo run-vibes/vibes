@@ -141,6 +141,17 @@ where
     ///
     /// This is the offset that will be assigned to the next appended event.
     fn high_water_mark(&self) -> Offset;
+
+    /// Flush any buffered writes to disk and sync.
+    ///
+    /// This ensures write visibility for implementations that use async I/O
+    /// with separate read/write file handles (e.g., Iggy with io_uring).
+    ///
+    /// Call this before reading historical events to ensure all data is visible.
+    /// Default implementation is a no-op for in-memory or sync implementations.
+    async fn flush_to_disk(&self) -> Result<()> {
+        Ok(())
+    }
 }
 
 /// A consumer that reads events and tracks its position.

@@ -86,9 +86,9 @@ describe('useFirehose', () => {
       expect(result.current.events).toEqual([]);
     });
 
-    it('initializes with null offsets', () => {
+    it('initializes with null cursors', () => {
       const { result } = renderHook(() => useFirehose({ autoConnect: false }));
-      expect(result.current.oldestOffset).toBeNull();
+      expect(result.current.oldestEventId).toBeNull();
       expect(result.current.newestOffset).toBeNull();
     });
 
@@ -162,10 +162,10 @@ describe('useFirehose', () => {
         ws.simulateMessage({
           type: 'events_batch',
           events: [
-            { offset: 10, event: { type: 'client_connected', client_id: 'c1' } },
-            { offset: 11, event: { type: 'client_connected', client_id: 'c2' } },
+            { event_id: 'evt-1', offset: 10, event: { type: 'client_connected', client_id: 'c1' } },
+            { event_id: 'evt-2', offset: 11, event: { type: 'client_connected', client_id: 'c2' } },
           ],
-          oldest_offset: 10,
+          oldest_event_id: 'evt-1',
           has_more: true,
         });
       });
@@ -175,7 +175,7 @@ describe('useFirehose', () => {
       expect(result.current.events[1].offset).toBe(11);
     });
 
-    it('updates oldestOffset from events_batch', async () => {
+    it('updates oldestEventId from events_batch', async () => {
       const { result } = renderHook(() => useFirehose());
       const ws = getLastMockWs();
 
@@ -184,14 +184,14 @@ describe('useFirehose', () => {
         ws.simulateMessage({
           type: 'events_batch',
           events: [
-            { offset: 10, event: { type: 'client_connected', client_id: 'c1' } },
+            { event_id: 'evt-1', offset: 10, event: { type: 'client_connected', client_id: 'c1' } },
           ],
-          oldest_offset: 10,
+          oldest_event_id: 'evt-1',
           has_more: true,
         });
       });
 
-      expect(result.current.oldestOffset).toBe(10);
+      expect(result.current.oldestEventId).toBe('evt-1');
     });
 
     it('updates newestOffset from events_batch', async () => {
@@ -203,10 +203,10 @@ describe('useFirehose', () => {
         ws.simulateMessage({
           type: 'events_batch',
           events: [
-            { offset: 10, event: { type: 'client_connected', client_id: 'c1' } },
-            { offset: 15, event: { type: 'client_connected', client_id: 'c2' } },
+            { event_id: 'evt-1', offset: 10, event: { type: 'client_connected', client_id: 'c1' } },
+            { event_id: 'evt-2', offset: 15, event: { type: 'client_connected', client_id: 'c2' } },
           ],
-          oldest_offset: 10,
+          oldest_event_id: 'evt-1',
           has_more: true,
         });
       });
@@ -223,7 +223,7 @@ describe('useFirehose', () => {
         ws.simulateMessage({
           type: 'events_batch',
           events: [],
-          oldest_offset: null,
+          oldest_event_id: null,
           has_more: true,
         });
       });
@@ -241,9 +241,9 @@ describe('useFirehose', () => {
         ws.simulateMessage({
           type: 'events_batch',
           events: [
-            { offset: 50, event: { type: 'client_connected', client_id: 'c1' } },
+            { event_id: 'evt-50', offset: 50, event: { type: 'client_connected', client_id: 'c1' } },
           ],
-          oldest_offset: 50,
+          oldest_event_id: 'evt-50',
           has_more: true,
         });
       });
@@ -258,9 +258,9 @@ describe('useFirehose', () => {
         ws.simulateMessage({
           type: 'events_batch',
           events: [
-            { offset: 40, event: { type: 'client_connected', client_id: 'older' } },
+            { event_id: 'evt-40', offset: 40, event: { type: 'client_connected', client_id: 'older' } },
           ],
-          oldest_offset: 40,
+          oldest_event_id: 'evt-40',
           has_more: true,
         });
       });
@@ -282,9 +282,9 @@ describe('useFirehose', () => {
         ws.simulateMessage({
           type: 'events_batch',
           events: [
-            { offset: 10, event: { type: 'client_connected', client_id: 'c1' } },
+            { event_id: 'evt-10', offset: 10, event: { type: 'client_connected', client_id: 'c1' } },
           ],
-          oldest_offset: 10,
+          oldest_event_id: 'evt-10',
           has_more: false,
         });
       });
@@ -292,6 +292,7 @@ describe('useFirehose', () => {
       act(() => {
         ws.simulateMessage({
           type: 'event',
+          event_id: 'evt-11',
           offset: 11,
           event: { type: 'client_connected', client_id: 'new' },
         });
@@ -309,6 +310,7 @@ describe('useFirehose', () => {
         ws.simulateOpen();
         ws.simulateMessage({
           type: 'event',
+          event_id: 'evt-100',
           offset: 100,
           event: { type: 'client_connected', client_id: 'c1' },
         });
@@ -319,7 +321,7 @@ describe('useFirehose', () => {
   });
 
   describe('fetchOlder', () => {
-    it('sends fetch_older message with correct before_offset', async () => {
+    it('sends fetch_older message with correct before_event_id', async () => {
       const { result } = renderHook(() => useFirehose());
       const ws = getLastMockWs();
 
@@ -328,9 +330,9 @@ describe('useFirehose', () => {
         ws.simulateMessage({
           type: 'events_batch',
           events: [
-            { offset: 50, event: { type: 'client_connected', client_id: 'c1' } },
+            { event_id: 'evt-50', offset: 50, event: { type: 'client_connected', client_id: 'c1' } },
           ],
-          oldest_offset: 50,
+          oldest_event_id: 'evt-50',
           has_more: true,
         });
       });
@@ -339,9 +341,11 @@ describe('useFirehose', () => {
         result.current.fetchOlder();
       });
 
-      const sent = JSON.parse(ws.sentMessages[0]);
+      // First message is the initial set_filters on connect, second is fetch_older
+      expect(ws.sentMessages.length).toBeGreaterThanOrEqual(2);
+      const sent = JSON.parse(ws.sentMessages[1]);
       expect(sent.type).toBe('fetch_older');
-      expect(sent.before_offset).toBe(50);
+      expect(sent.before_event_id).toBe('evt-50');
     });
 
     it('sets isLoadingOlder while waiting', async () => {
@@ -353,9 +357,9 @@ describe('useFirehose', () => {
         ws.simulateMessage({
           type: 'events_batch',
           events: [
-            { offset: 50, event: { type: 'client_connected', client_id: 'c1' } },
+            { event_id: 'evt-50', offset: 50, event: { type: 'client_connected', client_id: 'c1' } },
           ],
-          oldest_offset: 50,
+          oldest_event_id: 'evt-50',
           has_more: true,
         });
       });
@@ -371,7 +375,7 @@ describe('useFirehose', () => {
         ws.simulateMessage({
           type: 'events_batch',
           events: [],
-          oldest_offset: 40,
+          oldest_event_id: 'evt-40',
           has_more: false,
         });
       });
@@ -388,9 +392,9 @@ describe('useFirehose', () => {
         ws.simulateMessage({
           type: 'events_batch',
           events: [
-            { offset: 50, event: { type: 'client_connected', client_id: 'c1' } },
+            { event_id: 'evt-50', offset: 50, event: { type: 'client_connected', client_id: 'c1' } },
           ],
-          oldest_offset: 50,
+          oldest_event_id: 'evt-50',
           has_more: true,
         });
       });
@@ -401,7 +405,8 @@ describe('useFirehose', () => {
         result.current.fetchOlder(); // duplicate
       });
 
-      expect(ws.sentMessages).toHaveLength(1);
+      // 1 initial set_filters + 1 fetch_older (duplicates ignored)
+      expect(ws.sentMessages).toHaveLength(2);
     });
 
     it('does not send request when hasMore is false', async () => {
@@ -413,9 +418,9 @@ describe('useFirehose', () => {
         ws.simulateMessage({
           type: 'events_batch',
           events: [
-            { offset: 50, event: { type: 'client_connected', client_id: 'c1' } },
+            { event_id: 'evt-50', offset: 50, event: { type: 'client_connected', client_id: 'c1' } },
           ],
-          oldest_offset: 50,
+          oldest_event_id: 'evt-50',
           has_more: false, // No more history
         });
       });
@@ -424,7 +429,8 @@ describe('useFirehose', () => {
         result.current.fetchOlder();
       });
 
-      expect(ws.sentMessages).toHaveLength(0);
+      // Only the initial set_filters, no fetch_older
+      expect(ws.sentMessages).toHaveLength(1);
     });
   });
 
@@ -441,7 +447,9 @@ describe('useFirehose', () => {
         result.current.setFilters({ types: ['Claude', 'Hook'] });
       });
 
-      const sent = JSON.parse(ws.sentMessages[0]);
+      // sentMessages[0] is the initial set_filters on connect
+      // sentMessages[1] is the filter update we just sent
+      const sent = JSON.parse(ws.sentMessages[1]);
       expect(sent.type).toBe('set_filters');
       expect(sent.types).toEqual(['Claude', 'Hook']);
     });
@@ -502,9 +510,9 @@ describe('useFirehose', () => {
         ws.simulateMessage({
           type: 'events_batch',
           events: [
-            { offset: 10, event: { type: 'client_connected', client_id: 'c1' } },
+            { event_id: 'evt-10', offset: 10, event: { type: 'client_connected', client_id: 'c1' } },
           ],
-          oldest_offset: 10,
+          oldest_event_id: 'evt-10',
           has_more: false,
         });
       });
@@ -571,9 +579,9 @@ describe('useFirehose', () => {
         ws.simulateMessage({
           type: 'events_batch',
           events: [
-            { offset: 10, event: { type: 'client_connected', client_id: 'c1' } },
+            { event_id: 'evt-10', offset: 10, event: { type: 'client_connected', client_id: 'c1' } },
           ],
-          oldest_offset: 10,
+          oldest_event_id: 'evt-10',
           has_more: true,
         });
       });

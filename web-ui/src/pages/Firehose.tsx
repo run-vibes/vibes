@@ -1,5 +1,5 @@
 // web-ui/src/pages/Firehose.tsx
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { StreamView, EventInspector, Badge } from '@vibes/design-system';
 import type { DisplayEvent, ContextEvent } from '@vibes/design-system';
 import { useFirehose } from '../hooks/useFirehose';
@@ -73,13 +73,23 @@ export function FirehosePage() {
     isConnected,
     isFollowing,
     isLoadingOlder,
+    hasMore,
     error,
+    fetchOlder,
     setFilters,
     setIsFollowing,
   } = useFirehose();
 
-  // Send filter updates to server when local filters change
+  // Skip the first useEffect run - the initial request is sent by
+  // useFirehose in onopen. Only send filter updates when the user
+  // actually changes filters (not on initial mount).
+  const isInitialMount = useRef(true);
+
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
     setFilters({
       types: selectedTypes.length > 0 ? selectedTypes : null,
       sessionId: sessionFilter || null,
@@ -196,6 +206,9 @@ export function FirehosePage() {
             isPaused={!isFollowing}
             selectedId={selectedEventId ?? undefined}
             onEventClick={(e) => setSelectedEventId(e.id)}
+            onLoadMore={fetchOlder}
+            isLoadingMore={isLoadingOlder}
+            hasMore={hasMore}
           />
           {!isFollowing && (
             <button className="jump-to-latest" onClick={handleJumpToLatest}>
