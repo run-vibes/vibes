@@ -35,6 +35,16 @@ When starting `vibes claude` for the first time:
 
 Iggy has **two separate listeners**: TCP (port 8090) and HTTP (port 3001). The TCP listener became ready before HTTP, so the fixed grace period wasn't enough.
 
+### 3. CLI not wrapping events in StoredEvent
+
+The `vibes event send` command was serializing raw `VibesEvent` but consumers expect `StoredEvent` format (with `event_id`). This caused deserialization failures that were silently dropped.
+
+### 4. Injection hooks not sending to Iggy
+
+Injection hooks (`session_start`, `user_prompt_submit`) used `vibes-hook-inject.sh` which tried to connect to a Unix socket (`/tmp/vibes-hooks.sock`) that was removed. Connection failed silently, returning `{}` and exiting 0, so events were never sent to Iggy.
+
+Only `stop` worked because it used `vibes-hook-send.sh` → `vibes event send` → Iggy.
+
 ## Fixes
 
 ### Fix 1: Check `messages_count` for empty topics
@@ -67,14 +77,37 @@ let (http_result, tcp_result) = tokio::join!(http_ready, tcp_ready);
 - 100ms retry interval, 30s timeout
 - Checks if server crashed during wait
 
+### Fix 3: Wrap events in StoredEvent in CLI
+
+```rust
+// In vibes-cli/src/commands/event.rs
+let stored = StoredEvent::new(event);
+let serialized = serde_json::to_vec(&stored)?;
+```
+
+### Fix 4: Update vibes-hook-inject.sh to use CLI
+
+Changed injection hooks to send events via `vibes event send` instead of trying to connect to the removed Unix socket:
+
+```bash
+# Send event to Iggy via vibes CLI (fire-and-forget for event logging)
+if command -v vibes &>/dev/null; then
+    vibes event send --type hook --data "$EVENT_JSON" \
+        ${VIBES_SESSION_ID:+--session "$VIBES_SESSION_ID"} 2>/dev/null || true
+fi
+```
+
 ## Tasks
 
 - [x] Trace hook installation in `vibes claude` (hooks work, HTTP API receives events)
 - [x] Verify hook → server communication (HTTP → Iggy works)
 - [x] Check EventLog writes to Iggy (TCP consumer reads events correctly)
 - [x] Verify firehose consumer subscription (SeekPosition::End was the issue)
-- [x] Fix the broken link in the chain (fixed off-by-one in iggy_log.rs)
-- [x] Add E2E tests: `test_http_events_received_by_tcp_consumer` and `test_http_events_received_by_live_consumer`
+- [x] Fix off-by-one in SeekPosition::End for empty topics
+- [x] Fix race condition: wait for HTTP + TCP readiness
+- [x] Fix CLI: wrap events in StoredEvent
+- [x] Fix injection hooks: use CLI instead of removed Unix socket
+- [x] Add E2E tests: `test_http_events_received_by_tcp_consumer`, `test_http_events_received_by_live_consumer`, `test_vibes_event_send_cli_to_consumer`, `test_injection_hook_events_flow_to_firehose`
 
 ## Acceptance Criteria
 
