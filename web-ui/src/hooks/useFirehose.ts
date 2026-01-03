@@ -2,7 +2,7 @@
  * Hook for connecting to the firehose WebSocket endpoint with infinite scroll support
  *
  * Features:
- * - Offset tracking for pagination
+ * - Event ID tracking for pagination (UUIDv7 for time-ordering)
  * - Server-side filtering
  * - Auto-follow with manual scroll detection
  * - Fetch older events on demand
@@ -34,7 +34,9 @@ export interface FirehoseFilters {
  */
 export interface FirehoseState {
   events: FirehoseEvent[];
-  oldestOffset: number | null;
+  /** Oldest event ID in current view (for pagination) */
+  oldestEventId: string | null;
+  /** Newest offset (for debugging only) */
   newestOffset: number | null;
   isLoadingOlder: boolean;
   isFollowing: boolean;
@@ -63,7 +65,8 @@ export interface UseFirehoseReturn extends FirehoseState {
 interface EventsBatchMessage {
   type: 'events_batch';
   events: FirehoseEvent[];
-  oldest_offset: number | null;
+  /** Oldest event ID in this batch (for pagination cursor) */
+  oldest_event_id: string | null;
   has_more: boolean;
 }
 
@@ -82,7 +85,8 @@ type FirehoseServerMessage = EventsBatchMessage | LiveEventMessage;
  */
 interface FetchOlderMessage {
   type: 'fetch_older';
-  before_offset: number;
+  /** Load events before this event ID (UUIDv7 for time-ordering) */
+  before_event_id: string;
   limit?: number;
 }
 
@@ -99,7 +103,7 @@ export function useFirehose(options: FirehoseOptions = {}): UseFirehoseReturn {
 
   // Core state
   const [events, setEvents] = useState<FirehoseEvent[]>([]);
-  const [oldestOffset, setOldestOffset] = useState<number | null>(null);
+  const [oldestEventId, setOldestEventId] = useState<string | null>(null);
   const [newestOffset, setNewestOffset] = useState<number | null>(null);
   const [isLoadingOlder, setIsLoadingOlder] = useState(false);
   const [isFollowing, setIsFollowing] = useState(true);
@@ -144,8 +148,8 @@ export function useFirehose(options: FirehoseOptions = {}): UseFirehoseReturn {
           setEvents(batchEvents);
         }
 
-        // Update offsets
-        setOldestOffset(msg.oldest_offset);
+        // Update cursors
+        setOldestEventId(msg.oldest_event_id);
         if (batchEvents.length > 0) {
           const maxOffset = Math.max(...batchEvents.map((e) => e.offset));
           setNewestOffset((prev) => (prev === null ? maxOffset : Math.max(prev, maxOffset)));
@@ -195,8 +199,8 @@ export function useFirehose(options: FirehoseOptions = {}): UseFirehoseReturn {
   }, []);
 
   const fetchOlder = useCallback(() => {
-    // Guard: don't fetch if already loading, no more history, or no oldest offset
-    if (isLoadingOlderRef.current || !hasMore || oldestOffset === null) {
+    // Guard: don't fetch if already loading, no more history, or no oldest event ID
+    if (isLoadingOlderRef.current || !hasMore || oldestEventId === null) {
       return;
     }
 
@@ -205,9 +209,9 @@ export function useFirehose(options: FirehoseOptions = {}): UseFirehoseReturn {
     setIsLoadingOlder(true);
     sendMessage({
       type: 'fetch_older',
-      before_offset: oldestOffset,
+      before_event_id: oldestEventId,
     });
-  }, [hasMore, oldestOffset, sendMessage]);
+  }, [hasMore, oldestEventId, sendMessage]);
 
   const setFilters = useCallback(
     (newFilters: Partial<FirehoseFilters>) => {
@@ -231,7 +235,7 @@ export function useFirehose(options: FirehoseOptions = {}): UseFirehoseReturn {
 
       // Clear current events - server will send fresh batch
       setEvents([]);
-      setOldestOffset(null);
+      setOldestEventId(null);
       setNewestOffset(null);
       setHasMore(false);
 
@@ -253,7 +257,7 @@ export function useFirehose(options: FirehoseOptions = {}): UseFirehoseReturn {
 
   return {
     events,
-    oldestOffset,
+    oldestEventId,
     newestOffset,
     isLoadingOlder,
     isFollowing,
