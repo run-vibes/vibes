@@ -22,7 +22,7 @@ use async_trait::async_trait;
 use iggy::prelude::*;
 use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
-use tracing::{debug, info, warn};
+use tracing::{debug, info, trace, warn};
 
 use crate::error::{Error, Result};
 use crate::manager::IggyManager;
@@ -427,7 +427,7 @@ where
 {
     async fn poll(&mut self, max_count: usize, _timeout: Duration) -> Result<EventBatch<E>> {
         let poll_offset = self.offset; // Capture the offset we're about to use
-        info!(
+        trace!(
             group = %self.group,
             consumer_id = self.consumer_id,
             poll_offset,
@@ -486,7 +486,7 @@ where
         let offsets: Vec<u64> = polled.messages.iter().map(|m| m.header.offset).collect();
         let first_offset = offsets.first().copied();
         let last_offset = offsets.last().copied();
-        info!(
+        trace!(
             messages_received = polled.messages.len(),
             ?first_offset,
             ?last_offset,
@@ -550,7 +550,7 @@ where
                 // Query topic to get current offset
                 if let Some(topic_details) = self.client.get_topic(&stream_id, &topic_id).await? {
                     if let Some(partition) = topic_details.partitions.first() {
-                        info!(
+                        debug!(
                             current_offset = partition.current_offset,
                             messages_count = topic_details.messages_count,
                             n,
@@ -559,7 +559,7 @@ where
                         // current_offset is the last written offset, so add 1 to get count,
                         // then subtract n to get start position
                         self.offset = (partition.current_offset + 1).saturating_sub(n);
-                        info!(
+                        debug!(
                             calculated_offset = self.offset,
                             "FromEnd seek: calculated start offset"
                         );
