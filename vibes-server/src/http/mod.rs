@@ -43,6 +43,8 @@ pub fn create_router(state: Arc<AppState>) -> Router {
         .route("/ws/firehose", get(firehose_ws))
         .layer(middleware::from_fn(auth_middleware))
         .layer(Extension(auth_layer))
+        // Plugin routes (checked before static fallback)
+        .merge(plugins::plugin_router())
         .with_state(state)
         // Fallback serves embedded web-ui for SPA routing
         .fallback(static_files::static_handler)
@@ -65,5 +67,27 @@ mod tests {
 
         let response = server.get("/api/health").await;
         response.assert_status_ok();
+    }
+
+    #[tokio::test]
+    async fn test_plugin_routes_return_json_not_html() {
+        let state = Arc::new(AppState::new());
+        let router = create_router(state);
+        let server =
+            TestServer::new(router.into_make_service_with_connect_info::<SocketAddr>()).unwrap();
+
+        // Request an unregistered plugin route - should return JSON 404, not HTML
+        let response = server.get("/api/groove/policy").await;
+
+        // Plugin router returns 404 for unregistered routes (not the SPA HTML)
+        response.assert_status_not_found();
+
+        // Verify it's JSON, not HTML
+        let body = response.text();
+        assert!(
+            body.contains("error") && !body.contains("<!DOCTYPE"),
+            "Plugin route should return JSON error, not HTML. Got: {}",
+            body
+        );
     }
 }

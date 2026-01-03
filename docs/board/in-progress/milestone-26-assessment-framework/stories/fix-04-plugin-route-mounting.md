@@ -1,6 +1,6 @@
 ---
 created: 2026-01-03
-status: pending
+status: done
 ---
 
 # Fix: Plugin Routes Return HTML Instead of JSON
