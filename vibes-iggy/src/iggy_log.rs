@@ -42,8 +42,9 @@ pub mod topics {
     pub const STREAM_NAME: &str = "vibes";
     /// The topic name for the main event log.
     pub const EVENTS_TOPIC: &str = "events";
-    /// Number of partitions for parallel processing.
-    pub const PARTITION_COUNT: u32 = 8;
+    /// Number of partitions. Using 1 partition makes offset globally unique
+    /// and simplifies seeking/pagination.
+    pub const PARTITION_COUNT: u32 = 1;
 }
 
 /// Maximum events to buffer during disconnect before dropping oldest.
@@ -149,11 +150,7 @@ where
             )
             .await
         {
-            Ok(_) => info!(
-                "Created topic '{}' with {} partitions",
-                topics::EVENTS_TOPIC,
-                topics::PARTITION_COUNT
-            ),
+            Ok(_) => info!("Created topic '{}'", topics::EVENTS_TOPIC),
             Err(e) if is_already_exists_error(&e) => {
                 debug!("Topic already exists");
             }
@@ -583,9 +580,9 @@ mod tests {
     }
 
     #[test]
-    fn test_partition_count_is_power_of_two() {
-        // Ensures efficient hash distribution
-        assert!(topics::PARTITION_COUNT.is_power_of_two() || topics::PARTITION_COUNT == 8);
+    fn test_partition_count_is_one() {
+        // Single partition for globally unique offsets
+        assert_eq!(topics::PARTITION_COUNT, 1);
     }
 
     #[tokio::test]
