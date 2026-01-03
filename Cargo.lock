@@ -6278,6 +6278,7 @@ dependencies = [
  "dirs 5.0.1",
  "humantime-serde",
  "iggy 0.8.0",
+ "reqwest",
  "rlimit",
  "serde",
  "serde_json",

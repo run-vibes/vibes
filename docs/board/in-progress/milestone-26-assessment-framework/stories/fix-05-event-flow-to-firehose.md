@@ -11,9 +11,9 @@ status: done
 
 When running `vibes claude`, no session or assessment events appear in the firehose websocket. The websocket connection itself works (connection events appear), but Claude session events (MessageReceived, SessionStarted, etc.) and assessment events (LightweightSignal, etc.) are missing.
 
-## Root Cause Found
+## Root Causes Found
 
-**Off-by-one error in `SeekPosition::End` for empty topics.**
+### 1. Off-by-one error in `SeekPosition::End` for empty topics
 
 In `vibes-iggy/src/iggy_log.rs`, when seeking to `End` on an empty topic:
 1. `partition.current_offset` is 0 (default value for empty topics)
@@ -23,9 +23,21 @@ In `vibes-iggy/src/iggy_log.rs`, when seeking to `End` on an empty topic:
 
 This explains why the WebSocket consumer (which uses `SeekPosition::End` for live mode) missed all hook events - when the topic was empty at server start, it was waiting for offset 1 while events went to offset 0.
 
-## Fix
+### 2. Race condition: Iggy HTTP not ready when hooks fire
 
-Check `messages_count` to distinguish empty topics from topics with messages:
+When starting `vibes claude` for the first time:
+1. Daemon spawns, starts Iggy subprocess
+2. Server waited 500ms fixed grace period
+3. Server connected via TCP (ready before HTTP)
+4. Health endpoint returned OK
+5. CLI started Claude PTY, hooks fired
+6. Hooks sent events via HTTP - but Iggy HTTP wasn't ready yet!
+
+Iggy has **two separate listeners**: TCP (port 8090) and HTTP (port 3001). The TCP listener became ready before HTTP, so the fixed grace period wasn't enough.
+
+## Fixes
+
+### Fix 1: Check `messages_count` for empty topics
 
 ```rust
 SeekPosition::End => {
@@ -38,6 +50,22 @@ SeekPosition::End => {
     }
 }
 ```
+
+### Fix 2: Wait for HTTP + TCP readiness
+
+Replaced fixed 500ms grace period with proper protocol polling in `IggyManager::wait_for_ready()`:
+
+```rust
+// Wait for both HTTP and TCP concurrently
+let http_ready = self.wait_for_http_ready(start);
+let tcp_ready = self.wait_for_tcp_ready(start);
+let (http_result, tcp_result) = tokio::join!(http_ready, tcp_ready);
+```
+
+- Polls HTTP endpoint until any response
+- Polls TCP by attempting connection
+- 100ms retry interval, 30s timeout
+- Checks if server crashed during wait
 
 ## Tasks
 

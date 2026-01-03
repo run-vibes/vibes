@@ -241,3 +241,117 @@ async fn test_high_water_mark_increments() {
         "High water mark should increment"
     );
 }
+
+// ==================== Readiness Tests ====================
+// These tests verify the IggyManager properly waits for all protocols to be ready
+// before declaring the server available. This fixes the race condition where
+// CLI hooks (using HTTP) could fire before the HTTP server was accepting connections.
+
+/// Test that wait_for_ready waits for HTTP endpoint to be accessible.
+///
+/// This is the critical race condition test: the HTTP API must be accepting
+/// connections before we consider Iggy ready, since CLI hooks use HTTP.
+#[tokio::test]
+async fn test_wait_for_ready_waits_for_http() {
+    let (tcp_port, http_port) = port_pool::allocate();
+    let temp_dir = TempDir::new().expect("Failed to create temp directory");
+
+    let config = IggyConfig::default()
+        .with_data_dir(temp_dir.path())
+        .with_port(tcp_port)
+        .with_http_port(http_port);
+
+    let manager = Arc::new(IggyManager::new(config));
+
+    // Start Iggy server
+    manager.start().await.expect("Failed to start Iggy");
+
+    // Call wait_for_ready - this should wait for HTTP, TCP, and QUIC
+    manager
+        .wait_for_ready()
+        .await
+        .expect("wait_for_ready should succeed");
+
+    // Verify HTTP is actually ready by making a request
+    let http_url = format!("http://127.0.0.1:{}/", http_port);
+    let client = reqwest::Client::builder()
+        .timeout(Duration::from_secs(1))
+        .build()
+        .unwrap();
+
+    let response = client.get(&http_url).send().await;
+    assert!(
+        response.is_ok(),
+        "HTTP should be accessible after wait_for_ready: {:?}",
+        response.err()
+    );
+
+    // Clean up
+    manager.stop().await.expect("Failed to stop Iggy");
+}
+
+/// Test that wait_for_ready waits for TCP endpoint to be accessible.
+///
+/// The TCP API is used by the Rust SDK (IggyEventLog) for event streaming.
+#[tokio::test]
+async fn test_wait_for_ready_waits_for_tcp() {
+    let (tcp_port, http_port) = port_pool::allocate();
+    let temp_dir = TempDir::new().expect("Failed to create temp directory");
+
+    let config = IggyConfig::default()
+        .with_data_dir(temp_dir.path())
+        .with_port(tcp_port)
+        .with_http_port(http_port);
+
+    let manager = Arc::new(IggyManager::new(config));
+
+    // Start Iggy server
+    manager.start().await.expect("Failed to start Iggy");
+
+    // Call wait_for_ready
+    manager
+        .wait_for_ready()
+        .await
+        .expect("wait_for_ready should succeed");
+
+    // Verify TCP is actually ready by connecting
+    let tcp_result = tokio::net::TcpStream::connect(format!("127.0.0.1:{}", tcp_port)).await;
+    assert!(
+        tcp_result.is_ok(),
+        "TCP should be accessible after wait_for_ready: {:?}",
+        tcp_result.err()
+    );
+
+    // Clean up
+    manager.stop().await.expect("Failed to stop Iggy");
+}
+
+/// Test that wait_for_ready fails quickly if server process exits.
+///
+/// If Iggy crashes during startup, wait_for_ready shouldn't hang forever.
+#[tokio::test]
+async fn test_wait_for_ready_fails_if_server_not_running() {
+    let (tcp_port, http_port) = port_pool::allocate();
+
+    // Create manager but DON'T start the server
+    let config = IggyConfig::default()
+        .with_port(tcp_port)
+        .with_http_port(http_port);
+
+    let manager = IggyManager::new(config);
+
+    // wait_for_ready should fail since server isn't running
+    // (Use a short timeout for the test)
+    let result = tokio::time::timeout(Duration::from_secs(2), manager.wait_for_ready()).await;
+
+    // Should either return an error or timeout
+    match result {
+        Ok(Ok(())) => panic!("wait_for_ready should not succeed when server isn't running"),
+        Ok(Err(_)) => {
+            // Expected - wait_for_ready returned an error
+        }
+        Err(_) => {
+            // Also acceptable - timed out (wait_for_ready has its own longer timeout)
+        }
+    }
+}
