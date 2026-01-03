@@ -16,7 +16,6 @@ pub mod error;
 pub mod iggy_log;
 pub mod manager;
 pub mod memory;
-pub mod partitioned_memory;
 pub mod preflight;
 pub mod traits;
 
@@ -26,6 +25,5 @@ pub use error::{Error, Result};
 pub use iggy_log::IggyEventLog;
 pub use manager::{IggyManager, IggyState};
 pub use memory::InMemoryEventLog;
-pub use partitioned_memory::PartitionedInMemoryEventLog;
 pub use preflight::{PreflightResult, check_memlock_limit, run_preflight_checks};
 pub use traits::{EventBatch, EventConsumer, EventLog, Offset, Partitionable, SeekPosition};
