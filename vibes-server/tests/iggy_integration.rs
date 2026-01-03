@@ -523,3 +523,121 @@ async fn test_http_events_received_by_live_consumer() {
 
     drop(temp_dir);
 }
+
+/// Test that `vibes event send` CLI command sends events in correct StoredEvent format.
+///
+/// This is the TRUE end-to-end test for the hook event flow:
+/// 1. Hook script runs `vibes event send --type hook --data <json>`
+/// 2. CLI wraps event in StoredEvent (with event_id) and sends to Iggy HTTP
+/// 3. TCP consumer (firehose) polls and receives the event
+///
+/// This test executes the actual `vibes` binary to ensure the CLI code path works.
+/// Requires iggy-server and the vibes binary to be built.
+/// Run with: cargo test -p vibes-server --test iggy_integration -- --ignored
+#[tokio::test]
+#[ignore]
+async fn test_vibes_event_send_cli_to_consumer() {
+    use std::process::Command;
+
+    // Get unique ports for this test (different from other tests)
+    let temp_dir = TempDir::new().expect("Failed to create temp directory");
+    let tcp_port = 50100; // Use fixed ports for CLI env vars
+    let http_port = 50101;
+
+    let config = IggyConfig::default()
+        .with_data_dir(temp_dir.path())
+        .with_port(tcp_port)
+        .with_http_port(http_port);
+
+    // Create AppState with the specific Iggy config
+    let state = Arc::new(
+        AppState::new_with_iggy_config(config)
+            .await
+            .expect("Iggy should be available"),
+    );
+
+    // Give Iggy time to fully initialize
+    tokio::time::sleep(Duration::from_millis(1000)).await;
+
+    // Create consumer BEFORE sending events (live mode scenario - like firehose)
+    let mut consumer = state
+        .event_log
+        .consumer("cli-e2e-test")
+        .await
+        .expect("Consumer creation should work");
+    consumer
+        .seek(SeekPosition::End)
+        .await
+        .expect("Seek should work");
+
+    // Run `vibes event send` CLI command
+    // The CLI should wrap the event in StoredEvent before sending
+    let hook_json =
+        r#"{"type":"session_start","session_id":"cli-test-session","project_path":"/test"}"#;
+
+    // Find the vibes binary - it should be built in target/debug
+    let vibes_binary = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .unwrap()
+        .join("target/debug/vibes");
+
+    assert!(
+        vibes_binary.exists(),
+        "vibes binary not found at {:?}. Run `cargo build` first.",
+        vibes_binary
+    );
+
+    let output = Command::new(&vibes_binary)
+        .args([
+            "event",
+            "send",
+            "--type",
+            "hook",
+            "--session",
+            "cli-test-session",
+            "--data",
+            hook_json,
+        ])
+        .env("VIBES_IGGY_HOST", "127.0.0.1")
+        .env("VIBES_IGGY_HTTP_PORT", http_port.to_string())
+        .env("VIBES_IGGY_USERNAME", "iggy")
+        .env("VIBES_IGGY_PASSWORD", "iggy")
+        .output()
+        .expect("Failed to run vibes event send");
+
+    // Check CLI succeeded
+    assert!(
+        output.status.success(),
+        "vibes event send should succeed. stderr: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+
+    // Wait for event to propagate
+    tokio::time::sleep(Duration::from_millis(500)).await;
+
+    // Poll for the event
+    let batch = consumer
+        .poll(10, Duration::from_secs(2))
+        .await
+        .expect("Poll should work");
+
+    // Verify we received the event sent via CLI
+    assert!(
+        !batch.is_empty(),
+        "Consumer should receive event sent via CLI. Got empty batch."
+    );
+
+    let received_events: Vec<_> = batch.into_iter().map(|(_, stored)| stored.event).collect();
+    let found = received_events.iter().any(|e| match e {
+        VibesEvent::Hook { session_id, .. } => session_id.as_deref() == Some("cli-test-session"),
+        _ => false,
+    });
+
+    assert!(
+        found,
+        "Should find the hook event sent via CLI. Received: {:?}",
+        received_events
+    );
+
+    drop(temp_dir);
+}
