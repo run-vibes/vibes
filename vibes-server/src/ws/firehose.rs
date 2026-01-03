@@ -88,8 +88,8 @@ pub struct FirehoseEventsBatch {
     pub msg_type: &'static str,
     /// The events in this batch with their offsets
     pub events: Vec<EventWithOffset>,
-    /// The oldest offset in this batch (for pagination)
-    pub oldest_offset: Option<Offset>,
+    /// The oldest event ID in this batch (for pagination)
+    pub oldest_event_id: Option<Uuid>,
     /// Whether there are more events before this batch
     pub has_more: bool,
 }
@@ -97,13 +97,13 @@ pub struct FirehoseEventsBatch {
 impl FirehoseEventsBatch {
     pub fn new(
         events: Vec<EventWithOffset>,
-        oldest_offset: Option<Offset>,
+        oldest_event_id: Option<Uuid>,
         has_more: bool,
     ) -> Self {
         Self {
             msg_type: "events_batch",
             events,
-            oldest_offset,
+            oldest_event_id,
             has_more,
         }
     }
@@ -113,10 +113,11 @@ impl FirehoseEventsBatch {
 #[derive(Debug, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum FirehoseClientMessage {
-    /// Request older events before a given offset
+    /// Request older events before a given event ID
     FetchOlder {
-        /// Load events before this offset (exclusive)
-        before_offset: Offset,
+        /// Load events before this event ID (exclusive) - UUIDv7 for time-ordering
+        #[serde(default)]
+        before_event_id: Option<Uuid>,
         /// Maximum number of events to return (default: 100)
         #[serde(default)]
         limit: Option<u64>,
@@ -178,7 +179,7 @@ async fn handle_firehose(socket: WebSocket, state: Arc<AppState>, query: Firehos
 
     let batch = FirehoseEventsBatch::new(
         filtered_events.clone(),
-        filtered_events.first().map(|e| e.offset),
+        filtered_events.first().map(|e| e.event_id),
         has_more,
     );
 
@@ -250,11 +251,18 @@ where
 
     match msg {
         FirehoseClientMessage::FetchOlder {
-            before_offset,
+            before_event_id,
             limit,
         } => {
             let count = limit.unwrap_or(DEFAULT_FETCH_LIMIT);
-            let events = load_events_before_offset(state, before_offset, count).await;
+
+            // Load events before the specified event_id
+            let events = if let Some(event_id) = before_event_id {
+                load_events_before_event_id(state, event_id, count).await
+            } else {
+                // No event_id specified, load from end
+                load_historical_events(state, count).await
+            };
 
             let oldest_offset = events.first().map(|(offset, _)| *offset);
             let has_more = oldest_offset.is_some_and(|o| o > 0);
@@ -267,7 +275,7 @@ where
 
             let batch = FirehoseEventsBatch::new(
                 filtered_events.clone(),
-                filtered_events.first().map(|e| e.offset),
+                filtered_events.first().map(|e| e.event_id),
                 has_more,
             );
 
@@ -295,7 +303,7 @@ where
 
             let batch = FirehoseEventsBatch::new(
                 filtered_events.clone(),
-                filtered_events.first().map(|e| e.offset),
+                filtered_events.first().map(|e| e.event_id),
                 has_more,
             );
 
@@ -408,24 +416,19 @@ async fn load_historical_events(state: &AppState, count: u64) -> Vec<(Offset, St
     events
 }
 
-/// Load events before a specific offset from the EventLog.
+/// Load events before a specific event ID from the EventLog.
 ///
 /// Returns stored events in chronological order (oldest first) with their offsets.
 /// Used for pagination - fetching older events when scrolling up.
-async fn load_events_before_offset(
+///
+/// This implementation loads events from the beginning and finds the target by event_id.
+/// A future optimization could use Iggy's timestamp-based seeking via SeekPosition::BeforeEventId.
+async fn load_events_before_event_id(
     state: &AppState,
-    before_offset: Offset,
+    before_event_id: Uuid,
     count: u64,
 ) -> Vec<(Offset, StoredEvent)> {
-    if before_offset == 0 {
-        return Vec::new();
-    }
-
-    // Calculate the range to fetch
-    let end_offset = before_offset; // exclusive
-    let start_offset = end_offset.saturating_sub(count);
-
-    // Create a temporary consumer
+    // Load all events from beginning to find the target event
     let consumer_group = format!("firehose-pagination-{}", uuid::Uuid::new_v4());
     let mut consumer = match state.event_log.consumer(&consumer_group).await {
         Ok(c) => c,
@@ -435,34 +438,47 @@ async fn load_events_before_offset(
         }
     };
 
-    // Seek to the start position
-    if let Err(e) = consumer.seek(SeekPosition::Offset(start_offset)).await {
+    // Seek to beginning
+    if let Err(e) = consumer.seek(SeekPosition::Beginning).await {
         warn!("Failed to seek pagination consumer: {}", e);
         return Vec::new();
     }
 
-    // Calculate how many events to fetch (may be fewer if start_offset was clamped)
-    let events_to_fetch = (end_offset - start_offset) as usize;
+    // Poll all events up to high water mark
+    let hwm = state.event_log.high_water_mark();
+    if hwm == 0 {
+        return Vec::new();
+    }
 
-    // Poll for events
-    let mut events: Vec<(Offset, StoredEvent)> = match consumer
-        .poll(events_to_fetch, Duration::from_millis(100))
+    let all_events: Vec<(Offset, StoredEvent)> = match consumer
+        .poll(hwm as usize, Duration::from_millis(100))
         .await
     {
-        Ok(batch) => batch
-            .into_iter()
-            .filter(|(offset, _)| *offset < before_offset)
-            .collect(),
+        Ok(batch) => batch.into_iter().collect(),
         Err(e) => {
-            warn!("Failed to poll pagination events: {}", e);
-            Vec::new()
+            warn!("Failed to poll events for pagination: {}", e);
+            return Vec::new();
         }
     };
 
-    // Sort by event_id (UUIDv7 timestamp) for correct cross-partition ordering
-    events.sort_by_key(|(_, stored)| stored.event_id);
+    // Find the index of the target event_id
+    let target_index = all_events
+        .iter()
+        .position(|(_, stored)| stored.event_id == before_event_id);
 
-    events
+    match target_index {
+        Some(0) => Vec::new(), // Target is first event, nothing before it
+        Some(idx) => {
+            // Return up to `count` events before the target
+            let start = idx.saturating_sub(count as usize);
+            all_events[start..idx].to_vec()
+        }
+        None => {
+            // Target not found, return empty
+            warn!("Event ID {} not found in log", before_event_id);
+            Vec::new()
+        }
+    }
 }
 
 #[cfg(test)]
@@ -487,12 +503,13 @@ mod tests {
             name: Some("Test".to_string()),
         });
 
+        let oldest_event_id = stored1.event_id;
         let events = vec![
             EventWithOffset::new(stored1.clone(), 10),
             EventWithOffset::new(stored2.clone(), 11),
         ];
 
-        let batch = FirehoseEventsBatch::new(events, Some(10), true);
+        let batch = FirehoseEventsBatch::new(events, Some(oldest_event_id), true);
         let json = serde_json::to_string(&batch).unwrap();
 
         // Parse and verify structure
@@ -651,15 +668,17 @@ mod tests {
 
     #[test]
     fn firehose_client_message_fetch_older_deserializes() {
-        let msg: FirehoseClientMessage =
-            serde_json::from_str(r#"{"type":"fetch_older","before_offset":100,"limit":50}"#)
-                .unwrap();
+        // Test the new protocol with before_event_id
+        let msg: FirehoseClientMessage = serde_json::from_str(
+            r#"{"type":"fetch_older","before_event_id":"01936f8a-1234-7000-8000-000000000001","limit":50}"#,
+        )
+        .unwrap();
         match msg {
             FirehoseClientMessage::FetchOlder {
-                before_offset,
+                before_event_id,
                 limit,
             } => {
-                assert_eq!(before_offset, 100);
+                assert!(before_event_id.is_some());
                 assert_eq!(limit, Some(50));
             }
             _ => panic!("Expected FetchOlder"),
@@ -668,96 +687,20 @@ mod tests {
 
     #[test]
     fn firehose_client_message_fetch_older_with_default_limit() {
-        let msg: FirehoseClientMessage =
-            serde_json::from_str(r#"{"type":"fetch_older","before_offset":100}"#).unwrap();
+        let msg: FirehoseClientMessage = serde_json::from_str(
+            r#"{"type":"fetch_older","before_event_id":"01936f8a-1234-7000-8000-000000000001"}"#,
+        )
+        .unwrap();
         match msg {
             FirehoseClientMessage::FetchOlder {
-                before_offset,
+                before_event_id,
                 limit,
             } => {
-                assert_eq!(before_offset, 100);
+                assert!(before_event_id.is_some());
                 assert_eq!(limit, None);
             }
             _ => panic!("Expected FetchOlder"),
         }
-    }
-
-    #[tokio::test]
-    async fn load_events_before_offset_returns_events_before_given_offset() {
-        use crate::AppState;
-
-        let state = AppState::new();
-
-        // Append 10 events (offsets 0-9)
-        for i in 0..10 {
-            let stored = make_stored_event(VibesEvent::SessionCreated {
-                session_id: format!("session-{}", i),
-                name: Some(format!("Session {}", i)),
-            });
-            state.event_log.append(stored).await.unwrap();
-        }
-
-        // Load 3 events before offset 7 (should get offsets 4, 5, 6)
-        let events = load_events_before_offset(&state, 7, 3).await;
-
-        assert_eq!(events.len(), 3);
-
-        // Verify offsets are 4, 5, 6 (in chronological order)
-        assert_eq!(events[0].0, 4);
-        assert_eq!(events[1].0, 5);
-        assert_eq!(events[2].0, 6);
-
-        // Verify they're the correct events
-        if let VibesEvent::SessionCreated { session_id, .. } = &events[0].1.event {
-            assert_eq!(session_id, "session-4");
-        } else {
-            panic!("Expected SessionCreated event");
-        }
-    }
-
-    #[tokio::test]
-    async fn load_events_before_offset_handles_beginning_of_log() {
-        use crate::AppState;
-
-        let state = AppState::new();
-
-        // Append 5 events (offsets 0-4)
-        for i in 0..5 {
-            let stored = make_stored_event(VibesEvent::SessionCreated {
-                session_id: format!("session-{}", i),
-                name: None,
-            });
-            state.event_log.append(stored).await.unwrap();
-        }
-
-        // Load 100 events before offset 3 (should only get offsets 0, 1, 2)
-        let events = load_events_before_offset(&state, 3, 100).await;
-
-        assert_eq!(events.len(), 3);
-        assert_eq!(events[0].0, 0);
-        assert_eq!(events[1].0, 1);
-        assert_eq!(events[2].0, 2);
-    }
-
-    #[tokio::test]
-    async fn load_events_before_offset_returns_empty_when_at_beginning() {
-        use crate::AppState;
-
-        let state = AppState::new();
-
-        // Append some events
-        for i in 0..5 {
-            let stored = make_stored_event(VibesEvent::SessionCreated {
-                session_id: format!("session-{}", i),
-                name: None,
-            });
-            state.event_log.append(stored).await.unwrap();
-        }
-
-        // Load events before offset 0 (should be empty)
-        let events = load_events_before_offset(&state, 0, 100).await;
-
-        assert!(events.is_empty());
     }
 
     #[test]
@@ -839,6 +782,130 @@ mod tests {
             );
         }
     }
+
+    // ============================================================
+    // TDD: Event ID-based pagination tests (new protocol)
+    // ============================================================
+
+    #[test]
+    fn firehose_client_message_fetch_older_with_event_id_deserializes() {
+        // New protocol: fetch_older uses before_event_id instead of before_offset
+        let msg: FirehoseClientMessage = serde_json::from_str(
+            r#"{"type":"fetch_older","before_event_id":"01936f8a-1234-7000-8000-000000000001","limit":50}"#,
+        )
+        .unwrap();
+        match msg {
+            FirehoseClientMessage::FetchOlder {
+                before_event_id,
+                limit,
+            } => {
+                assert!(before_event_id.is_some());
+                assert_eq!(
+                    before_event_id.unwrap().to_string(),
+                    "01936f8a-1234-7000-8000-000000000001"
+                );
+                assert_eq!(limit, Some(50));
+            }
+            _ => panic!("Expected FetchOlder"),
+        }
+    }
+
+    #[test]
+    fn events_batch_includes_oldest_event_id() {
+        // Batch should include oldest_event_id for pagination
+        let stored = make_stored_event(VibesEvent::ClientConnected {
+            client_id: "c1".to_string(),
+        });
+        let event_id = stored.event_id;
+        let events = vec![EventWithOffset::new(stored, 10)];
+
+        let batch = FirehoseEventsBatch::new(events, Some(event_id), true);
+        let json = serde_json::to_string(&batch).unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+
+        // Should have oldest_event_id field
+        assert!(parsed["oldest_event_id"].is_string());
+        assert_eq!(parsed["oldest_event_id"], event_id.to_string());
+    }
+
+    #[tokio::test]
+    async fn load_events_before_event_id_returns_events_before_given_event() {
+        use crate::AppState;
+
+        let state = AppState::new();
+
+        // Append 10 events and track their event_ids
+        let mut event_ids = Vec::new();
+        for i in 0..10 {
+            let stored = make_stored_event(VibesEvent::SessionCreated {
+                session_id: format!("session-{}", i),
+                name: Some(format!("Session {}", i)),
+            });
+            event_ids.push(stored.event_id);
+            state.event_log.append(stored).await.unwrap();
+        }
+
+        // Load 3 events before event_id[7] (should get events 4, 5, 6)
+        let target_event_id = event_ids[7];
+        let events = load_events_before_event_id(&state, target_event_id, 3).await;
+
+        assert_eq!(events.len(), 3);
+
+        // Verify we got events 4, 5, 6 (before event 7)
+        let loaded_ids: Vec<_> = events.iter().map(|(_, s)| s.event_id).collect();
+        assert_eq!(loaded_ids, vec![event_ids[4], event_ids[5], event_ids[6]]);
+    }
+
+    #[tokio::test]
+    async fn load_events_before_event_id_handles_beginning_of_log() {
+        use crate::AppState;
+
+        let state = AppState::new();
+
+        // Append 5 events
+        let mut event_ids = Vec::new();
+        for i in 0..5 {
+            let stored = make_stored_event(VibesEvent::SessionCreated {
+                session_id: format!("session-{}", i),
+                name: None,
+            });
+            event_ids.push(stored.event_id);
+            state.event_log.append(stored).await.unwrap();
+        }
+
+        // Load 100 events before event_id[3] (should only get events 0, 1, 2)
+        let events = load_events_before_event_id(&state, event_ids[3], 100).await;
+
+        assert_eq!(events.len(), 3);
+        let loaded_ids: Vec<_> = events.iter().map(|(_, s)| s.event_id).collect();
+        assert_eq!(loaded_ids, vec![event_ids[0], event_ids[1], event_ids[2]]);
+    }
+
+    #[tokio::test]
+    async fn load_events_before_event_id_returns_empty_for_first_event() {
+        use crate::AppState;
+
+        let state = AppState::new();
+
+        // Append some events
+        let mut event_ids = Vec::new();
+        for i in 0..5 {
+            let stored = make_stored_event(VibesEvent::SessionCreated {
+                session_id: format!("session-{}", i),
+                name: None,
+            });
+            event_ids.push(stored.event_id);
+            state.event_log.append(stored).await.unwrap();
+        }
+
+        // Load events before the first event (should be empty)
+        let events = load_events_before_event_id(&state, event_ids[0], 100).await;
+        assert!(events.is_empty());
+    }
+
+    // ============================================================
+    // End TDD tests
+    // ============================================================
 
     #[tokio::test]
     async fn load_historical_events_sorts_by_event_id_across_partitions() {
