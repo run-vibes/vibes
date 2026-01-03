@@ -177,6 +177,11 @@ export function useFirehose(options: FirehoseOptions = {}): UseFirehoseReturn {
     ws.onopen = () => {
       setIsConnected(true);
       setError(null);
+
+      // Request initial events from server. The server does NOT automatically
+      // send historical events on connection - we must request them explicitly.
+      // This prevents race conditions between automatic loads and filter updates.
+      ws.send(JSON.stringify({ type: 'set_filters' }));
     };
 
     ws.onclose = () => {

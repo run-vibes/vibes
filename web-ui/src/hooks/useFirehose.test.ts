@@ -341,7 +341,9 @@ describe('useFirehose', () => {
         result.current.fetchOlder();
       });
 
-      const sent = JSON.parse(ws.sentMessages[0]);
+      // First message is the initial set_filters on connect, second is fetch_older
+      expect(ws.sentMessages.length).toBeGreaterThanOrEqual(2);
+      const sent = JSON.parse(ws.sentMessages[1]);
       expect(sent.type).toBe('fetch_older');
       expect(sent.before_event_id).toBe('evt-50');
     });
@@ -403,7 +405,8 @@ describe('useFirehose', () => {
         result.current.fetchOlder(); // duplicate
       });
 
-      expect(ws.sentMessages).toHaveLength(1);
+      // 1 initial set_filters + 1 fetch_older (duplicates ignored)
+      expect(ws.sentMessages).toHaveLength(2);
     });
 
     it('does not send request when hasMore is false', async () => {
@@ -426,7 +429,8 @@ describe('useFirehose', () => {
         result.current.fetchOlder();
       });
 
-      expect(ws.sentMessages).toHaveLength(0);
+      // Only the initial set_filters, no fetch_older
+      expect(ws.sentMessages).toHaveLength(1);
     });
   });
 
@@ -443,7 +447,9 @@ describe('useFirehose', () => {
         result.current.setFilters({ types: ['Claude', 'Hook'] });
       });
 
-      const sent = JSON.parse(ws.sentMessages[0]);
+      // sentMessages[0] is the initial set_filters on connect
+      // sentMessages[1] is the filter update we just sent
+      const sent = JSON.parse(ws.sentMessages[1]);
       expect(sent.type).toBe('set_filters');
       expect(sent.types).toEqual(['Claude', 'Hook']);
     });

@@ -120,7 +120,9 @@ pub async fn assessment_consumer_loop(
                 match result {
                     Ok(batch) => {
                         if batch.is_empty() {
-                            trace!(group = %config.group, "Empty batch, continuing");
+                            trace!(group = %config.group, "Empty batch, waiting before retry");
+                            // Sleep to prevent tight loop when caught up
+                            tokio::time::sleep(config.poll_timeout).await;
                             continue;
                         }
 

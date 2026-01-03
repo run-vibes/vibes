@@ -151,7 +151,7 @@ const HISTORICAL_EVENT_COUNT: u64 = 100;
 async fn handle_firehose(socket: WebSocket, state: Arc<AppState>, query: FirehoseQuery) {
     let (mut sender, mut receiver) = socket.split();
 
-    // Parse filter types (mutable for dynamic filter updates)
+    // Parse filter types from query params (mutable for dynamic filter updates)
     let mut filter_types: Option<Vec<String>> = query.types.as_ref().map(|t| {
         t.split(',')
             .map(|s| s.trim().to_lowercase())
@@ -160,33 +160,26 @@ async fn handle_firehose(socket: WebSocket, state: Arc<AppState>, query: Firehos
     });
     let mut filter_session = query.session.clone();
 
-    // Subscribe to broadcast BEFORE loading historical events to avoid gaps
-    let mut events_rx = state.subscribe_events();
-
-    // Load historical events from EventLog (with offsets)
-    let historical_events = load_historical_events(&state, HISTORICAL_EVENT_COUNT).await;
-
-    // Determine if there's more history before the oldest loaded event
-    let oldest_offset = historical_events.first().map(|(offset, _)| *offset);
-    let has_more = oldest_offset.is_some_and(|o| o > 0);
-
-    // Send initial batch of historical events
-    let filtered_events: Vec<_> = historical_events
-        .into_iter()
-        .filter(|(_, stored)| matches_filters(&stored.event, &filter_types, &filter_session))
-        .map(|(offset, stored)| EventWithOffset::new(stored, offset))
-        .collect();
-
-    let batch = FirehoseEventsBatch::new(
-        filtered_events.clone(),
-        filtered_events.first().map(|e| e.event_id),
-        has_more,
+    tracing::debug!(
+        ?filter_types,
+        ?filter_session,
+        "Firehose connection established (waiting for client to request events)"
     );
 
-    if let Err(e) = send_json(&mut sender, &batch).await {
-        warn!("Firehose send failed (initial batch): {}", e);
-        return;
-    }
+    // Subscribe to broadcast BEFORE client can request events to avoid gaps.
+    // Broadcast events received before the client requests initial events will
+    // be deduplicated using last_sent_offset.
+    let mut events_rx = state.subscribe_events();
+
+    // Track the highest offset we've sent to prevent duplicates.
+    // Updated when we send historical batches; broadcast events at or below
+    // this offset are skipped (they were included in the historical batch).
+    let mut last_sent_offset: Option<Offset> = None;
+
+    // NOTE: We do NOT automatically load/send historical events on connection.
+    // The client must send a set_filters message (even with empty filters) to
+    // initiate the first load. This ensures a single code path and prevents
+    // race conditions between automatic load and client filter updates.
 
     // Main event loop: handle both incoming messages and broadcast events
     loop {
@@ -201,6 +194,7 @@ async fn handle_firehose(socket: WebSocket, state: Arc<AppState>, query: Firehos
                             &mut sender,
                             &mut filter_types,
                             &mut filter_session,
+                            &mut last_sent_offset,
                         ).await {
                             warn!("Failed to handle client message: {}", e);
                         }
@@ -214,15 +208,26 @@ async fn handle_firehose(socket: WebSocket, state: Arc<AppState>, query: Firehos
             result = events_rx.recv() => {
                 match result {
                     Ok((offset, stored)) => {
+                        // Skip events we already sent in a historical batch.
+                        // Events written during historical load appear in both the batch
+                        // AND the broadcast channel - don't send duplicates.
+                        if let Some(last_offset) = last_sent_offset
+                            && offset <= last_offset
+                        {
+                            continue;
+                        }
+
                         if !matches_filters(&stored.event, &filter_types, &filter_session) {
                             continue;
                         }
 
-                        let msg = FirehoseEventMessage::new(offset, stored);
+                        let msg = FirehoseEventMessage::new(offset, stored.clone());
                         if let Err(e) = send_json(&mut sender, &msg).await {
                             warn!("Firehose send failed: {}", e);
                             break;
                         }
+                        // Update last_sent_offset so we don't re-send this event
+                        last_sent_offset = Some(offset);
                     }
                     Err(broadcast::error::RecvError::Closed) => break,
                     Err(broadcast::error::RecvError::Lagged(n)) => {
@@ -234,13 +239,17 @@ async fn handle_firehose(socket: WebSocket, state: Arc<AppState>, query: Firehos
     }
 }
 
-/// Handle a client message from the WebSocket
+/// Handle a client message from the WebSocket.
+///
+/// Updates `last_sent_offset` when sending batches to prevent duplicate
+/// events from being sent via the broadcast channel.
 async fn handle_client_message<S>(
     text: &str,
     state: &AppState,
     sender: &mut S,
     filter_types: &mut Option<Vec<String>>,
     filter_session: &mut Option<String>,
+    last_sent_offset: &mut Option<Offset>,
 ) -> Result<(), String>
 where
     S: SinkExt<Message> + Unpin,
@@ -265,6 +274,7 @@ where
             };
 
             let oldest_offset = events.first().map(|(offset, _)| *offset);
+            let newest_offset = events.last().map(|(offset, _)| *offset);
             let has_more = oldest_offset.is_some_and(|o| o > 0);
 
             let filtered_events: Vec<_> = events
@@ -282,6 +292,11 @@ where
             send_json(sender, &batch)
                 .await
                 .map_err(|e| format!("Failed to send batch: {}", e))?;
+
+            // Update last_sent_offset to prevent duplicates from broadcast
+            if let Some(offset) = newest_offset {
+                *last_sent_offset = Some(last_sent_offset.unwrap_or(0).max(offset));
+            }
         }
 
         FirehoseClientMessage::SetFilters { types, session } => {
@@ -293,6 +308,7 @@ where
             let events = load_historical_events(state, HISTORICAL_EVENT_COUNT).await;
 
             let oldest_offset = events.first().map(|(offset, _)| *offset);
+            let newest_offset = events.last().map(|(offset, _)| *offset);
             let has_more = oldest_offset.is_some_and(|o| o > 0);
 
             let filtered_events: Vec<_> = events
@@ -310,6 +326,11 @@ where
             send_json(sender, &batch)
                 .await
                 .map_err(|e| format!("Failed to send batch: {}", e))?;
+
+            // Update last_sent_offset to prevent duplicates from broadcast
+            if let Some(offset) = newest_offset {
+                *last_sent_offset = Some(last_sent_offset.unwrap_or(0).max(offset));
+            }
         }
     }
 
@@ -374,10 +395,27 @@ fn event_type_name(event: &VibesEvent) -> &'static str {
 /// Load the last N events from the EventLog.
 ///
 /// Returns stored events in chronological order (oldest first) with their offsets.
+///
+/// Note: Iggy's poll_messages may return partial batches due to segment boundaries
+/// or internal batching limits, so we poll in a loop until we have enough events
+/// or reach the end of available messages.
 async fn load_historical_events(state: &AppState, count: u64) -> Vec<(Offset, StoredEvent)> {
     let hwm = state.event_log.high_water_mark();
+    tracing::debug!(hwm, count, "load_historical_events: starting");
     if hwm == 0 {
+        tracing::debug!("load_historical_events: hwm is 0, returning empty");
         return Vec::new();
+    }
+
+    // Flush Iggy's in-memory buffer to disk before reading.
+    // This is critical for Iggy's io_uring backend (via compio) which uses separate
+    // file handles for reading and writing. Without flushing, recent writes may not
+    // be visible to the reader.
+    if let Err(e) = state.event_log.flush_to_disk().await {
+        warn!(
+            "Failed to flush event log to disk: {} (continuing anyway)",
+            e
+        );
     }
 
     // Create a temporary consumer to read historical events
@@ -390,28 +428,55 @@ async fn load_historical_events(state: &AppState, count: u64) -> Vec<(Offset, St
         }
     };
 
-    // Seek backwards from end: each partition seeks back by count events
-    // This ensures we have enough events even with uneven partition distribution
-    // We limit via poll(count) anyway, so overshooting is fine
+    // Seek backwards from end
     if let Err(e) = consumer.seek(SeekPosition::FromEnd(count)).await {
         warn!("Failed to seek historical consumer: {}", e);
         return Vec::new();
     }
+    tracing::debug!("load_historical_events: seeked to FromEnd({})", count);
 
-    // Poll for events
-    let mut events: Vec<(Offset, StoredEvent)> = match consumer
-        .poll(count as usize, Duration::from_millis(100))
-        .await
-    {
-        Ok(batch) => batch.into_iter().collect(),
-        Err(e) => {
-            warn!("Failed to poll historical events: {}", e);
-            Vec::new()
+    // Poll for events in a loop - Iggy may return partial batches
+    let mut events: Vec<(Offset, StoredEvent)> = Vec::new();
+    let target_count = count as usize;
+    let max_iterations = 100; // Safety limit to prevent infinite loops
+
+    for iteration in 0..max_iterations {
+        let remaining = target_count.saturating_sub(events.len());
+        if remaining == 0 {
+            break;
         }
-    };
 
-    // Sort by event_id (UUIDv7 timestamp) for correct cross-partition ordering
+        match consumer.poll(remaining, Duration::from_millis(100)).await {
+            Ok(batch) => {
+                let batch_len = batch.len();
+                tracing::trace!(
+                    iteration,
+                    batch_len,
+                    total = events.len() + batch_len,
+                    "load_historical_events: polled batch"
+                );
+
+                if batch_len == 0 {
+                    // No more events available
+                    break;
+                }
+
+                events.extend(batch.into_iter());
+            }
+            Err(e) => {
+                warn!("Failed to poll historical events: {}", e);
+                break;
+            }
+        }
+    }
+
+    // Sort by event_id (UUIDv7 timestamp) for correct ordering
     events.sort_by_key(|(_, stored)| stored.event_id);
+
+    tracing::debug!(
+        final_count = events.len(),
+        "load_historical_events: complete"
+    );
 
     events
 }
@@ -450,16 +515,29 @@ async fn load_events_before_event_id(
         return Vec::new();
     }
 
-    let all_events: Vec<(Offset, StoredEvent)> = match consumer
-        .poll(hwm as usize, Duration::from_millis(100))
-        .await
-    {
-        Ok(batch) => batch.into_iter().collect(),
-        Err(e) => {
-            warn!("Failed to poll events for pagination: {}", e);
-            return Vec::new();
+    // Poll in a loop - Iggy may return partial batches
+    let mut all_events: Vec<(Offset, StoredEvent)> = Vec::new();
+    let max_iterations = 100;
+
+    for _ in 0..max_iterations {
+        let remaining = (hwm as usize).saturating_sub(all_events.len());
+        if remaining == 0 {
+            break;
         }
-    };
+
+        match consumer.poll(remaining, Duration::from_millis(100)).await {
+            Ok(batch) => {
+                if batch.is_empty() {
+                    break;
+                }
+                all_events.extend(batch.into_iter());
+            }
+            Err(e) => {
+                warn!("Failed to poll events for pagination: {}", e);
+                break;
+            }
+        }
+    }
 
     // Find the index of the target event_id
     let target_index = all_events
