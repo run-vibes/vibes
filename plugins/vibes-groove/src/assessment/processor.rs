@@ -9,10 +9,11 @@ use std::sync::Arc;
 use tokio::sync::{RwLock, broadcast, mpsc};
 use tracing::{debug, error, trace};
 
+use super::checkpoint::{CheckpointConfig, CheckpointManager};
 use super::circuit_breaker::{CircuitBreaker, CircuitState, CircuitTransition};
 use super::lightweight::{LightweightDetector, LightweightDetectorConfig, SessionState};
 use super::session_buffer::{SessionBuffer, SessionBufferConfig};
-use super::types::SessionId;
+use super::types::{MediumEvent, SessionId};
 use super::{AssessmentConfig, AssessmentEvent, AssessmentLog};
 
 /// Messages sent to the background writer task.
@@ -46,6 +47,8 @@ pub struct AssessmentProcessor {
     circuit_breaker: Arc<RwLock<CircuitBreaker>>,
     /// Session event buffer for batch processing (protected by RwLock for async access).
     session_buffer: Arc<RwLock<SessionBuffer>>,
+    /// Checkpoint manager for triggering assessments (protected by RwLock for async access).
+    checkpoint_manager: Arc<RwLock<CheckpointManager>>,
 }
 
 impl AssessmentProcessor {
@@ -77,6 +80,9 @@ impl AssessmentProcessor {
         // Create session buffer
         let session_buffer = SessionBuffer::new(SessionBufferConfig::default());
 
+        // Create checkpoint manager
+        let checkpoint_manager = CheckpointManager::new(CheckpointConfig::default());
+
         Self {
             config,
             writer_tx,
@@ -85,6 +91,7 @@ impl AssessmentProcessor {
             session_states: Arc::new(RwLock::new(HashMap::new())),
             circuit_breaker: Arc::new(RwLock::new(circuit_breaker)),
             session_buffer: Arc::new(RwLock::new(session_buffer)),
+            checkpoint_manager: Arc::new(RwLock::new(checkpoint_manager)),
         }
     }
 
@@ -183,6 +190,14 @@ impl AssessmentProcessor {
         buffer.len(session_id)
     }
 
+    /// Get the number of checkpoints triggered for a session.
+    ///
+    /// This is primarily useful for testing and debugging.
+    pub async fn checkpoint_count(&self, session_id: &SessionId) -> u32 {
+        let cm = self.checkpoint_manager.read().await;
+        cm.checkpoint_count(session_id)
+    }
+
     /// Process a VibesEvent from the EventLog.
     ///
     /// This is the main entry point for the assessment consumer. It analyzes
@@ -259,10 +274,43 @@ impl AssessmentProcessor {
                 }
             }
 
+            // B4: Check for checkpoint triggers
+            // Need to acquire buffer read lock and checkpoint_manager write lock
+            let trigger = {
+                let buffer = self.session_buffer.read().await;
+                let mut cm = self.checkpoint_manager.write().await;
+                cm.should_checkpoint(
+                    &lightweight_event.context.session_id,
+                    &lightweight_event,
+                    &buffer,
+                )
+            };
+
+            if let Some(trigger) = trigger {
+                // Drain the buffer and create MediumEvent
+                let _events = {
+                    let mut buffer = self.session_buffer.write().await;
+                    buffer.drain(&lightweight_event.context.session_id)
+                };
+
+                // Create MediumEvent with the checkpoint info
+                let medium_event = MediumEvent::new(
+                    lightweight_event.context.clone(),
+                    (0, lightweight_event.message_idx + 1), // Message range covered
+                    trigger,
+                );
+
+                debug!(
+                    session_id = %medium_event.context.session_id,
+                    checkpoint_id = %medium_event.checkpoint_id,
+                    "Checkpoint triggered"
+                );
+
+                self.submit(AssessmentEvent::Medium(medium_event));
+            }
+
             self.submit(AssessmentEvent::Lightweight(lightweight_event));
         }
-
-        // TODO(B4): Check for checkpoint triggers
     }
 
     /// Extract session_id from a VibesEvent, if present.
@@ -649,6 +697,65 @@ mod tests {
         let b_count = processor.buffer_len(&"session-b".into()).await;
         assert_eq!(a_count, 2, "Session A should have 2 events");
         assert_eq!(b_count, 4, "Session B should have 4 events");
+
+        processor.shutdown();
+    }
+
+    // ==================== CheckpointManager Integration Tests ====================
+
+    #[tokio::test]
+    async fn process_event_triggers_checkpoint_on_time_interval() {
+        let log = Arc::new(InMemoryAssessmentLog::new());
+        let config = AssessmentConfig::default();
+        // Default config has 5 minute interval, but first checkpoint triggers immediately
+        // when min_events is met (no prior checkpoint recorded)
+        let processor = AssessmentProcessor::new(config, log.clone());
+
+        // Process enough events to meet min_events threshold (default 5)
+        for i in 0..6 {
+            let event = make_text_delta("checkpoint-session", &format!("Message {i}"));
+            processor.process_event(&event).await;
+        }
+
+        tokio::time::sleep(Duration::from_millis(50)).await;
+
+        // Check checkpoint count
+        let checkpoint_count = processor
+            .checkpoint_count(&"checkpoint-session".into())
+            .await;
+        assert!(
+            checkpoint_count >= 1,
+            "Should have triggered at least one checkpoint"
+        );
+
+        processor.shutdown();
+    }
+
+    #[tokio::test]
+    async fn process_event_emits_medium_event_on_checkpoint() {
+        let log = Arc::new(InMemoryAssessmentLog::new());
+        let config = AssessmentConfig::default();
+        let processor = AssessmentProcessor::new(config, log.clone());
+
+        // Process enough events to trigger a checkpoint (time interval with 0 second config)
+        for i in 0..6 {
+            let event = make_text_delta("medium-session", &format!("Message {i}"));
+            processor.process_event(&event).await;
+        }
+
+        tokio::time::sleep(Duration::from_millis(100)).await;
+
+        // Look for MediumEvent in the session log
+        let events = log.read_session(&"medium-session".into()).await.unwrap();
+        let medium_events: Vec<_> = events
+            .iter()
+            .filter(|e| matches!(e, AssessmentEvent::Medium(_)))
+            .collect();
+
+        assert!(
+            !medium_events.is_empty(),
+            "Should emit at least one MediumEvent on checkpoint"
+        );
 
         processor.shutdown();
     }

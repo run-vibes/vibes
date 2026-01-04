@@ -9,6 +9,9 @@ use uuid::Uuid;
 
 use crate::types::{LearningId, Scope};
 
+// Re-export CheckpointTrigger from checkpoint module so MediumEvent can use it
+pub use super::checkpoint::CheckpointTrigger;
+
 /// UUIDv7 wrapper for time-ordered event IDs.
 ///
 /// Events use UUIDv7 which embeds a timestamp, allowing natural time-ordering
@@ -432,22 +435,6 @@ impl LightweightEvent {
         self.success_ema = ema;
         self
     }
-}
-
-/// What triggered a checkpoint assessment.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum CheckpointTrigger {
-    /// Triggered after N messages.
-    MessageCount(u32),
-    /// Triggered at a task boundary.
-    TaskBoundary,
-    /// Triggered by a git commit.
-    GitCommit,
-    /// Triggered by a successful build.
-    BuildPass,
-    /// Triggered when the session pauses.
-    SessionPause,
 }
 
 /// UUIDv7 wrapper for checkpoint IDs.
@@ -1093,11 +1080,14 @@ mod tests {
     #[test]
     fn test_checkpoint_trigger_serialization() {
         let triggers = [
-            CheckpointTrigger::MessageCount(10),
-            CheckpointTrigger::TaskBoundary,
-            CheckpointTrigger::GitCommit,
-            CheckpointTrigger::BuildPass,
-            CheckpointTrigger::SessionPause,
+            CheckpointTrigger::TimeInterval,
+            CheckpointTrigger::ThresholdExceeded {
+                metric: "frustration_ema".to_string(),
+                value: 0.75,
+            },
+            CheckpointTrigger::PatternMatch {
+                pattern: "2 tool failures".to_string(),
+            },
         ];
 
         for trigger in triggers {
@@ -1124,7 +1114,7 @@ mod tests {
         let learning_id = Uuid::now_v7();
         let ctx = AssessmentContext::new("medium-test").with_learnings(vec![learning_id]);
 
-        let event = MediumEvent::new(ctx, (0, 10), CheckpointTrigger::MessageCount(10))
+        let event = MediumEvent::new(ctx, (0, 10), CheckpointTrigger::TimeInterval)
             .with_summary("Completed database setup")
             .with_token_metrics(TokenMetrics::new(5000, 0.1, 2))
             .with_segment_score(0.8)
@@ -1134,7 +1124,7 @@ mod tests {
         let parsed: MediumEvent = serde_json::from_str(&json).expect("should deserialize");
 
         assert_eq!(parsed.message_range, (0, 10));
-        assert_eq!(parsed.trigger, CheckpointTrigger::MessageCount(10));
+        assert_eq!(parsed.trigger, CheckpointTrigger::TimeInterval);
         assert_eq!(parsed.summary, "Completed database setup");
         assert_eq!(parsed.token_metrics.total_tokens, 5000);
         assert!((parsed.token_metrics.correction_ratio - 0.1).abs() < f64::EPSILON);
@@ -1288,7 +1278,7 @@ mod tests {
         let medium = AssessmentEvent::Medium(MediumEvent::new(
             medium_ctx,
             (0, 10),
-            CheckpointTrigger::TaskBoundary,
+            CheckpointTrigger::TimeInterval,
         ));
         assert_eq!(medium.session_id().as_str(), session_id);
 
@@ -1312,7 +1302,7 @@ mod tests {
         let medium = AssessmentEvent::Medium(MediumEvent::new(
             medium_ctx,
             (0, 10),
-            CheckpointTrigger::GitCommit,
+            CheckpointTrigger::TimeInterval,
         ));
         assert_eq!(*medium.event_id(), medium_event_id);
 

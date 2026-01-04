@@ -328,13 +328,17 @@ mod tests {
         let time1 = detector.time_since_activity(&session_id);
         assert!(time1.is_some());
 
-        // Wait a bit and process another event
-        std::thread::sleep(std::time::Duration::from_millis(50));
+        // Wait long enough for reliable timing comparison
+        std::thread::sleep(std::time::Duration::from_millis(100));
+        let time1_after_wait = detector.time_since_activity(&session_id);
+        assert!(time1_after_wait.unwrap() > time1.unwrap());
+
+        // Process another event - resets the timer
         detector.process(&make_user_input("test-session"));
         let time2 = detector.time_since_activity(&session_id);
 
-        // Time since activity should be less after the second event
-        assert!(time2.unwrap() < time1.unwrap());
+        // Time since activity should be less after the second event (timer reset)
+        assert!(time2.unwrap() < time1_after_wait.unwrap());
     }
 
     #[test]
