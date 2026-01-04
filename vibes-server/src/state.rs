@@ -30,10 +30,6 @@ use crate::middleware::AuthLayer;
 /// Default capacity for the event broadcast channel
 const DEFAULT_BROADCAST_CAPACITY: usize = 1000;
 
-/// Grace period for Iggy server startup before attempting connection.
-/// Allows the server process to fully initialize its TCP listener.
-const IGGY_STARTUP_GRACE_MS: u64 = 500;
-
 /// Shared application state accessible by all handlers
 #[derive(Clone)]
 pub struct AppState {
@@ -221,8 +217,10 @@ impl AppState {
             }
         });
 
-        // Give the server a moment to become ready
-        tokio::time::sleep(std::time::Duration::from_millis(IGGY_STARTUP_GRACE_MS)).await;
+        // Wait for Iggy to be fully ready (HTTP + TCP)
+        // This replaces the fixed grace period to fix the race condition where
+        // CLI hooks (using HTTP) could fire before HTTP was accepting connections.
+        manager.wait_for_ready().await?;
 
         // Create event log from the manager (cloning the Arc)
         let event_log = IggyEventLog::new(Arc::clone(&manager));

@@ -10,10 +10,19 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
 use tokio::sync::RwLock;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, error, info, trace, warn};
 
 use crate::config::IggyConfig;
 use crate::error::{Error, Result};
+
+/// Timeout for readiness checks (per request).
+const READY_CHECK_TIMEOUT: Duration = Duration::from_secs(1);
+
+/// Maximum time to wait for Iggy to become fully ready.
+const READY_TIMEOUT: Duration = Duration::from_secs(30);
+
+/// Interval between readiness check attempts.
+const READY_CHECK_INTERVAL: Duration = Duration::from_millis(100);
 
 /// State of the Iggy server subprocess.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -289,6 +298,155 @@ impl IggyManager {
     #[must_use]
     pub fn config(&self) -> &IggyConfig {
         &self.config
+    }
+
+    /// Wait for Iggy to be fully ready to accept connections.
+    ///
+    /// This polls both the HTTP and TCP endpoints until they respond successfully.
+    /// This is crucial because:
+    /// - CLI hooks use the HTTP API to send events
+    /// - The Rust SDK uses TCP for event streaming
+    ///
+    /// Without waiting for both protocols, there's a race condition where:
+    /// 1. Iggy starts and TCP becomes ready
+    /// 2. We declare Iggy ready and start accepting requests
+    /// 3. CLI hooks fire events via HTTP
+    /// 4. HTTP server isn't ready yet → events lost!
+    pub async fn wait_for_ready(&self) -> Result<()> {
+        let start = std::time::Instant::now();
+
+        info!(
+            tcp_port = self.config.port,
+            http_port = self.config.http_port,
+            "Waiting for Iggy to become ready (HTTP + TCP)"
+        );
+
+        // Check if process is even running first
+        if !self.is_running().await && self.state().await != IggyState::Starting {
+            return Err(Error::Connection("Iggy server is not running".to_string()));
+        }
+
+        // Wait for both HTTP and TCP concurrently
+        let http_ready = self.wait_for_http_ready(start);
+        let tcp_ready = self.wait_for_tcp_ready(start);
+
+        // Both must succeed
+        let (http_result, tcp_result) = tokio::join!(http_ready, tcp_ready);
+
+        http_result?;
+        tcp_result?;
+
+        debug!(
+            elapsed_ms = start.elapsed().as_millis() as u64,
+            "Iggy is fully ready (HTTP + TCP)"
+        );
+
+        Ok(())
+    }
+
+    /// Wait for the HTTP endpoint to become ready.
+    async fn wait_for_http_ready(&self, start: std::time::Instant) -> Result<()> {
+        let http_url = format!("http://127.0.0.1:{}/", self.config.http_port);
+
+        let client = reqwest::Client::builder()
+            .timeout(READY_CHECK_TIMEOUT)
+            .build()
+            .map_err(|e| Error::Connection(format!("Failed to create HTTP client: {}", e)))?;
+
+        let mut attempts = 0;
+
+        loop {
+            attempts += 1;
+
+            match client.get(&http_url).send().await {
+                Ok(response) => {
+                    // Any response (even 404) means HTTP server is up
+                    debug!(
+                        status = %response.status(),
+                        attempts = attempts,
+                        elapsed_ms = start.elapsed().as_millis() as u64,
+                        "Iggy HTTP API is ready"
+                    );
+                    return Ok(());
+                }
+                Err(e) => {
+                    trace!(
+                        attempt = attempts,
+                        error = %e,
+                        "HTTP check failed, retrying..."
+                    );
+                }
+            }
+
+            if start.elapsed() >= READY_TIMEOUT {
+                return Err(Error::Connection(format!(
+                    "Iggy HTTP API failed to become ready within {:?} ({} attempts)",
+                    READY_TIMEOUT, attempts
+                )));
+            }
+
+            // Check if server crashed while waiting
+            if !self.is_running().await {
+                return Err(Error::Connection(
+                    "Iggy server exited while waiting for HTTP readiness".to_string(),
+                ));
+            }
+
+            tokio::time::sleep(READY_CHECK_INTERVAL).await;
+        }
+    }
+
+    /// Wait for the TCP endpoint to become ready.
+    async fn wait_for_tcp_ready(&self, start: std::time::Instant) -> Result<()> {
+        let tcp_addr = format!("127.0.0.1:{}", self.config.port);
+        let mut attempts = 0;
+
+        loop {
+            attempts += 1;
+
+            match tokio::time::timeout(
+                READY_CHECK_TIMEOUT,
+                tokio::net::TcpStream::connect(&tcp_addr),
+            )
+            .await
+            {
+                Ok(Ok(_stream)) => {
+                    // Connection succeeded
+                    debug!(
+                        attempts = attempts,
+                        elapsed_ms = start.elapsed().as_millis() as u64,
+                        "Iggy TCP API is ready"
+                    );
+                    return Ok(());
+                }
+                Ok(Err(e)) => {
+                    trace!(
+                        attempt = attempts,
+                        error = %e,
+                        "TCP check failed, retrying..."
+                    );
+                }
+                Err(_) => {
+                    trace!(attempt = attempts, "TCP check timed out, retrying...");
+                }
+            }
+
+            if start.elapsed() >= READY_TIMEOUT {
+                return Err(Error::Connection(format!(
+                    "Iggy TCP API failed to become ready within {:?} ({} attempts)",
+                    READY_TIMEOUT, attempts
+                )));
+            }
+
+            // Check if server crashed while waiting
+            if !self.is_running().await {
+                return Err(Error::Connection(
+                    "Iggy server exited while waiting for TCP readiness".to_string(),
+                ));
+            }
+
+            tokio::time::sleep(READY_CHECK_INTERVAL).await;
+        }
     }
 }
 

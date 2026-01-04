@@ -26,9 +26,11 @@ else
 fi
 
 # Send to Iggy via vibes CLI
+# Use VIBES_BIN if set (for development), otherwise fall back to PATH
 # The CLI handles authentication and connection details
-if command -v vibes &>/dev/null; then
-    vibes event send --type hook --data "$EVENT_JSON" ${VIBES_SESSION_ID:+--session "$VIBES_SESSION_ID"} 2>/dev/null || true
+VIBES_CMD="${VIBES_BIN:-vibes}"
+if [ -x "$VIBES_CMD" ] || command -v "$VIBES_CMD" &>/dev/null; then
+    "$VIBES_CMD" event send --type hook --data "$EVENT_JSON" ${VIBES_SESSION_ID:+--session "$VIBES_SESSION_ID"} 2>/dev/null || true
 fi
 
 # Always exit successfully - hooks shouldn't block Claude

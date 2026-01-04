@@ -5,8 +5,8 @@ use std::io::Read;
 use anyhow::{Context, Result};
 use clap::{Args, Subcommand};
 use serde::Deserialize;
-use vibes_core::VibesEvent;
 use vibes_core::hooks::HookEvent;
+use vibes_core::{StoredEvent, VibesEvent};
 
 use crate::config::IggyClientConfig;
 use crate::iggy_client::IggyHttpClient;
@@ -111,8 +111,9 @@ async fn execute_send(args: SendArgs) -> Result<()> {
         .await
         .context("Failed to authenticate with Iggy")?;
 
-    // 4. Serialize and send
-    let serialized = serde_json::to_vec(&event).context("Failed to serialize event")?;
+    // 4. Wrap in StoredEvent (adds event_id) and serialize
+    let stored = StoredEvent::new(event);
+    let serialized = serde_json::to_vec(&stored).context("Failed to serialize event")?;
     client
         .send_message(&args.stream, &args.topic, &serialized)
         .await

@@ -72,6 +72,12 @@ impl PtyBackend for RealPtyBackend {
             cmd.cwd(dir);
         }
 
+        // Set VIBES_BIN so hooks can find the vibes binary during development
+        // This is especially important when vibes isn't on PATH
+        if let Ok(current_exe) = std::env::current_exe() {
+            cmd.env("VIBES_BIN", current_exe);
+        }
+
         let child = pair
             .slave
             .spawn_command(cmd)
@@ -257,5 +263,43 @@ mod tests {
         assert!(session.is_ok());
         let session = session.unwrap();
         assert_eq!(session.id, "test-id");
+    }
+
+    /// Test that VIBES_BIN is set in the child process environment.
+    ///
+    /// This is critical for hooks to find the vibes binary during development
+    /// when vibes isn't on PATH.
+    #[tokio::test]
+    async fn real_backend_sets_vibes_bin_env() {
+        // Use printenv VIBES_BIN as the command - it will print the value if set
+        let config = PtyConfig {
+            claude_path: "printenv".into(),
+            claude_args: vec!["VIBES_BIN".to_string()],
+            ..Default::default()
+        };
+        let backend = RealPtyBackend::new(config);
+        let session = backend
+            .create_session("test-env".to_string(), None, None)
+            .expect("Failed to create session");
+
+        // Give the process time to run and produce output
+        tokio::time::sleep(std::time::Duration::from_millis(200)).await;
+
+        // Read the output - should contain the path to current executable
+        let output = session.handle.read().await.unwrap_or_default();
+        let output_str = String::from_utf8_lossy(&output);
+
+        // The output should contain a path (the current executable path)
+        // It may have trailing newline
+        let trimmed = output_str.trim();
+        assert!(
+            !trimmed.is_empty(),
+            "VIBES_BIN should be set in child environment"
+        );
+        assert!(
+            trimmed.contains('/') || trimmed.contains('\\'),
+            "VIBES_BIN should be a path, got: {}",
+            trimmed
+        );
     }
 }
