@@ -8,7 +8,7 @@
 #   Reads JSON data from stdin and wraps it with type information.
 #
 # Environment:
-#   VIBES_SESSION_ID  - Session ID to include in events
+#   VIBES_SESSION_ID  - Session ID override (optional, defaults to JSON input)
 
 set -e
 
@@ -17,20 +17,24 @@ HOOK_TYPE="${1:-unknown}"
 # Read input JSON from stdin
 INPUT_JSON=$(cat)
 
-# Build the event JSON with type wrapper
-# Add session_id if available
+# Extract session_id from input JSON (Claude Code provides this)
+# Use VIBES_SESSION_ID env var as override if set
 if [ -n "$VIBES_SESSION_ID" ]; then
-    EVENT_JSON=$(echo "$INPUT_JSON" | jq -c ". + {session_id: \"$VIBES_SESSION_ID\"} | {type: \"$HOOK_TYPE\"} + .")
+    SESSION_ID="$VIBES_SESSION_ID"
 else
-    EVENT_JSON=$(echo "$INPUT_JSON" | jq -c "{type: \"$HOOK_TYPE\"} + .")
+    # Extract from JSON - returns empty string if null or missing
+    SESSION_ID=$(echo "$INPUT_JSON" | jq -r '.session_id // empty')
 fi
+
+# Build the event JSON with type wrapper
+EVENT_JSON=$(echo "$INPUT_JSON" | jq -c "{type: \"$HOOK_TYPE\"} + .")
 
 # Send to Iggy via vibes CLI
 # Use VIBES_BIN if set (for development), otherwise fall back to PATH
 # The CLI handles authentication and connection details
 VIBES_CMD="${VIBES_BIN:-vibes}"
 if [ -x "$VIBES_CMD" ] || command -v "$VIBES_CMD" &>/dev/null; then
-    "$VIBES_CMD" event send --type hook --data "$EVENT_JSON" ${VIBES_SESSION_ID:+--session "$VIBES_SESSION_ID"} 2>/dev/null || true
+    "$VIBES_CMD" event send --type hook --data "$EVENT_JSON" ${SESSION_ID:+--session "$SESSION_ID"} 2>/dev/null || true
 fi
 
 # Always exit successfully - hooks shouldn't block Claude
