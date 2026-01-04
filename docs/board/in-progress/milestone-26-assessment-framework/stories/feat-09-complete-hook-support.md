@@ -63,7 +63,7 @@ Updated `on_hook()` to handle all new hook types with appropriate logging.
 - [x] Update hook installer to register new hooks
 - [x] Update `GroovePlugin.on_hook()` to handle new types
 - [x] Add tests for new hook serialization/deserialization
-- [ ] Test with Claude Code to verify hooks fire correctly (deferred to integration testing)
+- [x] Test with Claude Code to verify hooks fire correctly (verified: 283 hook events in Iggy including session_end, notification)
 
 ## Acceptance Criteria
 
