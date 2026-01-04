@@ -16,6 +16,11 @@ pub enum HookType {
     Stop,
     SessionStart,
     UserPromptSubmit,
+    PermissionRequest,
+    Notification,
+    SubagentStop,
+    PreCompact,
+    SessionEnd,
 }
 
 impl HookType {
@@ -27,6 +32,11 @@ impl HookType {
             HookType::Stop => "Stop",
             HookType::SessionStart => "SessionStart",
             HookType::UserPromptSubmit => "UserPromptSubmit",
+            HookType::PermissionRequest => "PermissionRequest",
+            HookType::Notification => "Notification",
+            HookType::SubagentStop => "SubagentStop",
+            HookType::PreCompact => "PreCompact",
+            HookType::SessionEnd => "SessionEnd",
         }
     }
 }
@@ -86,6 +96,55 @@ pub struct UserPromptSubmitData {
     pub prompt: String,
 }
 
+/// Data from a PermissionRequest hook
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct PermissionRequestData {
+    /// Optional session ID
+    pub session_id: Option<String>,
+    /// The tool requesting permission
+    pub tool_name: String,
+    /// Tool input as JSON string
+    pub input: String,
+}
+
+/// Data from a Notification hook
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct NotificationData {
+    /// Optional session ID
+    pub session_id: Option<String>,
+    /// Notification title
+    pub title: String,
+    /// Notification message
+    pub message: String,
+}
+
+/// Data from a SubagentStop hook
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SubagentStopData {
+    /// Optional session ID
+    pub session_id: Option<String>,
+    /// ID of the subagent that stopped
+    pub subagent_id: String,
+    /// Reason for stopping
+    pub reason: Option<String>,
+}
+
+/// Data from a PreCompact hook
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct PreCompactData {
+    /// Optional session ID
+    pub session_id: Option<String>,
+}
+
+/// Data from a SessionEnd hook
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SessionEndData {
+    /// Optional session ID
+    pub session_id: Option<String>,
+    /// Reason for ending
+    pub reason: Option<String>,
+}
+
 /// A hook event received from Claude Code
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
@@ -95,6 +154,11 @@ pub enum HookEvent {
     Stop(StopData),
     SessionStart(SessionStartData),
     UserPromptSubmit(UserPromptSubmitData),
+    PermissionRequest(PermissionRequestData),
+    Notification(NotificationData),
+    SubagentStop(SubagentStopData),
+    PreCompact(PreCompactData),
+    SessionEnd(SessionEndData),
 }
 
 impl HookEvent {
@@ -106,6 +170,11 @@ impl HookEvent {
             HookEvent::Stop(data) => data.session_id.as_deref(),
             HookEvent::SessionStart(data) => data.session_id.as_deref(),
             HookEvent::UserPromptSubmit(data) => data.session_id.as_deref(),
+            HookEvent::PermissionRequest(data) => data.session_id.as_deref(),
+            HookEvent::Notification(data) => data.session_id.as_deref(),
+            HookEvent::SubagentStop(data) => data.session_id.as_deref(),
+            HookEvent::PreCompact(data) => data.session_id.as_deref(),
+            HookEvent::SessionEnd(data) => data.session_id.as_deref(),
         }
     }
 
@@ -117,6 +186,11 @@ impl HookEvent {
             HookEvent::Stop(_) => HookType::Stop,
             HookEvent::SessionStart(_) => HookType::SessionStart,
             HookEvent::UserPromptSubmit(_) => HookType::UserPromptSubmit,
+            HookEvent::PermissionRequest(_) => HookType::PermissionRequest,
+            HookEvent::Notification(_) => HookType::Notification,
+            HookEvent::SubagentStop(_) => HookType::SubagentStop,
+            HookEvent::PreCompact(_) => HookType::PreCompact,
+            HookEvent::SessionEnd(_) => HookType::SessionEnd,
         }
     }
 
@@ -124,7 +198,9 @@ impl HookEvent {
     pub fn supports_response(&self) -> bool {
         matches!(
             self,
-            HookEvent::SessionStart(_) | HookEvent::UserPromptSubmit(_)
+            HookEvent::SessionStart(_)
+                | HookEvent::UserPromptSubmit(_)
+                | HookEvent::PermissionRequest(_)
         )
     }
 
@@ -298,5 +374,130 @@ mod tests {
         // Empty response should still be valid JSON
         let parsed: HookResponse = serde_json::from_str(&json).unwrap();
         assert!(parsed.additional_context.is_none());
+    }
+
+    // TDD: Tests for new hook types (should fail until implemented)
+
+    #[test]
+    fn test_permission_request_serialization() {
+        let data = PermissionRequestData {
+            session_id: Some("sess-perm-123".to_string()),
+            tool_name: "Bash".to_string(),
+            input: r#"{"command": "rm -rf /"}"#.to_string(),
+        };
+        let event = HookEvent::PermissionRequest(data);
+
+        let json = serde_json::to_string(&event).unwrap();
+        assert!(json.contains("permission_request"));
+        assert!(json.contains("Bash"));
+
+        let parsed: HookEvent = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed.session_id(), Some("sess-perm-123"));
+        assert_eq!(parsed.hook_type(), HookType::PermissionRequest);
+    }
+
+    #[test]
+    fn test_notification_serialization() {
+        let data = NotificationData {
+            session_id: Some("sess-notif-456".to_string()),
+            title: "Build Complete".to_string(),
+            message: "Your build finished successfully".to_string(),
+        };
+        let event = HookEvent::Notification(data);
+
+        let json = serde_json::to_string(&event).unwrap();
+        assert!(json.contains("notification"));
+        assert!(json.contains("Build Complete"));
+
+        let parsed: HookEvent = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed.session_id(), Some("sess-notif-456"));
+        assert_eq!(parsed.hook_type(), HookType::Notification);
+    }
+
+    #[test]
+    fn test_subagent_stop_serialization() {
+        let data = SubagentStopData {
+            session_id: Some("sess-sub-789".to_string()),
+            subagent_id: "agent-42".to_string(),
+            reason: Some("completed".to_string()),
+        };
+        let event = HookEvent::SubagentStop(data);
+
+        let json = serde_json::to_string(&event).unwrap();
+        assert!(json.contains("subagent_stop"));
+        assert!(json.contains("agent-42"));
+
+        let parsed: HookEvent = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed.session_id(), Some("sess-sub-789"));
+        assert_eq!(parsed.hook_type(), HookType::SubagentStop);
+    }
+
+    #[test]
+    fn test_pre_compact_serialization() {
+        let data = PreCompactData {
+            session_id: Some("sess-compact-abc".to_string()),
+        };
+        let event = HookEvent::PreCompact(data);
+
+        let json = serde_json::to_string(&event).unwrap();
+        assert!(json.contains("pre_compact"));
+
+        let parsed: HookEvent = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed.session_id(), Some("sess-compact-abc"));
+        assert_eq!(parsed.hook_type(), HookType::PreCompact);
+    }
+
+    #[test]
+    fn test_session_end_serialization() {
+        let data = SessionEndData {
+            session_id: Some("sess-end-xyz".to_string()),
+            reason: Some("user_exit".to_string()),
+        };
+        let event = HookEvent::SessionEnd(data);
+
+        let json = serde_json::to_string(&event).unwrap();
+        assert!(json.contains("session_end"));
+        assert!(json.contains("user_exit"));
+
+        let parsed: HookEvent = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed.session_id(), Some("sess-end-xyz"));
+        assert_eq!(parsed.hook_type(), HookType::SessionEnd);
+    }
+
+    #[test]
+    fn test_permission_request_supports_response() {
+        let event = HookEvent::PermissionRequest(PermissionRequestData {
+            session_id: None,
+            tool_name: "Write".to_string(),
+            input: "{}".to_string(),
+        });
+        // PermissionRequest can block/modify, so it supports response
+        assert!(event.supports_response());
+    }
+
+    #[test]
+    fn test_fire_and_forget_hooks_no_response() {
+        let notification = HookEvent::Notification(NotificationData {
+            session_id: None,
+            title: "test".to_string(),
+            message: "test".to_string(),
+        });
+        assert!(!notification.supports_response());
+
+        let subagent = HookEvent::SubagentStop(SubagentStopData {
+            session_id: None,
+            subagent_id: "sub-1".to_string(),
+            reason: None,
+        });
+        assert!(!subagent.supports_response());
+
+        let compact = HookEvent::PreCompact(PreCompactData { session_id: None });
+        assert!(!compact.supports_response());
+
+        let end = HookEvent::SessionEnd(SessionEndData {
+            session_id: None,
+            reason: None,
+        });
+        assert!(!end.supports_response());
     }
 }

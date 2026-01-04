@@ -24,6 +24,21 @@ pub const SESSION_START: &str = include_str!("scripts/session-start.sh");
 /// User prompt submit hook script (injection capable)
 pub const USER_PROMPT_SUBMIT: &str = include_str!("scripts/user-prompt-submit.sh");
 
+/// Permission request hook script (injection capable)
+pub const PERMISSION_REQUEST: &str = include_str!("scripts/permission-request.sh");
+
+/// Notification hook script
+pub const NOTIFICATION: &str = include_str!("scripts/notification.sh");
+
+/// Subagent stop hook script
+pub const SUBAGENT_STOP: &str = include_str!("scripts/subagent-stop.sh");
+
+/// Pre-compact hook script
+pub const PRE_COMPACT: &str = include_str!("scripts/pre-compact.sh");
+
+/// Session end hook script
+pub const SESSION_END: &str = include_str!("scripts/session-end.sh");
+
 /// All scripts with their target filenames
 pub const SCRIPTS: &[(&str, &str)] = &[
     ("pre-tool-use.sh", PRE_TOOL_USE),
@@ -33,6 +48,11 @@ pub const SCRIPTS: &[(&str, &str)] = &[
     ("vibes-hook-inject.sh", VIBES_HOOK_INJECT),
     ("session-start.sh", SESSION_START),
     ("user-prompt-submit.sh", USER_PROMPT_SUBMIT),
+    ("permission-request.sh", PERMISSION_REQUEST),
+    ("notification.sh", NOTIFICATION),
+    ("subagent-stop.sh", SUBAGENT_STOP),
+    ("pre-compact.sh", PRE_COMPACT),
+    ("session-end.sh", SESSION_END),
 ];
 
 #[cfg(test)]
@@ -70,8 +90,8 @@ mod tests {
 
     #[test]
     fn test_script_count() {
-        // 4 original + 3 new (session-start, user-prompt-submit, vibes-hook-inject)
-        assert_eq!(SCRIPTS.len(), 7);
+        // 7 original + 5 new (permission-request, notification, subagent-stop, pre-compact, session-end)
+        assert_eq!(SCRIPTS.len(), 12);
     }
 
     #[test]
