@@ -105,7 +105,7 @@ const firehoseRoute = createRoute({
 
 const assessmentRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/assessment',
+  path: '/groove/assessment',
   component: AssessmentPage,
 })
 
