@@ -28,8 +28,10 @@ else
 fi
 
 # Send event to Iggy via vibes CLI (fire-and-forget for event logging)
-if command -v vibes &>/dev/null; then
-    vibes event send --type hook --data "$EVENT_JSON" ${VIBES_SESSION_ID:+--session "$VIBES_SESSION_ID"} 2>/dev/null || true
+# Use VIBES_BIN if set (for development), otherwise fall back to PATH
+VIBES_CMD="${VIBES_BIN:-vibes}"
+if [ -x "$VIBES_CMD" ] || command -v "$VIBES_CMD" &>/dev/null; then
+    "$VIBES_CMD" event send --type hook --data "$EVENT_JSON" ${VIBES_SESSION_ID:+--session "$VIBES_SESSION_ID"} 2>/dev/null || true
 fi
 
 # TODO: Future enhancement - query vibes daemon for additionalContext response

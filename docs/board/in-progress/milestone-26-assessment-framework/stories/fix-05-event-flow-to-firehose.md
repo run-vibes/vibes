@@ -45,6 +45,10 @@ Injection hooks (`session_start`, `user_prompt_submit`) used `vibes-hook-inject.
 
 Only `stop` worked because it used `vibes-hook-send.sh` → `vibes event send` → Iggy.
 
+### 5. Hooks can't find vibes binary during development
+
+During development, `vibes` is not on PATH - it's in `./target/release/vibes` or `./target/debug/vibes`. The hook scripts checked `command -v vibes` which returned false, so they silently skipped sending events.
+
 ## Fixes
 
 ### Fix 1: Check `messages_count` for empty topics
@@ -97,6 +101,27 @@ if command -v vibes &>/dev/null; then
 fi
 ```
 
+### Fix 5: Set VIBES_BIN environment variable in PTY spawn
+
+When spawning Claude, the PTY backend now sets `VIBES_BIN` to the current executable path:
+
+```rust
+// In vibes-core/src/pty/backend.rs
+if let Ok(current_exe) = std::env::current_exe() {
+    cmd.env("VIBES_BIN", current_exe);
+}
+```
+
+Hook scripts now check for `VIBES_BIN` first:
+
+```bash
+# Use VIBES_BIN if set (for development), otherwise fall back to PATH
+VIBES_CMD="${VIBES_BIN:-vibes}"
+if [ -x "$VIBES_CMD" ] || command -v "$VIBES_CMD" &>/dev/null; then
+    "$VIBES_CMD" event send --type hook --data "$EVENT_JSON" ...
+fi
+```
+
 ## Tasks
 
 - [x] Trace hook installation in `vibes claude` (hooks work, HTTP API receives events)
@@ -107,7 +132,8 @@ fi
 - [x] Fix race condition: wait for HTTP + TCP readiness
 - [x] Fix CLI: wrap events in StoredEvent
 - [x] Fix injection hooks: use CLI instead of removed Unix socket
-- [x] Add E2E tests: `test_http_events_received_by_tcp_consumer`, `test_http_events_received_by_live_consumer`, `test_vibes_event_send_cli_to_consumer`, `test_injection_hook_events_flow_to_firehose`
+- [x] Fix development: set VIBES_BIN in PTY spawn for hook scripts to find binary
+- [x] Add E2E tests: `test_http_events_received_by_tcp_consumer`, `test_http_events_received_by_live_consumer`, `test_vibes_event_send_cli_to_consumer`, `test_injection_hook_events_flow_to_firehose`, `test_real_backend_sets_vibes_bin_env`
 
 ## Acceptance Criteria
 
