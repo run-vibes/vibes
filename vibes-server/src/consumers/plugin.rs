@@ -1,7 +1,8 @@
-//! Plugin event consumer for assessment processing.
+//! Plugin event consumer.
 //!
-//! This consumer polls events from the EventLog and routes them to plugins
-//! via `dispatch_raw_event`. Results are broadcast via AppState.
+//! This consumer polls events from the EventLog and routes them to all loaded
+//! plugins via `dispatch_raw_event`. Assessment results returned by plugins
+//! are broadcast via AppState for WebSocket clients.
 //!
 //! This is the bridge between the host's event stream and the plugin callback
 //! interface, working around TypeId mismatch issues with dynamic libraries.

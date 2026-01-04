@@ -22,8 +22,8 @@ use vibes_core::{
 };
 
 use consumers::{
-    ConsumerManager, assessment::start_plugin_event_consumer,
-    notification::start_notification_consumer, websocket::start_websocket_consumer,
+    ConsumerManager, notification::start_notification_consumer,
+    plugin::start_plugin_event_consumer, websocket::start_websocket_consumer,
 };
 
 pub use error::ServerError;
