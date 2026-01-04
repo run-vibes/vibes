@@ -14,8 +14,8 @@ Stories:
 - [ ] [feat-09-complete-hook-support](in-progress/milestone-26-assessment-framework/stories/feat-09-complete-hook-support.md)
 - [x] [fix-04-plugin-route-mounting](in-progress/milestone-26-assessment-framework/stories/fix-04-plugin-route-mounting.md)
 - [x] [fix-05-event-flow-to-firehose](in-progress/milestone-26-assessment-framework/stories/fix-05-event-flow-to-firehose.md)
-- [ ] [fix-08-assessment-multiselect](in-progress/milestone-26-assessment-framework/stories/fix-08-assessment-multiselect.md)
-- [ ] [refactor-07-plugin-lifecycle](in-progress/milestone-26-assessment-framework/stories/refactor-07-plugin-lifecycle.md)
+- [x] [fix-08-assessment-multiselect](in-progress/milestone-26-assessment-framework/stories/fix-08-assessment-multiselect.md)
+- [x] [refactor-07-plugin-lifecycle](in-progress/milestone-26-assessment-framework/stories/refactor-07-plugin-lifecycle.md)
 
 
 ---

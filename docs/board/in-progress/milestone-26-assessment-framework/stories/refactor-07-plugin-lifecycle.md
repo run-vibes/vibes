@@ -1,57 +1,46 @@
 ---
 created: 2026-01-03
-status: pending
+status: done
 ---
 
 # Refactor: Add Plugin `on_ready()` Lifecycle Method
 
-> **For Claude:** Use superpowers:brainstorming if design needs refinement.
-
 ## Problem
 
-The assessment consumer is started in `vibes-server/src/consumers/assessment.rs`, but it uses types from `vibes-groove`. This means:
+The assessment consumer was tightly coupled to `vibes-groove` internals. This meant:
 
-1. `vibes-server` depends on `vibes-groove` internals
-2. The groove plugin isn't self-contained
-3. Plugin enable/disable requires modifying server code
+1. `vibes-server` depended on `vibes-groove` internals
+2. The groove plugin wasn't self-contained
+3. Plugin enable/disable required modifying server code
 
 ## Solution
 
-Add a generic `on_ready()` lifecycle method to the `Plugin` trait. This method is called after the server is fully initialized, with runtime dependencies injected.
+Implemented a callback-based pattern where:
 
-```rust
-trait Plugin {
-    fn on_load(&mut self, ctx: &mut PluginContext) -> Result<(), PluginError>;
+1. Server's plugin consumer calls `dispatch_raw_event()` for each event
+2. This invokes `on_event()` on each loaded plugin
+3. Plugins return `PluginAssessmentResult` values
+4. Server broadcasts results to WebSocket clients
 
-    /// Called after server is fully initialized with runtime dependencies.
-    /// Default implementation does nothing.
-    fn on_ready(&mut self, runtime: &mut PluginRuntime) -> Result<(), PluginError> {
-        Ok(())
-    }
-}
+This is cleaner than having plugins manage their own event consumers - the server owns the event loop, plugins just respond to callbacks.
 
-struct PluginRuntime {
-    /// Event log for consuming/producing events
-    pub event_log: Arc<dyn EventLog<StoredEvent>>,
-    /// Shutdown signal
-    pub shutdown: CancellationToken,
-    /// Iggy manager (if available) for persistent storage
-    pub iggy_manager: Option<Arc<IggyManager>>,
-}
-```
+Also added:
+- `on_ready()` lifecycle method for post-initialization setup
+- `event_id` field to `PluginAssessmentResult` for UI timestamp display
+- Renamed `consumers/assessment.rs` → `consumers/plugin.rs` to reflect generic purpose
 
 ## Tasks
 
-- [ ] Add `PluginRuntime` struct to `vibes-plugin-api`
-- [ ] Add `on_ready()` method to `Plugin` trait with default no-op
-- [ ] Update `vibes-server` to call `on_ready()` after initialization
-- [ ] Move assessment consumer startup from `vibes-server` to `GroovePlugin.on_ready()`
-- [ ] Remove `vibes-groove` dependency from `vibes-server` consumer code
-- [ ] Update tests
+- [x] Add `on_ready()` method to `Plugin` trait with default no-op
+- [x] Implement callback pattern via `dispatch_raw_event()` → `on_event()`
+- [x] Add `event_id` to `PluginAssessmentResult` for UI display
+- [x] Remove `vibes-groove` dependency from `vibes-server`
+- [x] Rename `consumers/assessment.rs` → `consumers/plugin.rs`
+- [x] Update frontend to transform wire format correctly
 
 ## Acceptance Criteria
 
-- [ ] `vibes-server` has no knowledge of groove internals
-- [ ] Groove plugin starts its own assessment consumer in `on_ready()`
-- [ ] Existing functionality unchanged (assessment events still flow)
-- [ ] `just pre-commit` passes
+- [x] `vibes-server` has no knowledge of groove internals
+- [x] Events flow to plugins via callback pattern
+- [x] Existing functionality unchanged (assessment events still flow to UI)
+- [x] `just pre-commit` passes

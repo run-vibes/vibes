@@ -53,4 +53,33 @@ describe('extractTimestampFromUuidv7', () => {
 
     expect(epochResult.getTime()).toBe(0);
   });
+
+  it('handles UUIDs with -lightweight suffix', () => {
+    // Same timestamp as first test, with suffix
+    const uuid = '018d0d1a-5183-7000-8000-000000000000-lightweight';
+    const result = extractTimestampFromUuidv7(uuid);
+
+    expect(result.getTime()).toBe(1705321845123);
+  });
+
+  it('handles UUIDs with -checkpoint suffix', () => {
+    // Same timestamp as first test, with suffix
+    const uuid = '018d0d1a-5183-7000-8000-000000000000-checkpoint';
+    const result = extractTimestampFromUuidv7(uuid);
+
+    expect(result.getTime()).toBe(1705321845123);
+  });
+
+  it('extracts same timestamp from suffixed and unsuffixed UUIDs', () => {
+    const baseUuid = '018d0d1a-5183-7000-8000-000000000000';
+    const lightweightUuid = `${baseUuid}-lightweight`;
+    const checkpointUuid = `${baseUuid}-checkpoint`;
+
+    const baseResult = extractTimestampFromUuidv7(baseUuid);
+    const lightweightResult = extractTimestampFromUuidv7(lightweightUuid);
+    const checkpointResult = extractTimestampFromUuidv7(checkpointUuid);
+
+    expect(lightweightResult.getTime()).toBe(baseResult.getTime());
+    expect(checkpointResult.getTime()).toBe(baseResult.getTime());
+  });
 });
