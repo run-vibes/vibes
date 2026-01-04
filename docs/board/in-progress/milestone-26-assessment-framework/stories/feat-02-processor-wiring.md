@@ -1,6 +1,6 @@
 ---
 created: 2026-01-01
-status: in_progress
+status: done
 ---
 
 # Feature: Wire Assessment Processor Pipeline
@@ -91,9 +91,9 @@ cargo test -p vibes-groove circuit_breaker
 
 ## Acceptance Criteria
 
-- [ ] Events flow through LightweightDetector
-- [ ] CircuitBreaker receives signals and can trigger interventions
-- [ ] SessionBuffer collects events per session
-- [ ] CheckpointManager triggers at appropriate times
-- [ ] All existing tests still pass
-- [ ] New integration test validates full pipeline
+- [x] Events flow through LightweightDetector
+- [x] CircuitBreaker receives signals and can trigger interventions
+- [x] SessionBuffer collects events per session
+- [x] CheckpointManager triggers at appropriate times
+- [x] All existing tests still pass
+- [x] New integration test validates full pipeline
