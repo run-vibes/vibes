@@ -6,6 +6,7 @@
 
 use regex::Regex;
 use tracing::trace;
+use uuid::Uuid;
 use vibes_core::{ClaudeEvent, VibesEvent};
 
 use super::config::PatternConfig;
@@ -159,10 +160,17 @@ impl LightweightDetector {
     ///
     /// Returns `Some(LightweightEvent)` if the event is relevant for assessment,
     /// or `None` if the event should be ignored.
+    ///
+    /// # Arguments
+    ///
+    /// * `event` - The VibesEvent to process
+    /// * `state` - Mutable session state for EMA tracking
+    /// * `triggering_event_id` - The ID of the StoredEvent that triggered this assessment
     pub fn process(
         &self,
         event: &VibesEvent,
         state: &mut SessionState,
+        triggering_event_id: Uuid,
     ) -> Option<LightweightEvent> {
         // Extract text content and session ID from the event
         let (session_id, text, signals) = self.extract_event_data(event)?;
@@ -192,6 +200,7 @@ impl LightweightDetector {
             signals: all_signals,
             frustration_ema: state.frustration_ema,
             success_ema: state.success_ema,
+            triggering_event_id,
         };
 
         // Increment message index for next event
@@ -359,6 +368,11 @@ mod tests {
     use super::*;
     use vibes_core::InputSource;
 
+    /// Generate a test triggering event ID.
+    fn test_event_id() -> Uuid {
+        Uuid::now_v7()
+    }
+
     fn make_user_input(session_id: &str, content: &str) -> VibesEvent {
         // UserInput is a top-level VibesEvent variant, not nested under ClaudeEvent
         VibesEvent::UserInput {
@@ -400,7 +414,9 @@ mod tests {
 
         // Test negative pattern matching
         let event = make_user_input("sess-1", "This is broken and doesn't work");
-        let result = detector.process(&event, &mut state).unwrap();
+        let result = detector
+            .process(&event, &mut state, test_event_id())
+            .unwrap();
 
         // Should detect negative patterns
         let negative_signals: Vec<_> = result
@@ -421,7 +437,9 @@ mod tests {
 
         // Test positive pattern matching
         let event = make_user_input("sess-1", "Thank you, that's perfect!");
-        let result = detector.process(&event, &mut state).unwrap();
+        let result = detector
+            .process(&event, &mut state, test_event_id())
+            .unwrap();
 
         // Should detect positive patterns
         let positive_signals: Vec<_> = result
@@ -442,7 +460,9 @@ mod tests {
 
         // Test tool failure detection (is_error=true means failure)
         let event = make_tool_result("sess-1", "Bash", true);
-        let result = detector.process(&event, &mut state).unwrap();
+        let result = detector
+            .process(&event, &mut state, test_event_id())
+            .unwrap();
 
         // Should detect tool failure
         let tool_failure_signals: Vec<_> = result
@@ -465,7 +485,9 @@ mod tests {
 
         // First event with negative patterns
         let event = make_user_input("sess-1", "This is broken!");
-        let result = detector.process(&event, &mut state).unwrap();
+        let result = detector
+            .process(&event, &mut state, test_event_id())
+            .unwrap();
 
         // EMA should increase from 0
         assert!(
@@ -476,7 +498,9 @@ mod tests {
 
         // Second event without negative patterns
         let event = make_user_input("sess-1", "Just a normal message");
-        let result = detector.process(&event, &mut state).unwrap();
+        let result = detector
+            .process(&event, &mut state, test_event_id())
+            .unwrap();
 
         // EMA should decay towards 0 (neutral message has 0 frustration contribution)
         // With alpha=0.5: new_ema = 0.5 * 0.0 + 0.5 * prev_ema = prev_ema/2
@@ -500,13 +524,13 @@ mod tests {
 
         // Start with a frustrating event
         let event = make_user_input("sess-1", "Error! This is broken!");
-        let _ = detector.process(&event, &mut state);
+        let _ = detector.process(&event, &mut state, test_event_id());
         let initial_ema = state.frustration_ema;
 
         // Process neutral events - EMA should decay
         for i in 0..5 {
             let event = make_user_input("sess-1", &format!("Neutral message {i}"));
-            let _ = detector.process(&event, &mut state);
+            let _ = detector.process(&event, &mut state, test_event_id());
         }
 
         assert!(
@@ -530,7 +554,7 @@ mod tests {
         ];
 
         for event in events {
-            let result = detector.process(&event, &mut state);
+            let result = detector.process(&event, &mut state, test_event_id());
             assert!(
                 result.is_some(),
                 "Should emit event for relevant VibesEvent"
@@ -552,7 +576,7 @@ mod tests {
             name: None,
         };
 
-        let result = detector.process(&event, &mut state);
+        let result = detector.process(&event, &mut state, test_event_id());
         assert!(result.is_none(), "Should ignore SessionCreated event");
 
         // State should not change
@@ -569,7 +593,7 @@ mod tests {
 
         // Process event for session 1
         let event = make_user_input("sess-1", "This is broken!");
-        let _ = detector.process(&event, &mut state1);
+        let _ = detector.process(&event, &mut state1, test_event_id());
 
         // Session 1 should have frustration, session 2 should not
         assert!(state1.frustration_ema > 0.0);
@@ -602,7 +626,9 @@ mod tests {
 
         // Should match custom negative pattern
         let event = make_user_input("sess-1", "custom_error occurred");
-        let result = detector.process(&event, &mut state).unwrap();
+        let result = detector
+            .process(&event, &mut state, test_event_id())
+            .unwrap();
 
         let has_negative = result
             .signals
@@ -612,7 +638,9 @@ mod tests {
 
         // Should match custom positive pattern
         let event = make_user_input("sess-1", "custom_success achieved");
-        let result = detector.process(&event, &mut state).unwrap();
+        let result = detector
+            .process(&event, &mut state, test_event_id())
+            .unwrap();
 
         let has_positive = result
             .signals
@@ -628,7 +656,9 @@ mod tests {
 
         // Message with both positive and negative patterns
         let event = make_user_input("sess-1", "Thanks for the help but it's still broken");
-        let result = detector.process(&event, &mut state).unwrap();
+        let result = detector
+            .process(&event, &mut state, test_event_id())
+            .unwrap();
 
         let has_positive = result
             .signals
@@ -650,7 +680,9 @@ mod tests {
 
         // is_error=false means successful tool execution
         let event = make_tool_result("sess-1", "Bash", false);
-        let result = detector.process(&event, &mut state).unwrap();
+        let result = detector
+            .process(&event, &mut state, test_event_id())
+            .unwrap();
 
         // Successful tool should not add a tool failure signal
         let tool_failures: Vec<_> = result

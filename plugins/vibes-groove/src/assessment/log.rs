@@ -129,6 +129,7 @@ mod tests {
             signals: vec![],
             frustration_ema: 0.0,
             success_ema: 1.0,
+            triggering_event_id: uuid::Uuid::now_v7(),
         })
     }
 

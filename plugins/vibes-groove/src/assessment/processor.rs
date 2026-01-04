@@ -240,9 +240,8 @@ impl AssessmentProcessor {
         let mut states = self.session_states.write().await;
         let state = states.entry(session_id).or_insert_with(SessionState::new);
 
-        // Run the detector
-        // TODO: Pass stored.event_id to detector for triggering_event_id (Task 2)
-        if let Some(lightweight_event) = self.detector.process(event, state) {
+        // Run the detector with the triggering event ID for attribution
+        if let Some(lightweight_event) = self.detector.process(event, state, stored.event_id) {
             trace!(
                 session_id = %lightweight_event.context.session_id,
                 message_idx = lightweight_event.message_idx,
@@ -352,6 +351,7 @@ mod tests {
             signals: vec![],
             frustration_ema: 0.0,
             success_ema: 1.0,
+            triggering_event_id: uuid::Uuid::now_v7(),
         })
     }
 

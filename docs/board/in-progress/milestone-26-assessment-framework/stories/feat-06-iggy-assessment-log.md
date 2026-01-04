@@ -1,6 +1,6 @@
 ---
 created: 2026-01-03
-status: backlog
+status: in_progress
 ---
 
 # Feature: Wire IggyAssessmentLog with Firehose
