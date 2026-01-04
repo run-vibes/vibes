@@ -14,7 +14,7 @@ use axum::{
 
 use crate::AppState;
 use crate::middleware::auth_middleware;
-use crate::ws::{firehose_ws, ws_handler};
+use crate::ws::{assessment_ws, firehose_ws, ws_handler};
 
 pub use api::{
     AuthIdentityResponse, AuthStatusResponse, HealthResponse, SessionListResponse, SessionSummary,
@@ -41,6 +41,7 @@ pub fn create_router(state: Arc<AppState>) -> Router {
         .route("/api/push/subscriptions", get(push::list_subscriptions))
         .route("/ws", get(ws_handler))
         .route("/ws/firehose", get(firehose_ws))
+        .route("/ws/assessment", get(assessment_ws))
         .layer(middleware::from_fn(auth_middleware))
         .layer(Extension(auth_layer))
         // Plugin routes (checked before static fallback)

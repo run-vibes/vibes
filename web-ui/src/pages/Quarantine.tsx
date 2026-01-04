@@ -1,5 +1,6 @@
 // web-ui/src/pages/Quarantine.tsx
 import { useState } from 'react';
+import { Link, useLocation } from '@tanstack/react-router';
 import { Text, Button } from '@vibes/design-system';
 import {
   useQuarantineList,
@@ -9,6 +10,32 @@ import {
   type QuarantinedLearningSummary,
 } from '../hooks/useGroove';
 import './Quarantine.css';
+
+// ============================================================================
+// Groove Navigation Component
+// ============================================================================
+
+function GrooveNav() {
+  const location = useLocation();
+  const isAssessment = location.pathname === '/groove/assessment';
+
+  return (
+    <nav className="groove-nav">
+      <Link
+        to="/groove"
+        className={`groove-nav-link ${!isAssessment ? 'active' : ''}`}
+      >
+        Security
+      </Link>
+      <Link
+        to="/groove/assessment"
+        className={`groove-nav-link ${isAssessment ? 'active' : ''}`}
+      >
+        Assessment
+      </Link>
+    </nav>
+  );
+}
 
 // ============================================================================
 // Stats Card Component
@@ -184,8 +211,8 @@ export function QuarantinePage() {
   return (
     <div className="quarantine-page">
       <div className="quarantine-header">
-        <h1>Groove Security</h1>
-        <Text intensity="dim">Manage quarantined learnings and security policy</Text>
+        <h1>Groove</h1>
+        <GrooveNav />
       </div>
 
       {/* Stats Grid */}

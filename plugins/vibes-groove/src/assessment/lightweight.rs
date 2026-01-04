@@ -6,6 +6,8 @@
 
 use regex::Regex;
 use tracing::trace;
+use uuid::Uuid;
+use vibes_core::hooks::HookEvent;
 use vibes_core::{ClaudeEvent, VibesEvent};
 
 use super::config::PatternConfig;
@@ -159,10 +161,17 @@ impl LightweightDetector {
     ///
     /// Returns `Some(LightweightEvent)` if the event is relevant for assessment,
     /// or `None` if the event should be ignored.
+    ///
+    /// # Arguments
+    ///
+    /// * `event` - The VibesEvent to process
+    /// * `state` - Mutable session state for EMA tracking
+    /// * `triggering_event_id` - The ID of the StoredEvent that triggered this assessment
     pub fn process(
         &self,
         event: &VibesEvent,
         state: &mut SessionState,
+        triggering_event_id: Uuid,
     ) -> Option<LightweightEvent> {
         // Extract text content and session ID from the event
         let (session_id, text, signals) = self.extract_event_data(event)?;
@@ -192,6 +201,7 @@ impl LightweightDetector {
             signals: all_signals,
             frustration_ema: state.frustration_ema,
             success_ema: state.success_ema,
+            triggering_event_id,
         };
 
         // Increment message index for next event
@@ -263,6 +273,31 @@ impl LightweightDetector {
                     message.clone(),
                     signals,
                 ))
+            }
+
+            // Hook events from Claude Code - process like their equivalent VibesEvent types
+            VibesEvent::Hook {
+                event: HookEvent::UserPromptSubmit(data),
+                ..
+            } => data
+                .session_id
+                .as_ref()
+                .map(|sid| (SessionId::from(sid.as_str()), data.prompt.clone(), vec![])),
+
+            // Hook tool results - check for failures
+            VibesEvent::Hook {
+                event: HookEvent::PostToolUse(data),
+                ..
+            } => {
+                let session_id = data.session_id.as_ref()?;
+                let signals = if !data.success {
+                    vec![LightweightSignal::ToolFailure {
+                        tool_name: data.tool_name.clone(),
+                    }]
+                } else {
+                    vec![]
+                };
+                Some((SessionId::from(session_id.as_str()), String::new(), signals))
             }
 
             // Ignore other event types for lightweight detection
@@ -358,6 +393,12 @@ impl std::fmt::Debug for LightweightDetector {
 mod tests {
     use super::*;
     use vibes_core::InputSource;
+    use vibes_core::hooks::{PostToolUseData, UserPromptSubmitData};
+
+    /// Generate a test triggering event ID.
+    fn test_event_id() -> Uuid {
+        Uuid::now_v7()
+    }
 
     fn make_user_input(session_id: &str, content: &str) -> VibesEvent {
         // UserInput is a top-level VibesEvent variant, not nested under ClaudeEvent
@@ -400,7 +441,9 @@ mod tests {
 
         // Test negative pattern matching
         let event = make_user_input("sess-1", "This is broken and doesn't work");
-        let result = detector.process(&event, &mut state).unwrap();
+        let result = detector
+            .process(&event, &mut state, test_event_id())
+            .unwrap();
 
         // Should detect negative patterns
         let negative_signals: Vec<_> = result
@@ -421,7 +464,9 @@ mod tests {
 
         // Test positive pattern matching
         let event = make_user_input("sess-1", "Thank you, that's perfect!");
-        let result = detector.process(&event, &mut state).unwrap();
+        let result = detector
+            .process(&event, &mut state, test_event_id())
+            .unwrap();
 
         // Should detect positive patterns
         let positive_signals: Vec<_> = result
@@ -442,7 +487,9 @@ mod tests {
 
         // Test tool failure detection (is_error=true means failure)
         let event = make_tool_result("sess-1", "Bash", true);
-        let result = detector.process(&event, &mut state).unwrap();
+        let result = detector
+            .process(&event, &mut state, test_event_id())
+            .unwrap();
 
         // Should detect tool failure
         let tool_failure_signals: Vec<_> = result
@@ -465,7 +512,9 @@ mod tests {
 
         // First event with negative patterns
         let event = make_user_input("sess-1", "This is broken!");
-        let result = detector.process(&event, &mut state).unwrap();
+        let result = detector
+            .process(&event, &mut state, test_event_id())
+            .unwrap();
 
         // EMA should increase from 0
         assert!(
@@ -476,7 +525,9 @@ mod tests {
 
         // Second event without negative patterns
         let event = make_user_input("sess-1", "Just a normal message");
-        let result = detector.process(&event, &mut state).unwrap();
+        let result = detector
+            .process(&event, &mut state, test_event_id())
+            .unwrap();
 
         // EMA should decay towards 0 (neutral message has 0 frustration contribution)
         // With alpha=0.5: new_ema = 0.5 * 0.0 + 0.5 * prev_ema = prev_ema/2
@@ -500,13 +551,13 @@ mod tests {
 
         // Start with a frustrating event
         let event = make_user_input("sess-1", "Error! This is broken!");
-        let _ = detector.process(&event, &mut state);
+        let _ = detector.process(&event, &mut state, test_event_id());
         let initial_ema = state.frustration_ema;
 
         // Process neutral events - EMA should decay
         for i in 0..5 {
             let event = make_user_input("sess-1", &format!("Neutral message {i}"));
-            let _ = detector.process(&event, &mut state);
+            let _ = detector.process(&event, &mut state, test_event_id());
         }
 
         assert!(
@@ -530,7 +581,7 @@ mod tests {
         ];
 
         for event in events {
-            let result = detector.process(&event, &mut state);
+            let result = detector.process(&event, &mut state, test_event_id());
             assert!(
                 result.is_some(),
                 "Should emit event for relevant VibesEvent"
@@ -552,7 +603,7 @@ mod tests {
             name: None,
         };
 
-        let result = detector.process(&event, &mut state);
+        let result = detector.process(&event, &mut state, test_event_id());
         assert!(result.is_none(), "Should ignore SessionCreated event");
 
         // State should not change
@@ -569,7 +620,7 @@ mod tests {
 
         // Process event for session 1
         let event = make_user_input("sess-1", "This is broken!");
-        let _ = detector.process(&event, &mut state1);
+        let _ = detector.process(&event, &mut state1, test_event_id());
 
         // Session 1 should have frustration, session 2 should not
         assert!(state1.frustration_ema > 0.0);
@@ -602,7 +653,9 @@ mod tests {
 
         // Should match custom negative pattern
         let event = make_user_input("sess-1", "custom_error occurred");
-        let result = detector.process(&event, &mut state).unwrap();
+        let result = detector
+            .process(&event, &mut state, test_event_id())
+            .unwrap();
 
         let has_negative = result
             .signals
@@ -612,7 +665,9 @@ mod tests {
 
         // Should match custom positive pattern
         let event = make_user_input("sess-1", "custom_success achieved");
-        let result = detector.process(&event, &mut state).unwrap();
+        let result = detector
+            .process(&event, &mut state, test_event_id())
+            .unwrap();
 
         let has_positive = result
             .signals
@@ -628,7 +683,9 @@ mod tests {
 
         // Message with both positive and negative patterns
         let event = make_user_input("sess-1", "Thanks for the help but it's still broken");
-        let result = detector.process(&event, &mut state).unwrap();
+        let result = detector
+            .process(&event, &mut state, test_event_id())
+            .unwrap();
 
         let has_positive = result
             .signals
@@ -650,7 +707,9 @@ mod tests {
 
         // is_error=false means successful tool execution
         let event = make_tool_result("sess-1", "Bash", false);
-        let result = detector.process(&event, &mut state).unwrap();
+        let result = detector
+            .process(&event, &mut state, test_event_id())
+            .unwrap();
 
         // Successful tool should not add a tool failure signal
         let tool_failures: Vec<_> = result
@@ -661,6 +720,159 @@ mod tests {
         assert!(
             tool_failures.is_empty(),
             "Successful tool should not add failure signal"
+        );
+    }
+
+    // === Hook Event Tests ===
+    // These test that hook events from Claude Code are processed like their
+    // equivalent VibesEvent types, allowing assessment of hook-captured sessions.
+
+    fn make_hook_user_prompt(session_id: &str, prompt: &str) -> VibesEvent {
+        VibesEvent::Hook {
+            session_id: Some(session_id.to_string()),
+            event: HookEvent::UserPromptSubmit(UserPromptSubmitData {
+                session_id: Some(session_id.to_string()),
+                prompt: prompt.to_string(),
+            }),
+        }
+    }
+
+    fn make_hook_tool_result(session_id: &str, tool_name: &str, success: bool) -> VibesEvent {
+        VibesEvent::Hook {
+            session_id: Some(session_id.to_string()),
+            event: HookEvent::PostToolUse(PostToolUseData {
+                tool_name: tool_name.to_string(),
+                output: if success {
+                    "Success".to_string()
+                } else {
+                    "Error: tool failed".to_string()
+                },
+                success,
+                duration_ms: 100,
+                session_id: Some(session_id.to_string()),
+            }),
+        }
+    }
+
+    #[test]
+    fn test_hook_user_prompt_processed_like_user_input() {
+        let detector = LightweightDetector::with_default_patterns();
+        let mut state = SessionState::new();
+
+        // Hook UserPromptSubmit should be processed like UserInput
+        let event = make_hook_user_prompt("sess-1", "This is broken and doesn't work");
+        let result = detector.process(&event, &mut state, test_event_id());
+
+        // Should return Some (not None) - hook events should be processed
+        assert!(
+            result.is_some(),
+            "Hook UserPromptSubmit should be processed, not ignored"
+        );
+
+        let result = result.unwrap();
+        // Should detect negative patterns in the prompt
+        let negative_signals: Vec<_> = result
+            .signals
+            .iter()
+            .filter(|s| matches!(s, LightweightSignal::Negative { .. }))
+            .collect();
+        assert!(
+            !negative_signals.is_empty(),
+            "Should detect negative patterns in hook prompt"
+        );
+    }
+
+    #[test]
+    fn test_hook_user_prompt_updates_ema() {
+        let detector = LightweightDetector::with_default_patterns();
+        let mut state = SessionState::new();
+
+        // Process a frustrating prompt via hook
+        let event = make_hook_user_prompt("sess-1", "Error! This is broken!");
+        let result = detector
+            .process(&event, &mut state, test_event_id())
+            .expect("Hook event should be processed");
+
+        // EMA should increase
+        assert!(
+            result.frustration_ema > 0.0,
+            "Frustration EMA should increase from hook event"
+        );
+        assert_eq!(result.message_idx, 0, "Message index should be set");
+    }
+
+    #[test]
+    fn test_hook_tool_failure_detected() {
+        let detector = LightweightDetector::with_default_patterns();
+        let mut state = SessionState::new();
+
+        // Hook PostToolUse with success=false should generate ToolFailure signal
+        let event = make_hook_tool_result("sess-1", "Bash", false);
+        let result = detector.process(&event, &mut state, test_event_id());
+
+        assert!(
+            result.is_some(),
+            "Hook PostToolUse should be processed, not ignored"
+        );
+
+        let result = result.unwrap();
+        let tool_failures: Vec<_> = result
+            .signals
+            .iter()
+            .filter(|s| matches!(s, LightweightSignal::ToolFailure { .. }))
+            .collect();
+        assert_eq!(
+            tool_failures.len(),
+            1,
+            "Should detect tool failure from hook event"
+        );
+    }
+
+    #[test]
+    fn test_hook_tool_success_no_failure_signal() {
+        let detector = LightweightDetector::with_default_patterns();
+        let mut state = SessionState::new();
+
+        // Hook PostToolUse with success=true should NOT generate ToolFailure signal
+        let event = make_hook_tool_result("sess-1", "Bash", true);
+        let result = detector.process(&event, &mut state, test_event_id());
+
+        assert!(
+            result.is_some(),
+            "Hook PostToolUse should be processed, not ignored"
+        );
+
+        let result = result.unwrap();
+        let tool_failures: Vec<_> = result
+            .signals
+            .iter()
+            .filter(|s| matches!(s, LightweightSignal::ToolFailure { .. }))
+            .collect();
+        assert!(
+            tool_failures.is_empty(),
+            "Successful hook tool should not add failure signal"
+        );
+    }
+
+    #[test]
+    fn test_hook_positive_patterns_detected() {
+        let detector = LightweightDetector::with_default_patterns();
+        let mut state = SessionState::new();
+
+        // Hook UserPromptSubmit with positive patterns
+        let event = make_hook_user_prompt("sess-1", "Thank you, that's perfect!");
+        let result = detector
+            .process(&event, &mut state, test_event_id())
+            .expect("Hook event should be processed");
+
+        let positive_signals: Vec<_> = result
+            .signals
+            .iter()
+            .filter(|s| matches!(s, LightweightSignal::Positive { .. }))
+            .collect();
+        assert!(
+            !positive_signals.is_empty(),
+            "Should detect positive patterns in hook prompt"
         );
     }
 }

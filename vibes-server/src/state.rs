@@ -9,6 +9,7 @@ use vibes_core::{
     TunnelManager, VapidKeyManager, VibesEvent,
     pty::{PtyConfig, PtyManager},
 };
+use vibes_groove::assessment::AssessmentLog;
 use vibes_iggy::{
     EventLog, IggyConfig, IggyEventLog, IggyManager, InMemoryEventLog, Offset, run_preflight_checks,
 };
@@ -55,6 +56,8 @@ pub struct AppState {
     pty_broadcaster: broadcast::Sender<PtyEvent>,
     /// Iggy manager for subprocess lifecycle (optional, only when using Iggy storage)
     iggy_manager: Option<Arc<IggyManager>>,
+    /// Assessment log for pattern detection events (set after consumer starts)
+    assessment_log: Arc<RwLock<Option<Arc<dyn AssessmentLog>>>>,
 }
 
 impl AppState {
@@ -83,6 +86,7 @@ impl AppState {
             subscriptions: None,
             pty_manager,
             iggy_manager: None,
+            assessment_log: Arc::new(RwLock::new(None)),
         }
     }
 
@@ -110,6 +114,7 @@ impl AppState {
             subscriptions: None,
             pty_manager,
             iggy_manager: None,
+            assessment_log: Arc::new(RwLock::new(None)),
         }
     }
 
@@ -148,6 +153,7 @@ impl AppState {
             subscriptions: None,
             pty_manager,
             iggy_manager,
+            assessment_log: Arc::new(RwLock::new(None)),
         })
     }
 
@@ -182,6 +188,7 @@ impl AppState {
             subscriptions: None,
             pty_manager,
             iggy_manager,
+            assessment_log: Arc::new(RwLock::new(None)),
         })
     }
 
@@ -277,6 +284,7 @@ impl AppState {
             subscriptions: None,
             pty_manager,
             iggy_manager: None,
+            assessment_log: Arc::new(RwLock::new(None)),
         }
     }
 
@@ -303,6 +311,7 @@ impl AppState {
             subscriptions: None,
             pty_manager,
             iggy_manager: None,
+            assessment_log: Arc::new(RwLock::new(None)),
         }
     }
 
@@ -311,6 +320,29 @@ impl AppState {
     pub fn with_iggy_manager(mut self, manager: Arc<IggyManager>) -> Self {
         self.iggy_manager = Some(manager);
         self
+    }
+
+    /// Get the Iggy manager if available.
+    ///
+    /// Returns None if Iggy is not being used for persistence.
+    pub fn iggy_manager(&self) -> Option<Arc<IggyManager>> {
+        self.iggy_manager.clone()
+    }
+
+    /// Set the assessment log after consumer starts.
+    ///
+    /// This is called during server startup after the assessment consumer
+    /// successfully creates the log. The log is then available for the
+    /// WebSocket endpoint to subscribe to.
+    pub async fn set_assessment_log(&self, log: Arc<dyn AssessmentLog>) {
+        *self.assessment_log.write().await = Some(log);
+    }
+
+    /// Get the assessment log if available.
+    ///
+    /// Returns None if the assessment consumer hasn't started or failed to start.
+    pub async fn assessment_log(&self) -> Option<Arc<dyn AssessmentLog>> {
+        self.assessment_log.read().await.clone()
     }
 
     /// Gracefully shutdown the server, stopping all managed subprocesses.

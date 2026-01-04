@@ -400,18 +400,27 @@ pub struct LightweightEvent {
 
     /// Exponential moving average of success indicators (0.0 to 1.0).
     pub success_ema: f64,
+
+    /// Event ID of the VibesEvent that triggered this assessment.
+    /// Used to link back to the original event in the main firehose.
+    pub triggering_event_id: uuid::Uuid,
 }
 
 impl LightweightEvent {
     /// Create a new lightweight event.
     #[must_use]
-    pub fn new(context: AssessmentContext, message_idx: u32) -> Self {
+    pub fn new(
+        context: AssessmentContext,
+        message_idx: u32,
+        triggering_event_id: uuid::Uuid,
+    ) -> Self {
         Self {
             context,
             message_idx,
             signals: Vec::new(),
             frustration_ema: 0.0,
             success_ema: 0.0,
+            triggering_event_id,
         }
     }
 
@@ -538,6 +547,10 @@ pub struct MediumEvent {
 
     /// IDs of learnings that were referenced/used in this segment.
     pub learnings_referenced: Vec<LearningId>,
+
+    /// Event IDs of the VibesEvents in this segment.
+    /// Used to link back to the original events in the main firehose.
+    pub event_ids_in_segment: Vec<Uuid>,
 }
 
 impl MediumEvent {
@@ -557,7 +570,15 @@ impl MediumEvent {
             token_metrics: TokenMetrics::default(),
             segment_score: 0.0,
             learnings_referenced: Vec::new(),
+            event_ids_in_segment: Vec::new(),
         }
+    }
+
+    /// Set the event IDs in this segment.
+    #[must_use]
+    pub fn with_event_ids(mut self, event_ids: Vec<Uuid>) -> Self {
+        self.event_ids_in_segment = event_ids;
+        self
     }
 
     /// Set the summary.
@@ -1059,7 +1080,7 @@ mod tests {
     #[test]
     fn test_lightweight_event_serialization_roundtrip() {
         let ctx = AssessmentContext::new("lightweight-test");
-        let event = LightweightEvent::new(ctx, 5)
+        let event = LightweightEvent::new(ctx, 5, Uuid::now_v7())
             .with_signal(LightweightSignal::Negative {
                 pattern: "ugh".into(),
                 confidence: 0.7,
@@ -1270,7 +1291,8 @@ mod tests {
 
         // Lightweight
         let lightweight_ctx = AssessmentContext::new(session_id);
-        let lightweight = AssessmentEvent::Lightweight(LightweightEvent::new(lightweight_ctx, 0));
+        let lightweight =
+            AssessmentEvent::Lightweight(LightweightEvent::new(lightweight_ctx, 0, Uuid::now_v7()));
         assert_eq!(lightweight.session_id().as_str(), session_id);
 
         // Medium
@@ -1293,7 +1315,8 @@ mod tests {
         // Lightweight
         let lightweight_ctx = AssessmentContext::new("test");
         let lightweight_event_id = lightweight_ctx.event_id;
-        let lightweight = AssessmentEvent::Lightweight(LightweightEvent::new(lightweight_ctx, 0));
+        let lightweight =
+            AssessmentEvent::Lightweight(LightweightEvent::new(lightweight_ctx, 0, Uuid::now_v7()));
         assert_eq!(*lightweight.event_id(), lightweight_event_id);
 
         // Medium
@@ -1316,7 +1339,7 @@ mod tests {
     #[test]
     fn test_assessment_event_tagged_serialization() {
         let ctx = AssessmentContext::new("tagged-test");
-        let event = AssessmentEvent::Lightweight(LightweightEvent::new(ctx, 0));
+        let event = AssessmentEvent::Lightweight(LightweightEvent::new(ctx, 0, Uuid::now_v7()));
 
         let json = serde_json::to_string(&event).expect("should serialize");
         assert!(json.contains("\"tier\":\"lightweight\""));

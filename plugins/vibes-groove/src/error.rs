@@ -38,6 +38,10 @@ pub enum GrooveError {
     #[error("Embedding error: {0}")]
     Embedding(String),
 
+    /// Assessment system error (Iggy communication, etc.)
+    #[error("Assessment error: {0}")]
+    Assessment(String),
+
     /// IO operation failed
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),

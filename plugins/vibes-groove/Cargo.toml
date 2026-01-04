@@ -15,7 +15,7 @@ crate-type = ["rlib", "cdylib"]
 cozo = { version = "0.7", default-features = false, features = ["storage-rocksdb", "rayon"] }
 
 # Message streaming (assessment event log)
-iggy = "0.6"
+iggy = "0.8"
 vibes-iggy = { path = "../../vibes-iggy" }
 
 # Async

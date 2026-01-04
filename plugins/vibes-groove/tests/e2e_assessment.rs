@@ -128,7 +128,7 @@ impl E2ETestHarness {
         // 1. Lightweight detection (requires session state)
         let lightweight = if let Some(ref sid) = session_id {
             let state = self.session_states.entry(sid.clone()).or_default();
-            self.detector.process(event, state)
+            self.detector.process(event, state, uuid::Uuid::now_v7())
         } else {
             None
         };
@@ -657,6 +657,7 @@ async fn e2e_processor_stores_and_broadcasts_events() {
         signals: vec![],
         frustration_ema: 0.0,
         success_ema: 1.0,
+        triggering_event_id: uuid::Uuid::now_v7(),
     });
 
     processor.submit(event.clone());
@@ -699,6 +700,7 @@ async fn e2e_broadcast_low_latency_multiple_subscribers() {
         signals: vec![],
         frustration_ema: 0.0,
         success_ema: 1.0,
+        triggering_event_id: uuid::Uuid::now_v7(),
     });
 
     // Submit and measure latency
@@ -740,6 +742,7 @@ async fn e2e_late_subscriber_receives_new_events() {
         signals: vec![],
         frustration_ema: 0.0,
         success_ema: 1.0,
+        triggering_event_id: uuid::Uuid::now_v7(),
     });
     processor.submit(event1);
     tokio::time::sleep(Duration::from_millis(50)).await;
@@ -754,6 +757,7 @@ async fn e2e_late_subscriber_receives_new_events() {
         signals: vec![],
         frustration_ema: 0.0,
         success_ema: 1.0,
+        triggering_event_id: uuid::Uuid::now_v7(),
     });
     processor.submit(event2);
 

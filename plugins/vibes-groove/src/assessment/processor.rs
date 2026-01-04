@@ -15,6 +15,7 @@ use super::lightweight::{LightweightDetector, LightweightDetectorConfig, Session
 use super::session_buffer::{SessionBuffer, SessionBufferConfig};
 use super::types::{MediumEvent, SessionId};
 use super::{AssessmentConfig, AssessmentEvent, AssessmentLog};
+use vibes_core::StoredEvent;
 
 /// Messages sent to the background writer task.
 #[derive(Debug)]
@@ -209,13 +210,14 @@ impl AssessmentProcessor {
     /// - CircuitBreaker for intervention decisions (B2)
     /// - SessionBuffer for event collection (B3)
     /// - CheckpointManager for checkpoint triggers (B4)
-    pub async fn process_event(&self, event: &vibes_core::VibesEvent) {
+    pub async fn process_event(&self, stored: &StoredEvent) {
         if !self.is_enabled() {
             trace!("Assessment disabled, skipping event processing");
             return;
         }
 
-        trace!(event = ?event, "Processing VibesEvent for assessment");
+        let event = &stored.event;
+        trace!(event = ?event, event_id = %stored.event_id, "Processing VibesEvent for assessment");
 
         // Get session ID (required for all pipeline stages)
         let session_id = match Self::extract_session_id(event) {
@@ -238,8 +240,8 @@ impl AssessmentProcessor {
         let mut states = self.session_states.write().await;
         let state = states.entry(session_id).or_insert_with(SessionState::new);
 
-        // Run the detector
-        if let Some(lightweight_event) = self.detector.process(event, state) {
+        // Run the detector with the triggering event ID for attribution
+        if let Some(lightweight_event) = self.detector.process(event, state, stored.event_id) {
             trace!(
                 session_id = %lightweight_event.context.session_id,
                 message_idx = lightweight_event.message_idx,
@@ -349,6 +351,7 @@ mod tests {
             signals: vec![],
             frustration_ema: 0.0,
             success_ema: 1.0,
+            triggering_event_id: uuid::Uuid::now_v7(),
         })
     }
 
@@ -478,13 +481,13 @@ mod tests {
 
     // ==================== process_event Tests ====================
 
-    fn make_text_delta(session_id: &str, text: &str) -> VibesEvent {
-        VibesEvent::Claude {
+    fn make_text_delta(session_id: &str, text: &str) -> StoredEvent {
+        StoredEvent::new(VibesEvent::Claude {
             session_id: session_id.to_string(),
             event: ClaudeEvent::TextDelta {
                 text: text.to_string(),
             },
-        }
+        })
     }
 
     #[tokio::test]

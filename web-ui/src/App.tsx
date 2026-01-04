@@ -12,6 +12,7 @@ import { Sessions } from './pages/Sessions'
 import { Session } from './pages/Session'
 import { QuarantinePage } from './pages/Quarantine'
 import { FirehosePage } from './pages/Firehose'
+import { AssessmentPage } from './pages/Assessment'
 import { DebugPage } from './pages/Debug'
 import { StreamsPage } from './pages/Streams'
 import { SettingsPage } from './pages/Settings'
@@ -102,6 +103,12 @@ const firehoseRoute = createRoute({
   component: FirehosePage,
 })
 
+const assessmentRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/groove/assessment',
+  component: AssessmentPage,
+})
+
 const debugRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/debug',
@@ -122,6 +129,7 @@ const routeTree = rootRoute.addChildren([
   grooveRoute,
   streamsRoute,
   firehoseRoute,
+  assessmentRoute,
   debugRoute,
   settingsRoute,
 ])

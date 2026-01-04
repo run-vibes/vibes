@@ -1,6 +1,6 @@
 ---
 created: 2026-01-03
-status: backlog
+status: done
 ---
 
 # Feature: Wire IggyAssessmentLog with Firehose
@@ -138,10 +138,10 @@ The assessment processor now emits `AssessmentEvent`s (Lightweight, Medium, Heav
 
 ## Acceptance Criteria
 
-- [ ] Assessment events persisted to Iggy (survive restart)
-- [ ] Three topics with correct tier routing
-- [ ] `/ws/assessment` streams events with tier filtering
-- [ ] Web UI shows assessment events with links to triggering events
-- [ ] No latency impact on main event flow (fire-and-forget maintained)
-- [ ] E2E: CLI session generates assessment events
-- [ ] E2E: Browser receives and displays assessment events
+- [x] Assessment events persisted to Iggy (survive restart)
+- [x] Three topics with correct tier routing
+- [x] `/ws/assessment` streams events with tier filtering
+- [x] Web UI shows assessment events with links to triggering events
+- [x] No latency impact on main event flow (fire-and-forget maintained)
+- [x] E2E: CLI session generates assessment events
+- [x] E2E: Browser receives and displays assessment events

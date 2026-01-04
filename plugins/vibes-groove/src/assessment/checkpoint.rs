@@ -247,6 +247,7 @@ mod tests {
             signals,
             frustration_ema,
             success_ema: 0.5,
+            triggering_event_id: uuid::Uuid::now_v7(),
         }
     }
 

@@ -20,6 +20,37 @@
   margin: 0;
 }
 
+/* Groove Navigation */
+.groove-nav {
+  display: flex;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  width: fit-content;
+}
+
+.groove-nav-link {
+  padding: var(--space-2) var(--space-4);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  transition: all 0.15s ease;
+}
+
+.groove-nav-link:hover {
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-hover);
+}
+
+.groove-nav-link.active {
+  color: var(--color-groove);
+  background-color: var(--color-groove-subtle);
+}
+
 /* Stats Grid */
 .stats-grid {
   display: grid;
