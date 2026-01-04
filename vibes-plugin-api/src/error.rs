@@ -48,6 +48,10 @@ pub enum PluginError {
     /// JSON serialization/deserialization error
     #[error("JSON error: {0}")]
     Json(String),
+
+    /// Runtime not ready (called before on_ready or missing dependencies)
+    #[error("Runtime not ready: {0}")]
+    NotReady(String),
 }
 
 impl PluginError {

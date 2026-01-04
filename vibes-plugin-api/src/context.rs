@@ -4,9 +4,13 @@ use crate::command::CommandSpec;
 use crate::error::PluginError;
 use crate::http::RouteSpec;
 use serde::{Serialize, de::DeserializeOwned};
+use std::any::Any;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
+use tokio::runtime::Handle as TokioHandle;
+use tokio_util::sync::CancellationToken;
+use vibes_iggy::IggyManager;
 
 // ─── Capability Enum ─────────────────────────────────────────────────
 
@@ -97,6 +101,22 @@ pub struct PluginContext {
     harness: Option<Arc<dyn Harness>>,
     /// Authoritative list of capabilities available to this plugin.
     capabilities: Vec<Capability>,
+    // ─── Runtime Fields (set after server initialization) ──────────────
+    /// Tokio runtime handle from the host process.
+    /// Plugins MUST use this handle for async operations because dynamically
+    /// loaded libraries have their own copy of tokio symbols that don't share
+    /// the thread-local runtime context with the main binary.
+    runtime_handle: Option<TokioHandle>,
+    /// Event log for consuming/producing events.
+    /// Type-erased to avoid circular dependencies; downcast to concrete type.
+    event_log: Option<Arc<dyn Any + Send + Sync>>,
+    /// Shutdown signal for graceful termination
+    shutdown: Option<CancellationToken>,
+    /// Iggy manager for persistent storage (if available)
+    iggy_manager: Option<Arc<IggyManager>>,
+    /// Services registered by the plugin (type-erased for flexibility).
+    /// Plugins can register shared resources here during on_ready().
+    services: HashMap<String, Arc<dyn Any + Send + Sync>>,
 }
 
 /// Plugin configuration - persistent key-value store backed by TOML
@@ -125,6 +145,11 @@ impl PluginContext {
             pending_routes: Vec::new(),
             harness: None,
             capabilities: Vec::new(),
+            runtime_handle: None,
+            event_log: None,
+            shutdown: None,
+            iggy_manager: None,
+            services: HashMap::new(),
         }
     }
 
@@ -138,6 +163,11 @@ impl PluginContext {
             pending_routes: Vec::new(),
             harness: None,
             capabilities: Vec::new(),
+            runtime_handle: None,
+            event_log: None,
+            shutdown: None,
+            iggy_manager: None,
+            services: HashMap::new(),
         }
     }
 
@@ -304,6 +334,142 @@ impl PluginContext {
     /// which may be empty if groove is not enabled.
     pub fn capabilities(&self) -> &[Capability] {
         &self.capabilities
+    }
+
+    // ─── Runtime Access (available after on_ready) ────────────────────
+
+    /// Set the tokio runtime handle (called by PluginHost before on_ready).
+    ///
+    /// Plugins MUST use this handle for any async operations because dynamically
+    /// loaded libraries have their own copy of tokio symbols. Calling
+    /// `tokio::runtime::Handle::current()` from a plugin will fail.
+    pub fn set_runtime_handle(&mut self, handle: TokioHandle) {
+        self.runtime_handle = Some(handle);
+    }
+
+    /// Get the tokio runtime handle from the host process.
+    ///
+    /// Returns `None` if not set (i.e., before on_ready is called).
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// fn on_ready(&mut self, ctx: &mut PluginContext) -> Result<(), PluginError> {
+    ///     let handle = ctx.runtime_handle()
+    ///         .ok_or(PluginError::NotReady("runtime handle not available".into()))?;
+    ///
+    ///     // Use block_on for synchronous contexts
+    ///     let result = handle.block_on(async {
+    ///         some_async_operation().await
+    ///     });
+    ///
+    ///     // Or spawn async tasks
+    ///     handle.spawn(async {
+    ///         background_task().await
+    ///     });
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn runtime_handle(&self) -> Option<TokioHandle> {
+        self.runtime_handle.clone()
+    }
+
+    /// Set the event log (called by PluginHost before on_ready).
+    ///
+    /// The event log is type-erased; plugins should downcast using `event_log()`.
+    pub fn set_event_log(&mut self, event_log: Arc<dyn Any + Send + Sync>) {
+        self.event_log = Some(event_log);
+    }
+
+    /// Get the event log, downcasting to the expected type.
+    ///
+    /// For vibes internal plugins, this is typically `Arc<dyn EventLog<StoredEvent>>`.
+    /// Returns `None` if not set or if the downcast fails.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// use vibes_core::StoredEvent;
+    /// use vibes_iggy::EventLog;
+    ///
+    /// fn on_ready(&mut self, ctx: &mut PluginContext) -> Result<(), PluginError> {
+    ///     let event_log: Arc<dyn EventLog<StoredEvent>> = ctx
+    ///         .event_log()
+    ///         .ok_or(PluginError::NotReady("event log not available".into()))?;
+    ///     // Use event_log...
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn event_log<T: ?Sized + 'static>(&self) -> Option<Arc<T>> {
+        self.event_log
+            .as_ref()
+            .and_then(|any| any.downcast_ref::<Arc<T>>().cloned())
+    }
+
+    /// Set the shutdown token (called by PluginHost before on_ready).
+    pub fn set_shutdown(&mut self, shutdown: CancellationToken) {
+        self.shutdown = Some(shutdown);
+    }
+
+    /// Get the shutdown cancellation token.
+    ///
+    /// Returns `None` if not set (i.e., before on_ready is called).
+    pub fn shutdown(&self) -> Option<CancellationToken> {
+        self.shutdown.clone()
+    }
+
+    /// Set the Iggy manager (called by PluginHost before on_ready).
+    pub fn set_iggy_manager(&mut self, manager: Arc<IggyManager>) {
+        self.iggy_manager = Some(manager);
+    }
+
+    /// Get the Iggy manager for persistent storage.
+    ///
+    /// Returns `None` if Iggy is not available or not set.
+    pub fn iggy_manager(&self) -> Option<Arc<IggyManager>> {
+        self.iggy_manager.clone()
+    }
+
+    /// Check if runtime dependencies are available.
+    ///
+    /// Returns `true` if runtime_handle, event_log, and shutdown are set.
+    pub fn is_runtime_ready(&self) -> bool {
+        self.runtime_handle.is_some() && self.event_log.is_some() && self.shutdown.is_some()
+    }
+
+    // ─── Service Registration ─────────────────────────────────────────
+
+    /// Register a service that can be retrieved by the host after on_ready.
+    ///
+    /// Plugins use this to expose shared resources (like AssessmentLog) that
+    /// the host or other plugins may need to access.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// fn on_ready(&mut self, ctx: &mut PluginContext) -> Result<(), PluginError> {
+    ///     let assessment_log: Arc<dyn AssessmentLog> = create_log();
+    ///     ctx.register_service("assessment_log", assessment_log);
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn register_service<T: Send + Sync + 'static>(&mut self, name: &str, service: Arc<T>) {
+        self.services.insert(name.to_string(), service);
+    }
+
+    /// Get a registered service, downcasting to the expected type.
+    ///
+    /// Returns `None` if the service doesn't exist or if the downcast fails.
+    pub fn get_service<T: ?Sized + 'static>(&self, name: &str) -> Option<Arc<T>> {
+        self.services
+            .get(name)
+            .and_then(|any| any.downcast_ref::<Arc<T>>().cloned())
+    }
+
+    /// Check if a service is registered.
+    pub fn has_service(&self, name: &str) -> bool {
+        self.services.contains_key(name)
     }
 }
 

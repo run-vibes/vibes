@@ -30,7 +30,8 @@ async fn assessment_pipeline_end_to_end() {
     // Setup processor with InMemoryAssessmentLog
     let log = Arc::new(InMemoryAssessmentLog::new());
     let config = AssessmentConfig::default();
-    let processor = AssessmentProcessor::new(config, log.clone());
+    let processor =
+        AssessmentProcessor::new(config, log.clone(), tokio::runtime::Handle::current());
 
     // Subscribe before submitting
     let mut rx = processor.subscribe();
@@ -78,7 +79,8 @@ async fn assessment_config_controls_behavior() {
         ..Default::default()
     };
 
-    let processor = AssessmentProcessor::new(config, log.clone());
+    let processor =
+        AssessmentProcessor::new(config, log.clone(), tokio::runtime::Handle::current());
 
     assert!(
         !processor.is_enabled(),
@@ -140,7 +142,8 @@ async fn assessment_events_preserve_session_lineage_through_pipeline() {
     // Setup processor
     let log = Arc::new(InMemoryAssessmentLog::new());
     let config = AssessmentConfig::default();
-    let processor = AssessmentProcessor::new(config, log.clone());
+    let processor =
+        AssessmentProcessor::new(config, log.clone(), tokio::runtime::Handle::current());
 
     // Create events for same session
     let session_id = "lineage-pipeline-session";
@@ -192,7 +195,8 @@ async fn assessment_events_preserve_session_lineage_through_pipeline() {
 async fn assessment_multiple_sessions_are_isolated() {
     let log = Arc::new(InMemoryAssessmentLog::new());
     let config = AssessmentConfig::default();
-    let processor = AssessmentProcessor::new(config, log.clone());
+    let processor =
+        AssessmentProcessor::new(config, log.clone(), tokio::runtime::Handle::current());
 
     // Submit events for different sessions
     processor.submit(make_lightweight_event("session-a", 0));

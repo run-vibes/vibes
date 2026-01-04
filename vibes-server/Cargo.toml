@@ -7,7 +7,6 @@ repository.workspace = true
 
 [dependencies]
 vibes-core = { path = "../vibes-core" }
-vibes-groove = { path = "../plugins/vibes-groove" }
 vibes-iggy = { path = "../vibes-iggy" }
 tokio-util = { version = "0.7", features = ["rt"] }
 axum = { version = "0.7", features = ["ws"] }

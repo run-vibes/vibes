@@ -5,9 +5,12 @@
 use serde::{Deserialize, Serialize};
 use vibes_core::hooks::{HookInstaller, HookInstallerConfig};
 use vibes_plugin_api::{
-    ArgSpec, CommandOutput, CommandSpec, HttpMethod, Plugin, PluginContext, PluginError,
-    PluginManifest, RouteRequest, RouteResponse, RouteSpec,
+    ArgSpec, AssessmentQuery, AssessmentQueryResponse, CommandOutput, CommandSpec, HttpMethod,
+    Plugin, PluginAssessmentResult, PluginContext, PluginError, PluginManifest, RawEvent,
+    RouteRequest, RouteResponse, RouteSpec,
 };
+
+use crate::assessment::{AssessmentConfig, SyncAssessmentProcessor};
 
 use crate::CozoStore;
 use crate::paths::GroovePaths;
@@ -195,6 +198,18 @@ pub struct ErrorResponse {
 }
 
 // ============================================================================
+// Assessment Consumer
+// ============================================================================
+//
+// The assessment consumer is spawned in on_ready() using the host's runtime
+// handle. Since the plugin runs in-process (not as a separate .so), we can
+// safely use async code by spawning tasks through the PluginContext's
+// runtime_handle.
+//
+// The consumer replays from the beginning of the event log to process full
+// session history for pattern detection.
+
+// ============================================================================
 // Plugin Implementation
 // ============================================================================
 
@@ -204,8 +219,15 @@ pub struct ErrorResponse {
 /// - Trust level hierarchy management
 /// - Security policy viewing
 /// - Quarantine queue management
+///
+/// Implements `on_event()` for synchronous event processing, enabling the
+/// host to call plugin assessment logic without async complications.
 #[derive(Default)]
-pub struct GroovePlugin;
+pub struct GroovePlugin {
+    /// Synchronous assessment processor for event callbacks.
+    /// Initialized during `on_load()` with default config.
+    processor: Option<SyncAssessmentProcessor>,
+}
 
 impl Plugin for GroovePlugin {
     fn manifest(&self) -> PluginManifest {
@@ -221,6 +243,11 @@ impl Plugin for GroovePlugin {
     fn on_load(&mut self, ctx: &mut PluginContext) -> Result<(), PluginError> {
         ctx.log_info("Loading groove plugin");
 
+        // Initialize the synchronous assessment processor
+        let config = AssessmentConfig::default();
+        self.processor = Some(SyncAssessmentProcessor::new(config));
+        ctx.log_info("Initialized assessment processor for event callbacks");
+
         // Register CLI commands
         self.register_commands(ctx)?;
 
@@ -228,6 +255,14 @@ impl Plugin for GroovePlugin {
         self.register_routes(ctx)?;
 
         ctx.log_info("Groove plugin loaded successfully");
+        Ok(())
+    }
+
+    fn on_ready(&mut self, ctx: &mut PluginContext) -> Result<(), PluginError> {
+        ctx.log_info("Groove plugin ready");
+        // Assessment processing is handled via on_event() callback which is called
+        // synchronously by the host for each event. The host owns the AssessmentLog
+        // due to TypeId mismatch issues with dynamic libraries.
         Ok(())
     }
 
@@ -265,6 +300,30 @@ impl Plugin for GroovePlugin {
                 // Other hook types are logged but not processed
                 None
             }
+        }
+    }
+
+    fn on_event(
+        &mut self,
+        event: RawEvent,
+        _ctx: &mut PluginContext,
+    ) -> Vec<PluginAssessmentResult> {
+        // Delegate to the synchronous processor if initialized
+        match &self.processor {
+            Some(processor) => processor.process(&event),
+            None => vec![],
+        }
+    }
+
+    fn query_assessment_results(
+        &self,
+        query: AssessmentQuery,
+        _ctx: &PluginContext,
+    ) -> AssessmentQueryResponse {
+        // Delegate to the synchronous processor if initialized
+        match &self.processor {
+            Some(processor) => processor.query(query),
+            None => AssessmentQueryResponse::default(),
         }
     }
 
@@ -999,7 +1058,7 @@ mod tests {
 
     #[test]
     fn test_manifest() {
-        let plugin = GroovePlugin;
+        let plugin = GroovePlugin::default();
         let manifest = plugin.manifest();
 
         assert_eq!(manifest.name, "groove");
@@ -1009,7 +1068,7 @@ mod tests {
 
     #[test]
     fn test_on_load_registers_commands() {
-        let mut plugin = GroovePlugin;
+        let mut plugin = GroovePlugin::default();
         let mut ctx = create_test_context();
 
         plugin.on_load(&mut ctx).unwrap();
@@ -1046,7 +1105,7 @@ mod tests {
 
     #[test]
     fn test_on_load_registers_routes() {
-        let mut plugin = GroovePlugin;
+        let mut plugin = GroovePlugin::default();
         let mut ctx = create_test_context();
 
         plugin.on_load(&mut ctx).unwrap();
@@ -1076,7 +1135,7 @@ mod tests {
 
     #[test]
     fn test_cmd_trust_levels() {
-        let plugin = GroovePlugin;
+        let plugin = GroovePlugin::default();
         let result = plugin.cmd_trust_levels().unwrap();
 
         match result {
@@ -1093,7 +1152,7 @@ mod tests {
 
     #[test]
     fn test_cmd_trust_role_admin() {
-        let plugin = GroovePlugin;
+        let plugin = GroovePlugin::default();
         let mut args = vibes_plugin_api::CommandArgs::default();
         args.args.push("admin".into());
 
@@ -1111,7 +1170,7 @@ mod tests {
 
     #[test]
     fn test_cmd_trust_role_viewer() {
-        let plugin = GroovePlugin;
+        let plugin = GroovePlugin::default();
         let mut args = vibes_plugin_api::CommandArgs::default();
         args.args.push("viewer".into());
 
@@ -1130,7 +1189,7 @@ mod tests {
 
     #[test]
     fn test_cmd_trust_role_invalid() {
-        let plugin = GroovePlugin;
+        let plugin = GroovePlugin::default();
         let mut args = vibes_plugin_api::CommandArgs::default();
         args.args.push("invalid".into());
 
@@ -1140,7 +1199,7 @@ mod tests {
 
     #[test]
     fn test_cmd_trust_role_missing_arg() {
-        let plugin = GroovePlugin;
+        let plugin = GroovePlugin::default();
         let args = vibes_plugin_api::CommandArgs::default();
 
         let result = plugin.cmd_trust_role(&args);
@@ -1149,7 +1208,7 @@ mod tests {
 
     #[test]
     fn test_cmd_policy_show() {
-        let plugin = GroovePlugin;
+        let plugin = GroovePlugin::default();
         let result = plugin.cmd_policy_show().unwrap();
 
         match result {
@@ -1166,7 +1225,7 @@ mod tests {
 
     #[test]
     fn test_cmd_policy_path() {
-        let plugin = GroovePlugin;
+        let plugin = GroovePlugin::default();
         let result = plugin.cmd_policy_path().unwrap();
 
         match result {
@@ -1180,7 +1239,7 @@ mod tests {
 
     #[test]
     fn test_route_get_policy() {
-        let plugin = GroovePlugin;
+        let plugin = GroovePlugin::default();
         let result = plugin.route_get_policy().unwrap();
 
         assert_eq!(result.status, 200);
@@ -1193,7 +1252,7 @@ mod tests {
 
     #[test]
     fn test_route_get_trust_levels() {
-        let plugin = GroovePlugin;
+        let plugin = GroovePlugin::default();
         let result = plugin.route_get_trust_levels().unwrap();
 
         assert_eq!(result.status, 200);
@@ -1208,7 +1267,7 @@ mod tests {
 
     #[test]
     fn test_route_get_role_permissions_admin() {
-        let plugin = GroovePlugin;
+        let plugin = GroovePlugin::default();
         let request = RouteRequest {
             params: [("role".into(), "admin".into())].into_iter().collect(),
             query: HashMap::new(),
@@ -1228,7 +1287,7 @@ mod tests {
 
     #[test]
     fn test_route_get_role_permissions_invalid() {
-        let plugin = GroovePlugin;
+        let plugin = GroovePlugin::default();
         let request = RouteRequest {
             params: [("role".into(), "invalid".into())].into_iter().collect(),
             query: HashMap::new(),
@@ -1242,7 +1301,7 @@ mod tests {
 
     #[test]
     fn test_route_list_quarantined() {
-        let plugin = GroovePlugin;
+        let plugin = GroovePlugin::default();
         let result = plugin.route_list_quarantined().unwrap();
 
         assert_eq!(result.status, 200);
@@ -1254,7 +1313,7 @@ mod tests {
 
     #[test]
     fn test_route_get_quarantine_stats() {
-        let plugin = GroovePlugin;
+        let plugin = GroovePlugin::default();
         let result = plugin.route_get_quarantine_stats().unwrap();
 
         assert_eq!(result.status, 200);
@@ -1266,7 +1325,7 @@ mod tests {
 
     #[test]
     fn test_route_review_quarantined_not_configured() {
-        let plugin = GroovePlugin;
+        let plugin = GroovePlugin::default();
         let body = serde_json::to_vec(&ReviewRequest {
             outcome: "approve".into(),
             notes: None,
@@ -1291,7 +1350,7 @@ mod tests {
 
     #[test]
     fn test_route_review_quarantined_invalid_outcome() {
-        let plugin = GroovePlugin;
+        let plugin = GroovePlugin::default();
         let body = serde_json::to_vec(&ReviewRequest {
             outcome: "invalid".into(),
             notes: None,
@@ -1315,7 +1374,7 @@ mod tests {
 
     #[test]
     fn test_handle_command_dispatch() {
-        let mut plugin = GroovePlugin;
+        let mut plugin = GroovePlugin::default();
         let mut ctx = create_test_context();
         let args = vibes_plugin_api::CommandArgs::default();
 
@@ -1330,7 +1389,7 @@ mod tests {
 
     #[test]
     fn test_handle_route_dispatch() {
-        let mut plugin = GroovePlugin;
+        let mut plugin = GroovePlugin::default();
         let mut ctx = create_test_context();
         let request = RouteRequest {
             params: HashMap::new(),
@@ -1374,7 +1433,7 @@ mod tests {
 
     #[test]
     fn test_cli_assess_status() {
-        let plugin = GroovePlugin;
+        let plugin = GroovePlugin::default();
         let result = plugin.cmd_assess_status().unwrap();
 
         match result {
@@ -1391,7 +1450,7 @@ mod tests {
 
     #[test]
     fn test_cli_assess_history() {
-        let plugin = GroovePlugin;
+        let plugin = GroovePlugin::default();
         let mut args = vibes_plugin_api::CommandArgs::default();
         args.args.push("test-session".into());
 
@@ -1413,7 +1472,7 @@ mod tests {
 
     #[test]
     fn test_on_load_registers_assess_commands() {
-        let mut plugin = GroovePlugin;
+        let mut plugin = GroovePlugin::default();
         let mut ctx = create_test_context();
 
         plugin.on_load(&mut ctx).unwrap();
@@ -1432,5 +1491,99 @@ mod tests {
             "Should register 'assess history'. Registered: {:?}",
             paths
         );
+    }
+
+    // ─── on_event Tests ──────────────────────────────────────────────
+
+    fn make_raw_event(session_id: &str, text: &str) -> RawEvent {
+        let event = vibes_core::VibesEvent::Claude {
+            session_id: session_id.to_string(),
+            event: vibes_core::ClaudeEvent::TextDelta {
+                text: text.to_string(),
+            },
+        };
+        let payload = serde_json::to_string(&event).unwrap();
+
+        RawEvent::new(
+            uuid::Uuid::now_v7().into_bytes(),
+            chrono::Utc::now().timestamp_millis() as u64,
+            Some(session_id.to_string()),
+            "Claude".to_string(),
+            payload,
+        )
+    }
+
+    #[test]
+    fn test_on_event_returns_results_when_enabled() {
+        let mut plugin = GroovePlugin::default();
+        let mut ctx = create_test_context();
+
+        // Load plugin (should initialize processor)
+        plugin.on_load(&mut ctx).unwrap();
+
+        let raw = make_raw_event("test-session", "Hello, world!");
+        let results = plugin.on_event(raw, &mut ctx);
+
+        // Should emit lightweight event result
+        assert!(!results.is_empty(), "Should return assessment results");
+        assert_eq!(results[0].result_type, "lightweight");
+        assert_eq!(results[0].session_id, "test-session");
+    }
+
+    #[test]
+    fn test_on_event_skips_events_without_session() {
+        let mut plugin = GroovePlugin::default();
+        let mut ctx = create_test_context();
+
+        plugin.on_load(&mut ctx).unwrap();
+
+        let raw = RawEvent::new(
+            [0u8; 16],
+            0,
+            None, // No session ID
+            "Test".to_string(),
+            "{}".to_string(),
+        );
+        let results = plugin.on_event(raw, &mut ctx);
+
+        assert!(results.is_empty(), "Should skip events without session");
+    }
+
+    #[test]
+    fn test_on_event_produces_valid_json_payloads() {
+        let mut plugin = GroovePlugin::default();
+        let mut ctx = create_test_context();
+
+        plugin.on_load(&mut ctx).unwrap();
+
+        let raw = make_raw_event("json-test", "Testing JSON serialization");
+        let results = plugin.on_event(raw, &mut ctx);
+
+        for result in &results {
+            // All payloads should be valid JSON
+            let value: serde_json::Value =
+                serde_json::from_str(&result.payload).expect("Payload should be valid JSON");
+            assert!(value.is_object(), "Payload should be a JSON object");
+        }
+    }
+
+    #[test]
+    fn test_on_event_maintains_session_state() {
+        let mut plugin = GroovePlugin::default();
+        let mut ctx = create_test_context();
+
+        plugin.on_load(&mut ctx).unwrap();
+
+        // Process multiple events for the same session
+        for i in 0..3 {
+            let raw = make_raw_event("stateful-session", &format!("Message {i}"));
+            let results = plugin.on_event(raw, &mut ctx);
+            assert!(!results.is_empty());
+
+            // Parse the lightweight event to check message_idx increments
+            let le: crate::assessment::LightweightEvent =
+                serde_json::from_str(&results[0].payload).unwrap();
+            assert_eq!(le.message_idx, i as u32);
+        }
     }
 }

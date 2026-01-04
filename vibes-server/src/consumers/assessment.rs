@@ -1,177 +1,100 @@
-//! Assessment event consumer.
+//! Plugin event consumer for assessment processing.
 //!
-//! This consumer reads from the EventLog and dispatches events to the
-//! AssessmentProcessor for pattern detection and learning extraction.
+//! This consumer polls events from the EventLog and routes them to plugins
+//! via `dispatch_raw_event`. Results are broadcast via AppState.
 //!
-//! Unlike the WebSocket consumer (which starts at End for live events),
-//! the assessment consumer starts at Beginning to process full session
-//! history for pattern detection.
+//! This is the bridge between the host's event stream and the plugin callback
+//! interface, working around TypeId mismatch issues with dynamic libraries.
 
 use std::sync::Arc;
+use std::time::Duration;
 
+use tokio::sync::RwLock;
 use tokio_util::sync::CancellationToken;
-use vibes_core::StoredEvent;
-use vibes_groove::assessment::{
-    AssessmentConfig, AssessmentConsumerConfig, AssessmentLog, AssessmentProcessor,
-    IggyAssessmentLog, InMemoryAssessmentLog, assessment_consumer_loop,
-};
-use vibes_iggy::{EventLog, IggyManager};
+use tracing::{debug, trace};
+use vibes_core::plugins::PluginHost;
 
-use super::Result;
+use super::{ConsumerConfig, ConsumerManager, Result};
+use crate::AppState;
 
-/// Start the assessment consumer that processes events through the assessment pipeline.
+/// Start the plugin event consumer.
+///
+/// This consumer polls events from the EventLog and routes them to all loaded
+/// plugins via `plugin_host.dispatch_raw_event()`. The returned assessment
+/// results are broadcast via AppState for WebSocket clients.
 ///
 /// # Arguments
 ///
-/// * `event_log` - The EventLog to consume events from
-/// * `iggy_manager` - Optional IggyManager for persistent assessment storage
-/// * `shutdown` - Cancellation token to signal shutdown
-///
-/// # Returns
-///
-/// Returns the AssessmentLog on success (for WebSocket endpoint use),
-/// or an error if the consumer fails to start.
-pub async fn start_assessment_consumer(
-    event_log: Arc<dyn EventLog<StoredEvent>>,
-    iggy_manager: Option<Arc<IggyManager>>,
+/// * `manager` - The consumer manager to register with
+/// * `plugin_host` - The plugin host containing loaded plugins
+/// * `state` - The AppState for broadcasting results
+/// * `shutdown` - Cancellation token for graceful shutdown
+pub async fn start_plugin_event_consumer(
+    manager: &mut ConsumerManager,
+    plugin_host: Arc<RwLock<PluginHost>>,
+    state: Arc<AppState>,
     shutdown: CancellationToken,
-) -> Result<Arc<dyn AssessmentLog>> {
-    // Create assessment log - use IggyAssessmentLog when we have a manager
-    let assessment_log: Arc<dyn AssessmentLog> = if let Some(manager) = iggy_manager {
-        let log = IggyAssessmentLog::new(manager);
+) -> Result<()> {
+    let config =
+        ConsumerConfig::replay("plugin-events").with_poll_timeout(Duration::from_millis(100));
 
-        // Try to connect - fall back to in-memory if connection fails
-        match log.connect().await {
-            Ok(()) => {
-                tracing::info!("Assessment log connected to Iggy");
-                Arc::new(log)
+    let handler = create_plugin_event_handler(plugin_host, state, shutdown);
+
+    manager.spawn_consumer(config, handler).await
+}
+
+/// Create the event handler that dispatches to plugins.
+fn create_plugin_event_handler(
+    plugin_host: Arc<RwLock<PluginHost>>,
+    state: Arc<AppState>,
+    _shutdown: CancellationToken,
+) -> super::EventHandler {
+    Arc::new(move |stored| {
+        let plugin_host = Arc::clone(&plugin_host);
+        let state = Arc::clone(&state);
+
+        Box::pin(async move {
+            // Dispatch event to all plugins via the generic plugin interface
+            let results = {
+                let mut host = plugin_host.write().await;
+                host.dispatch_raw_event(&stored)
+            };
+
+            if results.is_empty() {
+                trace!(event_id = %stored.event_id, "No assessment results from plugins");
+                return;
             }
-            Err(e) => {
-                tracing::warn!(
-                    "Failed to connect assessment log to Iggy: {}. Using in-memory log.",
-                    e
-                );
-                Arc::new(InMemoryAssessmentLog::new())
+
+            debug!(
+                event_id = %stored.event_id,
+                result_count = results.len(),
+                "Plugin returned assessment results"
+            );
+
+            // Broadcast results to WebSocket clients
+            for result in results {
+                state.broadcast_assessment_result(result);
             }
-        }
-    } else {
-        tracing::info!("Using in-memory assessment log (no Iggy manager)");
-        Arc::new(InMemoryAssessmentLog::new())
-    };
-
-    // Create processor with default config
-    let config = AssessmentConfig::default();
-    let processor = Arc::new(AssessmentProcessor::new(config, assessment_log.clone()));
-
-    // Create consumer from the event log
-    let consumer = event_log
-        .consumer("assessment")
-        .await
-        .map_err(|e| super::ConsumerError::Creation(e.to_string()))?;
-
-    // Consumer config - replay from beginning for full history
-    let consumer_config = AssessmentConsumerConfig::default();
-
-    tracing::info!("Assessment consumer starting");
-
-    // Spawn the consumer loop in a background task
-    tokio::spawn(async move {
-        let result = assessment_consumer_loop(consumer, processor, consumer_config, shutdown).await;
-
-        match result {
-            vibes_groove::assessment::ConsumerResult::Shutdown => {
-                tracing::info!("Assessment consumer stopped gracefully");
-            }
-            vibes_groove::assessment::ConsumerResult::Error(e) => {
-                tracing::error!("Assessment consumer stopped with error: {}", e);
-            }
-        }
-    });
-
-    Ok(assessment_log)
+        })
+    })
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use std::time::Duration;
-    use vibes_core::VibesEvent;
-    use vibes_iggy::InMemoryEventLog;
+    use vibes_plugin_api::PluginAssessmentResult;
 
-    fn make_stored_event(session_id: &str) -> StoredEvent {
-        StoredEvent::new(VibesEvent::SessionCreated {
-            session_id: session_id.to_string(),
-            name: None,
-        })
+    #[test]
+    fn test_plugin_assessment_result_creation() {
+        let result = PluginAssessmentResult::lightweight("test-session", r#"{"test": true}"#);
+        assert_eq!(result.result_type, "lightweight");
+        assert_eq!(result.session_id, "test-session");
+        assert_eq!(result.payload, r#"{"test": true}"#);
     }
 
-    #[tokio::test]
-    async fn test_assessment_consumer_starts() {
-        let log = Arc::new(InMemoryEventLog::<StoredEvent>::new());
-        let shutdown = CancellationToken::new();
-
-        // Start consumer (no Iggy manager = in-memory log)
-        let result = start_assessment_consumer(log, None, shutdown.clone()).await;
-        assert!(result.is_ok());
-
-        // Give it a moment to start
-        tokio::time::sleep(Duration::from_millis(50)).await;
-
-        // Shutdown gracefully
-        shutdown.cancel();
-        tokio::time::sleep(Duration::from_millis(100)).await;
-    }
-
-    #[tokio::test]
-    async fn test_assessment_consumer_uses_replay_mode() {
-        // Verify the consumer starts at Beginning (replay mode) - full history
-        let config = AssessmentConsumerConfig::default();
-        assert_eq!(config.start_position, vibes_iggy::SeekPosition::Beginning);
-        assert_eq!(config.group, "assessment");
-    }
-
-    #[tokio::test]
-    async fn test_assessment_consumer_processes_events() {
-        let log = Arc::new(InMemoryEventLog::<StoredEvent>::new());
-        let shutdown = CancellationToken::new();
-
-        // Append some events before starting consumer
-        for i in 0..3 {
-            log.append(make_stored_event(&format!("session-{i}")))
-                .await
-                .unwrap();
-        }
-
-        // Start consumer (no Iggy manager = in-memory log)
-        start_assessment_consumer(log.clone(), None, shutdown.clone())
-            .await
-            .unwrap();
-
-        // Give it time to process
-        tokio::time::sleep(Duration::from_millis(200)).await;
-
-        // Shutdown
-        shutdown.cancel();
-        tokio::time::sleep(Duration::from_millis(100)).await;
-
-        // Consumer processed events (no panics = success)
-    }
-
-    #[tokio::test]
-    async fn test_assessment_consumer_returns_log() {
-        let log = Arc::new(InMemoryEventLog::<StoredEvent>::new());
-        let shutdown = CancellationToken::new();
-
-        // Start consumer and get the assessment log
-        let assessment_log = start_assessment_consumer(log, None, shutdown.clone())
-            .await
-            .expect("should start");
-
-        // Subscribe to the assessment log
-        let _rx = assessment_log.subscribe();
-
-        // Cleanup
-        shutdown.cancel();
-        tokio::time::sleep(Duration::from_millis(50)).await;
+    #[test]
+    fn test_plugin_assessment_result_checkpoint() {
+        let result = PluginAssessmentResult::checkpoint("session-1", r#"{"summary": "ok"}"#);
+        assert_eq!(result.result_type, "checkpoint");
+        assert_eq!(result.session_id, "session-1");
     }
 }

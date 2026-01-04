@@ -77,7 +77,11 @@ impl E2ETestHarness {
         sampling_config: SamplingConfig,
     ) -> Self {
         let log = Arc::new(InMemoryAssessmentLog::new());
-        let processor = AssessmentProcessor::new(processor_config, log.clone());
+        let processor = AssessmentProcessor::new(
+            processor_config,
+            log.clone(),
+            tokio::runtime::Handle::current(),
+        );
         let rx = processor.subscribe();
 
         Self {
@@ -644,7 +648,8 @@ async fn e2e_multiple_sessions_isolated() {
 async fn e2e_processor_stores_and_broadcasts_events() {
     let log = Arc::new(InMemoryAssessmentLog::new());
     let config = AssessmentConfig::default();
-    let processor = AssessmentProcessor::new(config, log.clone());
+    let processor =
+        AssessmentProcessor::new(config, log.clone(), tokio::runtime::Handle::current());
 
     // Subscribe before submitting
     let mut rx = processor.subscribe();
@@ -686,7 +691,8 @@ async fn e2e_processor_stores_and_broadcasts_events() {
 async fn e2e_broadcast_low_latency_multiple_subscribers() {
     let log = Arc::new(InMemoryAssessmentLog::new());
     let config = AssessmentConfig::default();
-    let processor = AssessmentProcessor::new(config, log.clone());
+    let processor =
+        AssessmentProcessor::new(config, log.clone(), tokio::runtime::Handle::current());
 
     // Create multiple subscribers (simulating multiple browser tabs)
     let mut rx1 = processor.subscribe();
@@ -733,7 +739,8 @@ async fn e2e_broadcast_low_latency_multiple_subscribers() {
 async fn e2e_late_subscriber_receives_new_events() {
     let log = Arc::new(InMemoryAssessmentLog::new());
     let config = AssessmentConfig::default();
-    let processor = AssessmentProcessor::new(config, log.clone());
+    let processor =
+        AssessmentProcessor::new(config, log.clone(), tokio::runtime::Handle::current());
 
     // Submit first event
     let event1 = AssessmentEvent::Lightweight(LightweightEvent {

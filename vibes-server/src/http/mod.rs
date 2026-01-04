@@ -93,6 +93,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "Requires plugins installed; dynamically loaded plugins with background tasks cause issues in tests"]
     async fn test_groove_routes_work_when_plugin_loaded() {
         use std::sync::Arc;
         use tokio::sync::RwLock;

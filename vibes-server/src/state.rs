@@ -9,10 +9,10 @@ use vibes_core::{
     TunnelManager, VapidKeyManager, VibesEvent,
     pty::{PtyConfig, PtyManager},
 };
-use vibes_groove::assessment::AssessmentLog;
 use vibes_iggy::{
     EventLog, IggyConfig, IggyEventLog, IggyManager, InMemoryEventLog, Offset, run_preflight_checks,
 };
+use vibes_plugin_api::PluginAssessmentResult;
 
 /// PTY output event for broadcasting to attached clients
 #[derive(Clone, Debug)]
@@ -32,10 +32,15 @@ use crate::middleware::AuthLayer;
 const DEFAULT_BROADCAST_CAPACITY: usize = 1000;
 
 /// Shared application state accessible by all handlers
+///
+/// # Field Ordering (IMPORTANT)
+///
+/// `plugin_host` MUST be the last field because it contains dynamically loaded plugins.
+/// Other fields (like `assessment_log`) may hold types from those plugins. Rust drops
+/// fields in declaration order, so plugins must be unloaded AFTER all plugin types
+/// are dropped to avoid invalid vtable dereferences.
 #[derive(Clone)]
 pub struct AppState {
-    /// Plugin host for managing plugins
-    pub plugin_host: Arc<RwLock<PluginHost>>,
     /// Event log for persistent event storage
     pub event_log: Arc<dyn EventLog<StoredEvent>>,
     /// Tunnel manager for remote access
@@ -56,8 +61,13 @@ pub struct AppState {
     pty_broadcaster: broadcast::Sender<PtyEvent>,
     /// Iggy manager for subprocess lifecycle (optional, only when using Iggy storage)
     iggy_manager: Option<Arc<IggyManager>>,
-    /// Assessment log for pattern detection events (set after consumer starts)
-    assessment_log: Arc<RwLock<Option<Arc<dyn AssessmentLog>>>>,
+    /// Broadcast channel for assessment results from plugins
+    assessment_broadcaster: broadcast::Sender<PluginAssessmentResult>,
+    /// Plugin host for managing plugins
+    ///
+    /// MUST be last - plugins are unloaded when this drops, so all plugin types
+    /// (like assessment_log) must be dropped first.
+    pub plugin_host: Arc<RwLock<PluginHost>>,
 }
 
 impl AppState {
@@ -72,6 +82,7 @@ impl AppState {
         )));
         let (event_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let (pty_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
+        let (assessment_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let pty_manager = Arc::new(RwLock::new(PtyManager::new(PtyConfig::default())));
 
         Self {
@@ -86,7 +97,49 @@ impl AppState {
             subscriptions: None,
             pty_manager,
             iggy_manager: None,
-            assessment_log: Arc::new(RwLock::new(None)),
+            assessment_broadcaster,
+        }
+    }
+
+    /// Create a new AppState for testing that doesn't load external plugins.
+    ///
+    /// This avoids issues with dynamically loaded plugins whose background tasks
+    /// can outlive the test runtime and cause memory corruption.
+    pub fn new_for_testing() -> Self {
+        use std::path::PathBuf;
+
+        // Use a non-existent directory so no external plugins are loaded
+        let plugin_config = PluginHostConfig {
+            user_plugin_dir: PathBuf::from("/nonexistent/vibes/plugins"),
+            project_plugin_dir: None,
+            handler_timeout: std::time::Duration::from_secs(5),
+        };
+
+        let event_log: Arc<dyn EventLog<StoredEvent>> =
+            Arc::new(InMemoryEventLog::<StoredEvent>::new());
+        let plugin_host = Arc::new(RwLock::new(PluginHost::new(plugin_config)));
+        let tunnel_manager = Arc::new(RwLock::new(TunnelManager::new(
+            TunnelConfig::default(),
+            7432,
+        )));
+        let (event_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
+        let (pty_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
+        let (assessment_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
+        let pty_manager = Arc::new(RwLock::new(PtyManager::new(PtyConfig::default())));
+
+        Self {
+            event_log,
+            tunnel_manager,
+            auth_layer: AuthLayer::disabled(),
+            started_at: Utc::now(),
+            event_broadcaster,
+            vapid: None,
+            subscriptions: None,
+            pty_manager,
+            pty_broadcaster,
+            iggy_manager: None,
+            assessment_broadcaster,
+            plugin_host,
         }
     }
 
@@ -100,6 +153,7 @@ impl AppState {
         )));
         let (event_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let (pty_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
+        let (assessment_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let pty_manager = Arc::new(RwLock::new(PtyManager::new(PtyConfig::default())));
 
         Self {
@@ -114,7 +168,7 @@ impl AppState {
             subscriptions: None,
             pty_manager,
             iggy_manager: None,
-            assessment_log: Arc::new(RwLock::new(None)),
+            assessment_broadcaster,
         }
     }
 
@@ -139,6 +193,7 @@ impl AppState {
         )));
         let (event_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let (pty_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
+        let (assessment_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let pty_manager = Arc::new(RwLock::new(PtyManager::new(PtyConfig::default())));
 
         Ok(Self {
@@ -153,7 +208,7 @@ impl AppState {
             subscriptions: None,
             pty_manager,
             iggy_manager,
-            assessment_log: Arc::new(RwLock::new(None)),
+            assessment_broadcaster,
         })
     }
 
@@ -174,6 +229,7 @@ impl AppState {
         )));
         let (event_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let (pty_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
+        let (assessment_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let pty_manager = Arc::new(RwLock::new(PtyManager::new(PtyConfig::default())));
 
         Ok(Self {
@@ -188,7 +244,7 @@ impl AppState {
             subscriptions: None,
             pty_manager,
             iggy_manager,
-            assessment_log: Arc::new(RwLock::new(None)),
+            assessment_broadcaster,
         })
     }
 
@@ -270,6 +326,7 @@ impl AppState {
         )));
         let (event_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let (pty_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
+        let (assessment_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let pty_manager = Arc::new(RwLock::new(PtyManager::new(PtyConfig::default())));
 
         Self {
@@ -284,7 +341,7 @@ impl AppState {
             subscriptions: None,
             pty_manager,
             iggy_manager: None,
-            assessment_log: Arc::new(RwLock::new(None)),
+            assessment_broadcaster,
         }
     }
 
@@ -297,6 +354,7 @@ impl AppState {
             Arc::new(InMemoryEventLog::<StoredEvent>::new());
         let (event_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let (pty_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
+        let (assessment_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let pty_manager = Arc::new(RwLock::new(PtyManager::new(PtyConfig::default())));
 
         Self {
@@ -311,7 +369,7 @@ impl AppState {
             subscriptions: None,
             pty_manager,
             iggy_manager: None,
-            assessment_log: Arc::new(RwLock::new(None)),
+            assessment_broadcaster,
         }
     }
 
@@ -329,20 +387,20 @@ impl AppState {
         self.iggy_manager.clone()
     }
 
-    /// Set the assessment log after consumer starts.
+    /// Subscribe to assessment results broadcast from plugins.
     ///
-    /// This is called during server startup after the assessment consumer
-    /// successfully creates the log. The log is then available for the
-    /// WebSocket endpoint to subscribe to.
-    pub async fn set_assessment_log(&self, log: Arc<dyn AssessmentLog>) {
-        *self.assessment_log.write().await = Some(log);
+    /// Returns a receiver that will receive `PluginAssessmentResult` events
+    /// as they are produced by the plugin event consumer.
+    pub fn subscribe_assessment_results(&self) -> broadcast::Receiver<PluginAssessmentResult> {
+        self.assessment_broadcaster.subscribe()
     }
 
-    /// Get the assessment log if available.
+    /// Broadcast an assessment result from a plugin.
     ///
-    /// Returns None if the assessment consumer hasn't started or failed to start.
-    pub async fn assessment_log(&self) -> Option<Arc<dyn AssessmentLog>> {
-        self.assessment_log.read().await.clone()
+    /// Called by the plugin event consumer when a plugin returns assessment results.
+    /// Returns the number of receivers that received the result.
+    pub fn broadcast_assessment_result(&self, result: PluginAssessmentResult) -> usize {
+        self.assessment_broadcaster.send(result).unwrap_or(0)
     }
 
     /// Gracefully shutdown the server, stopping all managed subprocesses.

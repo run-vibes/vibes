@@ -1,7 +1,7 @@
 //! WebSocket handler for assessment event streaming
 //!
-//! Provides a read-only WebSocket endpoint that streams AssessmentEvents
-//! from the assessment pipeline, optionally filtered by session ID.
+//! Provides a read-only WebSocket endpoint that streams assessment events
+//! from plugins, optionally filtered by session ID.
 
 use std::sync::Arc;
 
@@ -12,41 +12,20 @@ use axum::{
     },
     response::Response,
 };
-use chrono::{Duration, Utc};
 use futures::{SinkExt, StreamExt};
 use serde::{Deserialize, Serialize};
 use tokio::sync::broadcast;
 use tracing::warn;
-use uuid::Uuid;
-use vibes_groove::assessment::AssessmentEvent;
+use vibes_plugin_api::{AssessmentQuery as PluginQuery, PluginAssessmentResult};
 
 use crate::AppState;
 
 /// Query parameters for assessment firehose filtering
 #[derive(Debug, Deserialize)]
-pub struct AssessmentQuery {
+pub struct AssessmentQueryParams {
     /// Filter by session ID
     #[serde(default)]
     pub session: Option<String>,
-}
-
-/// Assessment event with its ID - used in batches
-#[derive(Debug, Clone, Serialize)]
-pub struct AssessmentEventWithId {
-    /// The event ID (from the assessment event)
-    pub event_id: Uuid,
-    /// The assessment event data
-    #[serde(flatten)]
-    pub event: AssessmentEvent,
-}
-
-impl AssessmentEventWithId {
-    pub fn new(event: AssessmentEvent) -> Self {
-        Self {
-            event_id: event.event_id().as_uuid(),
-            event,
-        }
-    }
 }
 
 /// Server-to-client message: single live assessment event
@@ -55,19 +34,16 @@ pub struct AssessmentEventMessage {
     /// Message type discriminator
     #[serde(rename = "type")]
     pub msg_type: &'static str,
-    /// The event ID
-    pub event_id: Uuid,
-    /// The assessment event data
+    /// The assessment result from plugin
     #[serde(flatten)]
-    pub event: AssessmentEvent,
+    pub result: PluginAssessmentResult,
 }
 
 impl AssessmentEventMessage {
-    pub fn new(event: AssessmentEvent) -> Self {
+    pub fn new(result: PluginAssessmentResult) -> Self {
         Self {
             msg_type: "assessment_event",
-            event_id: event.event_id().as_uuid(),
-            event,
+            result,
         }
     }
 }
@@ -79,17 +55,17 @@ pub struct AssessmentEventsBatch {
     #[serde(rename = "type")]
     pub msg_type: &'static str,
     /// The events in this batch
-    pub events: Vec<AssessmentEventWithId>,
+    pub events: Vec<PluginAssessmentResult>,
     /// The oldest event ID in this batch (for pagination)
-    pub oldest_event_id: Option<Uuid>,
+    pub oldest_event_id: Option<String>,
     /// Whether there are more events before this batch
     pub has_more: bool,
 }
 
 impl AssessmentEventsBatch {
     pub fn new(
-        events: Vec<AssessmentEventWithId>,
-        oldest_event_id: Option<Uuid>,
+        events: Vec<PluginAssessmentResult>,
+        oldest_event_id: Option<String>,
         has_more: bool,
     ) -> Self {
         Self {
@@ -109,7 +85,7 @@ pub enum AssessmentClientMessage {
     FetchOlder {
         /// Load events before this event ID (exclusive)
         #[serde(default)]
-        before_event_id: Option<Uuid>,
+        before_event_id: Option<String>,
         /// Maximum number of events to return (default: 100)
         #[serde(default)]
         limit: Option<u64>,
@@ -123,32 +99,19 @@ pub enum AssessmentClientMessage {
 }
 
 /// Default limit for fetch_older requests
-const DEFAULT_FETCH_LIMIT: u64 = 100;
-
-/// Duration for initial historical event load (last 24 hours)
-const HISTORICAL_DURATION_HOURS: i64 = 24;
+const DEFAULT_FETCH_LIMIT: usize = 100;
 
 /// WebSocket upgrade handler for assessment firehose
 pub async fn assessment_ws(
     ws: WebSocketUpgrade,
     State(state): State<Arc<AppState>>,
-    Query(query): Query<AssessmentQuery>,
+    Query(query): Query<AssessmentQueryParams>,
 ) -> Response {
     ws.on_upgrade(move |socket| handle_assessment(socket, state, query))
 }
 
-async fn handle_assessment(socket: WebSocket, state: Arc<AppState>, query: AssessmentQuery) {
+async fn handle_assessment(socket: WebSocket, state: Arc<AppState>, query: AssessmentQueryParams) {
     let (mut sender, mut receiver) = socket.split();
-
-    // Get the assessment log - if not available, close the connection
-    let assessment_log = match state.assessment_log().await {
-        Some(log) => log,
-        None => {
-            warn!("Assessment WebSocket: No assessment log available");
-            let _ = sender.send(Message::Close(None)).await;
-            return;
-        }
-    };
 
     // Parse filter from query params
     let mut filter_session = query.session.clone();
@@ -159,10 +122,7 @@ async fn handle_assessment(socket: WebSocket, state: Arc<AppState>, query: Asses
     );
 
     // Subscribe to broadcast BEFORE client can request events to avoid gaps
-    let mut events_rx = assessment_log.subscribe();
-
-    // Track the last event ID we've sent to prevent duplicates
-    let mut last_sent_event_id: Option<Uuid> = None;
+    let mut results_rx = state.subscribe_assessment_results();
 
     // Main event loop: handle both incoming messages and broadcast events
     loop {
@@ -173,10 +133,9 @@ async fn handle_assessment(socket: WebSocket, state: Arc<AppState>, query: Asses
                     Some(Ok(Message::Text(text))) => {
                         if let Err(e) = handle_client_message(
                             &text,
-                            &assessment_log,
+                            &state,
                             &mut sender,
                             &mut filter_session,
-                            &mut last_sent_event_id,
                         ).await {
                             warn!("Failed to handle assessment client message: {}", e);
                         }
@@ -187,27 +146,19 @@ async fn handle_assessment(socket: WebSocket, state: Arc<AppState>, query: Asses
             }
 
             // Handle broadcast events
-            result = events_rx.recv() => {
+            result = results_rx.recv() => {
                 match result {
                     Ok(event) => {
-                        // Skip events we already sent
-                        if let Some(last_id) = last_sent_event_id
-                            && event.event_id().as_uuid() <= last_id
-                        {
-                            continue;
-                        }
-
                         // Apply session filter
                         if !matches_session_filter(&event, &filter_session) {
                             continue;
                         }
 
-                        let msg = AssessmentEventMessage::new(event.clone());
+                        let msg = AssessmentEventMessage::new(event);
                         if let Err(e) = send_json(&mut sender, &msg).await {
                             warn!("Assessment send failed: {}", e);
                             break;
                         }
-                        last_sent_event_id = Some(event.event_id().as_uuid());
                     }
                     Err(broadcast::error::RecvError::Closed) => break,
                     Err(broadcast::error::RecvError::Lagged(n)) => {
@@ -222,10 +173,9 @@ async fn handle_assessment(socket: WebSocket, state: Arc<AppState>, query: Asses
 /// Handle a client message from the WebSocket
 async fn handle_client_message<S>(
     text: &str,
-    assessment_log: &Arc<dyn vibes_groove::assessment::AssessmentLog>,
+    state: &Arc<AppState>,
     sender: &mut S,
     filter_session: &mut Option<String>,
-    last_sent_event_id: &mut Option<Uuid>,
 ) -> Result<(), String>
 where
     S: SinkExt<Message> + Unpin,
@@ -239,53 +189,57 @@ where
             before_event_id,
             limit,
         } => {
-            let count = limit.unwrap_or(DEFAULT_FETCH_LIMIT) as usize;
+            let count = limit.map(|l| l as usize).unwrap_or(DEFAULT_FETCH_LIMIT);
 
-            // Load events - either before a specific event or recent history
-            let events = if let Some(event_id) = before_event_id {
-                load_events_before(assessment_log, event_id, count, filter_session).await
-            } else {
-                load_recent_events(assessment_log, count, filter_session).await
+            // Query historical events from plugins
+            let response = {
+                let mut plugin_host = state.plugin_host().write().await;
+                let query = PluginQuery {
+                    session_id: filter_session.clone(),
+                    result_types: vec![],
+                    limit: count,
+                    after_event_id: before_event_id,
+                    newest_first: true,
+                };
+                plugin_host.dispatch_query_assessment(query)
             };
 
-            let oldest_event_id = events.first().map(|e| e.event_id);
-            let newest_event_id = events.last().map(|e| e.event_id);
-            let has_more = !events.is_empty(); // Simplified - assume more if we got any
-
-            let batch = AssessmentEventsBatch::new(events, oldest_event_id, has_more);
+            let batch = AssessmentEventsBatch::new(
+                response.results,
+                response.oldest_event_id,
+                response.has_more,
+            );
 
             send_json(sender, &batch)
                 .await
                 .map_err(|e| format!("Failed to send batch: {}", e))?;
-
-            // Update last_sent_event_id
-            if let Some(id) = newest_event_id {
-                *last_sent_event_id = Some(last_sent_event_id.unwrap_or(Uuid::nil()).max(id));
-            }
         }
 
         AssessmentClientMessage::SetFilters { session } => {
             *filter_session = session;
 
-            // Send fresh batch of recent events with new filters
-            let events =
-                load_recent_events(assessment_log, DEFAULT_FETCH_LIMIT as usize, filter_session)
-                    .await;
+            // Query fresh batch of recent events with new filters
+            let response = {
+                let mut plugin_host = state.plugin_host().write().await;
+                let query = PluginQuery {
+                    session_id: filter_session.clone(),
+                    result_types: vec![],
+                    limit: DEFAULT_FETCH_LIMIT,
+                    after_event_id: None,
+                    newest_first: true,
+                };
+                plugin_host.dispatch_query_assessment(query)
+            };
 
-            let oldest_event_id = events.first().map(|e| e.event_id);
-            let newest_event_id = events.last().map(|e| e.event_id);
-            let has_more = !events.is_empty();
-
-            let batch = AssessmentEventsBatch::new(events, oldest_event_id, has_more);
+            let batch = AssessmentEventsBatch::new(
+                response.results,
+                response.oldest_event_id,
+                response.has_more,
+            );
 
             send_json(sender, &batch)
                 .await
                 .map_err(|e| format!("Failed to send batch: {}", e))?;
-
-            // Update last_sent_event_id
-            if let Some(id) = newest_event_id {
-                *last_sent_event_id = Some(last_sent_event_id.unwrap_or(Uuid::nil()).max(id));
-            }
         }
     }
 
@@ -307,86 +261,15 @@ where
 }
 
 /// Check if an event matches the session filter
-fn matches_session_filter(event: &AssessmentEvent, filter_session: &Option<String>) -> bool {
+fn matches_session_filter(
+    result: &PluginAssessmentResult,
+    filter_session: &Option<String>,
+) -> bool {
     if let Some(session) = filter_session {
-        event.session_id().as_str() == session
+        result.session_id == *session
     } else {
         true
     }
-}
-
-/// Load recent assessment events (last N hours)
-async fn load_recent_events(
-    log: &Arc<dyn vibes_groove::assessment::AssessmentLog>,
-    limit: usize,
-    filter_session: &Option<String>,
-) -> Vec<AssessmentEventWithId> {
-    let end = Utc::now();
-    let start = end - Duration::hours(HISTORICAL_DURATION_HOURS);
-
-    let events = match log.read_range(start, end).await {
-        Ok(events) => events,
-        Err(e) => {
-            warn!("Failed to load recent assessment events: {}", e);
-            return Vec::new();
-        }
-    };
-
-    // Filter by session if specified, then take last N
-    let filtered: Vec<_> = events
-        .into_iter()
-        .filter(|e| matches_session_filter(e, filter_session))
-        .collect();
-
-    // Take the last `limit` events (most recent)
-    let start_idx = filtered.len().saturating_sub(limit);
-    filtered[start_idx..]
-        .iter()
-        .map(|e| AssessmentEventWithId::new(e.clone()))
-        .collect()
-}
-
-/// Load events before a specific event ID
-async fn load_events_before(
-    log: &Arc<dyn vibes_groove::assessment::AssessmentLog>,
-    before_event_id: Uuid,
-    limit: usize,
-    filter_session: &Option<String>,
-) -> Vec<AssessmentEventWithId> {
-    // Extract timestamp from UUIDv7 to get the time range
-    // UUIDv7 has timestamp in the first 48 bits
-    let timestamp_ms = (before_event_id.as_u128() >> 80) as i64;
-    let before_time =
-        chrono::DateTime::from_timestamp_millis(timestamp_ms).unwrap_or_else(Utc::now);
-
-    // Load events from 24 hours before the target event
-    let start = before_time - Duration::hours(HISTORICAL_DURATION_HOURS);
-
-    let events = match log.read_range(start, before_time).await {
-        Ok(events) => events,
-        Err(e) => {
-            warn!(
-                "Failed to load assessment events before {}: {}",
-                before_event_id, e
-            );
-            return Vec::new();
-        }
-    };
-
-    // Filter by session and exclude the target event
-    let filtered: Vec<_> = events
-        .into_iter()
-        .filter(|e| {
-            e.event_id().as_uuid() < before_event_id && matches_session_filter(e, filter_session)
-        })
-        .collect();
-
-    // Take the last `limit` events (closest to the target)
-    let start_idx = filtered.len().saturating_sub(limit);
-    filtered[start_idx..]
-        .iter()
-        .map(|e| AssessmentEventWithId::new(e.clone()))
-        .collect()
 }
 
 #[cfg(test)]
@@ -395,13 +278,14 @@ mod tests {
 
     #[test]
     fn assessment_query_deserializes_with_defaults() {
-        let query: AssessmentQuery = serde_json::from_str("{}").unwrap();
+        let query: AssessmentQueryParams = serde_json::from_str("{}").unwrap();
         assert!(query.session.is_none());
     }
 
     #[test]
     fn assessment_query_deserializes_with_session() {
-        let query: AssessmentQuery = serde_json::from_str(r#"{"session":"sess-123"}"#).unwrap();
+        let query: AssessmentQueryParams =
+            serde_json::from_str(r#"{"session":"sess-123"}"#).unwrap();
         assert_eq!(query.session, Some("sess-123".to_string()));
     }
 
@@ -449,7 +333,7 @@ mod tests {
 
     #[test]
     fn assessment_events_batch_serializes_correctly() {
-        let batch = AssessmentEventsBatch::new(vec![], Some(Uuid::nil()), true);
+        let batch = AssessmentEventsBatch::new(vec![], Some("evt-123".to_string()), true);
         let json = serde_json::to_string(&batch).unwrap();
         let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
 
@@ -457,5 +341,29 @@ mod tests {
         assert!(parsed["events"].is_array());
         assert!(parsed["oldest_event_id"].is_string());
         assert_eq!(parsed["has_more"], true);
+    }
+
+    #[test]
+    fn matches_session_filter_with_no_filter() {
+        let result = PluginAssessmentResult::lightweight("session-1", "{}");
+        assert!(matches_session_filter(&result, &None));
+    }
+
+    #[test]
+    fn matches_session_filter_with_matching_session() {
+        let result = PluginAssessmentResult::lightweight("session-1", "{}");
+        assert!(matches_session_filter(
+            &result,
+            &Some("session-1".to_string())
+        ));
+    }
+
+    #[test]
+    fn matches_session_filter_with_non_matching_session() {
+        let result = PluginAssessmentResult::lightweight("session-1", "{}");
+        assert!(!matches_session_filter(
+            &result,
+            &Some("session-2".to_string())
+        ));
     }
 }

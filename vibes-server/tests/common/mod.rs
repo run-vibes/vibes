@@ -18,7 +18,9 @@ pub async fn create_test_server() -> (Arc<AppState>, SocketAddr) {
 /// Creates a test server with custom config
 #[allow(dead_code)]
 pub async fn create_test_server_with_config(config: ServerConfig) -> (Arc<AppState>, SocketAddr) {
-    let state = Arc::new(AppState::new());
+    // Use new_for_testing() to avoid loading external plugins
+    // External plugins can have background tasks that outlive the test runtime
+    let state = Arc::new(AppState::new_for_testing());
 
     let server = VibesServer::with_state(config, Arc::clone(&state));
     let addr = spawn_server(server).await;
@@ -31,7 +33,8 @@ pub async fn create_test_server_with_config(config: ServerConfig) -> (Arc<AppSta
 pub async fn create_test_server_with_pty_config(
     pty_config: PtyConfig,
 ) -> (Arc<AppState>, SocketAddr) {
-    let state = Arc::new(AppState::new().with_pty_config(pty_config));
+    // Use new_for_testing() to avoid loading external plugins
+    let state = Arc::new(AppState::new_for_testing().with_pty_config(pty_config));
 
     let server = VibesServer::with_state(ServerConfig::default(), Arc::clone(&state));
     let addr = spawn_server(server).await;

@@ -18,6 +18,7 @@ pub mod processor;
 pub mod sampling;
 pub mod session_buffer;
 pub mod session_end;
+pub mod sync_processor;
 pub mod types;
 
 pub use checkpoint::{CheckpointConfig, CheckpointManager};
@@ -27,7 +28,10 @@ pub use config::{
     AssessmentConfig, CircuitBreakerConfig, IggyServerConfig, LlmConfig, PatternConfig,
     RetentionConfig, SamplingConfig, SessionEndConfig,
 };
-pub use consumer::{AssessmentConsumerConfig, ConsumerResult, assessment_consumer_loop};
+pub use consumer::{
+    AssessmentConsumerConfig, ConsumerResult, StartConsumerError, assessment_consumer_loop,
+    start_assessment_consumer,
+};
 pub use harness_llm::{
     AnalysisContext, AnalysisResult, Finding, FindingType, HarnessError, HarnessLLM,
 };
@@ -41,4 +45,5 @@ pub use processor::AssessmentProcessor;
 pub use sampling::{SamplingContext, SamplingDecision, SamplingStrategy};
 pub use session_buffer::{SessionBuffer, SessionBufferConfig};
 pub use session_end::{SessionEnd, SessionEndDetector, SessionEndReason};
+pub use sync_processor::SyncAssessmentProcessor;
 pub use types::*;
