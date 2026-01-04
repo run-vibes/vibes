@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>vibes :: firehose — CRT Essence v2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ═══════════════════════════════════════════════════════════════
+       CRT ESSENCE V2 — Session multi-select + Event details panel
+       ═══════════════════════════════════════════════════════════════ */
+
+    :root {
+      --phosphor: #ffb000;
+      --phosphor-bright: #ffc940;
+      --phosphor-dim: #996a00;
+      --phosphor-faint: #4d3500;
+      --phosphor-glow: rgba(255, 176, 0, 0.4);
+      --phosphor-subtle: rgba(255, 176, 0, 0.15);
+
+      --screen: #0a0908;
+      --screen-light: #141210;
+      --screen-lighter: #1e1a16;
+
+      --red: #ff4444;
+      --green: #44ff44;
+      --cyan: #44ffff;
+
+      --font-display: 'VT323', monospace;
+      --font-mono: 'IBM Plex Mono', monospace;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--screen);
+      overflow: hidden;
+    }
+
+    body {
+      font-family: var(--font-mono);
+      color: var(--phosphor);
+    }
+
+    /* ═══ SCANLINES ═══ */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0,0,0,0.15) 0px,
+        rgba(0,0,0,0.15) 1px,
+        transparent 1px,
+        transparent 2px
+      );
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    /* ═══ SCREEN VIGNETTE ═══ */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(
+        ellipse at center,
+        transparent 0%,
+        transparent 60%,
+        rgba(0,0,0,0.4) 100%
+      );
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    /* ═══ GLOW UTILITIES ═══ */
+    .glow {
+      text-shadow:
+        0 0 2px var(--phosphor),
+        0 0 8px var(--phosphor-glow),
+        0 0 16px var(--phosphor-subtle);
+    }
+
+    .glow-bright {
+      text-shadow:
+        0 0 2px var(--phosphor-bright),
+        0 0 10px var(--phosphor),
+        0 0 25px var(--phosphor-glow),
+        0 0 40px var(--phosphor-subtle);
+    }
+
+    .glow-red {
+      color: var(--red);
+      text-shadow: 0 0 4px var(--red), 0 0 12px rgba(255,68,68,0.5);
+    }
+
+    .glow-green {
+      color: var(--green);
+      text-shadow: 0 0 4px var(--green), 0 0 12px rgba(68,255,68,0.5);
+    }
+
+    .glow-cyan {
+      color: var(--cyan);
+      text-shadow: 0 0 4px var(--cyan), 0 0 12px rgba(68,255,255,0.5);
+    }
+
+    /* ═══ LAYOUT ═══ */
+    .app {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      height: 100vh;
+      padding: 1rem;
+      gap: 0.5rem;
+    }
+
+    /* ═══ HEADER ═══ */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--phosphor-faint);
+      background: var(--screen-light);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .logo {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      letter-spacing: 0.15em;
+    }
+
+    .nav {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .nav-item {
+      padding: 0.375rem 0.75rem;
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      color: var(--phosphor-dim);
+      cursor: pointer;
+      transition: all 0.15s;
+      border: 1px solid transparent;
+    }
+
+    .nav-item:hover {
+      color: var(--phosphor);
+      text-shadow: 0 0 8px var(--phosphor-glow);
+    }
+
+    .nav-item.active {
+      color: var(--phosphor);
+      border-color: var(--phosphor-dim);
+      background: var(--phosphor-subtle);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    .live-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+    }
+
+    .live-dot {
+      width: 10px;
+      height: 10px;
+      background: var(--red);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--red), 0 0 16px rgba(255,68,68,0.5);
+      animation: pulse 1s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .clock {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ═══ MAIN — 4 COLUMN LAYOUT ═══ */
+    .main {
+      display: grid;
+      grid-template-columns: 160px 200px 1fr 320px;
+      gap: 0.5rem;
+      overflow: hidden;
+    }
+
+    /* ═══ SESSION TABS (LEFT-MOST) ═══ */
+    .session-tabs {
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--phosphor-faint);
+      background: var(--screen-light);
+      overflow: hidden;
+    }
+
+    .session-tabs-header {
+      padding: 0.5rem 0.75rem;
+      font-family: var(--font-display);
+      font-size: 1rem;
+      letter-spacing: 0.1em;
+      border-bottom: 1px solid var(--phosphor-faint);
+      color: var(--phosphor-dim);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .session-count {
+      font-size: 0.875rem;
+      color: var(--phosphor);
+    }
+
+    .session-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .session-item {
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid var(--phosphor-faint);
+      cursor: pointer;
+      transition: all 0.1s;
+      position: relative;
+    }
+
+    .session-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: transparent;
+      transition: background 0.1s;
+    }
+
+    .session-item:hover {
+      background: var(--phosphor-subtle);
+    }
+
+    .session-item.selected {
+      background: var(--phosphor-subtle);
+    }
+
+    .session-item.selected::before {
+      background: var(--phosphor);
+      box-shadow: 0 0 6px var(--phosphor-glow);
+    }
+
+    .session-id {
+      font-family: var(--font-display);
+      font-size: 1.125rem;
+      color: var(--phosphor);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .session-checkbox {
+      width: 12px;
+      height: 12px;
+      border: 1px solid var(--phosphor-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+    }
+
+    .session-item.selected .session-checkbox {
+      background: var(--phosphor);
+      color: var(--screen);
+      border-color: var(--phosphor);
+    }
+
+    .session-name {
+      font-size: 0.75rem;
+      color: var(--phosphor-dim);
+      margin-top: 0.125rem;
+    }
+
+    .session-meta {
+      font-size: 0.625rem;
+      color: var(--phosphor-faint);
+      margin-top: 0.25rem;
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .session-status {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      margin-right: 0.25rem;
+    }
+
+    .session-status.active {
+      background: var(--green);
+      box-shadow: 0 0 4px var(--green);
+    }
+
+    .session-status.stale {
+      background: var(--phosphor-dim);
+    }
+
+    .session-status.error {
+      background: var(--red);
+      box-shadow: 0 0 4px var(--red);
+    }
+
+    /* ═══ SIDEBAR (METRICS + FILTERS) ═══ */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      overflow-y: auto;
+    }
+
+    .panel {
+      border: 1px solid var(--phosphor-faint);
+      background: var(--screen-light);
+    }
+
+    .panel-header {
+      padding: 0.5rem 0.75rem;
+      font-family: var(--font-display);
+      font-size: 1rem;
+      letter-spacing: 0.1em;
+      border-bottom: 1px solid var(--phosphor-faint);
+      color: var(--phosphor-dim);
+    }
+
+    .panel-body {
+      padding: 0.75rem;
+    }
+
+    /* Stats */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+    }
+
+    .stat {
+      text-align: center;
+      padding: 0.5rem;
+      border: 1px solid var(--phosphor-faint);
+    }
+
+    .stat-value {
+      font-family: var(--font-display);
+      font-size: 1.75rem;
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: 0.5625rem;
+      color: var(--phosphor-dim);
+      letter-spacing: 0.1em;
+      margin-top: 0.25rem;
+    }
+
+    /* Sparkline */
+    .sparkline {
+      font-family: var(--font-display);
+      font-size: 1.125rem;
+      letter-spacing: -0.05em;
+      color: var(--phosphor-dim);
+      text-align: center;
+      padding: 0.375rem 0;
+    }
+
+    .sparkline .peak {
+      color: var(--phosphor);
+      text-shadow: 0 0 6px var(--phosphor-glow);
+    }
+
+    /* Filter list */
+    .filter-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.125rem;
+    }
+
+    .filter-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.3125rem 0.5rem;
+      font-family: var(--font-display);
+      font-size: 0.9375rem;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.1s;
+    }
+
+    .filter-item:hover {
+      border-color: var(--phosphor-faint);
+      background: var(--phosphor-subtle);
+    }
+
+    .filter-item.active {
+      border-color: var(--phosphor-dim);
+      background: var(--phosphor-subtle);
+    }
+
+    .filter-count {
+      font-size: 0.8125rem;
+      color: var(--phosphor-dim);
+    }
+
+    /* ═══ STREAM ═══ */
+    .stream {
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--phosphor-faint);
+      background: var(--screen-light);
+      overflow: hidden;
+    }
+
+    .stream-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 1rem;
+      border-bottom: 1px solid var(--phosphor-faint);
+    }
+
+    .stream-title {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      letter-spacing: 0.1em;
+    }
+
+    .stream-controls {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .btn {
+      padding: 0.375rem 0.75rem;
+      font-family: var(--font-display);
+      font-size: 1rem;
+      background: transparent;
+      border: 1px solid var(--phosphor-dim);
+      color: var(--phosphor);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn:hover {
+      background: var(--phosphor-subtle);
+      text-shadow: 0 0 8px var(--phosphor-glow);
+    }
+
+    .btn.active {
+      background: var(--phosphor);
+      color: var(--screen);
+      border-color: var(--phosphor);
+    }
+
+    .stream-body {
+      flex: 1;
+      overflow-y: auto;
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
+    }
+
+    .event-row {
+      display: grid;
+      grid-template-columns: 90px 60px 1fr 60px;
+      gap: 0.75rem;
+      padding: 0.5rem 1rem;
+      border-bottom: 1px solid var(--phosphor-faint);
+      transition: background 0.1s;
+      cursor: pointer;
+    }
+
+    .event-row:hover {
+      background: var(--phosphor-subtle);
+    }
+
+    .event-row.selected {
+      background: var(--phosphor-subtle);
+      border-left: 2px solid var(--phosphor);
+      padding-left: calc(1rem - 2px);
+    }
+
+    .event-time {
+      color: var(--phosphor-dim);
+      font-variant-numeric: tabular-nums;
+      font-size: 0.75rem;
+    }
+
+    .event-type {
+      font-family: var(--font-display);
+      font-size: 0.875rem;
+      text-transform: uppercase;
+    }
+
+    .event-type.tool { color: var(--phosphor); }
+    .event-type.claude { color: var(--phosphor-bright); text-shadow: 0 0 6px var(--phosphor-glow); }
+    .event-type.session { color: var(--cyan); text-shadow: 0 0 6px rgba(68,255,255,0.4); }
+    .event-type.hook { color: var(--phosphor-dim); }
+    .event-type.assess { color: #ffd700; text-shadow: 0 0 6px rgba(255,215,0,0.4); }
+    .event-type.error { color: var(--red); text-shadow: 0 0 6px rgba(255,68,68,0.4); }
+
+    .event-content {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .event-session {
+      color: var(--phosphor-dim);
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+      font-size: 0.75rem;
+    }
+
+    /* ═══ EVENT DETAILS PANEL (RIGHT) ═══ */
+    .event-details {
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--phosphor-faint);
+      background: var(--screen-light);
+      overflow: hidden;
+    }
+
+    .event-details.empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .empty-message {
+      text-align: center;
+      color: var(--phosphor-dim);
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+    }
+
+    .empty-hint {
+      font-size: 0.875rem;
+      margin-top: 0.5rem;
+      color: var(--phosphor-faint);
+    }
+
+    .details-header {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--phosphor-faint);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .details-title {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      letter-spacing: 0.1em;
+    }
+
+    .details-close {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      color: var(--phosphor-dim);
+      cursor: pointer;
+      padding: 0 0.5rem;
+      transition: color 0.1s;
+    }
+
+    .details-close:hover {
+      color: var(--phosphor);
+    }
+
+    .details-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+    }
+
+    .detail-section {
+      margin-bottom: 1.25rem;
+    }
+
+    .detail-label {
+      font-family: var(--font-display);
+      font-size: 0.875rem;
+      color: var(--phosphor-dim);
+      letter-spacing: 0.1em;
+      margin-bottom: 0.375rem;
+    }
+
+    .detail-value {
+      font-size: 0.875rem;
+      color: var(--phosphor);
+      word-break: break-all;
+    }
+
+    .detail-value.large {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+    }
+
+    .detail-value.mono {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      padding: 0.75rem;
+      background: var(--screen);
+      border: 1px solid var(--phosphor-faint);
+      white-space: pre-wrap;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.375rem 0;
+      border-bottom: 1px dashed var(--phosphor-faint);
+    }
+
+    .detail-row:last-child {
+      border-bottom: none;
+    }
+
+    .detail-key {
+      color: var(--phosphor-dim);
+      font-size: 0.75rem;
+    }
+
+    .detail-val {
+      color: var(--phosphor);
+      font-size: 0.75rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ═══ FOOTER ═══ */
+    .footer {
+      display: flex;
+      align-items: center;
+      padding: 0.5rem 1rem;
+      border: 1px solid var(--phosphor-faint);
+      background: var(--screen-light);
+      gap: 1rem;
+    }
+
+    .prompt {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+    }
+
+    .command-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      color: var(--phosphor);
+      outline: none;
+      caret-color: var(--phosphor);
+    }
+
+    .command-input::placeholder {
+      color: var(--phosphor-faint);
+    }
+
+    .cursor {
+      display: inline-block;
+      width: 0.6em;
+      height: 1.1em;
+      background: var(--phosphor);
+      animation: blink 1s step-end infinite;
+      box-shadow: 0 0 8px var(--phosphor-glow);
+    }
+
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+
+    .hotkeys {
+      display: flex;
+      gap: 1.5rem;
+      font-family: var(--font-display);
+      font-size: 0.875rem;
+      color: var(--phosphor-dim);
+    }
+
+    .hotkey-key {
+      color: var(--phosphor);
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <span class="logo glow-bright">VIBES</span>
+        <nav class="nav">
+          <span class="nav-item">DASH</span>
+          <span class="nav-item">SESS</span>
+          <span class="nav-item active">FIRE</span>
+          <span class="nav-item">GROOVE</span>
+        </nav>
+      </div>
+      <div class="header-right">
+        <div class="live-badge glow-red">
+          <span class="live-dot"></span>
+          <span>LIVE</span>
+        </div>
+        <span class="clock glow" id="clock">23:47:32</span>
+      </div>
+    </header>
+
+    <!-- Main -->
+    <main class="main">
+      <!-- Session Tabs (Multi-Select) -->
+      <aside class="session-tabs">
+        <div class="session-tabs-header">
+          <span>SESSIONS</span>
+          <span class="session-count" id="session-count">2/5</span>
+        </div>
+        <div class="session-list" id="session-list">
+          <div class="session-item selected" data-session="a7f3c2">
+            <div class="session-id">
+              <span class="session-checkbox">✓</span>
+              a7f3c2
+            </div>
+            <div class="session-name">api-refactor</div>
+            <div class="session-meta">
+              <span><span class="session-status active"></span>active</span>
+              <span>47 evt</span>
+            </div>
+          </div>
+          <div class="session-item selected" data-session="b2e1d4">
+            <div class="session-id">
+              <span class="session-checkbox">✓</span>
+              b2e1d4
+            </div>
+            <div class="session-name">bug-fix-auth</div>
+            <div class="session-meta">
+              <span><span class="session-status active"></span>active</span>
+              <span>23 evt</span>
+            </div>
+          </div>
+          <div class="session-item" data-session="c9d4e5">
+            <div class="session-id">
+              <span class="session-checkbox"></span>
+              c9d4e5
+            </div>
+            <div class="session-name">perf-testing</div>
+            <div class="session-meta">
+              <span><span class="session-status stale"></span>stale</span>
+              <span>89 evt</span>
+            </div>
+          </div>
+          <div class="session-item" data-session="d8e2f1">
+            <div class="session-id">
+              <span class="session-checkbox"></span>
+              d8e2f1
+            </div>
+            <div class="session-name">docs-update</div>
+            <div class="session-meta">
+              <span><span class="session-status stale"></span>closed</span>
+              <span>12 evt</span>
+            </div>
+          </div>
+          <div class="session-item" data-session="e1a3b7">
+            <div class="session-id">
+              <span class="session-checkbox"></span>
+              e1a3b7
+            </div>
+            <div class="session-name">feature-xyz</div>
+            <div class="session-meta">
+              <span><span class="session-status error"></span>error</span>
+              <span>156 evt</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Sidebar (Metrics + Filters) -->
+      <aside class="sidebar">
+        <div class="panel">
+          <div class="panel-header">METRICS</div>
+          <div class="panel-body">
+            <div class="stat-grid">
+              <div class="stat">
+                <div class="stat-value glow">1247</div>
+                <div class="stat-label">EVT/HR</div>
+              </div>
+              <div class="stat">
+                <div class="stat-value glow-green">3</div>
+                <div class="stat-label">ACTIVE</div>
+              </div>
+              <div class="stat">
+                <div class="stat-value glow">47</div>
+                <div class="stat-label">LEARNS</div>
+              </div>
+              <div class="stat">
+                <div class="stat-value glow-red">2</div>
+                <div class="stat-label">ERRORS</div>
+              </div>
+            </div>
+            <div class="sparkline">
+              ▁▂▃▂<span class="peak">▅▇█</span>▆▄▃▂▁▂▃
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">FILTER</div>
+          <div class="panel-body">
+            <div class="filter-list">
+              <div class="filter-item active">
+                <span>ALL</span>
+                <span class="filter-count">847</span>
+              </div>
+              <div class="filter-item">
+                <span>TOOL</span>
+                <span class="filter-count">312</span>
+              </div>
+              <div class="filter-item">
+                <span>CLAUDE</span>
+                <span class="filter-count">284</span>
+              </div>
+              <div class="filter-item">
+                <span>SESSION</span>
+                <span class="filter-count">127</span>
+              </div>
+              <div class="filter-item">
+                <span>HOOK</span>
+                <span class="filter-count">89</span>
+              </div>
+              <div class="filter-item">
+                <span>ASSESS</span>
+                <span class="filter-count">33</span>
+              </div>
+              <div class="filter-item">
+                <span>ERROR</span>
+                <span class="filter-count">2</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Stream -->
+      <section class="stream">
+        <div class="stream-header">
+          <span class="stream-title glow">EVENT STREAM</span>
+          <div class="stream-controls">
+            <button class="btn active">LIVE</button>
+            <button class="btn">PAUSE</button>
+            <button class="btn">REPLAY</button>
+          </div>
+        </div>
+        <div class="stream-body" id="stream-body"></div>
+      </section>
+
+      <!-- Event Details Panel -->
+      <aside class="event-details empty" id="event-details">
+        <div class="empty-message">
+          <div>SELECT EVENT</div>
+          <div class="empty-hint">Click an event to view details</div>
+        </div>
+      </aside>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <span class="prompt glow">=</span>
+      <input type="text" class="command-input" placeholder="" autofocus>
+      <span class="cursor"></span>
+      <div class="hotkeys">
+        <span><span class="hotkey-key">SPC</span> pause</span>
+        <span><span class="hotkey-key">F</span> filter</span>
+        <span><span class="hotkey-key">R</span> replay</span>
+        <span><span class="hotkey-key">?</span> help</span>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    // Clock
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('clock').textContent = now.toTimeString().split(' ')[0];
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Event data
+    const eventTypes = ['tool', 'claude', 'session', 'hook', 'assess', 'error'];
+    const eventContents = {
+      tool: [
+        { content: 'Read file: src/lib/types.ts', details: { file: 'src/lib/types.ts', bytes: 1204, duration: '12ms' }},
+        { content: 'Write file: tests/unit/auth.spec.ts', details: { file: 'tests/unit/auth.spec.ts', bytes: 847, duration: '8ms' }},
+        { content: 'Bash: cargo test --lib', details: { command: 'cargo test --lib', exit: 0, duration: '4.2s' }},
+        { content: 'Edit: vibes-core/src/session.rs:142-156', details: { file: 'vibes-core/src/session.rs', lines: '142-156', bytes: 312 }},
+      ],
+      claude: [
+        { content: 'Analyzing type definitions for refactoring...', details: { model: 'claude-3-opus', tokens: 1247, thinking: true }},
+        { content: 'Implementing fix for session reconnection logic...', details: { model: 'claude-3-opus', tokens: 892, thinking: false }},
+        { content: 'Reviewing test coverage for auth module...', details: { model: 'claude-3-opus', tokens: 567, thinking: true }},
+      ],
+      session: [
+        { content: 'Session heartbeat: active, 47 tools invoked', details: { tools: 47, uptime: '1h 23m', memory: '124MB' }},
+        { content: 'Session checkpoint saved', details: { checkpoint: 'ckpt_847a2', size: '2.1MB' }},
+      ],
+      hook: [
+        { content: 'pre-commit hook executed: lint passed', details: { hook: 'pre-commit', duration: '1.2s', exit: 0 }},
+        { content: 'post-save hook executed: format complete', details: { hook: 'post-save', duration: '340ms', exit: 0 }},
+      ],
+      assess: [
+        { content: 'Learning captured: test-first methodology (0.94)', details: { pattern: 'test-first', confidence: 0.94, category: 'methodology' }},
+        { content: 'Pattern recognized: error-handling-improvement (0.89)', details: { pattern: 'error-handling', confidence: 0.89, category: 'quality' }},
+      ],
+      error: [
+        { content: 'ABEND: WebSocket connection timeout after 30s', details: { error: 'TIMEOUT', code: 'WS_TIMEOUT', retry: true }},
+        { content: 'ERROR: Failed to parse response JSON', details: { error: 'PARSE_ERROR', code: 'JSON_INVALID', recoverable: false }},
+      ]
+    };
+
+    const sessions = ['a7f3c2', 'b2e1d4', 'c9d4e5'];
+    let eventId = 0;
+
+    // Create event row
+    function createEventRow(time, type, contentObj, session) {
+      const row = document.createElement('div');
+      row.className = 'event-row';
+      row.dataset.eventId = ++eventId;
+      row.dataset.type = type;
+      row.dataset.content = contentObj.content;
+      row.dataset.details = JSON.stringify(contentObj.details);
+      row.dataset.time = time;
+      row.dataset.session = session;
+
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'event-time';
+      timeSpan.textContent = time;
+
+      const typeSpan = document.createElement('span');
+      typeSpan.className = 'event-type ' + type;
+      typeSpan.textContent = type.toUpperCase();
+
+      const contentSpan = document.createElement('span');
+      contentSpan.className = 'event-content';
+      contentSpan.textContent = contentObj.content;
+
+      const sessionSpan = document.createElement('span');
+      sessionSpan.className = 'event-session';
+      sessionSpan.textContent = session;
+
+      row.appendChild(timeSpan);
+      row.appendChild(typeSpan);
+      row.appendChild(contentSpan);
+      row.appendChild(sessionSpan);
+
+      row.addEventListener('click', function() { selectEvent(row); });
+
+      return row;
+    }
+
+    // Build details panel using safe DOM methods
+    function buildDetailsPanel(row) {
+      const detailsPanel = document.getElementById('event-details');
+      detailsPanel.classList.remove('empty');
+
+      // Clear existing content
+      while (detailsPanel.firstChild) {
+        detailsPanel.removeChild(detailsPanel.firstChild);
+      }
+
+      // Header
+      const header = document.createElement('div');
+      header.className = 'details-header';
+
+      const title = document.createElement('span');
+      title.className = 'details-title glow';
+      title.textContent = 'EVENT DETAILS';
+
+      const closeBtn = document.createElement('span');
+      closeBtn.className = 'details-close';
+      closeBtn.textContent = '×';
+      closeBtn.addEventListener('click', closeDetails);
+
+      header.appendChild(title);
+      header.appendChild(closeBtn);
+      detailsPanel.appendChild(header);
+
+      // Body
+      const body = document.createElement('div');
+      body.className = 'details-body';
+
+      // Type section
+      const typeSection = document.createElement('div');
+      typeSection.className = 'detail-section';
+      const typeLabel = document.createElement('div');
+      typeLabel.className = 'detail-label';
+      typeLabel.textContent = 'TYPE';
+      const typeValue = document.createElement('div');
+      typeValue.className = 'detail-value large';
+      typeValue.textContent = row.dataset.type.toUpperCase();
+      typeSection.appendChild(typeLabel);
+      typeSection.appendChild(typeValue);
+      body.appendChild(typeSection);
+
+      // Timestamp section
+      const timeSection = document.createElement('div');
+      timeSection.className = 'detail-section';
+      const timeLabel = document.createElement('div');
+      timeLabel.className = 'detail-label';
+      timeLabel.textContent = 'TIMESTAMP';
+      const timeValue = document.createElement('div');
+      timeValue.className = 'detail-value';
+      timeValue.textContent = row.dataset.time;
+      timeSection.appendChild(timeLabel);
+      timeSection.appendChild(timeValue);
+      body.appendChild(timeSection);
+
+      // Session section
+      const sessSection = document.createElement('div');
+      sessSection.className = 'detail-section';
+      const sessLabel = document.createElement('div');
+      sessLabel.className = 'detail-label';
+      sessLabel.textContent = 'SESSION';
+      const sessValue = document.createElement('div');
+      sessValue.className = 'detail-value';
+      sessValue.textContent = row.dataset.session;
+      sessSection.appendChild(sessLabel);
+      sessSection.appendChild(sessValue);
+      body.appendChild(sessSection);
+
+      // Content section
+      const contentSection = document.createElement('div');
+      contentSection.className = 'detail-section';
+      const contentLabel = document.createElement('div');
+      contentLabel.className = 'detail-label';
+      contentLabel.textContent = 'CONTENT';
+      const contentValue = document.createElement('div');
+      contentValue.className = 'detail-value mono';
+      contentValue.textContent = row.dataset.content;
+      contentSection.appendChild(contentLabel);
+      contentSection.appendChild(contentValue);
+      body.appendChild(contentSection);
+
+      // Metadata section
+      const details = JSON.parse(row.dataset.details);
+      const metaSection = document.createElement('div');
+      metaSection.className = 'detail-section';
+      const metaLabel = document.createElement('div');
+      metaLabel.className = 'detail-label';
+      metaLabel.textContent = 'METADATA';
+      metaSection.appendChild(metaLabel);
+
+      for (const [key, val] of Object.entries(details)) {
+        const detailRow = document.createElement('div');
+        detailRow.className = 'detail-row';
+
+        const keySpan = document.createElement('span');
+        keySpan.className = 'detail-key';
+        keySpan.textContent = key;
+
+        const valSpan = document.createElement('span');
+        valSpan.className = 'detail-val';
+        valSpan.textContent = String(val);
+
+        detailRow.appendChild(keySpan);
+        detailRow.appendChild(valSpan);
+        metaSection.appendChild(detailRow);
+      }
+
+      body.appendChild(metaSection);
+      detailsPanel.appendChild(body);
+    }
+
+    // Select event and show details
+    function selectEvent(row) {
+      document.querySelectorAll('.event-row.selected').forEach(function(r) {
+        r.classList.remove('selected');
+      });
+      row.classList.add('selected');
+      buildDetailsPanel(row);
+    }
+
+    function closeDetails() {
+      const detailsPanel = document.getElementById('event-details');
+      detailsPanel.classList.add('empty');
+
+      while (detailsPanel.firstChild) {
+        detailsPanel.removeChild(detailsPanel.firstChild);
+      }
+
+      const emptyMsg = document.createElement('div');
+      emptyMsg.className = 'empty-message';
+
+      const mainText = document.createElement('div');
+      mainText.textContent = 'SELECT EVENT';
+
+      const hintText = document.createElement('div');
+      hintText.className = 'empty-hint';
+      hintText.textContent = 'Click an event to view details';
+
+      emptyMsg.appendChild(mainText);
+      emptyMsg.appendChild(hintText);
+      detailsPanel.appendChild(emptyMsg);
+
+      document.querySelectorAll('.event-row.selected').forEach(function(r) {
+        r.classList.remove('selected');
+      });
+    }
+
+    // Initialize stream
+    const stream = document.getElementById('stream-body');
+    const now = new Date();
+
+    for (let i = 0; i < 12; i++) {
+      const type = eventTypes[Math.floor(Math.random() * (eventTypes.length - 1))];
+      const contents = eventContents[type];
+      const contentObj = contents[Math.floor(Math.random() * contents.length)];
+      const session = sessions[Math.floor(Math.random() * sessions.length)];
+      const time = new Date(now - (i * 3000));
+      const timeStr = time.toTimeString().split(' ')[0] + '.' + String(time.getMilliseconds()).padStart(3, '0');
+
+      stream.appendChild(createEventRow(timeStr, type, contentObj, session));
+    }
+
+    // Add new events
+    setInterval(function() {
+      const type = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+      const contents = eventContents[type];
+      const contentObj = contents[Math.floor(Math.random() * contents.length)];
+      const session = sessions[Math.floor(Math.random() * sessions.length)];
+      const now = new Date();
+      const timeStr = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
+
+      const row = createEventRow(timeStr, type, contentObj, session);
+      stream.insertBefore(row, stream.firstChild);
+
+      if (stream.children.length > 20) {
+        stream.removeChild(stream.lastChild);
+      }
+    }, 2500);
+
+    // Session multi-select
+    document.getElementById('session-list').addEventListener('click', function(e) {
+      const item = e.target.closest('.session-item');
+      if (!item) return;
+
+      item.classList.toggle('selected');
+      const checkbox = item.querySelector('.session-checkbox');
+      checkbox.textContent = item.classList.contains('selected') ? '✓' : '';
+
+      const total = document.querySelectorAll('.session-item').length;
+      const selected = document.querySelectorAll('.session-item.selected').length;
+      document.getElementById('session-count').textContent = selected + '/' + total;
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>vibes — Schematic Interface v3 (Large Screen)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Chakra+Petch:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ═══════════════════════════════════════════════════════════════
+       SCHEMATIC V3 — Fluid layout for large/ultrawide screens
+       No max-width, 5-column layout, better space utilization
+       ═══════════════════════════════════════════════════════════════ */
+
+    :root {
+      --bg-dark: #0a0e14;
+      --bg-panel: #0d1117;
+      --cyan: #00b4d8;
+      --cyan-dim: rgba(0, 180, 216, 0.6);
+      --cyan-glow: rgba(0, 180, 216, 0.3);
+      --cyan-subtle: rgba(0, 180, 216, 0.08);
+      --orange: #ff6b35;
+      --green: #90be6d;
+      --text-primary: #cad3de;
+      --text-dim: #5c6b7a;
+      --text-label: #3d4f5f;
+      --border: rgba(0, 180, 216, 0.2);
+      --border-faint: rgba(0, 180, 216, 0.08);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg-dark);
+      overflow: hidden;
+    }
+
+    body {
+      font-family: 'Share Tech Mono', monospace;
+      color: var(--text-primary);
+    }
+
+    /* Layout - full viewport, no max-width */
+    .app {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      height: 100vh;
+      padding: 0.75rem;
+      gap: 0.5rem;
+    }
+
+    /* Header - spans full width */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.625rem 1rem;
+      border: 1px solid var(--border);
+      background: var(--bg-panel);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 3rem;
+    }
+
+    .logo {
+      font-family: 'Chakra Petch', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--cyan);
+      letter-spacing: -0.5px;
+      text-shadow: 0 0 20px var(--cyan-glow);
+    }
+
+    .header-stats {
+      display: flex;
+      gap: 3rem;
+    }
+
+    .stat-block {
+      padding-left: 1rem;
+      border-left: 2px solid var(--border);
+    }
+
+    .stat-label {
+      font-size: 0.5rem;
+      color: var(--text-label);
+      letter-spacing: 1.5px;
+    }
+
+    .stat-value {
+      font-family: 'Chakra Petch', sans-serif;
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .stat-unit {
+      font-size: 0.625rem;
+      color: var(--text-dim);
+      margin-left: 0.25rem;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    .live-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.6875rem;
+      color: var(--green);
+    }
+
+    .live-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .clock {
+      font-size: 0.875rem;
+      color: var(--text-dim);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Main - 5 columns for large screens, fluid widths */
+    .main {
+      display: grid;
+      grid-template-columns: minmax(140px, 180px) minmax(180px, 240px) 1fr 1fr minmax(240px, 320px);
+      gap: 0.5rem;
+      overflow: hidden;
+    }
+
+    /* Panel styling */
+    .panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border-faint);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .panel-title {
+      font-size: 0.5625rem;
+      color: var(--cyan-dim);
+      letter-spacing: 2px;
+    }
+
+    .panel-ref {
+      font-size: 0.5rem;
+      color: var(--text-label);
+    }
+
+    .panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.5rem;
+    }
+
+    /* Sessions */
+    .session-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.375rem 0.5rem;
+      margin-bottom: 0.125rem;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.1s;
+    }
+
+    .session-item:hover {
+      border-color: var(--border-faint);
+      background: var(--cyan-subtle);
+    }
+
+    .session-item.selected {
+      border-color: var(--border);
+      background: var(--cyan-subtle);
+    }
+
+    .session-status {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .session-status.active { background: var(--cyan); box-shadow: 0 0 4px var(--cyan-glow); }
+    .session-status.idle { background: var(--text-dim); }
+    .session-status.warning { background: var(--orange); }
+
+    .session-info { flex: 1; min-width: 0; }
+    .session-name { font-size: 0.6875rem; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .session-id { font-size: 0.5rem; color: var(--text-dim); }
+
+    /* Filters + Stats */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.25rem;
+      margin-bottom: 0.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border-faint);
+    }
+
+    .mini-stat {
+      text-align: center;
+      padding: 0.375rem;
+      border: 1px solid var(--border-faint);
+    }
+
+    .mini-stat-value {
+      font-family: 'Chakra Petch', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .mini-stat-value.cyan { color: var(--cyan); }
+    .mini-stat-value.green { color: var(--green); }
+    .mini-stat-value.orange { color: var(--orange); }
+
+    .mini-stat-label {
+      font-size: 0.4375rem;
+      color: var(--text-label);
+      letter-spacing: 1px;
+    }
+
+    .filter-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.25rem 0.375rem;
+      cursor: pointer;
+      border: 1px solid transparent;
+      font-size: 0.6875rem;
+    }
+
+    .filter-item:hover { background: var(--cyan-subtle); }
+    .filter-item.active { border-color: var(--cyan-dim); background: var(--cyan-subtle); }
+    .filter-name { color: var(--text-primary); }
+    .filter-count { color: var(--text-dim); font-size: 0.625rem; }
+
+    /* Event streams - 2 columns side by side */
+    .stream-body {
+      flex: 1;
+      overflow-y: auto;
+      font-size: 0.75rem;
+    }
+
+    .event-row {
+      display: grid;
+      grid-template-columns: 70px 60px 1fr 50px;
+      gap: 0.5rem;
+      padding: 0.375rem 0.5rem;
+      border-bottom: 1px solid var(--border-faint);
+      cursor: pointer;
+    }
+
+    .event-row:hover { background: var(--cyan-subtle); }
+    .event-row.selected { background: var(--cyan-subtle); border-left: 2px solid var(--cyan); padding-left: calc(0.5rem - 2px); }
+
+    .event-time { color: var(--text-dim); font-variant-numeric: tabular-nums; font-size: 0.6875rem; }
+    .event-type { font-weight: 600; letter-spacing: 0.5px; font-size: 0.625rem; }
+    .event-type.tool { color: var(--cyan); }
+    .event-type.response { color: var(--green); }
+    .event-type.error { color: var(--orange); }
+    .event-type.system { color: var(--text-dim); }
+    .event-content { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-primary); }
+    .event-session { color: var(--text-dim); text-align: right; font-size: 0.5625rem; }
+
+    /* Details panel - rightmost */
+    .details-empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--text-label);
+      font-size: 0.6875rem;
+      text-align: center;
+    }
+
+    .details-content { padding: 0.5rem; }
+    .detail-section { margin-bottom: 0.75rem; }
+    .detail-label { font-size: 0.5rem; color: var(--text-label); letter-spacing: 1.5px; margin-bottom: 0.125rem; }
+    .detail-value { font-size: 0.75rem; color: var(--text-primary); }
+    .detail-value.large { font-family: 'Chakra Petch', sans-serif; font-size: 1.125rem; font-weight: 600; }
+    .detail-value.mono { font-size: 0.6875rem; padding: 0.375rem; background: var(--bg-dark); border: 1px solid var(--border-faint); white-space: pre-wrap; word-break: break-all; }
+    .detail-row { display: flex; justify-content: space-between; padding: 0.1875rem 0; border-bottom: 1px dashed var(--border-faint); font-size: 0.6875rem; }
+    .detail-key { color: var(--text-dim); }
+    .detail-val { color: var(--text-primary); }
+
+    /* Metrics section in details panel */
+    .metrics-section { margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border-faint); }
+    .metric-block { margin-bottom: 0.625rem; }
+    .metric-header { display: flex; justify-content: space-between; margin-bottom: 0.25rem; }
+    .metric-name { font-size: 0.5rem; color: var(--text-label); letter-spacing: 1px; }
+    .metric-value { font-family: 'Chakra Petch', sans-serif; font-size: 0.75rem; font-weight: 600; color: var(--text-primary); }
+    .metric-bar { height: 2px; background: var(--border-faint); }
+    .metric-bar-fill { height: 100%; background: var(--cyan); }
+
+    /* Footer */
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.375rem 1rem;
+      border: 1px solid var(--border);
+      background: var(--bg-panel);
+      font-size: 0.5625rem;
+      color: var(--text-dim);
+    }
+
+    .footer-specs { display: flex; gap: 2rem; }
+    .footer-spec { display: flex; gap: 0.5rem; }
+    .footer-spec-label { color: var(--text-label); }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="header-left">
+        <span class="logo">VIBES</span>
+        <div class="header-stats">
+          <div class="stat-block">
+            <div class="stat-label">SESSIONS</div>
+            <div class="stat-value">3<span class="stat-unit">/ 8</span></div>
+          </div>
+          <div class="stat-block">
+            <div class="stat-label">THROUGHPUT</div>
+            <div class="stat-value">847<span class="stat-unit">evt/min</span></div>
+          </div>
+          <div class="stat-block">
+            <div class="stat-label">UPTIME</div>
+            <div class="stat-value">99.7<span class="stat-unit">%</span></div>
+          </div>
+          <div class="stat-block">
+            <div class="stat-label">LATENCY P95</div>
+            <div class="stat-value">23<span class="stat-unit">ms</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="live-indicator">
+          <span class="live-dot"></span>
+          <span>LIVE</span>
+        </div>
+        <span class="clock" id="clock">23:47:32</span>
+      </div>
+    </header>
+
+    <main class="main">
+      <!-- Col 1: Sessions -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">SESSIONS</span>
+          <span class="panel-ref">A</span>
+        </div>
+        <div class="panel-body" id="session-list">
+          <div class="session-item selected">
+            <div class="session-status active"></div>
+            <div class="session-info">
+              <div class="session-name">api-refactor</div>
+              <div class="session-id">ses_7x8k2m</div>
+            </div>
+          </div>
+          <div class="session-item">
+            <div class="session-status active"></div>
+            <div class="session-info">
+              <div class="session-name">bug-fix-auth</div>
+              <div class="session-id">ses_3n9p1q</div>
+            </div>
+          </div>
+          <div class="session-item">
+            <div class="session-status warning"></div>
+            <div class="session-info">
+              <div class="session-name">perf-testing</div>
+              <div class="session-id">ses_2k4j8w</div>
+            </div>
+          </div>
+          <div class="session-item">
+            <div class="session-status idle"></div>
+            <div class="session-info">
+              <div class="session-name">docs-update</div>
+              <div class="session-id">ses_9m2l5n</div>
+            </div>
+          </div>
+          <div class="session-item">
+            <div class="session-status idle"></div>
+            <div class="session-info">
+              <div class="session-name">feature-xyz</div>
+              <div class="session-id">ses_4p7k2x</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Col 2: Filters + Stats -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">FILTERS</span>
+          <span class="panel-ref">B</span>
+        </div>
+        <div class="panel-body">
+          <div class="stats-grid">
+            <div class="mini-stat">
+              <div class="mini-stat-value cyan">1247</div>
+              <div class="mini-stat-label">EVT/HR</div>
+            </div>
+            <div class="mini-stat">
+              <div class="mini-stat-value green">47</div>
+              <div class="mini-stat-label">LEARNS</div>
+            </div>
+            <div class="mini-stat">
+              <div class="mini-stat-value">3</div>
+              <div class="mini-stat-label">ACTIVE</div>
+            </div>
+            <div class="mini-stat">
+              <div class="mini-stat-value orange">2</div>
+              <div class="mini-stat-label">ERRORS</div>
+            </div>
+          </div>
+          <div class="filter-item active"><span class="filter-name">ALL</span><span class="filter-count">847</span></div>
+          <div class="filter-item"><span class="filter-name">TOOL</span><span class="filter-count">312</span></div>
+          <div class="filter-item"><span class="filter-name">RESPONSE</span><span class="filter-count">284</span></div>
+          <div class="filter-item"><span class="filter-name">SYSTEM</span><span class="filter-count">216</span></div>
+          <div class="filter-item"><span class="filter-name">ERROR</span><span class="filter-count">2</span></div>
+        </div>
+      </div>
+
+      <!-- Col 3: Event Stream 1 -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">STREAM: TOOLS</span>
+          <span class="panel-ref">C1</span>
+        </div>
+        <div class="stream-body" id="stream-tools"></div>
+      </div>
+
+      <!-- Col 4: Event Stream 2 -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">STREAM: ALL</span>
+          <span class="panel-ref">C2</span>
+        </div>
+        <div class="stream-body" id="stream-all"></div>
+      </div>
+
+      <!-- Col 5: Details + Metrics -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">DETAILS</span>
+          <span class="panel-ref">D</span>
+        </div>
+        <div class="panel-body" id="details-panel">
+          <div class="details-empty">SELECT EVENT</div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-specs">
+        <div class="footer-spec"><span class="footer-spec-label">PROTOCOL:</span><span>WS/2.0</span></div>
+        <div class="footer-spec"><span class="footer-spec-label">NODE:</span><span>vibes-prod-01</span></div>
+        <div class="footer-spec"><span class="footer-spec-label">BUILD:</span><span>2.1.0</span></div>
+      </div>
+      <span>SCALE: FLUID</span>
+    </footer>
+  </div>
+
+  <script>
+    function updateClock() {
+      document.getElementById('clock').textContent = new Date().toTimeString().split(' ')[0];
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    const eventTypes = [
+      { type: 'TOOL', class: 'tool' },
+      { type: 'RESPONSE', class: 'response' },
+      { type: 'ERROR', class: 'error' },
+      { type: 'SYSTEM', class: 'system' }
+    ];
+
+    const contents = [
+      { text: 'Read: src/lib/auth.ts', details: { file: 'src/lib/auth.ts', bytes: 1204 }},
+      { text: 'Write: tests/auth.spec.ts', details: { file: 'tests/auth.spec.ts', bytes: 847 }},
+      { text: 'Bash: cargo test', details: { command: 'cargo test', exit: 0 }},
+      { text: 'Response: complete', details: { tokens: 1247 }},
+      { text: 'Checkpoint saved', details: { size: '2.1MB' }},
+    ];
+
+    const sessions = ['7x8k2m', '3n9p1q', '2k4j8w'];
+
+    function createEventRow(time, eventType, contentObj, session) {
+      const row = document.createElement('div');
+      row.className = 'event-row';
+      row.dataset.details = JSON.stringify(contentObj.details);
+      row.dataset.type = eventType.type;
+      row.dataset.time = time;
+      row.dataset.content = contentObj.text;
+
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'event-time';
+      timeSpan.textContent = time;
+
+      const typeSpan = document.createElement('span');
+      typeSpan.className = 'event-type ' + eventType.class;
+      typeSpan.textContent = eventType.type;
+
+      const contentSpan = document.createElement('span');
+      contentSpan.className = 'event-content';
+      contentSpan.textContent = contentObj.text;
+
+      const sessionSpan = document.createElement('span');
+      sessionSpan.className = 'event-session';
+      sessionSpan.textContent = session;
+
+      row.appendChild(timeSpan);
+      row.appendChild(typeSpan);
+      row.appendChild(contentSpan);
+      row.appendChild(sessionSpan);
+
+      row.addEventListener('click', function() { selectEvent(row); });
+      return row;
+    }
+
+    function selectEvent(row) {
+      document.querySelectorAll('.event-row.selected').forEach(function(r) { r.classList.remove('selected'); });
+      row.classList.add('selected');
+
+      const panel = document.getElementById('details-panel');
+      while (panel.firstChild) panel.removeChild(panel.firstChild);
+
+      const content = document.createElement('div');
+      content.className = 'details-content';
+
+      function addSection(label, value, classes) {
+        const section = document.createElement('div');
+        section.className = 'detail-section';
+        const labelEl = document.createElement('div');
+        labelEl.className = 'detail-label';
+        labelEl.textContent = label;
+        const valueEl = document.createElement('div');
+        valueEl.className = 'detail-value' + (classes ? ' ' + classes : '');
+        valueEl.textContent = value;
+        section.appendChild(labelEl);
+        section.appendChild(valueEl);
+        content.appendChild(section);
+      }
+
+      addSection('TYPE', row.dataset.type, 'large');
+      addSection('TIMESTAMP', row.dataset.time);
+      addSection('CONTENT', row.dataset.content, 'mono');
+
+      const details = JSON.parse(row.dataset.details);
+      const metaSection = document.createElement('div');
+      metaSection.className = 'detail-section';
+      const metaLabel = document.createElement('div');
+      metaLabel.className = 'detail-label';
+      metaLabel.textContent = 'METADATA';
+      metaSection.appendChild(metaLabel);
+
+      for (const [key, val] of Object.entries(details)) {
+        const detailRow = document.createElement('div');
+        detailRow.className = 'detail-row';
+        const keySpan = document.createElement('span');
+        keySpan.className = 'detail-key';
+        keySpan.textContent = key;
+        const valSpan = document.createElement('span');
+        valSpan.className = 'detail-val';
+        valSpan.textContent = String(val);
+        detailRow.appendChild(keySpan);
+        detailRow.appendChild(valSpan);
+        metaSection.appendChild(detailRow);
+      }
+      content.appendChild(metaSection);
+
+      // Add metrics section
+      const metricsSection = document.createElement('div');
+      metricsSection.className = 'metrics-section';
+      const metricsLabel = document.createElement('div');
+      metricsLabel.className = 'detail-label';
+      metricsLabel.textContent = 'SYSTEM METRICS';
+      metricsSection.appendChild(metricsLabel);
+
+      const metrics = [
+        { name: 'CPU', value: '42%', pct: 42 },
+        { name: 'MEM', value: '2.1GB', pct: 65 },
+        { name: 'LAT', value: '23ms', pct: 23 }
+      ];
+
+      metrics.forEach(function(m) {
+        const block = document.createElement('div');
+        block.className = 'metric-block';
+        const header = document.createElement('div');
+        header.className = 'metric-header';
+        const name = document.createElement('span');
+        name.className = 'metric-name';
+        name.textContent = m.name;
+        const val = document.createElement('span');
+        val.className = 'metric-value';
+        val.textContent = m.value;
+        header.appendChild(name);
+        header.appendChild(val);
+        block.appendChild(header);
+        const bar = document.createElement('div');
+        bar.className = 'metric-bar';
+        const fill = document.createElement('div');
+        fill.className = 'metric-bar-fill';
+        fill.style.width = m.pct + '%';
+        bar.appendChild(fill);
+        block.appendChild(bar);
+        metricsSection.appendChild(block);
+      });
+
+      content.appendChild(metricsSection);
+      panel.appendChild(content);
+    }
+
+    const streamTools = document.getElementById('stream-tools');
+    const streamAll = document.getElementById('stream-all');
+    const now = new Date();
+
+    // Populate tools stream
+    for (let i = 0; i < 15; i++) {
+      const time = new Date(now - (i * 4000));
+      const contentObj = contents[Math.floor(Math.random() * 3)]; // Only first 3 are tools
+      const session = sessions[Math.floor(Math.random() * sessions.length)];
+      streamTools.appendChild(createEventRow(time.toTimeString().split(' ')[0], eventTypes[0], contentObj, session));
+    }
+
+    // Populate all stream
+    for (let i = 0; i < 15; i++) {
+      const time = new Date(now - (i * 3000));
+      const eventType = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+      const contentObj = contents[Math.floor(Math.random() * contents.length)];
+      const session = sessions[Math.floor(Math.random() * sessions.length)];
+      streamAll.appendChild(createEventRow(time.toTimeString().split(' ')[0], eventType, contentObj, session));
+    }
+
+    // Live updates
+    setInterval(function() {
+      // Tools stream
+      const toolContent = contents[Math.floor(Math.random() * 3)];
+      const toolSession = sessions[Math.floor(Math.random() * sessions.length)];
+      const toolRow = createEventRow(new Date().toTimeString().split(' ')[0], eventTypes[0], toolContent, toolSession);
+      streamTools.insertBefore(toolRow, streamTools.firstChild);
+      if (streamTools.children.length > 30) streamTools.removeChild(streamTools.lastChild);
+    }, 4000);
+
+    setInterval(function() {
+      // All stream
+      const eventType = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+      const contentObj = contents[Math.floor(Math.random() * contents.length)];
+      const session = sessions[Math.floor(Math.random() * sessions.length)];
+      const row = createEventRow(new Date().toTimeString().split(' ')[0], eventType, contentObj, session);
+      streamAll.insertBefore(row, streamAll.firstChild);
+      if (streamAll.children.length > 30) streamAll.removeChild(streamAll.lastChild);
+    }, 2500);
+  </script>
+</body>
+</html>

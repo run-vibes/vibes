@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VIBES — Firehose | Warm Industrial</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <style>
+    /* ═══════════════════════════════════════════════════════════════
+       WARM INDUSTRIAL — Honest materiality, copper warmth, workshop feel
+       ═══════════════════════════════════════════════════════════════ */
+
+    :root {
+      /* Warm material palette */
+      --copper: #b87333;
+      --copper-light: #d4956a;
+      --copper-dark: #8b5a2b;
+      --brass: #c9a227;
+      --bronze: #8c7853;
+      --iron: #4a4a4a;
+      --steel: #71797e;
+      --rust: #a45a52;
+
+      /* Background textures */
+      --bg-workshop: #1a1714;
+      --bg-panel: #242018;
+      --bg-surface: #2e2820;
+      --bg-elevated: #3a3228;
+
+      /* Text */
+      --text-bright: #f5e6d3;
+      --text-normal: #c4b5a0;
+      --text-dim: #8b7d6b;
+      --text-faint: #5c5248;
+
+      /* Semantic */
+      --active: #7cb342;
+      --warning: #e6a117;
+      --error: #c94a4a;
+      --info: #5d9cad;
+
+      /* Typography */
+      --font-display: 'Fraunces', Georgia, serif;
+      --font-mono: 'DM Mono', 'Courier New', monospace;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg-workshop);
+      font-family: var(--font-mono);
+      color: var(--text-normal);
+      overflow-x: hidden;
+    }
+
+    /* ═══ TEXTURED BACKGROUND ═══ */
+    body {
+      background-image:
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+      background-blend-mode: overlay;
+      background-color: var(--bg-workshop);
+    }
+
+    /* ═══ LAYOUT ═══ */
+    .workshop {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-height: 100vh;
+    }
+
+    /* ═══ HEADER — Industrial nameplate ═══ */
+    .header {
+      background: linear-gradient(180deg, var(--bg-elevated) 0%, var(--bg-panel) 100%);
+      border-bottom: 3px solid var(--copper);
+      padding: 0;
+    }
+
+    .header-inner {
+      max-width: 1600px;
+      margin: 0 auto;
+      display: flex;
+      align-items: stretch;
+    }
+
+    .nameplate {
+      background: linear-gradient(135deg, var(--copper) 0%, var(--copper-dark) 100%);
+      padding: 1rem 2rem;
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    /* Rivets */
+    .nameplate::before,
+    .nameplate::after {
+      content: '●';
+      position: absolute;
+      font-size: 8px;
+      color: var(--copper-dark);
+      text-shadow: 1px 1px 0 var(--copper-light);
+    }
+    .nameplate::before { top: 8px; left: 12px; }
+    .nameplate::after { top: 8px; right: 12px; }
+
+    .logo {
+      font-family: var(--font-display);
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--bg-workshop);
+      letter-spacing: 0.05em;
+      text-shadow: 1px 1px 0 var(--copper-light);
+    }
+
+    .logo-divider {
+      width: 2px;
+      height: 24px;
+      background: var(--bg-workshop);
+      opacity: 0.3;
+    }
+
+    .page-name {
+      font-family: var(--font-display);
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--bg-workshop);
+      opacity: 0.8;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .nav {
+      display: flex;
+      align-items: stretch;
+      flex: 1;
+      border-left: 1px solid var(--text-faint);
+    }
+
+    .nav-item {
+      padding: 1rem 1.5rem;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+      color: var(--text-dim);
+      border-right: 1px solid rgba(255,255,255,0.05);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      position: relative;
+    }
+
+    .nav-item:hover {
+      color: var(--text-normal);
+      background: rgba(184, 115, 51, 0.1);
+    }
+
+    .nav-item.active {
+      color: var(--copper-light);
+      background: rgba(184, 115, 51, 0.15);
+    }
+
+    .nav-item.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--copper);
+    }
+
+    .header-status {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      padding: 0 1.5rem;
+      margin-left: auto;
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.6875rem;
+      letter-spacing: 0.05em;
+    }
+
+    .status-light {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 2px solid var(--text-faint);
+    }
+
+    .status-light.on {
+      background: var(--active);
+      border-color: var(--active);
+      box-shadow: 0 0 8px var(--active);
+    }
+
+    .clock {
+      font-variant-numeric: tabular-nums;
+      font-size: 0.875rem;
+      color: var(--copper-light);
+    }
+
+    /* ═══ MAIN CONTENT ═══ */
+    .main {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      max-width: 1600px;
+      margin: 0 auto;
+      width: 100%;
+      gap: 1px;
+      background: var(--text-faint);
+    }
+
+    /* ═══ SIDEBAR — Gauge panel ═══ */
+    .sidebar {
+      background: var(--bg-panel);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .gauge-section {
+      background: var(--bg-surface);
+      border: 1px solid var(--text-faint);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .gauge-header {
+      background: linear-gradient(90deg, var(--bronze), var(--iron));
+      padding: 0.5rem 0.75rem;
+      font-size: 0.625rem;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-bright);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .gauge-header::before {
+      content: '◆';
+      font-size: 6px;
+      color: var(--copper-light);
+    }
+
+    .gauge-body {
+      padding: 1rem;
+    }
+
+    /* Analog gauge */
+    .analog-gauge {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .gauge-dial {
+      width: 120px;
+      height: 60px;
+      background:
+        conic-gradient(from 180deg at 50% 100%,
+          var(--active) 0deg,
+          var(--warning) 60deg,
+          var(--error) 120deg,
+          var(--text-faint) 120deg,
+          var(--text-faint) 180deg
+        );
+      border-radius: 120px 120px 0 0;
+      position: relative;
+      border: 3px solid var(--bronze);
+      border-bottom: none;
+    }
+
+    .gauge-needle {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      width: 2px;
+      height: 50px;
+      background: var(--copper);
+      transform-origin: bottom center;
+      transform: translateX(-50%) rotate(-30deg);
+      box-shadow: 0 0 4px var(--copper);
+    }
+
+    .gauge-center {
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 12px;
+      height: 12px;
+      background: var(--bronze);
+      border-radius: 50%;
+      border: 2px solid var(--copper);
+    }
+
+    .gauge-value {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--copper-light);
+      margin-top: 0.75rem;
+    }
+
+    .gauge-label {
+      font-size: 0.625rem;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    /* Metric bars */
+    .metric-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.625rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .metric-row:last-child {
+      border-bottom: none;
+    }
+
+    .metric-label {
+      font-size: 0.6875rem;
+      color: var(--text-dim);
+    }
+
+    .metric-value {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-bright);
+    }
+
+    .metric-value.warning { color: var(--warning); }
+    .metric-value.error { color: var(--error); }
+    .metric-value.active { color: var(--active); }
+
+    /* LED indicators */
+    .led-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+    }
+
+    .led-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .led {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 2px solid var(--iron);
+      background: var(--bg-workshop);
+    }
+
+    .led.on-green {
+      background: var(--active);
+      box-shadow: 0 0 8px var(--active), inset 0 -2px 4px rgba(0,0,0,0.3);
+    }
+
+    .led.on-amber {
+      background: var(--warning);
+      box-shadow: 0 0 8px var(--warning), inset 0 -2px 4px rgba(0,0,0,0.3);
+    }
+
+    .led.on-red {
+      background: var(--error);
+      box-shadow: 0 0 8px var(--error), inset 0 -2px 4px rgba(0,0,0,0.3);
+    }
+
+    .led-label {
+      font-size: 0.5rem;
+      color: var(--text-faint);
+      letter-spacing: 0.05em;
+    }
+
+    /* ═══ STREAM PANEL ═══ */
+    .stream-panel {
+      background: var(--bg-panel);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stream-header {
+      background: linear-gradient(90deg, var(--bg-elevated), var(--bg-surface));
+      border-bottom: 2px solid var(--bronze);
+      padding: 0.875rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .stream-title {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-bright);
+      letter-spacing: 0.02em;
+    }
+
+    .stream-controls {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .btn {
+      padding: 0.5rem 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      letter-spacing: 0.05em;
+      background: var(--bg-surface);
+      border: 1px solid var(--bronze);
+      color: var(--text-normal);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn:hover {
+      background: var(--bg-elevated);
+      border-color: var(--copper);
+      color: var(--text-bright);
+    }
+
+    .btn.active {
+      background: var(--copper);
+      border-color: var(--copper);
+      color: var(--bg-workshop);
+    }
+
+    .stream-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.5rem;
+    }
+
+    /* Event tape (paper tape aesthetic) */
+    .event-tape {
+      background: linear-gradient(90deg,
+        var(--bg-surface) 0px,
+        var(--bg-surface) 4px,
+        transparent 4px,
+        transparent 8px
+      );
+      background-size: 8px 100%;
+      border-left: 3px solid var(--bronze);
+      margin-bottom: 2px;
+    }
+
+    .event-row {
+      display: grid;
+      grid-template-columns: 100px 70px 1fr 70px;
+      gap: 1rem;
+      padding: 0.625rem 1rem 0.625rem 1.5rem;
+      background: var(--bg-surface);
+      border-bottom: 1px dashed rgba(255,255,255,0.05);
+      transition: background 0.1s;
+    }
+
+    .event-row:hover {
+      background: var(--bg-elevated);
+    }
+
+    .event-time {
+      font-size: 0.6875rem;
+      color: var(--text-faint);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .event-type {
+      font-size: 0.5625rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.25rem 0.5rem;
+      text-align: center;
+      border: 1px solid;
+    }
+
+    .event-type.tool {
+      border-color: var(--steel);
+      color: var(--steel);
+      background: rgba(113, 121, 126, 0.1);
+    }
+    .event-type.claude {
+      border-color: var(--copper);
+      color: var(--copper-light);
+      background: rgba(184, 115, 51, 0.15);
+    }
+    .event-type.session {
+      border-color: var(--info);
+      color: var(--info);
+      background: rgba(93, 156, 173, 0.1);
+    }
+    .event-type.hook {
+      border-color: var(--bronze);
+      color: var(--bronze);
+      background: rgba(140, 120, 83, 0.1);
+    }
+    .event-type.assess {
+      border-color: var(--brass);
+      color: var(--brass);
+      background: rgba(201, 162, 39, 0.15);
+    }
+    .event-type.error {
+      border-color: var(--error);
+      color: var(--error);
+      background: rgba(201, 74, 74, 0.15);
+    }
+
+    .event-content {
+      font-size: 0.8125rem;
+      color: var(--text-normal);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .event-session {
+      font-size: 0.6875rem;
+      color: var(--text-faint);
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ═══ FOOTER — Control panel ═══ */
+    .footer {
+      background: linear-gradient(0deg, var(--bg-workshop) 0%, var(--bg-panel) 100%);
+      border-top: 3px solid var(--copper);
+      padding: 0;
+    }
+
+    .footer-inner {
+      max-width: 1600px;
+      margin: 0 auto;
+      display: flex;
+      align-items: stretch;
+    }
+
+    .command-section {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      padding: 0.75rem 1.5rem;
+      gap: 0.75rem;
+      border-right: 1px solid var(--text-faint);
+    }
+
+    .command-label {
+      font-size: 0.625rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--copper);
+      white-space: nowrap;
+    }
+
+    .command-input {
+      flex: 1;
+      background: var(--bg-surface);
+      border: 1px solid var(--bronze);
+      padding: 0.5rem 0.75rem;
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
+      color: var(--text-bright);
+      outline: none;
+    }
+
+    .command-input:focus {
+      border-color: var(--copper);
+      box-shadow: 0 0 0 1px var(--copper);
+    }
+
+    .command-input::placeholder {
+      color: var(--text-faint);
+    }
+
+    .hotkey-panel {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0 1.5rem;
+    }
+
+    .hotkey {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      font-size: 0.5625rem;
+      color: var(--text-dim);
+      letter-spacing: 0.05em;
+    }
+
+    .hotkey-key {
+      padding: 0.25rem 0.375rem;
+      background: var(--bronze);
+      color: var(--text-bright);
+      font-weight: 500;
+    }
+
+    /* ═══ DECORATIVE ELEMENTS ═══ */
+    .corner-bracket {
+      position: fixed;
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--bronze);
+      opacity: 0.3;
+    }
+
+    .corner-bracket.tl { top: 1rem; left: 1rem; border-right: none; border-bottom: none; }
+    .corner-bracket.tr { top: 1rem; right: 1rem; border-left: none; border-bottom: none; }
+    .corner-bracket.bl { bottom: 1rem; left: 1rem; border-right: none; border-top: none; }
+    .corner-bracket.br { bottom: 1rem; right: 1rem; border-left: none; border-top: none; }
+
+    /* Serial number plate */
+    .serial-plate {
+      position: fixed;
+      bottom: 1rem;
+      right: 1rem;
+      padding: 0.25rem 0.5rem;
+      background: var(--bronze);
+      font-size: 0.5rem;
+      letter-spacing: 0.1em;
+      color: var(--bg-workshop);
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <!-- Corner brackets -->
+  <div class="corner-bracket tl"></div>
+  <div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div>
+  <div class="corner-bracket br"></div>
+  <div class="serial-plate">SN: VBS-2025-001</div>
+
+  <div class="workshop">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-inner">
+        <div class="nameplate">
+          <span class="logo">VIBES</span>
+          <span class="logo-divider"></span>
+          <span class="page-name">Firehose</span>
+        </div>
+
+        <nav class="nav">
+          <div class="nav-item">Dashboard</div>
+          <div class="nav-item">Sessions</div>
+          <div class="nav-item active">Firehose</div>
+          <div class="nav-item">Groove</div>
+          <div class="nav-item">Debug</div>
+        </nav>
+
+        <div class="header-status">
+          <div class="status-indicator">
+            <span class="status-light on"></span>
+            <span>CONNECTED</span>
+          </div>
+          <span class="clock" id="clock">23:47:32</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main -->
+    <main class="main">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="gauge-section">
+          <div class="gauge-header">Event Rate</div>
+          <div class="gauge-body">
+            <div class="analog-gauge">
+              <div class="gauge-dial">
+                <div class="gauge-needle"></div>
+                <div class="gauge-center"></div>
+              </div>
+              <div class="gauge-value">1,247</div>
+              <div class="gauge-label">Events / Hour</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="gauge-section">
+          <div class="gauge-header">System Status</div>
+          <div class="gauge-body">
+            <div class="metric-row">
+              <span class="metric-label">Active Sessions</span>
+              <span class="metric-value">3</span>
+            </div>
+            <div class="metric-row">
+              <span class="metric-label">Learnings</span>
+              <span class="metric-value active">47</span>
+            </div>
+            <div class="metric-row">
+              <span class="metric-label">Buffer Usage</span>
+              <span class="metric-value warning">82%</span>
+            </div>
+            <div class="metric-row">
+              <span class="metric-label">Errors (24h)</span>
+              <span class="metric-value error">2</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="gauge-section">
+          <div class="gauge-header">Channel Status</div>
+          <div class="gauge-body">
+            <div class="led-grid">
+              <div class="led-item">
+                <div class="led on-green"></div>
+                <span class="led-label">TOOL</span>
+              </div>
+              <div class="led-item">
+                <div class="led on-amber"></div>
+                <span class="led-label">CLAUDE</span>
+              </div>
+              <div class="led-item">
+                <div class="led on-green"></div>
+                <span class="led-label">SESS</span>
+              </div>
+              <div class="led-item">
+                <div class="led on-green"></div>
+                <span class="led-label">HOOK</span>
+              </div>
+              <div class="led-item">
+                <div class="led on-amber"></div>
+                <span class="led-label">ASSESS</span>
+              </div>
+              <div class="led-item">
+                <div class="led on-red"></div>
+                <span class="led-label">ERROR</span>
+              </div>
+              <div class="led-item">
+                <div class="led"></div>
+                <span class="led-label">AUX1</span>
+              </div>
+              <div class="led-item">
+                <div class="led"></div>
+                <span class="led-label">AUX2</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Stream Panel -->
+      <section class="stream-panel">
+        <div class="stream-header">
+          <span class="stream-title">Event Stream — Live</span>
+          <div class="stream-controls">
+            <button class="btn active">● REC</button>
+            <button class="btn">PAUSE</button>
+            <button class="btn">REPLAY</button>
+            <button class="btn">EXPORT</button>
+          </div>
+        </div>
+        <div class="stream-body" id="stream-body">
+          <div class="event-tape">
+            <div class="event-row">
+              <span class="event-time">23:47:31.847</span>
+              <span class="event-type tool">TOOL</span>
+              <span class="event-content">Read file: src/components/SessionCard.tsx (847 bytes)</span>
+              <span class="event-session">a7f3c2</span>
+            </div>
+          </div>
+          <div class="event-tape">
+            <div class="event-row">
+              <span class="event-time">23:47:31.203</span>
+              <span class="event-type claude">CLAUDE</span>
+              <span class="event-content">Analyzing component structure for potential optimizations...</span>
+              <span class="event-session">a7f3c2</span>
+            </div>
+          </div>
+          <div class="event-tape">
+            <div class="event-row">
+              <span class="event-time">23:47:30.891</span>
+              <span class="event-type assess">ASSESS</span>
+              <span class="event-content">Lightweight assessment triggered: pattern match confidence 0.73</span>
+              <span class="event-session">a7f3c2</span>
+            </div>
+          </div>
+          <div class="event-tape">
+            <div class="event-row">
+              <span class="event-time">23:47:29.442</span>
+              <span class="event-type session">SESSION</span>
+              <span class="event-content">Session heartbeat: active, 47 tools invoked</span>
+              <span class="event-session">a7f3c2</span>
+            </div>
+          </div>
+          <div class="event-tape">
+            <div class="event-row">
+              <span class="event-time">23:47:28.103</span>
+              <span class="event-type tool">TOOL</span>
+              <span class="event-content">Bash: cargo test --lib (exit: 0)</span>
+              <span class="event-session">b2e1d4</span>
+            </div>
+          </div>
+          <div class="event-tape">
+            <div class="event-row">
+              <span class="event-time">23:47:27.551</span>
+              <span class="event-type hook">HOOK</span>
+              <span class="event-content">pre-commit hook executed: lint passed</span>
+              <span class="event-session">b2e1d4</span>
+            </div>
+          </div>
+          <div class="event-tape">
+            <div class="event-row">
+              <span class="event-time">23:47:26.888</span>
+              <span class="event-type error">ERROR</span>
+              <span class="event-content">ALERT: WebSocket connection timeout after 30s</span>
+              <span class="event-session">c9d4e5</span>
+            </div>
+          </div>
+          <div class="event-tape">
+            <div class="event-row">
+              <span class="event-time">23:47:25.102</span>
+              <span class="event-type claude">CLAUDE</span>
+              <span class="event-content">Implementing fix for session reconnection logic...</span>
+              <span class="event-session">a7f3c2</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="footer-inner">
+        <div class="command-section">
+          <span class="command-label">Command:</span>
+          <input type="text" class="command-input" placeholder="Enter command or / to search..." autofocus>
+        </div>
+        <div class="hotkey-panel">
+          <div class="hotkey"><span class="hotkey-key">SPC</span> Pause</div>
+          <div class="hotkey"><span class="hotkey-key">F</span> Filter</div>
+          <div class="hotkey"><span class="hotkey-key">R</span> Replay</div>
+          <div class="hotkey"><span class="hotkey-key">?</span> Help</div>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    // Update clock
+    function updateClock() {
+      const now = new Date();
+      const time = now.toTimeString().split(' ')[0];
+      document.getElementById('clock').textContent = time;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Event simulation
+    const eventTypes = ['tool', 'claude', 'session', 'hook', 'assess'];
+    const eventContents = [
+      'Read file: src/lib/types.ts (1,204 bytes)',
+      'Analyzing type definitions for refactoring...',
+      'Session heartbeat: active, 52 tools invoked',
+      'post-save hook executed: format complete',
+      'Learning captured: test-first methodology (0.94)',
+      'Bash: npm run build (exit: 0)',
+      'Write file: docs/API.md (2,847 bytes)',
+    ];
+
+    function createEventTape(time, type, content, session) {
+      const tape = document.createElement('div');
+      tape.className = 'event-tape';
+
+      const row = document.createElement('div');
+      row.className = 'event-row';
+
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'event-time';
+      timeSpan.textContent = time;
+
+      const typeSpan = document.createElement('span');
+      typeSpan.className = 'event-type ' + type;
+      typeSpan.textContent = type.toUpperCase();
+
+      const contentSpan = document.createElement('span');
+      contentSpan.className = 'event-content';
+      contentSpan.textContent = content;
+
+      const sessionSpan = document.createElement('span');
+      sessionSpan.className = 'event-session';
+      sessionSpan.textContent = session;
+
+      row.appendChild(timeSpan);
+      row.appendChild(typeSpan);
+      row.appendChild(contentSpan);
+      row.appendChild(sessionSpan);
+      tape.appendChild(row);
+
+      return tape;
+    }
+
+    function addEvent() {
+      const stream = document.getElementById('stream-body');
+      const type = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+      const content = eventContents[Math.floor(Math.random() * eventContents.length)];
+      const now = new Date();
+      const time = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
+      const session = Math.random().toString(36).substr(2, 6);
+
+      const tape = createEventTape(time, type, content, session);
+      stream.insertBefore(tape, stream.firstChild);
+
+      if (stream.children.length > 15) {
+        stream.removeChild(stream.lastChild);
+      }
+    }
+
+    setInterval(addEvent, 2000 + Math.random() * 2500);
+  </script>
+</body>
+</html>

@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>vibes :: groove — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ═══════════════════════════════════════════════════════════════
+       GROOVE DASHBOARD — Observability for the learning system
+       ═══════════════════════════════════════════════════════════════ */
+
+    :root {
+      --phosphor: #ffb000;
+      --phosphor-bright: #ffc940;
+      --phosphor-dim: #996a00;
+      --phosphor-faint: #4d3500;
+      --phosphor-glow: rgba(255, 176, 0, 0.4);
+      --phosphor-subtle: rgba(255, 176, 0, 0.15);
+
+      --screen: #0a0908;
+      --screen-light: #141210;
+      --screen-lighter: #1e1a16;
+
+      --red: #ff4444;
+      --green: #44ff44;
+      --cyan: #44ffff;
+      --gold: #ffd700;
+
+      --font-display: 'VT323', monospace;
+      --font-mono: 'IBM Plex Mono', monospace;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+      background: var(--screen);
+      overflow: hidden;
+    }
+
+    body {
+      font-family: var(--font-mono);
+      color: var(--phosphor);
+    }
+
+    /* Scanlines */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(0deg, rgba(0,0,0,0.15) 0px, rgba(0,0,0,0.15) 1px, transparent 1px, transparent 2px);
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    /* Vignette */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at center, transparent 0%, transparent 60%, rgba(0,0,0,0.4) 100%);
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    .glow { text-shadow: 0 0 2px var(--phosphor), 0 0 8px var(--phosphor-glow), 0 0 16px var(--phosphor-subtle); }
+    .glow-bright { text-shadow: 0 0 2px var(--phosphor-bright), 0 0 10px var(--phosphor), 0 0 25px var(--phosphor-glow); }
+    .glow-green { color: var(--green); text-shadow: 0 0 4px var(--green), 0 0 12px rgba(68,255,68,0.5); }
+    .glow-red { color: var(--red); text-shadow: 0 0 4px var(--red), 0 0 12px rgba(255,68,68,0.5); }
+    .glow-gold { color: var(--gold); text-shadow: 0 0 4px var(--gold), 0 0 12px rgba(255,215,0,0.5); }
+    .glow-cyan { color: var(--cyan); text-shadow: 0 0 4px var(--cyan), 0 0 12px rgba(68,255,255,0.5); }
+
+    /* Layout */
+    .app {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      height: 100vh;
+      padding: 1rem;
+      gap: 0.5rem;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--phosphor-faint);
+      background: var(--screen-light);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .logo {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      letter-spacing: 0.15em;
+    }
+
+    .nav {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .nav-item {
+      padding: 0.375rem 0.75rem;
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      color: var(--phosphor-dim);
+      cursor: pointer;
+      transition: all 0.15s;
+      border: 1px solid transparent;
+    }
+
+    .nav-item:hover {
+      color: var(--phosphor);
+      text-shadow: 0 0 8px var(--phosphor-glow);
+    }
+
+    .nav-item.active {
+      color: var(--phosphor);
+      border-color: var(--phosphor-dim);
+      background: var(--phosphor-subtle);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .header-action {
+      font-family: var(--font-display);
+      font-size: 1.125rem;
+      color: var(--phosphor-dim);
+      cursor: pointer;
+      padding: 0.25rem 0.5rem;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .header-action:hover {
+      color: var(--phosphor);
+      text-shadow: 0 0 8px var(--phosphor-glow);
+    }
+
+    /* Main grid - 3 columns */
+    .main {
+      display: grid;
+      grid-template-columns: 280px 1fr 320px;
+      grid-template-rows: auto 1fr;
+      gap: 0.5rem;
+      overflow: hidden;
+    }
+
+    /* Panel base */
+    .panel {
+      border: 1px solid var(--phosphor-faint);
+      background: var(--screen-light);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 0.5rem 0.75rem;
+      font-family: var(--font-display);
+      font-size: 1rem;
+      letter-spacing: 0.1em;
+      border-bottom: 1px solid var(--phosphor-faint);
+      color: var(--phosphor-dim);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.75rem;
+    }
+
+    /* Session Score Trend (spans top) */
+    .score-trend {
+      grid-column: 1 / -1;
+    }
+
+    .score-trend .panel-body {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      padding: 1rem 1.5rem;
+    }
+
+    .score-big {
+      text-align: center;
+    }
+
+    .score-value {
+      font-family: var(--font-display);
+      font-size: 4rem;
+      line-height: 1;
+    }
+
+    .score-label {
+      font-size: 0.625rem;
+      color: var(--phosphor-dim);
+      letter-spacing: 0.15em;
+      margin-top: 0.25rem;
+    }
+
+    .score-delta {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      margin-top: 0.5rem;
+    }
+
+    .trend-chart {
+      flex: 1;
+      height: 80px;
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      padding: 0 1rem;
+    }
+
+    .trend-bar {
+      flex: 1;
+      background: var(--phosphor-dim);
+      border-radius: 2px 2px 0 0;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .trend-bar:hover {
+      background: var(--phosphor);
+      box-shadow: 0 0 8px var(--phosphor-glow);
+    }
+
+    .trend-bar.current {
+      background: var(--phosphor);
+      box-shadow: 0 0 8px var(--phosphor-glow);
+    }
+
+    .score-stats {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .score-stat {
+      text-align: center;
+    }
+
+    .score-stat-value {
+      font-family: var(--font-display);
+      font-size: 1.75rem;
+      line-height: 1;
+    }
+
+    .score-stat-label {
+      font-size: 0.5625rem;
+      color: var(--phosphor-dim);
+      letter-spacing: 0.1em;
+      margin-top: 0.125rem;
+    }
+
+    /* Learnings list */
+    .learning-item {
+      padding: 0.75rem;
+      border: 1px solid var(--phosphor-faint);
+      margin-bottom: 0.5rem;
+      cursor: pointer;
+      transition: all 0.1s;
+    }
+
+    .learning-item:hover {
+      border-color: var(--phosphor-dim);
+      background: var(--phosphor-subtle);
+    }
+
+    .learning-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.375rem;
+    }
+
+    .learning-category {
+      font-family: var(--font-display);
+      font-size: 0.75rem;
+      padding: 0.125rem 0.375rem;
+      border: 1px solid currentColor;
+    }
+
+    .learning-category.code { color: var(--cyan); }
+    .learning-category.pref { color: var(--phosphor); }
+    .learning-category.error { color: var(--red); }
+    .learning-category.tool { color: var(--green); }
+
+    .learning-confidence {
+      font-family: var(--font-display);
+      font-size: 0.875rem;
+    }
+
+    .learning-content {
+      font-size: 0.8125rem;
+      color: var(--phosphor);
+      margin-bottom: 0.5rem;
+      line-height: 1.4;
+    }
+
+    .learning-meta {
+      display: flex;
+      gap: 1rem;
+      font-size: 0.625rem;
+      color: var(--phosphor-dim);
+    }
+
+    .learning-meta span {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    /* Metrics Breakdown */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+    }
+
+    .metric-card {
+      padding: 0.75rem;
+      border: 1px solid var(--phosphor-faint);
+      text-align: center;
+    }
+
+    .metric-value {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      line-height: 1;
+    }
+
+    .metric-label {
+      font-size: 0.5625rem;
+      color: var(--phosphor-dim);
+      letter-spacing: 0.1em;
+      margin-top: 0.25rem;
+    }
+
+    .metric-bar {
+      height: 4px;
+      background: var(--screen);
+      margin-top: 0.5rem;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .metric-bar-fill {
+      height: 100%;
+      background: var(--phosphor);
+      border-radius: 2px;
+      box-shadow: 0 0 6px var(--phosphor-glow);
+    }
+
+    /* Attribution panel */
+    .attribution-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.625rem 0;
+      border-bottom: 1px dashed var(--phosphor-faint);
+    }
+
+    .attribution-item:last-child {
+      border-bottom: none;
+    }
+
+    .attribution-rank {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      color: var(--phosphor-dim);
+      width: 24px;
+      text-align: center;
+    }
+
+    .attribution-content {
+      flex: 1;
+      font-size: 0.75rem;
+    }
+
+    .attribution-name {
+      color: var(--phosphor);
+      margin-bottom: 0.125rem;
+    }
+
+    .attribution-impact {
+      color: var(--phosphor-dim);
+    }
+
+    .attribution-value {
+      font-family: var(--font-display);
+      font-size: 1.125rem;
+    }
+
+    /* System Health */
+    .health-section {
+      margin-bottom: 1rem;
+    }
+
+    .health-title {
+      font-family: var(--font-display);
+      font-size: 0.875rem;
+      color: var(--phosphor-dim);
+      margin-bottom: 0.5rem;
+      letter-spacing: 0.1em;
+    }
+
+    .health-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.375rem 0;
+      font-size: 0.75rem;
+    }
+
+    .health-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 0.5rem;
+    }
+
+    .health-indicator.good {
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+    }
+
+    .health-indicator.warn {
+      background: var(--gold);
+      box-shadow: 0 0 6px var(--gold);
+    }
+
+    .health-indicator.bad {
+      background: var(--red);
+      box-shadow: 0 0 6px var(--red);
+    }
+
+    .health-key {
+      display: flex;
+      align-items: center;
+      color: var(--phosphor-dim);
+    }
+
+    .health-val {
+      font-family: var(--font-display);
+      font-size: 0.875rem;
+      color: var(--phosphor);
+    }
+
+    /* Real-time indicator */
+    .realtime-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.375rem 0.75rem;
+      border: 1px solid var(--phosphor-faint);
+      font-family: var(--font-display);
+      font-size: 0.875rem;
+      color: var(--phosphor-dim);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .realtime-toggle:hover {
+      border-color: var(--phosphor-dim);
+    }
+
+    .realtime-toggle.active {
+      color: var(--phosphor);
+      border-color: var(--phosphor-dim);
+    }
+
+    .realtime-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--phosphor-dim);
+    }
+
+    .realtime-toggle.active .realtime-dot {
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+      animation: pulse 1s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Hotkey hint */
+    .hotkey-hint {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      font-family: var(--font-display);
+      font-size: 0.875rem;
+      color: var(--phosphor-faint);
+      z-index: 100;
+      display: flex;
+      gap: 1.25rem;
+    }
+
+    .hotkey-key {
+      color: var(--phosphor-dim);
+      padding: 0.125rem 0.375rem;
+      border: 1px solid var(--phosphor-faint);
+      font-size: 0.75rem;
+      margin-right: 0.25rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <span class="logo glow-bright">VIBES</span>
+        <nav class="nav">
+          <span class="nav-item">DASH</span>
+          <span class="nav-item">SESS</span>
+          <span class="nav-item">FIRE</span>
+          <span class="nav-item active">GROOVE</span>
+        </nav>
+      </div>
+      <div class="header-right">
+        <div class="realtime-toggle active" id="realtime-toggle">
+          <span class="realtime-dot"></span>
+          <span>LEARNING...</span>
+        </div>
+        <span class="header-action">◐ THEME</span>
+        <span class="header-action">⚙ SETTINGS</span>
+      </div>
+    </header>
+
+    <!-- Main -->
+    <main class="main">
+      <!-- Session Score Trend (top row, full width) -->
+      <section class="panel score-trend">
+        <div class="panel-header">
+          <span>SESSION QUALITY TREND</span>
+          <span style="font-size: 0.75rem;">Last 30 days</span>
+        </div>
+        <div class="panel-body">
+          <div class="score-big">
+            <div class="score-value glow-green">87</div>
+            <div class="score-label">CURRENT SCORE</div>
+            <div class="score-delta glow-green">▲ +12 pts</div>
+          </div>
+          <div class="trend-chart" id="trend-chart"></div>
+          <div class="score-stats">
+            <div class="score-stat">
+              <div class="score-stat-value glow">94</div>
+              <div class="score-stat-label">BEST</div>
+            </div>
+            <div class="score-stat">
+              <div class="score-stat-value">71</div>
+              <div class="score-stat-label">AVG</div>
+            </div>
+            <div class="score-stat">
+              <div class="score-stat-value glow-red">52</div>
+              <div class="score-stat-label">WORST</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Learnings List -->
+      <section class="panel">
+        <div class="panel-header">
+          <span>LEARNINGS</span>
+          <span style="font-size: 0.75rem;">47 total</span>
+        </div>
+        <div class="panel-body">
+          <div class="learning-item">
+            <div class="learning-header">
+              <span class="learning-category code">CODE</span>
+              <span class="learning-confidence glow">0.94</span>
+            </div>
+            <div class="learning-content">Prefer async/await over .then() chains for readability in this codebase</div>
+            <div class="learning-meta">
+              <span>↻ 23 uses</span>
+              <span>✓ 21 helpful</span>
+              <span>⊕ Project</span>
+            </div>
+          </div>
+          <div class="learning-item">
+            <div class="learning-header">
+              <span class="learning-category pref">PREF</span>
+              <span class="learning-confidence glow">0.91</span>
+            </div>
+            <div class="learning-content">User prefers explicit error handling with custom error types</div>
+            <div class="learning-meta">
+              <span>↻ 18 uses</span>
+              <span>✓ 17 helpful</span>
+              <span>⊕ User</span>
+            </div>
+          </div>
+          <div class="learning-item">
+            <div class="learning-header">
+              <span class="learning-category error">ERROR</span>
+              <span class="learning-confidence">0.87</span>
+            </div>
+            <div class="learning-content">When seeing "connection refused", check if vibes daemon is running</div>
+            <div class="learning-meta">
+              <span>↻ 8 uses</span>
+              <span>✓ 8 helpful</span>
+              <span>⊕ Global</span>
+            </div>
+          </div>
+          <div class="learning-item">
+            <div class="learning-header">
+              <span class="learning-category tool">TOOL</span>
+              <span class="learning-confidence">0.85</span>
+            </div>
+            <div class="learning-content">Run 'just pre-commit' before committing in this repo</div>
+            <div class="learning-meta">
+              <span>↻ 31 uses</span>
+              <span>✓ 28 helpful</span>
+              <span>⊕ Project</span>
+            </div>
+          </div>
+          <div class="learning-item">
+            <div class="learning-header">
+              <span class="learning-category code">CODE</span>
+              <span class="learning-confidence">0.82</span>
+            </div>
+            <div class="learning-content">Use IBM Plex Mono for code, VT323 for display in CRT designs</div>
+            <div class="learning-meta">
+              <span>↻ 5 uses</span>
+              <span>✓ 5 helpful</span>
+              <span>⊕ Project</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Metrics Breakdown -->
+      <section class="panel">
+        <div class="panel-header">
+          <span>METRICS BREAKDOWN</span>
+        </div>
+        <div class="panel-body">
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <div class="metric-value glow-green">12%</div>
+              <div class="metric-label">CORRECTION RATIO</div>
+              <div class="metric-bar"><div class="metric-bar-fill" style="width: 12%; background: var(--green);"></div></div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value glow">0.84</div>
+              <div class="metric-label">SENTIMENT</div>
+              <div class="metric-bar"><div class="metric-bar-fill" style="width: 84%;"></div></div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value glow">78%</div>
+              <div class="metric-label">FIRST ATTEMPT</div>
+              <div class="metric-bar"><div class="metric-bar-fill" style="width: 78%;"></div></div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value glow-gold">67%</div>
+              <div class="metric-label">ACTIVATION</div>
+              <div class="metric-bar"><div class="metric-bar-fill" style="width: 67%; background: var(--gold);"></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Attribution -->
+      <section class="panel">
+        <div class="panel-header">
+          <span>TOP ATTRIBUTION</span>
+          <span style="font-size: 0.75rem;">What's helping</span>
+        </div>
+        <div class="panel-body">
+          <div class="attribution-item">
+            <span class="attribution-rank glow-gold">1</span>
+            <div class="attribution-content">
+              <div class="attribution-name">async/await preference</div>
+              <div class="attribution-impact">+4.2 score contribution</div>
+            </div>
+            <span class="attribution-value glow-green">+4.2</span>
+          </div>
+          <div class="attribution-item">
+            <span class="attribution-rank">2</span>
+            <div class="attribution-content">
+              <div class="attribution-name">just pre-commit workflow</div>
+              <div class="attribution-impact">+3.8 score contribution</div>
+            </div>
+            <span class="attribution-value glow-green">+3.8</span>
+          </div>
+          <div class="attribution-item">
+            <span class="attribution-rank">3</span>
+            <div class="attribution-content">
+              <div class="attribution-name">error handling patterns</div>
+              <div class="attribution-impact">+2.9 score contribution</div>
+            </div>
+            <span class="attribution-value glow-green">+2.9</span>
+          </div>
+          <div class="attribution-item">
+            <span class="attribution-rank">4</span>
+            <div class="attribution-content">
+              <div class="attribution-name">connection refused fix</div>
+              <div class="attribution-impact">+1.4 score contribution</div>
+            </div>
+            <span class="attribution-value glow">+1.4</span>
+          </div>
+          <div class="attribution-item">
+            <span class="attribution-rank">5</span>
+            <div class="attribution-content">
+              <div class="attribution-name">font pairing knowledge</div>
+              <div class="attribution-impact">+0.8 score contribution</div>
+            </div>
+            <span class="attribution-value">+0.8</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- System Health -->
+      <section class="panel">
+        <div class="panel-header">
+          <span>SYSTEM HEALTH</span>
+        </div>
+        <div class="panel-body">
+          <div class="health-section">
+            <div class="health-title">ADAPTIVE PARAMS</div>
+            <div class="health-row">
+              <span class="health-key"><span class="health-indicator good"></span>injection_prob</span>
+              <span class="health-val">0.73</span>
+            </div>
+            <div class="health-row">
+              <span class="health-key"><span class="health-indicator good"></span>confidence_threshold</span>
+              <span class="health-val">0.65</span>
+            </div>
+            <div class="health-row">
+              <span class="health-key"><span class="health-indicator warn"></span>exploration_rate</span>
+              <span class="health-val">0.15</span>
+            </div>
+          </div>
+          <div class="health-section">
+            <div class="health-title">NOVELTY DETECTION</div>
+            <div class="health-row">
+              <span class="health-key"><span class="health-indicator good"></span>Unknown patterns</span>
+              <span class="health-val">3</span>
+            </div>
+            <div class="health-row">
+              <span class="health-key"><span class="health-indicator good"></span>Pending clusters</span>
+              <span class="health-val">1</span>
+            </div>
+          </div>
+          <div class="health-section">
+            <div class="health-title">CAPABILITY GAPS</div>
+            <div class="health-row">
+              <span class="health-key"><span class="health-indicator warn"></span>Rust macros</span>
+              <span class="health-val">LOW</span>
+            </div>
+            <div class="health-row">
+              <span class="health-key"><span class="health-indicator good"></span>TypeScript</span>
+              <span class="health-val">HIGH</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Hotkey hint -->
+  <div class="hotkey-hint">
+    <span><span class="hotkey-key">⌘K</span> command</span>
+    <span><span class="hotkey-key">?</span> help</span>
+  </div>
+
+  <script>
+    // Generate trend chart bars
+    const trendData = [65, 68, 62, 70, 72, 75, 71, 78, 74, 80, 76, 82, 79, 85, 81, 87, 83, 88, 84, 90, 86, 91, 87, 92, 88, 94, 89, 87, 85, 87];
+    const chart = document.getElementById('trend-chart');
+
+    trendData.forEach(function(val, idx) {
+      const bar = document.createElement('div');
+      bar.className = 'trend-bar';
+      if (idx === trendData.length - 1) bar.classList.add('current');
+      bar.style.height = (val - 50) + '%';
+      bar.title = 'Day ' + (idx + 1) + ': ' + val;
+      chart.appendChild(bar);
+    });
+
+    // Toggle realtime indicator
+    document.getElementById('realtime-toggle').addEventListener('click', function() {
+      this.classList.toggle('active');
+      const text = this.querySelector('span:last-child');
+      text.textContent = this.classList.contains('active') ? 'LEARNING...' : 'PAUSED';
+    });
+  </script>
+</body>
+</html>

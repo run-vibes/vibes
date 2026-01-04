@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>vibes — raw://interface</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --terminal-green: #00ff41;
+      --dim-green: rgba(0, 255, 65, 0.4);
+      --very-dim: rgba(0, 255, 65, 0.15);
+      --text: #b0b0b0;
+      --text-dim: #4a4a4a;
+      --highlight: #ff0055;
+      --cyan: #00d4ff;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Fira Code', monospace;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 13px;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ASCII header */
+    .ascii-header {
+      padding: 20px 30px 10px;
+      color: var(--terminal-green);
+      white-space: pre;
+      font-size: 10px;
+      line-height: 1.2;
+      border-bottom: 1px dashed var(--very-dim);
+      overflow: hidden;
+    }
+
+    /* Status bar - raw data */
+    .status-bar {
+      display: flex;
+      gap: 20px;
+      padding: 8px 30px;
+      background: rgba(0, 255, 65, 0.03);
+      border-bottom: 1px solid var(--very-dim);
+      font-size: 11px;
+      color: var(--dim-green);
+      overflow-x: auto;
+    }
+
+    .status-item {
+      white-space: nowrap;
+    }
+
+    .status-label {
+      color: var(--text-dim);
+    }
+
+    .status-value {
+      color: var(--terminal-green);
+    }
+
+    .status-value.warn {
+      color: var(--highlight);
+    }
+
+    /* Main layout - dense columns */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 200px 1fr 320px;
+      min-height: calc(100vh - 150px);
+    }
+
+    /* Left panel - raw session list */
+    .session-panel {
+      border-right: 1px dashed var(--very-dim);
+      padding: 15px 0;
+    }
+
+    .panel-header {
+      padding: 0 15px 10px;
+      color: var(--text-dim);
+      font-size: 10px;
+      border-bottom: 1px dashed var(--very-dim);
+      margin-bottom: 10px;
+    }
+
+    .session-entry {
+      padding: 8px 15px;
+      cursor: pointer;
+      border-left: 2px solid transparent;
+      transition: all 0.1s;
+    }
+
+    .session-entry:hover {
+      background: rgba(0, 255, 65, 0.05);
+    }
+
+    .session-entry.active {
+      border-left-color: var(--terminal-green);
+      background: rgba(0, 255, 65, 0.08);
+    }
+
+    .session-id {
+      color: var(--terminal-green);
+      font-size: 12px;
+    }
+
+    .session-name {
+      color: var(--text);
+      font-size: 11px;
+    }
+
+    .session-meta {
+      color: var(--text-dim);
+      font-size: 10px;
+      margin-top: 2px;
+    }
+
+    /* Center - raw event stream */
+    .event-stream {
+      padding: 15px 20px;
+      overflow-y: auto;
+      max-height: calc(100vh - 150px);
+    }
+
+    .stream-line {
+      display: flex;
+      gap: 12px;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    .stream-line:hover {
+      background: rgba(0, 255, 65, 0.03);
+    }
+
+    .line-time {
+      color: var(--text-dim);
+      flex-shrink: 0;
+      width: 80px;
+    }
+
+    .line-type {
+      flex-shrink: 0;
+      width: 70px;
+      font-size: 10px;
+      padding: 2px 6px;
+      text-align: center;
+    }
+
+    .line-type.TOOL {
+      background: var(--very-dim);
+      color: var(--terminal-green);
+    }
+
+    .line-type.RESP {
+      background: rgba(0, 212, 255, 0.15);
+      color: var(--cyan);
+    }
+
+    .line-type.ERR {
+      background: rgba(255, 0, 85, 0.2);
+      color: var(--highlight);
+    }
+
+    .line-type.SYS {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-dim);
+    }
+
+    .line-session {
+      color: var(--dim-green);
+      flex-shrink: 0;
+      width: 90px;
+    }
+
+    .line-content {
+      color: var(--text);
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .line-content .path {
+      color: var(--cyan);
+    }
+
+    .line-content .cmd {
+      color: var(--terminal-green);
+    }
+
+    /* Right panel - raw data dump */
+    .data-panel {
+      border-left: 1px dashed var(--very-dim);
+      padding: 15px;
+      font-size: 11px;
+      overflow-y: auto;
+    }
+
+    .data-section {
+      margin-bottom: 25px;
+    }
+
+    .data-section-title {
+      color: var(--text-dim);
+      font-size: 10px;
+      margin-bottom: 8px;
+      padding-bottom: 5px;
+      border-bottom: 1px dashed var(--very-dim);
+    }
+
+    .data-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+    }
+
+    .data-key {
+      color: var(--text-dim);
+    }
+
+    .data-val {
+      color: var(--terminal-green);
+      text-align: right;
+    }
+
+    .data-val.high {
+      color: var(--highlight);
+    }
+
+    /* Hex dump block */
+    .hex-dump {
+      font-size: 10px;
+      color: var(--dim-green);
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.4);
+      margin-top: 10px;
+      overflow-x: auto;
+    }
+
+    .hex-line {
+      display: flex;
+      gap: 15px;
+    }
+
+    .hex-addr {
+      color: var(--text-dim);
+    }
+
+    .hex-bytes {
+      color: var(--dim-green);
+    }
+
+    .hex-ascii {
+      color: var(--terminal-green);
+    }
+
+    /* Sparkline made of text */
+    .text-spark {
+      color: var(--dim-green);
+      letter-spacing: 1px;
+      margin-top: 5px;
+    }
+
+    /* Footer - command prompt style */
+    .command-footer {
+      padding: 10px 30px;
+      border-top: 1px dashed var(--very-dim);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text-dim);
+      font-size: 12px;
+    }
+
+    .prompt {
+      color: var(--terminal-green);
+    }
+
+    .cursor {
+      display: inline-block;
+      width: 8px;
+      height: 14px;
+      background: var(--terminal-green);
+      animation: blink 1s step-end infinite;
+    }
+
+    @keyframes blink {
+      50% { opacity: 0; }
+    }
+
+    /* Matrix rain effect - subtle background */
+    .matrix-rain {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: -1;
+      opacity: 0.03;
+    }
+
+    .rain-column {
+      position: absolute;
+      top: -100%;
+      font-size: 14px;
+      color: var(--terminal-green);
+      writing-mode: vertical-rl;
+      animation: fall linear infinite;
+    }
+
+    @keyframes fall {
+      to { top: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Matrix rain background -->
+  <div class="matrix-rain" id="rain"></div>
+
+  <!-- ASCII Header -->
+  <div class="ascii-header">
+██╗   ██╗██╗██████╗ ███████╗███████╗
+██║   ██║██║██╔══██╗██╔════╝██╔════╝
+██║   ██║██║██████╔╝█████╗  ███████╗
+╚██╗ ██╔╝██║██╔══██╗██╔══╝  ╚════██║
+ ╚████╔╝ ██║██████╔╝███████╗███████║  v2.1.0 // raw interface
+  ╚═══╝  ╚═╝╚═════╝ ╚══════╝╚══════╝  pid:7847 uptime:4d12h37m</div>
+
+  <!-- Status bar -->
+  <div class="status-bar">
+    <div class="status-item"><span class="status-label">sessions:</span> <span class="status-value">3/8</span></div>
+    <div class="status-item"><span class="status-label">events:</span> <span class="status-value">847,291</span></div>
+    <div class="status-item"><span class="status-label">mem:</span> <span class="status-value">2.1G/8G</span></div>
+    <div class="status-item"><span class="status-label">cpu:</span> <span class="status-value">42%</span></div>
+    <div class="status-item"><span class="status-label">ws:</span> <span class="status-value">connected</span></div>
+    <div class="status-item"><span class="status-label">lat:</span> <span class="status-value">23ms</span></div>
+    <div class="status-item"><span class="status-label">err:</span> <span class="status-value warn">2</span></div>
+  </div>
+
+  <div class="main-grid">
+    <!-- Session list -->
+    <div class="session-panel">
+      <div class="panel-header">// SESSIONS</div>
+
+      <div class="session-entry active">
+        <div class="session-id">ses_7x8k2m</div>
+        <div class="session-name">api-refactor</div>
+        <div class="session-meta">active | 2m ago | 147 evt</div>
+      </div>
+
+      <div class="session-entry">
+        <div class="session-id">ses_3n9p1q</div>
+        <div class="session-name">bug-fix-auth</div>
+        <div class="session-meta">active | 5m ago | 89 evt</div>
+      </div>
+
+      <div class="session-entry">
+        <div class="session-id">ses_2k4j8w</div>
+        <div class="session-name">perf-testing</div>
+        <div class="session-meta">stale | 12m ago | 234 evt</div>
+      </div>
+
+      <div class="session-entry">
+        <div class="session-id">ses_9m2l5n</div>
+        <div class="session-name">docs-update</div>
+        <div class="session-meta">closed | 1h ago | 45 evt</div>
+      </div>
+
+      <div class="session-entry">
+        <div class="session-id">ses_4p7k2x</div>
+        <div class="session-name">feature-xyz</div>
+        <div class="session-meta">closed | 3h ago | 312 evt</div>
+      </div>
+    </div>
+
+    <!-- Event stream -->
+    <div class="event-stream" id="eventLog"></div>
+
+    <!-- Data panel -->
+    <div class="data-panel">
+      <div class="data-section">
+        <div class="data-section-title">// METRICS</div>
+        <div class="data-row"><span class="data-key">throughput</span><span class="data-val">847 evt/min</span></div>
+        <div class="data-row"><span class="data-key">p50_latency</span><span class="data-val">12ms</span></div>
+        <div class="data-row"><span class="data-key">p95_latency</span><span class="data-val">23ms</span></div>
+        <div class="data-row"><span class="data-key">p99_latency</span><span class="data-val high">47ms</span></div>
+        <div class="data-row"><span class="data-key">error_rate</span><span class="data-val">0.02%</span></div>
+        <div class="text-spark">▁▂▃▄▅▆▇█▇▆▅▄▅▆▇</div>
+      </div>
+
+      <div class="data-section">
+        <div class="data-section-title">// RESOURCES</div>
+        <div class="data-row"><span class="data-key">heap_used</span><span class="data-val">1.8G</span></div>
+        <div class="data-row"><span class="data-key">heap_total</span><span class="data-val">2.1G</span></div>
+        <div class="data-row"><span class="data-key">external</span><span class="data-val">847M</span></div>
+        <div class="data-row"><span class="data-key">gc_pause</span><span class="data-val">4.2ms</span></div>
+        <div class="data-row"><span class="data-key">fd_count</span><span class="data-val">127</span></div>
+      </div>
+
+      <div class="data-section">
+        <div class="data-section-title">// LAST PACKET</div>
+        <div class="hex-dump">
+          <div class="hex-line"><span class="hex-addr">0000</span><span class="hex-bytes">7b 22 74 79 70 65 22 3a</span><span class="hex-ascii">{"type":</span></div>
+          <div class="hex-line"><span class="hex-addr">0008</span><span class="hex-bytes">22 74 6f 6f 6c 22 2c 22</span><span class="hex-ascii">"tool","</span></div>
+          <div class="hex-line"><span class="hex-addr">0010</span><span class="hex-bytes">6e 61 6d 65 22 3a 22 72</span><span class="hex-ascii">name":"r</span></div>
+          <div class="hex-line"><span class="hex-addr">0018</span><span class="hex-bytes">65 61 64 22 7d 0a 00 00</span><span class="hex-ascii">ead"}..</span></div>
+        </div>
+      </div>
+
+      <div class="data-section">
+        <div class="data-section-title">// NETWORK</div>
+        <div class="data-row"><span class="data-key">rx_bytes</span><span class="data-val">12.4M</span></div>
+        <div class="data-row"><span class="data-key">tx_bytes</span><span class="data-val">847K</span></div>
+        <div class="data-row"><span class="data-key">ws_frames</span><span class="data-val">9,847</span></div>
+        <div class="data-row"><span class="data-key">reconnects</span><span class="data-val">0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="command-footer">
+    <span class="prompt">vibes@localhost:~$</span>
+    <span>tail -f /var/log/vibes/events.log</span>
+    <span class="cursor"></span>
+  </div>
+
+  <script>
+    // Create matrix rain effect
+    const rain = document.getElementById('rain');
+    const chars = 'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄ0123456789ABCDEF';
+
+    for (let i = 0; i < 30; i++) {
+      const col = document.createElement('div');
+      col.className = 'rain-column';
+      col.style.left = (i * 3.3) + '%';
+      col.style.animationDuration = (5 + Math.random() * 10) + 's';
+      col.style.animationDelay = (Math.random() * 5) + 's';
+
+      let text = '';
+      for (let j = 0; j < 50; j++) {
+        text += chars[Math.floor(Math.random() * chars.length)] + '\n';
+      }
+      col.textContent = text;
+      rain.appendChild(col);
+    }
+
+    // Event stream simulation
+    const eventTypes = [
+      { type: 'TOOL', class: 'TOOL' },
+      { type: 'RESP', class: 'RESP' },
+      { type: 'ERR', class: 'ERR' },
+      { type: 'SYS', class: 'SYS' }
+    ];
+
+    const contentTemplates = [
+      { text: 'read ', path: 'src/lib/auth.ts', suffix: ' (2.1KB)' },
+      { text: 'write ', path: 'tests/unit/auth.spec.ts', suffix: ' (847B)' },
+      { text: 'exec ', cmd: 'npm run test', suffix: ' exit:0' },
+      { text: 'response stream complete, tokens:', suffix: '1,247' },
+      { text: 'connection timeout, retrying in ', suffix: '5s' },
+      { text: 'checkpoint saved: ', path: '.vibes/state/ses_7x8k2m', suffix: '' },
+      { text: 'grep match: ', path: 'src/**/*.ts', suffix: ' (23 files)' },
+      { text: 'memory snapshot: heap=', suffix: '2.1G external=847M' }
+    ];
+
+    const sessions = ['ses_7x8k2m', 'ses_3n9p1q', 'ses_2k4j8w'];
+
+    function createStreamLine(time, eventType, template, session) {
+      const line = document.createElement('div');
+      line.className = 'stream-line';
+
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'line-time';
+      timeSpan.textContent = time;
+
+      const typeSpan = document.createElement('span');
+      typeSpan.className = 'line-type ' + eventType.class;
+      typeSpan.textContent = eventType.type;
+
+      const sessionSpan = document.createElement('span');
+      sessionSpan.className = 'line-session';
+      sessionSpan.textContent = session;
+
+      const contentSpan = document.createElement('span');
+      contentSpan.className = 'line-content';
+
+      // Build content with colored parts
+      contentSpan.textContent = template.text;
+      if (template.path) {
+        const pathSpan = document.createElement('span');
+        pathSpan.className = 'path';
+        pathSpan.textContent = template.path;
+        contentSpan.appendChild(pathSpan);
+      }
+      if (template.cmd) {
+        const cmdSpan = document.createElement('span');
+        cmdSpan.className = 'cmd';
+        cmdSpan.textContent = template.cmd;
+        contentSpan.appendChild(cmdSpan);
+      }
+      const suffix = document.createTextNode(template.suffix);
+      contentSpan.appendChild(suffix);
+
+      line.appendChild(timeSpan);
+      line.appendChild(typeSpan);
+      line.appendChild(sessionSpan);
+      line.appendChild(contentSpan);
+
+      return line;
+    }
+
+    function formatTime(date) {
+      return date.toTimeString().split(' ')[0];
+    }
+
+    // Initialize
+    const eventLog = document.getElementById('eventLog');
+    const now = new Date();
+
+    for (let i = 0; i < 25; i++) {
+      const time = new Date(now - (i * 2500));
+      const eventType = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+      const template = contentTemplates[Math.floor(Math.random() * contentTemplates.length)];
+      const session = sessions[Math.floor(Math.random() * sessions.length)];
+
+      eventLog.appendChild(createStreamLine(formatTime(time), eventType, template, session));
+    }
+
+    // Live updates
+    setInterval(() => {
+      const eventType = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+      const template = contentTemplates[Math.floor(Math.random() * contentTemplates.length)];
+      const session = sessions[Math.floor(Math.random() * sessions.length)];
+
+      const newLine = createStreamLine(formatTime(new Date()), eventType, template, session);
+      eventLog.insertBefore(newLine, eventLog.firstChild);
+
+      if (eventLog.children.length > 50) {
+        eventLog.removeChild(eventLog.lastChild);
+      }
+    }, 2000);
+  </script>
+</body>
+</html>

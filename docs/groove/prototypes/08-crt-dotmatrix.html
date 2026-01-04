@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>vibes :: firehose — Dot Matrix Printout</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    /* ═══════════════════════════════════════════════════════════════
+       DOT MATRIX PRINTOUT — Terminal output on continuous feed paper
+       ═══════════════════════════════════════════════════════════════ */
+
+    :root {
+      /* Paper colors */
+      --paper: #f8f4e8;
+      --paper-stripe: #f0ead8;
+      --paper-edge: #e8e0c8;
+      --paper-shadow: #d8d0b8;
+
+      /* Ink colors (slightly faded) */
+      --ink: #1a1a18;
+      --ink-light: #3a3a38;
+      --ink-faded: #6a6a68;
+      --ink-ghost: #9a9a98;
+
+      /* Ribbon colors (like old printer ribbons) */
+      --ribbon-black: #1a1a18;
+      --ribbon-red: #a83232;
+      --ribbon-blue: #2a4a8a;
+
+      /* Perforations */
+      --perf-hole: #d0c8b0;
+
+      --font-dot: 'Courier Prime', 'Courier New', monospace;
+      --font-display: 'VT323', monospace;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      background: #c4bca8;
+    }
+
+    body {
+      font-family: var(--font-dot);
+      color: var(--ink);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    /* ═══ PAPER CONTAINER ═══ */
+    .paper {
+      background: var(--paper);
+      max-width: 1200px;
+      margin: 0 auto;
+      box-shadow:
+        0 2px 8px rgba(0,0,0,0.1),
+        0 8px 24px rgba(0,0,0,0.1);
+      position: relative;
+    }
+
+    /* Green bar paper stripes */
+    .paper::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent 0px,
+        transparent 20px,
+        rgba(144, 180, 144, 0.15) 20px,
+        rgba(144, 180, 144, 0.15) 40px
+      );
+      pointer-events: none;
+    }
+
+    /* ═══ PERFORATION STRIPS ═══ */
+    .perf-strip {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 40px;
+      background: var(--paper-edge);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px 0;
+      gap: 10px;
+    }
+
+    .perf-strip.left {
+      left: 0;
+      border-right: 1px dashed var(--paper-shadow);
+    }
+
+    .perf-strip.right {
+      right: 0;
+      border-left: 1px dashed var(--paper-shadow);
+    }
+
+    .perf-hole {
+      width: 8px;
+      height: 8px;
+      background: var(--perf-hole);
+      border-radius: 50%;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
+    }
+
+    /* ═══ CONTENT AREA ═══ */
+    .content {
+      padding: 1.5rem 3.5rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ═══ HEADER ═══ */
+    .header {
+      border-bottom: 2px solid var(--ink);
+      padding-bottom: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.5rem;
+    }
+
+    .logo-block {
+      font-family: var(--font-display);
+    }
+
+    .logo {
+      font-size: 3rem;
+      line-height: 1;
+      letter-spacing: 0.1em;
+    }
+
+    .logo-sub {
+      font-size: 1rem;
+      color: var(--ink-faded);
+      letter-spacing: 0.2em;
+    }
+
+    .print-info {
+      text-align: right;
+      font-size: 0.75rem;
+      color: var(--ink-faded);
+      line-height: 1.6;
+    }
+
+    .nav-bar {
+      display: flex;
+      gap: 2rem;
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      margin-top: 0.75rem;
+    }
+
+    .nav-item {
+      color: var(--ink-faded);
+      cursor: pointer;
+    }
+
+    .nav-item:hover {
+      color: var(--ink);
+    }
+
+    .nav-item.active {
+      color: var(--ink);
+      text-decoration: underline;
+      text-underline-offset: 4px;
+    }
+
+    /* ═══ STATUS LINE ═══ */
+    .status-line {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      border-top: 1px solid var(--ink-ghost);
+      border-bottom: 1px solid var(--ink-ghost);
+      font-size: 0.8125rem;
+      color: var(--ink-light);
+      margin-bottom: 1rem;
+    }
+
+    .status-left {
+      display: flex;
+      gap: 2rem;
+    }
+
+    .status-item {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .status-label {
+      color: var(--ink-faded);
+    }
+
+    .status-value {
+      font-weight: 700;
+    }
+
+    .status-value.live {
+      color: var(--ribbon-red);
+    }
+
+    /* ═══ MAIN GRID ═══ */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 1.5rem;
+    }
+
+    /* ═══ SIDEBAR ═══ */
+    .sidebar {
+      font-size: 0.8125rem;
+    }
+
+    .sidebar-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .sidebar-header {
+      font-weight: 700;
+      text-decoration: underline;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .stat-list {
+      line-height: 1.8;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .stat-dots {
+      flex: 1;
+      border-bottom: 1px dotted var(--ink-ghost);
+      margin: 0 0.5rem 0.3rem;
+    }
+
+    .stat-value {
+      font-weight: 700;
+    }
+
+    .stat-value.red { color: var(--ribbon-red); }
+    .stat-value.blue { color: var(--ribbon-blue); }
+
+    /* ASCII chart */
+    .ascii-chart {
+      font-size: 0.75rem;
+      line-height: 1.2;
+      white-space: pre;
+      color: var(--ink-light);
+      margin-top: 0.5rem;
+    }
+
+    /* Filter list */
+    .filter-row {
+      display: flex;
+      align-items: center;
+      padding: 0.25rem 0;
+      cursor: pointer;
+    }
+
+    .filter-row:hover {
+      background: rgba(0,0,0,0.03);
+    }
+
+    .filter-row.active {
+      font-weight: 700;
+    }
+
+    .filter-check {
+      width: 1.5rem;
+      font-family: var(--font-display);
+    }
+
+    .filter-name {
+      flex: 1;
+    }
+
+    .filter-count {
+      color: var(--ink-faded);
+    }
+
+    /* ═══ STREAM ═══ */
+    .stream {
+      border: 1px solid var(--ink-ghost);
+    }
+
+    .stream-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--ink-ghost);
+      background: rgba(0,0,0,0.02);
+    }
+
+    .stream-title {
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .stream-controls {
+      display: flex;
+      gap: 1rem;
+      font-size: 0.75rem;
+    }
+
+    .stream-control {
+      cursor: pointer;
+      color: var(--ink-faded);
+    }
+
+    .stream-control:hover {
+      color: var(--ink);
+    }
+
+    .stream-control.active {
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    .stream-body {
+      max-height: 400px;
+      overflow-y: auto;
+      font-size: 0.75rem;
+      line-height: 1.6;
+    }
+
+    .event-line {
+      display: grid;
+      grid-template-columns: 90px 60px 1fr 60px;
+      gap: 1rem;
+      padding: 0.375rem 0.75rem;
+      border-bottom: 1px dotted var(--ink-ghost);
+    }
+
+    .event-line:hover {
+      background: rgba(0,0,0,0.02);
+    }
+
+    .event-time {
+      color: var(--ink-faded);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .event-type {
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .event-type.tool { color: var(--ink); }
+    .event-type.claude { color: var(--ribbon-blue); }
+    .event-type.session { color: var(--ink-light); }
+    .event-type.hook { color: var(--ink-faded); }
+    .event-type.assess { color: #6a5a0a; }
+    .event-type.error { color: var(--ribbon-red); }
+
+    .event-content {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .event-session {
+      color: var(--ink-ghost);
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ═══ FOOTER ═══ */
+    .footer {
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 2px solid var(--ink);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+    }
+
+    .command-line {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex: 1;
+    }
+
+    .prompt {
+      font-weight: 700;
+    }
+
+    .command-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--ink-ghost);
+      font-family: inherit;
+      font-size: inherit;
+      color: var(--ink);
+      padding: 0.25rem 0;
+      outline: none;
+    }
+
+    .command-input:focus {
+      border-bottom-color: var(--ink);
+    }
+
+    .footer-info {
+      color: var(--ink-faded);
+      text-align: right;
+    }
+
+    /* ═══ TEAR LINE ═══ */
+    .tear-line {
+      border-top: 1px dashed var(--ink-ghost);
+      margin: 1.5rem -3.5rem 0;
+      padding: 0.5rem 3.5rem;
+      font-size: 0.625rem;
+      color: var(--ink-ghost);
+      text-align: center;
+      letter-spacing: 0.5em;
+    }
+  </style>
+</head>
+<body>
+  <div class="paper">
+    <!-- Perforation strips -->
+    <div class="perf-strip left" id="perf-left"></div>
+    <div class="perf-strip right" id="perf-right"></div>
+
+    <div class="content">
+      <!-- Header -->
+      <header class="header">
+        <div class="header-top">
+          <div class="logo-block">
+            <div class="logo">VIBES</div>
+            <div class="logo-sub">MECH SUIT FOR DEVELOPERS</div>
+          </div>
+          <div class="print-info">
+            PRINT DATE: <span id="date">2025-01-04</span><br>
+            TIME: <span id="clock">23:47:32</span><br>
+            PAGE: 1 OF 1
+          </div>
+        </div>
+        <nav class="nav-bar">
+          <span class="nav-item">DASHBOARD</span>
+          <span class="nav-item">SESSIONS</span>
+          <span class="nav-item active">FIREHOSE</span>
+          <span class="nav-item">GROOVE</span>
+          <span class="nav-item">DEBUG</span>
+        </nav>
+      </header>
+
+      <!-- Status Line -->
+      <div class="status-line">
+        <div class="status-left">
+          <div class="status-item">
+            <span class="status-label">STATUS:</span>
+            <span class="status-value live">● LIVE</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">RATE:</span>
+            <span class="status-value">1,247 EVT/HR</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">BUFFER:</span>
+            <span class="status-value">82%</span>
+          </div>
+        </div>
+        <div class="status-right">
+          CONNECTED TO: localhost:7743
+        </div>
+      </div>
+
+      <!-- Main Grid -->
+      <div class="main-grid">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+          <section class="sidebar-section">
+            <div class="sidebar-header">System Metrics</div>
+            <div class="stat-list">
+              <div class="stat-row">
+                <span>Events/Hour</span>
+                <span class="stat-dots"></span>
+                <span class="stat-value">1,247</span>
+              </div>
+              <div class="stat-row">
+                <span>Active Sessions</span>
+                <span class="stat-dots"></span>
+                <span class="stat-value blue">3</span>
+              </div>
+              <div class="stat-row">
+                <span>Learnings</span>
+                <span class="stat-dots"></span>
+                <span class="stat-value">47</span>
+              </div>
+              <div class="stat-row">
+                <span>Errors (24h)</span>
+                <span class="stat-dots"></span>
+                <span class="stat-value red">2</span>
+              </div>
+            </div>
+            <div class="ascii-chart">
+RATE:  100|    ▄▄
+        75|  ▄▄██▄
+        50| ▄██████▄
+        25|▄████████▄▄
+         0└──────────────
+           -1h        now</div>
+          </section>
+
+          <section class="sidebar-section">
+            <div class="sidebar-header">Filter by Type</div>
+            <div class="filter-row active">
+              <span class="filter-check">[X]</span>
+              <span class="filter-name">ALL</span>
+              <span class="filter-count">847</span>
+            </div>
+            <div class="filter-row">
+              <span class="filter-check">[ ]</span>
+              <span class="filter-name">TOOL</span>
+              <span class="filter-count">312</span>
+            </div>
+            <div class="filter-row">
+              <span class="filter-check">[ ]</span>
+              <span class="filter-name">CLAUDE</span>
+              <span class="filter-count">284</span>
+            </div>
+            <div class="filter-row">
+              <span class="filter-check">[ ]</span>
+              <span class="filter-name">SESSION</span>
+              <span class="filter-count">127</span>
+            </div>
+            <div class="filter-row">
+              <span class="filter-check">[ ]</span>
+              <span class="filter-name">HOOK</span>
+              <span class="filter-count">89</span>
+            </div>
+            <div class="filter-row">
+              <span class="filter-check">[ ]</span>
+              <span class="filter-name">ASSESS</span>
+              <span class="filter-count">33</span>
+            </div>
+            <div class="filter-row">
+              <span class="filter-check">[ ]</span>
+              <span class="filter-name">ERROR</span>
+              <span class="filter-count">2</span>
+            </div>
+          </section>
+        </aside>
+
+        <!-- Stream -->
+        <section class="stream">
+          <div class="stream-header">
+            <span class="stream-title">Event Stream</span>
+            <div class="stream-controls">
+              <span class="stream-control active">[LIVE]</span>
+              <span class="stream-control">[PAUSE]</span>
+              <span class="stream-control">[REPLAY]</span>
+              <span class="stream-control">[EXPORT]</span>
+            </div>
+          </div>
+          <div class="stream-body" id="stream-body">
+            <div class="event-line">
+              <span class="event-time">23:47:31.847</span>
+              <span class="event-type tool">TOOL</span>
+              <span class="event-content">Read file: src/components/SessionCard.tsx (847 bytes)</span>
+              <span class="event-session">a7f3c2</span>
+            </div>
+            <div class="event-line">
+              <span class="event-time">23:47:31.203</span>
+              <span class="event-type claude">CLAUDE</span>
+              <span class="event-content">Analyzing component structure for potential optimizations...</span>
+              <span class="event-session">a7f3c2</span>
+            </div>
+            <div class="event-line">
+              <span class="event-time">23:47:30.891</span>
+              <span class="event-type assess">ASSESS</span>
+              <span class="event-content">◉ Lightweight assessment: pattern match confidence 0.73</span>
+              <span class="event-session">a7f3c2</span>
+            </div>
+            <div class="event-line">
+              <span class="event-time">23:47:29.442</span>
+              <span class="event-type session">SESSION</span>
+              <span class="event-content">Session heartbeat: active, 47 tools invoked</span>
+              <span class="event-session">a7f3c2</span>
+            </div>
+            <div class="event-line">
+              <span class="event-time">23:47:28.103</span>
+              <span class="event-type tool">TOOL</span>
+              <span class="event-content">Bash: cargo test --lib (exit: 0)</span>
+              <span class="event-session">b2e1d4</span>
+            </div>
+            <div class="event-line">
+              <span class="event-time">23:47:27.551</span>
+              <span class="event-type hook">HOOK</span>
+              <span class="event-content">pre-commit hook executed: lint passed</span>
+              <span class="event-session">b2e1d4</span>
+            </div>
+            <div class="event-line">
+              <span class="event-time">23:47:26.888</span>
+              <span class="event-type error">ERROR</span>
+              <span class="event-content">*** ABEND: WebSocket connection timeout after 30s</span>
+              <span class="event-session">c9d4e5</span>
+            </div>
+            <div class="event-line">
+              <span class="event-time">23:47:25.102</span>
+              <span class="event-type claude">CLAUDE</span>
+              <span class="event-content">Implementing fix for session reconnection logic...</span>
+              <span class="event-session">a7f3c2</span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Footer -->
+      <footer class="footer">
+        <div class="command-line">
+          <span class="prompt">COMMAND&gt;</span>
+          <input type="text" class="command-input" placeholder="" autofocus>
+        </div>
+        <div class="footer-info">
+          VIBES v0.1.0 // SPC=PAUSE F=FILTER R=REPLAY ?=HELP
+        </div>
+      </footer>
+
+      <!-- Tear line -->
+      <div class="tear-line">- - - TEAR HERE - - -</div>
+    </div>
+  </div>
+
+  <script>
+    // Generate perforation holes
+    function generatePerforations() {
+      const leftStrip = document.getElementById('perf-left');
+      const rightStrip = document.getElementById('perf-right');
+      const height = document.querySelector('.paper').offsetHeight;
+      const holeCount = Math.floor(height / 18);
+
+      for (let i = 0; i < holeCount; i++) {
+        const leftHole = document.createElement('div');
+        leftHole.className = 'perf-hole';
+        leftStrip.appendChild(leftHole);
+
+        const rightHole = document.createElement('div');
+        rightHole.className = 'perf-hole';
+        rightStrip.appendChild(rightHole);
+      }
+    }
+    generatePerforations();
+
+    // Update clock
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('clock').textContent = now.toTimeString().split(' ')[0];
+      document.getElementById('date').textContent = now.toISOString().split('T')[0];
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Event simulation
+    const eventTypes = ['tool', 'claude', 'session', 'hook', 'assess'];
+    const eventContents = [
+      'Read file: src/lib/types.ts (1,204 bytes)',
+      'Analyzing type definitions for refactoring...',
+      'Session heartbeat: active, 52 tools invoked',
+      'post-save hook executed: format complete',
+      '◉ Learning captured: test-first methodology (0.94)',
+    ];
+
+    function createEventLine(time, type, content, session) {
+      const line = document.createElement('div');
+      line.className = 'event-line';
+
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'event-time';
+      timeSpan.textContent = time;
+
+      const typeSpan = document.createElement('span');
+      typeSpan.className = 'event-type ' + type;
+      typeSpan.textContent = type.toUpperCase();
+
+      const contentSpan = document.createElement('span');
+      contentSpan.className = 'event-content';
+      contentSpan.textContent = content;
+
+      const sessionSpan = document.createElement('span');
+      sessionSpan.className = 'event-session';
+      sessionSpan.textContent = session;
+
+      line.appendChild(timeSpan);
+      line.appendChild(typeSpan);
+      line.appendChild(contentSpan);
+      line.appendChild(sessionSpan);
+
+      return line;
+    }
+
+    function addEvent() {
+      const stream = document.getElementById('stream-body');
+      const type = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+      const content = eventContents[Math.floor(Math.random() * eventContents.length)];
+      const now = new Date();
+      const time = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
+      const session = Math.random().toString(36).substr(2, 6);
+
+      const line = createEventLine(time, type, content, session);
+      stream.insertBefore(line, stream.firstChild);
+
+      if (stream.children.length > 12) {
+        stream.removeChild(stream.lastChild);
+      }
+    }
+
+    setInterval(addEvent, 2500 + Math.random() * 2000);
+  </script>
+</body>
+</html>

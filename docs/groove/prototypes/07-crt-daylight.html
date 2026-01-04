@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>vibes :: firehose — CRT Daylight</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ═══════════════════════════════════════════════════════════════
+       CRT DAYLIGHT — Warm cream, readable, phosphor hints in sunlight
+       ═══════════════════════════════════════════════════════════════ */
+
+    :root {
+      /* Warm paper tones */
+      --cream: #faf6f0;
+      --cream-dark: #f0ebe3;
+      --cream-darker: #e5ded4;
+      --paper: #fffcf7;
+
+      /* Warm ink */
+      --ink: #2a2420;
+      --ink-light: #4a4440;
+      --ink-faint: #8a847a;
+      --ink-ghost: #c4beb4;
+
+      /* Phosphor accents - warm amber that hints at CRT */
+      --amber: #c4880c;
+      --amber-light: #e6a21c;
+      --amber-glow: rgba(196, 136, 12, 0.15);
+      --amber-soft: rgba(196, 136, 12, 0.08);
+
+      /* Semantic with warmth */
+      --green: #4a8c4a;
+      --red: #b84a4a;
+      --cyan: #4a7a8c;
+
+      --font-display: 'VT323', monospace;
+      --font-mono: 'IBM Plex Mono', monospace;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--cream);
+      overflow-x: hidden;
+    }
+
+    body {
+      font-family: var(--font-mono);
+      color: var(--ink);
+    }
+
+    /* ═══ SUBTLE SCANLINES (barely visible in daylight) ═══ */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0,0,0,0.02) 0px,
+        rgba(0,0,0,0.02) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    /* ═══ GLOW - subtle warm shadows ═══ */
+    .glow {
+      text-shadow: 0 0 20px var(--amber-glow);
+    }
+
+    .glow-strong {
+      text-shadow:
+        0 0 10px var(--amber-glow),
+        0 0 30px var(--amber-soft);
+    }
+
+    /* ═══ LAYOUT ═══ */
+    .app {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-height: 100vh;
+    }
+
+    /* ═══ HEADER ═══ */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 2rem;
+      background: var(--paper);
+      border-bottom: 2px solid var(--cream-darker);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    .logo {
+      font-family: var(--font-display);
+      font-size: 2.5rem;
+      color: var(--amber);
+      letter-spacing: 0.1em;
+    }
+
+    .breadcrumb {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      color: var(--ink-faint);
+    }
+
+    .breadcrumb span {
+      color: var(--ink);
+    }
+
+    .nav {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .nav-item {
+      padding: 0.5rem 1rem;
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      color: var(--ink-faint);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .nav-item:hover {
+      color: var(--ink);
+    }
+
+    .nav-item.active {
+      color: var(--amber);
+      border-bottom-color: var(--amber);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      color: var(--green);
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      background: var(--green);
+      border-radius: 50%;
+      box-shadow: 0 0 8px rgba(74, 140, 74, 0.5);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    .clock {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      color: var(--ink-light);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ═══ MAIN ═══ */
+    .main {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 1px;
+      background: var(--cream-darker);
+    }
+
+    /* ═══ SIDEBAR ═══ */
+    .sidebar {
+      background: var(--paper);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .panel {
+      background: var(--cream);
+      border: 1px solid var(--cream-darker);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 0.625rem 1rem;
+      background: linear-gradient(180deg, var(--cream-dark), var(--cream-darker));
+      font-family: var(--font-display);
+      font-size: 1rem;
+      letter-spacing: 0.15em;
+      color: var(--ink-light);
+      border-bottom: 1px solid var(--cream-darker);
+    }
+
+    .panel-body {
+      padding: 1rem;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    .stat-card {
+      text-align: center;
+      padding: 0.75rem;
+      background: var(--paper);
+      border: 1px solid var(--cream-darker);
+      border-radius: 4px;
+    }
+
+    .stat-value {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      color: var(--amber);
+      line-height: 1;
+    }
+
+    .stat-value.green { color: var(--green); }
+    .stat-value.red { color: var(--red); }
+
+    .stat-label {
+      font-size: 0.625rem;
+      color: var(--ink-faint);
+      letter-spacing: 0.1em;
+      margin-top: 0.25rem;
+      text-transform: uppercase;
+    }
+
+    /* Sparkline bar chart */
+    .chart-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 40px;
+      padding: 0.5rem 0;
+    }
+
+    .chart-bar {
+      flex: 1;
+      background: linear-gradient(to top, var(--amber), var(--amber-light));
+      border-radius: 2px 2px 0 0;
+      opacity: 0.6;
+      transition: opacity 0.15s;
+    }
+
+    .chart-bar:hover {
+      opacity: 1;
+    }
+
+    /* Filter list */
+    .filter-list {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .filter-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0.75rem;
+      font-family: var(--font-display);
+      font-size: 1.125rem;
+      color: var(--ink-light);
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.1s;
+    }
+
+    .filter-item:hover {
+      background: var(--amber-soft);
+      color: var(--ink);
+    }
+
+    .filter-item.active {
+      background: var(--amber-glow);
+      color: var(--amber);
+    }
+
+    .filter-count {
+      font-size: 0.875rem;
+      color: var(--ink-faint);
+    }
+
+    .filter-item.active .filter-count {
+      color: var(--amber);
+    }
+
+    /* ═══ STREAM ═══ */
+    .stream {
+      background: var(--paper);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stream-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.5rem;
+      background: var(--cream);
+      border-bottom: 1px solid var(--cream-darker);
+    }
+
+    .stream-title {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      color: var(--ink);
+    }
+
+    .stream-controls {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .btn {
+      padding: 0.5rem 1rem;
+      font-family: var(--font-display);
+      font-size: 1rem;
+      background: var(--paper);
+      border: 1px solid var(--cream-darker);
+      color: var(--ink-light);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn:hover {
+      background: var(--cream);
+      color: var(--ink);
+      border-color: var(--ink-ghost);
+    }
+
+    .btn.active {
+      background: var(--amber);
+      border-color: var(--amber);
+      color: var(--paper);
+    }
+
+    .stream-body {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .event-row {
+      display: grid;
+      grid-template-columns: 100px 70px 1fr 70px;
+      gap: 1rem;
+      padding: 0.625rem 1.5rem;
+      border-bottom: 1px solid var(--cream-dark);
+      transition: background 0.1s;
+    }
+
+    .event-row:hover {
+      background: var(--amber-soft);
+    }
+
+    .event-time {
+      font-size: 0.75rem;
+      color: var(--ink-faint);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .event-type {
+      font-family: var(--font-display);
+      font-size: 0.875rem;
+      text-transform: uppercase;
+    }
+
+    .event-type.tool { color: var(--ink); }
+    .event-type.claude { color: var(--amber); }
+    .event-type.session { color: var(--cyan); }
+    .event-type.hook { color: var(--ink-faint); }
+    .event-type.assess { color: #b8860b; }
+    .event-type.error { color: var(--red); }
+
+    .event-content {
+      font-size: 0.8125rem;
+      color: var(--ink-light);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .event-session {
+      font-size: 0.75rem;
+      color: var(--ink-ghost);
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ═══ FOOTER ═══ */
+    .footer {
+      display: flex;
+      align-items: center;
+      padding: 0.75rem 2rem;
+      background: var(--cream);
+      border-top: 2px solid var(--cream-darker);
+      gap: 1rem;
+    }
+
+    .prompt {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      color: var(--amber);
+    }
+
+    .command-input {
+      flex: 1;
+      background: var(--paper);
+      border: 1px solid var(--cream-darker);
+      border-radius: 4px;
+      padding: 0.5rem 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      color: var(--ink);
+      outline: none;
+    }
+
+    .command-input:focus {
+      border-color: var(--amber);
+      box-shadow: 0 0 0 2px var(--amber-soft);
+    }
+
+    .command-input::placeholder {
+      color: var(--ink-ghost);
+    }
+
+    .hotkeys {
+      display: flex;
+      gap: 1.5rem;
+      font-family: var(--font-display);
+      font-size: 1rem;
+      color: var(--ink-faint);
+    }
+
+    .hotkey-key {
+      color: var(--amber);
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <span class="logo glow-strong">VIBES</span>
+        <nav class="nav">
+          <span class="nav-item">Dashboard</span>
+          <span class="nav-item">Sessions</span>
+          <span class="nav-item active">Firehose</span>
+          <span class="nav-item">Groove</span>
+        </nav>
+      </div>
+      <div class="header-right">
+        <div class="status">
+          <span class="status-dot"></span>
+          <span>Connected</span>
+        </div>
+        <span class="clock" id="clock">23:47:32</span>
+      </div>
+    </header>
+
+    <!-- Main -->
+    <main class="main">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="panel">
+          <div class="panel-header">METRICS</div>
+          <div class="panel-body">
+            <div class="stat-grid">
+              <div class="stat-card">
+                <div class="stat-value">1,247</div>
+                <div class="stat-label">Events/hr</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value green">3</div>
+                <div class="stat-label">Sessions</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value">47</div>
+                <div class="stat-label">Learnings</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value red">2</div>
+                <div class="stat-label">Errors</div>
+              </div>
+            </div>
+            <div class="chart-bars">
+              <div class="chart-bar" style="height: 20%"></div>
+              <div class="chart-bar" style="height: 35%"></div>
+              <div class="chart-bar" style="height: 45%"></div>
+              <div class="chart-bar" style="height: 30%"></div>
+              <div class="chart-bar" style="height: 60%"></div>
+              <div class="chart-bar" style="height: 85%"></div>
+              <div class="chart-bar" style="height: 100%"></div>
+              <div class="chart-bar" style="height: 75%"></div>
+              <div class="chart-bar" style="height: 55%"></div>
+              <div class="chart-bar" style="height: 40%"></div>
+              <div class="chart-bar" style="height: 30%"></div>
+              <div class="chart-bar" style="height: 45%"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">FILTER</div>
+          <div class="panel-body">
+            <div class="filter-list">
+              <div class="filter-item active">
+                <span>All Events</span>
+                <span class="filter-count">847</span>
+              </div>
+              <div class="filter-item">
+                <span>Tool</span>
+                <span class="filter-count">312</span>
+              </div>
+              <div class="filter-item">
+                <span>Claude</span>
+                <span class="filter-count">284</span>
+              </div>
+              <div class="filter-item">
+                <span>Session</span>
+                <span class="filter-count">127</span>
+              </div>
+              <div class="filter-item">
+                <span>Hook</span>
+                <span class="filter-count">89</span>
+              </div>
+              <div class="filter-item">
+                <span>Assess</span>
+                <span class="filter-count">33</span>
+              </div>
+              <div class="filter-item">
+                <span>Error</span>
+                <span class="filter-count">2</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Stream -->
+      <section class="stream">
+        <div class="stream-header">
+          <span class="stream-title">Event Stream</span>
+          <div class="stream-controls">
+            <button class="btn active">Live</button>
+            <button class="btn">Pause</button>
+            <button class="btn">Replay</button>
+            <button class="btn">Export</button>
+          </div>
+        </div>
+        <div class="stream-body" id="stream-body">
+          <div class="event-row">
+            <span class="event-time">23:47:31.847</span>
+            <span class="event-type tool">TOOL</span>
+            <span class="event-content">Read file: src/components/SessionCard.tsx (847 bytes)</span>
+            <span class="event-session">a7f3c2</span>
+          </div>
+          <div class="event-row">
+            <span class="event-time">23:47:31.203</span>
+            <span class="event-type claude">CLAUDE</span>
+            <span class="event-content">Analyzing component structure for potential optimizations...</span>
+            <span class="event-session">a7f3c2</span>
+          </div>
+          <div class="event-row">
+            <span class="event-time">23:47:30.891</span>
+            <span class="event-type assess">ASSESS</span>
+            <span class="event-content">◉ Lightweight assessment triggered: pattern match confidence 0.73</span>
+            <span class="event-session">a7f3c2</span>
+          </div>
+          <div class="event-row">
+            <span class="event-time">23:47:29.442</span>
+            <span class="event-type session">SESSION</span>
+            <span class="event-content">Session heartbeat: active, 47 tools invoked</span>
+            <span class="event-session">a7f3c2</span>
+          </div>
+          <div class="event-row">
+            <span class="event-time">23:47:28.103</span>
+            <span class="event-type tool">TOOL</span>
+            <span class="event-content">Bash: cargo test --lib (exit: 0)</span>
+            <span class="event-session">b2e1d4</span>
+          </div>
+          <div class="event-row">
+            <span class="event-time">23:47:27.551</span>
+            <span class="event-type hook">HOOK</span>
+            <span class="event-content">pre-commit hook executed: lint passed</span>
+            <span class="event-session">b2e1d4</span>
+          </div>
+          <div class="event-row">
+            <span class="event-time">23:47:26.888</span>
+            <span class="event-type error">ERROR</span>
+            <span class="event-content">WebSocket connection timeout after 30s</span>
+            <span class="event-session">c9d4e5</span>
+          </div>
+          <div class="event-row">
+            <span class="event-time">23:47:25.102</span>
+            <span class="event-type claude">CLAUDE</span>
+            <span class="event-content">Implementing fix for session reconnection logic...</span>
+            <span class="event-session">a7f3c2</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <span class="prompt">=</span>
+      <input type="text" class="command-input" placeholder="Type command or / to search..." autofocus>
+      <div class="hotkeys">
+        <span><span class="hotkey-key">SPC</span> pause</span>
+        <span><span class="hotkey-key">F</span> filter</span>
+        <span><span class="hotkey-key">R</span> replay</span>
+        <span><span class="hotkey-key">?</span> help</span>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('clock').textContent = now.toTimeString().split(' ')[0];
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    const eventTypes = ['tool', 'claude', 'session', 'hook', 'assess'];
+    const eventContents = [
+      'Read file: src/lib/types.ts (1,204 bytes)',
+      'Analyzing type definitions for refactoring...',
+      'Session heartbeat: active, 52 tools invoked',
+      'post-save hook executed: format complete',
+      '◉ Learning captured: test-first methodology (0.94)',
+    ];
+
+    function createEventRow(time, type, content, session) {
+      const row = document.createElement('div');
+      row.className = 'event-row';
+
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'event-time';
+      timeSpan.textContent = time;
+
+      const typeSpan = document.createElement('span');
+      typeSpan.className = 'event-type ' + type;
+      typeSpan.textContent = type.toUpperCase();
+
+      const contentSpan = document.createElement('span');
+      contentSpan.className = 'event-content';
+      contentSpan.textContent = content;
+
+      const sessionSpan = document.createElement('span');
+      sessionSpan.className = 'event-session';
+      sessionSpan.textContent = session;
+
+      row.appendChild(timeSpan);
+      row.appendChild(typeSpan);
+      row.appendChild(contentSpan);
+      row.appendChild(sessionSpan);
+
+      return row;
+    }
+
+    function addEvent() {
+      const stream = document.getElementById('stream-body');
+      const type = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+      const content = eventContents[Math.floor(Math.random() * eventContents.length)];
+      const now = new Date();
+      const time = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
+      const session = Math.random().toString(36).substr(2, 6);
+
+      const row = createEventRow(time, type, content, session);
+      stream.insertBefore(row, stream.firstChild);
+
+      if (stream.children.length > 12) {
+        stream.removeChild(stream.lastChild);
+      }
+    }
+
+    setInterval(addEvent, 2500 + Math.random() * 2000);
+  </script>
+</body>
+</html>

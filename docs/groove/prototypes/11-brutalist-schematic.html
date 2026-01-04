@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>vibes — Schematic Interface</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Chakra+Petch:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0a0e14;
+      --bg-panel: #0d1117;
+      --grid-line: rgba(0, 180, 216, 0.08);
+      --grid-major: rgba(0, 180, 216, 0.15);
+      --cyan: #00b4d8;
+      --cyan-dim: rgba(0, 180, 216, 0.6);
+      --cyan-glow: rgba(0, 180, 216, 0.3);
+      --orange: #ff6b35;
+      --text-primary: #cad3de;
+      --text-dim: #5c6b7a;
+      --text-label: #3d4f5f;
+      --border: rgba(0, 180, 216, 0.25);
+      --crosshair: rgba(0, 180, 216, 0.4);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Share Tech Mono', monospace;
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Engineering grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        /* Major grid */
+        linear-gradient(var(--grid-major) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-major) 1px, transparent 1px),
+        /* Minor grid */
+        linear-gradient(var(--grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+      background-size:
+        100px 100px,
+        100px 100px,
+        20px 20px,
+        20px 20px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Corner registration marks */
+    .registration-mark {
+      position: fixed;
+      width: 40px;
+      height: 40px;
+      z-index: 100;
+    }
+    .registration-mark::before,
+    .registration-mark::after {
+      content: '';
+      position: absolute;
+      background: var(--crosshair);
+    }
+    .registration-mark::before {
+      width: 100%;
+      height: 1px;
+      top: 50%;
+    }
+    .registration-mark::after {
+      width: 1px;
+      height: 100%;
+      left: 50%;
+    }
+    .reg-tl { top: 20px; left: 20px; }
+    .reg-tr { top: 20px; right: 20px; }
+    .reg-bl { bottom: 20px; left: 20px; }
+    .reg-br { bottom: 20px; right: 20px; }
+
+    /* Reference annotations on edges */
+    .ref-annotation {
+      position: fixed;
+      font-size: 9px;
+      color: var(--text-label);
+      letter-spacing: 2px;
+      z-index: 50;
+    }
+    .ref-top {
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    .ref-left {
+      left: 8px;
+      top: 50%;
+      transform: rotate(-90deg) translateX(-50%);
+      transform-origin: left center;
+    }
+    .ref-bottom {
+      bottom: 8px;
+      right: 80px;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      padding: 80px 60px 60px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    /* Header with technical callouts */
+    header {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 40px;
+      align-items: end;
+      margin-bottom: 60px;
+      padding-bottom: 40px;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+    }
+
+    /* Dimension line under header */
+    header::after {
+      content: '';
+      position: absolute;
+      bottom: -20px;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: repeating-linear-gradient(
+        90deg,
+        var(--cyan-dim) 0,
+        var(--cyan-dim) 4px,
+        transparent 4px,
+        transparent 8px
+      );
+    }
+
+    .logo-block {
+      position: relative;
+    }
+
+    h1 {
+      font-family: 'Chakra Petch', sans-serif;
+      font-size: 48px;
+      font-weight: 700;
+      color: var(--cyan);
+      letter-spacing: -1px;
+      line-height: 1;
+      text-shadow: 0 0 30px var(--cyan-glow);
+    }
+
+    .logo-annotation {
+      position: absolute;
+      top: -18px;
+      left: 0;
+      font-size: 9px;
+      color: var(--text-label);
+      letter-spacing: 1px;
+    }
+
+    .logo-dim {
+      position: absolute;
+      bottom: -22px;
+      left: 0;
+      font-size: 9px;
+      color: var(--text-dim);
+    }
+
+    .logo-dim::before {
+      content: '◄';
+      margin-right: 4px;
+    }
+    .logo-dim::after {
+      content: '►';
+      margin-left: 4px;
+    }
+
+    .header-stats {
+      display: flex;
+      gap: 60px;
+    }
+
+    .stat-block {
+      position: relative;
+      padding-left: 12px;
+      border-left: 2px solid var(--border);
+    }
+
+    .stat-label {
+      font-size: 9px;
+      color: var(--text-label);
+      letter-spacing: 2px;
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      font-family: 'Chakra Petch', sans-serif;
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .stat-unit {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-left: 4px;
+    }
+
+    .header-controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    .control-btn {
+      width: 36px;
+      height: 36px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+      position: relative;
+    }
+
+    .control-btn:hover {
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
+
+    .control-btn.active {
+      background: var(--cyan);
+      border-color: var(--cyan);
+      color: var(--bg-dark);
+    }
+
+    /* Main layout */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 280px 1fr 220px;
+      gap: 40px;
+    }
+
+    /* Panel styling with callout labels */
+    .panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      position: relative;
+    }
+
+    .panel-label {
+      position: absolute;
+      top: -10px;
+      left: 12px;
+      background: var(--bg-dark);
+      padding: 0 8px;
+      font-size: 9px;
+      color: var(--cyan-dim);
+      letter-spacing: 2px;
+    }
+
+    .panel-ref {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      font-size: 9px;
+      color: var(--text-label);
+    }
+
+    /* Session navigator */
+    .session-nav {
+      padding: 24px 16px;
+    }
+
+    .nav-section {
+      margin-bottom: 24px;
+    }
+
+    .nav-section-title {
+      font-size: 10px;
+      color: var(--text-label);
+      letter-spacing: 2px;
+      margin-bottom: 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px dashed var(--border);
+    }
+
+    .session-item {
+      display: grid;
+      grid-template-columns: 8px 1fr auto;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(0, 180, 216, 0.08);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .session-item:hover {
+      background: rgba(0, 180, 216, 0.05);
+      margin: 0 -16px;
+      padding-left: 16px;
+      padding-right: 16px;
+    }
+
+    .session-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-top: 4px;
+    }
+
+    .session-indicator.active {
+      background: var(--cyan);
+      box-shadow: 0 0 8px var(--cyan-glow);
+    }
+
+    .session-indicator.idle {
+      background: var(--text-dim);
+    }
+
+    .session-indicator.warning {
+      background: var(--orange);
+    }
+
+    .session-name {
+      font-size: 12px;
+      color: var(--text-primary);
+    }
+
+    .session-id {
+      font-size: 9px;
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+
+    .session-time {
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+
+    /* Event feed - main panel */
+    .event-feed {
+      padding: 24px;
+    }
+
+    .feed-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .feed-title {
+      font-family: 'Chakra Petch', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: 1px;
+    }
+
+    .feed-meta {
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+
+    .event-container {
+      height: 500px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    .event-row {
+      display: grid;
+      grid-template-columns: 90px 100px 1fr 80px;
+      gap: 16px;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(0, 180, 216, 0.06);
+      font-size: 12px;
+      position: relative;
+    }
+
+    /* Connection line between events */
+    .event-row::before {
+      content: '';
+      position: absolute;
+      left: 45px;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: linear-gradient(
+        180deg,
+        transparent,
+        var(--border) 20%,
+        var(--border) 80%,
+        transparent
+      );
+    }
+
+    .event-row:first-child::before {
+      top: 50%;
+    }
+
+    .event-row:last-child::before {
+      bottom: 50%;
+    }
+
+    /* Node point on timeline */
+    .event-row::after {
+      content: '';
+      position: absolute;
+      left: 42px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 7px;
+      height: 7px;
+      background: var(--bg-panel);
+      border: 1px solid var(--cyan-dim);
+    }
+
+    .event-time {
+      color: var(--text-dim);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .event-type {
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+
+    .event-type.tool { color: var(--cyan); }
+    .event-type.response { color: #90be6d; }
+    .event-type.error { color: var(--orange); }
+    .event-type.system { color: var(--text-dim); }
+
+    .event-content {
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .event-session {
+      color: var(--text-dim);
+      text-align: right;
+      font-size: 10px;
+    }
+
+    /* Metrics panel */
+    .metrics-panel {
+      padding: 20px 16px;
+    }
+
+    .metric-block {
+      margin-bottom: 24px;
+      padding-bottom: 20px;
+      border-bottom: 1px dashed var(--border);
+    }
+
+    .metric-block:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+
+    .metric-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 12px;
+    }
+
+    .metric-name {
+      font-size: 10px;
+      color: var(--text-label);
+      letter-spacing: 2px;
+    }
+
+    .metric-value {
+      font-family: 'Chakra Petch', sans-serif;
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .metric-bar {
+      height: 4px;
+      background: rgba(0, 180, 216, 0.15);
+      position: relative;
+    }
+
+    .metric-bar-fill {
+      height: 100%;
+      background: var(--cyan);
+      transition: width 0.3s;
+    }
+
+    .metric-bar-markers {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+      font-size: 8px;
+      color: var(--text-label);
+    }
+
+    /* Sparkline */
+    .sparkline {
+      height: 40px;
+      display: flex;
+      align-items: end;
+      gap: 2px;
+      margin-top: 8px;
+    }
+
+    .spark-bar {
+      flex: 1;
+      background: var(--cyan-dim);
+      min-height: 2px;
+      transition: height 0.3s;
+    }
+
+    .spark-bar:last-child {
+      background: var(--cyan);
+    }
+
+    /* Technical footer */
+    footer {
+      margin-top: 60px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+
+    .footer-specs {
+      display: flex;
+      gap: 40px;
+    }
+
+    .footer-spec {
+      display: flex;
+      gap: 8px;
+    }
+
+    .footer-spec-label {
+      color: var(--text-label);
+    }
+
+    .scale-ruler {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .scale-bar {
+      width: 100px;
+      height: 6px;
+      background: repeating-linear-gradient(
+        90deg,
+        var(--cyan-dim) 0,
+        var(--cyan-dim) 10px,
+        transparent 10px,
+        transparent 20px
+      );
+    }
+  </style>
+</head>
+<body>
+  <!-- Registration marks -->
+  <div class="registration-mark reg-tl"></div>
+  <div class="registration-mark reg-tr"></div>
+  <div class="registration-mark reg-bl"></div>
+  <div class="registration-mark reg-br"></div>
+
+  <!-- Reference annotations -->
+  <div class="ref-annotation ref-top">VIBES CONTROL INTERFACE // REV 2.1.0</div>
+  <div class="ref-annotation ref-left">SHEET 1 OF 1</div>
+  <div class="ref-annotation ref-bottom">SCALE: 1:1 @ 1920×1080</div>
+
+  <div class="container">
+    <header>
+      <div class="logo-block">
+        <span class="logo-annotation">FIG. 01 — PRIMARY IDENTIFIER</span>
+        <h1>VIBES</h1>
+        <span class="logo-dim">148.2px</span>
+      </div>
+
+      <div class="header-stats">
+        <div class="stat-block">
+          <div class="stat-label">ACTIVE SESSIONS</div>
+          <div class="stat-value">3<span class="stat-unit">/ 8 max</span></div>
+        </div>
+        <div class="stat-block">
+          <div class="stat-label">EVENT THROUGHPUT</div>
+          <div class="stat-value">847<span class="stat-unit">evt/min</span></div>
+        </div>
+        <div class="stat-block">
+          <div class="stat-label">UPTIME</div>
+          <div class="stat-value">99.7<span class="stat-unit">%</span></div>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <button class="control-btn active">◉</button>
+        <button class="control-btn">⊞</button>
+        <button class="control-btn">⋮</button>
+      </div>
+    </header>
+
+    <div class="main-grid">
+      <!-- Left: Session Navigator -->
+      <div class="panel session-nav">
+        <span class="panel-label">SECTION A</span>
+        <span class="panel-ref">A-01</span>
+
+        <div class="nav-section">
+          <div class="nav-section-title">ACTIVE SESSIONS</div>
+          <div class="session-item">
+            <div class="session-indicator active"></div>
+            <div>
+              <div class="session-name">api-refactor</div>
+              <div class="session-id">ses_7x8k2m</div>
+            </div>
+            <div class="session-time">2m ago</div>
+          </div>
+          <div class="session-item">
+            <div class="session-indicator active"></div>
+            <div>
+              <div class="session-name">bug-fix-auth</div>
+              <div class="session-id">ses_3n9p1q</div>
+            </div>
+            <div class="session-time">5m ago</div>
+          </div>
+          <div class="session-item">
+            <div class="session-indicator warning"></div>
+            <div>
+              <div class="session-name">perf-testing</div>
+              <div class="session-id">ses_2k4j8w</div>
+            </div>
+            <div class="session-time">12m ago</div>
+          </div>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">RECENT</div>
+          <div class="session-item">
+            <div class="session-indicator idle"></div>
+            <div>
+              <div class="session-name">docs-update</div>
+              <div class="session-id">ses_9m2l5n</div>
+            </div>
+            <div class="session-time">1h ago</div>
+          </div>
+          <div class="session-item">
+            <div class="session-indicator idle"></div>
+            <div>
+              <div class="session-name">feature-xyz</div>
+              <div class="session-id">ses_4p7k2x</div>
+            </div>
+            <div class="session-time">3h ago</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center: Event Feed -->
+      <div class="panel event-feed">
+        <span class="panel-label">SECTION B — EVENT STREAM</span>
+        <span class="panel-ref">B-01</span>
+
+        <div class="feed-header">
+          <div class="feed-title">REAL-TIME EVENT LOG</div>
+          <div class="feed-meta">SHOWING: ALL TYPES • LAST 100</div>
+        </div>
+
+        <div class="event-container" id="eventLog"></div>
+      </div>
+
+      <!-- Right: Metrics -->
+      <div class="panel metrics-panel">
+        <span class="panel-label">SECTION C</span>
+        <span class="panel-ref">C-01</span>
+
+        <div class="metric-block">
+          <div class="metric-header">
+            <span class="metric-name">CPU LOAD</span>
+            <span class="metric-value">42%</span>
+          </div>
+          <div class="metric-bar">
+            <div class="metric-bar-fill" style="width: 42%"></div>
+          </div>
+          <div class="metric-bar-markers">
+            <span>0</span>
+            <span>50</span>
+            <span>100</span>
+          </div>
+        </div>
+
+        <div class="metric-block">
+          <div class="metric-header">
+            <span class="metric-name">MEMORY</span>
+            <span class="metric-value">2.1GB</span>
+          </div>
+          <div class="metric-bar">
+            <div class="metric-bar-fill" style="width: 65%"></div>
+          </div>
+          <div class="metric-bar-markers">
+            <span>0</span>
+            <span>4GB</span>
+            <span>8GB</span>
+          </div>
+        </div>
+
+        <div class="metric-block">
+          <div class="metric-header">
+            <span class="metric-name">EVENT RATE</span>
+            <span class="metric-value">14/s</span>
+          </div>
+          <div class="sparkline" id="sparkline"></div>
+        </div>
+
+        <div class="metric-block">
+          <div class="metric-header">
+            <span class="metric-name">LATENCY P95</span>
+            <span class="metric-value">23ms</span>
+          </div>
+          <div class="metric-bar">
+            <div class="metric-bar-fill" style="width: 23%"></div>
+          </div>
+          <div class="metric-bar-markers">
+            <span>0</span>
+            <span>50ms</span>
+            <span>100ms</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <div class="footer-specs">
+        <div class="footer-spec">
+          <span class="footer-spec-label">PROTOCOL:</span>
+          <span>WS/2.0</span>
+        </div>
+        <div class="footer-spec">
+          <span class="footer-spec-label">NODE:</span>
+          <span>vibes-prod-01</span>
+        </div>
+        <div class="footer-spec">
+          <span class="footer-spec-label">BUILD:</span>
+          <span>2.1.0-rc.4</span>
+        </div>
+      </div>
+      <div class="scale-ruler">
+        <span>SCALE</span>
+        <div class="scale-bar"></div>
+        <span>100px</span>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    // Event data simulation
+    const eventTypes = [
+      { type: 'TOOL', class: 'tool' },
+      { type: 'RESPONSE', class: 'response' },
+      { type: 'ERROR', class: 'error' },
+      { type: 'SYSTEM', class: 'system' }
+    ];
+
+    const contents = [
+      'Read file: src/lib/auth.ts',
+      'Write file: tests/unit/auth.spec.ts',
+      'Bash: npm run test --coverage',
+      'Model response: Implementation complete',
+      'Connection timeout: retry in 5s',
+      'Session checkpoint saved',
+      'Tool invocation: Grep pattern match',
+      'Memory snapshot: 2.1GB allocated',
+      'WebSocket ping: 23ms latency'
+    ];
+
+    const sessions = ['ses_7x8k2m', 'ses_3n9p1q', 'ses_2k4j8w'];
+
+    function createEventRow(time, eventType, content, session) {
+      const row = document.createElement('div');
+      row.className = 'event-row';
+
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'event-time';
+      timeSpan.textContent = time;
+
+      const typeSpan = document.createElement('span');
+      typeSpan.className = 'event-type ' + eventType.class;
+      typeSpan.textContent = eventType.type;
+
+      const contentSpan = document.createElement('span');
+      contentSpan.className = 'event-content';
+      contentSpan.textContent = content;
+
+      const sessionSpan = document.createElement('span');
+      sessionSpan.className = 'event-session';
+      sessionSpan.textContent = session;
+
+      row.appendChild(timeSpan);
+      row.appendChild(typeSpan);
+      row.appendChild(contentSpan);
+      row.appendChild(sessionSpan);
+
+      return row;
+    }
+
+    function formatTime(date) {
+      return date.toTimeString().split(' ')[0];
+    }
+
+    // Initialize event log
+    const eventLog = document.getElementById('eventLog');
+    const now = new Date();
+
+    for (let i = 0; i < 15; i++) {
+      const time = new Date(now - (i * 4000));
+      const eventType = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+      const content = contents[Math.floor(Math.random() * contents.length)];
+      const session = sessions[Math.floor(Math.random() * sessions.length)];
+
+      eventLog.appendChild(createEventRow(formatTime(time), eventType, content, session));
+    }
+
+    // Add new events periodically
+    setInterval(() => {
+      const eventType = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+      const content = contents[Math.floor(Math.random() * contents.length)];
+      const session = sessions[Math.floor(Math.random() * sessions.length)];
+
+      const newRow = createEventRow(formatTime(new Date()), eventType, content, session);
+      eventLog.insertBefore(newRow, eventLog.firstChild);
+
+      if (eventLog.children.length > 50) {
+        eventLog.removeChild(eventLog.lastChild);
+      }
+    }, 3000);
+
+    // Initialize sparkline
+    const sparkline = document.getElementById('sparkline');
+    const sparkData = [40, 55, 35, 60, 45, 70, 50, 65, 55, 75, 60, 80, 70, 85, 75];
+
+    sparkData.forEach(value => {
+      const bar = document.createElement('div');
+      bar.className = 'spark-bar';
+      bar.style.height = value + '%';
+      sparkline.appendChild(bar);
+    });
+
+    // Animate sparkline
+    setInterval(() => {
+      const bars = sparkline.querySelectorAll('.spark-bar');
+      bars.forEach((bar, i) => {
+        if (i < bars.length - 1) {
+          bar.style.height = bars[i + 1].style.height;
+        } else {
+          bar.style.height = (30 + Math.random() * 60) + '%';
+        }
+      });
+    }, 1000);
+  </script>
+</body>
+</html>
