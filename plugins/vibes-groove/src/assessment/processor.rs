@@ -11,6 +11,7 @@ use tracing::{debug, error, trace};
 
 use super::circuit_breaker::{CircuitBreaker, CircuitState, CircuitTransition};
 use super::lightweight::{LightweightDetector, LightweightDetectorConfig, SessionState};
+use super::session_buffer::{SessionBuffer, SessionBufferConfig};
 use super::types::SessionId;
 use super::{AssessmentConfig, AssessmentEvent, AssessmentLog};
 
@@ -43,6 +44,8 @@ pub struct AssessmentProcessor {
     session_states: Arc<RwLock<HashMap<SessionId, SessionState>>>,
     /// Circuit breaker for intervention decisions (protected by RwLock for async access).
     circuit_breaker: Arc<RwLock<CircuitBreaker>>,
+    /// Session event buffer for batch processing (protected by RwLock for async access).
+    session_buffer: Arc<RwLock<SessionBuffer>>,
 }
 
 impl AssessmentProcessor {
@@ -71,6 +74,9 @@ impl AssessmentProcessor {
         // Create circuit breaker
         let circuit_breaker = CircuitBreaker::new(config.circuit_breaker.clone());
 
+        // Create session buffer
+        let session_buffer = SessionBuffer::new(SessionBufferConfig::default());
+
         Self {
             config,
             writer_tx,
@@ -78,6 +84,7 @@ impl AssessmentProcessor {
             detector,
             session_states: Arc::new(RwLock::new(HashMap::new())),
             circuit_breaker: Arc::new(RwLock::new(circuit_breaker)),
+            session_buffer: Arc::new(RwLock::new(session_buffer)),
         }
     }
 
@@ -168,6 +175,14 @@ impl AssessmentProcessor {
         cb.state(session_id)
     }
 
+    /// Get the number of events buffered for a session.
+    ///
+    /// This is primarily useful for testing and debugging.
+    pub async fn buffer_len(&self, session_id: &SessionId) -> usize {
+        let buffer = self.session_buffer.read().await;
+        buffer.len(session_id)
+    }
+
     /// Process a VibesEvent from the EventLog.
     ///
     /// This is the main entry point for the assessment consumer. It analyzes
@@ -187,16 +202,23 @@ impl AssessmentProcessor {
 
         trace!(event = ?event, "Processing VibesEvent for assessment");
 
-        // B1: Route to LightweightDetector for signal detection
-        // Get session ID to look up/create session state
+        // Get session ID (required for all pipeline stages)
         let session_id = match Self::extract_session_id(event) {
             Some(id) => id,
             None => {
-                trace!("Event has no session_id, skipping lightweight detection");
+                trace!("Event has no session_id, skipping");
                 return;
             }
         };
 
+        // B3: Buffer all events for checkpoint context
+        // Clone event since buffer takes ownership
+        {
+            let mut buffer = self.session_buffer.write().await;
+            buffer.push(session_id.clone(), event.clone());
+        }
+
+        // B1: Route to LightweightDetector for signal detection
         // Get or create session state (using write lock to potentially insert)
         let mut states = self.session_states.write().await;
         let state = states.entry(session_id).or_insert_with(SessionState::new);
@@ -240,7 +262,6 @@ impl AssessmentProcessor {
             self.submit(AssessmentEvent::Lightweight(lightweight_event));
         }
 
-        // TODO(B3): Buffer events per session
         // TODO(B4): Check for checkpoint triggers
     }
 
@@ -582,6 +603,52 @@ mod tests {
             crate::assessment::CircuitState::Closed,
             "Circuit should stay closed when disabled"
         );
+
+        processor.shutdown();
+    }
+
+    // ==================== SessionBuffer Integration Tests ====================
+
+    #[tokio::test]
+    async fn process_event_buffers_events_per_session() {
+        let log = Arc::new(InMemoryAssessmentLog::new());
+        let config = AssessmentConfig::default();
+        let processor = AssessmentProcessor::new(config, log.clone());
+
+        // Process multiple events for the same session
+        for i in 0..3 {
+            let event = make_text_delta("buffer-session", &format!("Message {i}"));
+            processor.process_event(&event).await;
+        }
+
+        // Verify events are buffered
+        let buffered_count = processor.buffer_len(&"buffer-session".into()).await;
+        assert_eq!(buffered_count, 3, "Should buffer 3 events");
+
+        processor.shutdown();
+    }
+
+    #[tokio::test]
+    async fn process_event_buffers_separate_sessions() {
+        let log = Arc::new(InMemoryAssessmentLog::new());
+        let config = AssessmentConfig::default();
+        let processor = AssessmentProcessor::new(config, log.clone());
+
+        // Process events for two different sessions
+        for i in 0..2 {
+            let event = make_text_delta("session-a", &format!("A message {i}"));
+            processor.process_event(&event).await;
+        }
+        for i in 0..4 {
+            let event = make_text_delta("session-b", &format!("B message {i}"));
+            processor.process_event(&event).await;
+        }
+
+        // Verify separate buffers
+        let a_count = processor.buffer_len(&"session-a".into()).await;
+        let b_count = processor.buffer_len(&"session-b".into()).await;
+        assert_eq!(a_count, 2, "Session A should have 2 events");
+        assert_eq!(b_count, 4, "Session B should have 4 events");
 
         processor.shutdown();
     }
