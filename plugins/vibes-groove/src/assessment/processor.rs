@@ -9,6 +9,7 @@ use std::sync::Arc;
 use tokio::sync::{RwLock, broadcast, mpsc};
 use tracing::{debug, error, trace};
 
+use super::circuit_breaker::{CircuitBreaker, CircuitState, CircuitTransition};
 use super::lightweight::{LightweightDetector, LightweightDetectorConfig, SessionState};
 use super::types::SessionId;
 use super::{AssessmentConfig, AssessmentEvent, AssessmentLog};
@@ -40,6 +41,8 @@ pub struct AssessmentProcessor {
     detector: LightweightDetector,
     /// Per-session state for EMA computation (protected by RwLock for async access).
     session_states: Arc<RwLock<HashMap<SessionId, SessionState>>>,
+    /// Circuit breaker for intervention decisions (protected by RwLock for async access).
+    circuit_breaker: Arc<RwLock<CircuitBreaker>>,
 }
 
 impl AssessmentProcessor {
@@ -65,12 +68,16 @@ impl AssessmentProcessor {
         let detector_config = LightweightDetectorConfig::from_pattern_config(&config.patterns);
         let detector = LightweightDetector::new(detector_config);
 
+        // Create circuit breaker
+        let circuit_breaker = CircuitBreaker::new(config.circuit_breaker.clone());
+
         Self {
             config,
             writer_tx,
             broadcast_tx,
             detector,
             session_states: Arc::new(RwLock::new(HashMap::new())),
+            circuit_breaker: Arc::new(RwLock::new(circuit_breaker)),
         }
     }
 
@@ -153,6 +160,14 @@ impl AssessmentProcessor {
         &self.config
     }
 
+    /// Get the circuit breaker state for a session.
+    ///
+    /// This is primarily useful for testing and debugging.
+    pub async fn circuit_state(&self, session_id: &SessionId) -> CircuitState {
+        let cb = self.circuit_breaker.read().await;
+        cb.state(session_id)
+    }
+
     /// Process a VibesEvent from the EventLog.
     ///
     /// This is the main entry point for the assessment consumer. It analyzes
@@ -194,10 +209,37 @@ impl AssessmentProcessor {
                 signals = lightweight_event.signals.len(),
                 "Emitting LightweightEvent"
             );
+
+            // B2: Route to CircuitBreaker for intervention decisions
+            // Need to drop the session states lock before acquiring circuit breaker lock
+            drop(states);
+
+            let mut cb = self.circuit_breaker.write().await;
+            if let Some(transition) = cb.record_event(&lightweight_event) {
+                match &transition {
+                    CircuitTransition::Opened {
+                        session_id,
+                        trigger_reason,
+                    } => {
+                        debug!(
+                            session_id = %session_id,
+                            reason = %trigger_reason,
+                            "Circuit opened - intervention triggered"
+                        );
+                        // TODO: Trigger actual intervention via InterventionHandler
+                    }
+                    CircuitTransition::HalfOpened { session_id } => {
+                        trace!(session_id = %session_id, "Circuit half-opened");
+                    }
+                    CircuitTransition::Closed { session_id } => {
+                        trace!(session_id = %session_id, "Circuit closed after recovery");
+                    }
+                }
+            }
+
             self.submit(AssessmentEvent::Lightweight(lightweight_event));
         }
 
-        // TODO(B2): Route signals to CircuitBreaker for state management
         // TODO(B3): Buffer events per session
         // TODO(B4): Check for checkpoint triggers
     }
@@ -477,6 +519,69 @@ mod tests {
             }
             other => panic!("Expected LightweightEvent, got {:?}", other),
         }
+
+        processor.shutdown();
+    }
+
+    // ==================== CircuitBreaker Integration Tests ====================
+
+    #[tokio::test]
+    async fn process_event_feeds_circuit_breaker() {
+        let log = Arc::new(InMemoryAssessmentLog::new());
+        // Use config with lower threshold for easier testing
+        let mut config = AssessmentConfig::default();
+        config.circuit_breaker.enabled = true;
+        let processor = AssessmentProcessor::new(config, log.clone());
+
+        // Send multiple frustrating messages to trigger circuit breaker
+        // Need enough signals to exceed the threshold
+        for i in 0..10 {
+            let event = make_text_delta(
+                "cb-session",
+                &format!("Error! This is broken and failed again! Attempt {i}"),
+            );
+            processor.process_event(&event).await;
+        }
+
+        tokio::time::sleep(Duration::from_millis(100)).await;
+
+        // Verify circuit breaker state changed (we should see the transition tracked)
+        // The circuit breaker is internal, so we verify via the circuit_state accessor
+        let state = processor.circuit_state(&"cb-session".into()).await;
+        assert_ne!(
+            state,
+            crate::assessment::CircuitState::Closed,
+            "Circuit should have opened after many frustration signals"
+        );
+
+        processor.shutdown();
+    }
+
+    #[tokio::test]
+    async fn process_event_circuit_breaker_disabled_does_not_open() {
+        let log = Arc::new(InMemoryAssessmentLog::new());
+        let mut config = AssessmentConfig::default();
+        config.circuit_breaker.enabled = false;
+        let processor = AssessmentProcessor::new(config, log.clone());
+
+        // Send frustrating messages
+        for i in 0..10 {
+            let event = make_text_delta(
+                "disabled-cb-session",
+                &format!("Error! Broken! Failed! Attempt {i}"),
+            );
+            processor.process_event(&event).await;
+        }
+
+        tokio::time::sleep(Duration::from_millis(100)).await;
+
+        // Circuit should remain closed when disabled
+        let state = processor.circuit_state(&"disabled-cb-session".into()).await;
+        assert_eq!(
+            state,
+            crate::assessment::CircuitState::Closed,
+            "Circuit should stay closed when disabled"
+        );
 
         processor.shutdown();
     }
