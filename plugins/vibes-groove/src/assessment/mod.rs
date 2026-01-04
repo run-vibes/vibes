@@ -20,7 +20,8 @@ pub mod session_buffer;
 pub mod session_end;
 pub mod types;
 
-pub use checkpoint::{CheckpointConfig, CheckpointManager, CheckpointTrigger};
+pub use checkpoint::{CheckpointConfig, CheckpointManager};
+// Note: CheckpointTrigger is re-exported via types.rs
 pub use circuit_breaker::{CircuitBreaker, CircuitState, CircuitTransition};
 pub use config::{
     AssessmentConfig, CircuitBreakerConfig, IggyServerConfig, LlmConfig, PatternConfig,

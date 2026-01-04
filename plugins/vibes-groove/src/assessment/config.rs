@@ -138,13 +138,42 @@ impl Default for LlmConfig {
 }
 
 /// Pattern configuration for matching positive and negative behaviors.
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct PatternConfig {
     /// Patterns indicating negative behaviors to avoid.
     pub negative: Vec<String>,
     /// Patterns indicating positive behaviors to encourage.
     pub positive: Vec<String>,
+}
+
+impl Default for PatternConfig {
+    fn default() -> Self {
+        Self {
+            negative: vec![
+                r"(?i)\berror\b".to_string(),
+                r"(?i)\bfailed\b".to_string(),
+                r"(?i)\bfrustrat".to_string(),
+                r"(?i)\bconfus".to_string(),
+                r"(?i)\bwrong\b".to_string(),
+                r"(?i)\bbroken\b".to_string(),
+                r"(?i)\bnot\s+work".to_string(),
+                r"(?i)\bdoesn't\s+work".to_string(),
+                r"(?i)\bcan't\b".to_string(),
+                r"(?i)\bwon't\b".to_string(),
+            ],
+            positive: vec![
+                r"(?i)\bthank".to_string(),
+                r"(?i)\bperfect\b".to_string(),
+                r"(?i)\bexcellent\b".to_string(),
+                r"(?i)\bgreat\b".to_string(),
+                r"(?i)\bworks?\b".to_string(),
+                r"(?i)\bsuccess".to_string(),
+                r"(?i)\bcomplete".to_string(),
+                r"(?i)\bdone\b".to_string(),
+            ],
+        }
+    }
 }
 
 impl PatternConfig {
@@ -241,8 +270,9 @@ mod tests {
         assert_eq!(config.llm.model, "claude-3-haiku");
         assert_eq!(config.llm.timeout_seconds, 60);
         assert_eq!(config.llm.max_retries, 2);
-        assert!(config.patterns.negative.is_empty());
-        assert!(config.patterns.positive.is_empty());
+        // PatternConfig now has default patterns (10 negative, 8 positive)
+        assert_eq!(config.patterns.negative.len(), 10);
+        assert_eq!(config.patterns.positive.len(), 8);
         assert_eq!(config.retention.lightweight_days, 7);
         assert_eq!(config.retention.medium_days, 30);
         assert_eq!(config.retention.heavy_days, -1);

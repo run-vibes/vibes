@@ -57,7 +57,8 @@ impl Default for CheckpointConfig {
 }
 
 /// Reason why a checkpoint was triggered.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum CheckpointTrigger {
     /// Triggered by specific pattern detection.
     PatternMatch {

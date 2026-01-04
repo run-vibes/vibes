@@ -202,7 +202,7 @@ mod tests {
         AssessmentEvent::Medium(MediumEvent::new(
             AssessmentContext::new(session),
             (0, 10),
-            CheckpointTrigger::MessageCount(10),
+            CheckpointTrigger::TimeInterval,
         ))
     }
 

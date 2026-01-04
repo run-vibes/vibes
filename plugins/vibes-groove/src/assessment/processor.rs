@@ -4,10 +4,16 @@
 //! assessment events to the log. Events are queued and written by a background
 //! task, ensuring that the main processing path is never blocked by I/O.
 
+use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::{broadcast, mpsc};
+use tokio::sync::{RwLock, broadcast, mpsc};
 use tracing::{debug, error, trace};
 
+use super::checkpoint::{CheckpointConfig, CheckpointManager};
+use super::circuit_breaker::{CircuitBreaker, CircuitState, CircuitTransition};
+use super::lightweight::{LightweightDetector, LightweightDetectorConfig, SessionState};
+use super::session_buffer::{SessionBuffer, SessionBufferConfig};
+use super::types::{MediumEvent, SessionId};
 use super::{AssessmentConfig, AssessmentEvent, AssessmentLog};
 
 /// Messages sent to the background writer task.
@@ -33,6 +39,16 @@ pub struct AssessmentProcessor {
     writer_tx: mpsc::UnboundedSender<WriterMessage>,
     /// Broadcast sender for real-time event subscribers.
     broadcast_tx: broadcast::Sender<AssessmentEvent>,
+    /// Lightweight detector for per-message signal detection.
+    detector: LightweightDetector,
+    /// Per-session state for EMA computation (protected by RwLock for async access).
+    session_states: Arc<RwLock<HashMap<SessionId, SessionState>>>,
+    /// Circuit breaker for intervention decisions (protected by RwLock for async access).
+    circuit_breaker: Arc<RwLock<CircuitBreaker>>,
+    /// Session event buffer for batch processing (protected by RwLock for async access).
+    session_buffer: Arc<RwLock<SessionBuffer>>,
+    /// Checkpoint manager for triggering assessments (protected by RwLock for async access).
+    checkpoint_manager: Arc<RwLock<CheckpointManager>>,
 }
 
 impl AssessmentProcessor {
@@ -54,10 +70,28 @@ impl AssessmentProcessor {
             Self::writer_task(log, writer_rx, task_broadcast_tx).await;
         });
 
+        // Create detector from pattern config
+        let detector_config = LightweightDetectorConfig::from_pattern_config(&config.patterns);
+        let detector = LightweightDetector::new(detector_config);
+
+        // Create circuit breaker
+        let circuit_breaker = CircuitBreaker::new(config.circuit_breaker.clone());
+
+        // Create session buffer
+        let session_buffer = SessionBuffer::new(SessionBufferConfig::default());
+
+        // Create checkpoint manager
+        let checkpoint_manager = CheckpointManager::new(CheckpointConfig::default());
+
         Self {
             config,
             writer_tx,
             broadcast_tx,
+            detector,
+            session_states: Arc::new(RwLock::new(HashMap::new())),
+            circuit_breaker: Arc::new(RwLock::new(circuit_breaker)),
+            session_buffer: Arc::new(RwLock::new(session_buffer)),
+            checkpoint_manager: Arc::new(RwLock::new(checkpoint_manager)),
         }
     }
 
@@ -140,6 +174,30 @@ impl AssessmentProcessor {
         &self.config
     }
 
+    /// Get the circuit breaker state for a session.
+    ///
+    /// This is primarily useful for testing and debugging.
+    pub async fn circuit_state(&self, session_id: &SessionId) -> CircuitState {
+        let cb = self.circuit_breaker.read().await;
+        cb.state(session_id)
+    }
+
+    /// Get the number of events buffered for a session.
+    ///
+    /// This is primarily useful for testing and debugging.
+    pub async fn buffer_len(&self, session_id: &SessionId) -> usize {
+        let buffer = self.session_buffer.read().await;
+        buffer.len(session_id)
+    }
+
+    /// Get the number of checkpoints triggered for a session.
+    ///
+    /// This is primarily useful for testing and debugging.
+    pub async fn checkpoint_count(&self, session_id: &SessionId) -> u32 {
+        let cm = self.checkpoint_manager.read().await;
+        cm.checkpoint_count(session_id)
+    }
+
     /// Process a VibesEvent from the EventLog.
     ///
     /// This is the main entry point for the assessment consumer. It analyzes
@@ -151,8 +209,6 @@ impl AssessmentProcessor {
     /// - CircuitBreaker for intervention decisions (B2)
     /// - SessionBuffer for event collection (B3)
     /// - CheckpointManager for checkpoint triggers (B4)
-    ///
-    /// Currently a stub that will be implemented in B1-B4.
     pub async fn process_event(&self, event: &vibes_core::VibesEvent) {
         if !self.is_enabled() {
             trace!("Assessment disabled, skipping event processing");
@@ -161,13 +217,106 @@ impl AssessmentProcessor {
 
         trace!(event = ?event, "Processing VibesEvent for assessment");
 
-        // TODO(B1): Route to LightweightDetector for signal detection
-        // TODO(B2): Route signals to CircuitBreaker for state management
-        // TODO(B3): Buffer events per session
-        // TODO(B4): Check for checkpoint triggers
-        //
-        // For now, this is a no-op stub. The actual pipeline will be built
-        // incrementally in tasks B1-B4.
+        // Get session ID (required for all pipeline stages)
+        let session_id = match Self::extract_session_id(event) {
+            Some(id) => id,
+            None => {
+                trace!("Event has no session_id, skipping");
+                return;
+            }
+        };
+
+        // B3: Buffer all events for checkpoint context
+        // Clone event since buffer takes ownership
+        {
+            let mut buffer = self.session_buffer.write().await;
+            buffer.push(session_id.clone(), event.clone());
+        }
+
+        // B1: Route to LightweightDetector for signal detection
+        // Get or create session state (using write lock to potentially insert)
+        let mut states = self.session_states.write().await;
+        let state = states.entry(session_id).or_insert_with(SessionState::new);
+
+        // Run the detector
+        if let Some(lightweight_event) = self.detector.process(event, state) {
+            trace!(
+                session_id = %lightweight_event.context.session_id,
+                message_idx = lightweight_event.message_idx,
+                signals = lightweight_event.signals.len(),
+                "Emitting LightweightEvent"
+            );
+
+            // B2: Route to CircuitBreaker for intervention decisions
+            // Need to drop the session states lock before acquiring circuit breaker lock
+            drop(states);
+
+            let mut cb = self.circuit_breaker.write().await;
+            if let Some(transition) = cb.record_event(&lightweight_event) {
+                match &transition {
+                    CircuitTransition::Opened {
+                        session_id,
+                        trigger_reason,
+                    } => {
+                        debug!(
+                            session_id = %session_id,
+                            reason = %trigger_reason,
+                            "Circuit opened - intervention triggered"
+                        );
+                        // TODO: Trigger actual intervention via InterventionHandler
+                    }
+                    CircuitTransition::HalfOpened { session_id } => {
+                        trace!(session_id = %session_id, "Circuit half-opened");
+                    }
+                    CircuitTransition::Closed { session_id } => {
+                        trace!(session_id = %session_id, "Circuit closed after recovery");
+                    }
+                }
+            }
+
+            // B4: Check for checkpoint triggers
+            // Need to acquire buffer read lock and checkpoint_manager write lock
+            let trigger = {
+                let buffer = self.session_buffer.read().await;
+                let mut cm = self.checkpoint_manager.write().await;
+                cm.should_checkpoint(
+                    &lightweight_event.context.session_id,
+                    &lightweight_event,
+                    &buffer,
+                )
+            };
+
+            if let Some(trigger) = trigger {
+                // Drain the buffer and create MediumEvent
+                let _events = {
+                    let mut buffer = self.session_buffer.write().await;
+                    buffer.drain(&lightweight_event.context.session_id)
+                };
+
+                // Create MediumEvent with the checkpoint info
+                let medium_event = MediumEvent::new(
+                    lightweight_event.context.clone(),
+                    (0, lightweight_event.message_idx + 1), // Message range covered
+                    trigger,
+                );
+
+                debug!(
+                    session_id = %medium_event.context.session_id,
+                    checkpoint_id = %medium_event.checkpoint_id,
+                    "Checkpoint triggered"
+                );
+
+                self.submit(AssessmentEvent::Medium(medium_event));
+            }
+
+            self.submit(AssessmentEvent::Lightweight(lightweight_event));
+        }
+    }
+
+    /// Extract session_id from a VibesEvent, if present.
+    fn extract_session_id(event: &vibes_core::VibesEvent) -> Option<SessionId> {
+        // Use the built-in session_id() method which handles all variants
+        event.session_id().map(SessionId::from)
     }
 }
 
@@ -191,6 +340,7 @@ mod tests {
     use super::*;
     use crate::assessment::{AssessmentContext, InMemoryAssessmentLog, LightweightEvent};
     use std::time::Duration;
+    use vibes_core::{ClaudeEvent, VibesEvent};
 
     fn make_lightweight_event(session: &str) -> AssessmentEvent {
         AssessmentEvent::Lightweight(LightweightEvent {
@@ -324,5 +474,403 @@ mod tests {
         // (channel may be closed or task stopped)
         let events = log.read_session(&"before-shutdown".into()).await.unwrap();
         assert_eq!(events.len(), 1);
+    }
+
+    // ==================== process_event Tests ====================
+
+    fn make_text_delta(session_id: &str, text: &str) -> VibesEvent {
+        VibesEvent::Claude {
+            session_id: session_id.to_string(),
+            event: ClaudeEvent::TextDelta {
+                text: text.to_string(),
+            },
+        }
+    }
+
+    #[tokio::test]
+    async fn process_event_emits_lightweight_event() {
+        let log = Arc::new(InMemoryAssessmentLog::new());
+        let config = AssessmentConfig::default();
+        let processor = AssessmentProcessor::new(config, log.clone());
+
+        // Create a VibesEvent that the detector should process
+        let event = make_text_delta("test-session", "Hello, this is a test message");
+
+        // Process the event
+        processor.process_event(&event).await;
+
+        // Give the background task time to write
+        tokio::time::sleep(Duration::from_millis(50)).await;
+
+        // Verify a LightweightEvent was emitted
+        let events = log.read_session(&"test-session".into()).await.unwrap();
+        assert_eq!(events.len(), 1, "Should emit one LightweightEvent");
+
+        match &events[0] {
+            AssessmentEvent::Lightweight(le) => {
+                assert_eq!(le.context.session_id.as_str(), "test-session");
+                assert_eq!(le.message_idx, 0, "First message should have index 0");
+            }
+            other => panic!("Expected LightweightEvent, got {:?}", other),
+        }
+
+        processor.shutdown();
+    }
+
+    #[tokio::test]
+    async fn process_event_maintains_session_state() {
+        let log = Arc::new(InMemoryAssessmentLog::new());
+        let config = AssessmentConfig::default();
+        let processor = AssessmentProcessor::new(config, log.clone());
+
+        // Process multiple events for the same session
+        let events = vec![
+            make_text_delta("stateful-session", "First message"),
+            make_text_delta("stateful-session", "Second message"),
+            make_text_delta("stateful-session", "Third message"),
+        ];
+
+        for event in &events {
+            processor.process_event(event).await;
+        }
+
+        // Give background task time to write
+        tokio::time::sleep(Duration::from_millis(100)).await;
+
+        // Verify message indices increment
+        let logged_events = log.read_session(&"stateful-session".into()).await.unwrap();
+        assert_eq!(logged_events.len(), 3);
+
+        for (i, event) in logged_events.iter().enumerate() {
+            match event {
+                AssessmentEvent::Lightweight(le) => {
+                    assert_eq!(
+                        le.message_idx, i as u32,
+                        "Message {} should have index {}",
+                        i, i
+                    );
+                }
+                other => panic!("Expected LightweightEvent, got {:?}", other),
+            }
+        }
+
+        processor.shutdown();
+    }
+
+    #[tokio::test]
+    async fn process_event_detects_frustration_patterns() {
+        let log = Arc::new(InMemoryAssessmentLog::new());
+        let config = AssessmentConfig::default();
+        let processor = AssessmentProcessor::new(config, log.clone());
+
+        // Send a frustrating message
+        let event = make_text_delta("frustration-session", "This is broken and doesn't work!");
+        processor.process_event(&event).await;
+
+        tokio::time::sleep(Duration::from_millis(50)).await;
+
+        let events = log
+            .read_session(&"frustration-session".into())
+            .await
+            .unwrap();
+        assert_eq!(events.len(), 1);
+
+        match &events[0] {
+            AssessmentEvent::Lightweight(le) => {
+                assert!(
+                    !le.signals.is_empty(),
+                    "Should detect negative signals in frustrating message"
+                );
+                assert!(
+                    le.frustration_ema > 0.0,
+                    "Frustration EMA should be positive"
+                );
+            }
+            other => panic!("Expected LightweightEvent, got {:?}", other),
+        }
+
+        processor.shutdown();
+    }
+
+    // ==================== CircuitBreaker Integration Tests ====================
+
+    #[tokio::test]
+    async fn process_event_feeds_circuit_breaker() {
+        let log = Arc::new(InMemoryAssessmentLog::new());
+        // Use config with lower threshold for easier testing
+        let mut config = AssessmentConfig::default();
+        config.circuit_breaker.enabled = true;
+        let processor = AssessmentProcessor::new(config, log.clone());
+
+        // Send multiple frustrating messages to trigger circuit breaker
+        // Need enough signals to exceed the threshold
+        for i in 0..10 {
+            let event = make_text_delta(
+                "cb-session",
+                &format!("Error! This is broken and failed again! Attempt {i}"),
+            );
+            processor.process_event(&event).await;
+        }
+
+        tokio::time::sleep(Duration::from_millis(100)).await;
+
+        // Verify circuit breaker state changed (we should see the transition tracked)
+        // The circuit breaker is internal, so we verify via the circuit_state accessor
+        let state = processor.circuit_state(&"cb-session".into()).await;
+        assert_ne!(
+            state,
+            crate::assessment::CircuitState::Closed,
+            "Circuit should have opened after many frustration signals"
+        );
+
+        processor.shutdown();
+    }
+
+    #[tokio::test]
+    async fn process_event_circuit_breaker_disabled_does_not_open() {
+        let log = Arc::new(InMemoryAssessmentLog::new());
+        let mut config = AssessmentConfig::default();
+        config.circuit_breaker.enabled = false;
+        let processor = AssessmentProcessor::new(config, log.clone());
+
+        // Send frustrating messages
+        for i in 0..10 {
+            let event = make_text_delta(
+                "disabled-cb-session",
+                &format!("Error! Broken! Failed! Attempt {i}"),
+            );
+            processor.process_event(&event).await;
+        }
+
+        tokio::time::sleep(Duration::from_millis(100)).await;
+
+        // Circuit should remain closed when disabled
+        let state = processor.circuit_state(&"disabled-cb-session".into()).await;
+        assert_eq!(
+            state,
+            crate::assessment::CircuitState::Closed,
+            "Circuit should stay closed when disabled"
+        );
+
+        processor.shutdown();
+    }
+
+    // ==================== SessionBuffer Integration Tests ====================
+
+    #[tokio::test]
+    async fn process_event_buffers_events_per_session() {
+        let log = Arc::new(InMemoryAssessmentLog::new());
+        let config = AssessmentConfig::default();
+        let processor = AssessmentProcessor::new(config, log.clone());
+
+        // Process multiple events for the same session
+        for i in 0..3 {
+            let event = make_text_delta("buffer-session", &format!("Message {i}"));
+            processor.process_event(&event).await;
+        }
+
+        // Verify events are buffered
+        let buffered_count = processor.buffer_len(&"buffer-session".into()).await;
+        assert_eq!(buffered_count, 3, "Should buffer 3 events");
+
+        processor.shutdown();
+    }
+
+    #[tokio::test]
+    async fn process_event_buffers_separate_sessions() {
+        let log = Arc::new(InMemoryAssessmentLog::new());
+        let config = AssessmentConfig::default();
+        let processor = AssessmentProcessor::new(config, log.clone());
+
+        // Process events for two different sessions
+        for i in 0..2 {
+            let event = make_text_delta("session-a", &format!("A message {i}"));
+            processor.process_event(&event).await;
+        }
+        for i in 0..4 {
+            let event = make_text_delta("session-b", &format!("B message {i}"));
+            processor.process_event(&event).await;
+        }
+
+        // Verify separate buffers
+        let a_count = processor.buffer_len(&"session-a".into()).await;
+        let b_count = processor.buffer_len(&"session-b".into()).await;
+        assert_eq!(a_count, 2, "Session A should have 2 events");
+        assert_eq!(b_count, 4, "Session B should have 4 events");
+
+        processor.shutdown();
+    }
+
+    // ==================== CheckpointManager Integration Tests ====================
+
+    #[tokio::test]
+    async fn process_event_triggers_checkpoint_on_time_interval() {
+        let log = Arc::new(InMemoryAssessmentLog::new());
+        let config = AssessmentConfig::default();
+        // Default config has 5 minute interval, but first checkpoint triggers immediately
+        // when min_events is met (no prior checkpoint recorded)
+        let processor = AssessmentProcessor::new(config, log.clone());
+
+        // Process enough events to meet min_events threshold (default 5)
+        for i in 0..6 {
+            let event = make_text_delta("checkpoint-session", &format!("Message {i}"));
+            processor.process_event(&event).await;
+        }
+
+        tokio::time::sleep(Duration::from_millis(50)).await;
+
+        // Check checkpoint count
+        let checkpoint_count = processor
+            .checkpoint_count(&"checkpoint-session".into())
+            .await;
+        assert!(
+            checkpoint_count >= 1,
+            "Should have triggered at least one checkpoint"
+        );
+
+        processor.shutdown();
+    }
+
+    #[tokio::test]
+    async fn process_event_emits_medium_event_on_checkpoint() {
+        let log = Arc::new(InMemoryAssessmentLog::new());
+        let config = AssessmentConfig::default();
+        let processor = AssessmentProcessor::new(config, log.clone());
+
+        // Process enough events to trigger a checkpoint (time interval with 0 second config)
+        for i in 0..6 {
+            let event = make_text_delta("medium-session", &format!("Message {i}"));
+            processor.process_event(&event).await;
+        }
+
+        tokio::time::sleep(Duration::from_millis(100)).await;
+
+        // Look for MediumEvent in the session log
+        let events = log.read_session(&"medium-session".into()).await.unwrap();
+        let medium_events: Vec<_> = events
+            .iter()
+            .filter(|e| matches!(e, AssessmentEvent::Medium(_)))
+            .collect();
+
+        assert!(
+            !medium_events.is_empty(),
+            "Should emit at least one MediumEvent on checkpoint"
+        );
+
+        processor.shutdown();
+    }
+
+    // ==================== Full Pipeline Integration Test ====================
+
+    /// Integration test that validates the complete assessment pipeline:
+    /// B1 (LightweightDetector) → B2 (CircuitBreaker) → B3 (SessionBuffer) → B4 (CheckpointManager)
+    #[tokio::test]
+    async fn full_pipeline_integration() {
+        let log = Arc::new(InMemoryAssessmentLog::new());
+        let config = AssessmentConfig::default();
+        let processor = AssessmentProcessor::new(config, log.clone());
+        let session_id: SessionId = "integration-test-session".into();
+
+        // Phase 1: Send neutral messages to establish baseline
+        // These should produce LightweightEvents but no circuit breaker triggers
+        for i in 0..3 {
+            let event = make_text_delta(
+                session_id.as_str(),
+                &format!("Working on task {i}. Everything looks good."),
+            );
+            processor.process_event(&event).await;
+        }
+
+        // Verify B1: LightweightEvents emitted with low frustration
+        tokio::time::sleep(Duration::from_millis(50)).await;
+        let events_after_neutral = log.read_session(&session_id).await.unwrap();
+        assert_eq!(
+            events_after_neutral.len(),
+            3,
+            "Should have 3 LightweightEvents"
+        );
+
+        // Verify B2: Circuit should still be closed after neutral messages
+        let circuit_state = processor.circuit_state(&session_id).await;
+        assert_eq!(
+            circuit_state,
+            crate::assessment::CircuitState::Closed,
+            "Circuit should be closed after neutral messages"
+        );
+
+        // Verify B3: Events should be buffered
+        let buffer_len = processor.buffer_len(&session_id).await;
+        assert_eq!(buffer_len, 3, "Should have 3 events buffered");
+
+        // Phase 2: Send frustrating messages to trigger circuit breaker
+        for i in 0..7 {
+            let event = make_text_delta(
+                session_id.as_str(),
+                &format!("Error! This is broken and failed again! Frustrating attempt {i}"),
+            );
+            processor.process_event(&event).await;
+        }
+
+        tokio::time::sleep(Duration::from_millis(100)).await;
+
+        // Verify B2: Circuit should have opened due to frustration signals
+        let circuit_state_after_frustration = processor.circuit_state(&session_id).await;
+        assert_ne!(
+            circuit_state_after_frustration,
+            crate::assessment::CircuitState::Closed,
+            "Circuit should have opened after frustration signals"
+        );
+
+        // Verify B4: Checkpoint should have triggered (min_events=5, first has no prior)
+        let checkpoint_count = processor.checkpoint_count(&session_id).await;
+        assert!(
+            checkpoint_count >= 1,
+            "Should have triggered at least one checkpoint"
+        );
+
+        // Verify that both LightweightEvents and MediumEvents were emitted
+        let all_events = log.read_session(&session_id).await.unwrap();
+        let lightweight_count = all_events
+            .iter()
+            .filter(|e| matches!(e, AssessmentEvent::Lightweight(_)))
+            .count();
+        let medium_count = all_events
+            .iter()
+            .filter(|e| matches!(e, AssessmentEvent::Medium(_)))
+            .count();
+
+        assert!(
+            lightweight_count >= 10,
+            "Should have at least 10 LightweightEvents"
+        );
+        assert!(
+            medium_count >= 1,
+            "Should have at least 1 MediumEvent (checkpoint)"
+        );
+
+        // Phase 3: Verify session state is maintained
+        // Process one more event and check message_idx is correct
+        let event = make_text_delta(session_id.as_str(), "Final message.");
+        processor.process_event(&event).await;
+        tokio::time::sleep(Duration::from_millis(50)).await;
+
+        let final_events = log.read_session(&session_id).await.unwrap();
+        let lightweight_events: Vec<_> = final_events
+            .iter()
+            .filter_map(|e| match e {
+                AssessmentEvent::Lightweight(le) => Some(le),
+                _ => None,
+            })
+            .collect();
+
+        // Check that message indices are sequential
+        for (i, le) in lightweight_events.iter().enumerate() {
+            assert_eq!(
+                le.message_idx as usize, i,
+                "Message indices should be sequential"
+            );
+        }
+
+        processor.shutdown();
     }
 }
