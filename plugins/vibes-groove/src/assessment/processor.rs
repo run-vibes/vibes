@@ -4,10 +4,13 @@
 //! assessment events to the log. Events are queued and written by a background
 //! task, ensuring that the main processing path is never blocked by I/O.
 
+use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::{broadcast, mpsc};
+use tokio::sync::{RwLock, broadcast, mpsc};
 use tracing::{debug, error, trace};
 
+use super::lightweight::{LightweightDetector, LightweightDetectorConfig, SessionState};
+use super::types::SessionId;
 use super::{AssessmentConfig, AssessmentEvent, AssessmentLog};
 
 /// Messages sent to the background writer task.
@@ -33,6 +36,10 @@ pub struct AssessmentProcessor {
     writer_tx: mpsc::UnboundedSender<WriterMessage>,
     /// Broadcast sender for real-time event subscribers.
     broadcast_tx: broadcast::Sender<AssessmentEvent>,
+    /// Lightweight detector for per-message signal detection.
+    detector: LightweightDetector,
+    /// Per-session state for EMA computation (protected by RwLock for async access).
+    session_states: Arc<RwLock<HashMap<SessionId, SessionState>>>,
 }
 
 impl AssessmentProcessor {
@@ -54,10 +61,16 @@ impl AssessmentProcessor {
             Self::writer_task(log, writer_rx, task_broadcast_tx).await;
         });
 
+        // Create detector from pattern config
+        let detector_config = LightweightDetectorConfig::from_pattern_config(&config.patterns);
+        let detector = LightweightDetector::new(detector_config);
+
         Self {
             config,
             writer_tx,
             broadcast_tx,
+            detector,
+            session_states: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
@@ -151,8 +164,6 @@ impl AssessmentProcessor {
     /// - CircuitBreaker for intervention decisions (B2)
     /// - SessionBuffer for event collection (B3)
     /// - CheckpointManager for checkpoint triggers (B4)
-    ///
-    /// Currently a stub that will be implemented in B1-B4.
     pub async fn process_event(&self, event: &vibes_core::VibesEvent) {
         if !self.is_enabled() {
             trace!("Assessment disabled, skipping event processing");
@@ -161,13 +172,40 @@ impl AssessmentProcessor {
 
         trace!(event = ?event, "Processing VibesEvent for assessment");
 
-        // TODO(B1): Route to LightweightDetector for signal detection
+        // B1: Route to LightweightDetector for signal detection
+        // Get session ID to look up/create session state
+        let session_id = match Self::extract_session_id(event) {
+            Some(id) => id,
+            None => {
+                trace!("Event has no session_id, skipping lightweight detection");
+                return;
+            }
+        };
+
+        // Get or create session state (using write lock to potentially insert)
+        let mut states = self.session_states.write().await;
+        let state = states.entry(session_id).or_insert_with(SessionState::new);
+
+        // Run the detector
+        if let Some(lightweight_event) = self.detector.process(event, state) {
+            trace!(
+                session_id = %lightweight_event.context.session_id,
+                message_idx = lightweight_event.message_idx,
+                signals = lightweight_event.signals.len(),
+                "Emitting LightweightEvent"
+            );
+            self.submit(AssessmentEvent::Lightweight(lightweight_event));
+        }
+
         // TODO(B2): Route signals to CircuitBreaker for state management
         // TODO(B3): Buffer events per session
         // TODO(B4): Check for checkpoint triggers
-        //
-        // For now, this is a no-op stub. The actual pipeline will be built
-        // incrementally in tasks B1-B4.
+    }
+
+    /// Extract session_id from a VibesEvent, if present.
+    fn extract_session_id(event: &vibes_core::VibesEvent) -> Option<SessionId> {
+        // Use the built-in session_id() method which handles all variants
+        event.session_id().map(SessionId::from)
     }
 }
 
@@ -191,6 +229,7 @@ mod tests {
     use super::*;
     use crate::assessment::{AssessmentContext, InMemoryAssessmentLog, LightweightEvent};
     use std::time::Duration;
+    use vibes_core::{ClaudeEvent, VibesEvent};
 
     fn make_lightweight_event(session: &str) -> AssessmentEvent {
         AssessmentEvent::Lightweight(LightweightEvent {
@@ -324,5 +363,121 @@ mod tests {
         // (channel may be closed or task stopped)
         let events = log.read_session(&"before-shutdown".into()).await.unwrap();
         assert_eq!(events.len(), 1);
+    }
+
+    // ==================== process_event Tests ====================
+
+    fn make_text_delta(session_id: &str, text: &str) -> VibesEvent {
+        VibesEvent::Claude {
+            session_id: session_id.to_string(),
+            event: ClaudeEvent::TextDelta {
+                text: text.to_string(),
+            },
+        }
+    }
+
+    #[tokio::test]
+    async fn process_event_emits_lightweight_event() {
+        let log = Arc::new(InMemoryAssessmentLog::new());
+        let config = AssessmentConfig::default();
+        let processor = AssessmentProcessor::new(config, log.clone());
+
+        // Create a VibesEvent that the detector should process
+        let event = make_text_delta("test-session", "Hello, this is a test message");
+
+        // Process the event
+        processor.process_event(&event).await;
+
+        // Give the background task time to write
+        tokio::time::sleep(Duration::from_millis(50)).await;
+
+        // Verify a LightweightEvent was emitted
+        let events = log.read_session(&"test-session".into()).await.unwrap();
+        assert_eq!(events.len(), 1, "Should emit one LightweightEvent");
+
+        match &events[0] {
+            AssessmentEvent::Lightweight(le) => {
+                assert_eq!(le.context.session_id.as_str(), "test-session");
+                assert_eq!(le.message_idx, 0, "First message should have index 0");
+            }
+            other => panic!("Expected LightweightEvent, got {:?}", other),
+        }
+
+        processor.shutdown();
+    }
+
+    #[tokio::test]
+    async fn process_event_maintains_session_state() {
+        let log = Arc::new(InMemoryAssessmentLog::new());
+        let config = AssessmentConfig::default();
+        let processor = AssessmentProcessor::new(config, log.clone());
+
+        // Process multiple events for the same session
+        let events = vec![
+            make_text_delta("stateful-session", "First message"),
+            make_text_delta("stateful-session", "Second message"),
+            make_text_delta("stateful-session", "Third message"),
+        ];
+
+        for event in &events {
+            processor.process_event(event).await;
+        }
+
+        // Give background task time to write
+        tokio::time::sleep(Duration::from_millis(100)).await;
+
+        // Verify message indices increment
+        let logged_events = log.read_session(&"stateful-session".into()).await.unwrap();
+        assert_eq!(logged_events.len(), 3);
+
+        for (i, event) in logged_events.iter().enumerate() {
+            match event {
+                AssessmentEvent::Lightweight(le) => {
+                    assert_eq!(
+                        le.message_idx, i as u32,
+                        "Message {} should have index {}",
+                        i, i
+                    );
+                }
+                other => panic!("Expected LightweightEvent, got {:?}", other),
+            }
+        }
+
+        processor.shutdown();
+    }
+
+    #[tokio::test]
+    async fn process_event_detects_frustration_patterns() {
+        let log = Arc::new(InMemoryAssessmentLog::new());
+        let config = AssessmentConfig::default();
+        let processor = AssessmentProcessor::new(config, log.clone());
+
+        // Send a frustrating message
+        let event = make_text_delta("frustration-session", "This is broken and doesn't work!");
+        processor.process_event(&event).await;
+
+        tokio::time::sleep(Duration::from_millis(50)).await;
+
+        let events = log
+            .read_session(&"frustration-session".into())
+            .await
+            .unwrap();
+        assert_eq!(events.len(), 1);
+
+        match &events[0] {
+            AssessmentEvent::Lightweight(le) => {
+                assert!(
+                    !le.signals.is_empty(),
+                    "Should detect negative signals in frustrating message"
+                );
+                assert!(
+                    le.frustration_ema > 0.0,
+                    "Frustration EMA should be positive"
+                );
+            }
+            other => panic!("Expected LightweightEvent, got {:?}", other),
+        }
+
+        processor.shutdown();
     }
 }
