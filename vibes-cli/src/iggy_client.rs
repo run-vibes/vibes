@@ -173,19 +173,23 @@ impl IggyHttpClient {
         &self.base_url
     }
 
-    /// Authenticate with Iggy, using cached token if available.
+    /// Authenticate with Iggy, using cached token if available and not expired.
     ///
     /// This is the main entry point for authentication. It will:
-    /// 1. Try to load a cached token
-    /// 2. If no cached token, login and cache the new token
+    /// 1. Try to load a cached token and check if it's still valid
+    /// 2. If no valid cached token, login and cache the new token
     pub async fn authenticate(&mut self, username: &str, password: &str) -> Result<()> {
         // Try to load cached token first
         if let Some(token) = self.load_cached_token() {
-            self.token = Some(token);
-            return Ok(());
+            if Self::is_token_valid(&token) {
+                self.token = Some(token);
+                return Ok(());
+            }
+            // Token expired, clear it and login fresh
+            let _ = Self::clear_cached_token();
         }
 
-        // No cached token, login fresh
+        // No valid cached token, login fresh
         self.login(username, password).await?;
         self.cache_token()?;
         Ok(())
@@ -221,6 +225,54 @@ impl IggyHttpClient {
 
         std::fs::write(&path, token).context("Failed to write token cache")?;
         Ok(())
+    }
+
+    /// Check if a JWT token is still valid (not expired).
+    ///
+    /// Returns false if:
+    /// - Token cannot be decoded
+    /// - Token is expired or expiring within 60 seconds
+    fn is_token_valid(token: &str) -> bool {
+        // JWT is three base64 parts separated by dots
+        let parts: Vec<&str> = token.split('.').collect();
+        if parts.len() != 3 {
+            return false;
+        }
+
+        // Decode the payload (middle part)
+        let payload =
+            match base64::Engine::decode(&base64::engine::general_purpose::STANDARD, parts[1]) {
+                Ok(bytes) => bytes,
+                Err(_) => {
+                    // Try URL-safe base64 (common in JWTs)
+                    match base64::Engine::decode(
+                        &base64::engine::general_purpose::URL_SAFE_NO_PAD,
+                        parts[1],
+                    ) {
+                        Ok(bytes) => bytes,
+                        Err(_) => return false,
+                    }
+                }
+            };
+
+        // Parse as JSON to extract exp claim
+        #[derive(serde::Deserialize)]
+        struct Claims {
+            exp: i64,
+        }
+
+        let claims: Claims = match serde_json::from_slice(&payload) {
+            Ok(c) => c,
+            Err(_) => return false,
+        };
+
+        // Check if token expires within 60 seconds
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_secs() as i64)
+            .unwrap_or(0);
+
+        claims.exp > now + 60
     }
 
     /// Clear the cached token (useful for testing or forced re-authentication).
@@ -347,5 +399,59 @@ mod tests {
 
         // Verify it's gone
         assert!(client.load_cached_token().is_none());
+    }
+
+    #[test]
+    fn is_token_valid_returns_false_for_expired_token() {
+        // JWT with exp claim set to Unix timestamp 0 (1970-01-01, definitely expired)
+        // Header: {"alg":"HS256","typ":"JWT"}
+        // Payload: {"exp":0}
+        // Signature: dummy (we don't validate signatures, just expiry)
+        let expired_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjB9.signature";
+
+        assert!(!IggyHttpClient::is_token_valid(expired_token));
+    }
+
+    #[test]
+    fn is_token_valid_returns_true_for_valid_token() {
+        // JWT with exp claim set to year 2100 (Unix timestamp ~4102444800)
+        // Header: {"alg":"HS256","typ":"JWT"}
+        // Payload: {"exp":4102444800}
+        // Signature: dummy
+        let valid_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjQxMDI0NDQ4MDB9.signature";
+
+        assert!(IggyHttpClient::is_token_valid(valid_token));
+    }
+
+    #[test]
+    fn is_token_valid_returns_false_for_malformed_token() {
+        // Not a valid JWT format
+        assert!(!IggyHttpClient::is_token_valid("not-a-jwt"));
+        assert!(!IggyHttpClient::is_token_valid("only.two"));
+        assert!(!IggyHttpClient::is_token_valid(""));
+    }
+
+    #[test]
+    fn is_token_valid_returns_false_for_token_expiring_within_60_seconds() {
+        // Create a JWT with exp set to current time + 30 seconds
+        // This should be considered invalid (we want 60 second buffer)
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+        let exp_soon = now + 30;
+
+        // Manually construct JWT payload with this exp
+        let payload = format!("{{\"exp\":{}}}", exp_soon);
+        let encoded_payload = base64::Engine::encode(
+            &base64::engine::general_purpose::URL_SAFE_NO_PAD,
+            payload.as_bytes(),
+        );
+        let token = format!(
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.{}.signature",
+            encoded_payload
+        );
+
+        assert!(!IggyHttpClient::is_token_valid(&token));
     }
 }
