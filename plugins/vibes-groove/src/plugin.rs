@@ -282,7 +282,7 @@ impl Plugin for GroovePlugin {
             hook_type, session_id, project_path
         ));
 
-        // Handle SessionStart and UserPromptSubmit for context injection
+        // Handle hook types - some can inject context, others are fire-and-forget
         match hook_type {
             "SessionStart" => {
                 // In the future, this will query learned context and return it
@@ -296,8 +296,26 @@ impl Plugin for GroovePlugin {
                 ctx.log_debug("User prompt submitted");
                 None
             }
+            "PermissionRequest" => {
+                // PermissionRequest can block or modify dangerous operations
+                // In the future, this will check against learned policies
+                ctx.log_debug("Permission request received");
+                // Return None to allow the operation (no blocking for now)
+                None
+            }
+            "SessionEnd" => {
+                // Session ended - good time to finalize any pending assessments
+                ctx.log_info(&format!("Session ended for session: {:?}", session_id));
+                None
+            }
+            "Notification" | "SubagentStop" | "PreCompact" => {
+                // Fire-and-forget hooks - just log for now
+                ctx.log_debug(&format!("Received {} hook", hook_type));
+                None
+            }
             _ => {
-                // Other hook types are logged but not processed
+                // Unknown hook types are logged but not processed
+                ctx.log_debug(&format!("Unknown hook type: {}", hook_type));
                 None
             }
         }

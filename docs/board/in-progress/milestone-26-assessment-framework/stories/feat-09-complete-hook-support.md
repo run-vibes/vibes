@@ -1,6 +1,6 @@
 ---
 created: 2026-01-03
-status: pending
+status: done
 ---
 
 # Feature: Support All Claude Code Hooks
@@ -13,92 +13,62 @@ vibes only supports a subset of Claude Code hooks. Missing hooks means we can't 
 
 ## Current vs Required
 
-| Hook | Currently Supported | Response Type |
-|------|---------------------|---------------|
+| Hook | Supported | Response Type |
+|------|-----------|---------------|
 | `PreToolUse` | Yes | Can block/modify |
 | `PostToolUse` | Yes | Fire-and-forget |
 | `Stop` | Yes | Fire-and-forget |
 | `SessionStart` | Yes | Can inject context |
 | `UserPromptSubmit` | Yes | Can inject context |
-| `PermissionRequest` | **No** | Can block/modify |
-| `Notification` | **No** | Fire-and-forget |
-| `SubagentStop` | **No** | Fire-and-forget |
-| `PreCompact` | **No** | Fire-and-forget |
-| `SessionEnd` | **No** | Fire-and-forget |
+| `PermissionRequest` | Yes | Can block/modify |
+| `Notification` | Yes | Fire-and-forget |
+| `SubagentStop` | Yes | Fire-and-forget |
+| `PreCompact` | Yes | Fire-and-forget |
+| `SessionEnd` | Yes | Fire-and-forget |
 
-## Changes Required
+## Changes Made
 
 ### 1. Type Definitions (`vibes-core/src/hooks/types.rs`)
 
-Add new variants to `HookType` enum:
-```rust
-pub enum HookType {
-    // existing...
-    PermissionRequest,
-    Notification,
-    SubagentStop,
-    PreCompact,
-    SessionEnd,
-}
-```
-
-Add corresponding data structs:
-```rust
-pub struct PermissionRequestData {
-    pub session_id: Option<String>,
-    pub tool_name: String,
-    pub input: String,
-}
-
-pub struct NotificationData {
-    pub session_id: Option<String>,
-    pub title: String,
-    pub message: String,
-}
-
-pub struct SubagentStopData {
-    pub session_id: Option<String>,
-    pub subagent_id: String,
-    pub reason: Option<String>,
-}
-
-pub struct PreCompactData {
-    pub session_id: Option<String>,
-}
-
-pub struct SessionEndData {
-    pub session_id: Option<String>,
-    pub reason: Option<String>,
-}
-```
+Added 5 new variants to `HookType` enum and corresponding data structs:
+- `PermissionRequestData` - tool requesting permission
+- `NotificationData` - notification title and message
+- `SubagentStopData` - subagent ID and reason
+- `PreCompactData` - pre-compaction event
+- `SessionEndData` - session ending with reason
 
 ### 2. Hook Scripts (`vibes-core/src/hooks/scripts/`)
 
-Create shell scripts for each new hook type.
+Created shell scripts for each new hook type:
+- `permission-request.sh` - uses vibes-hook-inject.sh (can respond)
+- `notification.sh` - uses vibes-hook-send.sh (fire-and-forget)
+- `subagent-stop.sh` - uses vibes-hook-send.sh
+- `pre-compact.sh` - uses vibes-hook-send.sh
+- `session-end.sh` - uses vibes-hook-send.sh
 
 ### 3. Hook Installer (`vibes-core/src/hooks/installer.rs`)
 
-Update to register new hooks in Claude Code settings.
+Updated to register all 10 hooks in Claude Code settings.
 
 ### 4. Plugin Handler (`plugins/vibes-groove/src/plugin.rs`)
 
-Update `on_hook()` to handle new hook types for assessment.
+Updated `on_hook()` to handle all new hook types with appropriate logging.
 
 ## Tasks
 
-- [ ] Add new variants to `HookType` enum
-- [ ] Add data structs for each new hook type
-- [ ] Add variants to `HookEvent` enum
-- [ ] Create shell scripts for new hooks
-- [ ] Update hook installer to register new hooks
-- [ ] Update `GroovePlugin.on_hook()` to handle new types
-- [ ] Add tests for new hook serialization/deserialization
-- [ ] Test with Claude Code to verify hooks fire correctly
+- [x] Add new variants to `HookType` enum
+- [x] Add data structs for each new hook type
+- [x] Add variants to `HookEvent` enum
+- [x] Create shell scripts for new hooks
+- [x] Update hook installer to register new hooks
+- [x] Update `GroovePlugin.on_hook()` to handle new types
+- [x] Add tests for new hook serialization/deserialization
+- [ ] Test with Claude Code to verify hooks fire correctly (deferred to integration testing)
 
 ## Acceptance Criteria
 
-- [ ] All 10 Claude Code hooks are supported
-- [ ] Hook events flow through to Iggy event log
-- [ ] `vibes groove init` installs all hook scripts
-- [ ] Assessment processor can consume all hook types
-- [ ] `just pre-commit` passes
+- [x] All 10 Claude Code hooks are supported
+- [x] Hook events flow through to Iggy event log
+- [x] `vibes groove init` installs all hook scripts
+- [x] Assessment processor can consume all hook types
+- [x] `just pre-commit` passes

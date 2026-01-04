@@ -177,6 +177,11 @@ impl HookInstaller {
             ("Stop", "stop.sh"),
             ("SessionStart", "session-start.sh"),
             ("UserPromptSubmit", "user-prompt-submit.sh"),
+            ("PermissionRequest", "permission-request.sh"),
+            ("Notification", "notification.sh"),
+            ("SubagentStop", "subagent-stop.sh"),
+            ("PreCompact", "pre-compact.sh"),
+            ("SessionEnd", "session-end.sh"),
         ];
 
         for (hook_type, script_name) in vibes_hooks {
@@ -299,14 +304,19 @@ mod tests {
         let content = fs::read_to_string(&settings_path).unwrap();
         let settings: serde_json::Value = serde_json::from_str(&content).unwrap();
 
-        // hooks is an object with 5 hook types as keys
+        // hooks is an object with 10 hook types as keys
         let hooks = settings.get("hooks").unwrap().as_object().unwrap();
-        assert_eq!(hooks.len(), 5); // PreToolUse, PostToolUse, Stop, SessionStart, UserPromptSubmit
+        assert_eq!(hooks.len(), 10); // All 10 Claude Code hook types
         assert!(hooks.contains_key("PreToolUse"));
         assert!(hooks.contains_key("PostToolUse"));
         assert!(hooks.contains_key("Stop"));
         assert!(hooks.contains_key("SessionStart"));
         assert!(hooks.contains_key("UserPromptSubmit"));
+        assert!(hooks.contains_key("PermissionRequest"));
+        assert!(hooks.contains_key("Notification"));
+        assert!(hooks.contains_key("SubagentStop"));
+        assert!(hooks.contains_key("PreCompact"));
+        assert!(hooks.contains_key("SessionEnd"));
     }
 
     #[test]
@@ -347,11 +357,12 @@ mod tests {
         // Check existing setting preserved
         assert_eq!(settings.get("some_setting").unwrap(), "value");
 
-        // Check hooks object now has 6 keys (1 existing OtherHook + 5 vibes)
+        // Check hooks object now has 11 keys (1 existing OtherHook + 10 vibes)
         let hooks = settings.get("hooks").unwrap().as_object().unwrap();
-        assert_eq!(hooks.len(), 6);
+        assert_eq!(hooks.len(), 11);
         assert!(hooks.contains_key("OtherHook"));
         assert!(hooks.contains_key("PreToolUse"));
+        assert!(hooks.contains_key("SessionEnd"));
     }
 
     #[test]
@@ -427,10 +438,10 @@ mod tests {
         // hooks should still be an object
         let hooks = settings.get("hooks").unwrap().as_object().unwrap();
 
-        // Original Notification hook should be preserved
+        // Original Notification hook should be preserved + our vibes hook added
         assert!(hooks.contains_key("Notification"));
         let notification = hooks.get("Notification").unwrap().as_array().unwrap();
-        assert_eq!(notification.len(), 1);
+        assert_eq!(notification.len(), 2); // 1 existing + 1 vibes
 
         // vibes hooks should be added under their respective types
         assert!(hooks.contains_key("PreToolUse"), "PreToolUse should exist");
