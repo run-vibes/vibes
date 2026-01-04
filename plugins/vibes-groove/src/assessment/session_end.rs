@@ -30,6 +30,7 @@ use std::collections::HashMap;
 use std::time::{Duration, Instant};
 
 use vibes_core::VibesEvent;
+use vibes_core::hooks::HookEvent;
 
 use super::config::SessionEndConfig;
 use super::types::SessionId;
@@ -141,13 +142,22 @@ impl SessionEndDetector {
         let session_id_str = event.session_id()?;
         let session_id = SessionId::from(session_id_str);
 
-        // Check for explicit session end via SessionRemoved event
-        if self.config.hook_enabled
-            && let VibesEvent::SessionRemoved { .. } = event
-        {
-            // Mark session as ended and remove tracking
-            self.sessions.remove(&session_id);
-            return Some(SessionEnd::explicit(session_id));
+        // Check for explicit session end via SessionRemoved event or Hook::Stop
+        if self.config.hook_enabled {
+            let is_session_end = matches!(
+                event,
+                VibesEvent::SessionRemoved { .. }
+                    | VibesEvent::Hook {
+                        event: HookEvent::Stop(_),
+                        ..
+                    }
+            );
+
+            if is_session_end {
+                // Mark session as ended and remove tracking
+                self.sessions.remove(&session_id);
+                return Some(SessionEnd::explicit(session_id));
+            }
         }
 
         // Update activity timestamp for this session
@@ -241,6 +251,7 @@ impl std::fmt::Debug for SessionEndDetector {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use vibes_core::hooks::{HookEvent, StopData};
 
     fn make_user_input(session_id: &str) -> VibesEvent {
         VibesEvent::UserInput {
@@ -262,6 +273,46 @@ mod tests {
             session_id: session_id.to_string(),
             name: None,
         }
+    }
+
+    fn make_hook_stop(session_id: &str) -> VibesEvent {
+        VibesEvent::Hook {
+            session_id: Some(session_id.to_string()),
+            event: HookEvent::Stop(StopData {
+                transcript_path: None,
+                reason: Some("user".to_string()),
+                session_id: Some(session_id.to_string()),
+            }),
+        }
+    }
+
+    #[test]
+    fn test_session_end_via_hook_stop() {
+        let config = SessionEndConfig {
+            hook_enabled: true,
+            timeout_enabled: false,
+            timeout_minutes: 15,
+        };
+        let mut detector = SessionEndDetector::new(config);
+
+        // Track the session first
+        let session_id = SessionId::from("test-session");
+        detector.process(&make_user_input("test-session"));
+        assert!(detector.is_tracking(&session_id));
+
+        // Hook::Stop should trigger session end just like SessionRemoved
+        let result = detector.process(&make_hook_stop("test-session"));
+
+        assert!(
+            result.is_some(),
+            "Hook::Stop should trigger session end, not be ignored"
+        );
+        let end = result.unwrap();
+        assert_eq!(end.session_id.as_str(), "test-session");
+        assert_eq!(end.reason, SessionEndReason::Explicit);
+
+        // Session should no longer be tracked
+        assert!(!detector.is_tracking(&session_id));
     }
 
     #[test]
@@ -339,6 +390,26 @@ mod tests {
 
         // Time since activity should be less after the second event (timer reset)
         assert!(time2.unwrap() < time1_after_wait.unwrap());
+    }
+
+    #[test]
+    fn test_hook_disabled_ignores_hook_stop() {
+        let config = SessionEndConfig {
+            hook_enabled: false, // Disabled
+            timeout_enabled: false,
+            timeout_minutes: 15,
+        };
+        let mut detector = SessionEndDetector::new(config);
+
+        // Track the session first
+        detector.process(&make_user_input("test-session"));
+
+        // Hook::Stop should not trigger end when hook is disabled
+        let result = detector.process(&make_hook_stop("test-session"));
+        assert!(result.is_none());
+
+        // Session should still be tracked
+        assert!(detector.is_tracking(&SessionId::from("test-session")));
     }
 
     #[test]
