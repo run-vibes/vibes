@@ -64,6 +64,48 @@ run_test "missing session_id does not add --session" \
     '{"prompt":"hello"}' \
     'event send --type hook' || FAILED=$((FAILED + 1))
 
+# Test 4: Auto-detect vibes from config file when VIBES_BIN is unset
+# This tests that the script reads ~/.config/vibes/bin_path when:
+# - VIBES_BIN is not set
+# - vibes is not in PATH
+test_autodetect() {
+    local test_name="auto-detect vibes from config file"
+
+    # Create a temporary HOME to isolate config
+    local FAKE_HOME="$TEST_DIR/home"
+    mkdir -p "$FAKE_HOME/.config/vibes"
+
+    # Write config file pointing to our mock vibes
+    echo "$MOCK_VIBES" > "$FAKE_HOME/.config/vibes/bin_path"
+
+    # Clear captured args
+    : > "$CAPTURED_ARGS"
+
+    # Run WITHOUT VIBES_BIN set, with PATH that doesn't contain vibes
+    # Use subshell to isolate env changes
+    # Keep essential tools but ensure 'vibes' command isn't found
+    (
+        unset VIBES_BIN
+        export HOME="$FAKE_HOME"
+        # Keep standard paths for tools like cat, jq, but vibes won't be in any of them
+        export PATH="/usr/bin:/bin"
+        echo '{"session_id":"auto-test","prompt":"hello"}' | "$SCRIPT_DIR/vibes-hook-send.sh" user_prompt_submit
+    )
+
+    # Check if vibes was called with session flag
+    if grep -qF -- '--session auto-test' "$CAPTURED_ARGS" 2>/dev/null; then
+        echo "PASS: $test_name"
+        return 0
+    else
+        echo "FAIL: $test_name"
+        echo "  Expected vibes to be called via config file auto-detection"
+        echo "  Captured args: $(cat "$CAPTURED_ARGS" 2>/dev/null || echo '<empty>')"
+        return 1
+    fi
+}
+
+test_autodetect || FAILED=$((FAILED + 1))
+
 echo
 if [ $FAILED -eq 0 ]; then
     echo "All tests passed!"

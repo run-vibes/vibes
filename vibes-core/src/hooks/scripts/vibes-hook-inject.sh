@@ -32,9 +32,20 @@ fi
 EVENT_JSON=$(echo "$INPUT_JSON" | jq -c "{type: \"$HOOK_TYPE\"} + .")
 
 # Send event to Iggy via vibes CLI (fire-and-forget for event logging)
-# Use VIBES_BIN if set (for development), otherwise fall back to PATH
-VIBES_CMD="${VIBES_BIN:-vibes}"
-if [ -x "$VIBES_CMD" ] || command -v "$VIBES_CMD" &>/dev/null; then
+# Resolution order:
+# 1. VIBES_BIN env var (for development)
+# 2. vibes in PATH
+# 3. Path from config file ~/.config/vibes/bin_path
+VIBES_CMD=""
+if [ -n "$VIBES_BIN" ]; then
+    VIBES_CMD="$VIBES_BIN"
+elif command -v vibes &>/dev/null; then
+    VIBES_CMD="vibes"
+elif [ -f "$HOME/.config/vibes/bin_path" ]; then
+    VIBES_CMD="$(cat "$HOME/.config/vibes/bin_path")"
+fi
+
+if [ -n "$VIBES_CMD" ] && { [ -x "$VIBES_CMD" ] || command -v "$VIBES_CMD" &>/dev/null; }; then
     "$VIBES_CMD" event send --type hook --data "$EVENT_JSON" ${SESSION_ID:+--session "$SESSION_ID"} 2>/dev/null || true
 fi
 
