@@ -759,4 +759,118 @@ mod tests {
 
         processor.shutdown();
     }
+
+    // ==================== Full Pipeline Integration Test ====================
+
+    /// Integration test that validates the complete assessment pipeline:
+    /// B1 (LightweightDetector) → B2 (CircuitBreaker) → B3 (SessionBuffer) → B4 (CheckpointManager)
+    #[tokio::test]
+    async fn full_pipeline_integration() {
+        let log = Arc::new(InMemoryAssessmentLog::new());
+        let config = AssessmentConfig::default();
+        let processor = AssessmentProcessor::new(config, log.clone());
+        let session_id: SessionId = "integration-test-session".into();
+
+        // Phase 1: Send neutral messages to establish baseline
+        // These should produce LightweightEvents but no circuit breaker triggers
+        for i in 0..3 {
+            let event = make_text_delta(
+                session_id.as_str(),
+                &format!("Working on task {i}. Everything looks good."),
+            );
+            processor.process_event(&event).await;
+        }
+
+        // Verify B1: LightweightEvents emitted with low frustration
+        tokio::time::sleep(Duration::from_millis(50)).await;
+        let events_after_neutral = log.read_session(&session_id).await.unwrap();
+        assert_eq!(
+            events_after_neutral.len(),
+            3,
+            "Should have 3 LightweightEvents"
+        );
+
+        // Verify B2: Circuit should still be closed after neutral messages
+        let circuit_state = processor.circuit_state(&session_id).await;
+        assert_eq!(
+            circuit_state,
+            crate::assessment::CircuitState::Closed,
+            "Circuit should be closed after neutral messages"
+        );
+
+        // Verify B3: Events should be buffered
+        let buffer_len = processor.buffer_len(&session_id).await;
+        assert_eq!(buffer_len, 3, "Should have 3 events buffered");
+
+        // Phase 2: Send frustrating messages to trigger circuit breaker
+        for i in 0..7 {
+            let event = make_text_delta(
+                session_id.as_str(),
+                &format!("Error! This is broken and failed again! Frustrating attempt {i}"),
+            );
+            processor.process_event(&event).await;
+        }
+
+        tokio::time::sleep(Duration::from_millis(100)).await;
+
+        // Verify B2: Circuit should have opened due to frustration signals
+        let circuit_state_after_frustration = processor.circuit_state(&session_id).await;
+        assert_ne!(
+            circuit_state_after_frustration,
+            crate::assessment::CircuitState::Closed,
+            "Circuit should have opened after frustration signals"
+        );
+
+        // Verify B4: Checkpoint should have triggered (min_events=5, first has no prior)
+        let checkpoint_count = processor.checkpoint_count(&session_id).await;
+        assert!(
+            checkpoint_count >= 1,
+            "Should have triggered at least one checkpoint"
+        );
+
+        // Verify that both LightweightEvents and MediumEvents were emitted
+        let all_events = log.read_session(&session_id).await.unwrap();
+        let lightweight_count = all_events
+            .iter()
+            .filter(|e| matches!(e, AssessmentEvent::Lightweight(_)))
+            .count();
+        let medium_count = all_events
+            .iter()
+            .filter(|e| matches!(e, AssessmentEvent::Medium(_)))
+            .count();
+
+        assert!(
+            lightweight_count >= 10,
+            "Should have at least 10 LightweightEvents"
+        );
+        assert!(
+            medium_count >= 1,
+            "Should have at least 1 MediumEvent (checkpoint)"
+        );
+
+        // Phase 3: Verify session state is maintained
+        // Process one more event and check message_idx is correct
+        let event = make_text_delta(session_id.as_str(), "Final message.");
+        processor.process_event(&event).await;
+        tokio::time::sleep(Duration::from_millis(50)).await;
+
+        let final_events = log.read_session(&session_id).await.unwrap();
+        let lightweight_events: Vec<_> = final_events
+            .iter()
+            .filter_map(|e| match e {
+                AssessmentEvent::Lightweight(le) => Some(le),
+                _ => None,
+            })
+            .collect();
+
+        // Check that message indices are sequential
+        for (i, le) in lightweight_events.iter().enumerate() {
+            assert_eq!(
+                le.message_idx as usize, i,
+                "Message indices should be sequential"
+            );
+        }
+
+        processor.shutdown();
+    }
 }
