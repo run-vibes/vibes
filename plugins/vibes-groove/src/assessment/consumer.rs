@@ -130,8 +130,8 @@ pub async fn assessment_consumer_loop(
 
                         let mut last_offset: Option<Offset> = None;
                         for (offset, stored) in batch {
-                            // Extract inner event and dispatch to processor for analysis
-                            processor.process_event(&stored.event).await;
+                            // Dispatch full StoredEvent for event_id access
+                            processor.process_event(&stored).await;
                             last_offset = Some(offset);
                         }
 
