@@ -76,11 +76,22 @@ export interface UseAssessmentReturn extends AssessmentState {
 }
 
 /**
+ * Wire format from server for PluginAssessmentResult.
+ * Note: context is embedded in the parsed payload, not at the top level.
+ */
+interface WireAssessmentResult {
+  event_id: string;
+  result_type: 'lightweight' | 'checkpoint' | 'session_end';
+  session_id: string;
+  payload: string; // JSON-serialized LightweightEvent, MediumEvent, etc.
+}
+
+/**
  * Server to client message types
  */
 interface AssessmentEventsBatchMessage {
   type: 'assessment_events_batch';
-  events: AssessmentEvent[];
+  events: WireAssessmentResult[];
   oldest_event_id: string | null;
   has_more: boolean;
 }
@@ -88,12 +99,66 @@ interface AssessmentEventsBatchMessage {
 interface LiveAssessmentEventMessage {
   type: 'assessment_event';
   event_id: string;
-  tier: 'lightweight' | 'medium' | 'heavy';
-  context: AssessmentContext;
-  [key: string]: unknown;
+  result_type: 'lightweight' | 'checkpoint' | 'session_end';
+  session_id: string;
+  payload: string;
 }
 
 type AssessmentServerMessage = AssessmentEventsBatchMessage | LiveAssessmentEventMessage;
+
+/**
+ * Map server result_type to frontend tier names.
+ */
+function mapResultTypeToTier(
+  resultType: string
+): 'lightweight' | 'medium' | 'heavy' {
+  switch (resultType) {
+    case 'lightweight':
+      return 'lightweight';
+    case 'checkpoint':
+      return 'medium';
+    case 'session_end':
+      return 'heavy';
+    default:
+      return 'lightweight';
+  }
+}
+
+/**
+ * Transform wire format to internal AssessmentEvent.
+ */
+function wireToAssessmentEvent(wire: WireAssessmentResult): AssessmentEvent {
+  // Parse the payload to extract context and other fields
+  let parsedPayload: Record<string, unknown> = {};
+  try {
+    parsedPayload = JSON.parse(wire.payload);
+  } catch {
+    // If payload parsing fails, use empty object
+  }
+
+  // Extract context from parsed payload, or create minimal context from wire data
+  const context: AssessmentContext =
+    (parsedPayload.context as AssessmentContext) ?? {
+      session_id: wire.session_id,
+      event_id: wire.event_id,
+      timestamp: new Date().toISOString(),
+      active_learnings: [],
+      injection_method: 'unknown',
+      injection_scope: null,
+      harness_type: 'unknown',
+      harness_version: null,
+      project_id: null,
+      user_id: null,
+    };
+
+  return {
+    event_id: wire.event_id,
+    tier: mapResultTypeToTier(wire.result_type),
+    context,
+    // Include parsed payload fields for inspection
+    ...parsedPayload,
+  };
+}
 
 /**
  * Client to server message types
@@ -148,7 +213,8 @@ export function useAssessment(options: AssessmentOptions = {}): UseAssessmentRet
       const msg = JSON.parse(data) as AssessmentServerMessage;
 
       if (msg.type === 'assessment_events_batch') {
-        const batchEvents = msg.events;
+        // Transform wire events to internal format
+        const batchEvents = msg.events.map(wireToAssessmentEvent);
 
         if (isLoadingOlderRef.current) {
           // Prepend older events
@@ -163,10 +229,14 @@ export function useAssessment(options: AssessmentOptions = {}): UseAssessmentRet
         setOldestEventId(msg.oldest_event_id);
         setHasMore(msg.has_more);
       } else if (msg.type === 'assessment_event') {
-        // Live event - extract fields from the flattened structure
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { type: _msgType, ...eventData } = msg;
-        const event = eventData as AssessmentEvent;
+        // Live event - transform to internal format
+        const wireEvent: WireAssessmentResult = {
+          event_id: msg.event_id,
+          result_type: msg.result_type,
+          session_id: msg.session_id,
+          payload: msg.payload,
+        };
+        const event = wireToAssessmentEvent(wireEvent);
         setEvents((prev) => [...prev, event]);
       }
     } catch (e) {

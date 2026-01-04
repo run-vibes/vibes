@@ -117,6 +117,9 @@ impl SyncAssessmentProcessor {
             buffer.push(session_id.clone(), vibes_event.clone());
         }
 
+        // Convert event_id bytes to UUID string for use throughout
+        let event_id_str = raw.event_id_string();
+
         // B1: Route to LightweightDetector for signal detection
         let lightweight_event = {
             let mut states = self.session_states.lock().unwrap();
@@ -132,6 +135,7 @@ impl SyncAssessmentProcessor {
             // Serialize to JSON for FFI boundary
             if let Ok(payload) = serde_json::to_string(le) {
                 results.push(PluginAssessmentResult::lightweight(
+                    &event_id_str,
                     session_id.as_str(),
                     payload,
                 ));
@@ -170,6 +174,7 @@ impl SyncAssessmentProcessor {
 
                 if let Ok(payload) = serde_json::to_string(&medium_event) {
                     results.push(PluginAssessmentResult::checkpoint(
+                        &event_id_str,
                         session_id.as_str(),
                         payload,
                     ));
@@ -179,11 +184,10 @@ impl SyncAssessmentProcessor {
 
         // Store results for querying
         if !results.is_empty() {
-            let event_id_str = raw.event_id_string();
             let mut stored = self.stored_results.lock().unwrap();
             for result in &results {
                 stored.push_front(StoredResult {
-                    event_id: event_id_str.clone(),
+                    event_id: result.event_id.clone(),
                     result: result.clone(),
                 });
             }

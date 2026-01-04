@@ -345,13 +345,13 @@ mod tests {
 
     #[test]
     fn matches_session_filter_with_no_filter() {
-        let result = PluginAssessmentResult::lightweight("session-1", "{}");
+        let result = PluginAssessmentResult::lightweight("evt-1", "session-1", "{}");
         assert!(matches_session_filter(&result, &None));
     }
 
     #[test]
     fn matches_session_filter_with_matching_session() {
-        let result = PluginAssessmentResult::lightweight("session-1", "{}");
+        let result = PluginAssessmentResult::lightweight("evt-1", "session-1", "{}");
         assert!(matches_session_filter(
             &result,
             &Some("session-1".to_string())
@@ -360,7 +360,7 @@ mod tests {
 
     #[test]
     fn matches_session_filter_with_non_matching_session() {
-        let result = PluginAssessmentResult::lightweight("session-1", "{}");
+        let result = PluginAssessmentResult::lightweight("evt-1", "session-1", "{}");
         assert!(!matches_session_filter(
             &result,
             &Some("session-2".to_string())

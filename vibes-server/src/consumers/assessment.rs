@@ -85,7 +85,9 @@ mod tests {
 
     #[test]
     fn test_plugin_assessment_result_creation() {
-        let result = PluginAssessmentResult::lightweight("test-session", r#"{"test": true}"#);
+        let result =
+            PluginAssessmentResult::lightweight("evt-1", "test-session", r#"{"test": true}"#);
+        assert_eq!(result.event_id, "evt-1");
         assert_eq!(result.result_type, "lightweight");
         assert_eq!(result.session_id, "test-session");
         assert_eq!(result.payload, r#"{"test": true}"#);
@@ -93,7 +95,9 @@ mod tests {
 
     #[test]
     fn test_plugin_assessment_result_checkpoint() {
-        let result = PluginAssessmentResult::checkpoint("session-1", r#"{"summary": "ok"}"#);
+        let result =
+            PluginAssessmentResult::checkpoint("evt-2", "session-1", r#"{"summary": "ok"}"#);
+        assert_eq!(result.event_id, "evt-2");
         assert_eq!(result.result_type, "checkpoint");
         assert_eq!(result.session_id, "session-1");
     }

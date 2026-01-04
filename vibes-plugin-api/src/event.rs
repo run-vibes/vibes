@@ -59,6 +59,12 @@ impl RawEvent {
 /// The host deserializes the payload and writes to the assessment log.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PluginAssessmentResult {
+    /// Unique event identifier (UUIDv7 string).
+    ///
+    /// This is typically the ID of the event that triggered the assessment,
+    /// enabling time-ordering and pagination in the UI.
+    pub event_id: String,
+
     /// Type of assessment result: "lightweight", "checkpoint", "session_end".
     pub result_type: String,
 
@@ -156,8 +162,13 @@ pub struct AssessmentQueryResponse {
 impl PluginAssessmentResult {
     /// Create a lightweight assessment result (per-message pattern detection).
     #[must_use]
-    pub fn lightweight(session_id: impl Into<String>, payload: impl Into<String>) -> Self {
+    pub fn lightweight(
+        event_id: impl Into<String>,
+        session_id: impl Into<String>,
+        payload: impl Into<String>,
+    ) -> Self {
         Self {
+            event_id: event_id.into(),
             result_type: "lightweight".to_string(),
             session_id: session_id.into(),
             payload: payload.into(),
@@ -166,8 +177,13 @@ impl PluginAssessmentResult {
 
     /// Create a checkpoint assessment result (periodic summaries).
     #[must_use]
-    pub fn checkpoint(session_id: impl Into<String>, payload: impl Into<String>) -> Self {
+    pub fn checkpoint(
+        event_id: impl Into<String>,
+        session_id: impl Into<String>,
+        payload: impl Into<String>,
+    ) -> Self {
         Self {
+            event_id: event_id.into(),
             result_type: "checkpoint".to_string(),
             session_id: session_id.into(),
             payload: payload.into(),
@@ -176,8 +192,13 @@ impl PluginAssessmentResult {
 
     /// Create a session end assessment result (full session analysis).
     #[must_use]
-    pub fn session_end(session_id: impl Into<String>, payload: impl Into<String>) -> Self {
+    pub fn session_end(
+        event_id: impl Into<String>,
+        session_id: impl Into<String>,
+        payload: impl Into<String>,
+    ) -> Self {
         Self {
+            event_id: event_id.into(),
             result_type: "session_end".to_string(),
             session_id: session_id.into(),
             payload: payload.into(),
@@ -220,14 +241,17 @@ mod tests {
 
     #[test]
     fn test_plugin_assessment_result_types() {
-        let lightweight = PluginAssessmentResult::lightweight("s1", "{}");
+        let lightweight = PluginAssessmentResult::lightweight("evt-1", "s1", "{}");
+        assert_eq!(lightweight.event_id, "evt-1");
         assert_eq!(lightweight.result_type, "lightweight");
         assert_eq!(lightweight.session_id, "s1");
 
-        let checkpoint = PluginAssessmentResult::checkpoint("s2", "{}");
+        let checkpoint = PluginAssessmentResult::checkpoint("evt-2", "s2", "{}");
+        assert_eq!(checkpoint.event_id, "evt-2");
         assert_eq!(checkpoint.result_type, "checkpoint");
 
-        let session_end = PluginAssessmentResult::session_end("s3", "{}");
+        let session_end = PluginAssessmentResult::session_end("evt-3", "s3", "{}");
+        assert_eq!(session_end.event_id, "evt-3");
         assert_eq!(session_end.result_type, "session_end");
     }
 
@@ -250,11 +274,12 @@ mod tests {
 
     #[test]
     fn test_plugin_assessment_result_serialization() {
-        let result = PluginAssessmentResult::lightweight("s1", r#"{"score": 0.5}"#);
+        let result = PluginAssessmentResult::lightweight("evt-1", "s1", r#"{"score": 0.5}"#);
 
         let json = serde_json::to_string(&result).unwrap();
         let parsed: PluginAssessmentResult = serde_json::from_str(&json).unwrap();
 
+        assert_eq!(parsed.event_id, "evt-1");
         assert_eq!(parsed.result_type, "lightweight");
         assert_eq!(parsed.session_id, "s1");
         assert_eq!(parsed.payload, r#"{"score": 0.5}"#);
