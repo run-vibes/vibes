@@ -6042,6 +6042,7 @@ dependencies = [
  "tokio",
  "tokio-stream",
  "tokio-test",
+ "tokio-util",
  "toml 0.8.23",
  "tracing",
  "uuid",
@@ -6123,8 +6124,12 @@ dependencies = [
  "serde_json",
  "tempfile",
  "thiserror 2.0.17",
+ "tokio",
+ "tokio-util",
  "toml 0.8.23",
  "tracing",
+ "uuid",
+ "vibes-iggy",
 ]
 
 [[package]]
@@ -6153,7 +6158,6 @@ dependencies = [
  "url",
  "uuid",
  "vibes-core",
- "vibes-groove",
  "vibes-iggy",
  "vibes-plugin-api",
 ]

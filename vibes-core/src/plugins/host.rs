@@ -7,15 +7,16 @@ use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use vibes_plugin_api::{
-    API_VERSION, CommandArgs, CommandOutput, HttpMethod, Plugin, PluginConfig, PluginContext,
-    PluginManifest, RouteRequest, RouteResponse,
+    API_VERSION, AssessmentQuery, AssessmentQueryResponse, CommandArgs, CommandOutput, HttpMethod,
+    Plugin, PluginAssessmentResult, PluginConfig, PluginContext, PluginManifest, RawEvent,
+    RouteRequest, RouteResponse,
 };
 
 use super::commands::CommandRegistry;
 use super::error::PluginHostError;
 use super::registry::PluginRegistry;
 use super::routes::RouteRegistry;
-use crate::events::{ClaudeEvent, VibesEvent};
+use crate::events::{ClaudeEvent, StoredEvent, VibesEvent};
 
 /// A loaded plugin with its runtime state
 struct LoadedPlugin {
@@ -24,11 +25,26 @@ struct LoadedPlugin {
     /// The plugin instance
     instance: Box<dyn Plugin>,
     /// Plugin context for callbacks
-    context: PluginContext,
+    pub(crate) context: PluginContext,
     /// Keep the library loaded
     _library: Library,
     /// Current plugin state
     state: PluginState,
+}
+
+impl Drop for LoadedPlugin {
+    fn drop(&mut self) {
+        // Call on_unload before the library is dropped
+        // This gives plugins a chance to clean up resources (cancel tasks, etc.)
+        // that hold references to types defined in the plugin library.
+        if let Err(e) = self.instance.on_unload() {
+            tracing::warn!(
+                plugin = %self.manifest.name,
+                error = %e,
+                "Plugin on_unload returned error"
+            );
+        }
+    }
 }
 
 /// State of a loaded plugin
@@ -275,6 +291,90 @@ impl PluginHost {
         Ok(())
     }
 
+    /// Notify all loaded plugins that the runtime is ready.
+    ///
+    /// This sets the runtime handle, event log, shutdown token, and Iggy manager
+    /// on each plugin's context, then calls `on_ready()` to allow plugins to start
+    /// background tasks.
+    ///
+    /// Should be called once after the server is fully initialized.
+    pub fn notify_ready(
+        &mut self,
+        event_log: std::sync::Arc<dyn std::any::Any + Send + Sync>,
+        shutdown: tokio_util::sync::CancellationToken,
+        iggy_manager: Option<std::sync::Arc<vibes_iggy::IggyManager>>,
+    ) {
+        // Get the tokio runtime handle from the current context.
+        // This handle will be passed to plugins so they can run async operations.
+        let runtime_handle = tokio::runtime::Handle::current();
+
+        for (name, plugin) in &mut self.plugins {
+            if plugin.state != PluginState::Loaded {
+                continue;
+            }
+
+            // Set runtime on context - runtime_handle MUST be set first so plugins
+            // can use it in on_ready() for async operations
+            plugin.context.set_runtime_handle(runtime_handle.clone());
+            plugin.context.set_event_log(event_log.clone());
+            plugin.context.set_shutdown(shutdown.clone());
+            if let Some(ref manager) = iggy_manager {
+                plugin.context.set_iggy_manager(manager.clone());
+            }
+
+            // Call on_ready with panic isolation
+            let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                plugin.instance.on_ready(&mut plugin.context)
+            }));
+
+            match result {
+                Ok(Ok(())) => {
+                    tracing::debug!(plugin = %name, "Plugin ready");
+                }
+                Ok(Err(e)) => {
+                    tracing::error!(plugin = %name, error = %e, "Plugin on_ready error");
+                    plugin.state = PluginState::Failed {
+                        error: e.to_string(),
+                    };
+                }
+                Err(_) => {
+                    tracing::error!(plugin = %name, "Plugin panicked in on_ready, disabling");
+                    plugin.state = PluginState::Failed {
+                        error: "Plugin panicked in on_ready".to_string(),
+                    };
+                }
+            }
+        }
+    }
+
+    /// Get a service registered by a plugin.
+    ///
+    /// Services are registered by plugins during `on_ready()` and can be retrieved
+    /// by the host to access shared resources like AssessmentLog.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T` - The type to downcast to. For trait objects stored as `Arc<Arc<dyn Trait>>`,
+    ///   specify `T = Arc<dyn Trait>`.
+    pub fn get_plugin_service<T: ?Sized + 'static>(
+        &self,
+        plugin_name: &str,
+        service_name: &str,
+    ) -> Option<std::sync::Arc<T>> {
+        self.plugins
+            .get(plugin_name)
+            .and_then(|plugin| plugin.context.get_service(service_name))
+    }
+
+    /// Check if a plugin is loaded and ready.
+    ///
+    /// Returns true if the plugin exists and is in the `Loaded` state.
+    pub fn is_plugin_loaded(&self, plugin_name: &str) -> bool {
+        self.plugins
+            .get(plugin_name)
+            .is_some_and(|plugin| plugin.state == PluginState::Loaded)
+    }
+
     /// Find the library file in a plugin directory
     fn find_library(&self, dir: &Path, name: &str) -> Result<PathBuf, PluginHostError> {
         // Look for <name>.so symlink (or .dylib on macOS, .dll on Windows)
@@ -444,6 +544,154 @@ impl PluginHost {
             .instance
             .handle_route(method, path, request, &mut plugin.context)
             .map_err(PluginHostError::InitFailed)
+    }
+
+    /// Dispatch a raw event to all loaded plugins and collect assessment results.
+    ///
+    /// This converts the StoredEvent to an FFI-safe RawEvent and calls each
+    /// plugin's `on_event()` handler. Results are aggregated from all plugins.
+    ///
+    /// Events are dispatched with panic isolation - if a plugin panics,
+    /// it is disabled and other plugins continue to receive events.
+    ///
+    /// # Returns
+    ///
+    /// A vector of assessment results from all plugins. The results are
+    /// JSON-serialized and ready to be written to the AssessmentLog.
+    pub fn dispatch_raw_event(&mut self, stored: &StoredEvent) -> Vec<PluginAssessmentResult> {
+        let raw = Self::to_raw_event(stored);
+        let mut all_results = Vec::new();
+
+        for (name, plugin) in &mut self.plugins {
+            if plugin.state != PluginState::Loaded {
+                continue;
+            }
+
+            let result = std::panic::catch_unwind(AssertUnwindSafe(|| {
+                plugin.instance.on_event(raw.clone(), &mut plugin.context)
+            }));
+
+            match result {
+                Ok(results) => {
+                    all_results.extend(results);
+                }
+                Err(_) => {
+                    tracing::error!(plugin = %name, "Plugin panicked in on_event, disabling");
+                    plugin.state = PluginState::Failed {
+                        error: "Plugin panicked in on_event".to_string(),
+                    };
+                }
+            }
+        }
+
+        all_results
+    }
+
+    /// Query assessment results from all loaded plugins.
+    ///
+    /// This calls each plugin's `query_assessment_results()` method and
+    /// aggregates the results. Plugins that don't have assessment data
+    /// simply return empty results.
+    ///
+    /// Queries are dispatched with panic isolation - if a plugin panics,
+    /// it is disabled and other plugins continue to be queried.
+    ///
+    /// # Arguments
+    ///
+    /// * `query` - The query parameters (session filter, limit, pagination)
+    ///
+    /// # Returns
+    ///
+    /// Aggregated assessment results from all plugins. The results are
+    /// sorted by event ID (newest first if specified in query).
+    pub fn dispatch_query_assessment(&mut self, query: AssessmentQuery) -> AssessmentQueryResponse {
+        let mut all_results = Vec::new();
+        let mut has_more = false;
+
+        for (name, plugin) in &mut self.plugins {
+            if plugin.state != PluginState::Loaded {
+                continue;
+            }
+
+            let query_clone = AssessmentQuery {
+                session_id: query.session_id.clone(),
+                result_types: query.result_types.clone(),
+                limit: query.limit,
+                after_event_id: query.after_event_id.clone(),
+                newest_first: query.newest_first,
+            };
+
+            let result = std::panic::catch_unwind(AssertUnwindSafe(|| {
+                plugin
+                    .instance
+                    .query_assessment_results(query_clone, &plugin.context)
+            }));
+
+            match result {
+                Ok(response) => {
+                    all_results.extend(response.results);
+                    if response.has_more {
+                        has_more = true;
+                    }
+                }
+                Err(_) => {
+                    tracing::error!(plugin = %name, "Plugin panicked in query_assessment_results, disabling");
+                    plugin.state = PluginState::Failed {
+                        error: "Plugin panicked in query_assessment_results".to_string(),
+                    };
+                }
+            }
+        }
+
+        // Apply limit to aggregated results
+        if all_results.len() > query.limit {
+            all_results.truncate(query.limit);
+            has_more = true;
+        }
+
+        let oldest_event_id = None; // Could be derived from results if needed
+
+        AssessmentQueryResponse {
+            results: all_results,
+            oldest_event_id,
+            has_more,
+        }
+    }
+
+    /// Convert a StoredEvent to an FFI-safe RawEvent.
+    fn to_raw_event(stored: &StoredEvent) -> RawEvent {
+        // Serialize the VibesEvent to JSON for FFI boundary
+        let payload = serde_json::to_string(&stored.event).unwrap_or_default();
+
+        // Derive event_type from the VibesEvent variant
+        let event_type = match &stored.event {
+            VibesEvent::Claude { .. } => "Claude",
+            VibesEvent::UserInput { .. } => "UserInput",
+            VibesEvent::PermissionResponse { .. } => "PermissionResponse",
+            VibesEvent::SessionCreated { .. } => "SessionCreated",
+            VibesEvent::SessionStateChanged { .. } => "SessionStateChanged",
+            VibesEvent::ClientConnected { .. } => "ClientConnected",
+            VibesEvent::ClientDisconnected { .. } => "ClientDisconnected",
+            VibesEvent::TunnelStateChanged { .. } => "TunnelStateChanged",
+            VibesEvent::OwnershipTransferred { .. } => "OwnershipTransferred",
+            VibesEvent::SessionRemoved { .. } => "SessionRemoved",
+            VibesEvent::Hook { .. } => "Hook",
+        };
+
+        // Extract timestamp from UUIDv7 (milliseconds since Unix epoch)
+        let (timestamp_secs, timestamp_subsec_nanos) = stored
+            .event_id
+            .get_timestamp()
+            .map_or((0, 0), |ts| (ts.to_unix().0, ts.to_unix().1));
+        let timestamp_ms = timestamp_secs * 1000 + u64::from(timestamp_subsec_nanos / 1_000_000);
+
+        RawEvent::new(
+            stored.event_id.into_bytes(),
+            timestamp_ms,
+            stored.session_id().map(|s| s.to_string()),
+            event_type.to_string(),
+            payload,
+        )
     }
 }
 
@@ -670,5 +918,70 @@ mod tests {
             error: "Panicked".to_string(),
         };
         assert!(matches!(state, PluginState::Failed { .. }));
+    }
+
+    // ─── dispatch_raw_event Tests ────────────────────────────────────
+
+    #[test]
+    fn test_to_raw_event_claude_event() {
+        use crate::events::{ClaudeEvent, StoredEvent, VibesEvent};
+
+        let event = StoredEvent::new(VibesEvent::Claude {
+            session_id: "test-session".to_string(),
+            event: ClaudeEvent::TextDelta {
+                text: "Hello world".to_string(),
+            },
+        });
+
+        let raw = PluginHost::to_raw_event(&event);
+
+        assert_eq!(raw.event_id, event.event_id.into_bytes());
+        assert_eq!(raw.session_id, Some("test-session".to_string()));
+        assert_eq!(raw.event_type, "Claude");
+        assert!(raw.payload.contains("text_delta"));
+        assert!(raw.payload.contains("Hello world"));
+    }
+
+    #[test]
+    fn test_to_raw_event_without_session() {
+        use crate::events::{StoredEvent, VibesEvent};
+
+        let event = StoredEvent::new(VibesEvent::ClientConnected {
+            client_id: "client-123".to_string(),
+        });
+
+        let raw = PluginHost::to_raw_event(&event);
+
+        assert_eq!(raw.session_id, None);
+        assert_eq!(raw.event_type, "ClientConnected");
+    }
+
+    #[test]
+    fn test_to_raw_event_timestamp_extraction() {
+        use crate::events::{StoredEvent, VibesEvent};
+
+        let event = StoredEvent::new(VibesEvent::ClientConnected {
+            client_id: "c1".to_string(),
+        });
+
+        let raw = PluginHost::to_raw_event(&event);
+
+        // Timestamp should be positive and reasonable (after 2024)
+        assert!(raw.timestamp_ms > 1_700_000_000_000);
+    }
+
+    #[test]
+    fn test_dispatch_raw_event_no_plugins() {
+        use crate::events::{StoredEvent, VibesEvent};
+
+        let config = PluginHostConfig::default();
+        let mut host = PluginHost::new(config);
+
+        let event = StoredEvent::new(VibesEvent::ClientConnected {
+            client_id: "c1".to_string(),
+        });
+
+        let results = host.dispatch_raw_event(&event);
+        assert!(results.is_empty());
     }
 }

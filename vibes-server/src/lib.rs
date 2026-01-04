@@ -22,8 +22,8 @@ use vibes_core::{
 };
 
 use consumers::{
-    ConsumerManager, assessment::start_assessment_consumer,
-    notification::start_notification_consumer, websocket::start_websocket_consumer,
+    ConsumerManager, notification::start_notification_consumer,
+    plugin::start_plugin_event_consumer, websocket::start_websocket_consumer,
 };
 
 pub use error::ServerError;
@@ -260,21 +260,35 @@ impl VibesServer {
             }
         }
 
-        // Start assessment consumer for pattern detection and learning
-        let iggy_manager = self.state.iggy_manager();
-        match start_assessment_consumer(event_log, iggy_manager, shutdown.clone()).await {
-            Ok(assessment_log) => {
-                tracing::info!("Assessment consumer started");
-                // Store assessment log for WebSocket endpoint
-                self.state.set_assessment_log(assessment_log).await;
-            }
-            Err(e) => {
-                tracing::error!("Failed to start assessment consumer: {}", e);
-                // Continue without assessment - not fatal
-            }
+        tracing::info!("EventLog consumers started");
+
+        // Notify plugins that the runtime is ready
+        // This allows plugins to start their own background consumers
+        // Note: We double-wrap the event_log Arc so it can be stored as Any
+        // Plugins retrieve it via: ctx.event_log::<Arc<dyn EventLog<StoredEvent>>>()
+        {
+            let event_log_any: Arc<dyn std::any::Any + Send + Sync> =
+                Arc::new(Arc::clone(&self.state.event_log));
+            let mut plugin_host = self.state.plugin_host().write().await;
+            plugin_host.notify_ready(event_log_any, shutdown.clone(), self.state.iggy_manager());
         }
 
-        tracing::info!("EventLog consumers started");
+        // Start plugin event consumer
+        // This consumer polls events and routes them to plugins via dispatch_raw_event
+        // Results are broadcast via AppState for WebSocket clients
+        {
+            let plugin_host = Arc::clone(self.state.plugin_host());
+            let state = Arc::clone(&self.state);
+
+            if let Err(e) =
+                start_plugin_event_consumer(&mut manager, plugin_host, state, shutdown.clone())
+                    .await
+            {
+                tracing::error!("Failed to start plugin event consumer: {}", e);
+            } else {
+                tracing::info!("Plugin event consumer started");
+            }
+        }
 
         // The manager is moved into the spawned task to keep it alive.
         // TODO: Replace pending() with proper shutdown signal coordination
@@ -416,8 +430,8 @@ mod tests {
         let config = IggyConfig::default();
         let manager = Arc::new(IggyManager::new(config));
 
-        // Create state with the manager
-        let state = Arc::new(AppState::new().with_iggy_manager(manager.clone()));
+        // Create state with the manager (use new_for_testing to avoid loading external plugins)
+        let state = Arc::new(AppState::new_for_testing().with_iggy_manager(manager.clone()));
         let server_config = ServerConfig::new("127.0.0.1", 0); // Port 0 = random available
         let server = VibesServer::with_state(server_config, Arc::clone(&state));
 

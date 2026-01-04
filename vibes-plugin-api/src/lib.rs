@@ -38,18 +38,20 @@
 pub mod command;
 pub mod context;
 pub mod error;
+pub mod event;
 pub mod http;
 pub mod types;
 
 pub use command::{ArgSpec, CommandOutput, CommandSpec};
 pub use context::{Capability, CommandArgs, Harness, PluginConfig, PluginContext};
 pub use error::PluginError;
+pub use event::{AssessmentQuery, AssessmentQueryResponse, PluginAssessmentResult, RawEvent};
 pub use http::{HttpMethod, RouteRequest, RouteResponse, RouteSpec};
 pub use types::*;
 
 /// Current plugin API version. Plugins must match this exactly.
 /// This will be checked when loading plugins to ensure compatibility.
-pub const API_VERSION: u32 = 2;
+pub const API_VERSION: u32 = 3;
 
 /// The core plugin trait - implement this to create a vibes plugin.
 ///
@@ -64,6 +66,41 @@ pub trait Plugin: Send + Sync {
 
     /// Called when plugin is unloaded. Use this to clean up resources.
     fn on_unload(&mut self) -> Result<(), PluginError>;
+
+    /// Called after server is fully initialized with runtime dependencies.
+    ///
+    /// At this point, `ctx.is_runtime_ready()` returns true and plugins can
+    /// access the event log, shutdown token, and Iggy manager via the context.
+    ///
+    /// Use this to start background tasks that depend on runtime resources:
+    /// - Event consumers that read from the EventLog
+    /// - Background processing tasks
+    /// - Persistent storage initialization
+    ///
+    /// Default implementation does nothing.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// fn on_ready(&mut self, ctx: &mut PluginContext) -> Result<(), PluginError> {
+    ///     // Access runtime dependencies
+    ///     let event_log: Arc<dyn EventLog<StoredEvent>> = ctx
+    ///         .event_log()
+    ///         .ok_or(PluginError::NotReady("event_log not available".into()))?;
+    ///     let shutdown = ctx.shutdown()
+    ///         .ok_or(PluginError::NotReady("shutdown not available".into()))?;
+    ///
+    ///     // Start background consumer
+    ///     tokio::spawn(async move {
+    ///         // consume events until shutdown
+    ///     });
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    fn on_ready(&mut self, _ctx: &mut PluginContext) -> Result<(), PluginError> {
+        Ok(())
+    }
 
     // ─── Event Handlers (default no-ops) ─────────────────────────────
 
@@ -140,6 +177,63 @@ pub trait Plugin: Send + Sync {
         _ctx: &mut PluginContext,
     ) -> Option<String> {
         None
+    }
+
+    /// Called for each event from the EventLog.
+    ///
+    /// This callback enables plugins to process events synchronously and return
+    /// assessment results. The host handles all async I/O (reading from EventLog,
+    /// writing to AssessmentLog), while plugins focus on pure event processing.
+    ///
+    /// # Arguments
+    ///
+    /// * `event` - The raw event with JSON-serialized payload
+    /// * `ctx` - Plugin context for logging and configuration
+    ///
+    /// # Returns
+    ///
+    /// A vector of assessment results to be written to the assessment log.
+    /// Return an empty vector if no assessments were triggered.
+    ///
+    /// # Design Note
+    ///
+    /// This callback pattern avoids issues with async code in dynamic libraries:
+    /// - TypeId mismatches across compilation units
+    /// - Tokio TLS isolation per .so
+    /// - Library internals calling `Handle::current()`
+    ///
+    /// By keeping plugins sync and using JSON serialization at the boundary,
+    /// the host can safely dispatch events to any plugin.
+    fn on_event(
+        &mut self,
+        _event: RawEvent,
+        _ctx: &mut PluginContext,
+    ) -> Vec<PluginAssessmentResult> {
+        vec![]
+    }
+
+    /// Query assessment results stored by this plugin.
+    ///
+    /// Plugins that process events via `on_event()` typically store results
+    /// internally. This method allows the host to retrieve those results
+    /// without needing to know about plugin-specific storage types.
+    ///
+    /// # Arguments
+    ///
+    /// * `query` - Query parameters (session filter, limit, pagination)
+    /// * `ctx` - Plugin context for logging
+    ///
+    /// # Returns
+    ///
+    /// Assessment results matching the query criteria.
+    ///
+    /// Default implementation returns empty results.
+    fn query_assessment_results(
+        &self,
+        _query: AssessmentQuery,
+        _ctx: &PluginContext,
+    ) -> AssessmentQueryResponse {
+        AssessmentQueryResponse::default()
     }
 
     // ─── Command Handler ────────────────────────────────────────────
@@ -233,7 +327,7 @@ mod tests {
 
     #[test]
     fn test_api_version_is_set() {
-        assert_eq!(API_VERSION, 2);
+        assert_eq!(API_VERSION, 3);
     }
 
     #[test]

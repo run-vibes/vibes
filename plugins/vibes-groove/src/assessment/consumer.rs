@@ -4,16 +4,32 @@
 //! AssessmentProcessor for analysis. Unlike the WebSocket consumer (which
 //! starts at End for live events), the assessment consumer starts at
 //! Beginning to process full session history for pattern detection.
+//!
+//! # Usage
+//!
+//! The server calls [`start_assessment_consumer`] to spawn the consumer:
+//!
+//! ```ignore
+//! use vibes_groove::assessment::{start_assessment_consumer, AssessmentConfig};
+//!
+//! let handle = start_assessment_consumer(
+//!     event_log,
+//!     assessment_log,
+//!     AssessmentConfig::default(),
+//!     shutdown.clone(),
+//! ).await?;
+//! ```
 
 use std::sync::Arc;
 use std::time::Duration;
 
+use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, error, info, trace};
 use vibes_core::StoredEvent;
-use vibes_iggy::{EventConsumer, Offset, SeekPosition};
+use vibes_iggy::{EventConsumer, EventLog, Offset, SeekPosition};
 
-use super::AssessmentProcessor;
+use super::{AssessmentConfig, AssessmentLog, AssessmentProcessor};
 
 /// Default poll timeout for assessment consumer.
 const DEFAULT_POLL_TIMEOUT: Duration = Duration::from_secs(1);
@@ -154,12 +170,78 @@ pub async fn assessment_consumer_loop(
     }
 }
 
+/// Error type for starting the assessment consumer.
+#[derive(Debug, thiserror::Error)]
+pub enum StartConsumerError {
+    /// Failed to create a consumer from the event log.
+    #[error("Failed to create consumer: {0}")]
+    ConsumerCreation(String),
+}
+
+/// Start the assessment consumer.
+///
+/// This is the main entry point for the server to start assessment processing.
+/// It creates the processor and consumer, then spawns a background task that
+/// runs until the shutdown token is cancelled.
+///
+/// # Arguments
+///
+/// * `event_log` - The event log to consume from
+/// * `assessment_log` - The log to write assessment events to
+/// * `config` - Assessment configuration
+/// * `shutdown` - Cancellation token for graceful shutdown
+///
+/// # Returns
+///
+/// Returns a `JoinHandle` that can be awaited to wait for the consumer to stop.
+///
+/// # Example
+///
+/// ```ignore
+/// let handle = start_assessment_consumer(
+///     event_log,
+///     assessment_log,
+///     AssessmentConfig::default(),
+///     shutdown.clone(),
+/// ).await?;
+/// ```
+pub async fn start_assessment_consumer(
+    event_log: Arc<dyn EventLog<StoredEvent>>,
+    assessment_log: Arc<dyn AssessmentLog>,
+    config: AssessmentConfig,
+    shutdown: CancellationToken,
+) -> Result<JoinHandle<ConsumerResult>, StartConsumerError> {
+    // Create consumer from event log
+    let consumer_config = AssessmentConsumerConfig::default();
+    let consumer = event_log
+        .consumer(&consumer_config.group)
+        .await
+        .map_err(|e| StartConsumerError::ConsumerCreation(e.to_string()))?;
+
+    // Create processor with the host's runtime handle
+    let runtime_handle = tokio::runtime::Handle::current();
+    let processor = Arc::new(AssessmentProcessor::new(
+        config,
+        assessment_log,
+        runtime_handle.clone(),
+    ));
+
+    info!("Starting assessment consumer");
+
+    // Spawn the consumer loop
+    let handle = runtime_handle.spawn(async move {
+        assessment_consumer_loop(consumer, processor, consumer_config, shutdown).await
+    });
+
+    Ok(handle)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use std::sync::atomic::{AtomicUsize, Ordering};
     use vibes_core::VibesEvent;
-    use vibes_iggy::{EventLog, InMemoryEventLog};
+    use vibes_iggy::InMemoryEventLog;
 
     fn make_stored_event(session_id: &str) -> StoredEvent {
         StoredEvent::new(VibesEvent::SessionCreated {
@@ -268,7 +350,7 @@ mod tests {
 
         // Create a simple processor using InMemoryAssessmentLog
         let assessment_log = Arc::new(crate::assessment::InMemoryAssessmentLog::new());
-        let processor = Arc::new(AssessmentProcessor::new(
+        let processor = Arc::new(AssessmentProcessor::new_for_test(
             crate::assessment::AssessmentConfig::default(),
             assessment_log,
         ));

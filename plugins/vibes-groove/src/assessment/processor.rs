@@ -58,16 +58,50 @@ impl AssessmentProcessor {
     /// This spawns a background task that writes events to the provided log.
     /// The background task runs until `shutdown()` is called or the processor
     /// is dropped.
+    ///
+    /// # Parameters
+    ///
+    /// * `config` - Assessment configuration
+    /// * `log` - The assessment log for persisting events
+    /// * `runtime_handle` - Tokio runtime handle from the host process. Required because
+    ///   dynamically loaded plugins have their own tokio symbols that don't share
+    ///   the runtime context. We must use `handle.spawn()` instead of `tokio::spawn()`.
     #[must_use]
-    pub fn new(config: AssessmentConfig, log: Arc<dyn AssessmentLog>) -> Self {
+    pub fn new(
+        config: AssessmentConfig,
+        log: Arc<dyn AssessmentLog>,
+        runtime_handle: tokio::runtime::Handle,
+    ) -> Self {
+        Self::new_internal(config, log, runtime_handle)
+    }
+
+    /// Create a new assessment processor for use in tests.
+    ///
+    /// This uses `Handle::current()` which works in test code running in a proper
+    /// tokio context. For production use in dynamically loaded plugins, use `new()`
+    /// with an explicit runtime handle.
+    #[cfg(test)]
+    #[must_use]
+    pub fn new_for_test(config: AssessmentConfig, log: Arc<dyn AssessmentLog>) -> Self {
+        Self::new_internal(config, log, tokio::runtime::Handle::current())
+    }
+
+    /// Internal constructor used by both new() and new_for_test()
+    fn new_internal(
+        config: AssessmentConfig,
+        log: Arc<dyn AssessmentLog>,
+        runtime_handle: tokio::runtime::Handle,
+    ) -> Self {
         let (writer_tx, writer_rx) = mpsc::unbounded_channel();
         let (broadcast_tx, _) = broadcast::channel(1024);
 
         // Clone broadcast_tx for the writer task
         let task_broadcast_tx = broadcast_tx.clone();
 
-        // Spawn background writer task
-        tokio::spawn(async move {
+        // Spawn background writer task using the host's runtime handle
+        // We can't use tokio::spawn() because dynamically loaded plugins have
+        // their own tokio symbols that don't share the runtime context
+        runtime_handle.spawn(async move {
             Self::writer_task(log, writer_rx, task_broadcast_tx).await;
         });
 
@@ -359,7 +393,7 @@ mod tests {
     async fn processor_submits_events() {
         let log = Arc::new(InMemoryAssessmentLog::new());
         let config = AssessmentConfig::default();
-        let processor = AssessmentProcessor::new(config, log.clone());
+        let processor = AssessmentProcessor::new_for_test(config, log.clone());
 
         let event = make_lightweight_event("test-session");
         processor.submit(event);
@@ -383,7 +417,7 @@ mod tests {
             ..Default::default()
         };
 
-        let processor = AssessmentProcessor::new(config, log.clone());
+        let processor = AssessmentProcessor::new_for_test(config, log.clone());
 
         assert!(!processor.is_enabled());
 
@@ -405,7 +439,7 @@ mod tests {
     async fn processor_subscribe_receives_events() {
         let log = Arc::new(InMemoryAssessmentLog::new());
         let config = AssessmentConfig::default();
-        let processor = AssessmentProcessor::new(config, log.clone());
+        let processor = AssessmentProcessor::new_for_test(config, log.clone());
 
         // Subscribe before submitting
         let mut rx = processor.subscribe();
@@ -430,7 +464,7 @@ mod tests {
         let mut config = AssessmentConfig::default();
         config.sampling.base_rate = 0.5;
 
-        let processor = AssessmentProcessor::new(config, log);
+        let processor = AssessmentProcessor::new_for_test(config, log);
 
         assert_eq!(processor.config().sampling.base_rate, 0.5);
         assert!(processor.config().enabled);
@@ -442,7 +476,7 @@ mod tests {
     async fn processor_handles_multiple_events() {
         let log = Arc::new(InMemoryAssessmentLog::new());
         let config = AssessmentConfig::default();
-        let processor = AssessmentProcessor::new(config, log.clone());
+        let processor = AssessmentProcessor::new_for_test(config, log.clone());
 
         // Submit multiple events
         for i in 0..5 {
@@ -463,7 +497,7 @@ mod tests {
     async fn processor_shutdown_stops_writer() {
         let log = Arc::new(InMemoryAssessmentLog::new());
         let config = AssessmentConfig::default();
-        let processor = AssessmentProcessor::new(config, log.clone());
+        let processor = AssessmentProcessor::new_for_test(config, log.clone());
 
         // Submit an event and wait for it
         processor.submit(make_lightweight_event("before-shutdown"));
@@ -494,7 +528,7 @@ mod tests {
     async fn process_event_emits_lightweight_event() {
         let log = Arc::new(InMemoryAssessmentLog::new());
         let config = AssessmentConfig::default();
-        let processor = AssessmentProcessor::new(config, log.clone());
+        let processor = AssessmentProcessor::new_for_test(config, log.clone());
 
         // Create a VibesEvent that the detector should process
         let event = make_text_delta("test-session", "Hello, this is a test message");
@@ -524,7 +558,7 @@ mod tests {
     async fn process_event_maintains_session_state() {
         let log = Arc::new(InMemoryAssessmentLog::new());
         let config = AssessmentConfig::default();
-        let processor = AssessmentProcessor::new(config, log.clone());
+        let processor = AssessmentProcessor::new_for_test(config, log.clone());
 
         // Process multiple events for the same session
         let events = vec![
@@ -564,7 +598,7 @@ mod tests {
     async fn process_event_detects_frustration_patterns() {
         let log = Arc::new(InMemoryAssessmentLog::new());
         let config = AssessmentConfig::default();
-        let processor = AssessmentProcessor::new(config, log.clone());
+        let processor = AssessmentProcessor::new_for_test(config, log.clone());
 
         // Send a frustrating message
         let event = make_text_delta("frustration-session", "This is broken and doesn't work!");
@@ -603,7 +637,7 @@ mod tests {
         // Use config with lower threshold for easier testing
         let mut config = AssessmentConfig::default();
         config.circuit_breaker.enabled = true;
-        let processor = AssessmentProcessor::new(config, log.clone());
+        let processor = AssessmentProcessor::new_for_test(config, log.clone());
 
         // Send multiple frustrating messages to trigger circuit breaker
         // Need enough signals to exceed the threshold
@@ -634,7 +668,7 @@ mod tests {
         let log = Arc::new(InMemoryAssessmentLog::new());
         let mut config = AssessmentConfig::default();
         config.circuit_breaker.enabled = false;
-        let processor = AssessmentProcessor::new(config, log.clone());
+        let processor = AssessmentProcessor::new_for_test(config, log.clone());
 
         // Send frustrating messages
         for i in 0..10 {
@@ -664,7 +698,7 @@ mod tests {
     async fn process_event_buffers_events_per_session() {
         let log = Arc::new(InMemoryAssessmentLog::new());
         let config = AssessmentConfig::default();
-        let processor = AssessmentProcessor::new(config, log.clone());
+        let processor = AssessmentProcessor::new_for_test(config, log.clone());
 
         // Process multiple events for the same session
         for i in 0..3 {
@@ -683,7 +717,7 @@ mod tests {
     async fn process_event_buffers_separate_sessions() {
         let log = Arc::new(InMemoryAssessmentLog::new());
         let config = AssessmentConfig::default();
-        let processor = AssessmentProcessor::new(config, log.clone());
+        let processor = AssessmentProcessor::new_for_test(config, log.clone());
 
         // Process events for two different sessions
         for i in 0..2 {
@@ -712,7 +746,7 @@ mod tests {
         let config = AssessmentConfig::default();
         // Default config has 5 minute interval, but first checkpoint triggers immediately
         // when min_events is met (no prior checkpoint recorded)
-        let processor = AssessmentProcessor::new(config, log.clone());
+        let processor = AssessmentProcessor::new_for_test(config, log.clone());
 
         // Process enough events to meet min_events threshold (default 5)
         for i in 0..6 {
@@ -738,7 +772,7 @@ mod tests {
     async fn process_event_emits_medium_event_on_checkpoint() {
         let log = Arc::new(InMemoryAssessmentLog::new());
         let config = AssessmentConfig::default();
-        let processor = AssessmentProcessor::new(config, log.clone());
+        let processor = AssessmentProcessor::new_for_test(config, log.clone());
 
         // Process enough events to trigger a checkpoint (time interval with 0 second config)
         for i in 0..6 {
@@ -771,7 +805,7 @@ mod tests {
     async fn full_pipeline_integration() {
         let log = Arc::new(InMemoryAssessmentLog::new());
         let config = AssessmentConfig::default();
-        let processor = AssessmentProcessor::new(config, log.clone());
+        let processor = AssessmentProcessor::new_for_test(config, log.clone());
         let session_id: SessionId = "integration-test-session".into();
 
         // Phase 1: Send neutral messages to establish baseline
