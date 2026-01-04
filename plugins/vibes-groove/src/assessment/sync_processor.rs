@@ -134,8 +134,10 @@ impl SyncAssessmentProcessor {
         if let Some(ref le) = lightweight_event {
             // Serialize to JSON for FFI boundary
             if let Ok(payload) = serde_json::to_string(le) {
+                // Use unique ID per result type to avoid multi-select bug
+                let lightweight_id = format!("{event_id_str}-lightweight");
                 results.push(PluginAssessmentResult::lightweight(
-                    &event_id_str,
+                    &lightweight_id,
                     session_id.as_str(),
                     payload,
                 ));
@@ -173,8 +175,10 @@ impl SyncAssessmentProcessor {
                     super::MediumEvent::new(le.context.clone(), (0, le.message_idx + 1), trigger);
 
                 if let Ok(payload) = serde_json::to_string(&medium_event) {
+                    // Use unique ID per result type to avoid multi-select bug
+                    let checkpoint_id = format!("{event_id_str}-checkpoint");
                     results.push(PluginAssessmentResult::checkpoint(
-                        &event_id_str,
+                        &checkpoint_id,
                         session_id.as_str(),
                         payload,
                     ));
@@ -547,5 +551,68 @@ mod tests {
         let has_checkpoint = all_results.iter().any(|r| r.result_type == "checkpoint");
         assert!(has_lightweight, "Should have lightweight results");
         assert!(has_checkpoint, "Should have checkpoint results");
+    }
+
+    #[test]
+    fn test_sync_processor_all_results_have_unique_event_ids() {
+        // Regression test for multi-select bug: when both lightweight and checkpoint
+        // results are generated from the same raw event, they must have different
+        // event_ids to prevent selecting multiple rows in the UI.
+        let config = AssessmentConfig::default();
+        let processor = SyncAssessmentProcessor::new(config);
+
+        // Process enough events to trigger a checkpoint
+        let mut all_results = Vec::new();
+        for i in 0..10 {
+            let raw = make_raw_event("unique-id-test", &format!("Message {i}"));
+            all_results.extend(processor.process(&raw));
+        }
+
+        // Collect all event_ids
+        let event_ids: Vec<&str> = all_results.iter().map(|r| r.event_id.as_str()).collect();
+
+        // Verify all event_ids are unique
+        let unique_ids: std::collections::HashSet<&str> = event_ids.iter().copied().collect();
+        assert_eq!(
+            event_ids.len(),
+            unique_ids.len(),
+            "All results should have unique event_ids. Found duplicates: {:?}",
+            event_ids
+        );
+    }
+
+    #[test]
+    fn test_sync_processor_event_ids_include_result_type_suffix() {
+        // Verify that event_ids include the result type as a suffix
+        let config = AssessmentConfig::default();
+        let processor = SyncAssessmentProcessor::new(config);
+
+        // Process enough events to trigger a checkpoint
+        let mut all_results = Vec::new();
+        for i in 0..6 {
+            let raw = make_raw_event("suffix-test", &format!("Message {i}"));
+            all_results.extend(processor.process(&raw));
+        }
+
+        // Verify lightweight results have -lightweight suffix
+        for result in all_results
+            .iter()
+            .filter(|r| r.result_type == "lightweight")
+        {
+            assert!(
+                result.event_id.ends_with("-lightweight"),
+                "Lightweight result should have -lightweight suffix, got: {}",
+                result.event_id
+            );
+        }
+
+        // Verify checkpoint results have -checkpoint suffix
+        for result in all_results.iter().filter(|r| r.result_type == "checkpoint") {
+            assert!(
+                result.event_id.ends_with("-checkpoint"),
+                "Checkpoint result should have -checkpoint suffix, got: {}",
+                result.event_id
+            );
+        }
     }
 }
