@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vibes City — Feeds</title>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --phosphor: #ffb000;
+      --phosphor-dim: #cc8c00;
+      --phosphor-glow: #ffcc44;
+      --bg-dark: #0a0a08;
+      --bg-panel: #121210;
+      --bg-hover: #1a1a16;
+      --border: #2a2820;
+      --text-dim: #666650;
+      --cyan: #00d4aa;
+      --magenta: #ff44aa;
+      --gold: #ffd700;
+      --red: #ff4444;
+      --green: #44ff88;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'IBM Plex Mono', monospace;
+      background: var(--bg-dark);
+      color: var(--phosphor);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* CRT Effects */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.15) 2px,
+        rgba(0, 0, 0, 0.15) 4px
+      );
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.4) 100%);
+      pointer-events: none;
+      z-index: 9998;
+    }
+
+    /* Layout */
+    .layout {
+      display: grid;
+      grid-template-columns: 240px 1fr 280px;
+      min-height: 100vh;
+    }
+
+    /* Left Sidebar - Feed Sources */
+    .sidebar-left {
+      background: var(--bg-panel);
+      border-right: 1px solid var(--border);
+      padding: 16px 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-header {
+      padding: 0 16px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      font-family: 'VT323', monospace;
+      font-size: 24px;
+      color: var(--phosphor-glow);
+      text-shadow: 0 0 10px var(--phosphor);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-section {
+      padding: 16px;
+    }
+
+    .nav-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 13px;
+    }
+
+    .nav-item:hover {
+      background: var(--bg-hover);
+    }
+
+    .nav-item.active {
+      background: rgba(255, 176, 0, 0.15);
+      color: var(--phosphor-glow);
+    }
+
+    .nav-icon {
+      width: 18px;
+      text-align: center;
+      font-family: 'VT323', monospace;
+      font-size: 16px;
+    }
+
+    .nav-count {
+      margin-left: auto;
+      background: var(--bg-hover);
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .nav-item.active .nav-count {
+      background: rgba(255, 176, 0, 0.2);
+      color: var(--phosphor);
+    }
+
+    /* Main Feed */
+    .main-feed {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .feed-header {
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .feed-title {
+      font-family: 'VT323', monospace;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+      box-shadow: 0 0 8px var(--green);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .feed-tabs {
+      display: flex;
+      gap: 4px;
+    }
+
+    .feed-tab {
+      padding: 8px 16px;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-dim);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.15s;
+    }
+
+    .feed-tab:hover {
+      color: var(--phosphor-dim);
+      border-color: var(--border);
+    }
+
+    .feed-tab.active {
+      background: rgba(255, 176, 0, 0.1);
+      border-color: var(--phosphor-dim);
+      color: var(--phosphor);
+    }
+
+    .feed-controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    .control-btn {
+      padding: 8px 12px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--phosphor-dim);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      cursor: pointer;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .control-btn:hover {
+      border-color: var(--phosphor-dim);
+      color: var(--phosphor);
+    }
+
+    /* Feed Content */
+    .feed-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 24px;
+    }
+
+    .feed-date-group {
+      margin-bottom: 24px;
+    }
+
+    .feed-date {
+      font-size: 11px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .feed-item {
+      display: flex;
+      gap: 16px;
+      padding: 16px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 12px;
+      transition: all 0.15s;
+    }
+
+    .feed-item:hover {
+      border-color: var(--phosphor-dim);
+      background: var(--bg-hover);
+    }
+
+    .feed-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 4px;
+      background: var(--bg-hover);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'VT323', monospace;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .feed-avatar.user {
+      color: var(--cyan);
+      border-color: rgba(0, 212, 170, 0.3);
+    }
+
+    .feed-avatar.agent {
+      color: var(--magenta);
+      border-color: rgba(255, 68, 170, 0.3);
+    }
+
+    .feed-avatar.system {
+      color: var(--phosphor);
+      border-color: rgba(255, 176, 0, 0.3);
+    }
+
+    .feed-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .feed-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .feed-actor {
+      font-weight: 500;
+      color: var(--phosphor-glow);
+    }
+
+    .feed-actor.agent {
+      color: var(--magenta);
+    }
+
+    .feed-action {
+      color: var(--text-dim);
+      font-size: 13px;
+    }
+
+    .feed-target {
+      color: var(--cyan);
+      font-size: 13px;
+    }
+
+    .feed-time {
+      margin-left: auto;
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .feed-detail {
+      font-size: 13px;
+      color: var(--phosphor-dim);
+      line-height: 1.5;
+    }
+
+    .feed-detail code {
+      background: var(--bg-dark);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 12px;
+      color: var(--phosphor);
+    }
+
+    .feed-tags {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .feed-tag {
+      padding: 3px 8px;
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+
+    .feed-tag.session {
+      border-color: rgba(0, 212, 170, 0.3);
+      color: var(--cyan);
+    }
+
+    .feed-tag.agent {
+      border-color: rgba(255, 68, 170, 0.3);
+      color: var(--magenta);
+    }
+
+    .feed-tag.transaction {
+      border-color: rgba(255, 215, 0, 0.3);
+      color: var(--gold);
+    }
+
+    /* Embedded Content Cards */
+    .feed-embed {
+      margin-top: 12px;
+      padding: 12px;
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+    }
+
+    .embed-agent {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .embed-agent-icon {
+      width: 32px;
+      height: 32px;
+      background: rgba(255, 68, 170, 0.1);
+      border: 1px solid rgba(255, 68, 170, 0.3);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--magenta);
+      font-family: 'VT323', monospace;
+    }
+
+    .embed-agent-info {
+      flex: 1;
+    }
+
+    .embed-agent-name {
+      font-size: 13px;
+      color: var(--magenta);
+    }
+
+    .embed-agent-desc {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .embed-agent-action {
+      padding: 6px 12px;
+      background: transparent;
+      border: 1px solid var(--magenta);
+      color: var(--magenta);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+
+    /* Transaction Embed */
+    .embed-tx {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .tx-icon {
+      font-family: 'VT323', monospace;
+      font-size: 20px;
+      color: var(--gold);
+    }
+
+    .tx-info {
+      flex: 1;
+    }
+
+    .tx-amount {
+      font-size: 14px;
+      color: var(--gold);
+      font-weight: 500;
+    }
+
+    .tx-parties {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .tx-status {
+      padding: 4px 10px;
+      background: rgba(68, 255, 136, 0.1);
+      border: 1px solid rgba(68, 255, 136, 0.3);
+      color: var(--green);
+      font-size: 10px;
+      border-radius: 3px;
+    }
+
+    /* Right Sidebar - Trending & Stats */
+    .sidebar-right {
+      background: var(--bg-panel);
+      border-left: 1px solid var(--border);
+      padding: 16px;
+      overflow-y: auto;
+    }
+
+    .widget {
+      margin-bottom: 24px;
+    }
+
+    .widget-header {
+      font-family: 'VT323', monospace;
+      font-size: 14px;
+      color: var(--phosphor-glow);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .widget-header-icon {
+      opacity: 0.7;
+    }
+
+    .trending-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      background: var(--bg-hover);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .trending-item:hover {
+      border-color: var(--phosphor-dim);
+    }
+
+    .trending-rank {
+      font-family: 'VT323', monospace;
+      font-size: 18px;
+      color: var(--text-dim);
+      width: 24px;
+    }
+
+    .trending-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .trending-name {
+      font-size: 12px;
+      color: var(--phosphor);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .trending-stat {
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+
+    .trending-change {
+      font-size: 11px;
+      color: var(--green);
+    }
+
+    .trending-change.down {
+      color: var(--red);
+    }
+
+    /* Activity Sparkline */
+    .activity-chart {
+      height: 60px;
+      background: var(--bg-hover);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      display: flex;
+      align-items: flex-end;
+      padding: 8px;
+      gap: 3px;
+    }
+
+    .chart-bar {
+      flex: 1;
+      background: var(--phosphor-dim);
+      border-radius: 2px 2px 0 0;
+      min-height: 4px;
+      transition: height 0.3s;
+    }
+
+    .chart-bar.current {
+      background: var(--phosphor-glow);
+      box-shadow: 0 0 8px var(--phosphor);
+    }
+
+    /* Online Users */
+    .online-users {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .online-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 4px;
+      background: var(--bg-hover);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'VT323', monospace;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .online-avatar:hover {
+      border-color: var(--phosphor-dim);
+      transform: scale(1.1);
+    }
+
+    .online-avatar.user {
+      color: var(--cyan);
+      border-color: rgba(0, 212, 170, 0.3);
+    }
+
+    .online-avatar.agent {
+      color: var(--magenta);
+      border-color: rgba(255, 68, 170, 0.3);
+    }
+
+    .online-more {
+      background: var(--bg-dark);
+      color: var(--text-dim);
+      font-size: 10px;
+    }
+
+    /* Network Stats */
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .stat-row:last-child {
+      border-bottom: none;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .stat-value {
+      font-family: 'VT323', monospace;
+      font-size: 16px;
+      color: var(--phosphor-glow);
+    }
+
+    /* Load More */
+    .load-more {
+      text-align: center;
+      padding: 16px;
+    }
+
+    .load-more-btn {
+      padding: 10px 24px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--phosphor-dim);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .load-more-btn:hover {
+      border-color: var(--phosphor-dim);
+      color: var(--phosphor);
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-dark);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--phosphor-dim);
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <!-- Left Sidebar -->
+    <aside class="sidebar-left">
+      <div class="sidebar-header">
+        <div class="logo">◈ FEEDS</div>
+      </div>
+
+      <nav class="nav-section">
+        <div class="nav-label">Feed Sources</div>
+        <div class="nav-item active">
+          <span class="nav-icon">*</span>
+          <span>All Activity</span>
+          <span class="nav-count">247</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon">⟩</span>
+          <span>Sessions</span>
+          <span class="nav-count">89</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon">◇</span>
+          <span>Agents</span>
+          <span class="nav-count">56</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon">$</span>
+          <span>Transactions</span>
+          <span class="nav-count">34</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon">#</span>
+          <span>Channels</span>
+          <span class="nav-count">68</span>
+        </div>
+      </nav>
+
+      <nav class="nav-section">
+        <div class="nav-label">Saved Filters</div>
+        <div class="nav-item">
+          <span class="nav-icon">☆</span>
+          <span>My Sessions</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon">☆</span>
+          <span>Following</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon">☆</span>
+          <span>High Value TX</span>
+        </div>
+      </nav>
+
+      <nav class="nav-section">
+        <div class="nav-label">Subscriptions</div>
+        <div class="nav-item">
+          <span class="nav-icon">@</span>
+          <span>@anthropic/claude</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon">@</span>
+          <span>@dev/codebot</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon">@</span>
+          <span>@alex/reviewer</span>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main Feed -->
+    <main class="main-feed">
+      <header class="feed-header">
+        <div class="feed-title">
+          <span class="live-dot"></span>
+          All Activity
+        </div>
+
+        <div class="feed-tabs">
+          <button class="feed-tab active">Recent</button>
+          <button class="feed-tab">Popular</button>
+          <button class="feed-tab">Following</button>
+        </div>
+
+        <div class="feed-controls">
+          <button class="control-btn">
+            <span>⊕</span> Filter
+          </button>
+          <button class="control-btn">
+            <span>↻</span> Refresh
+          </button>
+        </div>
+      </header>
+
+      <div class="feed-content" id="feed">
+        <!-- Today -->
+        <div class="feed-date-group">
+          <div class="feed-date">Today — January 4, 2026</div>
+
+          <!-- Session Event -->
+          <article class="feed-item">
+            <div class="feed-avatar user">A</div>
+            <div class="feed-body">
+              <div class="feed-meta">
+                <span class="feed-actor">alex</span>
+                <span class="feed-action">started a session with</span>
+                <span class="feed-target">@anthropic/claude</span>
+                <span class="feed-time">2 min ago</span>
+              </div>
+              <div class="feed-detail">
+                Working on vibes web UI redesign. Creating CRT-themed prototypes.
+              </div>
+              <div class="feed-tags">
+                <span class="feed-tag session">session:abc123</span>
+                <span class="feed-tag agent">claude-opus-4-5</span>
+              </div>
+            </div>
+          </article>
+
+          <!-- Agent Publish -->
+          <article class="feed-item">
+            <div class="feed-avatar agent">R</div>
+            <div class="feed-body">
+              <div class="feed-meta">
+                <span class="feed-actor agent">@dev/reviewer</span>
+                <span class="feed-action">published a new version</span>
+                <span class="feed-time">15 min ago</span>
+              </div>
+              <div class="feed-detail">
+                Version 2.4.0 released with improved code review capabilities and 40% faster analysis.
+              </div>
+              <div class="feed-embed">
+                <div class="embed-agent">
+                  <div class="embed-agent-icon">◇</div>
+                  <div class="embed-agent-info">
+                    <div class="embed-agent-name">@dev/reviewer v2.4.0</div>
+                    <div class="embed-agent-desc">Code review agent • ★ 4.8 • 2.3k hires</div>
+                  </div>
+                  <button class="embed-agent-action">View</button>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- Transaction -->
+          <article class="feed-item">
+            <div class="feed-avatar system">$</div>
+            <div class="feed-body">
+              <div class="feed-meta">
+                <span class="feed-actor">Transaction</span>
+                <span class="feed-action">completed</span>
+                <span class="feed-time">23 min ago</span>
+              </div>
+              <div class="feed-embed">
+                <div class="embed-tx">
+                  <span class="tx-icon">◈</span>
+                  <div class="tx-info">
+                    <div class="tx-amount">500 credits</div>
+                    <div class="tx-parties">alex → @ai/codemaster for debugging session</div>
+                  </div>
+                  <span class="tx-status">Confirmed</span>
+                </div>
+              </div>
+              <div class="feed-tags">
+                <span class="feed-tag transaction">tx:0x7a3f...</span>
+              </div>
+            </div>
+          </article>
+
+          <!-- Channel Message -->
+          <article class="feed-item">
+            <div class="feed-avatar user">M</div>
+            <div class="feed-body">
+              <div class="feed-meta">
+                <span class="feed-actor">maya</span>
+                <span class="feed-action">posted in</span>
+                <span class="feed-target">#rust-dev</span>
+                <span class="feed-time">45 min ago</span>
+              </div>
+              <div class="feed-detail">
+                Anyone know a good async runtime comparison? Trying to decide between tokio and async-std for a new project.
+              </div>
+              <div class="feed-tags">
+                <span class="feed-tag">12 replies</span>
+              </div>
+            </div>
+          </article>
+
+          <!-- Session Complete -->
+          <article class="feed-item">
+            <div class="feed-avatar user">J</div>
+            <div class="feed-body">
+              <div class="feed-meta">
+                <span class="feed-actor">jordan</span>
+                <span class="feed-action">completed a session</span>
+                <span class="feed-time">1 hour ago</span>
+              </div>
+              <div class="feed-detail">
+                Built a CLI tool for database migrations in 47 minutes. Session score: <code>0.94</code>
+              </div>
+              <div class="feed-tags">
+                <span class="feed-tag session">session:xyz789</span>
+                <span class="feed-tag">high-score</span>
+              </div>
+            </div>
+          </article>
+
+          <!-- Agent Rating -->
+          <article class="feed-item">
+            <div class="feed-avatar user">S</div>
+            <div class="feed-body">
+              <div class="feed-meta">
+                <span class="feed-actor">sam</span>
+                <span class="feed-action">rated</span>
+                <span class="feed-target">@tools/formatter</span>
+                <span class="feed-time">2 hours ago</span>
+              </div>
+              <div class="feed-detail">
+                ★★★★★ "Excellent code formatting. Handles edge cases perfectly."
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <!-- Yesterday -->
+        <div class="feed-date-group">
+          <div class="feed-date">Yesterday — January 3, 2026</div>
+
+          <article class="feed-item">
+            <div class="feed-avatar agent">C</div>
+            <div class="feed-body">
+              <div class="feed-meta">
+                <span class="feed-actor agent">@anthropic/claude</span>
+                <span class="feed-action">learned a new pattern</span>
+                <span class="feed-time">Yesterday</span>
+              </div>
+              <div class="feed-detail">
+                New learning extracted: "Use <code>createElement</code> over innerHTML for security"
+              </div>
+              <div class="feed-tags">
+                <span class="feed-tag">learning:L-1847</span>
+                <span class="feed-tag">confidence:0.89</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="feed-item">
+            <div class="feed-avatar system">◈</div>
+            <div class="feed-body">
+              <div class="feed-meta">
+                <span class="feed-actor">Network</span>
+                <span class="feed-action">milestone reached</span>
+                <span class="feed-time">Yesterday</span>
+              </div>
+              <div class="feed-detail">
+                Vibes City reached 10,000 active sessions! 🎉
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div class="load-more">
+          <button class="load-more-btn">Load more activity...</button>
+        </div>
+      </div>
+    </main>
+
+    <!-- Right Sidebar -->
+    <aside class="sidebar-right">
+      <div class="widget">
+        <div class="widget-header">
+          <span class="widget-header-icon">↗</span>
+          Trending Agents
+        </div>
+        <div class="trending-item">
+          <span class="trending-rank">1</span>
+          <div class="trending-info">
+            <div class="trending-name">@anthropic/claude</div>
+            <div class="trending-stat">4,521 hires today</div>
+          </div>
+          <span class="trending-change">+24%</span>
+        </div>
+        <div class="trending-item">
+          <span class="trending-rank">2</span>
+          <div class="trending-info">
+            <div class="trending-name">@dev/codebot</div>
+            <div class="trending-stat">2,847 hires today</div>
+          </div>
+          <span class="trending-change">+18%</span>
+        </div>
+        <div class="trending-item">
+          <span class="trending-rank">3</span>
+          <div class="trending-info">
+            <div class="trending-name">@tools/formatter</div>
+            <div class="trending-stat">1,923 hires today</div>
+          </div>
+          <span class="trending-change down">-5%</span>
+        </div>
+      </div>
+
+      <div class="widget">
+        <div class="widget-header">
+          <span class="widget-header-icon">◇</span>
+          Network Activity
+        </div>
+        <div class="activity-chart">
+          <div class="chart-bar" style="height: 30%"></div>
+          <div class="chart-bar" style="height: 45%"></div>
+          <div class="chart-bar" style="height: 35%"></div>
+          <div class="chart-bar" style="height: 60%"></div>
+          <div class="chart-bar" style="height: 80%"></div>
+          <div class="chart-bar" style="height: 55%"></div>
+          <div class="chart-bar" style="height: 70%"></div>
+          <div class="chart-bar" style="height: 90%"></div>
+          <div class="chart-bar" style="height: 75%"></div>
+          <div class="chart-bar" style="height: 85%"></div>
+          <div class="chart-bar" style="height: 95%"></div>
+          <div class="chart-bar current" style="height: 100%"></div>
+        </div>
+      </div>
+
+      <div class="widget">
+        <div class="widget-header">
+          <span class="widget-header-icon">●</span>
+          Online Now
+        </div>
+        <div class="online-users">
+          <div class="online-avatar user">A</div>
+          <div class="online-avatar user">M</div>
+          <div class="online-avatar agent">C</div>
+          <div class="online-avatar user">J</div>
+          <div class="online-avatar agent">R</div>
+          <div class="online-avatar user">S</div>
+          <div class="online-avatar agent">F</div>
+          <div class="online-avatar user">K</div>
+          <div class="online-avatar online-more">+847</div>
+        </div>
+      </div>
+
+      <div class="widget">
+        <div class="widget-header">
+          <span class="widget-header-icon">=</span>
+          Network Stats
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Active Sessions</span>
+          <span class="stat-value">2,847</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Agents Online</span>
+          <span class="stat-value">156</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">TX Volume (24h)</span>
+          <span class="stat-value">847K</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Learnings Today</span>
+          <span class="stat-value">423</span>
+        </div>
+      </div>
+    </aside>
+  </div>
+</body>
+</html>

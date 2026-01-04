@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>vibes :: dashboard — Home</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ═══════════════════════════════════════════════════════════════
+       VIBES HOME — Dashboard with Vibes City network overview
+       ═══════════════════════════════════════════════════════════════ */
+
+    :root {
+      --phosphor: #ffb000;
+      --phosphor-bright: #ffc940;
+      --phosphor-dim: #996a00;
+      --phosphor-faint: #4d3500;
+      --phosphor-glow: rgba(255, 176, 0, 0.4);
+      --phosphor-subtle: rgba(255, 176, 0, 0.15);
+
+      --screen: #0a0908;
+      --screen-light: #141210;
+      --screen-lighter: #1e1a16;
+
+      --red: #ff4444;
+      --green: #44ff44;
+      --cyan: #44ffff;
+      --magenta: #ff44ff;
+      --gold: #ffd700;
+
+      --font-display: 'VT323', monospace;
+      --font-mono: 'IBM Plex Mono', monospace;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+      background: var(--screen);
+      overflow: hidden;
+    }
+
+    body {
+      font-family: var(--font-mono);
+      color: var(--phosphor);
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(0deg, rgba(0,0,0,0.15) 0px, rgba(0,0,0,0.15) 1px, transparent 1px, transparent 2px);
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at center, transparent 0%, transparent 60%, rgba(0,0,0,0.4) 100%);
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    .glow { text-shadow: 0 0 2px var(--phosphor), 0 0 8px var(--phosphor-glow); }
+    .glow-bright { text-shadow: 0 0 2px var(--phosphor-bright), 0 0 10px var(--phosphor); }
+    .glow-green { color: var(--green); text-shadow: 0 0 4px var(--green); }
+    .glow-red { color: var(--red); text-shadow: 0 0 4px var(--red); }
+    .glow-cyan { color: var(--cyan); text-shadow: 0 0 4px var(--cyan); }
+    .glow-magenta { color: var(--magenta); text-shadow: 0 0 4px var(--magenta); }
+    .glow-gold { color: var(--gold); text-shadow: 0 0 4px var(--gold); }
+
+    .app {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      height: 100vh;
+      padding: 1rem;
+      gap: 0.5rem;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--phosphor-faint);
+      background: var(--screen-light);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .logo {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      letter-spacing: 0.15em;
+    }
+
+    .nav {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .nav-item {
+      padding: 0.375rem 0.75rem;
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      color: var(--phosphor-dim);
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+
+    .nav-item:hover {
+      color: var(--phosphor);
+    }
+
+    .nav-item.active {
+      color: var(--phosphor);
+      border-color: var(--phosphor-dim);
+      background: var(--phosphor-subtle);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .network-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-display);
+      font-size: 1rem;
+      padding: 0.25rem 0.75rem;
+      border: 1px solid var(--green);
+      color: var(--green);
+    }
+
+    .network-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .header-action {
+      font-family: var(--font-display);
+      font-size: 1.125rem;
+      color: var(--phosphor-dim);
+      cursor: pointer;
+    }
+
+    .header-action:hover {
+      color: var(--phosphor);
+    }
+
+    /* Main grid */
+    .main {
+      display: grid;
+      grid-template-columns: 1fr 1fr 320px;
+      grid-template-rows: auto 1fr 1fr;
+      gap: 0.5rem;
+      overflow: hidden;
+    }
+
+    /* Panel base */
+    .panel {
+      border: 1px solid var(--phosphor-faint);
+      background: var(--screen-light);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 0.5rem 0.75rem;
+      font-family: var(--font-display);
+      font-size: 1rem;
+      letter-spacing: 0.1em;
+      border-bottom: 1px solid var(--phosphor-faint);
+      color: var(--phosphor-dim);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.75rem;
+    }
+
+    /* Welcome/Status banner */
+    .welcome-banner {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.5rem;
+      border: 1px solid var(--phosphor-faint);
+      background: var(--screen-light);
+    }
+
+    .welcome-left {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .welcome-text h1 {
+      font-family: var(--font-display);
+      font-size: 1.75rem;
+      font-weight: normal;
+      letter-spacing: 0.1em;
+    }
+
+    .welcome-text p {
+      color: var(--phosphor-dim);
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+    }
+
+    .quick-stats {
+      display: flex;
+      gap: 2rem;
+    }
+
+    .quick-stat {
+      text-align: center;
+    }
+
+    .quick-stat-value {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      line-height: 1;
+    }
+
+    .quick-stat-label {
+      font-size: 0.5625rem;
+      color: var(--phosphor-dim);
+      letter-spacing: 0.1em;
+      margin-top: 0.25rem;
+    }
+
+    /* Local Sessions */
+    .session-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.625rem;
+      border: 1px solid var(--phosphor-faint);
+      margin-bottom: 0.5rem;
+      cursor: pointer;
+      transition: all 0.1s;
+    }
+
+    .session-item:hover {
+      border-color: var(--phosphor-dim);
+      background: var(--phosphor-subtle);
+    }
+
+    .session-status {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .session-status.active {
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+    }
+
+    .session-status.idle {
+      background: var(--phosphor-dim);
+    }
+
+    .session-info {
+      flex: 1;
+    }
+
+    .session-name {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      color: var(--phosphor);
+    }
+
+    .session-meta {
+      font-size: 0.625rem;
+      color: var(--phosphor-dim);
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 0.125rem;
+    }
+
+    .session-action {
+      font-family: var(--font-display);
+      font-size: 0.75rem;
+      color: var(--phosphor-dim);
+      padding: 0.25rem 0.5rem;
+      border: 1px solid var(--phosphor-faint);
+      cursor: pointer;
+    }
+
+    .session-action:hover {
+      color: var(--phosphor);
+      border-color: var(--phosphor-dim);
+    }
+
+    /* City Network Overview */
+    .city-map {
+      position: relative;
+      height: 100%;
+      min-height: 200px;
+    }
+
+    .city-node {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+
+    .city-node:hover {
+      transform: scale(1.1);
+    }
+
+    .node-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--phosphor);
+      box-shadow: 0 0 8px var(--phosphor-glow);
+    }
+
+    .node-dot.self {
+      background: var(--cyan);
+      box-shadow: 0 0 12px var(--cyan);
+      width: 16px;
+      height: 16px;
+    }
+
+    .node-dot.hub {
+      background: var(--gold);
+      box-shadow: 0 0 12px var(--gold);
+    }
+
+    .node-label {
+      font-family: var(--font-display);
+      font-size: 0.6875rem;
+      color: var(--phosphor-dim);
+      margin-top: 0.25rem;
+      white-space: nowrap;
+    }
+
+    .city-connection {
+      position: absolute;
+      height: 1px;
+      background: var(--phosphor-faint);
+      transform-origin: left center;
+    }
+
+    .city-connection.active {
+      background: var(--phosphor-dim);
+      box-shadow: 0 0 4px var(--phosphor-glow);
+    }
+
+    /* Network Activity Feed */
+    .activity-item {
+      display: flex;
+      gap: 0.75rem;
+      padding: 0.5rem 0;
+      border-bottom: 1px dashed var(--phosphor-faint);
+      font-size: 0.75rem;
+    }
+
+    .activity-time {
+      color: var(--phosphor-dim);
+      font-variant-numeric: tabular-nums;
+      flex-shrink: 0;
+      width: 50px;
+    }
+
+    .activity-content {
+      color: var(--phosphor);
+    }
+
+    .activity-user {
+      color: var(--cyan);
+    }
+
+    .activity-agent {
+      color: var(--magenta);
+    }
+
+    /* Wallet Panel */
+    .wallet-balance {
+      text-align: center;
+      padding: 1rem;
+      border: 1px solid var(--phosphor-faint);
+      margin-bottom: 0.75rem;
+    }
+
+    .balance-value {
+      font-family: var(--font-display);
+      font-size: 2.5rem;
+      line-height: 1;
+    }
+
+    .balance-label {
+      font-size: 0.625rem;
+      color: var(--phosphor-dim);
+      letter-spacing: 0.1em;
+      margin-top: 0.25rem;
+    }
+
+    .wallet-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.375rem 0;
+      font-size: 0.75rem;
+      border-bottom: 1px dashed var(--phosphor-faint);
+    }
+
+    .wallet-key {
+      color: var(--phosphor-dim);
+    }
+
+    .wallet-val {
+      font-family: var(--font-display);
+      font-size: 0.875rem;
+    }
+
+    /* Agent Cards */
+    .agent-card {
+      border: 1px solid var(--phosphor-faint);
+      padding: 0.75rem;
+      margin-bottom: 0.5rem;
+      cursor: pointer;
+      transition: all 0.1s;
+    }
+
+    .agent-card:hover {
+      border-color: var(--phosphor-dim);
+      background: var(--phosphor-subtle);
+    }
+
+    .agent-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.5rem;
+    }
+
+    .agent-name {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      color: var(--magenta);
+    }
+
+    .agent-owner {
+      font-size: 0.625rem;
+      color: var(--phosphor-dim);
+      margin-top: 0.125rem;
+    }
+
+    .agent-rating {
+      font-family: var(--font-display);
+      font-size: 0.875rem;
+      color: var(--gold);
+    }
+
+    .agent-desc {
+      font-size: 0.75rem;
+      color: var(--phosphor-dim);
+      line-height: 1.4;
+      margin-bottom: 0.5rem;
+    }
+
+    .agent-stats {
+      display: flex;
+      gap: 1rem;
+      font-size: 0.625rem;
+      color: var(--phosphor-faint);
+    }
+
+    /* Quick Actions */
+    .quick-action {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.625rem;
+      border: 1px solid var(--phosphor-faint);
+      margin-bottom: 0.375rem;
+      cursor: pointer;
+      transition: all 0.1s;
+    }
+
+    .quick-action:hover {
+      border-color: var(--phosphor-dim);
+      background: var(--phosphor-subtle);
+    }
+
+    .action-icon {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      width: 32px;
+      text-align: center;
+    }
+
+    .action-text {
+      flex: 1;
+    }
+
+    .action-title {
+      font-family: var(--font-display);
+      font-size: 0.9375rem;
+    }
+
+    .action-desc {
+      font-size: 0.625rem;
+      color: var(--phosphor-dim);
+    }
+
+    /* Hotkey hint */
+    .hotkey-hint {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      font-family: var(--font-display);
+      font-size: 0.875rem;
+      color: var(--phosphor-faint);
+      z-index: 100;
+      display: flex;
+      gap: 1.25rem;
+    }
+
+    .hotkey-key {
+      color: var(--phosphor-dim);
+      padding: 0.125rem 0.375rem;
+      border: 1px solid var(--phosphor-faint);
+      font-size: 0.75rem;
+      margin-right: 0.25rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <span class="logo glow-bright">VIBES</span>
+        <nav class="nav">
+          <span class="nav-item active">DASH</span>
+          <span class="nav-item">SESS</span>
+          <span class="nav-item">FIRE</span>
+          <span class="nav-item">GROOVE</span>
+          <span class="nav-item glow-magenta">CITY</span>
+        </nav>
+      </div>
+      <div class="header-right">
+        <div class="network-status">
+          <span class="network-dot"></span>
+          <span>VIBES CITY ONLINE</span>
+        </div>
+        <span class="header-action">◐ THEME</span>
+        <span class="header-action">⚙ SETTINGS</span>
+      </div>
+    </header>
+
+    <!-- Main -->
+    <main class="main">
+      <!-- Welcome Banner -->
+      <div class="welcome-banner">
+        <div class="welcome-left">
+          <div class="welcome-text">
+            <h1 class="glow">WELCOME BACK, ALEX</h1>
+            <p>3 active sessions • 47 learnings captured • Connected to Vibes City</p>
+          </div>
+        </div>
+        <div class="quick-stats">
+          <div class="quick-stat">
+            <div class="quick-stat-value glow-green">3</div>
+            <div class="quick-stat-label">ACTIVE</div>
+          </div>
+          <div class="quick-stat">
+            <div class="quick-stat-value glow">87</div>
+            <div class="quick-stat-label">SCORE</div>
+          </div>
+          <div class="quick-stat">
+            <div class="quick-stat-value glow-gold">$42.50</div>
+            <div class="quick-stat-label">BALANCE</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Local Sessions -->
+      <section class="panel">
+        <div class="panel-header">
+          <span>LOCAL SESSIONS</span>
+          <span style="font-size: 0.75rem; cursor: pointer;">+ NEW</span>
+        </div>
+        <div class="panel-body">
+          <div class="session-item">
+            <span class="session-status active"></span>
+            <div class="session-info">
+              <div class="session-name">api-refactor</div>
+              <div class="session-meta"><span>a7f3c2</span><span>47 tools</span><span>1h 23m</span></div>
+            </div>
+            <span class="session-action">OPEN</span>
+          </div>
+          <div class="session-item">
+            <span class="session-status active"></span>
+            <div class="session-info">
+              <div class="session-name">bug-fix-auth</div>
+              <div class="session-meta"><span>b2e1d4</span><span>23 tools</span><span>45m</span></div>
+            </div>
+            <span class="session-action">OPEN</span>
+          </div>
+          <div class="session-item">
+            <span class="session-status active"></span>
+            <div class="session-info">
+              <div class="session-name">perf-testing</div>
+              <div class="session-meta"><span>c9d4e5</span><span>89 tools</span><span>2h 15m</span></div>
+            </div>
+            <span class="session-action">OPEN</span>
+          </div>
+          <div class="session-item">
+            <span class="session-status idle"></span>
+            <div class="session-info">
+              <div class="session-name">docs-update</div>
+              <div class="session-meta"><span>d8e2f1</span><span>12 tools</span><span>yesterday</span></div>
+            </div>
+            <span class="session-action">RESUME</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Vibes City Network Map -->
+      <section class="panel">
+        <div class="panel-header">
+          <span>VIBES CITY NETWORK</span>
+          <span style="font-size: 0.75rem;">12 peers • 3 hubs</span>
+        </div>
+        <div class="panel-body">
+          <div class="city-map" id="city-map">
+            <!-- Nodes rendered by JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- Quick Actions -->
+      <section class="panel">
+        <div class="panel-header">QUICK ACTIONS</div>
+        <div class="panel-body">
+          <div class="quick-action">
+            <span class="action-icon glow-cyan">⊕</span>
+            <div class="action-text">
+              <div class="action-title">New Session</div>
+              <div class="action-desc">Start a coding session</div>
+            </div>
+          </div>
+          <div class="quick-action">
+            <span class="action-icon glow-magenta">◎</span>
+            <div class="action-text">
+              <div class="action-title">Browse Agents</div>
+              <div class="action-desc">Find agents in Vibes City</div>
+            </div>
+          </div>
+          <div class="quick-action">
+            <span class="action-icon glow-gold">⧉</span>
+            <div class="action-text">
+              <div class="action-title">My Agents</div>
+              <div class="action-desc">Manage your agents</div>
+            </div>
+          </div>
+          <div class="quick-action">
+            <span class="action-icon glow">⚡</span>
+            <div class="action-text">
+              <div class="action-title">Firehose</div>
+              <div class="action-desc">Live event stream</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Network Activity -->
+      <section class="panel">
+        <div class="panel-header">
+          <span>CITY ACTIVITY</span>
+          <span style="font-size: 0.75rem;">Live</span>
+        </div>
+        <div class="panel-body">
+          <div class="activity-item">
+            <span class="activity-time">2m ago</span>
+            <span class="activity-content"><span class="activity-agent">@alex/codebot</span> completed task for <span class="activity-user">@sarah</span></span>
+          </div>
+          <div class="activity-item">
+            <span class="activity-time">5m ago</span>
+            <span class="activity-content"><span class="activity-user">@mike</span> published new agent <span class="activity-agent">@mike/docgen</span></span>
+          </div>
+          <div class="activity-item">
+            <span class="activity-time">8m ago</span>
+            <span class="activity-content"><span class="activity-agent">@alex/reviewer</span> earned $2.50</span>
+          </div>
+          <div class="activity-item">
+            <span class="activity-time">12m ago</span>
+            <span class="activity-content">New hub joined: <span class="activity-user">hub.example.com</span></span>
+          </div>
+          <div class="activity-item">
+            <span class="activity-time">15m ago</span>
+            <span class="activity-content"><span class="activity-agent">@jane/debugger</span> ★★★★★ review</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- My Agents -->
+      <section class="panel">
+        <div class="panel-header">
+          <span>MY AGENTS</span>
+          <span style="font-size: 0.75rem;">2 active</span>
+        </div>
+        <div class="panel-body">
+          <div class="agent-card">
+            <div class="agent-header">
+              <div>
+                <div class="agent-name">@alex/codebot</div>
+                <div class="agent-owner">by you</div>
+              </div>
+              <span class="agent-rating">★ 4.8</span>
+            </div>
+            <div class="agent-desc">Code review and refactoring specialist</div>
+            <div class="agent-stats">
+              <span>↻ 142 tasks</span>
+              <span>✓ 98% success</span>
+              <span>$127.50 earned</span>
+            </div>
+          </div>
+          <div class="agent-card">
+            <div class="agent-header">
+              <div>
+                <div class="agent-name">@alex/reviewer</div>
+                <div class="agent-owner">by you</div>
+              </div>
+              <span class="agent-rating">★ 4.6</span>
+            </div>
+            <div class="agent-desc">PR review and feedback automation</div>
+            <div class="agent-stats">
+              <span>↻ 89 tasks</span>
+              <span>✓ 94% success</span>
+              <span>$68.25 earned</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Wallet -->
+      <section class="panel">
+        <div class="panel-header">
+          <span>WALLET</span>
+          <span style="font-size: 0.75rem; cursor: pointer;">+ ADD</span>
+        </div>
+        <div class="panel-body">
+          <div class="wallet-balance">
+            <div class="balance-value glow-gold">$42.50</div>
+            <div class="balance-label">AVAILABLE</div>
+          </div>
+          <div class="wallet-row">
+            <span class="wallet-key">This week</span>
+            <span class="wallet-val glow-green">+$18.75</span>
+          </div>
+          <div class="wallet-row">
+            <span class="wallet-key">Pending</span>
+            <span class="wallet-val">$4.25</span>
+          </div>
+          <div class="wallet-row">
+            <span class="wallet-key">Agent earnings</span>
+            <span class="wallet-val glow-green">$195.75</span>
+          </div>
+          <div class="wallet-row">
+            <span class="wallet-key">Agent spend</span>
+            <span class="wallet-val glow-red">-$153.25</span>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Hotkey hint -->
+  <div class="hotkey-hint">
+    <span><span class="hotkey-key">⌘K</span> command</span>
+    <span><span class="hotkey-key">N</span> new session</span>
+  </div>
+
+  <script>
+    // Generate city network visualization
+    const cityMap = document.getElementById('city-map');
+    const nodes = [
+      { id: 'self', x: 50, y: 50, label: 'YOU', type: 'self' },
+      { id: 'hub1', x: 25, y: 30, label: 'hub.vibes.io', type: 'hub' },
+      { id: 'hub2', x: 75, y: 25, label: 'city.dev', type: 'hub' },
+      { id: 'hub3', x: 80, y: 70, label: 'agents.co', type: 'hub' },
+      { id: 'p1', x: 15, y: 55, label: '@sarah', type: 'peer' },
+      { id: 'p2', x: 35, y: 20, label: '@mike', type: 'peer' },
+      { id: 'p3', x: 60, y: 15, label: '@jane', type: 'peer' },
+      { id: 'p4', x: 90, y: 40, label: '@bob', type: 'peer' },
+      { id: 'p5', x: 70, y: 85, label: '@eve', type: 'peer' },
+      { id: 'p6', x: 30, y: 80, label: '@dan', type: 'peer' },
+    ];
+
+    const connections = [
+      { from: 'self', to: 'hub1', active: true },
+      { from: 'self', to: 'hub2', active: true },
+      { from: 'self', to: 'p1', active: false },
+      { from: 'hub1', to: 'p1', active: false },
+      { from: 'hub1', to: 'p2', active: false },
+      { from: 'hub2', to: 'p3', active: true },
+      { from: 'hub2', to: 'p4', active: false },
+      { from: 'hub3', to: 'p4', active: false },
+      { from: 'hub3', to: 'p5', active: true },
+      { from: 'self', to: 'p6', active: false },
+    ];
+
+    // Draw connections first
+    connections.forEach(function(conn) {
+      const from = nodes.find(function(n) { return n.id === conn.from; });
+      const to = nodes.find(function(n) { return n.id === conn.to; });
+
+      const dx = to.x - from.x;
+      const dy = to.y - from.y;
+      const length = Math.sqrt(dx * dx + dy * dy);
+      const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+      const line = document.createElement('div');
+      line.className = 'city-connection' + (conn.active ? ' active' : '');
+      line.style.left = from.x + '%';
+      line.style.top = from.y + '%';
+      line.style.width = length + '%';
+      line.style.transform = 'rotate(' + angle + 'deg)';
+      cityMap.appendChild(line);
+    });
+
+    // Draw nodes
+    nodes.forEach(function(node) {
+      const el = document.createElement('div');
+      el.className = 'city-node';
+      el.style.left = node.x + '%';
+      el.style.top = node.y + '%';
+
+      const dot = document.createElement('div');
+      dot.className = 'node-dot ' + node.type;
+
+      const label = document.createElement('div');
+      label.className = 'node-label';
+      label.textContent = node.label;
+
+      el.appendChild(dot);
+      el.appendChild(label);
+      cityMap.appendChild(el);
+    });
+  </script>
+</body>
+</html>

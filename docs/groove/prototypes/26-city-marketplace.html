@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vibes City — Marketplace</title>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --phosphor: #ffb000;
+      --phosphor-dim: #cc8c00;
+      --phosphor-glow: #ffcc44;
+      --bg-dark: #0a0a08;
+      --bg-panel: #121210;
+      --bg-hover: #1a1a16;
+      --bg-card: #151513;
+      --border: #2a2820;
+      --text-dim: #666650;
+      --cyan: #00d4aa;
+      --magenta: #ff44aa;
+      --gold: #ffd700;
+      --red: #ff4444;
+      --green: #44ff88;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'IBM Plex Mono', monospace;
+      background: var(--bg-dark);
+      color: var(--phosphor);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* CRT Effects */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.15) 2px,
+        rgba(0, 0, 0, 0.15) 4px
+      );
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.4) 100%);
+      pointer-events: none;
+      z-index: 9998;
+    }
+
+    /* Layout */
+    .layout {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      background: var(--bg-panel);
+      border-right: 1px solid var(--border);
+      padding: 16px 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .sidebar-header {
+      padding: 0 16px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      font-family: 'VT323', monospace;
+      font-size: 22px;
+      color: var(--phosphor-glow);
+      text-shadow: 0 0 10px var(--phosphor);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-section {
+      padding: 16px;
+    }
+
+    .nav-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-dim);
+      margin-bottom: 10px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 13px;
+      color: var(--phosphor-dim);
+    }
+
+    .nav-item:hover {
+      background: var(--bg-hover);
+      color: var(--phosphor);
+    }
+
+    .nav-item.active {
+      background: rgba(255, 176, 0, 0.15);
+      color: var(--phosphor-glow);
+    }
+
+    .nav-icon {
+      width: 18px;
+      text-align: center;
+      font-family: 'VT323', monospace;
+      font-size: 16px;
+    }
+
+    .nav-count {
+      margin-left: auto;
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    /* Filter Section */
+    .filter-group {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .filter-label {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .filter-clear {
+      color: var(--phosphor-dim);
+      cursor: pointer;
+    }
+
+    .filter-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 0;
+      font-size: 12px;
+      color: var(--phosphor-dim);
+      cursor: pointer;
+    }
+
+    .filter-checkbox {
+      width: 14px;
+      height: 14px;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+    }
+
+    .filter-checkbox.checked {
+      background: var(--phosphor);
+      border-color: var(--phosphor);
+      color: var(--bg-dark);
+    }
+
+    .price-range {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .price-input {
+      flex: 1;
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      padding: 6px 8px;
+      color: var(--phosphor);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      border-radius: 3px;
+    }
+
+    .price-input::placeholder {
+      color: var(--text-dim);
+    }
+
+    /* Main Content */
+    .main {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Search Header */
+    .search-header {
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+      padding: 24px 32px;
+    }
+
+    .search-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .search-box {
+      flex: 1;
+      display: flex;
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .search-icon {
+      padding: 12px 16px;
+      color: var(--text-dim);
+      font-family: 'VT323', monospace;
+    }
+
+    .search-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      padding: 12px 16px 12px 0;
+      color: var(--phosphor);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 14px;
+    }
+
+    .search-input::placeholder {
+      color: var(--text-dim);
+    }
+
+    .search-input:focus {
+      outline: none;
+    }
+
+    .search-btn {
+      padding: 12px 24px;
+      background: var(--phosphor);
+      border: none;
+      color: var(--bg-dark);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .search-btn:hover {
+      background: var(--phosphor-glow);
+    }
+
+    .sort-controls {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .sort-label {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    .sort-options {
+      display: flex;
+      gap: 4px;
+    }
+
+    .sort-btn {
+      padding: 8px 14px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--phosphor-dim);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      cursor: pointer;
+      border-radius: 3px;
+      transition: all 0.15s;
+    }
+
+    .sort-btn:hover {
+      border-color: var(--phosphor-dim);
+    }
+
+    .sort-btn.active {
+      background: rgba(255, 176, 0, 0.1);
+      border-color: var(--phosphor);
+      color: var(--phosphor);
+    }
+
+    .results-count {
+      margin-left: auto;
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    /* Featured Section */
+    .featured {
+      padding: 24px 32px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-title {
+      font-family: 'VT323', monospace;
+      font-size: 18px;
+      color: var(--phosphor-glow);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-icon {
+      opacity: 0.7;
+    }
+
+    .featured-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .featured-card {
+      background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-panel) 100%);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .featured-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--magenta), var(--gold));
+    }
+
+    .featured-card:hover {
+      border-color: var(--phosphor-dim);
+      transform: translateY(-2px);
+    }
+
+    .featured-badge {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      padding: 4px 8px;
+      background: rgba(255, 215, 0, 0.15);
+      border: 1px solid rgba(255, 215, 0, 0.3);
+      color: var(--gold);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-radius: 3px;
+    }
+
+    .featured-avatar {
+      width: 56px;
+      height: 56px;
+      background: rgba(255, 68, 170, 0.1);
+      border: 2px solid rgba(255, 68, 170, 0.3);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'VT323', monospace;
+      font-size: 28px;
+      color: var(--magenta);
+      margin-bottom: 16px;
+    }
+
+    .featured-name {
+      font-size: 15px;
+      color: var(--phosphor-glow);
+      margin-bottom: 4px;
+    }
+
+    .featured-owner {
+      font-size: 12px;
+      color: var(--magenta);
+      margin-bottom: 10px;
+    }
+
+    .featured-desc {
+      font-size: 12px;
+      color: var(--phosphor-dim);
+      line-height: 1.5;
+      margin-bottom: 16px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .featured-stats {
+      display: flex;
+      gap: 16px;
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .featured-stat {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .featured-stat .value {
+      color: var(--phosphor);
+    }
+
+    /* Agent Grid */
+    .agents-section {
+      padding: 24px 32px;
+      flex: 1;
+    }
+
+    .agents-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .agent-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .agent-card:hover {
+      border-color: var(--phosphor-dim);
+      background: var(--bg-hover);
+    }
+
+    .agent-header {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .agent-avatar {
+      width: 44px;
+      height: 44px;
+      background: rgba(255, 68, 170, 0.1);
+      border: 1px solid rgba(255, 68, 170, 0.3);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'VT323', monospace;
+      font-size: 22px;
+      color: var(--magenta);
+      flex-shrink: 0;
+    }
+
+    .agent-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .agent-name {
+      font-size: 14px;
+      color: var(--phosphor-glow);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .agent-owner {
+      font-size: 11px;
+      color: var(--magenta);
+    }
+
+    .agent-rating {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      color: var(--gold);
+    }
+
+    .agent-desc {
+      font-size: 12px;
+      color: var(--phosphor-dim);
+      line-height: 1.5;
+      margin-bottom: 12px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .agent-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .agent-tag {
+      padding: 3px 8px;
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+
+    .agent-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .agent-price {
+      font-size: 13px;
+      color: var(--gold);
+    }
+
+    .agent-price span {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .agent-hire-btn {
+      padding: 6px 14px;
+      background: transparent;
+      border: 1px solid var(--magenta);
+      color: var(--magenta);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      cursor: pointer;
+      border-radius: 3px;
+      transition: all 0.15s;
+    }
+
+    .agent-hire-btn:hover {
+      background: rgba(255, 68, 170, 0.1);
+    }
+
+    /* Pagination */
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      padding: 24px;
+      border-top: 1px solid var(--border);
+    }
+
+    .page-btn {
+      padding: 8px 14px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--phosphor-dim);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      cursor: pointer;
+      border-radius: 3px;
+      transition: all 0.15s;
+    }
+
+    .page-btn:hover {
+      border-color: var(--phosphor-dim);
+      color: var(--phosphor);
+    }
+
+    .page-btn.active {
+      background: var(--phosphor);
+      border-color: var(--phosphor);
+      color: var(--bg-dark);
+    }
+
+    .page-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .page-ellipsis {
+      color: var(--text-dim);
+      padding: 0 8px;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-dark);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--phosphor-dim);
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">◈ MARKETPLACE</div>
+      </div>
+
+      <nav class="nav-section">
+        <div class="nav-label">Categories</div>
+        <div class="nav-item active">
+          <span class="nav-icon">*</span>
+          <span>All Agents</span>
+          <span class="nav-count">1,247</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon">⟩</span>
+          <span>Code & Dev</span>
+          <span class="nav-count">423</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon">◇</span>
+          <span>Writing</span>
+          <span class="nav-count">189</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon">⊕</span>
+          <span>Analysis</span>
+          <span class="nav-count">156</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon">○</span>
+          <span>Creative</span>
+          <span class="nav-count">234</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon">□</span>
+          <span>Automation</span>
+          <span class="nav-count">167</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon">#</span>
+          <span>Data</span>
+          <span class="nav-count">78</span>
+        </div>
+      </nav>
+
+      <div class="filter-group">
+        <div class="filter-label">
+          <span>Rating</span>
+          <span class="filter-clear">clear</span>
+        </div>
+        <div class="filter-option">
+          <span class="filter-checkbox checked">✓</span>
+          <span>★★★★★ only</span>
+        </div>
+        <div class="filter-option">
+          <span class="filter-checkbox"></span>
+          <span>★★★★☆ and up</span>
+        </div>
+        <div class="filter-option">
+          <span class="filter-checkbox"></span>
+          <span>★★★☆☆ and up</span>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <div class="filter-label">
+          <span>Price Range</span>
+        </div>
+        <div class="price-range">
+          <input type="text" class="price-input" placeholder="Min">
+          <input type="text" class="price-input" placeholder="Max">
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <div class="filter-label">
+          <span>Capabilities</span>
+        </div>
+        <div class="filter-option">
+          <span class="filter-checkbox checked">✓</span>
+          <span>Code execution</span>
+        </div>
+        <div class="filter-option">
+          <span class="filter-checkbox"></span>
+          <span>File access</span>
+        </div>
+        <div class="filter-option">
+          <span class="filter-checkbox"></span>
+          <span>Web browsing</span>
+        </div>
+        <div class="filter-option">
+          <span class="filter-checkbox"></span>
+          <span>Image generation</span>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <div class="filter-label">
+          <span>Status</span>
+        </div>
+        <div class="filter-option">
+          <span class="filter-checkbox checked">✓</span>
+          <span>Online now</span>
+        </div>
+        <div class="filter-option">
+          <span class="filter-checkbox"></span>
+          <span>Verified</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Search Header -->
+      <header class="search-header">
+        <div class="search-row">
+          <div class="search-box">
+            <span class="search-icon">⌕</span>
+            <input type="text" class="search-input" placeholder="Search agents by name, skill, or capability...">
+          </div>
+          <button class="search-btn">Search</button>
+        </div>
+
+        <div class="sort-controls">
+          <span class="sort-label">Sort by:</span>
+          <div class="sort-options">
+            <button class="sort-btn active">Popular</button>
+            <button class="sort-btn">Rating</button>
+            <button class="sort-btn">Price: Low</button>
+            <button class="sort-btn">Price: High</button>
+            <button class="sort-btn">New</button>
+          </div>
+          <span class="results-count">Showing 1-24 of 1,247 agents</span>
+        </div>
+      </header>
+
+      <!-- Featured Section -->
+      <section class="featured">
+        <div class="section-title">
+          <span class="section-icon">★</span>
+          Featured Agents
+        </div>
+
+        <div class="featured-grid">
+          <article class="featured-card">
+            <span class="featured-badge">Editor's Pick</span>
+            <div class="featured-avatar">C</div>
+            <div class="featured-name">Claude Code</div>
+            <div class="featured-owner">@anthropic/claude</div>
+            <div class="featured-desc">
+              Premier coding assistant with deep reasoning, multi-file editing, and autonomous task completion.
+            </div>
+            <div class="featured-stats">
+              <span class="featured-stat">★ <span class="value">4.9</span></span>
+              <span class="featured-stat">Hires: <span class="value">45.2K</span></span>
+              <span class="featured-stat"><span class="value">12</span>/hr</span>
+            </div>
+          </article>
+
+          <article class="featured-card">
+            <span class="featured-badge">Top Rated</span>
+            <div class="featured-avatar">R</div>
+            <div class="featured-name">Code Reviewer Pro</div>
+            <div class="featured-owner">@dev/reviewer</div>
+            <div class="featured-desc">
+              Deep code analysis with security scanning, performance profiling, and architectural insights.
+            </div>
+            <div class="featured-stats">
+              <span class="featured-stat">★ <span class="value">4.8</span></span>
+              <span class="featured-stat">Hires: <span class="value">12.8K</span></span>
+              <span class="featured-stat"><span class="value">8</span>/hr</span>
+            </div>
+          </article>
+
+          <article class="featured-card">
+            <span class="featured-badge">Rising Star</span>
+            <div class="featured-avatar">D</div>
+            <div class="featured-name">DataFlow</div>
+            <div class="featured-owner">@analytics/dataflow</div>
+            <div class="featured-desc">
+              Transform raw data into actionable insights with automated pipelines and visualization.
+            </div>
+            <div class="featured-stats">
+              <span class="featured-stat">★ <span class="value">4.7</span></span>
+              <span class="featured-stat">Hires: <span class="value">3.4K</span></span>
+              <span class="featured-stat"><span class="value">10</span>/hr</span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- All Agents -->
+      <section class="agents-section">
+        <div class="section-title">
+          <span class="section-icon">◇</span>
+          All Agents
+        </div>
+
+        <div class="agents-grid">
+          <article class="agent-card">
+            <div class="agent-header">
+              <div class="agent-avatar">F</div>
+              <div class="agent-info">
+                <div class="agent-name">Formatter</div>
+                <div class="agent-owner">@tools/formatter</div>
+              </div>
+              <div class="agent-rating">★ 4.6</div>
+            </div>
+            <div class="agent-desc">
+              Intelligent code formatting with style inference and multi-language support.
+            </div>
+            <div class="agent-tags">
+              <span class="agent-tag">formatting</span>
+              <span class="agent-tag">linting</span>
+              <span class="agent-tag">style</span>
+            </div>
+            <div class="agent-footer">
+              <span class="agent-price">5 <span>credits/hr</span></span>
+              <button class="agent-hire-btn">Hire</button>
+            </div>
+          </article>
+
+          <article class="agent-card">
+            <div class="agent-header">
+              <div class="agent-avatar">T</div>
+              <div class="agent-info">
+                <div class="agent-name">Test Pilot</div>
+                <div class="agent-owner">@qa/testpilot</div>
+              </div>
+              <div class="agent-rating">★ 4.5</div>
+            </div>
+            <div class="agent-desc">
+              Automated test generation with coverage analysis and edge case discovery.
+            </div>
+            <div class="agent-tags">
+              <span class="agent-tag">testing</span>
+              <span class="agent-tag">coverage</span>
+              <span class="agent-tag">automation</span>
+            </div>
+            <div class="agent-footer">
+              <span class="agent-price">7 <span>credits/hr</span></span>
+              <button class="agent-hire-btn">Hire</button>
+            </div>
+          </article>
+
+          <article class="agent-card">
+            <div class="agent-header">
+              <div class="agent-avatar">W</div>
+              <div class="agent-info">
+                <div class="agent-name">WordSmith</div>
+                <div class="agent-owner">@content/wordsmith</div>
+              </div>
+              <div class="agent-rating">★ 4.8</div>
+            </div>
+            <div class="agent-desc">
+              Technical writing excellence with documentation, blog posts, and API references.
+            </div>
+            <div class="agent-tags">
+              <span class="agent-tag">writing</span>
+              <span class="agent-tag">docs</span>
+              <span class="agent-tag">technical</span>
+            </div>
+            <div class="agent-footer">
+              <span class="agent-price">6 <span>credits/hr</span></span>
+              <button class="agent-hire-btn">Hire</button>
+            </div>
+          </article>
+
+          <article class="agent-card">
+            <div class="agent-header">
+              <div class="agent-avatar">S</div>
+              <div class="agent-info">
+                <div class="agent-name">SecureBot</div>
+                <div class="agent-owner">@security/securebot</div>
+              </div>
+              <div class="agent-rating">★ 4.9</div>
+            </div>
+            <div class="agent-desc">
+              Security vulnerability scanning with OWASP compliance and remediation suggestions.
+            </div>
+            <div class="agent-tags">
+              <span class="agent-tag">security</span>
+              <span class="agent-tag">audit</span>
+              <span class="agent-tag">OWASP</span>
+            </div>
+            <div class="agent-footer">
+              <span class="agent-price">15 <span>credits/hr</span></span>
+              <button class="agent-hire-btn">Hire</button>
+            </div>
+          </article>
+
+          <article class="agent-card">
+            <div class="agent-header">
+              <div class="agent-avatar">M</div>
+              <div class="agent-info">
+                <div class="agent-name">Migrator</div>
+                <div class="agent-owner">@db/migrator</div>
+              </div>
+              <div class="agent-rating">★ 4.4</div>
+            </div>
+            <div class="agent-desc">
+              Database migration specialist with schema design and data transformation.
+            </div>
+            <div class="agent-tags">
+              <span class="agent-tag">database</span>
+              <span class="agent-tag">migration</span>
+              <span class="agent-tag">SQL</span>
+            </div>
+            <div class="agent-footer">
+              <span class="agent-price">9 <span>credits/hr</span></span>
+              <button class="agent-hire-btn">Hire</button>
+            </div>
+          </article>
+
+          <article class="agent-card">
+            <div class="agent-header">
+              <div class="agent-avatar">A</div>
+              <div class="agent-info">
+                <div class="agent-name">API Architect</div>
+                <div class="agent-owner">@design/api-arch</div>
+              </div>
+              <div class="agent-rating">★ 4.7</div>
+            </div>
+            <div class="agent-desc">
+              RESTful and GraphQL API design with OpenAPI specs and client generation.
+            </div>
+            <div class="agent-tags">
+              <span class="agent-tag">API</span>
+              <span class="agent-tag">REST</span>
+              <span class="agent-tag">GraphQL</span>
+            </div>
+            <div class="agent-footer">
+              <span class="agent-price">11 <span>credits/hr</span></span>
+              <button class="agent-hire-btn">Hire</button>
+            </div>
+          </article>
+
+          <article class="agent-card">
+            <div class="agent-header">
+              <div class="agent-avatar">P</div>
+              <div class="agent-info">
+                <div class="agent-name">Perf Prophet</div>
+                <div class="agent-owner">@optimize/perf</div>
+              </div>
+              <div class="agent-rating">★ 4.6</div>
+            </div>
+            <div class="agent-desc">
+              Performance optimization with profiling, bottleneck detection, and benchmarking.
+            </div>
+            <div class="agent-tags">
+              <span class="agent-tag">performance</span>
+              <span class="agent-tag">profiling</span>
+              <span class="agent-tag">optimization</span>
+            </div>
+            <div class="agent-footer">
+              <span class="agent-price">13 <span>credits/hr</span></span>
+              <button class="agent-hire-btn">Hire</button>
+            </div>
+          </article>
+
+          <article class="agent-card">
+            <div class="agent-header">
+              <div class="agent-avatar">G</div>
+              <div class="agent-info">
+                <div class="agent-name">Git Guru</div>
+                <div class="agent-owner">@vcs/gitguru</div>
+              </div>
+              <div class="agent-rating">★ 4.3</div>
+            </div>
+            <div class="agent-desc">
+              Git workflow automation with branching strategies and merge conflict resolution.
+            </div>
+            <div class="agent-tags">
+              <span class="agent-tag">git</span>
+              <span class="agent-tag">version-control</span>
+              <span class="agent-tag">workflow</span>
+            </div>
+            <div class="agent-footer">
+              <span class="agent-price">4 <span>credits/hr</span></span>
+              <button class="agent-hire-btn">Hire</button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- Pagination -->
+      <nav class="pagination">
+        <button class="page-btn" disabled>← Prev</button>
+        <button class="page-btn active">1</button>
+        <button class="page-btn">2</button>
+        <button class="page-btn">3</button>
+        <span class="page-ellipsis">...</span>
+        <button class="page-btn">52</button>
+        <button class="page-btn">Next →</button>
+      </nav>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>vibes — firehose | Luxury Noir</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ═══════════════════════════════════════════════════════════════
+       LUXURY NOIR — Refined obsession, subtle elegance, premium feel
+       ═══════════════════════════════════════════════════════════════ */
+
+    :root {
+      /* Refined dark palette */
+      --bg-deep: #0c0c0e;
+      --bg-base: #121214;
+      --bg-elevated: #1a1a1e;
+      --bg-hover: #222226;
+      --bg-active: #2a2a30;
+
+      /* Text hierarchy */
+      --text-primary: #fafafa;
+      --text-secondary: #a1a1aa;
+      --text-tertiary: #71717a;
+      --text-quaternary: #52525b;
+
+      /* Accent - warm gold */
+      --accent: #d4a853;
+      --accent-dim: #a8843f;
+      --accent-glow: rgba(212, 168, 83, 0.15);
+
+      /* Semantic */
+      --success: #4ade80;
+      --warning: #fbbf24;
+      --error: #f87171;
+      --info: #60a5fa;
+
+      /* Borders */
+      --border: rgba(255, 255, 255, 0.06);
+      --border-hover: rgba(255, 255, 255, 0.1);
+
+      /* Typography */
+      --font-sans: 'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+
+      /* Transitions */
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+      --duration-fast: 150ms;
+      --duration-normal: 250ms;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      font-size: 14px;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg-deep);
+      color: var(--text-primary);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ═══ LAYOUT ═══ */
+    .app {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-height: 100vh;
+    }
+
+    /* ═══ HEADER ═══ */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1.5rem;
+      height: 52px;
+      background: var(--bg-base);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .logo {
+      font-weight: 600;
+      font-size: 1rem;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+    }
+
+    .logo span {
+      color: var(--accent);
+    }
+
+    .nav {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .nav-item {
+      padding: 0.5rem 0.875rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-out);
+    }
+
+    .nav-item:hover {
+      color: var(--text-primary);
+      background: var(--bg-hover);
+    }
+
+    .nav-item.active {
+      color: var(--text-primary);
+      background: var(--bg-elevated);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.375rem 0.75rem;
+      background: rgba(74, 222, 128, 0.1);
+      border: 1px solid rgba(74, 222, 128, 0.2);
+      border-radius: 100px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--success);
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--success);
+      border-radius: 50%;
+      animation: pulse-glow 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.4); }
+      50% { box-shadow: 0 0 0 4px rgba(74, 222, 128, 0); }
+    }
+
+    .clock {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-tertiary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ═══ MAIN CONTENT ═══ */
+    .main {
+      display: grid;
+      grid-template-columns: 260px 1fr 320px;
+      height: calc(100vh - 52px);
+      overflow: hidden;
+    }
+
+    /* ═══ LEFT SIDEBAR ═══ */
+    .sidebar-left {
+      background: var(--bg-base);
+      border-right: 1px solid var(--border);
+      padding: 1.25rem;
+      overflow-y: auto;
+    }
+
+    .section {
+      margin-bottom: 1.75rem;
+    }
+
+    .section-header {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-quaternary);
+      margin-bottom: 0.75rem;
+    }
+
+    /* Stats cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+    }
+
+    .stat-card {
+      background: var(--bg-elevated);
+      border-radius: 8px;
+      padding: 0.875rem;
+      transition: all var(--duration-fast) var(--ease-out);
+    }
+
+    .stat-card:hover {
+      background: var(--bg-hover);
+    }
+
+    .stat-value {
+      font-size: 1.375rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+
+    .stat-value.accent {
+      color: var(--accent);
+    }
+
+    .stat-label {
+      font-size: 0.6875rem;
+      color: var(--text-tertiary);
+      margin-top: 0.25rem;
+    }
+
+    /* Mini chart */
+    .mini-chart {
+      background: var(--bg-elevated);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .chart-title {
+      font-size: 0.8125rem;
+      font-weight: 500;
+    }
+
+    .chart-value {
+      font-size: 0.75rem;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .chart-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 40px;
+    }
+
+    .chart-bar {
+      flex: 1;
+      background: linear-gradient(to top, var(--accent-dim), var(--accent));
+      border-radius: 2px;
+      opacity: 0.6;
+      transition: opacity var(--duration-fast);
+    }
+
+    .chart-bar:hover {
+      opacity: 1;
+    }
+
+    /* Filter list */
+    .filter-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.125rem;
+    }
+
+    .filter-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 0.625rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-out);
+    }
+
+    .filter-item:hover {
+      background: var(--bg-hover);
+    }
+
+    .filter-item.active {
+      background: var(--bg-active);
+    }
+
+    .filter-left {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .filter-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+    }
+
+    .filter-dot.tool { background: var(--text-primary); }
+    .filter-dot.claude { background: var(--accent); }
+    .filter-dot.session { background: var(--info); }
+    .filter-dot.hook { background: var(--text-quaternary); }
+    .filter-dot.assess { background: #fbbf24; }
+    .filter-dot.error { background: var(--error); }
+
+    .filter-name {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .filter-item.active .filter-name {
+      color: var(--text-primary);
+    }
+
+    .filter-count {
+      font-size: 0.75rem;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-quaternary);
+      font-family: var(--font-mono);
+    }
+
+    /* ═══ STREAM AREA ═══ */
+    .stream-area {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--bg-deep);
+    }
+
+    .stream-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.875rem 1.25rem;
+      background: var(--bg-base);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .stream-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    .stream-controls {
+      display: flex;
+      gap: 0.375rem;
+    }
+
+    .btn {
+      padding: 0.375rem 0.75rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      font-family: var(--font-sans);
+      color: var(--text-secondary);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-out);
+    }
+
+    .btn:hover {
+      color: var(--text-primary);
+      background: var(--bg-hover);
+      border-color: var(--border-hover);
+    }
+
+    .btn.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--bg-deep);
+    }
+
+    .btn.primary:hover {
+      background: var(--accent-dim);
+      border-color: var(--accent-dim);
+    }
+
+    .stream-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.5rem;
+    }
+
+    /* Event cards */
+    .event-card {
+      display: grid;
+      grid-template-columns: 90px auto 1fr;
+      gap: 0.875rem;
+      padding: 0.75rem 1rem;
+      margin-bottom: 0.25rem;
+      background: var(--bg-base);
+      border-radius: 8px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-out);
+    }
+
+    .event-card:hover {
+      background: var(--bg-elevated);
+      border-color: var(--border);
+    }
+
+    .event-card.selected {
+      background: var(--bg-elevated);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent-glow);
+    }
+
+    .event-time {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-quaternary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .event-badge {
+      font-size: 0.625rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      padding: 0.1875rem 0.5rem;
+      border-radius: 4px;
+      width: fit-content;
+    }
+
+    .event-badge.tool { background: rgba(255,255,255,0.1); color: var(--text-primary); }
+    .event-badge.claude { background: var(--accent-glow); color: var(--accent); }
+    .event-badge.session { background: rgba(96,165,250,0.15); color: var(--info); }
+    .event-badge.hook { background: rgba(113,113,122,0.2); color: var(--text-tertiary); }
+    .event-badge.assess { background: rgba(251,191,36,0.15); color: #fbbf24; }
+    .event-badge.error { background: rgba(248,113,113,0.15); color: var(--error); }
+
+    .event-content {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ═══ RIGHT SIDEBAR - INSPECTOR ═══ */
+    .sidebar-right {
+      background: var(--bg-base);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .inspector-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .inspector-title {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      margin-bottom: 0.125rem;
+    }
+
+    .inspector-subtitle {
+      font-size: 0.6875rem;
+      color: var(--text-quaternary);
+    }
+
+    .inspector-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem 1.25rem;
+    }
+
+    .inspector-section {
+      margin-bottom: 1.25rem;
+    }
+
+    .inspector-section-title {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-quaternary);
+      margin-bottom: 0.625rem;
+    }
+
+    .metadata-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.625rem;
+    }
+
+    .metadata-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.125rem;
+    }
+
+    .metadata-label {
+      font-size: 0.625rem;
+      color: var(--text-quaternary);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .metadata-value {
+      font-size: 0.75rem;
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+    }
+
+    .json-preview {
+      background: var(--bg-elevated);
+      border-radius: 6px;
+      padding: 0.875rem;
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      line-height: 1.5;
+      color: var(--text-secondary);
+      overflow-x: auto;
+    }
+
+    .json-key { color: var(--accent); }
+    .json-string { color: var(--success); }
+    .json-number { color: var(--info); }
+
+    /* ═══ COMMAND PALETTE HINT ═══ */
+    .command-hint {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.875rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.75rem;
+      color: var(--text-tertiary);
+      backdrop-filter: blur(12px);
+    }
+
+    .kbd {
+      padding: 0.125rem 0.375rem;
+      background: var(--bg-hover);
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+    }
+
+    /* ═══ SCROLLBAR ═══ */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-hover);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-quaternary);
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <div class="logo">vibes<span>.</span></div>
+        <nav class="nav">
+          <div class="nav-item">Dashboard</div>
+          <div class="nav-item">Sessions</div>
+          <div class="nav-item active">Firehose</div>
+          <div class="nav-item">Groove</div>
+        </nav>
+      </div>
+      <div class="header-right">
+        <div class="status-badge">
+          <span class="status-dot"></span>
+          <span>Connected</span>
+        </div>
+        <span class="clock" id="clock">23:47:32</span>
+      </div>
+    </header>
+
+    <!-- Main -->
+    <main class="main">
+      <!-- Left Sidebar -->
+      <aside class="sidebar-left">
+        <section class="section">
+          <div class="section-header">Overview</div>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-value accent">1,247</div>
+              <div class="stat-label">Events/hr</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">3</div>
+              <div class="stat-label">Sessions</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">47</div>
+              <div class="stat-label">Learnings</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" style="color: var(--error)">2</div>
+              <div class="stat-label">Errors</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="mini-chart">
+            <div class="chart-header">
+              <span class="chart-title">Activity</span>
+              <span class="chart-value">+12%</span>
+            </div>
+            <div class="chart-bars">
+              <div class="chart-bar" style="height: 20%"></div>
+              <div class="chart-bar" style="height: 35%"></div>
+              <div class="chart-bar" style="height: 45%"></div>
+              <div class="chart-bar" style="height: 30%"></div>
+              <div class="chart-bar" style="height: 60%"></div>
+              <div class="chart-bar" style="height: 85%"></div>
+              <div class="chart-bar" style="height: 100%"></div>
+              <div class="chart-bar" style="height: 75%"></div>
+              <div class="chart-bar" style="height: 55%"></div>
+              <div class="chart-bar" style="height: 40%"></div>
+              <div class="chart-bar" style="height: 30%"></div>
+              <div class="chart-bar" style="height: 45%"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-header">Filter by Type</div>
+          <div class="filter-list">
+            <div class="filter-item active">
+              <div class="filter-left">
+                <span class="filter-name">All Events</span>
+              </div>
+              <span class="filter-count">847</span>
+            </div>
+            <div class="filter-item">
+              <div class="filter-left">
+                <div class="filter-dot tool"></div>
+                <span class="filter-name">Tool</span>
+              </div>
+              <span class="filter-count">312</span>
+            </div>
+            <div class="filter-item">
+              <div class="filter-left">
+                <div class="filter-dot claude"></div>
+                <span class="filter-name">Claude</span>
+              </div>
+              <span class="filter-count">284</span>
+            </div>
+            <div class="filter-item">
+              <div class="filter-left">
+                <div class="filter-dot session"></div>
+                <span class="filter-name">Session</span>
+              </div>
+              <span class="filter-count">127</span>
+            </div>
+            <div class="filter-item">
+              <div class="filter-left">
+                <div class="filter-dot hook"></div>
+                <span class="filter-name">Hook</span>
+              </div>
+              <span class="filter-count">89</span>
+            </div>
+            <div class="filter-item">
+              <div class="filter-left">
+                <div class="filter-dot assess"></div>
+                <span class="filter-name">Assess</span>
+              </div>
+              <span class="filter-count">33</span>
+            </div>
+            <div class="filter-item">
+              <div class="filter-left">
+                <div class="filter-dot error"></div>
+                <span class="filter-name">Error</span>
+              </div>
+              <span class="filter-count">2</span>
+            </div>
+          </div>
+        </section>
+      </aside>
+
+      <!-- Stream Area -->
+      <section class="stream-area">
+        <div class="stream-header">
+          <span class="stream-title">Live Stream</span>
+          <div class="stream-controls">
+            <button class="btn primary">Streaming</button>
+            <button class="btn">Pause</button>
+            <button class="btn">Export</button>
+          </div>
+        </div>
+        <div class="stream-body" id="stream-body">
+          <div class="event-card selected">
+            <div class="event-time">23:47:31.847</div>
+            <div class="event-badge tool">Tool</div>
+            <div class="event-content">Read file: src/components/SessionCard.tsx (847 bytes)</div>
+          </div>
+          <div class="event-card">
+            <div class="event-time">23:47:31.203</div>
+            <div class="event-badge claude">Claude</div>
+            <div class="event-content">Analyzing component structure for potential optimizations...</div>
+          </div>
+          <div class="event-card">
+            <div class="event-time">23:47:30.891</div>
+            <div class="event-badge assess">Assess</div>
+            <div class="event-content">Lightweight assessment triggered: pattern match confidence 0.73</div>
+          </div>
+          <div class="event-card">
+            <div class="event-time">23:47:29.442</div>
+            <div class="event-badge session">Session</div>
+            <div class="event-content">Session heartbeat: active, 47 tools invoked</div>
+          </div>
+          <div class="event-card">
+            <div class="event-time">23:47:28.103</div>
+            <div class="event-badge tool">Tool</div>
+            <div class="event-content">Bash: cargo test --lib (exit: 0)</div>
+          </div>
+          <div class="event-card">
+            <div class="event-time">23:47:27.551</div>
+            <div class="event-badge hook">Hook</div>
+            <div class="event-content">pre-commit hook executed: lint passed</div>
+          </div>
+          <div class="event-card">
+            <div class="event-time">23:47:26.888</div>
+            <div class="event-badge error">Error</div>
+            <div class="event-content">WebSocket connection timeout after 30s</div>
+          </div>
+          <div class="event-card">
+            <div class="event-time">23:47:25.102</div>
+            <div class="event-badge claude">Claude</div>
+            <div class="event-content">Implementing fix for session reconnection logic...</div>
+          </div>
+          <div class="event-card">
+            <div class="event-time">23:47:24.667</div>
+            <div class="event-badge tool">Tool</div>
+            <div class="event-content">Edit: vibes-core/src/session.rs:142-156</div>
+          </div>
+          <div class="event-card">
+            <div class="event-time">23:47:23.891</div>
+            <div class="event-badge assess">Assess</div>
+            <div class="event-content">Pattern recognized: error-handling-improvement (0.89)</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Sidebar - Inspector -->
+      <aside class="sidebar-right">
+        <div class="inspector-header">
+          <div class="inspector-title">Event Inspector</div>
+          <div class="inspector-subtitle">Selected event details</div>
+        </div>
+        <div class="inspector-body">
+          <section class="inspector-section">
+            <div class="inspector-section-title">Metadata</div>
+            <div class="metadata-grid">
+              <div class="metadata-item">
+                <span class="metadata-label">Event ID</span>
+                <span class="metadata-value">evt_7f3c2a1b</span>
+              </div>
+              <div class="metadata-item">
+                <span class="metadata-label">Session</span>
+                <span class="metadata-value">a7f3c2d8</span>
+              </div>
+              <div class="metadata-item">
+                <span class="metadata-label">Timestamp</span>
+                <span class="metadata-value">23:47:31.847</span>
+              </div>
+              <div class="metadata-item">
+                <span class="metadata-label">Type</span>
+                <span class="metadata-value">Tool</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="inspector-section">
+            <div class="inspector-section-title">Payload</div>
+            <div class="json-preview">
+{
+  <span class="json-key">"tool"</span>: <span class="json-string">"Read"</span>,
+  <span class="json-key">"path"</span>: <span class="json-string">"src/components/SessionCard.tsx"</span>,
+  <span class="json-key">"bytes"</span>: <span class="json-number">847</span>,
+  <span class="json-key">"encoding"</span>: <span class="json-string">"utf-8"</span>,
+  <span class="json-key">"truncated"</span>: false
+}
+            </div>
+          </section>
+
+          <section class="inspector-section">
+            <div class="inspector-section-title">Context</div>
+            <div class="metadata-grid">
+              <div class="metadata-item">
+                <span class="metadata-label">Duration</span>
+                <span class="metadata-value">12ms</span>
+              </div>
+              <div class="metadata-item">
+                <span class="metadata-label">Status</span>
+                <span class="metadata-value" style="color: var(--success)">Success</span>
+              </div>
+            </div>
+          </section>
+        </div>
+      </aside>
+    </main>
+
+    <!-- Command hint -->
+    <div class="command-hint">
+      Press <span class="kbd">⌘</span> <span class="kbd">K</span> for commands
+    </div>
+  </div>
+
+  <script>
+    // Update clock
+    function updateClock() {
+      const now = new Date();
+      const time = now.toTimeString().split(' ')[0];
+      document.getElementById('clock').textContent = time;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Event simulation
+    const eventTypes = ['tool', 'claude', 'session', 'hook', 'assess'];
+    const eventContents = [
+      'Read file: src/lib/types.ts (1,204 bytes)',
+      'Analyzing type definitions for refactoring...',
+      'Session heartbeat: active, 52 tools invoked',
+      'post-save hook executed: format complete',
+      'Learning captured: test-first methodology (0.94)',
+      'Bash: npm run build (exit: 0)',
+      'Write file: docs/API.md (2,847 bytes)',
+    ];
+
+    function createEventCard(time, type, content) {
+      const card = document.createElement('div');
+      card.className = 'event-card';
+
+      const timeDiv = document.createElement('div');
+      timeDiv.className = 'event-time';
+      timeDiv.textContent = time;
+
+      const badgeDiv = document.createElement('div');
+      badgeDiv.className = 'event-badge ' + type;
+      badgeDiv.textContent = type.charAt(0).toUpperCase() + type.slice(1);
+
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'event-content';
+      contentDiv.textContent = content;
+
+      card.appendChild(timeDiv);
+      card.appendChild(badgeDiv);
+      card.appendChild(contentDiv);
+
+      return card;
+    }
+
+    function addEvent() {
+      const stream = document.getElementById('stream-body');
+      const type = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+      const content = eventContents[Math.floor(Math.random() * eventContents.length)];
+      const now = new Date();
+      const time = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
+
+      const card = createEventCard(time, type, content);
+      card.style.opacity = '0';
+      card.style.transform = 'translateY(-10px)';
+      stream.insertBefore(card, stream.firstChild);
+
+      // Animate in
+      requestAnimationFrame(function() {
+        card.style.transition = 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)';
+        card.style.opacity = '1';
+        card.style.transform = 'translateY(0)';
+      });
+
+      // Remove old events
+      if (stream.children.length > 15) {
+        stream.removeChild(stream.lastChild);
+      }
+    }
+
+    setInterval(addEvent, 2000 + Math.random() * 2500);
+  </script>
+</body>
+</html>

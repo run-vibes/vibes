@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>vibes :: firehose — Refined Light</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ═══════════════════════════════════════════════════════════════
+       REFINED LIGHT — Warm parchment, sepia undertones, subtle CRT
+       ═══════════════════════════════════════════════════════════════ */
+
+    :root {
+      /* Warm parchment palette - NOT pure white */
+      --bg: #f4f1e8;
+      --bg-panel: #ebe7dc;
+      --bg-darker: #e0dcd0;
+      --bg-input: #faf8f2;
+
+      /* Ink colors - warm blacks and browns */
+      --ink: #2c2a24;
+      --ink-secondary: #4a4740;
+      --ink-dim: #7a7568;
+      --ink-faint: #b0a99a;
+
+      /* Accent - warm amber, not harsh orange */
+      --accent: #c4820a;
+      --accent-bright: #d99b1c;
+      --accent-subtle: rgba(196, 130, 10, 0.12);
+      --accent-glow: rgba(196, 130, 10, 0.25);
+
+      /* Status colors - muted */
+      --green: #4a7c3f;
+      --red: #a63d3d;
+      --cyan: #3d7a7c;
+
+      /* Borders */
+      --border: #d0cbbf;
+      --border-strong: #b0a99a;
+
+      --font-display: 'VT323', monospace;
+      --font-mono: 'IBM Plex Mono', monospace;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      overflow: hidden;
+    }
+
+    body {
+      font-family: var(--font-mono);
+      color: var(--ink);
+    }
+
+    /* ═══ SUBTLE SCANLINES — barely visible ═══ */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0,0,0,0.02) 0px,
+        rgba(0,0,0,0.02) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    /* ═══ VIGNETTE — very subtle ═══ */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(
+        ellipse at center,
+        transparent 0%,
+        transparent 70%,
+        rgba(0,0,0,0.06) 100%
+      );
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    /* ═══ UTILITIES ═══ */
+    .accent {
+      color: var(--accent);
+    }
+
+    .accent-glow {
+      color: var(--accent);
+      text-shadow: 0 0 8px var(--accent-glow);
+    }
+
+    /* ═══ LAYOUT ═══ */
+    .app {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      height: 100vh;
+      padding: 1rem;
+      gap: 0.5rem;
+    }
+
+    /* ═══ HEADER ═══ */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border);
+      background: var(--bg-panel);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .logo {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      letter-spacing: 0.15em;
+      color: var(--ink);
+    }
+
+    .nav {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .nav-item {
+      padding: 0.375rem 0.75rem;
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      color: var(--ink-dim);
+      cursor: pointer;
+      transition: all 0.15s;
+      border: 1px solid transparent;
+    }
+
+    .nav-item:hover {
+      color: var(--ink);
+      border-color: var(--border);
+    }
+
+    .nav-item.active {
+      color: var(--accent);
+      border-color: var(--accent);
+      background: var(--accent-subtle);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    .live-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      color: var(--green);
+    }
+
+    .live-dot {
+      width: 10px;
+      height: 10px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .clock {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-variant-numeric: tabular-nums;
+      color: var(--ink-secondary);
+    }
+
+    /* ═══ MAIN — 4 COLUMN LAYOUT ═══ */
+    .main {
+      display: grid;
+      grid-template-columns: 160px 200px 1fr 320px;
+      gap: 0.5rem;
+      overflow: hidden;
+    }
+
+    /* ═══ SESSION TABS ═══ */
+    .session-tabs {
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--border);
+      background: var(--bg-panel);
+      overflow: hidden;
+    }
+
+    .session-tabs-header {
+      padding: 0.5rem 0.75rem;
+      font-family: var(--font-display);
+      font-size: 1rem;
+      letter-spacing: 0.1em;
+      border-bottom: 1px solid var(--border);
+      color: var(--ink-dim);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .session-count {
+      font-size: 0.875rem;
+      color: var(--accent);
+    }
+
+    .session-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .session-item {
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.1s;
+      position: relative;
+    }
+
+    .session-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: transparent;
+      transition: background 0.1s;
+    }
+
+    .session-item:hover {
+      background: var(--bg-darker);
+    }
+
+    .session-item.selected {
+      background: var(--accent-subtle);
+    }
+
+    .session-item.selected::before {
+      background: var(--accent);
+    }
+
+    .session-id {
+      font-family: var(--font-display);
+      font-size: 1.125rem;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .session-checkbox {
+      width: 12px;
+      height: 12px;
+      border: 1px solid var(--border-strong);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      background: var(--bg-input);
+    }
+
+    .session-item.selected .session-checkbox {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .session-name {
+      font-size: 0.75rem;
+      color: var(--ink-dim);
+      margin-top: 0.125rem;
+    }
+
+    .session-meta {
+      font-size: 0.625rem;
+      color: var(--ink-faint);
+      margin-top: 0.25rem;
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .session-status {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      margin-right: 0.25rem;
+    }
+
+    .session-status.active { background: var(--green); }
+    .session-status.stale { background: var(--ink-faint); }
+    .session-status.error { background: var(--red); }
+
+    /* ═══ SIDEBAR ═══ */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      overflow-y: auto;
+    }
+
+    .panel {
+      border: 1px solid var(--border);
+      background: var(--bg-panel);
+    }
+
+    .panel-header {
+      padding: 0.5rem 0.75rem;
+      font-family: var(--font-display);
+      font-size: 1rem;
+      letter-spacing: 0.1em;
+      border-bottom: 1px solid var(--border);
+      color: var(--ink-dim);
+    }
+
+    .panel-body {
+      padding: 0.75rem;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+    }
+
+    .stat {
+      text-align: center;
+      padding: 0.5rem;
+      border: 1px solid var(--border);
+      background: var(--bg-input);
+    }
+
+    .stat-value {
+      font-family: var(--font-display);
+      font-size: 1.75rem;
+      line-height: 1;
+      color: var(--ink);
+    }
+
+    .stat-value.accent { color: var(--accent); }
+    .stat-value.green { color: var(--green); }
+    .stat-value.red { color: var(--red); }
+
+    .stat-label {
+      font-size: 0.5625rem;
+      color: var(--ink-dim);
+      letter-spacing: 0.1em;
+      margin-top: 0.25rem;
+    }
+
+    .sparkline {
+      font-family: var(--font-display);
+      font-size: 1.125rem;
+      letter-spacing: -0.05em;
+      color: var(--ink-faint);
+      text-align: center;
+      padding: 0.375rem 0;
+    }
+
+    .sparkline .peak {
+      color: var(--accent);
+    }
+
+    .filter-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.125rem;
+    }
+
+    .filter-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.3125rem 0.5rem;
+      font-family: var(--font-display);
+      font-size: 0.9375rem;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.1s;
+      color: var(--ink-secondary);
+    }
+
+    .filter-item:hover {
+      border-color: var(--border);
+      background: var(--bg-darker);
+    }
+
+    .filter-item.active {
+      border-color: var(--accent);
+      background: var(--accent-subtle);
+      color: var(--ink);
+    }
+
+    .filter-count {
+      font-size: 0.8125rem;
+      color: var(--ink-dim);
+    }
+
+    /* ═══ STREAM ═══ */
+    .stream {
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--border);
+      background: var(--bg-panel);
+      overflow: hidden;
+    }
+
+    .stream-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .stream-title {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      letter-spacing: 0.1em;
+      color: var(--ink);
+    }
+
+    .stream-controls {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .btn {
+      padding: 0.375rem 0.75rem;
+      font-family: var(--font-display);
+      font-size: 1rem;
+      background: var(--bg-input);
+      border: 1px solid var(--border-strong);
+      color: var(--ink-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn:hover {
+      background: var(--bg-darker);
+      border-color: var(--ink-dim);
+    }
+
+    .btn.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .stream-body {
+      flex: 1;
+      overflow-y: auto;
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
+      background: var(--bg-input);
+    }
+
+    .event-row {
+      display: grid;
+      grid-template-columns: 90px 60px 1fr 60px;
+      gap: 0.75rem;
+      padding: 0.5rem 1rem;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.1s;
+      cursor: pointer;
+    }
+
+    .event-row:hover {
+      background: var(--bg-darker);
+    }
+
+    .event-row.selected {
+      background: var(--accent-subtle);
+      border-left: 2px solid var(--accent);
+      padding-left: calc(1rem - 2px);
+    }
+
+    .event-time {
+      color: var(--ink-dim);
+      font-variant-numeric: tabular-nums;
+      font-size: 0.75rem;
+    }
+
+    .event-type {
+      font-family: var(--font-display);
+      font-size: 0.875rem;
+      text-transform: uppercase;
+    }
+
+    .event-type.tool { color: var(--ink); }
+    .event-type.claude { color: var(--accent); }
+    .event-type.session { color: var(--cyan); }
+    .event-type.hook { color: var(--ink-dim); }
+    .event-type.assess { color: var(--accent-bright); }
+    .event-type.error { color: var(--red); }
+
+    .event-content {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--ink-secondary);
+    }
+
+    .event-session {
+      color: var(--ink-dim);
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+      font-size: 0.75rem;
+    }
+
+    /* ═══ EVENT DETAILS ═══ */
+    .event-details {
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--border);
+      background: var(--bg-panel);
+      overflow: hidden;
+    }
+
+    .event-details.empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .empty-message {
+      text-align: center;
+      color: var(--ink-dim);
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+    }
+
+    .empty-hint {
+      font-size: 0.875rem;
+      margin-top: 0.5rem;
+      color: var(--ink-faint);
+    }
+
+    .details-header {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .details-title {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      letter-spacing: 0.1em;
+      color: var(--ink);
+    }
+
+    .details-close {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      color: var(--ink-dim);
+      cursor: pointer;
+      padding: 0 0.5rem;
+      transition: color 0.1s;
+    }
+
+    .details-close:hover {
+      color: var(--ink);
+    }
+
+    .details-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+    }
+
+    .detail-section {
+      margin-bottom: 1.25rem;
+    }
+
+    .detail-label {
+      font-family: var(--font-display);
+      font-size: 0.875rem;
+      color: var(--ink-dim);
+      letter-spacing: 0.1em;
+      margin-bottom: 0.375rem;
+    }
+
+    .detail-value {
+      font-size: 0.875rem;
+      color: var(--ink);
+      word-break: break-all;
+    }
+
+    .detail-value.large {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+    }
+
+    .detail-value.mono {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      padding: 0.75rem;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      white-space: pre-wrap;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.375rem 0;
+      border-bottom: 1px dashed var(--border);
+    }
+
+    .detail-row:last-child {
+      border-bottom: none;
+    }
+
+    .detail-key {
+      color: var(--ink-dim);
+      font-size: 0.75rem;
+    }
+
+    .detail-val {
+      color: var(--ink);
+      font-size: 0.75rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ═══ FOOTER ═══ */
+    .footer {
+      display: flex;
+      align-items: center;
+      padding: 0.5rem 1rem;
+      border: 1px solid var(--border);
+      background: var(--bg-panel);
+      gap: 1rem;
+    }
+
+    .prompt {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      color: var(--accent);
+    }
+
+    .command-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      color: var(--ink);
+      outline: none;
+      caret-color: var(--accent);
+    }
+
+    .command-input::placeholder {
+      color: var(--ink-faint);
+    }
+
+    .cursor {
+      display: inline-block;
+      width: 0.6em;
+      height: 1.1em;
+      background: var(--accent);
+      animation: blink 1s step-end infinite;
+    }
+
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+
+    .hotkeys {
+      display: flex;
+      gap: 1.5rem;
+      font-family: var(--font-display);
+      font-size: 0.875rem;
+      color: var(--ink-dim);
+    }
+
+    .hotkey-key {
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="header-left">
+        <span class="logo">VIBES</span>
+        <nav class="nav">
+          <span class="nav-item">DASH</span>
+          <span class="nav-item">SESS</span>
+          <span class="nav-item active">FIRE</span>
+          <span class="nav-item">GROOVE</span>
+        </nav>
+      </div>
+      <div class="header-right">
+        <div class="live-badge">
+          <span class="live-dot"></span>
+          <span>LIVE</span>
+        </div>
+        <span class="clock" id="clock">23:47:32</span>
+      </div>
+    </header>
+
+    <main class="main">
+      <aside class="session-tabs">
+        <div class="session-tabs-header">
+          <span>SESSIONS</span>
+          <span class="session-count" id="session-count">2/5</span>
+        </div>
+        <div class="session-list" id="session-list">
+          <div class="session-item selected" data-session="a7f3c2">
+            <div class="session-id">
+              <span class="session-checkbox">✓</span>
+              a7f3c2
+            </div>
+            <div class="session-name">api-refactor</div>
+            <div class="session-meta">
+              <span><span class="session-status active"></span>active</span>
+              <span>47 evt</span>
+            </div>
+          </div>
+          <div class="session-item selected" data-session="b2e1d4">
+            <div class="session-id">
+              <span class="session-checkbox">✓</span>
+              b2e1d4
+            </div>
+            <div class="session-name">bug-fix-auth</div>
+            <div class="session-meta">
+              <span><span class="session-status active"></span>active</span>
+              <span>23 evt</span>
+            </div>
+          </div>
+          <div class="session-item" data-session="c9d4e5">
+            <div class="session-id">
+              <span class="session-checkbox"></span>
+              c9d4e5
+            </div>
+            <div class="session-name">perf-testing</div>
+            <div class="session-meta">
+              <span><span class="session-status stale"></span>stale</span>
+              <span>89 evt</span>
+            </div>
+          </div>
+          <div class="session-item" data-session="d8e2f1">
+            <div class="session-id">
+              <span class="session-checkbox"></span>
+              d8e2f1
+            </div>
+            <div class="session-name">docs-update</div>
+            <div class="session-meta">
+              <span><span class="session-status stale"></span>closed</span>
+              <span>12 evt</span>
+            </div>
+          </div>
+          <div class="session-item" data-session="e1a3b7">
+            <div class="session-id">
+              <span class="session-checkbox"></span>
+              e1a3b7
+            </div>
+            <div class="session-name">feature-xyz</div>
+            <div class="session-meta">
+              <span><span class="session-status error"></span>error</span>
+              <span>156 evt</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <aside class="sidebar">
+        <div class="panel">
+          <div class="panel-header">METRICS</div>
+          <div class="panel-body">
+            <div class="stat-grid">
+              <div class="stat">
+                <div class="stat-value accent">1247</div>
+                <div class="stat-label">EVT/HR</div>
+              </div>
+              <div class="stat">
+                <div class="stat-value green">3</div>
+                <div class="stat-label">ACTIVE</div>
+              </div>
+              <div class="stat">
+                <div class="stat-value accent">47</div>
+                <div class="stat-label">LEARNS</div>
+              </div>
+              <div class="stat">
+                <div class="stat-value red">2</div>
+                <div class="stat-label">ERRORS</div>
+              </div>
+            </div>
+            <div class="sparkline">
+              ▁▂▃▂<span class="peak">▅▇█</span>▆▄▃▂▁▂▃
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">FILTER</div>
+          <div class="panel-body">
+            <div class="filter-list">
+              <div class="filter-item active">
+                <span>ALL</span>
+                <span class="filter-count">847</span>
+              </div>
+              <div class="filter-item">
+                <span>TOOL</span>
+                <span class="filter-count">312</span>
+              </div>
+              <div class="filter-item">
+                <span>CLAUDE</span>
+                <span class="filter-count">284</span>
+              </div>
+              <div class="filter-item">
+                <span>SESSION</span>
+                <span class="filter-count">127</span>
+              </div>
+              <div class="filter-item">
+                <span>HOOK</span>
+                <span class="filter-count">89</span>
+              </div>
+              <div class="filter-item">
+                <span>ASSESS</span>
+                <span class="filter-count">33</span>
+              </div>
+              <div class="filter-item">
+                <span>ERROR</span>
+                <span class="filter-count">2</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <section class="stream">
+        <div class="stream-header">
+          <span class="stream-title">EVENT STREAM</span>
+          <div class="stream-controls">
+            <button class="btn active">LIVE</button>
+            <button class="btn">PAUSE</button>
+            <button class="btn">REPLAY</button>
+          </div>
+        </div>
+        <div class="stream-body" id="stream-body"></div>
+      </section>
+
+      <aside class="event-details empty" id="event-details">
+        <div class="empty-message">
+          <div>SELECT EVENT</div>
+          <div class="empty-hint">Click an event to view details</div>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="footer">
+      <span class="prompt">=</span>
+      <input type="text" class="command-input" placeholder="" autofocus>
+      <span class="cursor"></span>
+      <div class="hotkeys">
+        <span><span class="hotkey-key">SPC</span> pause</span>
+        <span><span class="hotkey-key">F</span> filter</span>
+        <span><span class="hotkey-key">R</span> replay</span>
+        <span><span class="hotkey-key">?</span> help</span>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('clock').textContent = now.toTimeString().split(' ')[0];
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    const eventTypes = ['tool', 'claude', 'session', 'hook', 'assess', 'error'];
+    const eventContents = {
+      tool: [
+        { content: 'Read file: src/lib/types.ts', details: { file: 'src/lib/types.ts', bytes: 1204, duration: '12ms' }},
+        { content: 'Write file: tests/unit/auth.spec.ts', details: { file: 'tests/unit/auth.spec.ts', bytes: 847, duration: '8ms' }},
+        { content: 'Bash: cargo test --lib', details: { command: 'cargo test --lib', exit: 0, duration: '4.2s' }},
+      ],
+      claude: [
+        { content: 'Analyzing type definitions for refactoring...', details: { model: 'claude-3-opus', tokens: 1247 }},
+        { content: 'Implementing fix for session reconnection logic...', details: { model: 'claude-3-opus', tokens: 892 }},
+      ],
+      session: [
+        { content: 'Session heartbeat: active, 47 tools invoked', details: { tools: 47, uptime: '1h 23m' }},
+      ],
+      hook: [
+        { content: 'pre-commit hook executed: lint passed', details: { hook: 'pre-commit', duration: '1.2s' }},
+      ],
+      assess: [
+        { content: 'Learning captured: test-first methodology (0.94)', details: { pattern: 'test-first', confidence: 0.94 }},
+      ],
+      error: [
+        { content: 'ABEND: WebSocket connection timeout after 30s', details: { error: 'TIMEOUT', code: 'WS_TIMEOUT' }},
+      ]
+    };
+
+    const sessions = ['a7f3c2', 'b2e1d4', 'c9d4e5'];
+    let eventId = 0;
+
+    function createEventRow(time, type, contentObj, session) {
+      const row = document.createElement('div');
+      row.className = 'event-row';
+      row.dataset.eventId = ++eventId;
+      row.dataset.type = type;
+      row.dataset.content = contentObj.content;
+      row.dataset.details = JSON.stringify(contentObj.details);
+      row.dataset.time = time;
+      row.dataset.session = session;
+
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'event-time';
+      timeSpan.textContent = time;
+
+      const typeSpan = document.createElement('span');
+      typeSpan.className = 'event-type ' + type;
+      typeSpan.textContent = type.toUpperCase();
+
+      const contentSpan = document.createElement('span');
+      contentSpan.className = 'event-content';
+      contentSpan.textContent = contentObj.content;
+
+      const sessionSpan = document.createElement('span');
+      sessionSpan.className = 'event-session';
+      sessionSpan.textContent = session;
+
+      row.appendChild(timeSpan);
+      row.appendChild(typeSpan);
+      row.appendChild(contentSpan);
+      row.appendChild(sessionSpan);
+
+      row.addEventListener('click', function() { selectEvent(row); });
+      return row;
+    }
+
+    function buildDetailsPanel(row) {
+      const detailsPanel = document.getElementById('event-details');
+      detailsPanel.classList.remove('empty');
+      while (detailsPanel.firstChild) detailsPanel.removeChild(detailsPanel.firstChild);
+
+      const header = document.createElement('div');
+      header.className = 'details-header';
+      const title = document.createElement('span');
+      title.className = 'details-title';
+      title.textContent = 'EVENT DETAILS';
+      const closeBtn = document.createElement('span');
+      closeBtn.className = 'details-close';
+      closeBtn.textContent = '×';
+      closeBtn.addEventListener('click', closeDetails);
+      header.appendChild(title);
+      header.appendChild(closeBtn);
+      detailsPanel.appendChild(header);
+
+      const body = document.createElement('div');
+      body.className = 'details-body';
+
+      function addSection(label, value, classes) {
+        const section = document.createElement('div');
+        section.className = 'detail-section';
+        const labelEl = document.createElement('div');
+        labelEl.className = 'detail-label';
+        labelEl.textContent = label;
+        const valueEl = document.createElement('div');
+        valueEl.className = 'detail-value' + (classes ? ' ' + classes : '');
+        valueEl.textContent = value;
+        section.appendChild(labelEl);
+        section.appendChild(valueEl);
+        body.appendChild(section);
+      }
+
+      addSection('TYPE', row.dataset.type.toUpperCase(), 'large');
+      addSection('TIMESTAMP', row.dataset.time);
+      addSection('SESSION', row.dataset.session);
+      addSection('CONTENT', row.dataset.content, 'mono');
+
+      const details = JSON.parse(row.dataset.details);
+      const metaSection = document.createElement('div');
+      metaSection.className = 'detail-section';
+      const metaLabel = document.createElement('div');
+      metaLabel.className = 'detail-label';
+      metaLabel.textContent = 'METADATA';
+      metaSection.appendChild(metaLabel);
+
+      for (const [key, val] of Object.entries(details)) {
+        const detailRow = document.createElement('div');
+        detailRow.className = 'detail-row';
+        const keySpan = document.createElement('span');
+        keySpan.className = 'detail-key';
+        keySpan.textContent = key;
+        const valSpan = document.createElement('span');
+        valSpan.className = 'detail-val';
+        valSpan.textContent = String(val);
+        detailRow.appendChild(keySpan);
+        detailRow.appendChild(valSpan);
+        metaSection.appendChild(detailRow);
+      }
+      body.appendChild(metaSection);
+      detailsPanel.appendChild(body);
+    }
+
+    function selectEvent(row) {
+      document.querySelectorAll('.event-row.selected').forEach(function(r) { r.classList.remove('selected'); });
+      row.classList.add('selected');
+      buildDetailsPanel(row);
+    }
+
+    function closeDetails() {
+      const detailsPanel = document.getElementById('event-details');
+      detailsPanel.classList.add('empty');
+      while (detailsPanel.firstChild) detailsPanel.removeChild(detailsPanel.firstChild);
+      const emptyMsg = document.createElement('div');
+      emptyMsg.className = 'empty-message';
+      const mainText = document.createElement('div');
+      mainText.textContent = 'SELECT EVENT';
+      const hintText = document.createElement('div');
+      hintText.className = 'empty-hint';
+      hintText.textContent = 'Click an event to view details';
+      emptyMsg.appendChild(mainText);
+      emptyMsg.appendChild(hintText);
+      detailsPanel.appendChild(emptyMsg);
+      document.querySelectorAll('.event-row.selected').forEach(function(r) { r.classList.remove('selected'); });
+    }
+
+    const stream = document.getElementById('stream-body');
+    const now = new Date();
+    for (let i = 0; i < 12; i++) {
+      const type = eventTypes[Math.floor(Math.random() * (eventTypes.length - 1))];
+      const contents = eventContents[type];
+      const contentObj = contents[Math.floor(Math.random() * contents.length)];
+      const session = sessions[Math.floor(Math.random() * sessions.length)];
+      const time = new Date(now - (i * 3000));
+      const timeStr = time.toTimeString().split(' ')[0] + '.' + String(time.getMilliseconds()).padStart(3, '0');
+      stream.appendChild(createEventRow(timeStr, type, contentObj, session));
+    }
+
+    setInterval(function() {
+      const type = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+      const contents = eventContents[type];
+      const contentObj = contents[Math.floor(Math.random() * contents.length)];
+      const session = sessions[Math.floor(Math.random() * sessions.length)];
+      const now = new Date();
+      const timeStr = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
+      const row = createEventRow(timeStr, type, contentObj, session);
+      stream.insertBefore(row, stream.firstChild);
+      if (stream.children.length > 20) stream.removeChild(stream.lastChild);
+    }, 2500);
+
+    document.getElementById('session-list').addEventListener('click', function(e) {
+      const item = e.target.closest('.session-item');
+      if (!item) return;
+      item.classList.toggle('selected');
+      const checkbox = item.querySelector('.session-checkbox');
+      checkbox.textContent = item.classList.contains('selected') ? '✓' : '';
+      const total = document.querySelectorAll('.session-item').length;
+      const selected = document.querySelectorAll('.session-item.selected').length;
+      document.getElementById('session-count').textContent = selected + '/' + total;
+    });
+  </script>
+</body>
+</html>

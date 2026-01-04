@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VIBES /// FIREHOSE — PUNK</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    /* ═══════════════════════════════════════════════════════════════
+       BRUTALIST PUNK — Aggressive, asymmetric, grid-breaking chaos
+       ═══════════════════════════════════════════════════════════════ */
+
+    :root {
+      --black: #000000;
+      --white: #ffffff;
+      --neon-yellow: #e6ff00;
+      --neon-pink: #ff00aa;
+      --neon-cyan: #00ffff;
+      --blood-red: #ff0033;
+      --grey-dark: #1a1a1a;
+      --grey-mid: #333333;
+
+      --font-display: 'Bebas Neue', Impact, sans-serif;
+      --font-mono: 'Space Mono', monospace;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--black);
+      color: var(--white);
+      font-family: var(--font-mono);
+      overflow-x: hidden;
+    }
+
+    /* ═══ NOISE OVERLAY ═══ */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 10000;
+    }
+
+    /* ═══ LAYOUT — INTENTIONALLY BROKEN ═══ */
+    .container {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr;
+      grid-template-rows: auto 1fr;
+    }
+
+    /* ═══ HEADER — MASSIVE, TILTED ═══ */
+    .header {
+      background: var(--neon-yellow);
+      color: var(--black);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transform: skewY(-1deg);
+      margin-bottom: -1rem;
+      position: relative;
+      z-index: 100;
+    }
+
+    .logo {
+      font-family: var(--font-display);
+      font-size: 5rem;
+      line-height: 0.8;
+      letter-spacing: -0.02em;
+      transform: skewY(1deg);
+    }
+
+    .logo-sub {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.3em;
+      margin-top: 0.25rem;
+    }
+
+    .nav {
+      display: flex;
+      gap: 0;
+      transform: skewY(1deg);
+    }
+
+    .nav-item {
+      padding: 0.75rem 1.25rem;
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      background: var(--black);
+      color: var(--white);
+      cursor: pointer;
+      transition: all 0.1s;
+      border: 3px solid var(--black);
+    }
+
+    .nav-item:hover {
+      background: var(--neon-pink);
+      color: var(--black);
+    }
+
+    .nav-item.active {
+      background: var(--blood-red);
+      color: var(--white);
+      transform: rotate(-2deg) scale(1.1);
+      z-index: 10;
+    }
+
+    .header-status {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      transform: skewY(1deg);
+    }
+
+    .live-badge {
+      background: var(--blood-red);
+      color: var(--white);
+      padding: 0.5rem 1rem;
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      animation: flash 0.5s ease-in-out infinite alternate;
+    }
+
+    @keyframes flash {
+      from { opacity: 1; }
+      to { opacity: 0.7; }
+    }
+
+    .clock {
+      font-family: var(--font-display);
+      font-size: 2rem;
+    }
+
+    /* ═══ MAIN ═══ */
+    .main {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 0;
+    }
+
+    /* ═══ SIDEBAR — STACKED BLOCKS ═══ */
+    .sidebar {
+      background: var(--grey-dark);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-block {
+      padding: 1.5rem;
+      border-bottom: 4px solid var(--neon-yellow);
+    }
+
+    .sidebar-block:nth-child(2) {
+      border-bottom-color: var(--neon-pink);
+    }
+
+    .sidebar-block:nth-child(3) {
+      border-bottom-color: var(--neon-cyan);
+    }
+
+    .block-header {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .block-header::before {
+      content: '//';
+      color: var(--neon-yellow);
+    }
+
+    /* Stats - huge numbers */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .stat {
+      background: var(--black);
+      padding: 1rem;
+      border: 2px solid var(--grey-mid);
+      position: relative;
+    }
+
+    .stat::before {
+      content: '';
+      position: absolute;
+      top: -4px;
+      left: -4px;
+      right: 4px;
+      bottom: 4px;
+      border: 2px solid var(--neon-yellow);
+      pointer-events: none;
+    }
+
+    .stat-value {
+      font-family: var(--font-display);
+      font-size: 3rem;
+      line-height: 1;
+    }
+
+    .stat-value.pink { color: var(--neon-pink); }
+    .stat-value.cyan { color: var(--neon-cyan); }
+    .stat-value.red { color: var(--blood-red); }
+    .stat-value.yellow { color: var(--neon-yellow); }
+
+    .stat-label {
+      font-size: 0.625rem;
+      letter-spacing: 0.15em;
+      color: var(--grey-mid);
+      text-transform: uppercase;
+      margin-top: 0.25rem;
+    }
+
+    /* ASCII visualization */
+    .ascii-viz {
+      font-size: 0.75rem;
+      line-height: 1.2;
+      color: var(--neon-cyan);
+      white-space: pre;
+      margin-top: 1rem;
+      padding: 0.5rem;
+      background: var(--black);
+      border: 1px solid var(--neon-cyan);
+    }
+
+    /* Filter - toggle switches */
+    .filter-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+    }
+
+    .filter-btn {
+      padding: 0.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: var(--black);
+      border: 2px solid var(--grey-mid);
+      color: var(--grey-mid);
+      cursor: pointer;
+      transition: all 0.1s;
+    }
+
+    .filter-btn:hover {
+      border-color: var(--white);
+      color: var(--white);
+    }
+
+    .filter-btn.active {
+      background: var(--neon-yellow);
+      border-color: var(--neon-yellow);
+      color: var(--black);
+    }
+
+    /* ═══ STREAM — RAW DATA DUMP ═══ */
+    .stream {
+      background: var(--black);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Diagonal stripe accent */
+    .stream::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 200px;
+      height: 100%;
+      background: repeating-linear-gradient(
+        -45deg,
+        var(--neon-yellow) 0px,
+        var(--neon-yellow) 2px,
+        transparent 2px,
+        transparent 10px
+      );
+      opacity: 0.1;
+      pointer-events: none;
+    }
+
+    .stream-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.5rem;
+      background: var(--grey-dark);
+      border-bottom: 4px solid var(--neon-pink);
+    }
+
+    .stream-title {
+      font-family: var(--font-display);
+      font-size: 2.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .stream-title::before {
+      content: '>';
+      color: var(--neon-pink);
+      animation: blink 0.5s step-end infinite;
+    }
+
+    @keyframes blink {
+      50% { opacity: 0; }
+    }
+
+    .stream-controls {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .ctrl-btn {
+      padding: 0.5rem 1rem;
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      background: var(--black);
+      border: 3px solid var(--white);
+      color: var(--white);
+      cursor: pointer;
+      transition: all 0.1s;
+    }
+
+    .ctrl-btn:hover {
+      background: var(--white);
+      color: var(--black);
+    }
+
+    .ctrl-btn.active {
+      background: var(--neon-pink);
+      border-color: var(--neon-pink);
+      color: var(--black);
+      transform: rotate(-1deg);
+    }
+
+    .stream-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.5rem;
+      font-size: 0.8125rem;
+    }
+
+    /* Event rows - staggered, chaotic */
+    .event {
+      display: grid;
+      grid-template-columns: 90px 70px 1fr 60px;
+      gap: 1rem;
+      padding: 0.5rem 1rem;
+      border-left: 4px solid transparent;
+      transition: all 0.1s;
+      position: relative;
+    }
+
+    .event:nth-child(odd) {
+      background: rgba(255,255,255,0.02);
+    }
+
+    .event:hover {
+      background: rgba(230, 255, 0, 0.1);
+      border-left-color: var(--neon-yellow);
+      transform: translateX(4px);
+    }
+
+    .event-time {
+      color: var(--grey-mid);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .event-type {
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 0.6875rem;
+      letter-spacing: 0.05em;
+    }
+
+    .event-type.tool { color: var(--white); }
+    .event-type.claude { color: var(--neon-yellow); }
+    .event-type.session { color: var(--neon-cyan); }
+    .event-type.hook { color: var(--grey-mid); }
+    .event-type.assess { color: var(--neon-pink); }
+    .event-type.error { color: var(--blood-red); text-shadow: 0 0 10px var(--blood-red); }
+
+    .event-content {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .event-session {
+      color: var(--grey-mid);
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+    }
+
+    /* ═══ FOOTER — COMMAND LINE ═══ */
+    .footer {
+      background: var(--neon-yellow);
+      color: var(--black);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      transform: skewY(1deg);
+      margin-top: -0.5rem;
+    }
+
+    .prompt {
+      font-family: var(--font-display);
+      font-size: 2rem;
+    }
+
+    .command-input {
+      flex: 1;
+      background: var(--black);
+      border: 3px solid var(--black);
+      padding: 0.5rem 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      color: var(--neon-yellow);
+      outline: none;
+      transform: skewY(-1deg);
+    }
+
+    .command-input::placeholder {
+      color: var(--grey-mid);
+    }
+
+    .hotkeys {
+      display: flex;
+      gap: 1rem;
+      font-family: var(--font-display);
+      font-size: 1rem;
+      transform: skewY(-1deg);
+    }
+
+    .hotkey-key {
+      background: var(--black);
+      color: var(--neon-yellow);
+      padding: 0.25rem 0.5rem;
+    }
+
+    /* ═══ DECORATIVE CHAOS ═══ */
+    .corner-accent {
+      position: fixed;
+      font-family: var(--font-display);
+      font-size: 8rem;
+      opacity: 0.03;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .corner-accent.tl { top: -2rem; left: -1rem; }
+    .corner-accent.br { bottom: -2rem; right: -1rem; transform: rotate(180deg); }
+
+    .glitch-line {
+      position: fixed;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--neon-pink);
+      opacity: 0;
+      animation: glitch-scan 4s linear infinite;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    @keyframes glitch-scan {
+      0% { top: 0; opacity: 0; }
+      10% { opacity: 0.5; }
+      50% { top: 100%; opacity: 0.5; }
+      51% { opacity: 0; }
+      100% { opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="corner-accent tl">VIBES</div>
+  <div class="corner-accent br">VIBES</div>
+  <div class="glitch-line"></div>
+
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div>
+        <div class="logo">VIBES</div>
+        <div class="logo-sub">MECH SUIT FOR DEVS</div>
+      </div>
+
+      <nav class="nav">
+        <span class="nav-item">DASH</span>
+        <span class="nav-item">SESS</span>
+        <span class="nav-item active">FIRE</span>
+        <span class="nav-item">GROOVE</span>
+      </nav>
+
+      <div class="header-status">
+        <span class="live-badge">● LIVE</span>
+        <span class="clock" id="clock">23:47:32</span>
+      </div>
+    </header>
+
+    <!-- Main -->
+    <main class="main">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="sidebar-block">
+          <div class="block-header">METRICS</div>
+          <div class="stat-grid">
+            <div class="stat">
+              <div class="stat-value yellow">1247</div>
+              <div class="stat-label">Events/hr</div>
+            </div>
+            <div class="stat">
+              <div class="stat-value cyan">3</div>
+              <div class="stat-label">Sessions</div>
+            </div>
+            <div class="stat">
+              <div class="stat-value pink">47</div>
+              <div class="stat-label">Learnings</div>
+            </div>
+            <div class="stat">
+              <div class="stat-value red">2</div>
+              <div class="stat-label">Errors</div>
+            </div>
+          </div>
+          <div class="ascii-viz">
+RATE ████████████░░░░░░░░ 62%
+BUFF ██████████████████░░ 91%
+LOAD ███████░░░░░░░░░░░░░ 35%</div>
+        </div>
+
+        <div class="sidebar-block">
+          <div class="block-header">FILTER</div>
+          <div class="filter-grid">
+            <button class="filter-btn active">ALL</button>
+            <button class="filter-btn">TOOL</button>
+            <button class="filter-btn">CLAUDE</button>
+            <button class="filter-btn">SESSION</button>
+            <button class="filter-btn">HOOK</button>
+            <button class="filter-btn">ASSESS</button>
+            <button class="filter-btn">ERROR</button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Stream -->
+      <section class="stream">
+        <div class="stream-header">
+          <span class="stream-title">EVENT_STREAM</span>
+          <div class="stream-controls">
+            <button class="ctrl-btn active">LIVE</button>
+            <button class="ctrl-btn">PAUSE</button>
+            <button class="ctrl-btn">REPLAY</button>
+            <button class="ctrl-btn">DUMP</button>
+          </div>
+        </div>
+        <div class="stream-body" id="stream-body">
+          <div class="event">
+            <span class="event-time">23:47:31.847</span>
+            <span class="event-type tool">TOOL</span>
+            <span class="event-content">Read file: src/components/SessionCard.tsx (847 bytes)</span>
+            <span class="event-session">a7f3c2</span>
+          </div>
+          <div class="event">
+            <span class="event-time">23:47:31.203</span>
+            <span class="event-type claude">CLAUDE</span>
+            <span class="event-content">Analyzing component structure for potential optimizations...</span>
+            <span class="event-session">a7f3c2</span>
+          </div>
+          <div class="event">
+            <span class="event-time">23:47:30.891</span>
+            <span class="event-type assess">ASSESS</span>
+            <span class="event-content">◉ Lightweight assessment triggered: pattern match confidence 0.73</span>
+            <span class="event-session">a7f3c2</span>
+          </div>
+          <div class="event">
+            <span class="event-time">23:47:29.442</span>
+            <span class="event-type session">SESSION</span>
+            <span class="event-content">Session heartbeat: active, 47 tools invoked</span>
+            <span class="event-session">a7f3c2</span>
+          </div>
+          <div class="event">
+            <span class="event-time">23:47:28.103</span>
+            <span class="event-type tool">TOOL</span>
+            <span class="event-content">Bash: cargo test --lib (exit: 0)</span>
+            <span class="event-session">b2e1d4</span>
+          </div>
+          <div class="event">
+            <span class="event-time">23:47:27.551</span>
+            <span class="event-type hook">HOOK</span>
+            <span class="event-content">pre-commit hook executed: lint passed</span>
+            <span class="event-session">b2e1d4</span>
+          </div>
+          <div class="event">
+            <span class="event-time">23:47:26.888</span>
+            <span class="event-type error">ERROR</span>
+            <span class="event-content">*** ABEND: WebSocket connection timeout after 30s ***</span>
+            <span class="event-session">c9d4e5</span>
+          </div>
+          <div class="event">
+            <span class="event-time">23:47:25.102</span>
+            <span class="event-type claude">CLAUDE</span>
+            <span class="event-content">Implementing fix for session reconnection logic...</span>
+            <span class="event-session">a7f3c2</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <span class="prompt">&gt;&gt;</span>
+      <input type="text" class="command-input" placeholder="ENTER COMMAND..." autofocus>
+      <div class="hotkeys">
+        <span><span class="hotkey-key">SPC</span> PAUSE</span>
+        <span><span class="hotkey-key">F</span> FILTER</span>
+        <span><span class="hotkey-key">?</span> HELP</span>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('clock').textContent = now.toTimeString().split(' ')[0];
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    const eventTypes = ['tool', 'claude', 'session', 'hook', 'assess'];
+    const eventContents = [
+      'Read file: src/lib/types.ts (1,204 bytes)',
+      'Analyzing type definitions for refactoring...',
+      'Session heartbeat: active, 52 tools invoked',
+      'post-save hook executed: format complete',
+      '◉ Learning captured: test-first methodology (0.94)',
+    ];
+
+    function createEvent(time, type, content, session) {
+      const event = document.createElement('div');
+      event.className = 'event';
+
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'event-time';
+      timeSpan.textContent = time;
+
+      const typeSpan = document.createElement('span');
+      typeSpan.className = 'event-type ' + type;
+      typeSpan.textContent = type.toUpperCase();
+
+      const contentSpan = document.createElement('span');
+      contentSpan.className = 'event-content';
+      contentSpan.textContent = content;
+
+      const sessionSpan = document.createElement('span');
+      sessionSpan.className = 'event-session';
+      sessionSpan.textContent = session;
+
+      event.appendChild(timeSpan);
+      event.appendChild(typeSpan);
+      event.appendChild(contentSpan);
+      event.appendChild(sessionSpan);
+
+      return event;
+    }
+
+    function addEvent() {
+      const stream = document.getElementById('stream-body');
+      const type = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+      const content = eventContents[Math.floor(Math.random() * eventContents.length)];
+      const now = new Date();
+      const time = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
+      const session = Math.random().toString(36).substr(2, 6);
+
+      const event = createEvent(time, type, content, session);
+      stream.insertBefore(event, stream.firstChild);
+
+      if (stream.children.length > 15) {
+        stream.removeChild(stream.lastChild);
+      }
+    }
+
+    setInterval(addEvent, 1500 + Math.random() * 1500);
+  </script>
+</body>
+</html>

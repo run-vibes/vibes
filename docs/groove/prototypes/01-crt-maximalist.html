@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>vibes :: firehose — CRT Maximalist</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ═══════════════════════════════════════════════════════════════
+       CRT MAXIMALIST — Full commitment to phosphor terminal aesthetic
+       ═══════════════════════════════════════════════════════════════ */
+
+    :root {
+      /* Phosphor colors - authentic CRT palette */
+      --phosphor-green: #33ff33;
+      --phosphor-green-dim: #1a8c1a;
+      --phosphor-green-glow: #00ff0044;
+      --phosphor-amber: #ffb000;
+      --phosphor-amber-dim: #8c6000;
+      --phosphor-amber-glow: #ffb00044;
+      --phosphor-red: #ff3333;
+      --phosphor-cyan: #00ffff;
+
+      /* Screen colors */
+      --screen-black: #0a0a08;
+      --screen-dark: #0f0f0c;
+      --screen-surface: #141412;
+      --bezel-color: #2a2520;
+      --bezel-inner: #1a1815;
+
+      /* Active phosphor (switch between green/amber) */
+      --phosphor: var(--phosphor-amber);
+      --phosphor-dim: var(--phosphor-amber-dim);
+      --phosphor-glow: var(--phosphor-amber-glow);
+
+      /* Typography */
+      --font-display: 'VT323', monospace;
+      --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+
+      /* Timing */
+      --flicker-speed: 0.05s;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      background: #0a0806;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: var(--font-mono);
+      color: var(--phosphor);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    /* ═══ CRT MONITOR HOUSING ═══ */
+    .crt-housing {
+      position: relative;
+      background: linear-gradient(145deg, #3d3830 0%, #252018 50%, #1a1510 100%);
+      border-radius: 24px;
+      padding: 2rem;
+      box-shadow:
+        0 30px 60px rgba(0,0,0,0.8),
+        inset 0 2px 0 rgba(255,255,255,0.1),
+        inset 0 -2px 0 rgba(0,0,0,0.3);
+      max-width: 1400px;
+      width: 100%;
+    }
+
+    .crt-bezel {
+      background: linear-gradient(180deg, var(--bezel-color) 0%, var(--bezel-inner) 100%);
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow:
+        inset 0 0 30px rgba(0,0,0,0.8),
+        inset 0 2px 0 rgba(255,255,255,0.05);
+    }
+
+    /* ═══ THE SCREEN ═══ */
+    .crt-screen {
+      position: relative;
+      background: var(--screen-black);
+      border-radius: 20px / 20px;
+      overflow: hidden;
+      box-shadow:
+        inset 0 0 100px rgba(0,0,0,0.9),
+        inset 0 0 20px var(--phosphor-glow);
+    }
+
+    /* Screen curvature effect */
+    .crt-screen::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        ellipse 120% 120% at 50% 50%,
+        transparent 0%,
+        transparent 70%,
+        rgba(0,0,0,0.3) 100%
+      );
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    /* Scanlines overlay */
+    .scanlines {
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0,0,0,0.15) 0px,
+        rgba(0,0,0,0.15) 1px,
+        transparent 1px,
+        transparent 2px
+      );
+      pointer-events: none;
+      z-index: 101;
+    }
+
+    /* Screen flicker animation */
+    .screen-flicker {
+      position: absolute;
+      inset: 0;
+      background: transparent;
+      pointer-events: none;
+      z-index: 102;
+      animation: flicker 8s infinite;
+    }
+
+    @keyframes flicker {
+      0%, 100% { opacity: 0; }
+      92% { opacity: 0; }
+      93% { opacity: 0.02; background: var(--phosphor-glow); }
+      94% { opacity: 0; }
+      96% { opacity: 0.01; background: var(--phosphor-glow); }
+      97% { opacity: 0; }
+    }
+
+    /* Phosphor glow on text */
+    .glow {
+      text-shadow:
+        0 0 2px var(--phosphor),
+        0 0 8px var(--phosphor-glow),
+        0 0 20px var(--phosphor-glow);
+    }
+
+    .glow-intense {
+      text-shadow:
+        0 0 2px var(--phosphor),
+        0 0 10px var(--phosphor),
+        0 0 30px var(--phosphor-glow),
+        0 0 50px var(--phosphor-glow);
+    }
+
+    /* ═══ CONTENT AREA ═══ */
+    .screen-content {
+      position: relative;
+      padding: 1.5rem;
+      min-height: 600px;
+      z-index: 1;
+    }
+
+    /* ═══ HEADER ═══ */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--phosphor-dim);
+      margin-bottom: 1rem;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .logo {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      letter-spacing: 0.1em;
+    }
+
+    .breadcrumb {
+      font-size: 0.875rem;
+      color: var(--phosphor-dim);
+    }
+
+    .breadcrumb span {
+      color: var(--phosphor);
+    }
+
+    .status-cluster {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      font-size: 0.75rem;
+      font-family: var(--font-display);
+      letter-spacing: 0.05em;
+    }
+
+    .live-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--phosphor-red);
+      text-shadow: 0 0 10px var(--phosphor-red);
+      animation: pulse-live 1s ease-in-out infinite;
+    }
+
+    @keyframes pulse-live {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--phosphor-red);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--phosphor-red);
+    }
+
+    .clock {
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ═══ STATS BAR ═══ */
+    .stats-bar {
+      display: flex;
+      gap: 2rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px dashed var(--phosphor-dim);
+      margin-bottom: 1rem;
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+    }
+
+    .stat {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .stat-label {
+      color: var(--phosphor-dim);
+    }
+
+    .stat-value {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .sparkline {
+      font-size: 0.875rem;
+      letter-spacing: -0.05em;
+      color: var(--phosphor-dim);
+    }
+
+    .sparkline .peak {
+      color: var(--phosphor);
+    }
+
+    /* ═══ EVENT STREAM ═══ */
+    .event-stream {
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
+      line-height: 1.6;
+    }
+
+    .event-row {
+      display: grid;
+      grid-template-columns: 100px 80px 1fr auto;
+      gap: 1rem;
+      padding: 0.4rem 0;
+      border-bottom: 1px solid rgba(255, 176, 0, 0.1);
+      transition: background 0.1s, opacity 0.3s;
+    }
+
+    .event-row:hover {
+      background: rgba(255, 176, 0, 0.05);
+    }
+
+    .event-time {
+      color: var(--phosphor-dim);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .event-type {
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.6875rem;
+      letter-spacing: 0.1em;
+      padding: 0.15rem 0.4rem;
+      border: 1px solid;
+      text-align: center;
+    }
+
+    .event-type.session {
+      color: var(--phosphor-cyan);
+      border-color: var(--phosphor-cyan);
+      text-shadow: 0 0 8px var(--phosphor-cyan);
+    }
+    .event-type.claude {
+      color: var(--phosphor);
+      border-color: var(--phosphor);
+    }
+    .event-type.tool {
+      color: var(--phosphor-green);
+      border-color: var(--phosphor-green);
+      text-shadow: 0 0 8px var(--phosphor-green);
+    }
+    .event-type.hook {
+      color: var(--phosphor-dim);
+      border-color: var(--phosphor-dim);
+    }
+    .event-type.error {
+      color: var(--phosphor-red);
+      border-color: var(--phosphor-red);
+      text-shadow: 0 0 8px var(--phosphor-red);
+    }
+    .event-type.assess {
+      color: #ffd700;
+      border-color: #ffd700;
+      text-shadow: 0 0 8px #ffd700;
+    }
+
+    .event-content {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .event-session {
+      color: var(--phosphor-dim);
+      font-size: 0.75rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ═══ COMMAND LINE ═══ */
+    .command-line {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--screen-dark);
+      border-top: 1px solid var(--phosphor-dim);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-mono);
+    }
+
+    .prompt {
+      color: var(--phosphor);
+      font-weight: 600;
+    }
+
+    .command-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--phosphor);
+      font-family: inherit;
+      font-size: inherit;
+      outline: none;
+      caret-color: var(--phosphor);
+    }
+
+    .cursor-block {
+      display: inline-block;
+      width: 0.6em;
+      height: 1.1em;
+      background: var(--phosphor);
+      animation: blink-cursor 1s step-end infinite;
+      vertical-align: text-bottom;
+    }
+
+    @keyframes blink-cursor {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+
+    /* ═══ FUNCTION KEY BAR ═══ */
+    .function-bar {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5rem 1.5rem;
+      background: linear-gradient(180deg, var(--bezel-inner) 0%, var(--bezel-color) 100%);
+      font-family: var(--font-display);
+      font-size: 0.9rem;
+      color: var(--phosphor-dim);
+      border-radius: 0 0 8px 8px;
+    }
+
+    .fkey {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .fkey-num {
+      color: var(--phosphor);
+    }
+
+    /* ═══ POWER LED ═══ */
+    .power-led {
+      position: absolute;
+      bottom: 1rem;
+      right: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-display);
+      font-size: 0.75rem;
+      color: var(--phosphor-dim);
+    }
+
+    .led {
+      width: 8px;
+      height: 8px;
+      background: var(--phosphor-green);
+      border-radius: 50%;
+      box-shadow:
+        0 0 4px var(--phosphor-green),
+        0 0 12px var(--phosphor-green);
+    }
+
+    /* ═══ BRAND BADGE ═══ */
+    .brand-badge {
+      position: absolute;
+      bottom: 1rem;
+      left: 2rem;
+      font-family: var(--font-display);
+      font-size: 0.875rem;
+      color: rgba(255,255,255,0.3);
+      letter-spacing: 0.2em;
+    }
+  </style>
+</head>
+<body>
+  <div class="crt-housing">
+    <div class="crt-bezel">
+      <div class="crt-screen">
+        <div class="scanlines"></div>
+        <div class="screen-flicker"></div>
+
+        <div class="screen-content">
+          <!-- Header -->
+          <header class="header">
+            <div class="header-left">
+              <span class="logo glow-intense">VIBES</span>
+              <span class="breadcrumb">› firehose › <span>live</span></span>
+            </div>
+            <div class="status-cluster">
+              <div class="live-indicator">
+                <span class="live-dot"></span>
+                <span>LIVE</span>
+              </div>
+              <span class="clock glow" id="clock">23:47:32</span>
+            </div>
+          </header>
+
+          <!-- Stats Bar -->
+          <div class="stats-bar">
+            <div class="stat">
+              <span class="stat-label">EVENTS/HR:</span>
+              <span class="stat-value glow">1,247</span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">SESSIONS:</span>
+              <span class="stat-value glow">3</span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">RATE:</span>
+              <span class="sparkline">▁▂▃▂<span class="peak">▅▇█</span>▆▄▃▂</span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">BUFFER:</span>
+              <span class="stat-value">████████░░</span>
+              <span class="stat-value glow">82%</span>
+            </div>
+          </div>
+
+          <!-- Event Stream -->
+          <div class="event-stream" id="event-stream">
+            <div class="event-row">
+              <span class="event-time">23:47:31.847</span>
+              <span class="event-type tool">TOOL</span>
+              <span class="event-content">Read file: src/components/SessionCard.tsx (847 bytes)</span>
+              <span class="event-session">a7f3...</span>
+            </div>
+            <div class="event-row">
+              <span class="event-time">23:47:31.203</span>
+              <span class="event-type claude">CLAUDE</span>
+              <span class="event-content">Analyzing component structure for potential optimizations...</span>
+              <span class="event-session">a7f3...</span>
+            </div>
+            <div class="event-row">
+              <span class="event-time">23:47:30.891</span>
+              <span class="event-type assess">ASSESS</span>
+              <span class="event-content">◉ Lightweight assessment triggered: pattern match confidence 0.73</span>
+              <span class="event-session">a7f3...</span>
+            </div>
+            <div class="event-row">
+              <span class="event-time">23:47:29.442</span>
+              <span class="event-type session">SESSION</span>
+              <span class="event-content">Session heartbeat: active, 47 tools invoked</span>
+              <span class="event-session">a7f3...</span>
+            </div>
+            <div class="event-row">
+              <span class="event-time">23:47:28.103</span>
+              <span class="event-type tool">TOOL</span>
+              <span class="event-content">Bash: cargo test --lib (exit: 0)</span>
+              <span class="event-session">b2e1...</span>
+            </div>
+            <div class="event-row">
+              <span class="event-time">23:47:27.551</span>
+              <span class="event-type hook">HOOK</span>
+              <span class="event-content">pre-commit hook executed: lint passed</span>
+              <span class="event-session">b2e1...</span>
+            </div>
+            <div class="event-row">
+              <span class="event-time">23:47:26.888</span>
+              <span class="event-type error">ERROR</span>
+              <span class="event-content">ABEND: WebSocket connection timeout after 30s</span>
+              <span class="event-session">c9d4...</span>
+            </div>
+            <div class="event-row">
+              <span class="event-time">23:47:25.102</span>
+              <span class="event-type claude">CLAUDE</span>
+              <span class="event-content">Implementing fix for session reconnection logic...</span>
+              <span class="event-session">a7f3...</span>
+            </div>
+            <div class="event-row">
+              <span class="event-time">23:47:24.667</span>
+              <span class="event-type tool">TOOL</span>
+              <span class="event-content">Edit: vibes-core/src/session.rs:142-156</span>
+              <span class="event-session">a7f3...</span>
+            </div>
+            <div class="event-row">
+              <span class="event-time">23:47:23.891</span>
+              <span class="event-type assess">ASSESS</span>
+              <span class="event-content">◉ Pattern recognized: error-handling-improvement (0.89)</span>
+              <span class="event-session">a7f3...</span>
+            </div>
+          </div>
+
+          <!-- Command Line -->
+          <div class="command-line">
+            <span class="prompt glow">=</span>
+            <input type="text" class="command-input" placeholder="" autofocus>
+            <span class="cursor-block"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Function Key Bar -->
+      <div class="function-bar">
+        <span class="fkey"><span class="fkey-num">F1</span>=Help</span>
+        <span class="fkey"><span class="fkey-num">F4</span>=Filter</span>
+        <span class="fkey"><span class="fkey-num">F5</span>=Pause</span>
+        <span class="fkey"><span class="fkey-num">F6</span>=Replay</span>
+        <span class="fkey"><span class="fkey-num">F7</span>=Export</span>
+        <span class="fkey"><span class="fkey-num">F9</span>=Clear</span>
+        <span class="fkey"><span class="fkey-num">F10</span>=Quit</span>
+      </div>
+    </div>
+
+    <!-- Power LED -->
+    <div class="power-led">
+      <span class="led"></span>
+      <span>POWER</span>
+    </div>
+
+    <!-- Brand Badge -->
+    <div class="brand-badge">VIBES TERMINAL CO.</div>
+  </div>
+
+  <script>
+    // Update clock
+    function updateClock() {
+      const now = new Date();
+      const time = now.toTimeString().split(' ')[0];
+      document.getElementById('clock').textContent = time;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Event data for simulation
+    const eventTypes = ['tool', 'claude', 'session', 'hook', 'assess'];
+    const eventContents = [
+      'Read file: src/lib/types.ts (1,204 bytes)',
+      'Analyzing type definitions for refactoring...',
+      'Session heartbeat: active, 52 tools invoked',
+      'post-save hook executed: format complete',
+      '◉ Learning captured: test-first methodology (0.94)',
+      'Bash: npm run build (exit: 0)',
+      'Write file: docs/API.md (2,847 bytes)',
+      'Generating documentation from source comments...',
+    ];
+
+    // Create event row using safe DOM methods
+    function createEventRow(time, type, content, session) {
+      const row = document.createElement('div');
+      row.className = 'event-row';
+      row.style.opacity = '0';
+
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'event-time';
+      timeSpan.textContent = time;
+
+      const typeSpan = document.createElement('span');
+      typeSpan.className = 'event-type ' + type;
+      typeSpan.textContent = type.toUpperCase();
+
+      const contentSpan = document.createElement('span');
+      contentSpan.className = 'event-content';
+      contentSpan.textContent = content;
+
+      const sessionSpan = document.createElement('span');
+      sessionSpan.className = 'event-session';
+      sessionSpan.textContent = session;
+
+      row.appendChild(timeSpan);
+      row.appendChild(typeSpan);
+      row.appendChild(contentSpan);
+      row.appendChild(sessionSpan);
+
+      return row;
+    }
+
+    function addEvent() {
+      const stream = document.getElementById('event-stream');
+      const type = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+      const content = eventContents[Math.floor(Math.random() * eventContents.length)];
+      const now = new Date();
+      const time = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
+      const session = Math.random().toString(36).substr(2, 4) + '...';
+
+      const row = createEventRow(time, type, content, session);
+      stream.insertBefore(row, stream.firstChild);
+
+      // Fade in
+      setTimeout(function() { row.style.opacity = '1'; }, 10);
+
+      // Remove old events
+      if (stream.children.length > 15) {
+        stream.removeChild(stream.lastChild);
+      }
+    }
+
+    // Add events periodically
+    setInterval(addEvent, 2000 + Math.random() * 3000);
+  </script>
+</body>
+</html>
