@@ -12,10 +12,10 @@ use std::sync::Arc;
 use tokio_util::sync::CancellationToken;
 use vibes_core::StoredEvent;
 use vibes_groove::assessment::{
-    AssessmentConfig, AssessmentConsumerConfig, AssessmentProcessor, InMemoryAssessmentLog,
-    assessment_consumer_loop,
+    AssessmentConfig, AssessmentConsumerConfig, AssessmentLog, AssessmentProcessor,
+    IggyAssessmentLog, InMemoryAssessmentLog, assessment_consumer_loop,
 };
-use vibes_iggy::EventLog;
+use vibes_iggy::{EventLog, IggyManager};
 
 use super::Result;
 
@@ -24,21 +24,44 @@ use super::Result;
 /// # Arguments
 ///
 /// * `event_log` - The EventLog to consume events from
+/// * `iggy_manager` - Optional IggyManager for persistent assessment storage
 /// * `shutdown` - Cancellation token to signal shutdown
 ///
 /// # Returns
 ///
-/// Returns Ok(()) on success, or an error if the consumer fails to start.
+/// Returns the AssessmentLog on success (for WebSocket endpoint use),
+/// or an error if the consumer fails to start.
 pub async fn start_assessment_consumer(
     event_log: Arc<dyn EventLog<StoredEvent>>,
+    iggy_manager: Option<Arc<IggyManager>>,
     shutdown: CancellationToken,
-) -> Result<()> {
-    // Create assessment log (in-memory for now, will use Iggy later)
-    let assessment_log = Arc::new(InMemoryAssessmentLog::new());
+) -> Result<Arc<dyn AssessmentLog>> {
+    // Create assessment log - use IggyAssessmentLog when we have a manager
+    let assessment_log: Arc<dyn AssessmentLog> = if let Some(manager) = iggy_manager {
+        let log = IggyAssessmentLog::new(manager);
+
+        // Try to connect - fall back to in-memory if connection fails
+        match log.connect().await {
+            Ok(()) => {
+                tracing::info!("Assessment log connected to Iggy");
+                Arc::new(log)
+            }
+            Err(e) => {
+                tracing::warn!(
+                    "Failed to connect assessment log to Iggy: {}. Using in-memory log.",
+                    e
+                );
+                Arc::new(InMemoryAssessmentLog::new())
+            }
+        }
+    } else {
+        tracing::info!("Using in-memory assessment log (no Iggy manager)");
+        Arc::new(InMemoryAssessmentLog::new())
+    };
 
     // Create processor with default config
     let config = AssessmentConfig::default();
-    let processor = Arc::new(AssessmentProcessor::new(config, assessment_log));
+    let processor = Arc::new(AssessmentProcessor::new(config, assessment_log.clone()));
 
     // Create consumer from the event log
     let consumer = event_log
@@ -65,7 +88,7 @@ pub async fn start_assessment_consumer(
         }
     });
 
-    Ok(())
+    Ok(assessment_log)
 }
 
 #[cfg(test)]
@@ -87,8 +110,8 @@ mod tests {
         let log = Arc::new(InMemoryEventLog::<StoredEvent>::new());
         let shutdown = CancellationToken::new();
 
-        // Start consumer
-        let result = start_assessment_consumer(log, shutdown.clone()).await;
+        // Start consumer (no Iggy manager = in-memory log)
+        let result = start_assessment_consumer(log, None, shutdown.clone()).await;
         assert!(result.is_ok());
 
         // Give it a moment to start
@@ -119,8 +142,8 @@ mod tests {
                 .unwrap();
         }
 
-        // Start consumer
-        start_assessment_consumer(log.clone(), shutdown.clone())
+        // Start consumer (no Iggy manager = in-memory log)
+        start_assessment_consumer(log.clone(), None, shutdown.clone())
             .await
             .unwrap();
 
@@ -132,5 +155,23 @@ mod tests {
         tokio::time::sleep(Duration::from_millis(100)).await;
 
         // Consumer processed events (no panics = success)
+    }
+
+    #[tokio::test]
+    async fn test_assessment_consumer_returns_log() {
+        let log = Arc::new(InMemoryEventLog::<StoredEvent>::new());
+        let shutdown = CancellationToken::new();
+
+        // Start consumer and get the assessment log
+        let assessment_log = start_assessment_consumer(log, None, shutdown.clone())
+            .await
+            .expect("should start");
+
+        // Subscribe to the assessment log
+        let _rx = assessment_log.subscribe();
+
+        // Cleanup
+        shutdown.cancel();
+        tokio::time::sleep(Duration::from_millis(50)).await;
     }
 }

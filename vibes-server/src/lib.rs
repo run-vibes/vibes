@@ -261,11 +261,17 @@ impl VibesServer {
         }
 
         // Start assessment consumer for pattern detection and learning
-        if let Err(e) = start_assessment_consumer(event_log, shutdown.clone()).await {
-            tracing::error!("Failed to start assessment consumer: {}", e);
-            // Continue without assessment - not fatal
-        } else {
-            tracing::info!("Assessment consumer started");
+        let iggy_manager = self.state.iggy_manager();
+        match start_assessment_consumer(event_log, iggy_manager, shutdown.clone()).await {
+            Ok(assessment_log) => {
+                tracing::info!("Assessment consumer started");
+                // Store assessment log for WebSocket endpoint
+                self.state.set_assessment_log(assessment_log).await;
+            }
+            Err(e) => {
+                tracing::error!("Failed to start assessment consumer: {}", e);
+                // Continue without assessment - not fatal
+            }
         }
 
         tracing::info!("EventLog consumers started");
