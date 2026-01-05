@@ -31,6 +31,7 @@ What remains is cleanup, integration, and validation.
 | 7 | [refactor-07-plugin-lifecycle](stories/refactor-07-plugin-lifecycle.md) | Add Plugin `on_ready()` lifecycle method |
 | 8 | [fix-08-assessment-multiselect](stories/fix-08-assessment-multiselect.md) | Fix assessment page multi-select bug |
 | 9 | [feat-09-complete-hook-support](stories/feat-09-complete-hook-support.md) | Support all Claude Code hooks |
+| 10 | [feat-10-cli-assess-queries](stories/feat-10-cli-assess-queries.md) | Wire CLI assess commands to query real data |
 
 > **Status:** Check story frontmatter or run `just board` for current status.
 
