@@ -17,6 +17,14 @@ vi.mock('../hooks/useTunnelStatus', () => ({
   }),
 }));
 
+// Mock the CRT effects hook
+vi.mock('../hooks/useCrtEffects', () => ({
+  useCrtEffects: () => ({
+    enabled: true,
+    setEffects: vi.fn(),
+  }),
+}));
+
 describe('SettingsPage', () => {
   describe('Tunnel section', () => {
     test('displays tunnel status', () => {

@@ -1,7 +1,7 @@
 /* design-system/src/primitives/Text/Text.module.css */
 .text {
   margin: 0;
-  font-family: var(--font-sans);
+  font-family: var(--font-mono);
   line-height: var(--leading-normal);
 }
 

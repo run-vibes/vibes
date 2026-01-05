@@ -3,10 +3,12 @@ import { useState, useEffect } from 'react';
 import { Panel, Button, Text } from '@vibes/design-system';
 import { NotificationSettings } from '../components/NotificationSettings';
 import { useTunnelStatus } from '../hooks/useTunnelStatus';
+import { useCrtEffects } from '../hooks/useCrtEffects';
 import './Settings.css';
 
 export function SettingsPage() {
   const { data: tunnel, isLoading: tunnelLoading, error: tunnelError } = useTunnelStatus();
+  const { enabled: crtEffectsEnabled, setEffects: setCrtEffects } = useCrtEffects();
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     const saved = localStorage.getItem('vibes-theme');
     return (saved === 'light' || saved === 'dark') ? saved : 'dark';
@@ -53,13 +55,35 @@ export function SettingsPage() {
                   className={`theme-option ${theme === 'dark' ? 'active' : ''}`}
                   onClick={() => handleThemeChange('dark')}
                 >
-                  🌙 Dark
+                  Dark
                 </button>
                 <button
                   className={`theme-option ${theme === 'light' ? 'active' : ''}`}
                   onClick={() => handleThemeChange('light')}
                 >
-                  ☀️ Light
+                  Light
+                </button>
+              </div>
+            </div>
+          </div>
+          <div className="setting-row">
+            <div className="setting-info">
+              <div className="setting-label">CRT Effects</div>
+              <Text intensity="dim">Enable retro CRT scanlines and vignette</Text>
+            </div>
+            <div className="setting-control">
+              <div className="theme-toggle">
+                <button
+                  className={`theme-option ${crtEffectsEnabled ? 'active' : ''}`}
+                  onClick={() => setCrtEffects(true)}
+                >
+                  On
+                </button>
+                <button
+                  className={`theme-option ${!crtEffectsEnabled ? 'active' : ''}`}
+                  onClick={() => setCrtEffects(false)}
+                >
+                  Off
                 </button>
               </div>
             </div>
@@ -176,26 +200,29 @@ export function SettingsPage() {
 }
 
 function TunnelStatusBadge({ state }: { state: string }) {
-  const colors: Record<string, string> = {
-    disabled: '#9CA3AF',
-    starting: '#F59E0B',
-    connected: '#10B981',
-    reconnecting: '#F59E0B',
-    failed: '#EF4444',
-    stopped: '#9CA3AF',
+  // Map tunnel states to design system status tokens
+  const stateStyles: Record<string, { color: string; bgColor: string }> = {
+    disabled: { color: 'var(--status-disabled)', bgColor: 'var(--status-disabled-subtle)' },
+    starting: { color: 'var(--status-starting)', bgColor: 'var(--status-starting-subtle)' },
+    connected: { color: 'var(--status-connected)', bgColor: 'var(--status-connected-subtle)' },
+    reconnecting: { color: 'var(--status-starting)', bgColor: 'var(--status-starting-subtle)' },
+    failed: { color: 'var(--status-failed)', bgColor: 'var(--status-failed-subtle)' },
+    stopped: { color: 'var(--status-disabled)', bgColor: 'var(--status-disabled-subtle)' },
   };
+
+  const style = stateStyles[state] || stateStyles.disabled;
 
   return (
     <span
       style={{
         display: 'inline-flex',
         alignItems: 'center',
-        gap: '0.5rem',
-        padding: '0.25rem 0.75rem',
-        borderRadius: '9999px',
-        backgroundColor: `${colors[state] || '#9CA3AF'}20`,
-        color: colors[state] || '#9CA3AF',
-        fontSize: '0.875rem',
+        gap: 'var(--space-2)',
+        padding: 'var(--space-1) var(--space-3)',
+        borderRadius: 'var(--radius-full)',
+        backgroundColor: style.bgColor,
+        color: style.color,
+        fontSize: 'var(--font-size-sm)',
         fontWeight: 500,
       }}
     >

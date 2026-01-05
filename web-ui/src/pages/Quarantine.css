@@ -93,13 +93,13 @@
   font-weight: 500;
 }
 
-.trust-badge.local { background-color: #10B98120; color: #10B981; }
-.trust-badge.private-cloud { background-color: #6366F120; color: #6366F1; }
-.trust-badge.org-verified { background-color: #3B82F620; color: #3B82F6; }
-.trust-badge.org-unverified { background-color: #8B5CF620; color: #8B5CF6; }
-.trust-badge.public-verified { background-color: #F59E0B20; color: #F59E0B; }
-.trust-badge.public-unverified { background-color: #EF444420; color: #EF4444; }
-.trust-badge.quarantined { background-color: #6B728020; color: #6B7280; }
+.trust-badge.local { background-color: var(--trust-local-subtle); color: var(--trust-local); }
+.trust-badge.private-cloud { background-color: var(--trust-private-subtle); color: var(--trust-private); }
+.trust-badge.org-verified { background-color: var(--trust-org-verified-subtle); color: var(--trust-org-verified); }
+.trust-badge.org-unverified { background-color: var(--trust-org-unverified-subtle); color: var(--trust-org-unverified); }
+.trust-badge.public-verified { background-color: var(--trust-public-verified-subtle); color: var(--trust-public-verified); }
+.trust-badge.public-unverified { background-color: var(--trust-public-unverified-subtle); color: var(--trust-public-unverified); }
+.trust-badge.quarantined { background-color: var(--trust-quarantined-subtle); color: var(--trust-quarantined); }
 
 /* Quarantine List */
 .quarantine-list {

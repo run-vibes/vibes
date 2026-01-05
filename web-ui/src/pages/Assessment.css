@@ -86,8 +86,11 @@
 }
 
 .assessment-stream {
+  /* Grid stretches this; StreamView uses flex: 1 internally */
   min-height: 0;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 .assessment-inspector {

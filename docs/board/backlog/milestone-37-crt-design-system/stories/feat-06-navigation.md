@@ -1,6 +1,6 @@
 ---
 created: 2026-01-04
-status: pending
+status: done
 ---
 
 # Feature: Restyle Navigation with Phosphor Glow
@@ -70,9 +70,9 @@ Apply consistent styling to sidebar footer:
 
 ## Acceptance Criteria
 
-- [ ] Sidebar has CRT background/border
-- [ ] Nav items use display font
-- [ ] Hover shows phosphor glow
-- [ ] Active state clearly visible with left border
-- [ ] Logo matches CRT aesthetic
-- [ ] Footer links styled consistently
+- [x] Sidebar has CRT background/border
+- [x] Nav items use display font
+- [x] Hover shows phosphor glow
+- [x] Active state clearly visible with left border
+- [x] Logo matches CRT aesthetic
+- [x] Footer links styled consistently

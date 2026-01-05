@@ -1,6 +1,6 @@
 ---
 created: 2026-01-04
-status: pending
+status: done
 ---
 
 # Feature: Apply CRT Styling to Event Firehose
@@ -76,9 +76,9 @@ Apply CRT styling to "no events" state:
 
 ## Acceptance Criteria
 
-- [ ] Firehose uses CRT background/typography
-- [ ] Event items have phosphor border accent
-- [ ] Hover state shows glow
-- [ ] Metadata uses appropriate font sizes
-- [ ] New events have arrival animation
-- [ ] Empty state matches aesthetic
+- [x] Firehose uses CRT background/typography
+- [x] Event items have phosphor border accent
+- [x] Hover state shows glow
+- [x] Metadata uses appropriate font sizes
+- [x] New events have arrival animation
+- [x] Empty state matches aesthetic

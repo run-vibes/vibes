@@ -1,6 +1,6 @@
 ---
 created: 2026-01-04
-status: pending
+status: done
 ---
 
 # Feature: Restyle Session Cards with Glow Effects
@@ -77,9 +77,9 @@ Active sessions get subtle pulsing:
 
 ## Acceptance Criteria
 
-- [ ] Session cards use CRT surface/border
-- [ ] Active sessions have phosphor glow
-- [ ] Hover state shows enhanced glow
-- [ ] Status indicator pulses for active
-- [ ] Typography matches design spec
-- [ ] Actions have hover effects
+- [x] Session cards use CRT surface/border
+- [x] Active sessions have phosphor glow
+- [x] Hover state shows enhanced glow
+- [x] Status indicator pulses for active
+- [x] Typography matches design spec
+- [x] Actions have hover effects

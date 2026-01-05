@@ -8,6 +8,8 @@ The vibe engineering mech suit.
 
 **vibes** augments *you*—the human developer—with AI-powered superpowers: remote session control, persistent context, and a learning system that remembers what works. You stay in command; vibes amplifies your reach.
 
+![Firehose - Real-time event stream viewer](docs/screenshots/firehose.png)
+
 ## Getting Started
 
 - [Features](#features) — What vibes does

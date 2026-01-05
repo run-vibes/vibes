@@ -1,6 +1,6 @@
 ---
 created: 2026-01-04
-status: pending
+status: done
 ---
 
 # Feature: Implement CRT Visual Effects
@@ -92,9 +92,9 @@ Add utility classes for phosphor glow:
 
 ## Acceptance Criteria
 
-- [ ] Scanlines visible across entire viewport
-- [ ] Vignette creates subtle edge darkening
-- [ ] Effects work in both dark and light themes
-- [ ] Toggle persists to localStorage
-- [ ] Disabling removes all effects
-- [ ] No performance degradation on modern devices
+- [x] Scanlines visible across entire viewport
+- [x] Vignette creates subtle edge darkening
+- [x] Effects work in both dark and light themes
+- [x] Toggle persists to localStorage
+- [x] Disabling removes all effects
+- [x] No performance degradation on modern devices

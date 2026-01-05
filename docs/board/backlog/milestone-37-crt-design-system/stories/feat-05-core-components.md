@@ -1,6 +1,6 @@
 ---
 created: 2026-01-04
-status: pending
+status: done
 ---
 
 # Feature: Restyle Core UI Components
@@ -89,9 +89,9 @@ Ensure all interactive components have phosphor glow on hover/focus.
 
 ## Acceptance Criteria
 
-- [ ] Buttons use phosphor colors with glow
-- [ ] Cards have subtle border highlighting
-- [ ] Inputs have focus glow effect
-- [ ] Modals match CRT aesthetic
-- [ ] All components use design tokens (no hardcoded colors)
-- [ ] Hover/focus states are consistent
+- [x] Buttons use phosphor colors with glow
+- [x] Cards have subtle border highlighting
+- [x] Inputs have focus glow effect
+- [x] Modals match CRT aesthetic
+- [x] All components use design tokens (no hardcoded colors)
+- [x] Hover/focus states are consistent

@@ -1,6 +1,6 @@
 ---
 created: 2026-01-04
-status: pending
+status: done
 ---
 
 # Feature: Add Theme Toggle with Persistence
@@ -58,9 +58,9 @@ const systemPreference = window.matchMedia('(prefers-color-scheme: dark)').match
 
 ## Acceptance Criteria
 
-- [ ] Theme toggle button visible in UI
-- [ ] Click toggles between dark and light themes
-- [ ] Theme persists across page reloads
-- [ ] System preference used as default (no stored pref)
-- [ ] Keyboard shortcut works
-- [ ] No flash of wrong theme on page load
+- [x] Theme toggle button visible in UI
+- [x] Click toggles between dark and light themes
+- [x] Theme persists across page reloads
+- [x] System preference used as default (no stored pref)
+- [x] Keyboard shortcut works
+- [x] No flash of wrong theme on page load

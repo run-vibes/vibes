@@ -1,39 +1,61 @@
-/* design-system/src/primitives/Panel/Panel.module.css */
+/* design-system/src/primitives/Panel/Panel.module.css
+ * CRT Essence Design System - Panel/Card Component
+ *
+ * Surface containers with subtle border highlighting
+ */
+
 .panel {
   border-radius: var(--radius-lg);
   overflow: hidden;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
+/* Default variant */
 .default {
-  background-color: var(--color-bg-surface);
-  border: 1px solid var(--color-border);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
 }
 
+.default:hover {
+  border-color: var(--phosphor-dim);
+}
+
+/* Elevated variant - with phosphor glow */
 .elevated {
-  background-color: var(--color-bg-elevated);
-  border: 1px solid var(--color-border-strong);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  background-color: var(--surface-light);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-md);
 }
 
+.elevated:hover {
+  border-color: var(--phosphor-dim);
+  box-shadow: var(--shadow-lg), 0 0 12px var(--phosphor-subtle);
+}
+
+/* Inset variant - recessed appearance */
 .inset {
-  background-color: var(--color-bg-base);
-  border: 1px solid var(--color-border-subtle);
+  background-color: var(--screen);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-inset-sm);
 }
 
+/* Header section */
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--color-border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+  background-color: var(--surface-light);
 }
 
 .title {
-  font-family: var(--font-mono);
-  font-size: var(--text-sm);
-  font-weight: 500;
-  color: var(--color-text-primary);
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  font-weight: 400;
+  color: var(--text);
   margin: 0;
+  letter-spacing: var(--tracking-wide);
 }
 
 .content {

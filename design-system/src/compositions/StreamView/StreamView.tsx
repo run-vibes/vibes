@@ -76,6 +76,10 @@ export const StreamView = forwardRef<HTMLDivElement, StreamViewProps>(
     const parentRef = useRef<HTMLDivElement>(null);
     const isFollowingRef = useRef(true);
     const prevEventCountRef = useRef(events.length);
+    // Track the highest scroll position we've seen - used to prevent loadMore on initial render.
+    // We only trigger loadMore when user has scrolled down first (maxScrollTop > threshold)
+    // and then scrolled back up (scrollTop < threshold).
+    const maxScrollTopRef = useRef(0);
     const classes = [styles.streamView, className].filter(Boolean).join(' ');
 
     const virtualizer = useVirtualizer({
@@ -102,9 +106,19 @@ export const StreamView = forwardRef<HTMLDivElement, StreamViewProps>(
       const scrollElement = parentRef.current;
       if (!scrollElement) return;
 
-      // Check if near top for pagination
+      const { scrollTop } = scrollElement;
+
+      // Track maximum scroll position to detect when user has scrolled down
+      maxScrollTopRef.current = Math.max(maxScrollTopRef.current, scrollTop);
+
+      // Check if near top for pagination.
+      // Only trigger loadMore if we've previously scrolled down (maxScrollTop > threshold)
+      // and are now near the top. This prevents immediate loadMore on initial render
+      // when scrollTop starts at 0 before auto-scroll to bottom completes.
+      const hasScrolledDownFirst = maxScrollTopRef.current > LOAD_MORE_THRESHOLD;
       if (
-        scrollElement.scrollTop < LOAD_MORE_THRESHOLD &&
+        hasScrolledDownFirst &&
+        scrollTop < LOAD_MORE_THRESHOLD &&
         hasMore &&
         !isLoadingMore &&
         onLoadMore

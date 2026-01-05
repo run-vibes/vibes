@@ -1,6 +1,6 @@
 ---
 created: 2026-01-04
-status: pending
+status: done
 ---
 
 # Feature: Apply CRT Typography System
@@ -62,9 +62,9 @@ Apply font size tokens consistently:
 
 ## Acceptance Criteria
 
-- [ ] VT323 renders for display text
-- [ ] IBM Plex Mono renders for body/code
-- [ ] Fonts load without FOUT (flash of unstyled text)
-- [ ] Font sizes match design spec
-- [ ] Text remains readable at all sizes
-- [ ] Consistent font usage across all components
+- [x] VT323 renders for display text
+- [x] IBM Plex Mono renders for body/code
+- [x] Fonts load without FOUT (flash of unstyled text)
+- [x] Font sizes match design spec
+- [x] Text remains readable at all sizes
+- [x] Consistent font usage across all components

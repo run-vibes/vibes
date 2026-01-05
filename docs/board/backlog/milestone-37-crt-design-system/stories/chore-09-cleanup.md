@@ -1,6 +1,6 @@
 ---
 created: 2026-01-04
-status: pending
+status: done
 ---
 
 # Chore: Remove Old Styles and Document Tokens
@@ -59,9 +59,11 @@ theme: {
 }
 ```
 
+**Note:** This project uses pure CSS with design tokens, not Tailwind CSS. Task skipped as not applicable.
+
 ### Task 5: Document Design Tokens
 
-Create `web-ui/DESIGN_TOKENS.md`:
+Create `design-system/DESIGN_TOKENS.md`:
 - List all available tokens
 - Usage examples
 - Theme customization guide
@@ -77,10 +79,10 @@ Run visual regression:
 
 ## Acceptance Criteria
 
-- [ ] No hardcoded colors in component files
-- [ ] No hardcoded font values in component files
-- [ ] Unused CSS removed
-- [ ] Tailwind config extended with tokens
-- [ ] DESIGN_TOKENS.md documentation complete
-- [ ] All pages match CRT aesthetic
-- [ ] `just pre-commit` passes
+- [x] No hardcoded colors in component files
+- [x] No hardcoded font values in component files
+- [x] Unused CSS removed
+- [x] Tailwind config extended with tokens (N/A - project uses pure CSS tokens)
+- [x] DESIGN_TOKENS.md documentation complete
+- [x] All pages match CRT aesthetic
+- [x] `just pre-commit` passes
