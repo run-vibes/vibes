@@ -279,9 +279,12 @@ mod tests {
         VibesEvent::Hook {
             session_id: Some(session_id.to_string()),
             event: HookEvent::Stop(StopData {
-                transcript_path: None,
-                reason: Some("user".to_string()),
                 session_id: Some(session_id.to_string()),
+                transcript_path: None,
+                cwd: None,
+                permission_mode: None,
+                hook_event_name: Some("Stop".to_string()),
+                stop_hook_active: Some(false),
             }),
         }
     }

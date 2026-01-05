@@ -303,6 +303,9 @@ async fn test_http_events_received_by_tcp_consumer() {
         event: HookEvent::SessionStart(SessionStartData {
             session_id: Some("test-session".to_string()),
             project_path: Some("/test".to_string()),
+            transcript_path: None,
+            cwd: None,
+            hook_event_name: None,
         }),
     };
     let serialized = serde_json::to_vec(&StoredEvent::new(hook_event.clone())).unwrap();
@@ -468,6 +471,9 @@ async fn test_http_events_received_by_live_consumer() {
         event: HookEvent::SessionStart(SessionStartData {
             session_id: Some("live-test-session".to_string()),
             project_path: Some("/test".to_string()),
+            transcript_path: None,
+            cwd: None,
+            hook_event_name: None,
         }),
     };
     let serialized = serde_json::to_vec(&StoredEvent::new(hook_event.clone())).unwrap();

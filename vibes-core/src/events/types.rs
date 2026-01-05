@@ -580,9 +580,14 @@ mod tests {
         use crate::hooks::PreToolUseData;
 
         let hook_event = HookEvent::PreToolUse(PreToolUseData {
-            tool_name: "Bash".to_string(),
-            input: r#"{"command": "ls"}"#.to_string(),
             session_id: Some("sess-123".to_string()),
+            transcript_path: None,
+            cwd: Some("/project".to_string()),
+            permission_mode: Some("default".to_string()),
+            hook_event_name: Some("PreToolUse".to_string()),
+            tool_name: "Bash".to_string(),
+            tool_input: serde_json::json!({"command": "ls"}),
+            tool_use_id: Some("toolu_123".to_string()),
         });
 
         let event = VibesEvent::Hook {
@@ -604,9 +609,12 @@ mod tests {
         use crate::hooks::StopData;
 
         let hook_event = HookEvent::Stop(StopData {
-            transcript_path: None,
-            reason: Some("user".to_string()),
             session_id: Some("sess-456".to_string()),
+            transcript_path: None,
+            cwd: None,
+            permission_mode: None,
+            hook_event_name: None,
+            stop_hook_active: Some(false),
         });
 
         let event = VibesEvent::Hook {

@@ -279,10 +279,13 @@ impl LightweightDetector {
             VibesEvent::Hook {
                 event: HookEvent::UserPromptSubmit(data),
                 ..
-            } => data
-                .session_id
-                .as_ref()
-                .map(|sid| (SessionId::from(sid.as_str()), data.prompt.clone(), vec![])),
+            } => data.session_id.as_ref().map(|sid| {
+                (
+                    SessionId::from(sid.as_str()),
+                    data.prompt.clone().unwrap_or_default(),
+                    vec![],
+                )
+            }),
 
             // Hook tool results - check for failures
             VibesEvent::Hook {
@@ -290,7 +293,19 @@ impl LightweightDetector {
                 ..
             } => {
                 let session_id = data.session_id.as_ref()?;
-                let signals = if !data.success {
+                // Check for failure by looking at tool_response.interrupted or stderr content
+                let is_failure = data
+                    .tool_response
+                    .get("interrupted")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false)
+                    || data
+                        .tool_response
+                        .get("stderr")
+                        .and_then(|v| v.as_str())
+                        .map(|s| !s.is_empty())
+                        .unwrap_or(false);
+                let signals = if is_failure {
                     vec![LightweightSignal::ToolFailure {
                         tool_name: data.tool_name.clone(),
                     }]
@@ -732,24 +747,33 @@ mod tests {
             session_id: Some(session_id.to_string()),
             event: HookEvent::UserPromptSubmit(UserPromptSubmitData {
                 session_id: Some(session_id.to_string()),
-                prompt: prompt.to_string(),
+                transcript_path: None,
+                cwd: None,
+                hook_event_name: Some("UserPromptSubmit".to_string()),
+                prompt: Some(prompt.to_string()),
             }),
         }
     }
 
     fn make_hook_tool_result(session_id: &str, tool_name: &str, success: bool) -> VibesEvent {
+        use serde_json::json;
         VibesEvent::Hook {
             session_id: Some(session_id.to_string()),
             event: HookEvent::PostToolUse(PostToolUseData {
-                tool_name: tool_name.to_string(),
-                output: if success {
-                    "Success".to_string()
-                } else {
-                    "Error: tool failed".to_string()
-                },
-                success,
-                duration_ms: 100,
                 session_id: Some(session_id.to_string()),
+                transcript_path: None,
+                cwd: None,
+                permission_mode: None,
+                hook_event_name: Some("PostToolUse".to_string()),
+                tool_name: tool_name.to_string(),
+                tool_input: None,
+                tool_response: json!({
+                    "stdout": if success { "Success" } else { "" },
+                    "stderr": if success { "" } else { "Error: tool failed" },
+                    "interrupted": !success,
+                    "isImage": false
+                }),
+                tool_use_id: None,
             }),
         }
     }

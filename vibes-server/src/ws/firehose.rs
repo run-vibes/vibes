@@ -501,6 +501,17 @@ async fn load_events_before_event_id(
     before_event_id: Uuid,
     count: u64,
 ) -> Vec<(Offset, StoredEvent)> {
+    // Flush Iggy's in-memory buffer to disk before reading.
+    // This is critical for Iggy's io_uring backend (via compio) which uses separate
+    // file handles for reading and writing. Without flushing, recent writes may not
+    // be visible to the reader.
+    if let Err(e) = state.event_log.flush_to_disk().await {
+        tracing::warn!(
+            "Failed to flush event log to disk: {} (continuing anyway)",
+            e
+        );
+    }
+
     // Load all events from beginning to find the target event
     let consumer_group = format!("firehose-pagination-{}", uuid::Uuid::new_v4());
     let mut consumer = match state.event_log.consumer(&consumer_group).await {
