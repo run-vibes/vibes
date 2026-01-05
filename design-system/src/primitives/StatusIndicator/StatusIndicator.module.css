@@ -12,8 +12,8 @@
 }
 
 .label {
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
   color: var(--color-text-secondary);
 }
 

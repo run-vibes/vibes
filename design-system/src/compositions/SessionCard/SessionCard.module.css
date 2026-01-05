@@ -1,20 +1,50 @@
-/* design-system/src/compositions/SessionCard/SessionCard.module.css */
+/* design-system/src/compositions/SessionCard/SessionCard.module.css
+ * CRT Essence Design System - Session Card Component
+ *
+ * Interactive card with phosphor glow on hover and active state indicators
+ */
+
+/* === Pulse Animation for Active Sessions === */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* === Base Card Container === */
 .card {
   display: block;
-  background-color: var(--color-bg-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
+  position: relative;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
   padding: var(--space-4);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
 .card:hover {
-  border-color: var(--color-accent);
-  transform: translateY(-2px);
-  box-shadow: var(--glow-amber);
+  border-color: var(--phosphor-dim);
+  box-shadow: 0 0 15px rgba(255, 176, 0, 0.2);
 }
 
+.card:focus-visible {
+  outline: none;
+  border-color: var(--phosphor);
+  box-shadow: var(--focus-ring);
+}
+
+/* === Active Session State === */
+.active {
+  border-left: 3px solid var(--phosphor);
+  box-shadow: inset 3px 0 10px rgba(255, 176, 0, 0.15);
+}
+
+.active:hover {
+  border-left-color: var(--phosphor-bright);
+  box-shadow: inset 3px 0 10px rgba(255, 176, 0, 0.15), 0 0 15px rgba(255, 176, 0, 0.2);
+}
+
+/* === Header Section === */
 .header {
   display: flex;
   justify-content: space-between;
@@ -22,41 +52,159 @@
   margin-bottom: var(--space-3);
 }
 
+.titleSection {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 .title {
-  font-family: var(--font-mono);
-  font-size: var(--text-base);
-  font-weight: 500;
-  color: var(--color-text-primary);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 400;
+  color: var(--text);
   margin: 0;
+  transition: color var(--transition-fast);
+}
+
+/* Active session title in phosphor color */
+.active .title {
+  color: var(--phosphor);
+}
+
+/* Inactive session title dimmed */
+.inactive .title {
+  color: var(--text-dim);
 }
 
 .id {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
-  color: var(--color-text-dim);
+  color: var(--text-faint);
   margin-top: var(--space-1);
 }
 
+/* === Status Dot Indicator === */
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background-color: var(--border);
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.statusDot.processing {
+  background-color: var(--phosphor);
+  box-shadow: 0 0 8px var(--phosphor);
+  animation: pulse 2s infinite;
+}
+
+.statusDot.waiting {
+  background-color: var(--phosphor-dim);
+  box-shadow: 0 0 6px var(--phosphor-dim);
+  animation: pulse 3s infinite;
+}
+
+.statusDot.finished {
+  background-color: var(--green);
+  box-shadow: 0 0 6px var(--green-glow);
+}
+
+.statusDot.failed {
+  background-color: var(--red);
+  box-shadow: 0 0 6px var(--red-glow);
+}
+
+.statusDot.idle {
+  background-color: var(--text-faint);
+}
+
+/* === Metadata Section === */
 .meta {
   display: flex;
   align-items: center;
   gap: var(--space-4);
   font-size: var(--text-sm);
-  color: var(--color-text-secondary);
+  color: var(--text-dim);
 }
 
 .subscribers {
   display: flex;
   align-items: center;
   gap: var(--space-1);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
 }
 
 .subscriberIcon {
   opacity: 0.7;
+  font-size: var(--text-sm);
 }
 
 .time {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
-  color: var(--color-text-dim);
+  color: var(--text-faint);
+}
+
+/* === Duration/Count Badges === */
+.badgeGroup {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.metaBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-0-5) var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-dim);
+  background-color: var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+
+/* === Quick Actions === */
+.actions {
+  display: flex;
+  gap: var(--space-1);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.card:hover .actions {
+  opacity: 1;
+}
+
+.actionButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.actionButton:hover {
+  color: var(--phosphor);
+  border-color: var(--phosphor-dim);
+  background-color: var(--phosphor-subtle);
+}
+
+.actionButton:focus-visible {
+  outline: none;
+  border-color: var(--phosphor);
+  box-shadow: var(--focus-ring);
+}
+
+.actionButton:active {
+  transform: scale(0.95);
 }

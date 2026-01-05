@@ -31,6 +31,12 @@ function formatDate(createdAt: string | number): string {
   return new Date(createdAt).toLocaleString();
 }
 
+/** Check if session state indicates active processing */
+function isActiveState(state: SessionState | string): boolean {
+  const normalized = typeof state === 'string' ? state.toLowerCase().replace(/_/g, '') : state;
+  return normalized === 'processing' || normalized === 'waiting' || normalized === 'waitingpermission';
+}
+
 export function SessionCard({
   id,
   name,
@@ -45,6 +51,7 @@ export function SessionCard({
   const formattedDate = formatDate(createdAt);
   const stateKey = typeof state === 'string' ? state.toLowerCase().replace(/_/g, '') : state;
   const stateLabel = stateLabels[state] || state;
+  const isActive = isActiveState(state);
 
   const handleKill = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -54,12 +61,15 @@ export function SessionCard({
     }
   };
 
+  const cardClassName = `session-card ${isActive ? 'session-active' : 'session-inactive'}`;
+
   return (
-    <Link to="/sessions/$sessionId" params={{ sessionId: id }} className="session-card">
+    <Link to="/sessions/$sessionId" params={{ sessionId: id }} className={cardClassName}>
       <div className="session-card-header">
         <h3>
+          <span className={`status-dot status-dot-${stateKey}`} />
           {displayName}
-          {isOwner && <span className="owner-badge" title="You own this session">★</span>}
+          {isOwner && <span className="owner-badge" title="You own this session">&#x2605;</span>}
         </h3>
         <span className={`status status-${stateKey}`}>{stateLabel}</span>
       </div>
@@ -67,7 +77,7 @@ export function SessionCard({
         <span className="session-id">{shortId}</span>
         {subscriberCount !== undefined && (
           <span className="subscriber-count" title="Connected clients">
-            👥 {subscriberCount}
+            &#x1F465; {subscriberCount}
           </span>
         )}
         <span className="session-date">{formattedDate}</span>
@@ -78,7 +88,7 @@ export function SessionCard({
           onClick={handleKill}
           title="Kill session"
         >
-          ✕
+          &#x2715;
         </button>
       )}
     </Link>

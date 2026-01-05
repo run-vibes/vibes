@@ -37,7 +37,7 @@ export const Header = forwardRef<HTMLElement, HeaderProps>(
 
     return (
       <header ref={ref} className={classes} {...props}>
-        <Link href="/" className={styles.logo}>◈ vibes</Link>
+        <Link href="/" className={styles.logo}>VIBES</Link>
 
         <nav className={styles.nav}>
           {navItems.map((item) => (
@@ -50,7 +50,7 @@ export const Header = forwardRef<HTMLElement, HeaderProps>(
                 item.isGroove && styles.grooveLink,
               ].filter(Boolean).join(' ')}
             >
-              {item.isGroove ? '◉ ' : ''}{item.label}
+              {item.label}
             </Link>
           ))}
         </nav>

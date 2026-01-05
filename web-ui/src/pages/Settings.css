@@ -1,4 +1,7 @@
-/* web-ui/src/pages/Settings.css */
+/* web-ui/src/pages/Settings.css
+ * CRT Essence Design System - Settings Page Styles
+ */
+
 .settings-page {
   display: flex;
   flex-direction: column;
@@ -12,10 +15,10 @@
 }
 
 .settings-header h1 {
-  font-family: var(--font-mono);
+  font-family: var(--font-display);
   font-size: var(--text-xl);
-  font-weight: 600;
-  color: var(--color-text-primary);
+  font-weight: 400;
+  color: var(--text);
   margin: 0;
 }
 
@@ -36,7 +39,7 @@
   align-items: center;
   gap: var(--space-4);
   padding: var(--space-3) 0;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .setting-row:last-child {
@@ -54,7 +57,7 @@
 
 .setting-label {
   font-weight: 500;
-  color: var(--color-text-primary);
+  color: var(--text);
   margin-bottom: var(--space-1);
 }
 
@@ -64,33 +67,35 @@
 
 .theme-toggle {
   display: flex;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--border);
   border-radius: var(--radius-md);
   overflow: hidden;
 }
 
 .theme-option {
   padding: var(--space-2) var(--space-3);
-  font-family: var(--font-mono);
+  font-family: var(--font-display);
   font-size: var(--text-sm);
   background-color: transparent;
   border: none;
-  color: var(--color-text-secondary);
+  color: var(--text-dim);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
 .theme-option:first-child {
-  border-right: 1px solid var(--color-border);
+  border-right: 1px solid var(--border);
 }
 
 .theme-option:hover {
-  background-color: var(--color-bg-elevated);
+  background-color: var(--phosphor-subtle);
+  color: var(--text);
 }
 
 .theme-option.active {
-  background-color: var(--color-accent);
-  color: var(--color-text-inverse);
+  background: var(--phosphor);
+  color: var(--screen);
+  box-shadow: 0 0 10px var(--phosphor-glow);
 }
 
 .about-content {
@@ -103,10 +108,11 @@
 }
 
 .about-logo {
-  font-family: var(--font-mono);
+  font-family: var(--font-display);
   font-size: var(--text-2xl);
-  font-weight: 700;
-  color: var(--color-accent);
+  font-weight: 400;
+  color: var(--phosphor);
+  text-shadow: 0 0 10px var(--phosphor-glow);
 }
 
 .about-links {
@@ -116,27 +122,29 @@
 }
 
 .about-links a {
-  color: var(--color-accent);
+  color: var(--phosphor);
   text-decoration: none;
+  transition: text-shadow var(--transition-fast);
 }
 
 .about-links a:hover {
-  text-decoration: underline;
+  text-shadow: 0 0 8px var(--phosphor-glow);
 }
 
 .about-links span {
-  color: var(--color-text-dim);
+  color: var(--text-faint);
 }
 
-/* Confirmation Dialog */
+/* Confirmation Dialog - Modal-like with phosphor glow */
 .confirm-dialog {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
   padding: var(--space-3);
-  background-color: var(--color-bg-elevated);
-  border: 1px solid var(--color-border);
+  background-color: var(--surface);
+  border: 1px solid var(--phosphor);
   border-radius: var(--radius-md);
+  box-shadow: var(--shadow-modal);
 }
 
 .confirm-buttons {

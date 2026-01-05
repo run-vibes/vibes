@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react'
 import {
   createRouter,
   createRootRoute,
@@ -16,7 +15,7 @@ import { AssessmentPage } from './pages/Assessment'
 import { DebugPage } from './pages/Debug'
 import { StreamsPage } from './pages/Streams'
 import { SettingsPage } from './pages/Settings'
-import { useAuth } from './hooks/useAuth'
+import { useAuth, useTheme } from './hooks'
 import { useWebSocket } from './hooks/useWebSocket'
 
 // Root layout component
@@ -24,22 +23,13 @@ function RootLayout() {
   const { addMessageHandler } = useWebSocket();
   const { identity, isLocal, isAuthenticated, isLoading } = useAuth({ addMessageHandler });
   const location = useLocation();
-  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
-    const saved = localStorage.getItem('vibes-theme');
-    return (saved === 'light' || saved === 'dark') ? saved : 'dark';
-  });
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
-
-  const handleThemeChange = (newTheme: 'dark' | 'light') => {
-    setTheme(newTheme);
-    localStorage.setItem('vibes-theme', newTheme);
-  };
+  const { theme, toggleTheme } = useTheme();
 
   const navItems = [
-    { label: 'Groove', href: '/groove', isGroove: true, isActive: location.pathname.startsWith('/groove') },
+    { label: 'DASH', href: '/', isActive: location.pathname === '/' },
+    { label: 'SESS', href: '/sessions', isActive: location.pathname.startsWith('/sessions') },
+    { label: 'FIRE', href: '/firehose', isActive: location.pathname === '/firehose' },
+    { label: 'GROOVE', href: '/groove', isGroove: true, isActive: location.pathname.startsWith('/groove') },
   ];
 
   return (
@@ -49,7 +39,7 @@ function RootLayout() {
         identity={isAuthenticated && identity ? { email: identity.email, provider: identity.identity_provider } : undefined}
         isLocal={!isLoading && isLocal}
         theme={theme}
-        onThemeToggle={() => handleThemeChange(theme === 'dark' ? 'light' : 'dark')}
+        onThemeToggle={toggleTheme}
         settingsHref="/settings"
         renderLink={({ href, className, children }) => (
           <Link to={href} className={className}>{children}</Link>

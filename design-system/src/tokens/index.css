@@ -1,4 +1,11 @@
-/* design-system/src/tokens/index.css */
+/* design-system/src/tokens/index.css
+ * CRT Essence Design System - Token Imports
+ *
+ * Import order matters: colors must come before effects
+ * since effects reference color variables
+ */
+
 @import './colors.css';
 @import './typography.css';
 @import './spacing.css';
+@import './effects.css';

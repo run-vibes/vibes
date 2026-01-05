@@ -2,7 +2,7 @@ import { describe, test, expect, vi, beforeAll, afterAll } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { FirehosePage } from './Firehose';
 
-// Mock ResizeObserver for virtualization - deferred callback to avoid sync issues
+// Mock ResizeObserver for virtualization - use large dimensions to render all items
 class MockResizeObserver {
   callback: ResizeObserverCallback;
   constructor(callback: ResizeObserverCallback) {
@@ -10,13 +10,14 @@ class MockResizeObserver {
   }
   observe(target: Element) {
     // Defer callback to next tick to avoid sync issues with virtualizer
+    // Use large dimensions to ensure all test events render
     setTimeout(() => {
       this.callback([{
         target,
-        contentRect: { width: 400, height: 500, x: 0, y: 0, top: 0, left: 0, bottom: 500, right: 400 } as DOMRectReadOnly,
-        borderBoxSize: [{ blockSize: 500, inlineSize: 400 }],
-        contentBoxSize: [{ blockSize: 500, inlineSize: 400 }],
-        devicePixelContentBoxSize: [{ blockSize: 500, inlineSize: 400 }],
+        contentRect: { width: 800, height: 2000, x: 0, y: 0, top: 0, left: 0, bottom: 2000, right: 800 } as DOMRectReadOnly,
+        borderBoxSize: [{ blockSize: 2000, inlineSize: 800 }],
+        contentBoxSize: [{ blockSize: 2000, inlineSize: 800 }],
+        devicePixelContentBoxSize: [{ blockSize: 2000, inlineSize: 800 }],
       }], this);
     }, 0);
   }
@@ -76,11 +77,11 @@ describe('FirehosePage', () => {
 
     Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
       configurable: true,
-      get() { return 500; }
+      get() { return 2000; }
     });
     Object.defineProperty(HTMLElement.prototype, 'scrollHeight', {
       configurable: true,
-      get() { return 1000; }
+      get() { return 2000; }
     });
     Object.defineProperty(HTMLElement.prototype, 'scrollTop', {
       configurable: true,
@@ -93,12 +94,12 @@ describe('FirehosePage', () => {
     });
 
     Element.prototype.getBoundingClientRect = () => ({
-      width: 400,
-      height: 500,
+      width: 800,
+      height: 2000,
       top: 0,
       left: 0,
-      bottom: 500,
-      right: 400,
+      bottom: 2000,
+      right: 800,
       x: 0,
       y: 0,
       toJSON: () => ({})
@@ -112,9 +113,10 @@ describe('FirehosePage', () => {
   test('search input filters events by content', async () => {
     render(<FirehosePage />);
 
-    // Wait for events to render
+    // Wait for events to render - use getAllByText since name appears in both
+    // sessions sidebar and event stream
     await waitFor(() => {
-      expect(screen.getByText(/auth-refactor/)).toBeInTheDocument();
+      expect(screen.getAllByText(/auth-refactor/).length).toBeGreaterThan(0);
     });
 
     // Find the search input (should have placeholder like "Search...")
@@ -129,31 +131,34 @@ describe('FirehosePage', () => {
       expect(screen.getByText(/Let me analyze/)).toBeInTheDocument();
     });
 
-    // The session_created event should be filtered out (doesn't contain "analyze")
-    expect(screen.queryByText(/auth-refactor/)).not.toBeInTheDocument();
+    // The session_created event summary should be filtered out
+    // Note: session sidebar still shows session name, but stream filters out
+    expect(screen.queryByText(/Created "auth-refactor"/)).not.toBeInTheDocument();
   });
 
   test('search is case-insensitive', async () => {
     render(<FirehosePage />);
 
+    // Wait for events to render
     await waitFor(() => {
-      expect(screen.getByText(/auth-refactor/)).toBeInTheDocument();
+      expect(screen.getAllByText(/auth-refactor/).length).toBeGreaterThan(0);
     });
 
     const searchInput = screen.getByPlaceholderText(/search/i);
     fireEvent.change(searchInput, { target: { value: 'AUTH' } });
 
-    // Should still find auth-refactor even with uppercase search
+    // Should still find auth-refactor in stream even with uppercase search
     await waitFor(() => {
-      expect(screen.getByText(/auth-refactor/)).toBeInTheDocument();
+      expect(screen.getByText(/Created "auth-refactor"/)).toBeInTheDocument();
     });
   });
 
   test('empty search shows all events', async () => {
     render(<FirehosePage />);
 
+    // Wait for events to render
     await waitFor(() => {
-      expect(screen.getByText(/auth-refactor/)).toBeInTheDocument();
+      expect(screen.getAllByText(/auth-refactor/).length).toBeGreaterThan(0);
     });
 
     const searchInput = screen.getByPlaceholderText(/search/i);
@@ -162,9 +167,9 @@ describe('FirehosePage', () => {
     fireEvent.change(searchInput, { target: { value: 'xyz' } });
     fireEvent.change(searchInput, { target: { value: '' } });
 
-    // All events should be visible again
+    // All events in stream should be visible again
     await waitFor(() => {
-      expect(screen.getByText(/auth-refactor/)).toBeInTheDocument();
+      expect(screen.getByText(/Created "auth-refactor"/)).toBeInTheDocument();
       expect(screen.getByText(/Let me analyze/)).toBeInTheDocument();
     });
   });

@@ -70,32 +70,38 @@ export const SessionTerminal = forwardRef<SessionTerminalHandle, SessionTerminal
     useEffect(() => {
       if (!containerRef.current) return;
 
-      // Create terminal with Claude-like theme
+      // Get CSS variable values for terminal theme
+      const styles = getComputedStyle(document.documentElement);
+      const getVar = (name: string, fallback: string) =>
+        styles.getPropertyValue(name).trim() || fallback;
+
+      // Create terminal with CRT design system theme
       const term = new Terminal({
         cursorBlink: true,
         fontSize: 14,
-        fontFamily: '"JetBrains Mono", "Fira Code", Menlo, Monaco, monospace',
+        fontFamily: '"IBM Plex Mono", "JetBrains Mono", Menlo, Monaco, monospace',
         theme: {
-          background: '#1a1a2e',
-          foreground: '#eaeaea',
-          cursor: '#eaeaea',
-          cursorAccent: '#1a1a2e',
-          selectionBackground: '#3d3d5c',
-          black: '#000000',
-          red: '#ff5555',
-          green: '#50fa7b',
-          yellow: '#f1fa8c',
-          blue: '#bd93f9',
-          magenta: '#ff79c6',
-          cyan: '#8be9fd',
-          white: '#f8f8f2',
-          brightBlack: '#6272a4',
-          brightRed: '#ff6e6e',
-          brightGreen: '#69ff94',
-          brightYellow: '#ffffa5',
-          brightBlue: '#d6acff',
-          brightMagenta: '#ff92df',
-          brightCyan: '#a4ffff',
+          background: getVar('--terminal-bg', '#0a0908'),
+          foreground: getVar('--terminal-fg', '#e8e0d0'),
+          cursor: getVar('--terminal-cursor', '#ffb000'),
+          cursorAccent: getVar('--terminal-bg', '#0a0908'),
+          selectionBackground: getVar('--terminal-selection', '#3d3830'),
+          // ANSI colors matching the CRT aesthetic
+          black: '#0a0908',
+          red: getVar('--red', '#ff4444'),
+          green: getVar('--green', '#44ff44'),
+          yellow: getVar('--phosphor', '#ffb000'),
+          blue: '#6b8cff',
+          magenta: '#c678dd',
+          cyan: getVar('--cyan', '#44ffff'),
+          white: getVar('--text', '#e8e0d0'),
+          brightBlack: getVar('--text-faint', '#5a5248'),
+          brightRed: '#ff6b6b',
+          brightGreen: '#69ff69',
+          brightYellow: getVar('--phosphor-bright', '#ffc633'),
+          brightBlue: '#8fa8ff',
+          brightMagenta: '#da98e8',
+          brightCyan: '#69ffff',
           brightWhite: '#ffffff',
         },
         allowTransparency: true,

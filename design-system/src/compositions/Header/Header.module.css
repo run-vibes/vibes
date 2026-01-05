@@ -2,54 +2,70 @@
 .header {
   display: flex;
   align-items: center;
-  padding: var(--space-3) var(--space-6);
-  background-color: var(--color-bg-surface);
-  border-bottom: 1px solid var(--color-border);
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
 }
 
 .logo {
-  font-family: var(--font-mono);
-  font-size: var(--text-lg);
-  font-weight: 600;
-  color: var(--color-accent);
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 400;
+  color: var(--phosphor);
   text-decoration: none;
-  margin-right: var(--space-8);
+  letter-spacing: 0.15em;
+  text-shadow:
+    0 0 2px var(--phosphor),
+    0 0 10px var(--phosphor-glow),
+    0 0 25px var(--phosphor-glow),
+    0 0 40px var(--phosphor-subtle);
+  transition: text-shadow var(--transition-fast);
 }
 
 .logo:hover {
-  text-shadow: var(--glow-amber);
+  text-shadow:
+    0 0 2px var(--phosphor-bright),
+    0 0 15px var(--phosphor),
+    0 0 30px var(--phosphor-glow),
+    0 0 50px var(--phosphor-subtle);
 }
 
 .nav {
   display: flex;
   align-items: center;
-  gap: var(--space-6);
-  flex: 1;
+  gap: var(--space-1);
+  margin-left: var(--space-6);
 }
 
 .navLink {
-  font-family: var(--font-mono);
-  font-size: var(--text-sm);
-  color: var(--color-text-secondary);
+  font-family: var(--font-display);
+  font-size: var(--font-size-xl);
+  color: var(--text-dim);
   text-decoration: none;
-  transition: color var(--transition-fast);
+  transition: all var(--transition-fast);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid transparent;
 }
 
 .navLink:hover {
-  color: var(--color-text-primary);
+  color: var(--phosphor);
+  text-shadow: 0 0 8px var(--phosphor-glow);
 }
 
 .navLinkActive {
-  color: var(--color-accent);
+  color: var(--phosphor);
+  border-color: var(--phosphor-dim);
+  background: var(--phosphor-subtle);
 }
 
 .grooveLink {
-  color: var(--color-groove);
+  color: var(--phosphor-dim);
 }
 
 .grooveLink:hover {
-  color: var(--color-groove);
-  text-shadow: 0 0 8px rgba(201, 162, 39, 0.4);
+  color: var(--phosphor);
+  text-shadow: 0 0 10px var(--phosphor-glow);
 }
 
 .actions {
@@ -61,35 +77,39 @@
 
 .identity {
   font-family: var(--font-mono);
-  font-size: var(--text-sm);
-  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  color: var(--text-dim);
 }
 
 .themeToggle {
   background: none;
-  border: none;
-  color: var(--color-text-secondary);
+  border: 1px solid transparent;
+  color: var(--text-dim);
   cursor: pointer;
-  padding: var(--space-2);
-  border-radius: var(--radius-md);
+  padding: var(--space-1) var(--space-2);
+  font-family: var(--font-display);
+  font-size: var(--font-size-lg);
   transition: all var(--transition-fast);
 }
 
 .themeToggle:hover {
-  background-color: var(--color-hover);
-  color: var(--color-text-primary);
+  border-color: var(--phosphor-dim);
+  color: var(--phosphor);
+  text-shadow: 0 0 8px var(--phosphor-glow);
 }
 
 .settingsLink {
-  color: var(--color-text-secondary);
+  color: var(--text-dim);
   text-decoration: none;
-  padding: var(--space-2);
-  border-radius: var(--radius-md);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid transparent;
   transition: all var(--transition-fast);
-  font-size: var(--text-base);
+  font-family: var(--font-display);
+  font-size: var(--font-size-lg);
 }
 
 .settingsLink:hover {
-  background-color: var(--color-hover);
-  color: var(--color-text-primary);
+  border-color: var(--phosphor-dim);
+  color: var(--phosphor);
+  text-shadow: 0 0 8px var(--phosphor-glow);
 }

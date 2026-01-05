@@ -2,12 +2,12 @@ import { Link } from '@tanstack/react-router';
 import { useTunnelStatus } from '../hooks/useTunnelStatus';
 
 const BADGE_CONFIG = {
-  disabled: { color: '#9CA3AF', icon: '○', tooltip: 'No tunnel configured' },
-  starting: { color: '#F59E0B', icon: '◐', tooltip: 'Connecting...' },
-  connected: { color: '#10B981', icon: '●', tooltip: '' }, // URL set dynamically
-  reconnecting: { color: '#F59E0B', icon: '◐', tooltip: 'Reconnecting...' },
-  failed: { color: '#EF4444', icon: '●', tooltip: 'Connection failed' },
-  stopped: { color: '#9CA3AF', icon: '○', tooltip: 'Tunnel stopped' },
+  disabled: { color: 'var(--status-disabled)', icon: '○', tooltip: 'No tunnel configured' },
+  starting: { color: 'var(--status-starting)', icon: '◐', tooltip: 'Connecting...' },
+  connected: { color: 'var(--status-connected)', icon: '●', tooltip: '' }, // URL set dynamically
+  reconnecting: { color: 'var(--status-starting)', icon: '◐', tooltip: 'Reconnecting...' },
+  failed: { color: 'var(--status-failed)', icon: '●', tooltip: 'Connection failed' },
+  stopped: { color: 'var(--status-disabled)', icon: '○', tooltip: 'Tunnel stopped' },
 } as const;
 
 export function TunnelBadge() {
@@ -15,7 +15,7 @@ export function TunnelBadge() {
 
   if (isLoading || !status) {
     return (
-      <span style={{ color: '#9CA3AF' }} title="Loading...">
+      <span style={{ color: 'var(--status-disabled)' }} title="Loading...">
         ○
       </span>
     );

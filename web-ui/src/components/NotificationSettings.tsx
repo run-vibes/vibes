@@ -2,71 +2,71 @@ import { usePushSubscription } from '../hooks/usePushSubscription';
 
 const styles = {
   container: {
-    padding: '1rem',
-    backgroundColor: '#1f2937',
-    borderRadius: '0.5rem',
-    marginBottom: '1rem',
+    padding: 'var(--space-4)',
+    backgroundColor: 'var(--surface)',
+    borderRadius: 'var(--radius-md)',
+    marginBottom: 'var(--space-4)',
   },
   header: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: '0.75rem',
+    marginBottom: 'var(--space-3)',
   },
   title: {
-    fontSize: '1rem',
+    fontSize: 'var(--font-size-base)',
     fontWeight: 600,
-    color: '#f9fafb',
+    color: 'var(--text)',
     margin: 0,
   },
   description: {
-    fontSize: '0.875rem',
-    color: '#9ca3af',
-    marginBottom: '1rem',
+    fontSize: 'var(--font-size-sm)',
+    color: 'var(--text-dim)',
+    marginBottom: 'var(--space-4)',
   },
   button: {
-    padding: '0.5rem 1rem',
-    borderRadius: '0.375rem',
+    padding: 'var(--space-2) var(--space-4)',
+    borderRadius: 'var(--radius-md)',
     border: 'none',
-    fontSize: '0.875rem',
+    fontSize: 'var(--font-size-sm)',
     fontWeight: 500,
     cursor: 'pointer',
-    transition: 'background-color 0.15s',
+    transition: 'background-color var(--transition-fast)',
   },
   enableButton: {
-    backgroundColor: '#3b82f6',
-    color: 'white',
+    backgroundColor: 'var(--phosphor)',
+    color: 'var(--screen)',
   },
   disableButton: {
-    backgroundColor: '#374151',
-    color: '#d1d5db',
+    backgroundColor: 'var(--surface-light)',
+    color: 'var(--text)',
   },
   disabledButton: {
-    backgroundColor: '#374151',
-    color: '#6b7280',
+    backgroundColor: 'var(--surface-light)',
+    color: 'var(--text-faint)',
     cursor: 'not-allowed',
   },
   status: {
     display: 'flex',
     alignItems: 'center',
-    gap: '0.5rem',
-    fontSize: '0.875rem',
-    color: '#9ca3af',
+    gap: 'var(--space-2)',
+    fontSize: 'var(--font-size-sm)',
+    color: 'var(--text-dim)',
   },
   statusIcon: {
     fontSize: '0.75rem',
   },
   error: {
-    marginTop: '0.5rem',
-    padding: '0.5rem',
-    backgroundColor: '#7f1d1d',
-    borderRadius: '0.25rem',
-    color: '#fca5a5',
-    fontSize: '0.875rem',
+    marginTop: 'var(--space-2)',
+    padding: 'var(--space-2)',
+    backgroundColor: 'var(--red-subtle)',
+    borderRadius: 'var(--radius-sm)',
+    color: 'var(--red)',
+    fontSize: 'var(--font-size-sm)',
   },
   notSupported: {
-    color: '#6b7280',
-    fontSize: '0.875rem',
+    color: 'var(--text-faint)',
+    fontSize: 'var(--font-size-sm)',
   },
 } as const;
 
@@ -103,15 +103,15 @@ export function NotificationSettings() {
 
   const getStatusInfo = () => {
     if (isLoading) {
-      return { icon: '◐', color: '#f59e0b', text: 'Loading...' };
+      return { icon: '◐', color: 'var(--status-starting)', text: 'Loading...' };
     }
     if (isSubscribed) {
-      return { icon: '●', color: '#10b981', text: 'Enabled' };
+      return { icon: '●', color: 'var(--status-connected)', text: 'Enabled' };
     }
     if (!hasPermission && Notification.permission === 'denied') {
-      return { icon: '●', color: '#ef4444', text: 'Blocked by browser' };
+      return { icon: '●', color: 'var(--status-failed)', text: 'Blocked by browser' };
     }
-    return { icon: '○', color: '#9ca3af', text: 'Disabled' };
+    return { icon: '○', color: 'var(--status-disabled)', text: 'Disabled' };
   };
 
   const statusInfo = getStatusInfo();

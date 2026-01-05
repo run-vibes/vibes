@@ -1,2 +1,2 @@
 export { SessionCard } from './SessionCard';
-export type { SessionCardProps } from './SessionCard';
+export type { SessionCardProps, SessionAction, SessionStatus } from './SessionCard';

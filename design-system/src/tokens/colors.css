@@ -1,63 +1,207 @@
-/* design-system/src/tokens/colors.css */
+/* design-system/src/tokens/colors.css
+ * CRT Essence Design System - Color Tokens
+ *
+ * Dark theme (default): Warm amber phosphor on deep screen black
+ * Light theme: Sepia tones on warm parchment
+ */
 
 :root {
-  /* === Base Palette (Dark Theme) === */
-  --color-bg-base: #1a1816;
-  --color-bg-surface: #242220;
-  --color-bg-elevated: #2e2c29;
-  --color-bg-overlay: rgba(26, 24, 22, 0.95);
+  /* === Screen (Background) Colors === */
+  --screen: #0a0908;
+  --surface: #141210;
+  --surface-light: #1e1a16;
+  --surface-lighter: #2a2520;
 
-  /* === Text === */
-  --color-text-primary: #f0ebe3;
-  --color-text-secondary: #a39e93;
-  --color-text-dim: #6b665c;
-  --color-text-inverse: #1a1816;
+  /* === Phosphor (Primary Accent) === */
+  --phosphor: #ffb000;
+  --phosphor-bright: #ffc633;
+  --phosphor-dim: #cc8c00;
+  --phosphor-faint: #4d3500;
+  --phosphor-glow: rgba(255, 176, 0, 0.4);
+  --phosphor-subtle: rgba(255, 176, 0, 0.15);
+
+  /* === Text Colors === */
+  --text: #e8e0d0;
+  --text-dim: #8a8070;
+  --text-faint: #5a5248;
+  --text-inverse: #0a0908;
+
+  /* === Border Colors === */
+  --border: #2a2520;
+  --border-subtle: #1e1a16;
+  --border-strong: #3d3830;
 
   /* === Semantic Colors === */
-  --color-accent: #e6b450;
-  --color-success: #7ec699;
-  --color-warning: #e6b450;
-  --color-error: #e05252;
-  --color-info: #7eb8c9;
+  --red: #ff4444;
+  --red-glow: rgba(255, 68, 68, 0.5);
+  --red-subtle: rgba(255, 68, 68, 0.15);
+  --red-border: rgba(255, 68, 68, 0.3);
+  --green: #44ff44;
+  --green-glow: rgba(68, 255, 68, 0.5);
+  --green-subtle: rgba(68, 255, 68, 0.15);
+  --green-border: rgba(68, 255, 68, 0.3);
+  --cyan: #44ffff;
+  --cyan-glow: rgba(68, 255, 255, 0.5);
+  --cyan-subtle: rgba(68, 255, 255, 0.15);
+  --cyan-border: rgba(68, 255, 255, 0.3);
+  --gold: #ffd700;
+  --gold-glow: rgba(255, 215, 0, 0.4);
 
-  /* === Plugin Accents === */
-  --color-groove: #c9a227;
+  /* === Trust Level Colors === */
+  --trust-local: #10B981;
+  --trust-local-subtle: rgba(16, 185, 129, 0.13);
+  --trust-private: #6366F1;
+  --trust-private-subtle: rgba(99, 102, 241, 0.13);
+  --trust-org-verified: #3B82F6;
+  --trust-org-verified-subtle: rgba(59, 130, 246, 0.13);
+  --trust-org-unverified: #8B5CF6;
+  --trust-org-unverified-subtle: rgba(139, 92, 246, 0.13);
+  --trust-public-verified: #F59E0B;
+  --trust-public-verified-subtle: rgba(245, 158, 11, 0.13);
+  --trust-public-unverified: #EF4444;
+  --trust-public-unverified-subtle: rgba(239, 68, 68, 0.13);
+  --trust-quarantined: #6B7280;
+  --trust-quarantined-subtle: rgba(107, 114, 128, 0.13);
 
-  /* === Borders === */
-  --color-border: #3d3a36;
-  --color-border-subtle: #2e2c29;
-  --color-border-strong: #4d4a46;
+  /* === Status Colors (for badges and indicators) === */
+  --status-disabled: #9CA3AF;
+  --status-disabled-subtle: rgba(156, 163, 175, 0.13);
+  --status-starting: #F59E0B;
+  --status-starting-subtle: rgba(245, 158, 11, 0.13);
+  --status-connected: #10B981;
+  --status-connected-subtle: rgba(16, 185, 129, 0.13);
+  --status-failed: #EF4444;
+  --status-failed-subtle: rgba(239, 68, 68, 0.13);
 
-  /* === Interactive States === */
-  --color-hover: rgba(230, 180, 80, 0.1);
-  --color-active: rgba(230, 180, 80, 0.2);
-  --color-focus: rgba(230, 180, 80, 0.4);
+  /* === Terminal Colors (for xterm.js theme) === */
+  --terminal-bg: #0a0908;
+  --terminal-fg: #e8e0d0;
+  --terminal-cursor: #ffb000;
+  --terminal-selection: #3d3830;
+  --terminal-scrollbar: #2a2520;
+  --terminal-scrollbar-hover: #3d3830;
 
-  /* === Glow Effects === */
-  --glow-amber: 0 0 20px rgba(230, 180, 80, 0.15);
-  --glow-success: 0 0 20px rgba(126, 198, 153, 0.15);
-  --glow-error: 0 0 20px rgba(224, 82, 82, 0.15);
+  /* === Scanline Overlay === */
+  --scanline: rgba(0, 0, 0, 0.15);
+
+  /* === Legacy Aliases (for backward compatibility) === */
+  --color-bg-base: var(--screen);
+  --color-bg-surface: var(--surface);
+  --color-bg-elevated: var(--surface-light);
+  --color-bg-overlay: rgba(10, 9, 8, 0.95);
+  --color-bg-hover: var(--surface-light);
+
+  --color-text-primary: var(--text);
+  --color-text-secondary: var(--text-dim);
+  --color-text-dim: var(--text-faint);
+  --color-text-inverse: var(--text-inverse);
+
+  --color-accent: var(--phosphor);
+  --color-success: var(--green);
+  --color-warning: var(--phosphor);
+  --color-error: var(--red);
+  --color-info: var(--cyan);
+
+  --color-groove: var(--phosphor-dim);
+  --color-groove-subtle: var(--phosphor-subtle);
+
+  --color-border: var(--border);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
+
+  --color-hover: var(--phosphor-subtle);
+  --color-active: rgba(255, 176, 0, 0.25);
+  --color-focus: var(--phosphor-glow);
 }
 
-/* === Light Theme === */
+/* === Light Theme (Daylight Mode) === */
 [data-theme="light"] {
-  --color-bg-base: #f5f2ed;
-  --color-bg-surface: #ffffff;
-  --color-bg-elevated: #f9f7f4;
-  --color-bg-overlay: rgba(245, 242, 237, 0.95);
+  /* === Screen (Background) Colors === */
+  --screen: #f4f1e8;
+  --surface: #ffffff;
+  --surface-light: #ebe7dc;
+  --surface-lighter: #e0dcd0;
 
-  --color-text-primary: #1a1816;
-  --color-text-secondary: #4a4640;
-  --color-text-dim: #6b665c;
-  --color-text-inverse: #f0ebe3;
+  /* === Phosphor (Primary Accent) - Sepia === */
+  --phosphor: #c4820a;
+  --phosphor-bright: #e09810;
+  --phosphor-dim: #9a6808;
+  --phosphor-faint: #d4c4a0;
+  --phosphor-glow: rgba(196, 130, 10, 0.25);
+  --phosphor-subtle: rgba(196, 130, 10, 0.12);
 
-  --color-border: #d4d0c8;
-  --color-border-subtle: #e8e4dc;
-  --color-border-strong: #b8b4ac;
+  /* === Text Colors === */
+  --text: #2c2a26;
+  --text-dim: #6b6560;
+  --text-faint: #9a948a;
+  --text-inverse: #f4f1e8;
 
-  --color-hover: rgba(26, 24, 22, 0.05);
-  --color-active: rgba(26, 24, 22, 0.1);
-  --color-focus: rgba(230, 180, 80, 0.3);
+  /* === Border Colors === */
+  --border: #d4d0c8;
+  --border-subtle: #e8e4dc;
+  --border-strong: #b0a99a;
 
-  --glow-amber: 0 0 20px rgba(230, 180, 80, 0.1);
+  /* === Semantic Colors (muted for light theme) === */
+  --red: #a63d3d;
+  --red-glow: rgba(166, 61, 61, 0.3);
+  --red-subtle: rgba(166, 61, 61, 0.1);
+  --red-border: rgba(166, 61, 61, 0.25);
+  --green: #4a7c3f;
+  --green-glow: rgba(74, 124, 63, 0.3);
+  --green-subtle: rgba(74, 124, 63, 0.1);
+  --green-border: rgba(74, 124, 63, 0.25);
+  --cyan: #3d7a7c;
+  --cyan-glow: rgba(61, 122, 124, 0.3);
+  --cyan-subtle: rgba(61, 122, 124, 0.1);
+  --cyan-border: rgba(61, 122, 124, 0.25);
+  --gold: #b8860b;
+  --gold-glow: rgba(184, 134, 11, 0.3);
+
+  /* === Trust Level Colors (softer for light theme) === */
+  --trust-local: #059669;
+  --trust-local-subtle: rgba(5, 150, 105, 0.1);
+  --trust-private: #4f46e5;
+  --trust-private-subtle: rgba(79, 70, 229, 0.1);
+  --trust-org-verified: #2563eb;
+  --trust-org-verified-subtle: rgba(37, 99, 235, 0.1);
+  --trust-org-unverified: #7c3aed;
+  --trust-org-unverified-subtle: rgba(124, 58, 237, 0.1);
+  --trust-public-verified: #d97706;
+  --trust-public-verified-subtle: rgba(217, 119, 6, 0.1);
+  --trust-public-unverified: #dc2626;
+  --trust-public-unverified-subtle: rgba(220, 38, 38, 0.1);
+  --trust-quarantined: #4b5563;
+  --trust-quarantined-subtle: rgba(75, 85, 99, 0.1);
+
+  /* === Status Colors (softer for light theme) === */
+  --status-disabled: #6b7280;
+  --status-disabled-subtle: rgba(107, 114, 128, 0.1);
+  --status-starting: #d97706;
+  --status-starting-subtle: rgba(217, 119, 6, 0.1);
+  --status-connected: #059669;
+  --status-connected-subtle: rgba(5, 150, 105, 0.1);
+  --status-failed: #dc2626;
+  --status-failed-subtle: rgba(220, 38, 38, 0.1);
+
+  /* === Scanline Overlay (very subtle) === */
+  --scanline: rgba(0, 0, 0, 0.03);
+
+  /* === Legacy Aliases === */
+  --color-bg-base: var(--screen);
+  --color-bg-surface: var(--surface);
+  --color-bg-elevated: var(--surface-light);
+  --color-bg-overlay: rgba(244, 241, 232, 0.95);
+
+  --color-text-primary: var(--text);
+  --color-text-secondary: var(--text-dim);
+  --color-text-dim: var(--text-faint);
+  --color-text-inverse: var(--text-inverse);
+
+  --color-border: var(--border);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
+
+  --color-hover: rgba(44, 42, 38, 0.05);
+  --color-active: rgba(44, 42, 38, 0.1);
+  --color-focus: var(--phosphor-glow);
 }

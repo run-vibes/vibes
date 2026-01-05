@@ -13,14 +13,14 @@ test('firehose shows connection status', async ({ page, serverUrl }) => {
   await expect(page.getByText('Connected')).toBeVisible({ timeout: 5000 });
 });
 
-test('firehose has event type filter chips', async ({ page, serverUrl }) => {
+test('firehose has event type filters', async ({ page, serverUrl }) => {
   await page.goto(`${serverUrl}/firehose`);
 
-  // Should have filter chips for event types
-  await expect(page.getByRole('button', { name: 'SESSION' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'CLAUDE' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'TOOL' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'HOOK' })).toBeVisible();
+  // Should have filter items for event types in the sidebar
+  await expect(page.locator('.filter-item').filter({ hasText: 'SESSION' })).toBeVisible();
+  await expect(page.locator('.filter-item').filter({ hasText: 'CLAUDE' })).toBeVisible();
+  await expect(page.locator('.filter-item').filter({ hasText: 'TOOL' })).toBeVisible();
+  await expect(page.locator('.filter-item').filter({ hasText: 'HOOK' })).toBeVisible();
 });
 
 test('firehose has search input', async ({ page, serverUrl }) => {
@@ -29,21 +29,21 @@ test('firehose has search input', async ({ page, serverUrl }) => {
   await expect(page.getByPlaceholder('Search events...')).toBeVisible();
 });
 
-test('filter chips toggle active state', async ({ page, serverUrl }) => {
+test('filter items toggle active state', async ({ page, serverUrl }) => {
   await page.goto(`${serverUrl}/firehose`);
 
-  const sessionChip = page.getByRole('button', { name: 'SESSION' });
+  const sessionFilter = page.locator('.filter-item').filter({ hasText: 'SESSION' });
 
   // Initially not active
-  await expect(sessionChip).not.toHaveClass(/active/);
+  await expect(sessionFilter).not.toHaveClass(/active/);
 
   // Click to activate
-  await sessionChip.click();
-  await expect(sessionChip).toHaveClass(/active/);
+  await sessionFilter.click();
+  await expect(sessionFilter).toHaveClass(/active/);
 
   // Click again to deactivate
-  await sessionChip.click();
-  await expect(sessionChip).not.toHaveClass(/active/);
+  await sessionFilter.click();
+  await expect(sessionFilter).not.toHaveClass(/active/);
 });
 
 test('firehose shows event stream panel', async ({ page, serverUrl }) => {
@@ -72,18 +72,18 @@ test('search input can be cleared', async ({ page, serverUrl }) => {
   await expect(searchInput).toHaveValue('');
 });
 
-test('multiple filter chips can be active simultaneously', async ({ page, serverUrl }) => {
+test('multiple filter items can be active simultaneously', async ({ page, serverUrl }) => {
   await page.goto(`${serverUrl}/firehose`);
 
-  const sessionChip = page.getByRole('button', { name: 'SESSION' });
-  const claudeChip = page.getByRole('button', { name: 'CLAUDE' });
+  const sessionFilter = page.locator('.filter-item').filter({ hasText: 'SESSION' });
+  const claudeFilter = page.locator('.filter-item').filter({ hasText: 'CLAUDE' });
 
   // Activate both
-  await sessionChip.click();
-  await claudeChip.click();
+  await sessionFilter.click();
+  await claudeFilter.click();
 
-  await expect(sessionChip).toHaveClass(/active/);
-  await expect(claudeChip).toHaveClass(/active/);
+  await expect(sessionFilter).toHaveClass(/active/);
+  await expect(claudeFilter).toHaveClass(/active/);
 });
 
 test('firehose shows LIVE indicator when connected', async ({ page, serverUrl }) => {

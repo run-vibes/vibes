@@ -29,4 +29,70 @@ describe('SessionCard', () => {
     const link = screen.getByRole('link');
     expect(link).toHaveAttribute('href', '/sessions/test-session-id-12345');
   });
+
+  test('applies session-active class for processing state', () => {
+    render(
+      <SessionCard
+        id="test-session-id"
+        state="processing"
+        createdAt={Date.now()}
+      />
+    );
+
+    const link = screen.getByRole('link');
+    expect(link.className).toContain('session-active');
+  });
+
+  test('applies session-active class for waiting state', () => {
+    render(
+      <SessionCard
+        id="test-session-id"
+        state="waiting_permission"
+        createdAt={Date.now()}
+      />
+    );
+
+    const link = screen.getByRole('link');
+    expect(link.className).toContain('session-active');
+  });
+
+  test('applies session-inactive class for idle state', () => {
+    render(
+      <SessionCard
+        id="test-session-id"
+        state="idle"
+        createdAt={Date.now()}
+      />
+    );
+
+    const link = screen.getByRole('link');
+    expect(link.className).toContain('session-inactive');
+  });
+
+  test('applies session-inactive class for finished state', () => {
+    render(
+      <SessionCard
+        id="test-session-id"
+        state="finished"
+        createdAt={Date.now()}
+      />
+    );
+
+    const link = screen.getByRole('link');
+    expect(link.className).toContain('session-inactive');
+  });
+
+  test('renders status dot with correct class', () => {
+    const { container } = render(
+      <SessionCard
+        id="test-session-id"
+        state="processing"
+        createdAt={Date.now()}
+      />
+    );
+
+    const statusDot = container.querySelector('.status-dot');
+    expect(statusDot).toBeInTheDocument();
+    expect(statusDot?.className).toContain('status-dot-processing');
+  });
 });

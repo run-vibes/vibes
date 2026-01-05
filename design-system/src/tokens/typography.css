@@ -1,25 +1,63 @@
-/* design-system/src/tokens/typography.css */
+/* design-system/src/tokens/typography.css
+ * CRT Essence Design System - Typography Tokens
+ *
+ * VT323: Pixel-perfect display font for headers and UI chrome
+ * IBM Plex Mono: Clean monospace for code and body text
+ */
 
 :root {
   /* === Font Families === */
-  --font-mono: 'JetBrains Mono', 'SF Mono', 'Cascadia Code', 'Menlo', monospace;
+  --font-display: 'VT323', monospace;
+  --font-mono: 'IBM Plex Mono', 'JetBrains Mono', 'SF Mono', 'Cascadia Code', 'Menlo', monospace;
   --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
 
   /* === Font Sizes === */
-  --text-xs: 0.75rem;    /* 12px */
-  --text-sm: 0.875rem;   /* 14px */
-  --text-base: 1rem;     /* 16px */
-  --text-lg: 1.125rem;   /* 18px */
-  --text-xl: 1.25rem;    /* 20px */
-  --text-2xl: 1.5rem;    /* 24px */
+  --font-size-xs: 0.75rem;    /* 12px */
+  --font-size-sm: 0.875rem;   /* 14px */
+  --font-size-base: 1rem;     /* 16px */
+  --font-size-lg: 1.25rem;    /* 20px */
+  --font-size-xl: 1.5rem;     /* 24px */
+  --font-size-2xl: 2rem;      /* 32px */
+  --font-size-3xl: 2.5rem;    /* 40px */
 
   /* === Line Heights === */
+  --leading-none: 1;
   --leading-tight: 1.25;
   --leading-normal: 1.5;
   --leading-relaxed: 1.75;
 
   /* === Letter Spacing === */
+  --tracking-tighter: -0.05em;
   --tracking-tight: -0.02em;
   --tracking-normal: 0;
-  --tracking-wide: 0.02em;
+  --tracking-wide: 0.05em;
+  --tracking-wider: 0.1em;
+  --tracking-widest: 0.15em;
+
+  /* === Font Weights === */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* === Legacy Aliases (for backward compatibility) === */
+  --text-xs: var(--font-size-xs);
+  --text-sm: var(--font-size-sm);
+  --text-base: var(--font-size-base);
+  --text-lg: var(--font-size-lg);
+  --text-xl: var(--font-size-xl);
+  --text-2xl: var(--font-size-2xl);
+}
+
+/* === Typography Utility Classes === */
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+.font-sans {
+  font-family: var(--font-sans);
 }
