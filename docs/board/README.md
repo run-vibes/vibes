@@ -10,7 +10,9 @@
 
 ## Backlog
 
-*Backlog empty*
+| Story | Type | Priority | Epics |
+|-------|------|----------|-------|
+| [feat-0004-subnav](stages/backlog/stories/feat-0004-subnav.md) | feat | medium | web-ui |
 
 ## Epics
 
@@ -21,7 +23,7 @@
 | [mobile](epics/mobile/) | active | 0 |
 | [networking](epics/networking/) | active | 0 |
 | [plugin-system](epics/plugin-system/) | active | 10 |
-| [web-ui](epics/web-ui/) | active | 16 |
+| [web-ui](epics/web-ui/) | active | 17 |
 
 ## Milestones
 
