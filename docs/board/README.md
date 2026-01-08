@@ -14,7 +14,6 @@
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
 | [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli |
-| [feat-0014-production-iggy-polling-for-assessment-queries](stages/backlog/stories/feat-0014-production-iggy-polling-for-assessment-queries.md) | feat | medium | core,plugin-system |
 | [m29-feat-0012-wire-circuit-breaker-intervention](stages/backlog/stories/m29-feat-0012-wire-circuit-breaker-intervention.md) | feat | high | core,plugin-system |
 
 ## Epics
@@ -90,6 +89,7 @@
 - [feat-0003-web-ui-navigation-hierarchy](stages/done/stories/feat-0003-web-ui-navigation-hierarchy.md)
 - [feat-0004-subnav](stages/done/stories/feat-0004-subnav.md)
 - [feat-0005-session-terminal-outline](stages/done/stories/feat-0005-session-terminal-outline.md)
+- [feat-0014-production-iggy-polling-for-assessment-queries](stages/done/stories/feat-0014-production-iggy-polling-for-assessment-queries.md)
 - [m14-chore-01-design](stages/done/stories/m14-chore-01-design.md)
 - [m14-chore-02-implementation](stages/done/stories/m14-chore-02-implementation.md)
 - [m26-chore-01-eventbus-cleanup](stages/done/stories/m26-chore-01-eventbus-cleanup.md)
