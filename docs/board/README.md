@@ -10,7 +10,6 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | Story | Type | Priority | Epics |
 |-------|------|----------|-------|
 | [chore-0014-resolve-remaining-code-todos](stages/backlog/stories/chore-0014-resolve-remaining-code-todos.md) | chore | medium | core,cli |
-| [chore-0015-cli-help-text-audit](stages/backlog/stories/chore-0015-cli-help-text-audit.md) | chore | low | cli |
 | [docs-0001-fix-broken-documentation-links](stages/backlog/stories/docs-0001-fix-broken-documentation-links.md) | docs | medium | core |
 | [docs-0002-update-prd-for-current-architecture](stages/backlog/stories/docs-0002-update-prd-for-current-architecture.md) | docs | medium | core |
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
@@ -86,6 +85,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 - [chore-0010-align-sessions-page-layout-with-firehose](stages/done/stories/chore-0010-align-sessions-page-layout-with-firehose.md)
 - [chore-0011-align-groove-pages-layout-with-firehose](stages/done/stories/chore-0011-align-groove-pages-layout-with-firehose.md)
 - [chore-0013-add-test-coverage-metrics](stages/done/stories/chore-0013-add-test-coverage-metrics.md)
+- [chore-0015-cli-help-text-audit](stages/done/stories/chore-0015-cli-help-text-audit.md)
 - [feat-0003-web-ui-navigation-hierarchy](stages/done/stories/feat-0003-web-ui-navigation-hierarchy.md)
 - [feat-0004-subnav](stages/done/stories/feat-0004-subnav.md)
 - [feat-0005-session-terminal-outline](stages/done/stories/feat-0005-session-terminal-outline.md)
