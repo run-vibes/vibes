@@ -467,7 +467,7 @@ pub struct DevicePairingAuth;         // Future: QR code pairing
 
 **Goal:** Progressive improvement through accumulated experience - zero friction, fully adaptive.
 
-**Design:** See [vibes groove Design](plans/14-continual-learning/design.md) and [Branding Guide](groove/BRANDING.md)
+**Design:** See [vibes groove Architecture](groove/ARCHITECTURE.md) and [Branding Guide](groove/BRANDING.md)
 
 #### Milestone 4.1: Harness Introspection ✓
 - `vibes-introspection` crate with public API
@@ -817,7 +817,7 @@ Implementations:
 - Localhost bypass enables frictionless local development
 - Relying on Cloudflare for login redirect keeps vibes simple
 
-**Full design:** See [Milestone 2.2 Design](plans/06-cloudflare-access/design.md)
+**Full design:** See [Milestone 2.2 Design](board/milestones/06-cloudflare-access/design.md)
 
 ---
 
@@ -842,7 +842,7 @@ Implementations:
 - Automatic refresh on unknown `kid` handles key rotation seamlessly
 - Clock skew leeway prevents false rejections
 
-**Full design:** See [Milestone 2.2 Design](plans/06-cloudflare-access/design.md)
+**Full design:** See [Milestone 2.2 Design](board/milestones/06-cloudflare-access/design.md)
 
 ---
 
@@ -931,7 +931,7 @@ Implementations:
 - Third-party services (Pushover, ntfy): Adds external dependencies and configuration burden
 - Notification action buttons: Inconsistent mobile browser support, complex service worker logic
 
-**Full design:** See [Milestone 2.3 Design](plans/07-push-notifications/design.md)
+**Full design:** See [Milestone 2.3 Design](board/milestones/07-push-notifications/design.md)
 
 ---
 

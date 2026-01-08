@@ -2,7 +2,7 @@
 
 > **groove** - The continual learning system that finds your coding rhythm.
 >
-> See [BRANDING.md](../../groove/BRANDING.md) for personality, voice, and visual identity guidelines.
+> See [BRANDING.md](BRANDING.md) for personality, voice, and visual identity guidelines.
 
 ## Overview
 
