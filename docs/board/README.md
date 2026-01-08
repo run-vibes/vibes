@@ -8,17 +8,29 @@
 
 ## Backlog
 
-*Backlog empty*
+| Story | Type | Priority | Epics |
+|-------|------|----------|-------|
+| [chore-0013-add-test-coverage-metrics](stages/backlog/stories/chore-0013-add-test-coverage-metrics.md) | chore | medium | core |
+| [chore-0014-resolve-remaining-code-todos](stages/backlog/stories/chore-0014-resolve-remaining-code-todos.md) | chore | medium | core,cli |
+| [chore-0015-cli-help-text-audit](stages/backlog/stories/chore-0015-cli-help-text-audit.md) | chore | low | cli |
+| [docs-0001-fix-broken-documentation-links](stages/backlog/stories/docs-0001-fix-broken-documentation-links.md) | docs | medium | core |
+| [docs-0002-update-prd-for-current-architecture](stages/backlog/stories/docs-0002-update-prd-for-current-architecture.md) | docs | medium | core |
+| [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
+| [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
+| [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli |
+| [feat-0014-production-iggy-polling-for-assessment-queries](stages/backlog/stories/feat-0014-production-iggy-polling-for-assessment-queries.md) | feat | medium | core,plugin-system |
+| [m29-feat-0012-wire-circuit-breaker-intervention](stages/backlog/stories/m29-feat-0012-wire-circuit-breaker-intervention.md) | feat | high | core,plugin-system |
+| [refactor-0008-consolidate-assessment-types-module](stages/backlog/stories/refactor-0008-consolidate-assessment-types-module.md) | refactor | low | plugin-system |
 
 ## Epics
 
 | Epic | Status | Stories |
 |------|--------|---------|
-| [cli](epics/cli/) | active | 10 |
-| [core](epics/core/) | active | 15 |
+| [cli](epics/cli/) | active | 13 |
+| [core](epics/core/) | active | 22 |
 | [mobile](epics/mobile/) | active | 0 |
 | [networking](epics/networking/) | active | 0 |
-| [plugin-system](epics/plugin-system/) | active | 11 |
+| [plugin-system](epics/plugin-system/) | active | 16 |
 | [web-ui](epics/web-ui/) | active | 25 |
 
 ## Milestones
