@@ -197,6 +197,52 @@ pub struct ErrorResponse {
     pub code: String,
 }
 
+/// Assessment status response for HTTP API
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AssessmentStatusResponse {
+    pub circuit_breaker: CircuitBreakerStatus,
+    pub sampling: SamplingStatus,
+    pub activity: ActivityStatus,
+}
+
+/// Circuit breaker status for API
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CircuitBreakerStatus {
+    pub enabled: bool,
+    pub cooldown_seconds: u32,
+    pub max_interventions_per_session: u32,
+}
+
+/// Sampling status for API
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SamplingStatus {
+    pub base_rate: f64,
+    pub burnin_sessions: u32,
+}
+
+/// Activity status for API
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ActivityStatus {
+    pub active_sessions: usize,
+    pub events_stored: usize,
+    pub sessions: Vec<String>,
+}
+
+/// Assessment history response for HTTP API
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AssessmentHistoryResponse {
+    pub sessions: Vec<SessionHistoryItem>,
+    pub has_more: bool,
+}
+
+/// Single session's history
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SessionHistoryItem {
+    pub session_id: String,
+    pub event_count: usize,
+    pub result_types: Vec<String>,
+}
+
 // ============================================================================
 // Assessment Consumer
 // ============================================================================
@@ -381,6 +427,8 @@ impl Plugin for GroovePlugin {
             (HttpMethod::Get, "/quarantine") => self.route_list_quarantined(),
             (HttpMethod::Get, "/quarantine/stats") => self.route_get_quarantine_stats(),
             (HttpMethod::Post, "/quarantine/:id/review") => self.route_review_quarantined(&request),
+            (HttpMethod::Get, "/assess/status") => self.route_assess_status(),
+            (HttpMethod::Get, "/assess/history") => self.route_assess_history(&request),
             _ => Err(PluginError::UnknownRoute(format!("{:?} {}", method, path))),
         }
     }
@@ -517,6 +565,17 @@ impl GroovePlugin {
         ctx.register_route(RouteSpec {
             method: HttpMethod::Post,
             path: "/quarantine/:id/review".into(),
+        })?;
+
+        // Assessment routes
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Get,
+            path: "/assess/status".into(),
+        })?;
+
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Get,
+            path: "/assess/history".into(),
         })?;
 
         Ok(())
@@ -1130,6 +1189,100 @@ impl GroovePlugin {
                 code: "NOT_CONFIGURED".to_string(),
             },
         )
+    }
+
+    // ─── Assessment Routes ────────────────────────────────────────────────
+
+    fn route_assess_status(&self) -> Result<RouteResponse, PluginError> {
+        if let Some(processor) = &self.processor {
+            let cb = processor.circuit_breaker_summary();
+            let sampling = processor.sampling_summary();
+            let sessions = processor.active_sessions();
+            let event_count = processor.stored_results_count();
+
+            RouteResponse::json(
+                200,
+                &AssessmentStatusResponse {
+                    circuit_breaker: CircuitBreakerStatus {
+                        enabled: cb.enabled,
+                        cooldown_seconds: cb.cooldown_seconds,
+                        max_interventions_per_session: cb.max_interventions_per_session,
+                    },
+                    sampling: SamplingStatus {
+                        base_rate: sampling.base_rate,
+                        burnin_sessions: sampling.burnin_sessions,
+                    },
+                    activity: ActivityStatus {
+                        active_sessions: sessions.len(),
+                        events_stored: event_count,
+                        sessions,
+                    },
+                },
+            )
+        } else {
+            RouteResponse::json(
+                503,
+                &ErrorResponse {
+                    error: "Assessment processor not initialized".to_string(),
+                    code: "NOT_INITIALIZED".to_string(),
+                },
+            )
+        }
+    }
+
+    fn route_assess_history(&self, request: &RouteRequest) -> Result<RouteResponse, PluginError> {
+        let session_filter = request.query.get("session").cloned();
+
+        if let Some(processor) = &self.processor {
+            let sessions = processor.active_sessions();
+
+            // Filter sessions if a filter is provided
+            let filtered_sessions: Vec<_> = if let Some(ref filter) = session_filter {
+                sessions.into_iter().filter(|s| s == filter).collect()
+            } else {
+                sessions
+            };
+
+            // Get event counts and types for each session
+            let items: Vec<SessionHistoryItem> = filtered_sessions
+                .into_iter()
+                .map(|session_id| {
+                    let query = AssessmentQuery::new().with_session(&session_id);
+                    let response = processor.query(query);
+
+                    // Collect unique result types
+                    let result_types: Vec<_> = response
+                        .results
+                        .iter()
+                        .map(|r| r.result_type.clone())
+                        .collect::<std::collections::HashSet<_>>()
+                        .into_iter()
+                        .collect();
+
+                    SessionHistoryItem {
+                        session_id,
+                        event_count: response.results.len(),
+                        result_types,
+                    }
+                })
+                .collect();
+
+            RouteResponse::json(
+                200,
+                &AssessmentHistoryResponse {
+                    sessions: items,
+                    has_more: false,
+                },
+            )
+        } else {
+            RouteResponse::json(
+                503,
+                &ErrorResponse {
+                    error: "Assessment processor not initialized".to_string(),
+                    code: "NOT_INITIALIZED".to_string(),
+                },
+            )
+        }
     }
 }
 
@@ -1795,5 +1948,80 @@ mod tests {
             }
             _ => panic!("Expected Text output"),
         }
+    }
+
+    // ─── HTTP Route Tests ─────────────────────────────────────────────────
+
+    #[test]
+    fn test_route_assess_status_with_data() {
+        let mut plugin = GroovePlugin::default();
+        let mut ctx = create_test_context();
+
+        plugin.on_load(&mut ctx).unwrap();
+
+        // Process some events
+        for i in 0..3 {
+            let raw = make_raw_event("route-test-session", &format!("Message {i}"));
+            plugin.on_event(raw, &mut ctx);
+        }
+
+        let result = plugin.route_assess_status().unwrap();
+        assert_eq!(result.status, 200);
+
+        let response: AssessmentStatusResponse = serde_json::from_slice(&result.body).unwrap();
+        assert!(response.activity.events_stored > 0);
+        assert!(response.activity.active_sessions > 0);
+        assert!(
+            response
+                .activity
+                .sessions
+                .contains(&"route-test-session".to_string())
+        );
+    }
+
+    #[test]
+    fn test_route_assess_history_with_data() {
+        let mut plugin = GroovePlugin::default();
+        let mut ctx = create_test_context();
+
+        plugin.on_load(&mut ctx).unwrap();
+
+        // Process events for a session
+        for i in 0..3 {
+            let raw = make_raw_event("history-route-session", &format!("Message {i}"));
+            plugin.on_event(raw, &mut ctx);
+        }
+
+        let request = RouteRequest {
+            params: HashMap::new(),
+            query: HashMap::new(),
+            body: vec![],
+            headers: HashMap::new(),
+        };
+
+        let result = plugin.route_assess_history(&request).unwrap();
+        assert_eq!(result.status, 200);
+
+        let response: AssessmentHistoryResponse = serde_json::from_slice(&result.body).unwrap();
+        assert!(!response.sessions.is_empty());
+
+        let session = response
+            .sessions
+            .iter()
+            .find(|s| s.session_id == "history-route-session")
+            .expect("Should find session");
+        assert!(session.event_count > 0);
+    }
+
+    #[test]
+    fn test_route_assess_status_not_initialized() {
+        // Plugin without on_load called - processor is None
+        let plugin = GroovePlugin::default();
+
+        let result = plugin.route_assess_status().unwrap();
+        assert_eq!(result.status, 503);
+
+        let response: ErrorResponse = serde_json::from_slice(&result.body).unwrap();
+        assert_eq!(response.code, "NOT_INITIALIZED");
     }
 }
