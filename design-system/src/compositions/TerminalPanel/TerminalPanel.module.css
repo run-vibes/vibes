@@ -1,0 +1,37 @@
+/* design-system/src/compositions/TerminalPanel/TerminalPanel.module.css */
+
+/* Terminal panel container */
+.terminalPanel {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  overflow: hidden;
+  position: relative;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.terminalPanel.focused {
+  border-color: var(--phosphor);
+  box-shadow: 0 0 12px var(--phosphor-glow), inset 0 0 30px rgba(255, 176, 0, 0.02);
+}
+
+/* Header slot */
+.headerSlot {
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--screen, #0a0908);
+}
+
+/* Body slot - takes remaining space */
+.bodySlot {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Input slot */
+.inputSlot {
+  flex-shrink: 0;
+  border-top: 1px solid var(--border);
+}

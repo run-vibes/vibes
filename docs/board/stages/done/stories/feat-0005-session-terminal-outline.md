@@ -2,7 +2,7 @@
 id: feat-0005-session-terminal-outline
 title: "Feature: Apply Terminal Outline to Session Detail Page"
 type: feat
-status: backlog
+status: done
 priority: medium
 epics: [web-ui]
 depends: []

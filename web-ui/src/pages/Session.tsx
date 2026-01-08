@@ -5,9 +5,23 @@ import { useParams, Link } from '@tanstack/react-router';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { SessionTerminal, type SessionTerminalHandle } from '../components/Terminal';
+import { TerminalPanel, TerminalHeader, Button } from '@vibes/design-system';
+import type { TerminalStatus } from '@vibes/design-system';
 import type { ServerMessage } from '../lib/types';
+import './Session.css';
 
 type ConnectionState = 'connecting' | 'attached' | 'exited' | 'error';
+
+function connectionStateToTerminalStatus(state: ConnectionState): TerminalStatus {
+  switch (state) {
+    case 'attached':
+      return 'active';
+    case 'error':
+      return 'error';
+    default:
+      return 'idle';
+  }
+}
 
 export function Session() {
   const { sessionId } = useParams({ from: '/sessions/$sessionId' });
@@ -131,17 +145,32 @@ export function Session() {
     });
   }, [sessionId, send]);
 
-  return (
-    <div className="page session-detail terminal-page">
-      <div className="session-header">
-        <Link to="/sessions" className="back-link">&larr; Sessions</Link>
-        <h1>Session {sessionId.slice(0, 8)}</h1>
-        <span className="terminal-size">{terminalSize.cols}x{terminalSize.rows}</span>
-        <ConnectionStatus state={connectionState} exitCode={exitCode} />
-      </div>
+  // Build metadata array
+  const metadata: string[] = [`${terminalSize.cols}×${terminalSize.rows}`];
+  if (connectionState === 'exited' && exitCode !== null) {
+    metadata.push(`exit: ${exitCode}`);
+  }
+  if (connectionState === 'error') {
+    metadata.push('ERROR');
+  }
 
+  // Header actions
+  const headerActions = (
+    <>
+      <Link to="/sessions" className="term-action-btn">← BACK</Link>
+      {connectionState === 'error' && (
+        <Button variant="ghost" size="sm">RETRY</Button>
+      )}
+      {connectionState === 'exited' && (
+        <Button variant="ghost" size="sm">LOGS</Button>
+      )}
+    </>
+  );
+
+  return (
+    <div className="session-page">
       {!isConnected && (
-        <div className="connection-status">
+        <div className="connection-banner">
           Connecting to daemon...
         </div>
       )}
@@ -158,7 +187,18 @@ export function Session() {
         </div>
       )}
 
-      <div className="terminal-wrapper">
+      <TerminalPanel
+        focused={connectionState === 'attached'}
+        header={
+          <TerminalHeader
+            status={connectionStateToTerminalStatus(connectionState)}
+            name={`session-${sessionId.slice(0, 6)}`}
+            id={sessionId.slice(0, 8)}
+            metadata={metadata}
+            actions={headerActions}
+          />
+        }
+      >
         {(connectionState === 'attached' || connectionState === 'exited') && (
           <SessionTerminal
             ref={terminalCallbackRef}
@@ -172,20 +212,7 @@ export function Session() {
             Attaching to session...
           </div>
         )}
-      </div>
+      </TerminalPanel>
     </div>
   );
-}
-
-function ConnectionStatus({ state, exitCode }: { state: ConnectionState; exitCode: number | null }) {
-  switch (state) {
-    case 'connecting':
-      return <span className="status status-connecting">Connecting...</span>;
-    case 'attached':
-      return <span className="status status-attached">Connected</span>;
-    case 'exited':
-      return <span className="status status-exited">Exited ({exitCode ?? '?'})</span>;
-    case 'error':
-      return <span className="status status-error">Error</span>;
-  }
 }

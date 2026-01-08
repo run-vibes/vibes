@@ -9,9 +9,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 
 ## Backlog
 
-| Story | Type | Priority | Epics |
-|-------|------|----------|-------|
-| [feat-0005-session-terminal-outline](stages/backlog/stories/feat-0005-session-terminal-outline.md) | feat | medium | web-ui |
+*Backlog empty*
 
 ## Epics
 
@@ -79,6 +77,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 - [chore-0003-assessment-tier-buttons](stages/done/stories/chore-0003-assessment-tier-buttons.md)
 - [feat-0003-web-ui-navigation-hierarchy](stages/done/stories/feat-0003-web-ui-navigation-hierarchy.md)
 - [feat-0004-subnav](stages/done/stories/feat-0004-subnav.md)
+- [feat-0005-session-terminal-outline](stages/done/stories/feat-0005-session-terminal-outline.md)
 - [m14-chore-01-design](stages/done/stories/m14-chore-01-design.md)
 - [m14-chore-02-implementation](stages/done/stories/m14-chore-02-implementation.md)
 - [m26-chore-01-eventbus-cleanup](stages/done/stories/m26-chore-01-eventbus-cleanup.md)

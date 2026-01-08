@@ -1,0 +1,67 @@
+/* design-system/src/compositions/TerminalPanel/TerminalLine.module.css */
+
+.line {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  margin-bottom: var(--space-1);
+}
+
+/* Prompt variant */
+.prompt {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.promptText {
+  color: var(--cyan, #44ffff);
+  flex-shrink: 0;
+}
+
+.command {
+  color: var(--phosphor);
+}
+
+/* Output variant */
+.output {
+  color: var(--text-dim);
+  padding-left: var(--space-4);
+}
+
+.output.success {
+  color: var(--green, #44ff44);
+}
+
+.output.error {
+  color: var(--red, #ff4444);
+}
+
+.output.info {
+  color: var(--cyan, #44ffff);
+}
+
+/* Thinking variant */
+.thinking {
+  color: var(--magenta, #ff44ff);
+  font-style: italic;
+  display: flex;
+  gap: var(--space-2);
+}
+
+.thinkingIcon {
+  flex-shrink: 0;
+}
+
+/* Tool variant */
+.tool {
+  color: var(--phosphor);
+  padding-left: var(--space-4);
+  border-left: 2px solid var(--border);
+  display: flex;
+  gap: var(--space-2);
+}
+
+.toolName {
+  color: var(--cyan, #44ffff);
+  flex-shrink: 0;
+}
