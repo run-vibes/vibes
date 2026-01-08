@@ -27,7 +27,17 @@
 .bodySlot {
   flex: 1;
   min-height: 0;
+  width: 100%;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ensure children fill the body slot */
+.bodySlot > * {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
 }
 
 /* Input slot */

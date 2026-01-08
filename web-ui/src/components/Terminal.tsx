@@ -141,7 +141,16 @@ export const SessionTerminal = forwardRef<SessionTerminalHandle, SessionTerminal
       // Handle terminal resize - notify server
       term.onResize(handleResize);
 
-      // Handle window resize
+      // Handle container resize with ResizeObserver for better responsiveness
+      const resizeObserver = new ResizeObserver(() => {
+        // Use requestAnimationFrame to batch resize calls
+        requestAnimationFrame(() => {
+          fitAddon.fit();
+        });
+      });
+      resizeObserver.observe(containerRef.current);
+
+      // Also handle window resize as fallback
       const onWindowResize = () => {
         fitAddon.fit();
       };
@@ -152,6 +161,7 @@ export const SessionTerminal = forwardRef<SessionTerminalHandle, SessionTerminal
 
       // Cleanup
       return () => {
+        resizeObserver.disconnect();
         window.removeEventListener('resize', onWindowResize);
         term.dispose();
         terminalRef.current = null;
