@@ -2,7 +2,7 @@
 id: DOCS0002
 title: Update PRD for current architecture
 type: docs
-status: backlog
+status: done
 priority: medium
 epics: [core]
 depends: []
@@ -27,11 +27,11 @@ The PRD (docs/PRD.md) was written early in the project and some sections don't r
 
 ## Acceptance Criteria
 
-- [ ] PRD reflects current project state
-- [ ] All major features documented
-- [ ] Architecture diagrams updated if needed
-- [ ] Future/planned items clearly marked as such
-- [ ] No references to deprecated patterns
+- [x] PRD reflects current project state
+- [x] All major features documented
+- [x] Architecture diagrams updated if needed
+- [x] Future/planned items clearly marked as such
+- [x] No references to deprecated patterns
 
 ## Implementation Notes
 

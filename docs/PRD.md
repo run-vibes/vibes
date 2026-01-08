@@ -95,8 +95,10 @@ vibes/
 │       └── config/         # Configuration loading
 ├── vibes-plugin-api/       # Published crate for plugin authors
 ├── vibes-introspection/    # Harness detection and capability discovery
-├── vibes-groove/           # Continual learning system (Phase 4)
+├── vibes-iggy/             # EventLog backed by Apache Iggy message streaming
 ├── web-ui/                 # TanStack frontend (embedded via rust-embed)
+├── plugins/
+│   └── vibes-groove/       # Continual learning system (external plugin)
 └── examples/plugins/       # Example plugins
 ```
 
@@ -187,14 +189,17 @@ pub struct VibesServer {
 vibes [OPTIONS] <COMMAND>
 
 Commands:
+  auth      Manage Cloudflare Access authentication
   claude    Proxy Claude Code with vibes enhancements
-  serve     Run server only (headless mode)
-  gui       Launch native GUI (when available)
-  plugin    Manage plugins
   config    Manage configuration
-  update    Update vibes to the latest version
-  auth      Authentication setup (Phase 2)
-  tunnel    Cloudflare Tunnel management (Phase 2)
+  event     Send events to the EventLog
+  plugin    Manage plugins
+  serve     Run the vibes server (daemon mode)
+  sessions  Manage active sessions
+  tunnel    Manage Cloudflare Tunnel
+
+Plugin Commands:
+  groove    Continual learning system (vibes-groove plugin)
 
 Global Options:
   --no-serve          Disable background server
@@ -233,12 +238,40 @@ vibes plugin enable <name>           # Enable a plugin
 vibes plugin disable <name>          # Disable without removing
 ```
 
-### vibes update
+### vibes update (Planned)
 
 ```bash
 vibes update                         # Update to latest stable version
 vibes update --check                 # Check for updates without installing
 vibes update --version <version>     # Update to specific version
+```
+
+### vibes event
+
+Send events to the EventLog for testing and integration.
+
+```bash
+vibes event send <EVENT_JSON>        # Send a raw event
+vibes event send --type custom --payload '{"key": "value"}'
+```
+
+### vibes sessions
+
+Manage active Claude sessions.
+
+```bash
+vibes sessions list                  # List active sessions
+vibes sessions kill <ID>             # Terminate a session
+```
+
+### vibes groove
+
+The groove plugin adds commands for the continual learning system. See [groove Architecture](groove/ARCHITECTURE.md).
+
+```bash
+vibes groove status                  # Show learning system status
+vibes groove assess status           # Show pending/active assessments
+vibes groove assess history          # View assessment history
 ```
 
 ---
@@ -308,6 +341,26 @@ Plugins are native Rust dynamic libraries (.so/.dylib/.dll) loaded from:
 // Export macro for plugin authors
 vibes_plugin::export_plugin!(MyPlugin);
 ```
+
+### External Plugin Commands
+
+Plugins can register CLI subcommands that appear under `vibes <plugin-name>`:
+
+```rust
+impl Plugin for GroovePlugin {
+    fn external_commands(&self) -> Vec<ExternalCommand> {
+        vec![
+            ExternalCommand {
+                name: "groove".to_string(),
+                about: "Continual learning system".to_string(),
+                // Subcommands like "groove status", "groove assess"
+            }
+        ]
+    }
+}
+```
+
+Users invoke these as `vibes groove <subcommand>`. The plugin receives the subcommand arguments and handles execution.
 
 ---
 
@@ -475,7 +528,7 @@ pub struct DevicePairingAuth;         // Future: QR code pairing
 - Cross-platform support (Windows, macOS, Linux)
 - `HarnessCapabilities` with 3-tier scope hierarchy
 
-#### Milestone 4.2: Storage Foundation (In Progress)
+#### Milestone 4.2: Storage Foundation ✓
 - CozoDB setup with schema and migrations
 - `Learning` model with UUIDv7 identifiers
 - `LearningStorage` trait and CozoDB implementation
@@ -487,14 +540,35 @@ pub struct DevicePairingAuth;         // Future: QR code pairing
 - `SecureInjector` with trust-aware wrapping
 - RBAC, audit logging, quarantine workflow
 
-#### Milestone 4.3-4.9: (See PROGRESS.md)
-- Capture & Inject MVP
-- Assessment Framework
-- Learning Extraction
-- Attribution Engine
-- Adaptive Strategies
-- groove Dashboard
-- Open-World Adaptation
+#### Milestone 4.3: Capture & Inject MVP ✓
+- Claude hooks integration for session capture
+- CLAUDE.md injection for learnings
+- Basic learning pipeline operational
+
+#### Milestone 4.4: Assessment Framework ◉ (In Progress)
+
+**Three-tier assessment model** balancing signal quality against latency and cost:
+
+| Tier | Techniques | Cost | Latency | Frequency | Blocking |
+|------|------------|------|---------|-----------|----------|
+| **Lightweight** | Regex, counters, lexicon sentiment | $0 | <10ms | Every message | Yes |
+| **Medium** | LLM summarize segment, compute metrics | ~$0.002 | 0.5-2s | Checkpoints | No (async) |
+| **Heavy** | Full transcript analysis, learning extraction | ~$0.02-0.22 | 5-10s | Sampled | No (async) |
+
+**Key components:**
+- `SyncProcessor` for lightweight real-time signals
+- `AsyncProcessor` for medium/heavy background analysis
+- `CircuitBreaker` for intervention on detected problems
+- Assessment logging via Iggy for persistence and querying
+- CLI commands: `vibes groove assess status/history`
+- Web UI assessment dashboard
+
+#### Milestone 4.5-4.9: (Planned)
+- Learning Extraction - Rich pattern extraction from transcripts
+- Attribution Engine - 4-layer value attribution
+- Adaptive Strategies - Thompson sampling for injection
+- groove Dashboard - User-facing metrics and trends
+- Open-World Adaptation - Novelty detection, meta-learning
 
 **Deliverable:** groove - a self-improving system that finds your coding rhythm
 
@@ -660,40 +734,48 @@ full = ["cli", "server", "gui"]
 
 ### ADR-007: Event Bus Architecture
 
-**Status:** Decided
+**Status:** Revised — Migrated to Apache Iggy via vibes-iggy
 
 **Context:** The EventBus needs to support real-time broadcasting, late-joiner replay, and future extensibility (persistence, distribution).
 
-**Decision:** Adapter pattern separating the EventBus trait from implementations. MVP uses in-memory implementation; can swap to persistent or distributed backends later.
+**Original Decision:** Adapter pattern separating the EventBus trait from implementations. MVP used in-memory implementation.
+
+**Revised Decision:** Apache Iggy message streaming via `vibes-iggy` crate. Provides persistent event storage with replay capability.
 
 **Architecture:**
 ```
-EventBus (trait)
+EventLog (trait in vibes-core)
 ├── publish(event)
 ├── subscribe() -> Stream<Event>
-├── subscribe_from(seq) -> Stream<Event>  // replay from sequence number
+├── subscribe_from(offset) -> Stream<Event>  // replay from offset
 └── get_events(session_id) -> Vec<Event>
 
 Implementations:
-├── MemoryEventBus (MVP)
-│   ├── Vec<Event> for replay
-│   └── tokio::broadcast for real-time
-├── SqliteEventBus (future - persistence)
-└── DistributedEventBus (future - Redis Streams, NATS, Iggy)
+├── MemoryEventLog (testing)
+│   └── Simple Vec<Event> for unit tests
+├── IggyEventLog ✓ (production)
+│   ├── Apache Iggy for persistence
+│   ├── UUIDv7 event IDs (time-ordered)
+│   └── Bundled iggy-server binary
+└── Future: DistributedEventLog (multi-machine)
 ```
+
+**Current implementation:**
+- `vibes-iggy` crate wraps Apache Iggy SDK
+- `iggy-server` binary bundled alongside vibes (built from submodule)
+- Events persisted to `~/.vibes/iggy/` data directory
+- UUIDv7 IDs enable natural time-ordering and pagination
+- Web UI firehose uses Iggy for infinite scroll with backend pagination
 
 **Rationale:**
 - Late joiner support is essential (web UI opens mid-session)
-- Adapter pattern allows swapping implementations without API changes
+- Persistence enables session replay after server restart
+- Iggy is lightweight enough for single-machine use
 - Opens path to distributed vibes (multiple machines sharing events)
-- In-memory MVP is simple; persistence can wait until needed
 
-**Alternatives considered:**
-- Pure tokio::broadcast: No replay, late joiners miss events
-- Iggy/Kafka from day one: Overkill for single-machine tool, adds operational complexity
-- SQLite from day one: Reasonable, but adds complexity before we need persistence
-
-**Revisit trigger:** When crash recovery or cross-machine distribution becomes a requirement.
+**Migration history:**
+- Phase 1-2: MemoryEventBus (in-memory only)
+- Phase 3+: IggyEventLog (persistent, production-ready)
 
 ---
 
@@ -939,13 +1021,21 @@ Implementations:
 
 ### Claude Code Integration
 
-Key flags for programmatic use:
+**Current approach (Phase 3+):** PTY backend with Claude hooks.
+
+- Claude runs as a PTY process for full terminal parity
+- Claude hooks (stop hooks) capture structured events
+- Raw terminal I/O streamed to CLI and Web UI (xterm.js)
+
+**Claude hooks configuration:**
 ```bash
-claude -p "query"                    # Print mode (exits after response)
---output-format stream-json          # Newline-delimited JSON streaming
---session-id "uuid"                  # Session continuity across invocations
---allowedTools "Bash,Read,Edit"      # Pre-approve tools
---input-format stream-json           # Accept streaming JSON input (investigate)
+claude config set --global hookEndpoint "http://localhost:7432/hooks"
+```
+
+**Historical approach (deprecated):**
+```bash
+# Print mode with stream-json (Phase 1-2, no longer used)
+claude -p "query" --output-format stream-json
 ```
 
 Session files stored in `~/.claude/` with UUIDs.
@@ -969,9 +1059,9 @@ struct WebAssets;
 
 ## Open Questions
 
-1. **Stream-json bidirectional:** Does `--input-format stream-json` work without `-p` for long-running interactive sessions? Needs testing.
+1. ~~**Stream-json bidirectional:** Does `--input-format stream-json` work without `-p` for long-running interactive sessions?~~ **Resolved:** Migrated to PTY backend in Phase 3. Stream-json approach deprecated.
 
-2. **Permission UX:** How to handle permission requests when multiple clients are connected? First responder wins? Require specific client?
+2. ~~**Permission UX:** How to handle permission requests when multiple clients are connected?~~ **Resolved:** First responder wins. Any connected client can approve/deny.
 
 3. **Plugin distribution:** How will users discover and install third-party plugins? Registry? Git URLs?
 
