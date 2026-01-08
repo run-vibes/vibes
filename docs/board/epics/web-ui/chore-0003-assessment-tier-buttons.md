@@ -1,1 +1,1 @@
-../../stages/backlog/stories/chore-0003-assessment-tier-buttons.md
+../../stages/done/stories/chore-0003-assessment-tier-buttons.md

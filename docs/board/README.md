@@ -1,6 +1,5 @@
-# Planning Board
-
-> Auto-generated from directory structure. Run `just board generate` to update.
+Generated README.md
+Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
@@ -12,7 +11,6 @@
 
 | Story | Type | Priority | Epics |
 |-------|------|----------|-------|
-| [chore-0003-assessment-tier-buttons](stages/backlog/stories/chore-0003-assessment-tier-buttons.md) | chore | low | web-ui |
 | [feat-0004-subnav](stages/backlog/stories/feat-0004-subnav.md) | feat | medium | web-ui |
 | [feat-0005-session-terminal-outline](stages/backlog/stories/feat-0005-session-terminal-outline.md) | feat | medium | web-ui |
 
@@ -79,6 +77,7 @@
 - [bug-0002-firehose-not-loading-historical-events](stages/done/stories/bug-0002-firehose-not-loading-historical-events.md)
 - [chore-0001-nav-cleanup](stages/done/stories/chore-0001-nav-cleanup.md)
 - [chore-0002-firehose-filter-cleanup](stages/done/stories/chore-0002-firehose-filter-cleanup.md)
+- [chore-0003-assessment-tier-buttons](stages/done/stories/chore-0003-assessment-tier-buttons.md)
 - [feat-0003-web-ui-navigation-hierarchy](stages/done/stories/feat-0003-web-ui-navigation-hierarchy.md)
 - [m14-chore-01-design](stages/done/stories/m14-chore-01-design.md)
 - [m14-chore-02-implementation](stages/done/stories/m14-chore-02-implementation.md)
