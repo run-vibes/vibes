@@ -45,6 +45,7 @@ Stories:
 - [milestone-34-cli-enhancements](backlog/milestone-34-cli-enhancements/) *(design only)*
 - [milestone-35-ios-app](backlog/milestone-35-ios-app/) *(design only)*
 - [milestone-37-crt-design-system](backlog/milestone-37-crt-design-system/)
+- [milestone-38-board-restructure](backlog/milestone-38-board-restructure/) *(design only)*
 
 ---
 
