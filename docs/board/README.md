@@ -10,7 +10,9 @@
 
 ## Backlog
 
-*Backlog empty*
+| Story | Type | Priority | Epics |
+|-------|------|----------|-------|
+| [m29-feat-11-web-ui-assess-queries](stages/backlog/stories/m29-feat-11-web-ui-assess-queries.md) | feat | medium | web-ui,plugin-system |
 
 ## Epics
 
@@ -20,8 +22,8 @@
 | [core](epics/core/) | active | 15 |
 | [mobile](epics/mobile/) | active | 0 |
 | [networking](epics/networking/) | active | 0 |
-| [plugin-system](epics/plugin-system/) | active | 10 |
-| [web-ui](epics/web-ui/) | active | 23 |
+| [plugin-system](epics/plugin-system/) | active | 11 |
+| [web-ui](epics/web-ui/) | active | 24 |
 
 ## Milestones
 
