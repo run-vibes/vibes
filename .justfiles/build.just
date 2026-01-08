@@ -1,8 +1,14 @@
 # Build commands for vibes
 
+# Run commands from project root, not .justfiles/
+set working-directory := '..'
+
 # Default: show available build commands
 default:
-    @just build --list
+    @echo "Build commands:"
+    @echo "  just builds debug    Debug build (vibes + iggy-server)"
+    @echo "  just builds release  Release build (vibes + iggy-server)"
+    @echo "  just builds dev      Development watch mode"
 
 # Debug build (vibes + iggy-server)
 debug: _check-submodules

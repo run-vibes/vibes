@@ -41,20 +41,34 @@ The `iggy-server` binary is copied alongside vibes in `target/`.
 
 **Always use `just` over raw cargo commands.**
 
+### Top-Level Commands
+
 | Command | Purpose |
 |---------|---------|
 | `just` | List all available commands |
+| `just setup` | Full setup for new developers |
 | `just build` | Debug build (vibes + iggy-server) |
 | `just build-release` | Release build |
-| `just dev` | Watch mode (`cargo watch -x check`) |
-| `just test` | Run unit tests (`cargo nextest run`) |
-| `just test-all` | Unit + integration tests |
-| `just test-integration` | Integration tests (requires Claude CLI) |
-| `just clippy` | Lint |
-| `just fmt` | Format code |
-| `just coverage` | Generate test coverage report (HTML) |
-| `just coverage-summary` | Print coverage summary to terminal |
 | `just pre-commit` | All checks before committing |
+
+### Module Commands
+
+Commands are organized into modules. Use `just <module>` to see available subcommands.
+
+| Module | Commands | Examples |
+|--------|----------|----------|
+| `just tests` | `run`, `all`, `integration`, `watch`, `one <name>` | `just tests run` |
+| `just quality` | `check`, `clippy`, `fmt`, `fmt-check`, `mutants` | `just quality clippy` |
+| `just coverage` | `report`, `html`, `summary`, `lcov`, `package <pkg>` | `just coverage summary` |
+| `just builds` | `debug`, `release`, `dev` | `just builds dev` |
+| `just web` | `build`, `typecheck`, `test`, `install`, `e2e`, `e2e-setup` | `just web build` |
+| `just plugin` | `list`, `install-groove`, `uninstall-groove` | `just plugin list` |
+| `just board` | `status`, `generate`, `new`, `start`, `done`, `link` | `just board status` |
+
+### Board Commands
+
+| Command | Purpose |
+|---------|---------|
 | `just board` | Show available commands |
 | `just board generate` | Regenerate board README.md |
 | `just board status` | Show board status |

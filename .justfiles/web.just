@@ -1,8 +1,19 @@
 # Web UI commands for vibes
 
+# Run commands from project root, not .justfiles/
+set working-directory := '..'
+
 # Default: show available web commands
 default:
-    @just web --list
+    @echo "Web UI commands:"
+    @echo "  just web build       Build web-ui (required for server)"
+    @echo "  just web typecheck   TypeScript type check (no emit)"
+    @echo "  just web test        Run web-ui tests"
+    @echo "  just web install     Install npm dependencies"
+    @echo "  just web e2e         E2E tests with Playwright"
+    @echo "  just web e2e-headed  E2E tests in headed mode (visible browser)"
+    @echo "  just web e2e-debug   E2E tests in debug mode"
+    @echo "  just web e2e-setup   Install Playwright browsers"
 
 # Build web-ui (required for server)
 build:

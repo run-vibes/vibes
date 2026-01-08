@@ -1,8 +1,14 @@
 # Plugin management commands for vibes
 
+# Run commands from project root, not .justfiles/
+set working-directory := '..'
+
 # Default: show available plugin commands
 default:
-    @just plugin --list
+    @echo "Plugin management commands:"
+    @echo "  just plugin list              List installed plugins"
+    @echo "  just plugin install-groove    Install groove plugin (build, copy, enable)"
+    @echo "  just plugin uninstall-groove  Uninstall groove plugin"
 
 # List installed plugins
 list:
@@ -14,7 +20,7 @@ install-groove:
     set -euo pipefail
 
     # Build release first
-    just build release
+    just build-release
 
     PLUGIN_DIR="${HOME}/.config/vibes/plugins/groove"
     mkdir -p "${PLUGIN_DIR}"

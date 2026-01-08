@@ -1,8 +1,16 @@
 # Testing commands for vibes
 
+# Run commands from project root, not .justfiles/
+set working-directory := '..'
+
 # Default: show available test commands
 default:
-    @just test --list
+    @echo "Testing commands:"
+    @echo "  just tests run           Run unit tests"
+    @echo "  just tests all           Run all tests including integration"
+    @echo "  just tests integration   Integration tests only (requires Claude CLI)"
+    @echo "  just tests watch         Watch mode for tests"
+    @echo "  just tests one <name>    Run a specific test by name"
 
 # Run unit tests
 run:

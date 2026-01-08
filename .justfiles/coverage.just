@@ -1,8 +1,16 @@
 # Test coverage commands for vibes
 
+# Run commands from project root, not .justfiles/
+set working-directory := '..'
+
 # Default: show available coverage commands
 default:
-    @just coverage --list
+    @echo "Coverage commands:"
+    @echo "  just coverage report        Generate HTML report, opens in browser"
+    @echo "  just coverage html          Generate HTML report without opening browser"
+    @echo "  just coverage summary       Print coverage summary to terminal"
+    @echo "  just coverage lcov          Generate LCOV format (for CI/codecov)"
+    @echo "  just coverage package <pkg> Coverage for a specific package"
 
 # Generate coverage report (HTML, opens in browser)
 report:

@@ -5,22 +5,22 @@
 # Planning board management
 mod board '.justfiles/board.just'
 
-# Testing commands (use: just tests run, just tests all)
+# Testing commands
 mod tests '.justfiles/test.just'
 
-# Code quality commands (use: just quality check, just quality clippy)
+# Code quality commands
 mod quality '.justfiles/quality.just'
 
-# Coverage commands (use: just coverage report, just coverage summary)
+# Coverage commands
 mod coverage '.justfiles/coverage.just'
 
-# Build commands (use: just builds debug, just builds release)
+# Build commands
 mod builds '.justfiles/build.just'
 
-# Web UI commands (use: just web build, just web test)
+# Web UI commands
 mod web '.justfiles/web.just'
 
-# Plugin management (use: just plugin list, just plugin install-groove)
+# Plugin management
 mod plugin '.justfiles/plugin.just'
 
 # ─── Top-Level Commands ──────────────────────────────────────────────────────
@@ -51,55 +51,8 @@ setup: setup-hooks
     echo "✓ Setup complete. Run 'just build' to build."
 
 # Run all checks (pre-commit)
-pre-commit: fmt-check clippy test web::typecheck web::test
+pre-commit: quality::fmt-check quality::clippy tests::run web::typecheck web::test
     @echo "✓ All pre-commit checks passed"
-
-# ─── Convenience Aliases ─────────────────────────────────────────────────────
-# Backwards compatible top-level commands
-
-# Development watch mode
-dev:
-    cargo watch -x check
-
-# Run unit tests
-test:
-    cargo nextest run
-
-# Run all tests including integration
-test-all:
-    cargo nextest run --run-ignored all
-
-# Integration tests only (requires Claude CLI)
-test-integration:
-    cargo nextest run --run-ignored ignored-only
-
-# Watch mode for tests
-test-watch:
-    cargo watch -x 'nextest run'
-
-# Run a specific test by name
-test-one NAME:
-    cargo nextest run {{NAME}}
-
-# Type check all targets
-check:
-    cargo check --all-targets
-
-# Lint with clippy
-clippy:
-    cargo clippy --all-targets -- -D warnings
-
-# Format code
-fmt:
-    cargo fmt
-
-# Check formatting
-fmt-check:
-    cargo fmt -- --check
-
-# Mutation testing
-mutants:
-    cargo mutants
 
 # Build debug (vibes + iggy)
 build: web::build builds::_check-submodules

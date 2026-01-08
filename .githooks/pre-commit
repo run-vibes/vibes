@@ -5,16 +5,16 @@ echo "Running pre-commit checks..."
 
 # Format check
 echo "→ Checking formatting..."
-cargo fmt --check
+just quality fmt-check
 
 # Clippy
 echo "→ Running clippy..."
-cargo clippy --all-targets -- -D warnings
+just quality clippy
 
 # TypeScript type check (if web-ui files changed)
 if git diff --cached --name-only | grep -q '^web-ui/'; then
     echo "→ Checking TypeScript..."
-    npm run typecheck --workspace=web-ui
+    just web typecheck
 fi
 
 echo "✓ Pre-commit checks passed"

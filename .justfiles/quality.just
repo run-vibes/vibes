@@ -1,8 +1,16 @@
 # Code quality commands for vibes
 
+# Run commands from project root, not .justfiles/
+set working-directory := '..'
+
 # Default: show available quality commands
 default:
-    @just quality --list
+    @echo "Code quality commands:"
+    @echo "  just quality check      Type check all targets"
+    @echo "  just quality clippy     Run clippy linter"
+    @echo "  just quality fmt        Format code"
+    @echo "  just quality fmt-check  Check formatting without modifying files"
+    @echo "  just quality mutants    Mutation testing"
 
 # Type check all targets
 check:
@@ -23,7 +31,3 @@ fmt-check:
 # Mutation testing
 mutants:
     cargo mutants
-
-# Run all quality checks (pre-commit)
-pre-commit: fmt-check clippy
-    @echo "✓ Code quality checks passed"
