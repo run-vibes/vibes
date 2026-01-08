@@ -1,18 +1,16 @@
-# Planning Board
-
-> Auto-generated from directory structure. Run `just board generate` to update.
+Generated README.md
+Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
 | Story | Type | Priority | Epics |
 |-------|------|----------|-------|
 | [m26-feat-10-cli-assess-queries](stages/in-progress/stories/m26-feat-10-cli-assess-queries.md) | feat | medium | core,cli,plugin-system |
+| [m29-feat-11-web-ui-assess-queries](stages/in-progress/stories/m29-feat-11-web-ui-assess-queries.md) | feat | medium | web-ui,plugin-system |
 
 ## Backlog
 
-| Story | Type | Priority | Epics |
-|-------|------|----------|-------|
-| [m29-feat-11-web-ui-assess-queries](stages/backlog/stories/m29-feat-11-web-ui-assess-queries.md) | feat | medium | web-ui,plugin-system |
+*Backlog empty*
 
 ## Epics
 

@@ -13,8 +13,6 @@ export type VibesFixture = {
 
 // Get the project root directory (parent of e2e-tests)
 const projectRoot = path.resolve(import.meta.dirname, '../..');
-const testConfigDir = path.join(projectRoot, '.vibes');
-const testConfigPath = path.join(testConfigDir, 'config.toml');
 
 // Find the vibes binary
 // Priority: VIBES_BIN env var > debug build > release build
@@ -63,19 +61,22 @@ export const test = base.extend<VibesFixture>({
     const vibesBin = findVibesBinary();
     console.log(`[vibes] Using binary: ${vibesBin}`);
 
-    // Create isolated temp directory for Iggy data
+    // Create isolated temp directory for this test (Iggy data + config)
     const testId = `vibes-e2e-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    const iggyDataDir = path.join(os.tmpdir(), testId);
+    const testTempDir = path.join(os.tmpdir(), testId);
+    const iggyDataDir = path.join(testTempDir, 'iggy');
+    const configDir = path.join(testTempDir, 'config');
     fs.mkdirSync(iggyDataDir, { recursive: true });
+    fs.mkdirSync(configDir, { recursive: true });
 
     // Get random ports for Iggy to avoid conflicts between parallel tests
     const iggyPort = await getRandomPort();
     const iggyHttpPort = await getRandomPort();
 
-    console.log(`[vibes] Using Iggy data dir: ${iggyDataDir}`);
+    console.log(`[vibes] Using temp dir: ${testTempDir}`);
     console.log(`[vibes] Using Iggy ports: TCP=${iggyPort}, HTTP=${iggyHttpPort}`);
 
-    // Start server on random port with isolated Iggy config
+    // Start server on random port with isolated Iggy config and project config
     const server = spawn(
       vibesBin,
       ['serve', '--port', '0'],
@@ -86,6 +87,7 @@ export const test = base.extend<VibesFixture>({
           VIBES_IGGY_DATA_DIR: iggyDataDir,
           VIBES_IGGY_PORT: String(iggyPort),
           VIBES_IGGY_HTTP_PORT: String(iggyHttpPort),
+          VIBES_PROJECT_CONFIG_DIR: configDir,
         }
       }
     );
@@ -98,38 +100,18 @@ export const test = base.extend<VibesFixture>({
     const port = await waitForPort(server.stdout!);
     console.log(`[vibes] Server started on http://127.0.0.1:${port}`);
 
-    // Backup existing config if present
-    let existingConfig: string | null = null;
-    try {
-      existingConfig = fs.readFileSync(testConfigPath, 'utf-8');
-    } catch {
-      // No existing config
-    }
-
-    // Write config file for CLI to use
-    fs.mkdirSync(testConfigDir, { recursive: true });
-    fs.writeFileSync(testConfigPath, `[server]\nport = ${port}\n`);
+    // Write config file for CLI to use (in isolated temp dir)
+    fs.writeFileSync(path.join(configDir, 'config.toml'), `[server]\nport = ${port}\n`);
 
     await use(port);
 
     server.kill('SIGTERM');
     console.log('[vibes] Server stopped');
 
-    // Restore or cleanup config
+    // Clean up temp directory (includes Iggy data and config)
     try {
-      if (existingConfig !== null) {
-        fs.writeFileSync(testConfigPath, existingConfig);
-      } else {
-        fs.unlinkSync(testConfigPath);
-      }
-    } catch {
-      // Ignore cleanup errors
-    }
-
-    // Clean up Iggy data directory
-    try {
-      fs.rmSync(iggyDataDir, { recursive: true, force: true });
-      console.log(`[vibes] Cleaned up: ${iggyDataDir}`);
+      fs.rmSync(testTempDir, { recursive: true, force: true });
+      console.log(`[vibes] Cleaned up: ${testTempDir}`);
     } catch {
       // Ignore cleanup errors
     }

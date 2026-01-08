@@ -41,8 +41,13 @@ impl ConfigLoader {
     }
 
     /// Get project config path
+    /// Can be overridden with VIBES_PROJECT_CONFIG_DIR env var (useful for isolated e2e tests)
     pub fn project_config_path() -> PathBuf {
-        PathBuf::from(".vibes/config.toml")
+        if let Ok(dir) = std::env::var("VIBES_PROJECT_CONFIG_DIR") {
+            PathBuf::from(dir).join("config.toml")
+        } else {
+            PathBuf::from(".vibes/config.toml")
+        }
     }
 
     /// Merge two raw configs (overlay values override base only if explicitly set)
