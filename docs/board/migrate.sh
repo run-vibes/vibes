@@ -185,8 +185,9 @@ get_frontmatter_value() {
     fi
 
     # Extract frontmatter block and find key
+    # Use || true to handle missing keys gracefully with pipefail enabled
     sed -n '1,/^---$/p' "$filepath" | tail -n +2 | head -n -1 | \
-        grep "^${key}:" | sed "s/^${key}: *//" | tr -d '"' | tr -d "'"
+        grep "^${key}:" | sed "s/^${key}: *//" | tr -d '"' | tr -d "'" || true
 }
 
 # Create or update frontmatter for a story
@@ -251,8 +252,8 @@ EOF
 
     # Append rest of file (skip old frontmatter if present)
     if has_frontmatter "$filepath"; then
-        # Skip frontmatter (everything between first --- and second ---)
-        sed '1,/^---$/d' "$filepath" | sed '1,/^---$/d'
+        # Skip frontmatter (everything from line 1 to the closing ---)
+        sed '1,/^---$/d' "$filepath"
     else
         cat "$filepath"
     fi
