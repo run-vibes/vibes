@@ -25,10 +25,10 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install npm dependencies
-        run: nix develop --command just npm-install
+        run: nix develop --command just web install
 
       - name: Build web-ui
-        run: nix develop --command just build-web
+        run: nix develop --command just web build
 
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
@@ -43,14 +43,14 @@ jobs:
             vendor/iggy -> target
 
       - name: Format check
-        run: nix develop --command just fmt-check
+        run: nix develop --command just quality fmt-check
 
       - name: Clippy
         # Build all targets so test binaries are ready for next step
-        run: nix develop --command cargo clippy --all-targets -- -D warnings
+        run: nix develop --command just quality clippy
 
       - name: Test
-        run: nix develop --command just test
+        run: nix develop --command just tests run
 
   e2e:
     runs-on: ubuntu-latest
@@ -71,10 +71,10 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install npm dependencies
-        run: nix develop --command just npm-install
+        run: nix develop --command just web install
 
       - name: Build web-ui
-        run: nix develop --command just build-web
+        run: nix develop --command just web build
 
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
@@ -92,10 +92,10 @@ jobs:
         run: nix develop --command cargo build
 
       - name: Install Playwright browsers
-        run: nix develop --command just e2e-setup
+        run: nix develop --command just web e2e-setup
 
       - name: Run E2E smoke tests
-        run: nix develop --command just test-e2e
+        run: nix develop --command just web e2e
         env:
           # Use mock PTY mode since Claude CLI isn't installed in CI
           VIBES_MOCK_PTY: "1"
