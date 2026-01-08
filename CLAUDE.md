@@ -52,6 +52,8 @@ The `iggy-server` binary is copied alongside vibes in `target/`.
 | `just test-integration` | Integration tests (requires Claude CLI) |
 | `just clippy` | Lint |
 | `just fmt` | Format code |
+| `just coverage` | Generate test coverage report (HTML) |
+| `just coverage-summary` | Print coverage summary to terminal |
 | `just pre-commit` | All checks before committing |
 | `just board` | Show available commands |
 | `just board generate` | Regenerate board README.md |

@@ -1,1 +1,1 @@
-../../stages/backlog/stories/chore-0013-add-test-coverage-metrics.md
+../../stages/done/stories/chore-0013-add-test-coverage-metrics.md
