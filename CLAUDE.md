@@ -53,10 +53,14 @@ The `iggy-server` binary is copied alongside vibes in `target/`.
 | `just clippy` | Lint |
 | `just fmt` | Format code |
 | `just pre-commit` | All checks before committing |
-| `just board` | Regenerate board README.md |
-| `just board new feat "desc"` | Create feature in backlog |
-| `just board start <item>` | Move item to in-progress |
-| `just board done <item>` | Move to done + update changelog |
+| `just board` | Show available commands |
+| `just board generate` | Regenerate board README.md |
+| `just board status` | Show board status |
+| `just board new story "title"` | Create new story |
+| `just board new epic "name"` | Create new epic |
+| `just board new milestone "name"` | Create new milestone |
+| `just board start <id>` | Move story to in-progress |
+| `just board done <id>` | Move story to done |
 
 ## Workflow
 
@@ -71,7 +75,7 @@ The `iggy-server` binary is copied alongside vibes in `target/`.
 
 ### New Features
 
-1. Check `docs/board/in-progress/` for current work
+1. Check `docs/board/stages/in-progress/stories/` for current work
 2. Use `superpowers:brainstorming` to explore options
 3. Write `design.md` then `implementation.md`
 4. Use `superpowers:executing-plans` with the plan
@@ -87,10 +91,10 @@ All designs go in `docs/board/` following CONVENTIONS.md:
 
 | Size | Structure |
 |------|-----------|
-| **Small feature** | Single file: `docs/board/backlog/feat-NNNN-name.md` (design embedded) |
-| **Large feature** | Milestone directory: `docs/board/backlog/milestone-NN-name/design.md` |
+| **Small feature** | Story file: `docs/board/stages/backlog/stories/<type>-NNNN-name.md` |
+| **Large feature** | Milestone directory: `docs/board/milestones/NN-name/design.md` |
 
-Use `just board new feat "name"` or `just board new milestone "name"` to create the correct structure.
+Use `just board new story "name"` or `just board new milestone "name"` to create the correct structure.
 
 ### Bug Fixes
 
@@ -108,8 +112,8 @@ See [docs/board/CONVENTIONS.md](docs/board/CONVENTIONS.md) for detailed planning
 1. Run `just pre-commit` — all checks pass
 
 2. Update the board:
-   - **Stories:** Set frontmatter `status: done`, check acceptance criteria, run `just board`
-   - **Standalone items:** Run `just board done <item>`
+   - Set frontmatter `status: done`, check acceptance criteria
+   - Run `just board done <story-id>` to move story and update changelog
 
 3. Commit, push, create PR
 

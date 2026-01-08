@@ -7,15 +7,17 @@ This document describes how to use the kanban planning board at `docs/board/`.
 ### The Board
 | Section | Description |
 |---------|-------------|
-| [Board Structure](#board-structure) | Directory layout and columns |
+| [Board Structure](#board-structure) | Directory layout and organization |
+| [Stages](#stages) | Story lifecycle: backlog, in-progress, done |
+| [Epics](#epics) | Grouping related stories |
+| [Milestones](#milestones) | Large deliverables with design docs |
 | [Commands](#commands) | `just board` command reference |
-| [Work Item Types](#work-item-types) | Milestones, stories, features, bugs, chores |
 
 ### Planning
 | Section | Description |
 |---------|-------------|
 | [When to Create a Plan](#when-to-create-a-plan) | Planning vs just doing |
-| [Plan Directory Structure](#plan-directory-structure) | File organization for milestones |
+| [Story Lifecycle](#story-lifecycle) | Moving stories through stages |
 | [Phase 1: Design Document](#phase-1-design-document) | Architecture and design decisions |
 | [Phase 2: Implementation Plan](#phase-2-implementation-plan) | Stories and task breakdown |
 
@@ -39,79 +41,165 @@ This document describes how to use the kanban planning board at `docs/board/`.
 
 ```
 docs/board/
-├── README.md          # Auto-generated board view
-├── CHANGELOG.md       # Updated when items complete
-├── CONVENTIONS.md     # This file
-├── backlog/           # Future work
-├── ready/             # Designed, ready to implement
-├── in-progress/       # Currently being worked on
-├── review/            # Awaiting review/merge
-└── done/              # Completed work
+├── README.md              # Auto-generated board view
+├── CHANGELOG.md           # Updated when items complete
+├── CONVENTIONS.md         # This file
+├── stages/                # Story files organized by status
+│   ├── backlog/stories/   # Future work
+│   ├── in-progress/stories/ # Currently being worked on
+│   └── done/stories/      # Completed work
+├── epics/                 # Story groupings (symlinks to stories)
+│   ├── core/              # Core functionality
+│   ├── web-ui/            # Web UI features
+│   └── ...
+├── milestones/            # Large deliverables (symlinks to epics)
+│   ├── 01-core-proxy/
+│   └── ...
+├── templates/             # Templates for new items
+│   ├── story.md
+│   ├── epic.md
+│   └── milestone.md
+├── backlog/               # Legacy: milestone directories (to be migrated)
+└── in-progress/           # Legacy: milestone directories (to be migrated)
 ```
+
+## Stages
+
+Stories live in `stages/<stage>/stories/` and move between stages as work progresses.
+
+| Stage | Path | Description |
+|-------|------|-------------|
+| **backlog** | `stages/backlog/stories/` | Future work, not yet started |
+| **in-progress** | `stages/in-progress/stories/` | Currently being worked on |
+| **done** | `stages/done/stories/` | Completed work |
+
+### Story File Format
+
+Stories use YAML frontmatter for metadata:
+
+```yaml
+---
+id: m26-feat-01-eventlog
+title: EventLog Assessment Storage
+type: feat
+status: in-progress
+priority: high
+epics: [core]
+depends: []
+estimate: 2h
+created: 2025-01-07
+updated: 2025-01-07
+---
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `id` | Yes | Unique identifier (prefix with milestone: `m26-feat-01`) |
+| `title` | Yes | Human-readable title |
+| `type` | Yes | `feat`, `bug`, `chore`, `refactor` |
+| `status` | Yes | `backlog`, `in-progress`, `done` |
+| `priority` | No | `low`, `medium`, `high`, `critical` |
+| `epics` | No | List of epic IDs this story belongs to |
+| `depends` | No | List of story IDs that must complete first |
+| `estimate` | No | Time estimate (e.g., `2h`, `1d`) |
+| `created` | Yes | Creation date |
+| `updated` | Yes | Last update date |
+
+### Story Naming
+
+Stories use prefixes to indicate type, with optional milestone prefix:
+
+| Pattern | Example | Use Case |
+|---------|---------|----------|
+| `m<NN>-feat-<NN>-<name>.md` | `m26-feat-01-eventlog.md` | Milestone story |
+| `feat-<NNNN>-<name>.md` | `feat-0003-navigation.md` | Standalone feature |
+| `bug-<NNNN>-<name>.md` | `bug-0001-cwd-propagation.md` | Standalone bug fix |
+| `chore-<NNNN>-<name>.md` | `chore-0001-cleanup.md` | Standalone maintenance |
+
+## Epics
+
+Epics group related stories across milestones. Each epic is a directory in `epics/` containing:
+
+- `README.md` with epic metadata
+- Symlinks to stories (pointing to `../../stages/<stage>/stories/<story>.md`)
+
+```
+epics/
+├── core/
+│   ├── README.md
+│   ├── m26-feat-01-eventlog.md -> ../../stages/in-progress/stories/m26-feat-01-eventlog.md
+│   └── m26-feat-02-processor.md -> ../../stages/in-progress/stories/m26-feat-02-processor.md
+└── web-ui/
+    ├── README.md
+    └── feat-0003-navigation.md -> ../../stages/done/stories/feat-0003-navigation.md
+```
+
+### Epic README Format
+
+```yaml
+---
+id: core
+title: Core Functionality
+status: active
+description: Core vibes functionality and infrastructure
+---
+```
+
+### Key Properties
+
+- A story can belong to **multiple epics** (via symlinks from each epic)
+- Symlinks automatically stay valid when stories move between stages (relative paths)
+- Epics provide a cross-cutting view of work by theme
+
+## Milestones
+
+Milestones are large deliverables that span multiple work sessions. They live in `milestones/` and contain:
+
+- `README.md` with milestone metadata
+- `design.md` for architecture decisions
+- `implementation.md` for story index (optional)
+- Symlinks to related epics
+
+```
+milestones/
+└── 26-assessment-framework/
+    ├── README.md
+    ├── design.md
+    ├── implementation.md
+    └── core -> ../../epics/core
+```
+
+### Milestone README Format
+
+```yaml
+---
+id: 26
+title: Assessment Framework
+status: in-progress
+epics: [core]
+---
+```
+
+### Milestone-Epic Relationship
+
+- Milestones link to epics (not directly to stories)
+- This creates a hierarchy: Milestone -> Epic -> Stories
+- An epic can be linked to multiple milestones
 
 ## Commands
 
 | Command | Action |
 |---------|--------|
-| `just board` | Regenerate README.md |
-| `just board new feat "desc"` | Create feature in backlog |
-| `just board new milestone "name"` | Create milestone in backlog |
-| `just board start <item>` | Move to in-progress |
-| `just board review <item>` | Move to review |
-| `just board done <item>` | Move to done + changelog |
-| `just board status` | Show counts per column |
-
-## Work Item Types
-
-The board supports four item types, organized hierarchically:
-
-### Milestones
-
-Large deliverables that span multiple work sessions. Milestones contain a design doc, an implementation plan that indexes the stories, and one or more **stories** that break the work into mergeable chunks.
-
-```
-docs/board/in-progress/milestone-26-assessment-framework/
-├── design.md              # Architecture and decisions
-├── implementation.md      # Story index with links and sequence
-└── stories/               # Child work items (1 or more)
-    ├── feat-01-eventlog.md
-    ├── feat-02-assessment.md
-    └── chore-03-cleanup.md
-```
-
-**Numbering:** Milestones use sequential numbers (01, 02, 03...) that indicate priority order. Numbers flow from done → in-progress → backlog. Periodically reconcile numbers when milestones complete or priorities change.
-
-**Create with:** `just board new milestone "Assessment Framework"`
-
-### Stories
-
-Focused work items that live within a milestone. Stories break large milestones into reviewable chunks—each story can be implemented and merged independently.
-
-**Naming:** Stories use the same prefixes as standalone items (`feat-`, `bug-`, `chore-`) with a sequence number:
-
-```
-stories/
-├── feat-01-core-types.md      # New functionality
-├── feat-02-api-endpoints.md   # More new functionality
-├── bug-03-edge-case.md        # Fix discovered during implementation
-└── chore-04-docs.md           # Documentation, cleanup
-```
-
-See [Phase 2: Implementation Plan](#phase-2-implementation-plan) for the full story template.
-
-### Features, Bugs, and Chores
-
-Standalone items that don't warrant a full milestone structure.
-
-| Type | Prefix | Use Case |
-|------|--------|----------|
-| `feat` | `feat-NNNN-` | New functionality, enhancements |
-| `bug` | `bug-NNNN-` | Defects, unexpected behavior |
-| `chore` | `chore-NNNN-` | Maintenance, refactoring, tooling |
-
-**Create with:** `just board new feat "Add session export"`, `just board new bug "Fix auth timeout"`
-
-These are single markdown files (not directories) unless they grow complex enough to warrant design docs.
+| `just board` | Show available commands |
+| `just board generate` | Regenerate README.md |
+| `just board status` | Show counts per stage |
+| `just board new story "title"` | Create story in backlog |
+| `just board new epic "name"` | Create new epic |
+| `just board new milestone "name"` | Create new milestone |
+| `just board start <id>` | Move story to in-progress |
+| `just board done <id>` | Move story to done + changelog |
+| `just board link <story> <epic>` | Link story to epic |
+| `just board link-epic <epic> <milestone>` | Link epic to milestone |
 
 ---
 
@@ -135,33 +223,39 @@ Skip planning for:
 - Single-file changes
 - Test additions for existing code
 
-## Plan Directory Structure
+## Story Lifecycle
 
-Plans live in `docs/board/<column>/` within milestone directories.
+### 1. Create Story
 
-```
-docs/board/
-├── backlog/
-│   └── milestone-27-learning-extraction/
-│       └── design.md                    # Design only until ready
-├── in-progress/
-│   └── milestone-26-assessment-framework/
-│       ├── design.md                    # Architecture decisions
-│       ├── implementation.md            # Story index
-│       └── stories/
-│           ├── feat-01-eventlog.md
-│           └── feat-02-assessment.md
-└── done/
-    └── milestone-25-assessment-types/
-        ├── design.md
-        └── implementation.md
+```bash
+just board new story "Add session export"
 ```
 
-**Naming:**
-- Prefix with zero-padded number (01, 02, 03... up to 99)
-- Use kebab-case for the name
-- Keep names short but descriptive
-- Numbers should be sequential across all columns
+This creates a story in `stages/backlog/stories/` using the template.
+
+### 2. Link to Epic (Optional)
+
+```bash
+just board link feat-0004-session-export core
+```
+
+This creates a symlink in `epics/core/` pointing to the story.
+
+### 3. Start Work
+
+```bash
+just board start feat-0004-session-export
+```
+
+This moves the story file from `stages/backlog/stories/` to `stages/in-progress/stories/`. Symlinks in epics automatically point to the new location (relative paths).
+
+### 4. Complete Work
+
+```bash
+just board done feat-0004-session-export
+```
+
+This moves the story to `stages/done/stories/` and updates the changelog.
 
 ## Phase 1: Design Document
 
@@ -256,9 +350,9 @@ new-crate = "1.0"            # Purpose
 
 ### Key Elements
 
-1. **Decisions Table** — Quick reference for all major choices
-2. **Rationale** — Explain *why* not just *what*
-3. **Trade-offs** — Document what was considered and rejected
+1. **Decisions Table** - Quick reference for all major choices
+2. **Rationale** - Explain *why* not just *what*
+3. **Trade-offs** - Document what was considered and rejected
 
 ### Example: Decision Documentation
 
@@ -277,23 +371,11 @@ new-crate = "1.0"            # Purpose
 
 ## Phase 2: Implementation Plan
 
-After design approval, create an `implementation.md` that breaks the milestone into **stories**—focused deliverables that can be implemented and merged independently.
+After design approval, create an `implementation.md` that breaks the milestone into **stories** - focused deliverables that can be implemented and merged independently.
 
 ### Source of Truth
 
-**Story frontmatter is the single source of truth for status.** The `implementation.md` is a navigation index only—it links to stories but does not track their status. Run `just board` to see current status in the README.
-
-### Milestone Structure
-
-```
-docs/board/<column>/milestone-NN-name/
-├── design.md              # Architecture decisions (from Phase 1)
-├── implementation.md      # Story index with sequence and links
-└── stories/
-    ├── feat-01-types.md       # Core type definitions
-    ├── feat-02-storage.md     # Persistence layer
-    └── feat-03-api.md         # HTTP endpoints
-```
+**Story frontmatter is the single source of truth for status.** The `implementation.md` is a navigation index only - it links to stories but does not track their status. Run `just board status` to see current status.
 
 ### Implementation Plan Template
 
@@ -314,11 +396,11 @@ The `implementation.md` serves as the entry point and index for the milestone's 
 
 | # | Story | Description |
 |---|-------|-------------|
-| 1 | [feat-01-types](stories/feat-01-types.md) | Core type definitions |
-| 2 | [feat-02-storage](stories/feat-02-storage.md) | Persistence layer |
-| 3 | [feat-03-api](stories/feat-03-api.md) | HTTP endpoints |
+| 1 | [m26-feat-01-types](../../stages/backlog/stories/m26-feat-01-types.md) | Core type definitions |
+| 2 | [m26-feat-02-storage](../../stages/backlog/stories/m26-feat-02-storage.md) | Persistence layer |
+| 3 | [m26-feat-03-api](../../stages/backlog/stories/m26-feat-03-api.md) | HTTP endpoints |
 
-> **Status:** Check story frontmatter or run `just board` for current status.
+> **Status:** Check story frontmatter or run `just board status` for current status.
 
 ## Dependencies
 
@@ -336,15 +418,23 @@ The `implementation.md` serves as the entry point and index for the milestone's 
 
 ```markdown
 ---
+id: m26-feat-01-types
+title: Core Type Definitions
+type: feat
+status: backlog
+priority: high
+epics: [core]
+depends: []
+estimate: 2h
 created: 2024-01-15
-status: pending  # pending | in-progress | done
+updated: 2024-01-15
 ---
 
-# [Type]: [Focused Deliverable]
+# Core Type Definitions
 
 > **For Claude:** Use superpowers:executing-plans to implement this story.
 
-## Goal
+## Summary
 
 [One sentence: what this story delivers]
 
@@ -383,7 +473,7 @@ Each task ends with a commit:
 > **IMPORTANT:** After all acceptance criteria are met:
 
 1. Update this file's frontmatter: `status: done`
-2. Regenerate board: `just board`
+2. Move story: `just board done <story-id>`
 3. Commit, push, and create PR
 ```
 
@@ -458,11 +548,11 @@ After implementing all tasks:
 
 1. **Verify:** Run `just pre-commit` (fmt + clippy + test)
 2. **Update story:** Set frontmatter `status: done`
-3. **Update board:** Run `just board` to regenerate README.md
+3. **Move story:** Run `just board done <story-id>`
 4. **Commit:** Include story status change in commit
 5. **Push and PR:** Create PR with conventional commit title
 
-> **Claude must always update the story status and regenerate the board before creating a PR.**
+> **Claude must always update the story status and move the story before creating a PR.**
 
 ---
 
@@ -487,20 +577,20 @@ When adding new functionality that could be a separate feature, **always evaluat
 
 The `vibes-plugin-api` (v2) supports:
 
-- **Session lifecycle hooks** — `on_session_created`, `on_turn_complete`, `on_hook`, etc.
-- **CLI command registration** — `ctx.register_command(CommandSpec { ... })` → `vibes <plugin> <command>`
-- **HTTP route registration** — `ctx.register_route(RouteSpec { ... })` → `/api/plugins/<plugin>/...`
-- **Configuration** — Persistent key-value store with TOML serialization
-- **Logging** — Plugin-prefixed logging via tracing
+- **Session lifecycle hooks** - `on_session_created`, `on_turn_complete`, `on_hook`, etc.
+- **CLI command registration** - `ctx.register_command(CommandSpec { ... })` -> `vibes <plugin> <command>`
+- **HTTP route registration** - `ctx.register_route(RouteSpec { ... })` -> `/api/plugins/<plugin>/...`
+- **Configuration** - Persistent key-value store with TOML serialization
+- **Logging** - Plugin-prefixed logging via tracing
 
 ### Example: groove
 
 The **groove** continual learning plugin demonstrates proper plugin architecture:
 
-- **CLI commands** registered via `register_command()` → `vibes groove init`, `vibes groove status`
-- **HTTP routes** registered via `register_route()` → `/api/plugins/groove/...`
-- **Event hooks** — `on_hook()` captures Claude Code events for learning extraction
-- **Configuration** — Stores scope and injection preferences
+- **CLI commands** registered via `register_command()` -> `vibes groove init`, `vibes groove status`
+- **HTTP routes** registered via `register_route()` -> `/api/plugins/groove/...`
+- **Event hooks** - `on_hook()` captures Claude Code events for learning extraction
+- **Configuration** - Stores scope and injection preferences
 
 ## Best Practices
 
