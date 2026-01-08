@@ -2,7 +2,7 @@
 id: REFACTOR0008
 title: Consolidate assessment types module
 type: refactor
-status: backlog
+status: done
 priority: low
 epics: [plugin-system]
 depends: []
@@ -31,10 +31,10 @@ Consider consolidating or clearly separating concerns.
 
 ## Acceptance Criteria
 
-- [ ] Clear separation: internal types vs API types
-- [ ] Single source of truth for each type
-- [ ] Documentation on type organization
-- [ ] No breaking API changes (preserve external interface)
+- [x] Clear separation: internal types vs API types
+- [x] Single source of truth for each type
+- [x] Documentation on type organization
+- [x] No breaking API changes (preserve external interface)
 
 ## Implementation Notes
 
