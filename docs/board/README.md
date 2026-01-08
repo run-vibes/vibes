@@ -1,5 +1,6 @@
-Generated README.md
-Auto-generated from directory structure. Run `just board generate` to update.
+# Planning Board
+
+> Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
@@ -9,9 +10,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 
 ## Backlog
 
-| Story | Type | Priority | Epics |
-|-------|------|----------|-------|
-| [chore-0011-align-groove-pages-layout-with-firehose](stages/backlog/stories/chore-0011-align-groove-pages-layout-with-firehose.md) | chore | medium | web-ui |
+*Backlog empty*
 
 ## Epics
 
@@ -53,19 +52,19 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [23-plugin-api-extension](milestones/23-plugin-api-extension/) | done | plugin-system |
 | [24-capture-inject](milestones/24-capture-inject/) | done | core |
 | [25-assessment-types](milestones/25-assessment-types/) | done | core,cli,plugin-system |
-| [26-assessment-framework](milestones/26-assessment-framework/) | in-progress | core,cli,plugin-system |
-| [27-learning-extraction](milestones/27-learning-extraction/) | planned | plugin-system |
-| [28-attribution-engine](milestones/28-attribution-engine/) | planned | plugin-system |
-| [29-adaptive-strategies](milestones/29-adaptive-strategies/) | planned | plugin-system |
-| [30-groove-dashboard](milestones/30-groove-dashboard/) | planned | plugin-system |
-| [31-open-world-adaptation](milestones/31-open-world-adaptation/) | planned | plugin-system |
-| [32-setup-wizards](milestones/32-setup-wizards/) | planned | cli |
-| [33-default-plugins](milestones/33-default-plugins/) | planned | plugin-system |
-| [34-cli-enhancements](milestones/34-cli-enhancements/) | planned | cli |
-| [35-ios-app](milestones/35-ios-app/) | planned | mobile |
-| [36-firehose-infinite-scroll](milestones/36-firehose-infinite-scroll/) | done | web-ui |
-| [37-crt-design-system](milestones/37-crt-design-system/) | done | web-ui |
-| [38-board-restructure](milestones/38-board-restructure/) | done | core |
+| [26-firehose-infinite-scroll](milestones/26-firehose-infinite-scroll/) | done | web-ui |
+| [27-crt-design-system](milestones/27-crt-design-system/) | done | web-ui |
+| [28-board-restructure](milestones/28-board-restructure/) | done | core |
+| [29-assessment-framework](milestones/29-assessment-framework/) | in-progress | core,cli,plugin-system |
+| [30-learning-extraction](milestones/30-learning-extraction/) | planned | plugin-system |
+| [31-attribution-engine](milestones/31-attribution-engine/) | planned | plugin-system |
+| [32-adaptive-strategies](milestones/32-adaptive-strategies/) | planned | plugin-system |
+| [33-groove-dashboard](milestones/33-groove-dashboard/) | planned | plugin-system |
+| [34-open-world-adaptation](milestones/34-open-world-adaptation/) | planned | plugin-system |
+| [35-setup-wizards](milestones/35-setup-wizards/) | planned | cli |
+| [36-default-plugins](milestones/36-default-plugins/) | planned | plugin-system |
+| [37-cli-enhancements](milestones/37-cli-enhancements/) | planned | cli |
+| [38-ios-app](milestones/38-ios-app/) | planned | mobile |
 
 ## Done
 
@@ -78,6 +77,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 - [chore-0002-firehose-filter-cleanup](stages/done/stories/chore-0002-firehose-filter-cleanup.md)
 - [chore-0003-assessment-tier-buttons](stages/done/stories/chore-0003-assessment-tier-buttons.md)
 - [chore-0010-align-sessions-page-layout-with-firehose](stages/done/stories/chore-0010-align-sessions-page-layout-with-firehose.md)
+- [chore-0011-align-groove-pages-layout-with-firehose](stages/done/stories/chore-0011-align-groove-pages-layout-with-firehose.md)
 - [feat-0003-web-ui-navigation-hierarchy](stages/done/stories/feat-0003-web-ui-navigation-hierarchy.md)
 - [feat-0004-subnav](stages/done/stories/feat-0004-subnav.md)
 - [feat-0005-session-terminal-outline](stages/done/stories/feat-0005-session-terminal-outline.md)
