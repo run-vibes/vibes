@@ -244,6 +244,73 @@ pub struct SessionHistoryItem {
 }
 
 // ============================================================================
+// Server URL Configuration (for CLI → Server HTTP)
+// ============================================================================
+
+/// Default vibes server port (matches vibes-cli DEFAULT_PORT)
+pub const DEFAULT_SERVER_PORT: u16 = 7432;
+
+/// Default vibes server host
+pub const DEFAULT_SERVER_HOST: &str = "127.0.0.1";
+
+/// API endpoint path for assessment status
+pub const API_ASSESS_STATUS_PATH: &str = "/api/groove/assess/status";
+
+/// API endpoint path for assessment history
+pub const API_ASSESS_HISTORY_PATH: &str = "/api/groove/assess/history";
+
+/// Server configuration for CLI HTTP calls
+#[derive(Debug, Clone)]
+pub struct ServerUrlConfig {
+    pub host: String,
+    pub port: u16,
+}
+
+impl Default for ServerUrlConfig {
+    fn default() -> Self {
+        Self {
+            host: DEFAULT_SERVER_HOST.to_string(),
+            port: DEFAULT_SERVER_PORT,
+        }
+    }
+}
+
+impl ServerUrlConfig {
+    /// Build base URL from config
+    pub fn base_url(&self) -> String {
+        format!("http://{}:{}", self.host, self.port)
+    }
+
+    /// Build full URL for assessment status endpoint
+    pub fn status_url(&self) -> String {
+        format!("{}{}", self.base_url(), API_ASSESS_STATUS_PATH)
+    }
+
+    /// Build full URL for assessment history endpoint
+    pub fn history_url(&self, session_id: Option<&str>) -> String {
+        let base = format!("{}{}", self.base_url(), API_ASSESS_HISTORY_PATH);
+        match session_id {
+            Some(id) => format!("{}?session={}", base, id),
+            None => base,
+        }
+    }
+
+    /// Parse from --url flag value (e.g., "http://localhost:8080")
+    pub fn from_url(url_str: &str) -> Result<Self, String> {
+        // Strip trailing slash
+        let url_str = url_str.trim_end_matches('/');
+
+        // Parse URL
+        let url = url::Url::parse(url_str).map_err(|e| format!("Invalid URL: {}", e))?;
+
+        let host = url.host_str().ok_or("URL must have a host")?.to_string();
+        let port = url.port().unwrap_or(DEFAULT_SERVER_PORT);
+
+        Ok(Self { host, port })
+    }
+}
+
+// ============================================================================
 // Assessment Consumer
 // ============================================================================
 //
@@ -289,10 +356,8 @@ impl Plugin for GroovePlugin {
     fn on_load(&mut self, ctx: &mut PluginContext) -> Result<(), PluginError> {
         ctx.log_info("Loading groove plugin");
 
-        // Initialize the synchronous assessment processor
-        let config = AssessmentConfig::default();
-        self.processor = Some(SyncAssessmentProcessor::new(config));
-        ctx.log_info("Initialized assessment processor for event callbacks");
+        // NOTE: Don't initialize processor here - it's created lazily in on_event()
+        // This ensures CLI mode (no events) queries the server instead of empty local state
 
         // Register CLI commands
         self.register_commands(ctx)?;
@@ -372,11 +437,17 @@ impl Plugin for GroovePlugin {
         event: RawEvent,
         _ctx: &mut PluginContext,
     ) -> Vec<PluginAssessmentResult> {
-        // Delegate to the synchronous processor if initialized
-        match &self.processor {
-            Some(processor) => processor.process(&event),
-            None => vec![],
+        // Lazily initialize the processor on first event (server mode only)
+        if self.processor.is_none() {
+            let config = AssessmentConfig::default();
+            self.processor = Some(SyncAssessmentProcessor::new(config));
         }
+
+        // Delegate to the processor
+        self.processor
+            .as_ref()
+            .map(|p| p.process(&event))
+            .unwrap_or_default()
     }
 
     fn query_assessment_results(
@@ -407,7 +478,7 @@ impl Plugin for GroovePlugin {
             ["policy", "path"] => self.cmd_policy_path(),
             ["quarantine", "list"] => self.cmd_quarantine_list(),
             ["quarantine", "stats"] => self.cmd_quarantine_stats(),
-            ["assess", "status"] => self.cmd_assess_status(),
+            ["assess", "status"] => self.cmd_assess_status(args),
             ["assess", "history"] => self.cmd_assess_history(args),
             _ => Err(PluginError::UnknownCommand(path.join(" "))),
         }
@@ -583,31 +654,123 @@ impl GroovePlugin {
 
     // ─── Server Client (CLI → Server HTTP) ────────────────────────────
 
-    /// Default vibes server port
-    const DEFAULT_SERVER_PORT: u16 = 7743;
+    /// Find .vibes/config.toml by searching up from current directory
+    pub fn find_config_file() -> Option<std::path::PathBuf> {
+        let mut dir = std::env::current_dir().ok()?;
+        loop {
+            let config_path = dir.join(".vibes/config.toml");
+            if config_path.exists() {
+                return Some(config_path);
+            }
+            if !dir.pop() {
+                return None;
+            }
+        }
+    }
 
-    /// Build the base URL for the vibes server
+    /// Load server URL config from .vibes/config.toml (searching up directories)
+    pub fn load_server_config() -> ServerUrlConfig {
+        if let Some(config_path) = Self::find_config_file()
+            && let Ok(contents) = std::fs::read_to_string(&config_path)
+        {
+            // Parse just the server section
+            #[derive(serde::Deserialize)]
+            struct ConfigFile {
+                #[serde(default)]
+                server: ServerSection,
+            }
+            #[derive(serde::Deserialize, Default)]
+            struct ServerSection {
+                host: Option<String>,
+                port: Option<u16>,
+            }
+
+            if let Ok(config) = toml::from_str::<ConfigFile>(&contents) {
+                return ServerUrlConfig {
+                    host: config
+                        .server
+                        .host
+                        .unwrap_or_else(|| DEFAULT_SERVER_HOST.to_string()),
+                    port: config.server.port.unwrap_or(DEFAULT_SERVER_PORT),
+                };
+            }
+        }
+        ServerUrlConfig::default()
+    }
+
+    /// Parse --url flag from command args, returning (url_config, remaining_args)
+    pub fn parse_url_flag(args: &[String]) -> (Option<ServerUrlConfig>, Vec<String>) {
+        let mut url_config = None;
+        let mut remaining = Vec::new();
+        let mut skip_next = false;
+
+        for (i, arg) in args.iter().enumerate() {
+            if skip_next {
+                skip_next = false;
+                continue;
+            }
+
+            if arg == "--url"
+                && let Some(url) = args.get(i + 1)
+                && let Ok(config) = ServerUrlConfig::from_url(url)
+            {
+                url_config = Some(config);
+                skip_next = true;
+                continue;
+            } else if arg.starts_with("--url=")
+                && let Some(url) = arg.strip_prefix("--url=")
+                && let Ok(config) = ServerUrlConfig::from_url(url)
+            {
+                url_config = Some(config);
+                continue;
+            }
+
+            remaining.push(arg.clone());
+        }
+
+        (url_config, remaining)
+    }
+
+    /// Check if args contain --help or -h
+    pub fn wants_help(args: &[String]) -> bool {
+        args.iter().any(|a| a == "--help" || a == "-h")
+    }
+
+    /// Build the base URL for the vibes server (legacy, for tests)
     pub fn server_base_url(port: Option<u16>) -> String {
-        let port = port.unwrap_or(Self::DEFAULT_SERVER_PORT);
-        format!("http://127.0.0.1:{}", port)
+        let port = port.unwrap_or(DEFAULT_SERVER_PORT);
+        format!("http://{}:{}", DEFAULT_SERVER_HOST, port)
     }
 
     /// Fetch assessment status from the running vibes server
     pub async fn fetch_status_from_server(
         port: Option<u16>,
     ) -> Result<AssessmentStatusResponse, String> {
-        let url = format!("{}/assess/status", Self::server_base_url(port));
+        let config = port.map_or_else(Self::load_server_config, |p| ServerUrlConfig {
+            host: DEFAULT_SERVER_HOST.to_string(),
+            port: p,
+        });
+        Self::fetch_status_with_config(&config).await
+    }
+
+    /// Fetch assessment status using explicit config
+    pub async fn fetch_status_with_config(
+        config: &ServerUrlConfig,
+    ) -> Result<AssessmentStatusResponse, String> {
+        let url = config.status_url();
 
         let client = reqwest::Client::builder()
             .timeout(std::time::Duration::from_secs(5))
             .build()
             .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
 
-        let response = client
-            .get(&url)
-            .send()
-            .await
-            .map_err(|e| format!("Failed to connect to server: {}", e))?;
+        let response = client.get(&url).send().await.map_err(|e| {
+            format!(
+                "Failed to connect to server at {}: {}",
+                config.base_url(),
+                e
+            )
+        })?;
 
         if !response.status().is_success() {
             return Err(format!("Server returned error: {}", response.status()));
@@ -624,22 +787,32 @@ impl GroovePlugin {
         session_id: Option<&str>,
         port: Option<u16>,
     ) -> Result<AssessmentHistoryResponse, String> {
-        let mut url = format!("{}/assess/history", Self::server_base_url(port));
+        let config = port.map_or_else(Self::load_server_config, |p| ServerUrlConfig {
+            host: DEFAULT_SERVER_HOST.to_string(),
+            port: p,
+        });
+        Self::fetch_history_with_config(session_id, &config).await
+    }
 
-        if let Some(session) = session_id {
-            url = format!("{}?session={}", url, session);
-        }
+    /// Fetch assessment history using explicit config
+    pub async fn fetch_history_with_config(
+        session_id: Option<&str>,
+        config: &ServerUrlConfig,
+    ) -> Result<AssessmentHistoryResponse, String> {
+        let url = config.history_url(session_id);
 
         let client = reqwest::Client::builder()
             .timeout(std::time::Duration::from_secs(5))
             .build()
             .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
 
-        let response = client
-            .get(&url)
-            .send()
-            .await
-            .map_err(|e| format!("Failed to connect to server: {}", e))?;
+        let response = client.get(&url).send().await.map_err(|e| {
+            format!(
+                "Failed to connect to server at {}: {}",
+                config.base_url(),
+                e
+            )
+        })?;
 
         if !response.status().is_success() {
             return Err(format!("Server returned error: {}", response.status()));
@@ -651,27 +824,23 @@ impl GroovePlugin {
             .map_err(|e| format!("Failed to parse response: {}", e))
     }
 
-    /// Blocking version of fetch_status_from_server for CLI use
-    fn fetch_status_from_server_blocking(
-        port: Option<u16>,
-    ) -> Result<AssessmentStatusResponse, String> {
-        // Create a new runtime for blocking calls from CLI
+    /// Blocking version of fetch_status using config
+    fn fetch_status_blocking(config: &ServerUrlConfig) -> Result<AssessmentStatusResponse, String> {
         let rt = tokio::runtime::Runtime::new()
             .map_err(|e| format!("Failed to create runtime: {}", e))?;
-
-        rt.block_on(Self::fetch_status_from_server(port))
+        let config = config.clone();
+        rt.block_on(Self::fetch_status_with_config(&config))
     }
 
-    /// Blocking version of fetch_history_from_server for CLI use
-    fn fetch_history_from_server_blocking(
+    /// Blocking version of fetch_history using config
+    fn fetch_history_blocking(
         session_id: Option<&str>,
-        port: Option<u16>,
+        config: &ServerUrlConfig,
     ) -> Result<AssessmentHistoryResponse, String> {
-        // Create a new runtime for blocking calls from CLI
         let rt = tokio::runtime::Runtime::new()
             .map_err(|e| format!("Failed to create runtime: {}", e))?;
-
-        rt.block_on(Self::fetch_history_from_server(session_id, port))
+        let config = config.clone();
+        rt.block_on(Self::fetch_history_with_config(session_id, &config))
     }
 
     // ─── Command Handlers ─────────────────────────────────────────────
@@ -1006,7 +1175,26 @@ impl GroovePlugin {
         Ok(CommandOutput::Text(output))
     }
 
-    fn cmd_assess_status(&self) -> Result<CommandOutput, PluginError> {
+    fn cmd_assess_status(
+        &self,
+        args: &vibes_plugin_api::CommandArgs,
+    ) -> Result<CommandOutput, PluginError> {
+        // Handle --help
+        if Self::wants_help(&args.args) {
+            return Ok(CommandOutput::Text(
+                "Usage: vibes groove assess status [OPTIONS]\n\n\
+                 Show assessment system status including circuit breaker state,\n\
+                 sampling configuration, and recent activity.\n\n\
+                 Options:\n\
+                   --url <URL>  Server URL (default: from .vibes/config.toml or http://127.0.0.1:7432)\n\
+                   --help, -h   Show this help message\n"
+                    .to_string(),
+            ));
+        }
+
+        // Parse --url flag
+        let (url_config, _remaining) = Self::parse_url_flag(&args.args);
+
         let mut output = String::new();
         output.push_str("Assessment System Status\n");
         output.push_str(&format!("{}\n\n", "=".repeat(40)));
@@ -1051,7 +1239,10 @@ impl GroovePlugin {
             output.push_str(&format!("  Events stored:   {}\n\n", event_count));
         } else {
             // No processor (CLI mode) - try to fetch from running server
-            match Self::fetch_status_from_server_blocking(None) {
+            let config = url_config.unwrap_or_else(Self::load_server_config);
+            output.push_str(&format!("(Querying server at {})\n\n", config.base_url()));
+
+            match Self::fetch_status_blocking(&config) {
                 Ok(status) => {
                     // Circuit breaker status
                     output.push_str("Circuit Breaker:\n");
@@ -1092,8 +1283,9 @@ impl GroovePlugin {
                         status.activity.events_stored
                     ));
                 }
-                Err(_) => {
+                Err(e) => {
                     // Server not running or not responding
+                    output.push_str(&format!("Error: {}\n\n", e));
                     output.push_str("Circuit Breaker:\n");
                     output.push_str("  Status: Not initialized\n\n");
                     output.push_str("Sampling Strategy:\n");
@@ -1115,7 +1307,26 @@ impl GroovePlugin {
         &self,
         args: &vibes_plugin_api::CommandArgs,
     ) -> Result<CommandOutput, PluginError> {
-        let session_id = args.args.first().map(|s| s.as_str());
+        // Handle --help
+        if Self::wants_help(&args.args) {
+            return Ok(CommandOutput::Text(
+                "Usage: vibes groove assess history [OPTIONS] [SESSION_ID]\n\n\
+                 Show assessment history. Without SESSION_ID, lists all sessions.\n\
+                 With SESSION_ID, shows events for that specific session.\n\n\
+                 Arguments:\n\
+                   [SESSION_ID]  Session ID to show details for (optional)\n\n\
+                 Options:\n\
+                   --url <URL>  Server URL (default: from .vibes/config.toml or http://127.0.0.1:7432)\n\
+                   --help, -h   Show this help message\n"
+                    .to_string(),
+            ));
+        }
+
+        // Parse --url flag
+        let (url_config, remaining) = Self::parse_url_flag(&args.args);
+
+        // Session ID is the first non-flag argument
+        let session_id = remaining.first().map(|s| s.as_str());
 
         let mut output = String::new();
         output.push_str("Assessment History\n");
@@ -1172,7 +1383,10 @@ impl GroovePlugin {
             }
         } else {
             // No processor (CLI mode) - try to fetch from running server
-            match Self::fetch_history_from_server_blocking(session_id, None) {
+            let config = url_config.unwrap_or_else(Self::load_server_config);
+            output.push_str(&format!("(Querying server at {})\n\n", config.base_url()));
+
+            match Self::fetch_history_blocking(session_id, &config) {
                 Ok(history) => {
                     if history.sessions.is_empty() {
                         output.push_str("Recent Sessions:\n");
@@ -1198,8 +1412,9 @@ impl GroovePlugin {
                         "\nTip: Run 'vibes groove assess history <session_id>' for details.\n",
                     );
                 }
-                Err(_) => {
+                Err(e) => {
                     // Server not running or not responding
+                    output.push_str(&format!("Error: {}\n\n", e));
                     output.push_str("Assessment processor not initialized.\n");
                     output.push_str("Start server with 'vibes serve' first.\n");
                 }
@@ -1848,7 +2063,8 @@ mod tests {
     #[test]
     fn test_cli_assess_status() {
         let plugin = GroovePlugin::default();
-        let result = plugin.cmd_assess_status().unwrap();
+        let args = vibes_plugin_api::CommandArgs::default();
+        let result = plugin.cmd_assess_status(&args).unwrap();
 
         match result {
             CommandOutput::Text(text) => {
@@ -2018,7 +2234,8 @@ mod tests {
         }
 
         // Now check assess status shows actual count (not hardcoded "0")
-        let result = plugin.cmd_assess_status().unwrap();
+        let args = vibes_plugin_api::CommandArgs::default();
+        let result = plugin.cmd_assess_status(&args).unwrap();
         match result {
             CommandOutput::Text(text) => {
                 // Should contain at least "5" somewhere indicating event count
@@ -2045,7 +2262,8 @@ mod tests {
         plugin.on_event(make_raw_event("session-a", "Hello"), &mut ctx);
         plugin.on_event(make_raw_event("session-b", "World"), &mut ctx);
 
-        let result = plugin.cmd_assess_status().unwrap();
+        let args = vibes_plugin_api::CommandArgs::default();
+        let result = plugin.cmd_assess_status(&args).unwrap();
         match result {
             CommandOutput::Text(text) => {
                 // Should show actual session count (not hardcoded "0")
@@ -2201,7 +2419,7 @@ mod tests {
     #[test]
     fn test_server_base_url_uses_default_port() {
         let url = GroovePlugin::server_base_url(None);
-        assert_eq!(url, "http://127.0.0.1:7743");
+        assert_eq!(url, "http://127.0.0.1:7432");
     }
 
     #[test]
@@ -2228,8 +2446,9 @@ mod tests {
     fn test_cmd_assess_status_cli_mode_shows_server_hint() {
         // Plugin without processor (CLI mode)
         let plugin = GroovePlugin::default();
+        let args = vibes_plugin_api::CommandArgs::default();
 
-        let result = plugin.cmd_assess_status().unwrap();
+        let result = plugin.cmd_assess_status(&args).unwrap();
         match result {
             CommandOutput::Text(text) => {
                 // In CLI mode without processor, should indicate server is needed
@@ -2261,6 +2480,333 @@ mod tests {
                         || text.contains("vibes serve")
                         || text.contains("vibes claude"),
                     "CLI mode should hint about server. Output:\n{}",
+                    text
+                );
+            }
+            _ => panic!("Expected Text output"),
+        }
+    }
+
+    // ─── ServerUrlConfig Tests ──────────────────────────────────────────────
+
+    #[test]
+    fn test_server_url_config_default() {
+        let config = ServerUrlConfig::default();
+        assert_eq!(config.host, "127.0.0.1");
+        assert_eq!(config.port, 7432);
+        assert_eq!(config.base_url(), "http://127.0.0.1:7432");
+    }
+
+    #[test]
+    fn test_server_url_config_from_url_simple() {
+        let config = ServerUrlConfig::from_url("http://localhost:8080").unwrap();
+        assert_eq!(config.host, "localhost");
+        assert_eq!(config.port, 8080);
+    }
+
+    #[test]
+    fn test_server_url_config_from_url_with_trailing_slash() {
+        let config = ServerUrlConfig::from_url("http://localhost:8080/").unwrap();
+        assert_eq!(config.host, "localhost");
+        assert_eq!(config.port, 8080);
+    }
+
+    #[test]
+    fn test_server_url_config_from_url_without_port_uses_default() {
+        let config = ServerUrlConfig::from_url("http://localhost").unwrap();
+        assert_eq!(config.host, "localhost");
+        assert_eq!(config.port, 7432); // Default port
+    }
+
+    #[test]
+    fn test_server_url_config_from_url_with_path() {
+        let config = ServerUrlConfig::from_url("http://localhost:9000/api").unwrap();
+        assert_eq!(config.host, "localhost");
+        assert_eq!(config.port, 9000);
+    }
+
+    #[test]
+    fn test_server_url_config_from_url_invalid() {
+        let result = ServerUrlConfig::from_url("not-a-valid-url");
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Invalid URL"));
+    }
+
+    #[test]
+    fn test_server_url_config_from_url_ip_address() {
+        let config = ServerUrlConfig::from_url("http://192.168.1.100:3000").unwrap();
+        assert_eq!(config.host, "192.168.1.100");
+        assert_eq!(config.port, 3000);
+    }
+
+    // ─── parse_url_flag Tests ───────────────────────────────────────────────
+
+    #[test]
+    fn test_parse_url_flag_with_url_space() {
+        let args = vec![
+            "--url".to_string(),
+            "http://localhost:8080".to_string(),
+            "other-arg".to_string(),
+        ];
+        let (config, remaining) = GroovePlugin::parse_url_flag(&args);
+
+        assert!(config.is_some());
+        let config = config.unwrap();
+        assert_eq!(config.host, "localhost");
+        assert_eq!(config.port, 8080);
+        assert_eq!(remaining, vec!["other-arg".to_string()]);
+    }
+
+    #[test]
+    fn test_parse_url_flag_with_url_equals() {
+        let args = vec![
+            "--url=http://localhost:9000".to_string(),
+            "other-arg".to_string(),
+        ];
+        let (config, remaining) = GroovePlugin::parse_url_flag(&args);
+
+        assert!(config.is_some());
+        let config = config.unwrap();
+        assert_eq!(config.host, "localhost");
+        assert_eq!(config.port, 9000);
+        assert_eq!(remaining, vec!["other-arg".to_string()]);
+    }
+
+    #[test]
+    fn test_parse_url_flag_no_url() {
+        let args = vec!["session-id".to_string(), "--other".to_string()];
+        let (config, remaining) = GroovePlugin::parse_url_flag(&args);
+
+        assert!(config.is_none());
+        assert_eq!(remaining, args);
+    }
+
+    #[test]
+    fn test_parse_url_flag_empty_args() {
+        let args: Vec<String> = vec![];
+        let (config, remaining) = GroovePlugin::parse_url_flag(&args);
+
+        assert!(config.is_none());
+        assert!(remaining.is_empty());
+    }
+
+    #[test]
+    fn test_parse_url_flag_url_only() {
+        let args = vec!["--url".to_string(), "http://localhost:8080".to_string()];
+        let (config, remaining) = GroovePlugin::parse_url_flag(&args);
+
+        assert!(config.is_some());
+        assert!(remaining.is_empty());
+    }
+
+    // ─── wants_help Tests ───────────────────────────────────────────────────
+
+    #[test]
+    fn test_wants_help_with_double_dash() {
+        let args = vec!["--help".to_string()];
+        assert!(GroovePlugin::wants_help(&args));
+    }
+
+    #[test]
+    fn test_wants_help_with_short_flag() {
+        let args = vec!["-h".to_string()];
+        assert!(GroovePlugin::wants_help(&args));
+    }
+
+    #[test]
+    fn test_wants_help_mixed_with_other_args() {
+        let args = vec!["session-id".to_string(), "--help".to_string()];
+        assert!(GroovePlugin::wants_help(&args));
+    }
+
+    #[test]
+    fn test_wants_help_no_help_flag() {
+        let args = vec!["session-id".to_string(), "--url".to_string()];
+        assert!(!GroovePlugin::wants_help(&args));
+    }
+
+    #[test]
+    fn test_wants_help_empty_args() {
+        let args: Vec<String> = vec![];
+        assert!(!GroovePlugin::wants_help(&args));
+    }
+
+    // ─── --help in assess commands Tests ────────────────────────────────────
+
+    #[test]
+    fn test_cmd_assess_status_help() {
+        let plugin = GroovePlugin::default();
+        let mut args = vibes_plugin_api::CommandArgs::default();
+        args.args.push("--help".to_string());
+
+        let result = plugin.cmd_assess_status(&args).unwrap();
+        match result {
+            CommandOutput::Text(text) => {
+                assert!(text.contains("Usage:"), "Help should show usage");
+                assert!(text.contains("--url"), "Help should mention --url option");
+                assert!(text.contains("--help"), "Help should mention --help option");
+            }
+            _ => panic!("Expected Text output"),
+        }
+    }
+
+    #[test]
+    fn test_cmd_assess_status_help_short() {
+        let plugin = GroovePlugin::default();
+        let mut args = vibes_plugin_api::CommandArgs::default();
+        args.args.push("-h".to_string());
+
+        let result = plugin.cmd_assess_status(&args).unwrap();
+        match result {
+            CommandOutput::Text(text) => {
+                assert!(text.contains("Usage:"), "Help should show usage");
+            }
+            _ => panic!("Expected Text output"),
+        }
+    }
+
+    #[test]
+    fn test_cmd_assess_history_help() {
+        let plugin = GroovePlugin::default();
+        let mut args = vibes_plugin_api::CommandArgs::default();
+        args.args.push("--help".to_string());
+
+        let result = plugin.cmd_assess_history(&args).unwrap();
+        match result {
+            CommandOutput::Text(text) => {
+                assert!(text.contains("Usage:"), "Help should show usage");
+                assert!(text.contains("--url"), "Help should mention --url option");
+                assert!(
+                    text.contains("SESSION_ID"),
+                    "Help should mention session ID arg"
+                );
+            }
+            _ => panic!("Expected Text output"),
+        }
+    }
+
+    #[test]
+    fn test_cmd_assess_history_help_short() {
+        let plugin = GroovePlugin::default();
+        let mut args = vibes_plugin_api::CommandArgs::default();
+        args.args.push("-h".to_string());
+
+        let result = plugin.cmd_assess_history(&args).unwrap();
+        match result {
+            CommandOutput::Text(text) => {
+                assert!(text.contains("Usage:"), "Help should show usage");
+            }
+            _ => panic!("Expected Text output"),
+        }
+    }
+
+    // ─── API Endpoint URL Tests ────────────────────────────────────────────────
+
+    #[test]
+    fn test_api_assess_status_path_includes_groove_prefix() {
+        // This test ensures the API path includes the /api/groove/ prefix
+        // which is required by the server's route registration
+        assert!(
+            API_ASSESS_STATUS_PATH.starts_with("/api/groove/"),
+            "Status path must include /api/groove/ prefix, got: {}",
+            API_ASSESS_STATUS_PATH
+        );
+        assert_eq!(API_ASSESS_STATUS_PATH, "/api/groove/assess/status");
+    }
+
+    #[test]
+    fn test_api_assess_history_path_includes_groove_prefix() {
+        // This test ensures the API path includes the /api/groove/ prefix
+        assert!(
+            API_ASSESS_HISTORY_PATH.starts_with("/api/groove/"),
+            "History path must include /api/groove/ prefix, got: {}",
+            API_ASSESS_HISTORY_PATH
+        );
+        assert_eq!(API_ASSESS_HISTORY_PATH, "/api/groove/assess/history");
+    }
+
+    #[test]
+    fn test_server_url_config_status_url() {
+        let config = ServerUrlConfig {
+            host: "localhost".to_string(),
+            port: 8080,
+        };
+        assert_eq!(
+            config.status_url(),
+            "http://localhost:8080/api/groove/assess/status"
+        );
+    }
+
+    #[test]
+    fn test_server_url_config_history_url_without_session() {
+        let config = ServerUrlConfig {
+            host: "localhost".to_string(),
+            port: 8080,
+        };
+        assert_eq!(
+            config.history_url(None),
+            "http://localhost:8080/api/groove/assess/history"
+        );
+    }
+
+    #[test]
+    fn test_server_url_config_history_url_with_session() {
+        let config = ServerUrlConfig {
+            host: "localhost".to_string(),
+            port: 8080,
+        };
+        assert_eq!(
+            config.history_url(Some("test-session-123")),
+            "http://localhost:8080/api/groove/assess/history?session=test-session-123"
+        );
+    }
+
+    // ─── CLI Mode Behavior Tests ───────────────────────────────────────────────
+
+    #[test]
+    fn test_plugin_default_has_no_processor() {
+        // In CLI mode, the plugin should NOT have a processor initialized
+        // This ensures CLI commands will query the server instead of local state
+        let plugin = GroovePlugin::default();
+        assert!(
+            plugin.processor.is_none(),
+            "Default plugin should have no processor (CLI mode)"
+        );
+    }
+
+    #[test]
+    fn test_cli_mode_status_shows_querying_server_message() {
+        // When processor is None (CLI mode), the status command should
+        // indicate it's querying the server
+        let plugin = GroovePlugin::default();
+        let args = vibes_plugin_api::CommandArgs::default();
+
+        let result = plugin.cmd_assess_status(&args).unwrap();
+        match result {
+            CommandOutput::Text(text) => {
+                assert!(
+                    text.contains("Querying server at"),
+                    "CLI mode should show 'Querying server at' message. Got:\n{}",
+                    text
+                );
+            }
+            _ => panic!("Expected Text output"),
+        }
+    }
+
+    #[test]
+    fn test_cli_mode_history_shows_querying_server_message() {
+        // When processor is None (CLI mode), the history command should
+        // indicate it's querying the server
+        let plugin = GroovePlugin::default();
+        let args = vibes_plugin_api::CommandArgs::default();
+
+        let result = plugin.cmd_assess_history(&args).unwrap();
+        match result {
+            CommandOutput::Text(text) => {
+                assert!(
+                    text.contains("Querying server at"),
+                    "CLI mode should show 'Querying server at' message. Got:\n{}",
                     text
                 );
             }

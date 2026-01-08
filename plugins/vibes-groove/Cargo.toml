@@ -46,6 +46,9 @@ dirs.workspace = true
 # HTTP client (for CLI to query server)
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 
+# URL parsing (for --url flag)
+url = "2"
+
 # Logging
 tracing.workspace = true
 
