@@ -1,83 +1,62 @@
-/* web-ui/src/pages/Assessment.css */
+/* web-ui/src/pages/Assessment.css
+ * CRT-styled Groove Assessment page - matches Firehose layout patterns
+ */
+
+/* === Container === */
 .assessment-page {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  gap: var(--space-4);
+  flex: 1;
+  min-height: 0;
+  gap: var(--space-2);
+  background: var(--screen);
+  font-family: var(--font-mono);
+  padding: var(--space-4);
 }
 
+/* === Header === */
 .assessment-header {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  padding-bottom: var(--space-4);
-  border-bottom: 1px solid var(--color-border);
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  background: var(--surface);
 }
 
-.assessment-title {
+.assessment-header-left {
   display: flex;
   align-items: center;
   gap: var(--space-4);
 }
 
-.assessment-title h1 {
-  font-family: var(--font-mono);
-  font-size: var(--text-xl);
-  font-weight: 600;
-  color: var(--color-text-primary);
+.assessment-title {
+  font-family: var(--font-display);
+  font-size: var(--font-size-xl);
+  font-weight: 400;
+  color: var(--phosphor);
+  text-shadow: 0 0 10px var(--phosphor-glow);
+  letter-spacing: 0.1em;
   margin: 0;
 }
 
 .assessment-status {
   display: flex;
   gap: var(--space-2);
-  margin-left: auto;
 }
 
-/* Groove Navigation (shared with Quarantine) */
-.groove-nav {
-  display: flex;
-  gap: var(--space-1);
-  padding: var(--space-1);
-  background-color: var(--color-bg-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  width: fit-content;
-}
-
-.groove-nav-link {
-  padding: var(--space-2) var(--space-4);
-  font-family: var(--font-mono);
-  font-size: var(--text-sm);
-  color: var(--color-text-secondary);
-  text-decoration: none;
-  border-radius: var(--radius-sm);
-  transition: all 0.15s ease;
-}
-
-.groove-nav-link:hover {
-  color: var(--color-text-primary);
-  background-color: var(--color-bg-hover);
-}
-
-.groove-nav-link.active {
-  color: var(--color-groove);
-  background-color: var(--color-groove-subtle);
-}
-
-.assessment-controls {
+.assessment-header-right {
   display: flex;
   align-items: center;
   gap: var(--space-4);
-  flex-wrap: wrap;
 }
 
+/* === Tier Filter Chips === */
 .assessment-filters {
   display: flex;
   gap: var(--space-2);
 }
 
-/* Tier Filter Chips */
 .filter-chip {
   padding: var(--space-1) var(--space-3);
   font-family: var(--font-display);
@@ -103,49 +82,84 @@
   text-shadow: 0 0 8px var(--phosphor-glow);
 }
 
+/* === Search Input === */
+.search-input {
+  width: 200px;
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  color: var(--text);
+  background-color: var(--screen);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.search-input::placeholder {
+  color: var(--text-faint);
+}
+
+.search-input:hover:not(:focus) {
+  border-color: var(--phosphor-dim);
+}
+
+.search-input:focus {
+  border-color: var(--phosphor);
+  box-shadow: 0 0 5px var(--phosphor-glow);
+}
+
+/* === Content Layout === */
 .assessment-content {
   display: grid;
-  grid-template-columns: 1fr 400px;
-  gap: var(--space-4);
+  grid-template-columns: 1fr 320px;
+  gap: var(--space-2);
   flex: 1;
   min-height: 0;
 }
 
+/* === Stream Panel === */
 .assessment-stream {
-  /* Grid stretches this; StreamView uses flex: 1 internally */
   min-height: 0;
   position: relative;
   display: flex;
   flex-direction: column;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  overflow: hidden;
 }
 
+/* === Inspector Panel === */
 .assessment-inspector {
   min-height: 0;
 }
 
-.assessment-stream .jump-to-latest {
+/* === Jump to Latest Button === */
+.jump-to-latest {
   position: absolute;
   bottom: var(--space-4);
   left: 50%;
   transform: translateX(-50%);
   padding: var(--space-2) var(--space-4);
-  font-family: var(--font-mono);
-  font-size: var(--text-sm);
-  font-weight: 500;
-  color: var(--color-text-inverse);
-  background-color: var(--color-accent);
-  border: none;
-  border-radius: var(--radius-full);
+  font-family: var(--font-display);
+  font-size: var(--font-size-sm);
+  font-weight: 400;
+  color: var(--screen);
+  background-color: var(--phosphor);
+  border: 1px solid var(--phosphor-bright);
+  border-radius: 0;
   cursor: pointer;
+  box-shadow: 0 0 15px var(--phosphor-glow);
   transition: all var(--transition-fast);
   z-index: 10;
 }
 
-.assessment-stream .jump-to-latest:hover {
-  background-color: var(--color-accent-hover);
+.jump-to-latest:hover {
+  background-color: var(--phosphor-bright);
+  box-shadow: 0 0 25px var(--phosphor-glow), 0 0 40px var(--phosphor-subtle);
 }
 
-/* Responsive */
+/* === Responsive === */
 @media (max-width: 1024px) {
   .assessment-content {
     grid-template-columns: 1fr;
@@ -153,12 +167,24 @@
   }
 }
 
-@media (max-width: 640px) {
-  .assessment-controls {
+@media (max-width: 768px) {
+  .assessment-header {
     flex-direction: column;
     align-items: stretch;
+    gap: var(--space-3);
   }
 
+  .assessment-header-left,
+  .assessment-header-right {
+    justify-content: space-between;
+  }
+
+  .search-input {
+    flex: 1;
+  }
+}
+
+@media (max-width: 640px) {
   .assessment-filters {
     flex-wrap: wrap;
   }

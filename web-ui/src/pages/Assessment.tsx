@@ -179,9 +179,10 @@ export function AssessmentPage() {
 
   return (
     <div className="assessment-page">
+      {/* Header */}
       <div className="assessment-header">
-        <div className="assessment-title">
-          <h1>Assessment</h1>
+        <div className="assessment-header-left">
+          <h1 className="assessment-title">ASSESSMENT</h1>
           <div className="assessment-status">
             {isConnected ? (
               <Badge status="success">Connected</Badge>
@@ -194,7 +195,7 @@ export function AssessmentPage() {
           </div>
         </div>
 
-        <div className="assessment-controls">
+        <div className="assessment-header-right">
           <div className="assessment-filters">
             {ASSESSMENT_TIERS.map((tier) => (
               <button
@@ -233,7 +234,7 @@ export function AssessmentPage() {
           />
           {!isFollowing && (
             <button className="jump-to-latest" onClick={handleJumpToLatest}>
-              Jump to latest
+              ↓ Jump to latest
             </button>
           )}
         </div>

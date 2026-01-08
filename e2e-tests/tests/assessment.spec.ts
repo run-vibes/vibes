@@ -3,7 +3,7 @@ import { test, expect } from '../fixtures/vibes.js';
 test('assessment page loads with heading', async ({ page, serverUrl }) => {
   await page.goto(`${serverUrl}/groove/assessment`);
 
-  await expect(page.getByRole('heading', { name: 'Groove' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'ASSESSMENT', exact: true })).toBeVisible();
 });
 
 test('assessment page has groove navigation tabs', async ({ page, serverUrl }) => {

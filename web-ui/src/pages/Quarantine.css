@@ -1,122 +1,180 @@
-/* web-ui/src/pages/Quarantine.css */
+/* web-ui/src/pages/Quarantine.css
+ * CRT-styled Groove Security page - matches Firehose layout patterns
+ */
+
+/* === Container === */
 .quarantine-page {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
-  padding: 0;
+  flex: 1;
+  min-height: 0;
+  gap: var(--space-2);
+  background: var(--screen);
+  font-family: var(--font-mono);
+  padding: var(--space-4);
 }
 
+/* === Header === */
 .quarantine-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.quarantine-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.quarantine-title {
+  font-family: var(--font-display);
+  font-size: var(--font-size-xl);
+  font-weight: 400;
+  color: var(--phosphor);
+  text-shadow: 0 0 10px var(--phosphor-glow);
+  letter-spacing: 0.1em;
+  margin: 0;
+}
+
+.quarantine-status {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.quarantine-header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* === Content Area === */
+.quarantine-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* === Section Headers === */
+.quarantine-content h2 {
+  font-family: var(--font-display);
+  font-size: var(--font-size-base);
+  font-weight: 400;
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+  margin: 0;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border);
+}
+
+/* === Stats Grid === */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: var(--space-2);
+}
+
+.stat-card {
+  padding: var(--space-3);
+  background-color: var(--screen);
+  border: 1px solid var(--border);
+  text-align: center;
+}
+
+.stat-value {
+  font-family: var(--font-display);
+  font-size: var(--font-size-2xl);
+  font-weight: 400;
+  line-height: 1;
+  text-shadow: 0 0 8px var(--phosphor-glow);
+}
+
+.stat-value.total { color: var(--phosphor); }
+.stat-value.pending { color: var(--yellow, #ffcc00); }
+.stat-value.approved { color: var(--green, #44ff44); }
+.stat-value.rejected { color: var(--red, #ff4444); }
+.stat-value.escalated { color: var(--orange, #ff8844); }
+
+.stat-label {
+  font-size: 9px;
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+  margin-top: var(--space-1);
+  text-transform: uppercase;
+}
+
+/* === Trust Badge === */
+.trust-badge {
+  display: inline-block;
+  padding: var(--space-1) var(--space-2);
+  font-family: var(--font-display);
+  font-size: var(--font-size-xs);
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  border: 1px solid var(--border);
+}
+
+.trust-badge.local {
+  color: var(--green, #44ff44);
+  border-color: var(--green, #44ff44);
+  text-shadow: 0 0 4px rgba(68, 255, 68, 0.5);
+}
+
+.trust-badge.private-cloud {
+  color: var(--phosphor);
+  border-color: var(--phosphor-dim);
+}
+
+.trust-badge.org-verified {
+  color: var(--green, #44ff44);
+  border-color: var(--green, #44ff44);
+}
+
+.trust-badge.org-unverified {
+  color: var(--yellow, #ffcc00);
+  border-color: var(--yellow, #ffcc00);
+}
+
+.trust-badge.public-verified {
+  color: var(--phosphor);
+  border-color: var(--phosphor-dim);
+}
+
+.trust-badge.public-unverified {
+  color: var(--orange, #ff8844);
+  border-color: var(--orange, #ff8844);
+}
+
+.trust-badge.quarantined {
+  color: var(--red, #ff4444);
+  border-color: var(--red, #ff4444);
+  text-shadow: 0 0 4px rgba(255, 68, 68, 0.5);
+}
+
+/* === Quarantine List === */
+.quarantine-list {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
 }
 
-.quarantine-header h1 {
-  font-family: var(--font-mono);
-  font-size: var(--text-xl);
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin: 0;
-}
-
-/* Groove Navigation */
-.groove-nav {
-  display: flex;
-  gap: var(--space-1);
-  padding: var(--space-1);
-  background-color: var(--color-bg-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  width: fit-content;
-}
-
-.groove-nav-link {
-  padding: var(--space-2) var(--space-4);
-  font-family: var(--font-mono);
-  font-size: var(--text-sm);
-  color: var(--color-text-secondary);
-  text-decoration: none;
-  border-radius: var(--radius-sm);
-  transition: all 0.15s ease;
-}
-
-.groove-nav-link:hover {
-  color: var(--color-text-primary);
-  background-color: var(--color-bg-hover);
-}
-
-.groove-nav-link.active {
-  color: var(--color-groove);
-  background-color: var(--color-groove-subtle);
-}
-
-/* Stats Grid */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: var(--space-3);
-}
-
-.stat-card {
-  padding: var(--space-4);
-  background-color: var(--color-bg-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  text-align: center;
-}
-
-.stat-value {
-  font-family: var(--font-mono);
-  font-size: var(--text-2xl);
-  font-weight: 700;
-}
-
-.stat-value.total { color: var(--color-info); }
-.stat-value.pending { color: var(--color-warning); }
-.stat-value.approved { color: var(--color-success); }
-.stat-value.rejected { color: var(--color-error); }
-.stat-value.escalated { color: var(--color-groove); }
-
-.stat-label {
-  font-size: var(--text-sm);
-  color: var(--color-text-secondary);
-  margin-top: var(--space-1);
-}
-
-/* Trust Badge */
-.trust-badge {
-  display: inline-block;
-  padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-xs);
-  font-weight: 500;
-}
-
-.trust-badge.local { background-color: var(--trust-local-subtle); color: var(--trust-local); }
-.trust-badge.private-cloud { background-color: var(--trust-private-subtle); color: var(--trust-private); }
-.trust-badge.org-verified { background-color: var(--trust-org-verified-subtle); color: var(--trust-org-verified); }
-.trust-badge.org-unverified { background-color: var(--trust-org-unverified-subtle); color: var(--trust-org-unverified); }
-.trust-badge.public-verified { background-color: var(--trust-public-verified-subtle); color: var(--trust-public-verified); }
-.trust-badge.public-unverified { background-color: var(--trust-public-unverified-subtle); color: var(--trust-public-unverified); }
-.trust-badge.quarantined { background-color: var(--trust-quarantined-subtle); color: var(--trust-quarantined); }
-
-/* Quarantine List */
-.quarantine-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-/* Quarantine Item */
+/* === Quarantine Item === */
 .quarantine-item {
-  padding: var(--space-4);
-  background-color: var(--color-bg-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  background-color: var(--screen);
+  border: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-2);
 }
 
 .quarantine-item-header {
@@ -132,14 +190,14 @@
 }
 
 .quarantine-item-description {
-  font-weight: 500;
-  color: var(--color-text-primary);
+  font-weight: 400;
+  color: var(--text);
 }
 
 .quarantine-item-id {
   font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  color: var(--color-text-dim);
+  font-size: var(--font-size-xs);
+  color: var(--text-faint);
   margin-top: var(--space-1);
 }
 
@@ -147,15 +205,15 @@
   display: grid;
   grid-template-columns: auto 1fr auto 1fr;
   gap: var(--space-1) var(--space-2);
-  font-size: var(--text-sm);
+  font-size: var(--font-size-sm);
 }
 
 .quarantine-item-meta dt {
-  color: var(--color-text-secondary);
+  color: var(--text-dim);
 }
 
 .quarantine-item-meta dd {
-  color: var(--color-text-primary);
+  color: var(--text);
   margin: 0;
   margin-right: var(--space-4);
 }
@@ -166,18 +224,17 @@
   margin-top: var(--space-2);
 }
 
-/* Trust Levels */
+/* === Trust Levels Grid === */
 .trust-levels-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--space-2);
 }
 
 .trust-level-card {
   padding: var(--space-3);
-  background-color: var(--color-bg-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  background-color: var(--screen);
+  border: 1px solid var(--border);
 }
 
 .trust-level-header {
@@ -187,44 +244,47 @@
 }
 
 .trust-level-score {
-  font-family: var(--font-mono);
-  font-size: var(--text-sm);
-  font-weight: 700;
-  color: var(--color-text-primary);
+  font-family: var(--font-display);
+  font-size: var(--font-size-sm);
+  font-weight: 400;
+  color: var(--phosphor);
 }
 
 .trust-level-description {
-  font-size: var(--text-xs);
-  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  color: var(--text-dim);
   margin-top: var(--space-2);
 }
 
-/* Policy Section */
+/* === Policy Section === */
 .policy-header {
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  font-size: var(--text-lg);
-  font-weight: 600;
-  color: var(--color-text-primary);
+  font-family: var(--font-display);
+  font-size: var(--font-size-base);
+  font-weight: 400;
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
   margin: 0;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border);
 }
 
 .policy-header:hover {
-  color: var(--color-accent);
+  color: var(--phosphor);
 }
 
 .policy-content {
-  background-color: var(--color-bg-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: var(--space-4);
-  margin-top: var(--space-3);
+  background-color: var(--screen);
+  border: 1px solid var(--border);
+  padding: var(--space-3);
+  margin-top: var(--space-2);
 }
 
 .policy-section {
-  margin-top: var(--space-4);
+  margin-top: var(--space-3);
 }
 
 .policy-section:first-child {
@@ -232,49 +292,67 @@
 }
 
 .policy-section h3 {
-  font-size: var(--text-base);
-  font-weight: 600;
-  color: var(--color-text-primary);
+  font-family: var(--font-display);
+  font-size: var(--font-size-sm);
+  font-weight: 400;
+  color: var(--phosphor);
+  letter-spacing: 0.1em;
   margin: 0 0 var(--space-2) 0;
 }
 
 .policy-section dl {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: var(--space-1) var(--space-4);
-  font-size: var(--text-sm);
+  gap: var(--space-1) var(--space-3);
+  font-size: var(--font-size-sm);
 }
 
 .policy-section dt {
-  color: var(--color-text-secondary);
+  color: var(--text-dim);
 }
 
 .policy-section dd {
-  color: var(--color-text-primary);
+  color: var(--text);
   margin: 0;
 }
 
-/* Empty State */
+/* === Empty State === */
 .empty-state {
-  padding: var(--space-8);
-  background-color: var(--color-bg-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  padding: var(--space-6);
+  background-color: var(--screen);
+  border: 1px solid var(--border);
   text-align: center;
+  color: var(--text-dim);
 }
 
-/* Responsive */
+/* === Responsive === */
+@media (max-width: 768px) {
+  .quarantine-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+  }
+
+  .quarantine-header-left,
+  .quarantine-header-right {
+    justify-content: space-between;
+  }
+}
+
 @media (max-width: 640px) {
   .quarantine-item-header {
     flex-direction: column;
   }
 
   .quarantine-item-meta {
-    flex-direction: column;
-    gap: var(--space-2);
+    grid-template-columns: auto 1fr;
   }
 
   .quarantine-item-actions {
     flex-wrap: wrap;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
