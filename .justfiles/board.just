@@ -228,9 +228,9 @@ _next-milestone:
     #!/usr/bin/env bash
     cd "{{board_dir}}"
     max=0
-    for d in milestones/milestone-*/; do
+    for d in milestones/[0-9]*/; do
         [[ -d "$d" ]] || continue
-        num=$(basename "$d" | sed -n 's/^milestone-\([0-9]*\).*/\1/p')
+        num=$(basename "$d" | sed -n 's/^\([0-9]*\).*/\1/p')
         if [[ -n "$num" ]] && [[ "$num" -gt "$max" ]]; then
             max=$num
         fi
@@ -392,7 +392,7 @@ _new-milestone NAME:
     name="{{NAME}}"
     id=$(just board _next-milestone)
     slug=$(echo "$name" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd 'a-z0-9-')
-    dir="milestones/milestone-${id}-${slug}"
+    dir="milestones/${id}-${slug}"
 
     if [[ -d "$dir" ]]; then
         echo "Error: Milestone directory already exists"

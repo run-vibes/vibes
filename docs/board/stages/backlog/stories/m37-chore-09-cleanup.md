@@ -9,7 +9,7 @@ depends: []
 estimate:
 created: 2026-01-04
 updated: 2026-01-07
-milestone: milestone-37-crt-design-system
+milestone: 37-crt-design-system
 ---
 
 # Chore: Remove Old Styles and Document Tokens

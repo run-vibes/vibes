@@ -9,7 +9,7 @@ depends: []
 estimate:
 created: 2026-01-07
 updated: 2026-01-07
-milestone: milestone-14-kanban-board
+milestone: 14-kanban-board
 ---
 # Kanban Planning Board - Design Document
 

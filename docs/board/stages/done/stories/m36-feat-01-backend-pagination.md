@@ -9,7 +9,7 @@ depends: []
 estimate:
 created: 2026-01-02
 updated: 2026-01-07
-milestone: milestone-36-firehose-infinite-scroll
+milestone: 36-firehose-infinite-scroll
 ---
 
 # feat: Backend Pagination Support

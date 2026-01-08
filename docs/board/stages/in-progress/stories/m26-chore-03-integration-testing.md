@@ -9,7 +9,7 @@ depends: []
 estimate:
 created: 2026-01-01
 updated: 2026-01-07
-milestone: milestone-26-assessment-framework
+milestone: 26-assessment-framework
 ---
 
 # Chore: Assessment Framework Integration Testing

@@ -9,7 +9,7 @@ depends: []
 estimate:
 created: 2026-01-03
 updated: 2026-01-07
-milestone: milestone-26-assessment-framework
+milestone: 26-assessment-framework
 ---
 
 # Refactor: Add Plugin `on_ready()` Lifecycle Method

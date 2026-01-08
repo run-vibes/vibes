@@ -92,7 +92,7 @@ All designs go in `docs/board/` following CONVENTIONS.md:
 | Size | Structure |
 |------|-----------|
 | **Small feature** | Story file: `docs/board/stages/backlog/stories/<type>-NNNN-name.md` |
-| **Large feature** | Milestone directory: `docs/board/milestones/milestone-NN-name/design.md` |
+| **Large feature** | Milestone directory: `docs/board/milestones/NN-name/design.md` |
 
 Use `just board new story "name"` or `just board new milestone "name"` to create the correct structure.
 

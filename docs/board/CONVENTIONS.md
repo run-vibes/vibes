@@ -53,7 +53,7 @@ docs/board/
 │   ├── web-ui/            # Web UI features
 │   └── ...
 ├── milestones/            # Large deliverables (symlinks to epics)
-│   ├── milestone-01-core-proxy/
+│   ├── 01-core-proxy/
 │   └── ...
 ├── templates/             # Templates for new items
 │   ├── story.md
@@ -162,7 +162,7 @@ Milestones are large deliverables that span multiple work sessions. They live in
 
 ```
 milestones/
-└── milestone-26-assessment-framework/
+└── 26-assessment-framework/
     ├── README.md
     ├── design.md
     ├── implementation.md
@@ -173,7 +173,7 @@ milestones/
 
 ```yaml
 ---
-id: milestone-26
+id: 26
 title: Assessment Framework
 status: in-progress
 epics: [core]
