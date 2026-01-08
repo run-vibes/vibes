@@ -109,7 +109,11 @@ export function Sessions() {
                 status={mapStateToStatus(session.state)}
                 updatedAt={new Date(session.last_activity_at)}
                 subscribers={session.subscriber_count}
-                onClick={() => navigate({ to: '/sessions/$sessionId', params: { sessionId: session.id } })}
+                href={`/sessions/${session.id}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate({ to: '/sessions/$sessionId', params: { sessionId: session.id } });
+                }}
                 actions={[
                   {
                     icon: '×',
