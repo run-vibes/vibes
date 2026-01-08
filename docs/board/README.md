@@ -11,7 +11,6 @@ Auto-generated from directory structure. Run `just board generate` to update.
 
 | Story | Type | Priority | Epics |
 |-------|------|----------|-------|
-| [chore-0010-align-sessions-page-layout-with-firehose](stages/backlog/stories/chore-0010-align-sessions-page-layout-with-firehose.md) | chore | medium | web-ui |
 | [chore-0011-align-groove-pages-layout-with-firehose](stages/backlog/stories/chore-0011-align-groove-pages-layout-with-firehose.md) | chore | medium | web-ui |
 
 ## Epics
@@ -78,6 +77,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 - [chore-0001-nav-cleanup](stages/done/stories/chore-0001-nav-cleanup.md)
 - [chore-0002-firehose-filter-cleanup](stages/done/stories/chore-0002-firehose-filter-cleanup.md)
 - [chore-0003-assessment-tier-buttons](stages/done/stories/chore-0003-assessment-tier-buttons.md)
+- [chore-0010-align-sessions-page-layout-with-firehose](stages/done/stories/chore-0010-align-sessions-page-layout-with-firehose.md)
 - [feat-0003-web-ui-navigation-hierarchy](stages/done/stories/feat-0003-web-ui-navigation-hierarchy.md)
 - [feat-0004-subnav](stages/done/stories/feat-0004-subnav.md)
 - [feat-0005-session-terminal-outline](stages/done/stories/feat-0005-session-terminal-outline.md)

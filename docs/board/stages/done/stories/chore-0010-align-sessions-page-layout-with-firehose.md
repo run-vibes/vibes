@@ -2,7 +2,7 @@
 id: CHORE0010
 title: Align Sessions page layout with Firehose
 type: chore
-status: backlog
+status: done
 priority: medium
 epics: [web-ui]
 depends: []
