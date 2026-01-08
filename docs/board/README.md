@@ -3,9 +3,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
-| Story | Type | Priority | Epics |
-|-------|------|----------|-------|
-| [refactor-0008-consolidate-assessment-types-module](stages/in-progress/stories/refactor-0008-consolidate-assessment-types-module.md) | refactor | low | plugin-system |
+*No stories in progress*
 
 ## Backlog
 
@@ -121,5 +119,6 @@ Auto-generated from directory structure. Run `just board generate` to update.
 - [m37-feat-06-navigation](stages/done/stories/m37-feat-06-navigation.md)
 - [m37-feat-07-firehose](stages/done/stories/m37-feat-07-firehose.md)
 - [m37-feat-08-session-cards](stages/done/stories/m37-feat-08-session-cards.md)
+- [refactor-0008-consolidate-assessment-types-module](stages/done/stories/refactor-0008-consolidate-assessment-types-module.md)
 
 </details>
