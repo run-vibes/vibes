@@ -18,6 +18,15 @@ use crate::daemon::{
 
 /// Arguments for the serve command
 #[derive(Debug, Args)]
+#[command(after_long_help = "\
+Examples:
+  vibes serve                      Run server in foreground
+  vibes serve -d                   Run server as background daemon
+  vibes serve --quick-tunnel       Run with temporary public URL
+  vibes serve -p 8080              Run on custom port
+  vibes serve status               Check if daemon is running
+  vibes serve stop                 Stop the daemon
+")]
 pub struct ServeArgs {
     /// Subcommand (stop, status)
     #[command(subcommand)]

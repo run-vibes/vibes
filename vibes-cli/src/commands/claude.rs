@@ -17,6 +17,14 @@ use crate::daemon::ensure_daemon_running;
 use crate::terminal::RawTerminal;
 
 #[derive(Args)]
+#[command(after_long_help = "\
+Examples:
+  vibes claude                         Start interactive session
+  vibes claude \"fix the typo\"          Send a prompt
+  vibes claude --session-name refactor Start named session
+  vibes claude -r <id>                 Resume a session by ID
+  vibes claude -- --print              Pass flags to claude directly
+")]
 pub struct ClaudeArgs {
     // === Vibes-specific flags ===
     /// Human-friendly session name (shown in vibes UI)

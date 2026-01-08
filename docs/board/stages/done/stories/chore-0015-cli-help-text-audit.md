@@ -2,7 +2,7 @@
 id: CHORE0015
 title: CLI help text audit
 type: chore
-status: backlog
+status: done
 priority: low
 epics: [cli]
 depends: []
@@ -29,11 +29,11 @@ All commands under `vibes`:
 
 ## Acceptance Criteria
 
-- [ ] All commands have `#[clap(about = "...")]` descriptions
-- [ ] Descriptions are consistent in style (imperative mood)
-- [ ] Examples provided for complex commands
-- [ ] No placeholder or TODO text in help output
-- [ ] `vibes --help` shows clean, organized output
+- [x] All commands have `#[clap(about = "...")]` descriptions
+- [x] Descriptions are consistent in style (imperative mood)
+- [x] Examples provided for complex commands
+- [x] No placeholder or TODO text in help output
+- [x] `vibes --help` shows clean, organized output
 
 ## Implementation Notes
 
