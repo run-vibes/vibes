@@ -1,6 +1,6 @@
 ---
 id: B004
-title: Fix: Events Don't Flow from Claude Hooks to Firehose
+title: "Fix: Events Don't Flow from Claude Hooks to Firehose"
 type: fix
 status: done
 priority: medium

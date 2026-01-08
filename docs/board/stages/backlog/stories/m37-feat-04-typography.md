@@ -1,6 +1,6 @@
 ---
 id: F015
-title: Feature: Apply CRT Typography System
+title: "Feature: Apply CRT Typography System"
 type: feat
 status: done
 priority: medium

@@ -1,6 +1,6 @@
 ---
 id: F017
-title: Feature: Restyle Navigation with Phosphor Glow
+title: "Feature: Restyle Navigation with Phosphor Glow"
 type: feat
 status: done
 priority: medium

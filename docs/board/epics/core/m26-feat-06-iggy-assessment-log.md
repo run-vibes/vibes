@@ -1,1 +1,1 @@
-../../stages/in-progress/stories/m26-feat-06-iggy-assessment-log.md
+../../stages/done/stories/m26-feat-06-iggy-assessment-log.md

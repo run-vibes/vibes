@@ -1,6 +1,6 @@
 ---
 id: F009
-title: Feature: Wire IggyAssessmentLog with Firehose
+title: "Feature: Wire IggyAssessmentLog with Firehose"
 type: feat
 status: done
 priority: medium

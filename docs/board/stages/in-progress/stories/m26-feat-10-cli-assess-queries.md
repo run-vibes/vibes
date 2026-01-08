@@ -1,6 +1,6 @@
 ---
 id: F011
-title: Feature: Wire CLI Assess Commands to Query Real Data
+title: "Feature: Wire CLI Assess Commands to Query Real Data"
 type: feat
 status: backlog
 priority: medium

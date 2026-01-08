@@ -1,6 +1,6 @@
 ---
 id: F010
-title: Feature: Support All Claude Code Hooks
+title: "Feature: Support All Claude Code Hooks"
 type: feat
 status: done
 priority: medium

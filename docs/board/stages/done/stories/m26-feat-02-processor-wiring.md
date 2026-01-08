@@ -1,6 +1,6 @@
 ---
 id: F008
-title: Feature: Wire Assessment Processor Pipeline
+title: "Feature: Wire Assessment Processor Pipeline"
 type: feat
 status: done
 priority: medium

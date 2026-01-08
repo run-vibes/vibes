@@ -1,1 +1,1 @@
-../../stages/in-progress/stories/m26-refactor-07-plugin-lifecycle.md
+../../stages/done/stories/m26-refactor-07-plugin-lifecycle.md

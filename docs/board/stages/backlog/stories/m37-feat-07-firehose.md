@@ -1,6 +1,6 @@
 ---
 id: F018
-title: Feature: Apply CRT Styling to Event Firehose
+title: "Feature: Apply CRT Styling to Event Firehose"
 type: feat
 status: done
 priority: medium

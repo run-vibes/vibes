@@ -1,6 +1,6 @@
 ---
 id: F005
-title: feat: UI Polish and Cleanup
+title: "feat: UI Polish and Cleanup"
 type: feat
 status: done
 priority: medium

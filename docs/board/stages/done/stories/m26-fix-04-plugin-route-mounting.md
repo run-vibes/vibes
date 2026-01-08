@@ -1,6 +1,6 @@
 ---
 id: B003
-title: Fix: Plugin Routes Return HTML Instead of JSON
+title: "Fix: Plugin Routes Return HTML Instead of JSON"
 type: fix
 status: done
 priority: medium

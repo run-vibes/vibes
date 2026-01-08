@@ -1,6 +1,6 @@
 ---
 id: F014
-title: Feature: Implement CRT Visual Effects
+title: "Feature: Implement CRT Visual Effects"
 type: feat
 status: done
 priority: medium

@@ -1,6 +1,6 @@
 ---
 id: C003
-title: Chore: Remove Dead EventBus Code
+title: "Chore: Remove Dead EventBus Code"
 type: chore
 status: done
 priority: medium

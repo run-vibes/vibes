@@ -1,6 +1,6 @@
 ---
 id: F012
-title: Feature: Create Design Token CSS Custom Properties
+title: "Feature: Create Design Token CSS Custom Properties"
 type: feat
 status: done
 priority: medium

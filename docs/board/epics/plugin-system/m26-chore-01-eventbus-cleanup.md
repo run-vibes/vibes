@@ -1,1 +1,1 @@
-../../stages/in-progress/stories/m26-chore-01-eventbus-cleanup.md
+../../stages/done/stories/m26-chore-01-eventbus-cleanup.md

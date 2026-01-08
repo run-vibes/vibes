@@ -1,1 +1,1 @@
-../../stages/in-progress/stories/m26-fix-05-event-flow-to-firehose.md
+../../stages/done/stories/m26-fix-05-event-flow-to-firehose.md

@@ -1,6 +1,6 @@
 ---
 id: C004
-title: Chore: Assessment Framework Integration Testing
+title: "Chore: Assessment Framework Integration Testing"
 type: chore
 status: done
 priority: medium

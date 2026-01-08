@@ -1,6 +1,6 @@
 ---
 id: F001
-title: feat: Backend Pagination Support
+title: "feat: Backend Pagination Support"
 type: feat
 status: done
 priority: medium

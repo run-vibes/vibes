@@ -1,6 +1,6 @@
 ---
 id: R001
-title: Refactor: Single Partition with Event ID Seeking
+title: "Refactor: Single Partition with Event ID Seeking"
 type: refactor
 status: done
 priority: medium

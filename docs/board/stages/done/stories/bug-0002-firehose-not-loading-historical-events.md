@@ -1,6 +1,6 @@
 ---
 id: B002
-title: bug-0002: Firehose Not Loading Historical Events
+title: "bug-0002: Firehose Not Loading Historical Events"
 type: bug
 status: done
 priority: medium

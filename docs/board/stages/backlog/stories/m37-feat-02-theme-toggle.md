@@ -1,6 +1,6 @@
 ---
 id: F013
-title: Feature: Add Theme Toggle with Persistence
+title: "Feature: Add Theme Toggle with Persistence"
 type: feat
 status: done
 priority: medium

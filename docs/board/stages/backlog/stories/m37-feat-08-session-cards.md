@@ -1,6 +1,6 @@
 ---
 id: F019
-title: Feature: Restyle Session Cards with Glow Effects
+title: "Feature: Restyle Session Cards with Glow Effects"
 type: feat
 status: done
 priority: medium

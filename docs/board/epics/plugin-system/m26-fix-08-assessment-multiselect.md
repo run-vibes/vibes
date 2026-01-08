@@ -1,1 +1,1 @@
-../../stages/in-progress/stories/m26-fix-08-assessment-multiselect.md
+../../stages/done/stories/m26-fix-08-assessment-multiselect.md

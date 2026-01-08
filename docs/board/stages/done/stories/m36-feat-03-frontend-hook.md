@@ -1,6 +1,6 @@
 ---
 id: F003
-title: feat: Rewrite useFirehose Hook
+title: "feat: Rewrite useFirehose Hook"
 type: feat
 status: done
 priority: medium

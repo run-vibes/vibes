@@ -1,6 +1,6 @@
 ---
 id: F007
-title: feat-0003: Web UI Navigation Hierarchy
+title: "feat-0003: Web UI Navigation Hierarchy"
 type: feat
 status: done
 priority: medium

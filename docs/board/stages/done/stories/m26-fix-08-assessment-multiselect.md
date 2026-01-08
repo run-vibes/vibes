@@ -1,6 +1,6 @@
 ---
 id: B005
-title: Fix: Assessment Page Multi-Select Bug
+title: "Fix: Assessment Page Multi-Select Bug"
 type: fix
 status: done
 priority: medium

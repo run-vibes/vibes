@@ -1,6 +1,6 @@
 ---
 id: F006
-title: feat: UUIDv7 Global Event Sequencing
+title: "feat: UUIDv7 Global Event Sequencing"
 type: feat
 status: done
 priority: medium

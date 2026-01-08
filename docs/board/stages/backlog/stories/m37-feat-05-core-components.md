@@ -1,6 +1,6 @@
 ---
 id: F016
-title: Feature: Restyle Core UI Components
+title: "Feature: Restyle Core UI Components"
 type: feat
 status: done
 priority: medium

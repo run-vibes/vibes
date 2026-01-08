@@ -1,6 +1,6 @@
 ---
 id: C005
-title: Chore: Remove Old Styles and Document Tokens
+title: "Chore: Remove Old Styles and Document Tokens"
 type: chore
 status: done
 priority: medium

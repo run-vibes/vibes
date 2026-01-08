@@ -1,6 +1,6 @@
 ---
 id: R002
-title: Refactor: Add Plugin `on_ready()` Lifecycle Method
+title: "Refactor: Add Plugin `on_ready()` Lifecycle Method"
 type: refactor
 status: done
 priority: medium
