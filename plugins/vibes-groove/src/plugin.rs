@@ -581,6 +581,99 @@ impl GroovePlugin {
         Ok(())
     }
 
+    // ─── Server Client (CLI → Server HTTP) ────────────────────────────
+
+    /// Default vibes server port
+    const DEFAULT_SERVER_PORT: u16 = 7743;
+
+    /// Build the base URL for the vibes server
+    pub fn server_base_url(port: Option<u16>) -> String {
+        let port = port.unwrap_or(Self::DEFAULT_SERVER_PORT);
+        format!("http://127.0.0.1:{}", port)
+    }
+
+    /// Fetch assessment status from the running vibes server
+    pub async fn fetch_status_from_server(
+        port: Option<u16>,
+    ) -> Result<AssessmentStatusResponse, String> {
+        let url = format!("{}/assess/status", Self::server_base_url(port));
+
+        let client = reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(5))
+            .build()
+            .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
+
+        let response = client
+            .get(&url)
+            .send()
+            .await
+            .map_err(|e| format!("Failed to connect to server: {}", e))?;
+
+        if !response.status().is_success() {
+            return Err(format!("Server returned error: {}", response.status()));
+        }
+
+        response
+            .json::<AssessmentStatusResponse>()
+            .await
+            .map_err(|e| format!("Failed to parse response: {}", e))
+    }
+
+    /// Fetch assessment history from the running vibes server
+    pub async fn fetch_history_from_server(
+        session_id: Option<&str>,
+        port: Option<u16>,
+    ) -> Result<AssessmentHistoryResponse, String> {
+        let mut url = format!("{}/assess/history", Self::server_base_url(port));
+
+        if let Some(session) = session_id {
+            url = format!("{}?session={}", url, session);
+        }
+
+        let client = reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(5))
+            .build()
+            .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
+
+        let response = client
+            .get(&url)
+            .send()
+            .await
+            .map_err(|e| format!("Failed to connect to server: {}", e))?;
+
+        if !response.status().is_success() {
+            return Err(format!("Server returned error: {}", response.status()));
+        }
+
+        response
+            .json::<AssessmentHistoryResponse>()
+            .await
+            .map_err(|e| format!("Failed to parse response: {}", e))
+    }
+
+    /// Blocking version of fetch_status_from_server for CLI use
+    fn fetch_status_from_server_blocking(
+        port: Option<u16>,
+    ) -> Result<AssessmentStatusResponse, String> {
+        // Create a new runtime for blocking calls from CLI
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| format!("Failed to create runtime: {}", e))?;
+
+        rt.block_on(Self::fetch_status_from_server(port))
+    }
+
+    /// Blocking version of fetch_history_from_server for CLI use
+    fn fetch_history_from_server_blocking(
+        session_id: Option<&str>,
+        port: Option<u16>,
+    ) -> Result<AssessmentHistoryResponse, String> {
+        // Create a new runtime for blocking calls from CLI
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| format!("Failed to create runtime: {}", e))?;
+
+        rt.block_on(Self::fetch_history_from_server(session_id, port))
+    }
+
     // ─── Command Handlers ─────────────────────────────────────────────
 
     fn cmd_init(&self, args: &vibes_plugin_api::CommandArgs) -> Result<CommandOutput, PluginError> {
@@ -918,7 +1011,7 @@ impl GroovePlugin {
         output.push_str("Assessment System Status\n");
         output.push_str(&format!("{}\n\n", "=".repeat(40)));
 
-        // Get real data from processor if available
+        // Get real data from processor if available (server context)
         if let Some(processor) = &self.processor {
             // Circuit breaker status
             let cb_summary = processor.circuit_breaker_summary();
@@ -957,13 +1050,60 @@ impl GroovePlugin {
             output.push_str(&format!("  Active sessions: {}\n", sessions.len()));
             output.push_str(&format!("  Events stored:   {}\n\n", event_count));
         } else {
-            // No processor available (CLI mode without server)
-            output.push_str("Circuit Breaker:\n");
-            output.push_str("  Status: Not initialized\n\n");
-            output.push_str("Sampling Strategy:\n");
-            output.push_str("  Status: Not initialized\n\n");
-            output.push_str("Recent Activity:\n");
-            output.push_str("  No data available (processor not initialized)\n\n");
+            // No processor (CLI mode) - try to fetch from running server
+            match Self::fetch_status_from_server_blocking(None) {
+                Ok(status) => {
+                    // Circuit breaker status
+                    output.push_str("Circuit Breaker:\n");
+                    let cb_state = if status.circuit_breaker.enabled {
+                        "Closed (normal operation)"
+                    } else {
+                        "Disabled"
+                    };
+                    output.push_str(&format!("  State:           {}\n", cb_state));
+                    output.push_str(&format!(
+                        "  Cooldown:        {} seconds\n",
+                        status.circuit_breaker.cooldown_seconds
+                    ));
+                    output.push_str(&format!(
+                        "  Max per session: {}\n\n",
+                        status.circuit_breaker.max_interventions_per_session
+                    ));
+
+                    // Sampling status
+                    output.push_str("Sampling Strategy:\n");
+                    output.push_str(&format!(
+                        "  Base rate:       {:.0}%\n",
+                        status.sampling.base_rate * 100.0
+                    ));
+                    output.push_str(&format!(
+                        "  Burnin sessions: {}\n\n",
+                        status.sampling.burnin_sessions
+                    ));
+
+                    // Recent activity
+                    output.push_str("Recent Activity:\n");
+                    output.push_str(&format!(
+                        "  Active sessions: {}\n",
+                        status.activity.active_sessions
+                    ));
+                    output.push_str(&format!(
+                        "  Events stored:   {}\n\n",
+                        status.activity.events_stored
+                    ));
+                }
+                Err(_) => {
+                    // Server not running or not responding
+                    output.push_str("Circuit Breaker:\n");
+                    output.push_str("  Status: Not initialized\n\n");
+                    output.push_str("Sampling Strategy:\n");
+                    output.push_str("  Status: Not initialized\n\n");
+                    output.push_str("Recent Activity:\n");
+                    output.push_str(
+                        "  No data available. Start server with 'vibes serve' first.\n\n",
+                    );
+                }
+            }
         }
 
         output.push_str("Note: Assessment consumer starts automatically with 'vibes claude'.\n");
@@ -982,6 +1122,7 @@ impl GroovePlugin {
         output.push_str(&format!("{}\n\n", "=".repeat(40)));
 
         if let Some(processor) = &self.processor {
+            // Server context - query local processor
             if let Some(id) = session_id {
                 // Query events for specific session
                 output.push_str(&format!("Session: {}\n\n", id));
@@ -1030,9 +1171,39 @@ impl GroovePlugin {
                 );
             }
         } else {
-            // No processor available
-            output.push_str("Assessment processor not initialized.\n");
-            output.push_str("Run 'vibes claude' to start collecting assessment data.\n");
+            // No processor (CLI mode) - try to fetch from running server
+            match Self::fetch_history_from_server_blocking(session_id, None) {
+                Ok(history) => {
+                    if history.sessions.is_empty() {
+                        output.push_str("Recent Sessions:\n");
+                        output.push_str("  No session history available.\n");
+                    } else {
+                        output.push_str("Recent Sessions:\n");
+                        for session in &history.sessions {
+                            let types_str = if session.result_types.is_empty() {
+                                String::new()
+                            } else {
+                                format!(" [{}]", session.result_types.join(", "))
+                            };
+                            output.push_str(&format!(
+                                "  {} ({} events){}\n",
+                                session.session_id, session.event_count, types_str
+                            ));
+                        }
+                        if history.has_more {
+                            output.push_str("\n  ... and more sessions available.\n");
+                        }
+                    }
+                    output.push_str(
+                        "\nTip: Run 'vibes groove assess history <session_id>' for details.\n",
+                    );
+                }
+                Err(_) => {
+                    // Server not running or not responding
+                    output.push_str("Assessment processor not initialized.\n");
+                    output.push_str("Start server with 'vibes serve' first.\n");
+                }
+            }
         }
 
         Ok(CommandOutput::Text(output))
@@ -2023,5 +2194,77 @@ mod tests {
 
         let response: ErrorResponse = serde_json::from_slice(&result.body).unwrap();
         assert_eq!(response.code, "NOT_INITIALIZED");
+    }
+
+    // ─── Server Client Tests (for CLI → Server HTTP calls) ───────────────
+
+    #[test]
+    fn test_server_base_url_uses_default_port() {
+        let url = GroovePlugin::server_base_url(None);
+        assert_eq!(url, "http://127.0.0.1:7743");
+    }
+
+    #[test]
+    fn test_server_base_url_uses_custom_port() {
+        let url = GroovePlugin::server_base_url(Some(8080));
+        assert_eq!(url, "http://127.0.0.1:8080");
+    }
+
+    #[tokio::test]
+    async fn test_fetch_status_from_server_returns_error_when_server_not_running() {
+        // Try to connect to a port where no server is running
+        let result = GroovePlugin::fetch_status_from_server(Some(19999)).await;
+        assert!(result.is_err(), "Should fail when server is not running");
+    }
+
+    #[tokio::test]
+    async fn test_fetch_history_from_server_returns_error_when_server_not_running() {
+        // Try to connect to a port where no server is running
+        let result = GroovePlugin::fetch_history_from_server(None, Some(19999)).await;
+        assert!(result.is_err(), "Should fail when server is not running");
+    }
+
+    #[test]
+    fn test_cmd_assess_status_cli_mode_shows_server_hint() {
+        // Plugin without processor (CLI mode)
+        let plugin = GroovePlugin::default();
+
+        let result = plugin.cmd_assess_status().unwrap();
+        match result {
+            CommandOutput::Text(text) => {
+                // In CLI mode without processor, should indicate server is needed
+                assert!(
+                    text.contains("Not initialized")
+                        || text.contains("server")
+                        || text.contains("vibes serve"),
+                    "CLI mode should hint about server. Output:\n{}",
+                    text
+                );
+            }
+            _ => panic!("Expected Text output"),
+        }
+    }
+
+    #[test]
+    fn test_cmd_assess_history_cli_mode_shows_server_hint() {
+        // Plugin without processor (CLI mode)
+        let plugin = GroovePlugin::default();
+        let args = vibes_plugin_api::CommandArgs::default();
+
+        let result = plugin.cmd_assess_history(&args).unwrap();
+        match result {
+            CommandOutput::Text(text) => {
+                // In CLI mode without processor, should indicate how to get data
+                assert!(
+                    text.contains("not initialized")
+                        || text.contains("server")
+                        || text.contains("vibes serve")
+                        || text.contains("vibes claude"),
+                    "CLI mode should hint about server. Output:\n{}",
+                    text
+                );
+            }
+            _ => panic!("Expected Text output"),
+        }
     }
 }
