@@ -59,6 +59,8 @@ generate:
         esac
     }
 
+    # Generate README.md
+    {
     echo "# Planning Board"
     echo ""
     echo "> Auto-generated from directory structure. Run \`just board generate\` to update."
@@ -158,6 +160,9 @@ generate:
     fi
     echo ""
     echo "</details>"
+    } > README.md
+
+    echo "Generated README.md"
 
 # Show board status summary
 status:
