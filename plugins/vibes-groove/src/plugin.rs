@@ -859,25 +859,55 @@ impl GroovePlugin {
         output.push_str("Assessment System Status\n");
         output.push_str(&format!("{}\n\n", "=".repeat(40)));
 
-        // Circuit breaker status
-        output.push_str("Circuit Breaker:\n");
-        output.push_str("  State:           Closed (normal operation)\n");
-        output.push_str("  Failure count:   0\n");
-        output.push_str("  Last transition: N/A\n\n");
+        // Get real data from processor if available
+        if let Some(processor) = &self.processor {
+            // Circuit breaker status
+            let cb_summary = processor.circuit_breaker_summary();
+            output.push_str("Circuit Breaker:\n");
+            let cb_state = if cb_summary.enabled {
+                "Closed (normal operation)"
+            } else {
+                "Disabled"
+            };
+            output.push_str(&format!("  State:           {}\n", cb_state));
+            output.push_str(&format!(
+                "  Cooldown:        {} seconds\n",
+                cb_summary.cooldown_seconds
+            ));
+            output.push_str(&format!(
+                "  Max per session: {}\n\n",
+                cb_summary.max_interventions_per_session
+            ));
 
-        // Sampling status
-        output.push_str("Sampling Strategy:\n");
-        output.push_str("  Base rate:       10%\n");
-        output.push_str("  Burnin sessions: 5\n\n");
+            // Sampling status
+            let sampling = processor.sampling_summary();
+            output.push_str("Sampling Strategy:\n");
+            output.push_str(&format!(
+                "  Base rate:       {:.0}%\n",
+                sampling.base_rate * 100.0
+            ));
+            output.push_str(&format!(
+                "  Burnin sessions: {}\n\n",
+                sampling.burnin_sessions
+            ));
 
-        // Recent activity
-        output.push_str("Recent Activity:\n");
-        output.push_str("  Active sessions: 0\n");
-        output.push_str("  Events today:    0\n");
-        output.push_str("  Checkpoints:     0\n\n");
+            // Recent activity from actual data
+            let sessions = processor.active_sessions();
+            let event_count = processor.stored_results_count();
+            output.push_str("Recent Activity:\n");
+            output.push_str(&format!("  Active sessions: {}\n", sessions.len()));
+            output.push_str(&format!("  Events stored:   {}\n\n", event_count));
+        } else {
+            // No processor available (CLI mode without server)
+            output.push_str("Circuit Breaker:\n");
+            output.push_str("  Status: Not initialized\n\n");
+            output.push_str("Sampling Strategy:\n");
+            output.push_str("  Status: Not initialized\n\n");
+            output.push_str("Recent Activity:\n");
+            output.push_str("  No data available (processor not initialized)\n\n");
+        }
 
         output.push_str("Note: Assessment consumer starts automatically with 'vibes claude'.\n");
-        output.push_str("Live metrics will be available in a future update.\n");
 
         Ok(CommandOutput::Text(output))
     }
@@ -892,16 +922,58 @@ impl GroovePlugin {
         output.push_str("Assessment History\n");
         output.push_str(&format!("{}\n\n", "=".repeat(40)));
 
-        if let Some(id) = session_id {
-            output.push_str(&format!("Session: {}\n\n", id));
-            output.push_str("No assessments found for this session.\n");
-            output.push_str("\nAssessment history will be queryable in a future update.\n");
+        if let Some(processor) = &self.processor {
+            if let Some(id) = session_id {
+                // Query events for specific session
+                output.push_str(&format!("Session: {}\n\n", id));
+
+                let query = AssessmentQuery::new().with_session(id).with_limit(20);
+                let response = processor.query(query);
+
+                if response.results.is_empty() {
+                    output.push_str("No assessments found for this session.\n");
+                } else {
+                    output.push_str(&format!(
+                        "Showing {} most recent events:\n\n",
+                        response.results.len()
+                    ));
+                    for result in &response.results {
+                        output.push_str(&format!(
+                            "  [{:12}] {}\n",
+                            result.result_type, result.event_id
+                        ));
+                    }
+                    if response.has_more {
+                        output.push_str("\n  ... and more events available.\n");
+                    }
+                }
+            } else {
+                // List all sessions
+                let sessions = processor.active_sessions();
+                output.push_str("Recent Sessions:\n");
+
+                if sessions.is_empty() {
+                    output.push_str("  No session history available.\n");
+                } else {
+                    for session in &sessions {
+                        // Get event count for each session
+                        let query = AssessmentQuery::new().with_session(session);
+                        let response = processor.query(query);
+                        output.push_str(&format!(
+                            "  {} ({} events)\n",
+                            session,
+                            response.results.len()
+                        ));
+                    }
+                }
+                output.push_str(
+                    "\nTip: Run 'vibes groove assess history <session_id>' for details.\n",
+                );
+            }
         } else {
-            output.push_str("Recent Sessions:\n");
-            output.push_str("  No session history available.\n\n");
-            output.push_str(
-                "Tip: Run 'vibes groove assess history <session_id>' for a specific session.\n",
-            );
+            // No processor available
+            output.push_str("Assessment processor not initialized.\n");
+            output.push_str("Run 'vibes claude' to start collecting assessment data.\n");
         }
 
         Ok(CommandOutput::Text(output))
@@ -1602,6 +1674,126 @@ mod tests {
             let le: crate::assessment::LightweightEvent =
                 serde_json::from_str(&results[0].payload).unwrap();
             assert_eq!(le.message_idx, i as u32);
+        }
+    }
+
+    // ─── CLI Assess Commands with Real Data Tests ────────────────────────
+
+    #[test]
+    fn test_cmd_assess_status_shows_real_event_count() {
+        let mut plugin = GroovePlugin::default();
+        let mut ctx = create_test_context();
+
+        // Initialize plugin (creates processor)
+        plugin.on_load(&mut ctx).unwrap();
+
+        // Process events to create some data
+        for i in 0..5 {
+            let raw = make_raw_event("test-session", &format!("Event {i}"));
+            plugin.on_event(raw, &mut ctx);
+        }
+
+        // Now check assess status shows actual count (not hardcoded "0")
+        let result = plugin.cmd_assess_status().unwrap();
+        match result {
+            CommandOutput::Text(text) => {
+                // Should contain at least "5" somewhere indicating event count
+                // Current hardcoded output says "Events today: 0"
+                // After fix, it should show actual counts
+                assert!(
+                    !text.contains("Events today:    0"),
+                    "Should show actual event count, not hardcoded 0. Output:\n{}",
+                    text
+                );
+            }
+            _ => panic!("Expected Text output"),
+        }
+    }
+
+    #[test]
+    fn test_cmd_assess_status_shows_real_session_count() {
+        let mut plugin = GroovePlugin::default();
+        let mut ctx = create_test_context();
+
+        plugin.on_load(&mut ctx).unwrap();
+
+        // Process events for multiple sessions
+        plugin.on_event(make_raw_event("session-a", "Hello"), &mut ctx);
+        plugin.on_event(make_raw_event("session-b", "World"), &mut ctx);
+
+        let result = plugin.cmd_assess_status().unwrap();
+        match result {
+            CommandOutput::Text(text) => {
+                // Should show actual session count (not hardcoded "0")
+                assert!(
+                    !text.contains("Active sessions: 0"),
+                    "Should show actual session count, not hardcoded 0. Output:\n{}",
+                    text
+                );
+            }
+            _ => panic!("Expected Text output"),
+        }
+    }
+
+    #[test]
+    fn test_cmd_assess_history_shows_real_sessions() {
+        let mut plugin = GroovePlugin::default();
+        let mut ctx = create_test_context();
+
+        plugin.on_load(&mut ctx).unwrap();
+
+        // Process events for a session
+        for i in 0..3 {
+            let raw = make_raw_event("history-session", &format!("Message {i}"));
+            plugin.on_event(raw, &mut ctx);
+        }
+
+        // Query history without session ID (list all)
+        let args = vibes_plugin_api::CommandArgs::default();
+        let result = plugin.cmd_assess_history(&args).unwrap();
+
+        match result {
+            CommandOutput::Text(text) => {
+                // Should NOT say "No session history available"
+                // Should list the session we created
+                assert!(
+                    !text.contains("No session history available"),
+                    "Should show actual sessions, not hardcoded 'no history'. Output:\n{}",
+                    text
+                );
+            }
+            _ => panic!("Expected Text output"),
+        }
+    }
+
+    #[test]
+    fn test_cmd_assess_history_shows_session_events() {
+        let mut plugin = GroovePlugin::default();
+        let mut ctx = create_test_context();
+
+        plugin.on_load(&mut ctx).unwrap();
+
+        // Process events for specific session
+        for i in 0..3 {
+            let raw = make_raw_event("detail-session", &format!("Detail message {i}"));
+            plugin.on_event(raw, &mut ctx);
+        }
+
+        // Query history for specific session
+        let mut args = vibes_plugin_api::CommandArgs::default();
+        args.args.push("detail-session".into());
+        let result = plugin.cmd_assess_history(&args).unwrap();
+
+        match result {
+            CommandOutput::Text(text) => {
+                // Should NOT say "No assessments found"
+                assert!(
+                    !text.contains("No assessments found"),
+                    "Should show session events, not hardcoded 'no assessments'. Output:\n{}",
+                    text
+                );
+            }
+            _ => panic!("Expected Text output"),
         }
     }
 }
