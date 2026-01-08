@@ -2,7 +2,7 @@
 id: CHORE0012
 title: Align Settings page with CRT design system
 type: chore
-status: backlog
+status: done
 priority: medium
 epics: [web-ui]
 depends: []

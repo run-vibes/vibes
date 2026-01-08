@@ -1,5 +1,4 @@
 import { forwardRef, HTMLAttributes, ReactNode } from 'react';
-import { Badge } from '../../primitives/Badge';
 import styles from './Header.module.css';
 
 export interface NavItem {
@@ -19,7 +18,6 @@ export interface LinkProps {
 export interface HeaderProps extends HTMLAttributes<HTMLElement> {
   navItems?: NavItem[];
   identity?: { email: string; provider?: string };
-  isLocal?: boolean;
   theme?: 'dark' | 'light';
   onThemeToggle?: () => void;
   settingsHref?: string;
@@ -31,7 +29,7 @@ const DefaultLink = ({ href, className, children }: LinkProps) => (
 );
 
 export const Header = forwardRef<HTMLElement, HeaderProps>(
-  ({ navItems = [], identity, isLocal, theme = 'dark', onThemeToggle, settingsHref, renderLink, className = '', ...props }, ref) => {
+  ({ navItems = [], identity, theme = 'dark', onThemeToggle, settingsHref, renderLink, className = '', ...props }, ref) => {
     const classes = [styles.header, className].filter(Boolean).join(' ');
 
     const Link = renderLink ?? DefaultLink;
@@ -59,7 +57,6 @@ export const Header = forwardRef<HTMLElement, HeaderProps>(
         </nav>
 
         <div className={styles.actions}>
-          {isLocal && <Badge status="idle">Local</Badge>}
           {identity && <span className={styles.identity}>{identity.email}</span>}
           {onThemeToggle && (
             <button

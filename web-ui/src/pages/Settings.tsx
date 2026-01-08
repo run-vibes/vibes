@@ -1,6 +1,6 @@
 // web-ui/src/pages/Settings.tsx
 import { useState, useEffect } from 'react';
-import { Panel, Button, Text } from '@vibes/design-system';
+import { Button } from '@vibes/design-system';
 import { NotificationSettings } from '../components/NotificationSettings';
 import { useTunnelStatus } from '../hooks/useTunnelStatus';
 import { useCrtEffects } from '../hooks/useCrtEffects';
@@ -38,16 +38,16 @@ export function SettingsPage() {
   return (
     <div className="settings-page">
       <div className="settings-header">
-        <h1>Settings</h1>
-        <Text intensity="dim">Configure your vibes experience</Text>
+        <h1>SETTINGS</h1>
       </div>
 
       <div className="settings-content">
-        <Panel title="Appearance" className="settings-panel">
+        <div className="settings-panel">
+          <h2 className="settings-panel-title">APPEARANCE</h2>
           <div className="setting-row">
             <div className="setting-info">
               <div className="setting-label">Theme</div>
-              <Text intensity="dim">Choose between dark and light mode</Text>
+              <span className="setting-description">Choose between dark and light mode</span>
             </div>
             <div className="setting-control">
               <div className="theme-toggle">
@@ -69,7 +69,7 @@ export function SettingsPage() {
           <div className="setting-row">
             <div className="setting-info">
               <div className="setting-label">CRT Effects</div>
-              <Text intensity="dim">Enable retro CRT scanlines and vignette</Text>
+              <span className="setting-description">Enable retro CRT scanlines and vignette</span>
             </div>
             <div className="setting-control">
               <div className="theme-toggle">
@@ -88,15 +88,17 @@ export function SettingsPage() {
               </div>
             </div>
           </div>
-        </Panel>
+        </div>
 
-        <Panel title="Notifications" className="settings-panel">
+        <div className="settings-panel">
+          <h2 className="settings-panel-title">NOTIFICATIONS</h2>
           <NotificationSettings />
-        </Panel>
+        </div>
 
-        <Panel title="Tunnel" className="settings-panel">
-          {tunnelLoading && <Text intensity="dim">Loading...</Text>}
-          {tunnelError && <Text intensity="dim" style={{ color: 'var(--color-error)' }}>Error loading tunnel status</Text>}
+        <div className="settings-panel">
+          <h2 className="settings-panel-title">TUNNEL</h2>
+          {tunnelLoading && <span className="setting-description">Loading...</span>}
+          {tunnelError && <span className="setting-error">Error loading tunnel status</span>}
           {tunnel && (
             <div className="tunnel-status">
               <div className="setting-row">
@@ -112,7 +114,7 @@ export function SettingsPage() {
                   <div className="setting-label">Mode</div>
                 </div>
                 <div className="setting-control">
-                  <Text intensity="dim">{tunnel.mode || 'Not configured'}</Text>
+                  <span className="setting-value">{tunnel.mode || 'Not configured'}</span>
                 </div>
               </div>
               {tunnel.url && (
@@ -121,7 +123,7 @@ export function SettingsPage() {
                     <div className="setting-label">URL</div>
                   </div>
                   <div className="setting-control">
-                    <a href={tunnel.url} target="_blank" rel="noopener noreferrer">
+                    <a href={tunnel.url} target="_blank" rel="noopener noreferrer" className="setting-link">
                       {tunnel.url}
                     </a>
                   </div>
@@ -133,7 +135,7 @@ export function SettingsPage() {
                     <div className="setting-label">Tunnel Name</div>
                   </div>
                   <div className="setting-control">
-                    <Text intensity="dim">{tunnel.tunnel_name}</Text>
+                    <span className="setting-value">{tunnel.tunnel_name}</span>
                   </div>
                 </div>
               )}
@@ -143,24 +145,25 @@ export function SettingsPage() {
                     <div className="setting-label">Error</div>
                   </div>
                   <div className="setting-control">
-                    <Text intensity="dim" style={{ color: 'var(--color-error)' }}>{tunnel.error}</Text>
+                    <span className="setting-error">{tunnel.error}</span>
                   </div>
                 </div>
               )}
             </div>
           )}
-        </Panel>
+        </div>
 
-        <Panel title="Data & Storage" className="settings-panel">
+        <div className="settings-panel">
+          <h2 className="settings-panel-title">DATA & STORAGE</h2>
           <div className="setting-row">
             <div className="setting-info">
               <div className="setting-label">Clear Local Data</div>
-              <Text intensity="dim">Remove all cached settings and preferences</Text>
+              <span className="setting-description">Remove all cached settings and preferences</span>
             </div>
             <div className="setting-control">
               {showClearConfirm ? (
                 <div className="confirm-dialog">
-                  <Text intensity="dim">Clear all settings?</Text>
+                  <span className="setting-description">Clear all settings?</span>
                   <div className="confirm-buttons">
                     <Button variant="secondary" onClick={() => setShowClearConfirm(false)}>
                       Cancel
@@ -177,12 +180,13 @@ export function SettingsPage() {
               )}
             </div>
           </div>
-        </Panel>
+        </div>
 
-        <Panel title="About" className="settings-panel">
+        <div className="settings-panel">
+          <h2 className="settings-panel-title">ABOUT</h2>
           <div className="about-content">
             <div className="about-logo">vibes</div>
-            <Text intensity="dim">Remote control for your Claude Code sessions</Text>
+            <span className="setting-description">Remote control for your Claude Code sessions</span>
             <div className="about-links">
               <a href="https://github.com/run-vibes/vibes" target="_blank" rel="noopener noreferrer">
                 GitHub
@@ -193,7 +197,7 @@ export function SettingsPage() {
               </a>
             </div>
           </div>
-        </Panel>
+        </div>
       </div>
     </div>
   );
@@ -214,19 +218,13 @@ function TunnelStatusBadge({ state }: { state: string }) {
 
   return (
     <span
+      className="tunnel-badge"
       style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 'var(--space-2)',
-        padding: 'var(--space-1) var(--space-3)',
-        borderRadius: 'var(--radius-full)',
         backgroundColor: style.bgColor,
         color: style.color,
-        fontSize: 'var(--font-size-sm)',
-        fontWeight: 500,
       }}
     >
-      <span style={{ fontSize: '0.5rem' }}>●</span>
+      <span className="tunnel-badge-dot">●</span>
       {state}
     </span>
   );
