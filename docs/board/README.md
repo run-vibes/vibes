@@ -12,7 +12,7 @@
 
 | Story | Type | Priority | Epics |
 |-------|------|----------|-------|
-| [m27-chore-12-align-settings-page-with-crt-design](stages/backlog/stories/m27-chore-12-align-settings-page-with-crt-design.md) | chore | medium | web-ui |
+| [m27-chore-0012-align-settings-page-with-crt-design-system](stages/backlog/stories/m27-chore-0012-align-settings-page-with-crt-design-system.md) | chore | medium | web-ui |
 
 ## Epics
 
@@ -23,7 +23,7 @@
 | [mobile](epics/mobile/) | active | 0 |
 | [networking](epics/networking/) | active | 0 |
 | [plugin-system](epics/plugin-system/) | active | 11 |
-| [web-ui](epics/web-ui/) | active | 24 |
+| [web-ui](epics/web-ui/) | active | 25 |
 
 ## Milestones
 
