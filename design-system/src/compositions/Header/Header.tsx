@@ -7,6 +7,7 @@ export interface NavItem {
   href: string;
   isActive?: boolean;
   isGroove?: boolean;
+  hasSubnav?: boolean;
 }
 
 export interface LinkProps {
@@ -48,9 +49,11 @@ export const Header = forwardRef<HTMLElement, HeaderProps>(
                 styles.navLink,
                 item.isActive && styles.navLinkActive,
                 item.isGroove && styles.grooveLink,
+                item.hasSubnav && styles.hasSubnav,
               ].filter(Boolean).join(' ')}
             >
               {item.label}
+              {item.hasSubnav && <span className={styles.subnavIndicator}>▾</span>}
             </Link>
           ))}
         </nav>
@@ -64,12 +67,14 @@ export const Header = forwardRef<HTMLElement, HeaderProps>(
               onClick={onThemeToggle}
               aria-label="Toggle theme"
             >
-              {theme === 'dark' ? '☀' : '🌙'}
+              <span className={styles.actionIcon}>◐</span>
+              <span className={styles.actionLabel}>THEME</span>
             </button>
           )}
           {settingsHref && (
-            <Link href={settingsHref} className={styles.settingsLink}>
-              ⚙
+            <Link href={settingsHref} className={styles.settingsLink} aria-label="Settings">
+              <span className={styles.actionIcon}>⚙</span>
+              <span className={styles.actionLabel}>SETTINGS</span>
             </Link>
           )}
         </div>

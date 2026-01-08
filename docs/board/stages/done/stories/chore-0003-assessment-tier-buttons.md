@@ -2,7 +2,7 @@
 id: chore-0003-assessment-tier-buttons
 title: "Chore: Style Assessment Tier Filter Buttons"
 type: chore
-status: backlog
+status: done
 priority: low
 epics: [web-ui]
 depends: []
@@ -28,7 +28,7 @@ Style the "Lightweight", "Medium", and "Heavy" tier filter buttons on `/groove/a
 
 ## Acceptance Criteria
 
-- [ ] Tier buttons use CRT design system styling
-- [ ] Buttons have appropriate hover/active states
-- [ ] Selected state is clearly visible
-- [ ] Consistent with other UI filter buttons
+- [x] Tier buttons use CRT design system styling
+- [x] Buttons have appropriate hover/active states
+- [x] Selected state is clearly visible
+- [x] Consistent with other UI filter buttons

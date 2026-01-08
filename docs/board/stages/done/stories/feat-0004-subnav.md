@@ -2,7 +2,7 @@
 id: feat-0004-subnav
 title: "Feature: Implement Plugin Subnav Bar"
 type: feat
-status: backlog
+status: done
 priority: medium
 epics: [web-ui]
 depends: []

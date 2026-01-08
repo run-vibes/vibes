@@ -1,6 +1,5 @@
 // web-ui/src/pages/Quarantine.tsx
 import { useState } from 'react';
-import { Link, useLocation } from '@tanstack/react-router';
 import { Text, Button } from '@vibes/design-system';
 import {
   useQuarantineList,
@@ -10,32 +9,6 @@ import {
   type QuarantinedLearningSummary,
 } from '../hooks/useGroove';
 import './Quarantine.css';
-
-// ============================================================================
-// Groove Navigation Component
-// ============================================================================
-
-function GrooveNav() {
-  const location = useLocation();
-  const isAssessment = location.pathname === '/groove/assessment';
-
-  return (
-    <nav className="groove-nav">
-      <Link
-        to="/groove"
-        className={`groove-nav-link ${!isAssessment ? 'active' : ''}`}
-      >
-        Security
-      </Link>
-      <Link
-        to="/groove/assessment"
-        className={`groove-nav-link ${isAssessment ? 'active' : ''}`}
-      >
-        Assessment
-      </Link>
-    </nav>
-  );
-}
 
 // ============================================================================
 // Stats Card Component
@@ -113,7 +86,7 @@ function TrustLevelsSection() {
 
   return (
     <section>
-      <h2>Trust Levels</h2>
+      <h2>TRUST LEVELS</h2>
       <div className="trust-levels-grid">
         {data.levels.map((level) => (
           <div key={level.name} className="trust-level-card">
@@ -143,7 +116,7 @@ function PolicySection() {
   return (
     <section>
       <h2 className="policy-header" onClick={() => setExpanded(!expanded)}>
-        Security Policy {expanded ? '▼' : '▶'}
+        SECURITY POLICY {expanded ? '▼' : '▶'}
       </h2>
       {expanded && (
         <div className="policy-content">
@@ -210,50 +183,58 @@ export function QuarantinePage() {
 
   return (
     <div className="quarantine-page">
+      {/* Header */}
       <div className="quarantine-header">
-        <h1>Groove</h1>
-        <GrooveNav />
+        <div className="quarantine-header-left">
+          <h1 className="quarantine-title">SECURITY</h1>
+        </div>
+        <div className="quarantine-header-right">
+          {/* Future: Add actions like refresh button */}
+        </div>
       </div>
 
-      {/* Stats Grid */}
-      <section>
-        <h2>Quarantine Queue</h2>
-        {statsLoading ? (
-          <Text intensity="dim">Loading stats...</Text>
-        ) : stats ? (
-          <div className="stats-grid">
-            <StatCard label="Total" value={stats.total} variant="total" />
-            <StatCard label="Pending" value={stats.pending_review} variant="pending" />
-            <StatCard label="Approved" value={stats.approved} variant="approved" />
-            <StatCard label="Rejected" value={stats.rejected} variant="rejected" />
-            <StatCard label="Escalated" value={stats.escalated} variant="escalated" />
-          </div>
-        ) : null}
-      </section>
+      {/* Content */}
+      <div className="quarantine-content">
+        {/* Stats Grid */}
+        <section>
+          <h2>QUARANTINE QUEUE</h2>
+          {statsLoading ? (
+            <Text intensity="dim">Loading stats...</Text>
+          ) : stats ? (
+            <div className="stats-grid">
+              <StatCard label="Total" value={stats.total} variant="total" />
+              <StatCard label="Pending" value={stats.pending_review} variant="pending" />
+              <StatCard label="Approved" value={stats.approved} variant="approved" />
+              <StatCard label="Rejected" value={stats.rejected} variant="rejected" />
+              <StatCard label="Escalated" value={stats.escalated} variant="escalated" />
+            </div>
+          ) : null}
+        </section>
 
-      {/* Quarantine List */}
-      <section>
-        <h2>Pending Review</h2>
-        {listLoading ? (
-          <Text intensity="dim">Loading quarantined items...</Text>
-        ) : quarantined && quarantined.items.length > 0 ? (
-          <div className="quarantine-list">
-            {quarantined.items.map((item) => (
-              <QuarantineItem key={item.id} item={item} />
-            ))}
-          </div>
-        ) : (
-          <div className="empty-state">
-            <Text intensity="dim">No items in quarantine queue</Text>
-          </div>
-        )}
-      </section>
+        {/* Quarantine List */}
+        <section>
+          <h2>PENDING REVIEW</h2>
+          {listLoading ? (
+            <Text intensity="dim">Loading quarantined items...</Text>
+          ) : quarantined && quarantined.items.length > 0 ? (
+            <div className="quarantine-list">
+              {quarantined.items.map((item) => (
+                <QuarantineItem key={item.id} item={item} />
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state">
+              <Text intensity="dim">No items in quarantine queue</Text>
+            </div>
+          )}
+        </section>
 
-      {/* Trust Levels */}
-      <TrustLevelsSection />
+        {/* Trust Levels */}
+        <TrustLevelsSection />
 
-      {/* Policy */}
-      <PolicySection />
+        {/* Policy */}
+        <PolicySection />
+      </div>
     </div>
   );
 }

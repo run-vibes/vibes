@@ -28,7 +28,7 @@ describe('Session', () => {
   test('back link goes to /sessions', () => {
     render(<Session />);
 
-    const backLink = screen.getByRole('link', { name: /sessions/i });
+    const backLink = screen.getByRole('link', { name: /back/i });
     expect(backLink).toHaveAttribute('href', '/sessions');
   });
 });

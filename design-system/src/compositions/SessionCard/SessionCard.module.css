@@ -33,6 +33,12 @@
   box-shadow: var(--focus-ring);
 }
 
+/* Reset link styling when rendered as anchor */
+a.card {
+  text-decoration: none;
+  color: inherit;
+}
+
 /* === Active Session State === */
 .active {
   border-left: 3px solid var(--phosphor);

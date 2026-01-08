@@ -5,7 +5,7 @@ import { Header } from './Header';
 describe('Header', () => {
   it('renders logo', () => {
     render(<Header />);
-    expect(screen.getByText(/vibes/)).toBeInTheDocument();
+    expect(screen.getByText(/vibes/i)).toBeInTheDocument();
   });
 
   it('renders as header element', () => {
@@ -48,6 +48,22 @@ describe('Header', () => {
     expect(onToggle).toHaveBeenCalled();
   });
 
+  it('renders theme toggle with icon and text label', () => {
+    render(<Header theme="dark" onThemeToggle={() => {}} />);
+    const themeButton = screen.getByLabelText('Toggle theme');
+    expect(themeButton).toHaveTextContent('◐');
+    expect(themeButton).toHaveTextContent('THEME');
+  });
+
+  it('renders settings link with icon and text label', () => {
+    render(<Header settingsHref="/settings" renderLink={({ href, className, children }) => (
+      <a href={href} className={className}>{children}</a>
+    )} />);
+    const settingsLink = screen.getByRole('link', { name: /settings/i });
+    expect(settingsLink).toHaveTextContent('⚙');
+    expect(settingsLink).toHaveTextContent('SETTINGS');
+  });
+
   it('does not render theme toggle when onThemeToggle not provided', () => {
     render(<Header />);
     expect(screen.queryByLabelText('Toggle theme')).not.toBeInTheDocument();
@@ -60,6 +76,15 @@ describe('Header', () => {
       />
     );
     expect(screen.getByText(/Groove/)).toBeInTheDocument();
+  });
+
+  it('renders subnav indicator for items with hasSubnav', () => {
+    render(
+      <Header
+        navItems={[{ label: 'Groove', href: '/groove', hasSubnav: true }]}
+      />
+    );
+    expect(screen.getByText('▾')).toBeInTheDocument();
   });
 
   it('merges custom className', () => {

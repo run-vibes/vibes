@@ -2,7 +2,7 @@
 id: chore-0001-nav-cleanup
 title: "Chore: Clean Up Navigation Items"
 type: chore
-status: backlog
+status: done
 priority: medium
 epics: [web-ui]
 depends: []
@@ -52,10 +52,10 @@ VIBES  [SESSIONS] [FIREHOSE] [GROOVE]     [◐ THEME] [⚙ SETTINGS]
 
 ## Acceptance Criteria
 
-- [ ] "Dash" nav item removed
-- [ ] "Sess" renamed to "Sessions"
-- [ ] "Fire" renamed to "Firehose"
-- [ ] Theme action shows "◐ THEME"
-- [ ] Settings action shows "⚙ SETTINGS"
-- [ ] Clicking logo returns to homepage
-- [ ] All routes still work correctly
+- [x] "Dash" nav item removed
+- [x] "Sess" renamed to "Sessions"
+- [x] "Fire" renamed to "Firehose"
+- [x] Theme action shows "◐ THEME"
+- [x] Settings action shows "⚙ SETTINGS"
+- [x] Clicking logo returns to homepage
+- [x] All routes still work correctly

@@ -22,6 +22,8 @@ export interface SessionCardProps extends HTMLAttributes<HTMLElement> {
   eventCount?: number;
   /** Quick action buttons shown on hover */
   actions?: SessionAction[];
+  /** URL to navigate to - renders as anchor when provided */
+  href?: string;
 }
 
 const statusMap = {
@@ -48,6 +50,7 @@ export const SessionCard = forwardRef<HTMLElement, SessionCardProps>(
       duration,
       eventCount,
       actions,
+      href,
       className = '',
       onClick,
       ...props
@@ -66,8 +69,10 @@ export const SessionCard = forwardRef<HTMLElement, SessionCardProps>(
     const timeAgo = formatTimeAgo(updatedAt);
     const durationStr = duration !== undefined ? formatDuration(duration) : undefined;
 
+    const Tag = href ? 'a' : 'article';
+
     return (
-      <article ref={ref} className={classes} onClick={onClick} {...props}>
+      <Tag ref={ref as React.Ref<HTMLAnchorElement & HTMLElement>} className={classes} onClick={onClick} href={href} {...props}>
         <div className={styles.header}>
           <div>
             <div className={styles.titleSection}>
@@ -114,7 +119,7 @@ export const SessionCard = forwardRef<HTMLElement, SessionCardProps>(
             </div>
           )}
         </div>
-      </article>
+      </Tag>
     );
   }
 );

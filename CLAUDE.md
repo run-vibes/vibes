@@ -105,6 +105,17 @@ Use `just board new story "name"` or `just board new milestone "name"` to create
 
 See [docs/board/CONVENTIONS.md](docs/board/CONVENTIONS.md) for detailed planning conventions.
 
+### Story State Changes (IMPORTANT)
+
+**ALWAYS use `just board` commands to change story state. NEVER manually move files or update symlinks.**
+
+| Action | Command |
+|--------|---------|
+| Start working | `just board start <story-id>` |
+| Complete work | `just board done <story-id>` |
+
+These commands handle file moves, symlink updates, and changelog entries automatically.
+
 ### Completing Work
 
 **REQUIRED before marking work done:**
@@ -112,8 +123,9 @@ See [docs/board/CONVENTIONS.md](docs/board/CONVENTIONS.md) for detailed planning
 1. Run `just pre-commit` — all checks pass
 
 2. Update the board:
-   - Set frontmatter `status: done`, check acceptance criteria
-   - Run `just board done <story-id>` to move story and update changelog
+   - Check acceptance criteria in story file
+   - Set frontmatter `status: done`
+   - Run `just board done <story-id>` (moves file, updates symlinks, adds changelog)
 
 3. Commit, push, create PR
 
