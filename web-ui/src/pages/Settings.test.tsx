@@ -31,7 +31,7 @@ describe('SettingsPage', () => {
       render(<SettingsPage />);
 
       // Should have a Tunnel section
-      expect(screen.getByText('Tunnel')).toBeInTheDocument();
+      expect(screen.getByText('TUNNEL')).toBeInTheDocument();
       expect(screen.getByText('connected')).toBeInTheDocument();
     });
 

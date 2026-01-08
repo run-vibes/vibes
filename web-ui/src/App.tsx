@@ -26,7 +26,7 @@ import { useWebSocket } from './hooks/useWebSocket'
 // Root layout component
 function RootLayout() {
   const { addMessageHandler } = useWebSocket();
-  const { identity, isLocal, isAuthenticated, isLoading } = useAuth({ addMessageHandler });
+  const { identity, isAuthenticated } = useAuth({ addMessageHandler });
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
 
@@ -52,7 +52,6 @@ function RootLayout() {
       <Header
         navItems={navItems}
         identity={isAuthenticated && identity ? { email: identity.email, provider: identity.identity_provider } : undefined}
-        isLocal={!isLoading && isLocal}
         theme={theme}
         onThemeToggle={toggleTheme}
         settingsHref="/settings"

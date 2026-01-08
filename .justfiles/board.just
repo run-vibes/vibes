@@ -15,13 +15,17 @@ default:
     echo "  just board status       Show counts per stage + blocked stories"
     echo ""
     echo "Story management:"
-    echo "  just board new story \"title\"  Create story in backlog"
-    echo "  just board start <id>         Move story to in-progress"
-    echo "  just board done <id>          Move story to done + changelog"
+    echo "  just board new story \"title\" [type] [epics] [milestone]"
+    echo "                              Create story (type: feat|bug|chore|refactor)"
+    echo "  just board start <id>       Move story to in-progress"
+    echo "  just board done <id> [summary]"
+    echo "                              Move story to done + changelog"
     echo ""
     echo "Epic/Milestone management:"
-    echo "  just board new epic \"name\"      Create epic directory"
-    echo "  just board new milestone \"name\" Create milestone directory"
+    echo "  just board new epic \"name\" [description]"
+    echo "                              Create epic directory"
+    echo "  just board new milestone \"name\""
+    echo "                              Create milestone directory"
     echo "  just board link <story> <epic>   Add story to epic"
     echo "  just board unlink <story> <epic> Remove story from epic"
     echo "  just board link-epic <epic> <milestone>  Add epic to milestone"
@@ -30,6 +34,11 @@ default:
     echo "  just board list epics      Show all epics with story counts"
     echo "  just board list milestones Show all milestones with progress"
     echo "  just board show <id>       Display story details"
+    echo ""
+    echo "Examples:"
+    echo "  just board new story \"Add login\" feat \"web-ui\" \"27-crt-design-system\""
+    echo "  just board new epic \"performance\" \"Speed improvements\""
+    echo "  just board done feat-01 \"Added user authentication\""
 
 # Generate README.md from directory structure
 generate:
@@ -243,63 +252,94 @@ _next-milestone:
     printf "%02d" $((max + 1))
 
 # Internal: create a new story
-_new-story TITLE:
+# Usage: just board _new-story "title" [type] [epics] [milestone]
+# Examples:
+#   just board _new-story "Add login" feat "web-ui, cli"
+#   just board _new-story "Fix crash" bug "" "27-crt-design-system"
+_new-story TITLE TYPE="" EPICS="" MILESTONE="":
     #!/usr/bin/env bash
     set -euo pipefail
     cd "{{board_dir}}"
 
     title="{{TITLE}}"
+    type="{{TYPE}}"
+    selected_epics="{{EPICS}}"
+    milestone="{{MILESTONE}}"
 
-    # Prompt for type
-    echo "Select type:"
-    echo "  1) feat     - New functionality"
-    echo "  2) bug      - Bug fix"
-    echo "  3) chore    - Maintenance"
-    echo "  4) refactor - Code restructuring"
-    read -p "Type [1-4]: " type_choice
+    # If type not provided, prompt for it
+    if [[ -z "$type" ]]; then
+        echo "Select type:"
+        echo "  1) feat     - New functionality"
+        echo "  2) bug      - Bug fix"
+        echo "  3) chore    - Maintenance"
+        echo "  4) refactor - Code restructuring"
+        read -p "Type [1-4]: " type_choice
 
-    case "$type_choice" in
-        1) type="feat" ;;
-        2) type="bug" ;;
-        3) type="chore" ;;
-        4) type="refactor" ;;
-        *) type="feat" ;;
+        case "$type_choice" in
+            1) type="feat" ;;
+            2) type="bug" ;;
+            3) type="chore" ;;
+            4) type="refactor" ;;
+            *) type="feat" ;;
+        esac
+    fi
+
+    # Validate type
+    case "$type" in
+        feat|bug|chore|refactor|fix|docs) ;;
+        *)
+            echo "Error: Invalid type '$type'. Must be: feat, bug, chore, refactor, fix, docs"
+            exit 1
+            ;;
     esac
 
     # Generate ID
     id=$(just board _next-id "$type")
 
-    # Prompt for epics
-    echo ""
-    echo "Available epics:"
-    i=1
-    declare -a epic_names=()
-    for epic_dir in epics/*/; do
-        [[ -d "$epic_dir" ]] || continue
-        name=$(basename "$epic_dir")
-        epic_names+=("$name")
-        echo "  $i) $name"
-        i=$((i + 1))
-    done
-
-    echo ""
-    read -p "Select epics (comma-separated numbers, or Enter for none): " epic_choice
-
-    selected_epics=""
-    if [[ -n "$epic_choice" ]]; then
-        IFS=',' read -ra choices <<< "$epic_choice"
-        for choice in "${choices[@]}"; do
-            choice=$(echo "$choice" | tr -d ' ')
-            if [[ "$choice" =~ ^[0-9]+$ ]] && [[ $choice -ge 1 ]] && [[ $choice -le ${#epic_names[@]} ]]; then
-                [[ -n "$selected_epics" ]] && selected_epics="$selected_epics, "
-                selected_epics="${selected_epics}${epic_names[$((choice-1))]}"
-            fi
+    # If epics not provided, prompt for them
+    if [[ -z "$selected_epics" ]] && [[ -t 0 ]]; then
+        echo ""
+        echo "Available epics:"
+        i=1
+        declare -a epic_names=()
+        for epic_dir in epics/*/; do
+            [[ -d "$epic_dir" ]] || continue
+            name=$(basename "$epic_dir")
+            epic_names+=("$name")
+            echo "  $i) $name"
+            i=$((i + 1))
         done
+
+        echo ""
+        read -p "Select epics (comma-separated numbers, or Enter for none): " epic_choice
+
+        if [[ -n "$epic_choice" ]]; then
+            IFS=',' read -ra choices <<< "$epic_choice"
+            for choice in "${choices[@]}"; do
+                choice=$(echo "$choice" | tr -d ' ')
+                if [[ "$choice" =~ ^[0-9]+$ ]] && [[ $choice -ge 1 ]] && [[ $choice -le ${#epic_names[@]} ]]; then
+                    [[ -n "$selected_epics" ]] && selected_epics="$selected_epics, "
+                    selected_epics="${selected_epics}${epic_names[$((choice-1))]}"
+                fi
+            done
+        fi
     fi
 
-    # Create slug
+    # Create slug from title
     slug=$(echo "$title" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd 'a-z0-9-')
-    filename="stages/backlog/stories/${type}-${id}-${slug}.md"
+
+    # Build filename - include milestone prefix if provided
+    if [[ -n "$milestone" ]]; then
+        # Extract milestone number (e.g., "27" from "27-crt-design-system")
+        ms_num=$(echo "$milestone" | grep -oE '^[0-9]+' || echo "")
+        if [[ -n "$ms_num" ]]; then
+            filename="stages/backlog/stories/m${ms_num}-${type}-${id}-${slug}.md"
+        else
+            filename="stages/backlog/stories/${type}-${id}-${slug}.md"
+        fi
+    else
+        filename="stages/backlog/stories/${type}-${id}-${slug}.md"
+    fi
 
     # Create the story file
     date=$(date +%Y-%m-%d)
@@ -315,6 +355,9 @@ _new-story TITLE:
         echo "estimate:"
         echo "created: ${date}"
         echo "updated: ${date}"
+        if [[ -n "$milestone" ]]; then
+            echo "milestone: ${milestone}"
+        fi
         echo '---'
         echo ""
         echo "# ${title}"
@@ -351,12 +394,14 @@ _new-story TITLE:
     fi
 
 # Internal: create a new epic
-_new-epic NAME:
+# Usage: just board _new-epic "name" [description]
+_new-epic NAME DESCRIPTION="":
     #!/usr/bin/env bash
     set -euo pipefail
     cd "{{board_dir}}"
 
     name="{{NAME}}"
+    description="{{DESCRIPTION}}"
     slug=$(echo "$name" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd 'a-z0-9-')
     dir="epics/$slug"
 
@@ -367,7 +412,10 @@ _new-epic NAME:
 
     mkdir -p "$dir"
 
-    read -p "Description (one line): " description
+    # If description not provided and we have a terminal, prompt for it
+    if [[ -z "$description" ]] && [[ -t 0 ]]; then
+        read -p "Description (one line): " description
+    fi
 
     {
         echo '---'
@@ -465,24 +513,31 @@ _new-milestone NAME:
     echo "Created: $dir/design.md"
 
 # Router for new command
-new TYPE NAME:
+# Usage:
+#   just board new story "title" [type] [epics] [milestone]
+#   just board new epic "name" [description]
+#   just board new milestone "name"
+new TYPE NAME *ARGS:
     #!/usr/bin/env bash
     type="{{TYPE}}"
     name="{{NAME}}"
 
     case "$type" in
         story)
-            just board _new-story "$name"
+            just board _new-story "$name" {{ARGS}}
             ;;
         epic)
-            just board _new-epic "$name"
+            just board _new-epic "$name" {{ARGS}}
             ;;
         milestone)
             just board _new-milestone "$name"
             ;;
         *)
             echo "Error: Unknown type '$type'"
-            echo "Usage: just board new <story|epic|milestone> \"name\""
+            echo "Usage:"
+            echo "  just board new story \"title\" [type] [epics] [milestone]"
+            echo "  just board new epic \"name\" [description]"
+            echo "  just board new milestone \"name\""
             exit 1
             ;;
     esac
@@ -578,7 +633,12 @@ start ID:
     echo "Board updated"
 
 # Complete a story (move to done)
-done ID:
+# Usage: just board done <id> [summary]
+# Examples:
+#   just board done feat-01                    # Prompts for changelog summary
+#   just board done feat-01 "Added login"      # Uses provided summary
+#   just board done feat-01 ""                 # Skips changelog (empty string)
+done ID SUMMARY="__PROMPT__":
     #!/usr/bin/env bash
     set -euo pipefail
     cd "{{board_dir}}"
@@ -602,10 +662,19 @@ done ID:
     # Get epics from frontmatter before moving
     epics=$(grep -m1 "^epics:" "$path" 2>/dev/null | sed 's/^epics: *//' | tr -d '[]' || echo "")
 
-    # Prompt for changelog entry
+    # Get title for changelog
     title=$(grep -m1 "^title:" "$path" 2>/dev/null | sed 's/^title: *//' || basename "$path" .md)
-    echo "Enter changelog summary for '$title' (or Enter to skip):"
-    read -r summary
+
+    # Handle summary - prompt only if set to __PROMPT__ and we have a terminal
+    summary="{{SUMMARY}}"
+    if [[ "$summary" == "__PROMPT__" ]]; then
+        if [[ -t 0 ]]; then
+            echo "Enter changelog summary for '$title' (or Enter to skip):"
+            read -r summary
+        else
+            summary=""
+        fi
+    fi
 
     # Move the file
     mv "$path" "$dest"

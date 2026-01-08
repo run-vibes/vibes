@@ -2,37 +2,66 @@
  * CRT Essence Design System - Settings Page Styles
  */
 
+/* === Container === */
 .settings-page {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
   gap: var(--space-4);
+  background: var(--screen);
+  font-family: var(--font-mono);
+  padding: var(--space-4);
 }
 
+/* === Header === */
 .settings-header {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  background: var(--surface);
 }
 
 .settings-header h1 {
   font-family: var(--font-display);
-  font-size: var(--text-xl);
+  font-size: var(--font-size-xl);
   font-weight: 400;
-  color: var(--text);
+  color: var(--phosphor);
+  text-shadow: 0 0 10px var(--phosphor-glow);
+  letter-spacing: 0.1em;
   margin: 0;
 }
 
+/* === Content Grid === */
 .settings-content {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: var(--space-4);
-  max-width: 600px;
+  flex: 1;
 }
 
+/* === Panels === */
 .settings-panel {
   min-height: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: var(--space-4);
 }
 
+.settings-panel-title {
+  color: var(--phosphor);
+  font-family: var(--font-display);
+  font-size: var(--font-size-md);
+  font-weight: 400;
+  margin: 0 0 var(--space-3) 0;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border);
+  text-shadow: 0 0 8px var(--phosphor-glow);
+  letter-spacing: 0.05em;
+}
+
+/* === Setting Rows === */
 .setting-row {
   display: flex;
   justify-content: space-between;
@@ -56,6 +85,7 @@
 }
 
 .setting-label {
+  font-family: var(--font-mono);
   font-weight: 500;
   color: var(--text);
   margin-bottom: var(--space-1);
@@ -65,17 +95,43 @@
   flex-shrink: 0;
 }
 
+.setting-description {
+  color: var(--text-dim);
+  font-size: var(--font-size-sm);
+}
+
+.setting-value {
+  color: var(--text-dim);
+  font-size: var(--font-size-sm);
+}
+
+.setting-error {
+  color: var(--red);
+  font-size: var(--font-size-sm);
+}
+
+.setting-link {
+  color: var(--phosphor);
+  font-size: var(--font-size-sm);
+  text-decoration: none;
+  transition: text-shadow var(--transition-fast);
+}
+
+.setting-link:hover {
+  text-shadow: 0 0 8px var(--phosphor-glow);
+}
+
+/* === Theme Toggle === */
 .theme-toggle {
   display: flex;
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
   overflow: hidden;
 }
 
 .theme-option {
   padding: var(--space-2) var(--space-3);
-  font-family: var(--font-display);
-  font-size: var(--text-sm);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
   background-color: transparent;
   border: none;
   color: var(--text-dim);
@@ -98,6 +154,7 @@
   box-shadow: 0 0 10px var(--phosphor-glow);
 }
 
+/* === About Section === */
 .about-content {
   display: flex;
   flex-direction: column;
@@ -109,7 +166,7 @@
 
 .about-logo {
   font-family: var(--font-display);
-  font-size: var(--text-2xl);
+  font-size: var(--font-size-2xl);
   font-weight: 400;
   color: var(--phosphor);
   text-shadow: 0 0 10px var(--phosphor-glow);
@@ -118,7 +175,7 @@
 .about-links {
   display: flex;
   gap: var(--space-3);
-  font-size: var(--text-sm);
+  font-size: var(--font-size-sm);
 }
 
 .about-links a {
@@ -135,7 +192,7 @@
   color: var(--text-faint);
 }
 
-/* Confirmation Dialog - Modal-like with phosphor glow */
+/* === Confirmation Dialog === */
 .confirm-dialog {
   display: flex;
   flex-direction: column;
@@ -143,7 +200,6 @@
   padding: var(--space-3);
   background-color: var(--surface);
   border: 1px solid var(--phosphor);
-  border-radius: var(--radius-md);
   box-shadow: var(--shadow-modal);
 }
 
@@ -153,8 +209,31 @@
   justify-content: flex-end;
 }
 
-/* Responsive */
+/* === Tunnel Status === */
+.tunnel-status {
+  display: flex;
+  flex-direction: column;
+}
+
+.tunnel-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+
+.tunnel-badge-dot {
+  font-size: 0.5rem;
+}
+
+/* === Responsive === */
 @media (max-width: 640px) {
+  .settings-content {
+    grid-template-columns: 1fr;
+  }
+
   .setting-row {
     flex-direction: column;
     align-items: flex-start;

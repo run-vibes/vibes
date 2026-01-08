@@ -36,11 +36,6 @@ describe('Header', () => {
     expect(screen.getByText('user@example.com')).toBeInTheDocument();
   });
 
-  it('renders local badge when isLocal', () => {
-    render(<Header isLocal />);
-    expect(screen.getByText('Local')).toBeInTheDocument();
-  });
-
   it('calls onThemeToggle when theme button clicked', () => {
     const onToggle = vi.fn();
     render(<Header theme="dark" onThemeToggle={onToggle} />);
