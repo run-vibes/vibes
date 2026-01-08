@@ -9,7 +9,10 @@ Auto-generated from directory structure. Run `just board generate` to update.
 
 ## Backlog
 
-*Backlog empty*
+| Story | Type | Priority | Epics |
+|-------|------|----------|-------|
+| [chore-0010-align-sessions-page-layout-with-firehose](stages/backlog/stories/chore-0010-align-sessions-page-layout-with-firehose.md) | chore | medium | web-ui |
+| [chore-0011-align-groove-pages-layout-with-firehose](stages/backlog/stories/chore-0011-align-groove-pages-layout-with-firehose.md) | chore | medium | web-ui |
 
 ## Epics
 
@@ -20,7 +23,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [mobile](epics/mobile/) | active | 0 |
 | [networking](epics/networking/) | active | 0 |
 | [plugin-system](epics/plugin-system/) | active | 10 |
-| [web-ui](epics/web-ui/) | active | 21 |
+| [web-ui](epics/web-ui/) | active | 23 |
 
 ## Milestones
 
