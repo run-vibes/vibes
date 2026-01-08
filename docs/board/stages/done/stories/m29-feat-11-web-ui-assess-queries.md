@@ -2,13 +2,13 @@
 id: F012
 title: "Feature: Add Assessment Query UI to Web Dashboard"
 type: feat
-status: in-progress
+status: done
 priority: medium
 epics: [web-ui, plugin-system]
 depends: [m26-feat-10-cli-assess-queries]
 estimate:
 created: 2026-01-07
-updated: 2026-01-07
+updated: 2026-01-08
 milestone: 29-assessment-framework
 ---
 
@@ -145,12 +145,12 @@ Add `GET /api/groove/assess/stats`:
 
 ## Implementation Order
 
-1. **API first** - Add `/assess/stats` endpoint, test with curl
+1. **Restructure files** - Create `assessment/` directory, move existing stream page
 2. **Shared layout** - Create `AssessmentLayout` with subnav, update routes
-3. **Status page** - Simplest, fetching and displaying data
-4. **History page** - Session selector + timeline reusing existing components
-5. **Stats page** - Charts last (most complex)
-6. **Move existing** - Refactor current `Assessment.tsx` → `AssessmentStream.tsx`
+3. **API endpoint** - Add `/assess/stats` endpoint, test with curl
+4. **Status page** - Fetching and displaying data
+5. **History page** - Session selector + timeline
+6. **Stats page** - Charts with visx
 
 ## Acceptance Criteria
 

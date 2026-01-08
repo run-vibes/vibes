@@ -1,11 +1,11 @@
-// web-ui/src/pages/Assessment.tsx
+// web-ui/src/pages/assessment/AssessmentStream.tsx
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { StreamView, EventInspector, Badge } from '@vibes/design-system';
 import type { DisplayEvent, ContextEvent } from '@vibes/design-system';
-import { useAssessment } from '../hooks/useAssessment';
-import type { AssessmentEvent } from '../hooks/useAssessment';
-import { extractTimestampFromUuidv7 } from '../lib/uuidv7';
-import './Assessment.css';
+import { useAssessment } from '../../hooks/useAssessment';
+import type { AssessmentEvent } from '../../hooks/useAssessment';
+import { extractTimestampFromUuidv7 } from '../../lib/uuidv7';
+import './AssessmentStream.css';
 
 const ASSESSMENT_TIERS = ['lightweight', 'medium', 'heavy'] as const;
 
@@ -74,7 +74,7 @@ function summarizeHeavyEvent(event: AssessmentEvent): string {
   return 'Heavy: behavioral analysis';
 }
 
-export function AssessmentPage() {
+export function AssessmentStream() {
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);

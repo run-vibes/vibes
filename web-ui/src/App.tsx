@@ -11,7 +11,12 @@ import { Sessions } from './pages/Sessions'
 import { Session } from './pages/Session'
 import { QuarantinePage } from './pages/Quarantine'
 import { FirehosePage } from './pages/Firehose'
-import { AssessmentPage } from './pages/Assessment'
+import {
+  AssessmentLayout,
+  AssessmentStream,
+  AssessmentStatus,
+  AssessmentHistory,
+} from './pages/assessment'
 import { DebugPage } from './pages/Debug'
 import { StreamsPage } from './pages/Streams'
 import { SettingsPage } from './pages/Settings'
@@ -35,7 +40,7 @@ function RootLayout() {
 
   const grooveSubnavItems = [
     { label: 'Security', href: '/groove', icon: '🛡', isActive: location.pathname === '/groove' },
-    { label: 'Assessment', href: '/groove/assessment', icon: '◈', isActive: location.pathname === '/groove/assessment' },
+    { label: 'Assessment', href: '/groove/assessment', icon: '◈', isActive: location.pathname.startsWith('/groove/assessment') },
   ];
 
   const renderLink = ({ href, className, children }: { href: string; className: string; children: React.ReactNode }) => (
@@ -108,10 +113,29 @@ const firehoseRoute = createRoute({
   component: FirehosePage,
 })
 
-const assessmentRoute = createRoute({
+// Assessment routes - nested under layout
+const assessmentLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/groove/assessment',
-  component: AssessmentPage,
+  component: AssessmentLayout,
+})
+
+const assessmentIndexRoute = createRoute({
+  getParentRoute: () => assessmentLayoutRoute,
+  path: '/',
+  component: AssessmentStream,
+})
+
+const assessmentStatusRoute = createRoute({
+  getParentRoute: () => assessmentLayoutRoute,
+  path: '/status',
+  component: AssessmentStatus,
+})
+
+const assessmentHistoryRoute = createRoute({
+  getParentRoute: () => assessmentLayoutRoute,
+  path: '/history',
+  component: AssessmentHistory,
 })
 
 const debugRoute = createRoute({
@@ -134,7 +158,11 @@ const routeTree = rootRoute.addChildren([
   grooveRoute,
   streamsRoute,
   firehoseRoute,
-  assessmentRoute,
+  assessmentLayoutRoute.addChildren([
+    assessmentIndexRoute,
+    assessmentStatusRoute,
+    assessmentHistoryRoute,
+  ]),
   debugRoute,
   settingsRoute,
 ])

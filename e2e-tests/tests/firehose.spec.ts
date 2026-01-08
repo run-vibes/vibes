@@ -18,9 +18,8 @@ test('firehose has event type filters', async ({ page, serverUrl }) => {
 
   // Should have filter items for event types in the sidebar
   await expect(page.locator('.filter-item').filter({ hasText: 'SESSION' })).toBeVisible();
-  await expect(page.locator('.filter-item').filter({ hasText: 'CLAUDE' })).toBeVisible();
-  await expect(page.locator('.filter-item').filter({ hasText: 'TOOL' })).toBeVisible();
   await expect(page.locator('.filter-item').filter({ hasText: 'HOOK' })).toBeVisible();
+  await expect(page.locator('.filter-item').filter({ hasText: 'ERROR' })).toBeVisible();
 });
 
 test('firehose has search input', async ({ page, serverUrl }) => {
@@ -76,14 +75,14 @@ test('multiple filter items can be active simultaneously', async ({ page, server
   await page.goto(`${serverUrl}/firehose`);
 
   const sessionFilter = page.locator('.filter-item').filter({ hasText: 'SESSION' });
-  const claudeFilter = page.locator('.filter-item').filter({ hasText: 'CLAUDE' });
+  const hookFilter = page.locator('.filter-item').filter({ hasText: 'HOOK' });
 
   // Activate both
   await sessionFilter.click();
-  await claudeFilter.click();
+  await hookFilter.click();
 
   await expect(sessionFilter).toHaveClass(/active/);
-  await expect(claudeFilter).toHaveClass(/active/);
+  await expect(hookFilter).toHaveClass(/active/);
 });
 
 test('firehose shows LIVE indicator when connected', async ({ page, serverUrl }) => {

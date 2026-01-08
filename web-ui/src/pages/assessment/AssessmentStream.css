@@ -1,0 +1,191 @@
+/* web-ui/src/pages/Assessment.css
+ * CRT-styled Groove Assessment page - matches Firehose layout patterns
+ */
+
+/* === Container === */
+.assessment-page {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: var(--space-2);
+  background: var(--screen);
+  font-family: var(--font-mono);
+  padding: var(--space-4);
+}
+
+/* === Header === */
+.assessment-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.assessment-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.assessment-title {
+  font-family: var(--font-display);
+  font-size: var(--font-size-xl);
+  font-weight: 400;
+  color: var(--phosphor);
+  text-shadow: 0 0 10px var(--phosphor-glow);
+  letter-spacing: 0.1em;
+  margin: 0;
+}
+
+.assessment-status {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.assessment-header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+/* === Tier Filter Chips === */
+.assessment-filters {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.filter-chip {
+  padding: var(--space-1) var(--space-3);
+  font-family: var(--font-display);
+  font-size: var(--font-size-sm);
+  text-transform: capitalize;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-dim);
+  transition: all var(--transition-fast);
+}
+
+.filter-chip:hover {
+  border-color: var(--phosphor-dim);
+  color: var(--phosphor);
+  background: var(--phosphor-subtle);
+}
+
+.filter-chip.active {
+  border-color: var(--phosphor);
+  color: var(--phosphor);
+  background: var(--phosphor-subtle);
+  text-shadow: 0 0 8px var(--phosphor-glow);
+}
+
+/* === Search Input === */
+.search-input {
+  width: 200px;
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  color: var(--text);
+  background-color: var(--screen);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.search-input::placeholder {
+  color: var(--text-faint);
+}
+
+.search-input:hover:not(:focus) {
+  border-color: var(--phosphor-dim);
+}
+
+.search-input:focus {
+  border-color: var(--phosphor);
+  box-shadow: 0 0 5px var(--phosphor-glow);
+}
+
+/* === Content Layout === */
+.assessment-content {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: var(--space-2);
+  flex: 1;
+  min-height: 0;
+}
+
+/* === Stream Panel === */
+.assessment-stream {
+  min-height: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+/* === Inspector Panel === */
+.assessment-inspector {
+  min-height: 0;
+}
+
+/* === Jump to Latest Button === */
+.jump-to-latest {
+  position: absolute;
+  bottom: var(--space-4);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: var(--space-2) var(--space-4);
+  font-family: var(--font-display);
+  font-size: var(--font-size-sm);
+  font-weight: 400;
+  color: var(--screen);
+  background-color: var(--phosphor);
+  border: 1px solid var(--phosphor-bright);
+  border-radius: 0;
+  cursor: pointer;
+  box-shadow: 0 0 15px var(--phosphor-glow);
+  transition: all var(--transition-fast);
+  z-index: 10;
+}
+
+.jump-to-latest:hover {
+  background-color: var(--phosphor-bright);
+  box-shadow: 0 0 25px var(--phosphor-glow), 0 0 40px var(--phosphor-subtle);
+}
+
+/* === Responsive === */
+@media (max-width: 1024px) {
+  .assessment-content {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 300px;
+  }
+}
+
+@media (max-width: 768px) {
+  .assessment-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+  }
+
+  .assessment-header-left,
+  .assessment-header-right {
+    justify-content: space-between;
+  }
+
+  .search-input {
+    flex: 1;
+  }
+}
+
+@media (max-width: 640px) {
+  .assessment-filters {
+    flex-wrap: wrap;
+  }
+}

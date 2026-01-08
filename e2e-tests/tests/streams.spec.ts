@@ -18,16 +18,17 @@ test('homepage shows status badges', async ({ page, serverUrl }) => {
 test('homepage has navigation cards', async ({ page, serverUrl }) => {
   await page.goto(serverUrl);
 
-  // Should have cards linking to subpages
-  await expect(page.getByRole('link', { name: /Firehose/i })).toBeVisible();
-  await expect(page.getByRole('link', { name: /Debug Console/i })).toBeVisible();
-  await expect(page.getByRole('link', { name: /Sessions/i })).toBeVisible();
+  // Should have cards linking to subpages (use card-specific selector to avoid matching navbar)
+  await expect(page.locator('.stream-card-link').filter({ hasText: /Firehose/i })).toBeVisible();
+  await expect(page.locator('.stream-card-link').filter({ hasText: /Debug Console/i })).toBeVisible();
+  await expect(page.locator('.stream-card-link').filter({ hasText: /Sessions/i })).toBeVisible();
 });
 
 test('firehose card links to firehose page', async ({ page, serverUrl }) => {
   await page.goto(serverUrl);
 
-  await page.getByRole('link', { name: /Firehose/i }).click();
+  // Use the card link, not the navbar link
+  await page.locator('.stream-card-link').filter({ hasText: /Firehose/i }).click();
 
   await expect(page).toHaveURL(/\/firehose/);
 });
@@ -35,7 +36,8 @@ test('firehose card links to firehose page', async ({ page, serverUrl }) => {
 test('sessions card links to sessions page', async ({ page, serverUrl }) => {
   await page.goto(serverUrl);
 
-  await page.getByRole('link', { name: /Sessions/i }).click();
+  // Use the card link, not the navbar link
+  await page.locator('.stream-card-link').filter({ hasText: /Sessions/i }).click();
 
   await expect(page).toHaveURL(/\/sessions/);
 });

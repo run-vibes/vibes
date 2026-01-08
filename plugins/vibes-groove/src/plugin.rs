@@ -243,6 +243,30 @@ pub struct SessionHistoryItem {
     pub result_types: Vec<String>,
 }
 
+/// Assessment stats response for HTTP API
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AssessmentStatsResponse {
+    pub tier_distribution: TierDistribution,
+    pub total_assessments: usize,
+    pub top_sessions: Vec<SessionStats>,
+}
+
+/// Count of assessments by tier
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TierDistribution {
+    pub lightweight: usize,
+    pub medium: usize,
+    pub heavy: usize,
+    pub checkpoint: usize,
+}
+
+/// Session with assessment count
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SessionStats {
+    pub session_id: String,
+    pub assessment_count: usize,
+}
+
 // ============================================================================
 // Server URL Configuration (for CLI → Server HTTP)
 // ============================================================================
@@ -258,6 +282,9 @@ pub const API_ASSESS_STATUS_PATH: &str = "/api/groove/assess/status";
 
 /// API endpoint path for assessment history
 pub const API_ASSESS_HISTORY_PATH: &str = "/api/groove/assess/history";
+
+/// API endpoint path for assessment stats
+pub const API_ASSESS_STATS_PATH: &str = "/api/groove/assess/stats";
 
 /// Server configuration for CLI HTTP calls
 #[derive(Debug, Clone)]
@@ -500,6 +527,7 @@ impl Plugin for GroovePlugin {
             (HttpMethod::Post, "/quarantine/:id/review") => self.route_review_quarantined(&request),
             (HttpMethod::Get, "/assess/status") => self.route_assess_status(),
             (HttpMethod::Get, "/assess/history") => self.route_assess_history(&request),
+            (HttpMethod::Get, "/assess/stats") => self.route_assess_stats(),
             _ => Err(PluginError::UnknownRoute(format!("{:?} {}", method, path))),
         }
     }
@@ -647,6 +675,11 @@ impl GroovePlugin {
         ctx.register_route(RouteSpec {
             method: HttpMethod::Get,
             path: "/assess/history".into(),
+        })?;
+
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Get,
+            path: "/assess/stats".into(),
         })?;
 
         Ok(())
@@ -1670,6 +1703,77 @@ impl GroovePlugin {
             )
         }
     }
+
+    fn route_assess_stats(&self) -> Result<RouteResponse, PluginError> {
+        if let Some(processor) = &self.processor {
+            let sessions = processor.active_sessions();
+
+            // Get all results to compute stats
+            let query = AssessmentQuery::new();
+            let response = processor.query(query);
+
+            // Count by tier (result_type)
+            let mut lightweight = 0;
+            let mut medium = 0;
+            let mut heavy = 0;
+            let mut checkpoint = 0;
+
+            // Count by session
+            let mut session_counts: std::collections::HashMap<String, usize> =
+                std::collections::HashMap::new();
+
+            for result in &response.results {
+                // Count tier distribution
+                match result.result_type.as_str() {
+                    "lightweight" => lightweight += 1,
+                    "medium" => medium += 1,
+                    "heavy" => heavy += 1,
+                    "checkpoint" => checkpoint += 1,
+                    _ => {}
+                }
+
+                // Count per session
+                *session_counts.entry(result.session_id.clone()).or_insert(0) += 1;
+            }
+
+            // Get top sessions sorted by count (descending)
+            let mut top_sessions: Vec<SessionStats> = sessions
+                .into_iter()
+                .map(|session_id| {
+                    let count = session_counts.get(&session_id).copied().unwrap_or(0);
+                    SessionStats {
+                        session_id,
+                        assessment_count: count,
+                    }
+                })
+                .collect();
+
+            top_sessions.sort_by(|a, b| b.assessment_count.cmp(&a.assessment_count));
+            top_sessions.truncate(10); // Top 10 sessions
+
+            RouteResponse::json(
+                200,
+                &AssessmentStatsResponse {
+                    tier_distribution: TierDistribution {
+                        lightweight,
+                        medium,
+                        heavy,
+                        checkpoint,
+                    },
+                    total_assessments: response.results.len(),
+                    top_sessions,
+                },
+            )
+        } else {
+            RouteResponse::json(
+                503,
+                &ErrorResponse {
+                    error: "Assessment processor not initialized".to_string(),
+                    code: "NOT_INITIALIZED".to_string(),
+                },
+            )
+        }
+    }
 }
 
 // Export the plugin for dynamic loading
@@ -1750,6 +1854,9 @@ mod tests {
             "/quarantine",
             "/quarantine/stats",
             "/quarantine/:id/review",
+            "/assess/status",
+            "/assess/history",
+            "/assess/stats",
         ];
 
         for route in expected_routes {
@@ -2408,6 +2515,59 @@ mod tests {
         let plugin = GroovePlugin::default();
 
         let result = plugin.route_assess_status().unwrap();
+        assert_eq!(result.status, 503);
+
+        let response: ErrorResponse = serde_json::from_slice(&result.body).unwrap();
+        assert_eq!(response.code, "NOT_INITIALIZED");
+    }
+
+    #[test]
+    fn test_route_assess_stats_with_data() {
+        let mut plugin = GroovePlugin::default();
+        let mut ctx = create_test_context();
+
+        plugin.on_load(&mut ctx).unwrap();
+
+        // Process events for multiple sessions
+        for i in 0..5 {
+            let raw = make_raw_event("stats-session-1", &format!("Message {i}"));
+            plugin.on_event(raw, &mut ctx);
+        }
+        for i in 0..3 {
+            let raw = make_raw_event("stats-session-2", &format!("Message {i}"));
+            plugin.on_event(raw, &mut ctx);
+        }
+
+        let result = plugin.route_assess_stats().unwrap();
+        assert_eq!(result.status, 200);
+
+        let response: AssessmentStatsResponse = serde_json::from_slice(&result.body).unwrap();
+
+        // Should have assessments
+        assert!(response.total_assessments > 0);
+
+        // Tier distribution should have values
+        let tier_total = response.tier_distribution.lightweight
+            + response.tier_distribution.medium
+            + response.tier_distribution.heavy
+            + response.tier_distribution.checkpoint;
+        assert_eq!(tier_total, response.total_assessments);
+
+        // Top sessions should be ordered by count
+        assert!(!response.top_sessions.is_empty());
+        if response.top_sessions.len() >= 2 {
+            assert!(
+                response.top_sessions[0].assessment_count
+                    >= response.top_sessions[1].assessment_count
+            );
+        }
+    }
+
+    #[test]
+    fn test_route_assess_stats_not_initialized() {
+        let plugin = GroovePlugin::default();
+
+        let result = plugin.route_assess_stats().unwrap();
         assert_eq!(result.status, 503);
 
         let response: ErrorResponse = serde_json::from_slice(&result.body).unwrap();
