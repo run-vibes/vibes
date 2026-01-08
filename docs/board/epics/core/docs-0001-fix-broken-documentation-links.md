@@ -1,1 +1,1 @@
-../../stages/backlog/stories/docs-0001-fix-broken-documentation-links.md
+../../stages/done/stories/docs-0001-fix-broken-documentation-links.md
