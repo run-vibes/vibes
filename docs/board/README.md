@@ -14,6 +14,7 @@
 |-------|------|----------|-------|
 | [chore-0001-nav-cleanup](stages/backlog/stories/chore-0001-nav-cleanup.md) | chore | medium | web-ui |
 | [chore-0002-firehose-filter-cleanup](stages/backlog/stories/chore-0002-firehose-filter-cleanup.md) | chore | low | web-ui |
+| [chore-0003-assessment-tier-buttons](stages/backlog/stories/chore-0003-assessment-tier-buttons.md) | chore | low | web-ui |
 | [feat-0004-subnav](stages/backlog/stories/feat-0004-subnav.md) | feat | medium | web-ui |
 | [feat-0005-session-terminal-outline](stages/backlog/stories/feat-0005-session-terminal-outline.md) | feat | medium | web-ui |
 
@@ -26,7 +27,7 @@
 | [mobile](epics/mobile/) | active | 0 |
 | [networking](epics/networking/) | active | 0 |
 | [plugin-system](epics/plugin-system/) | active | 10 |
-| [web-ui](epics/web-ui/) | active | 20 |
+| [web-ui](epics/web-ui/) | active | 21 |
 
 ## Milestones
 
