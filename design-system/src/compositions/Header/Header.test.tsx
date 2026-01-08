@@ -5,7 +5,7 @@ import { Header } from './Header';
 describe('Header', () => {
   it('renders logo', () => {
     render(<Header />);
-    expect(screen.getByText(/vibes/)).toBeInTheDocument();
+    expect(screen.getByText(/vibes/i)).toBeInTheDocument();
   });
 
   it('renders as header element', () => {
@@ -46,6 +46,22 @@ describe('Header', () => {
     render(<Header theme="dark" onThemeToggle={onToggle} />);
     fireEvent.click(screen.getByLabelText('Toggle theme'));
     expect(onToggle).toHaveBeenCalled();
+  });
+
+  it('renders theme toggle with icon and text label', () => {
+    render(<Header theme="dark" onThemeToggle={() => {}} />);
+    const themeButton = screen.getByLabelText('Toggle theme');
+    expect(themeButton).toHaveTextContent('◐');
+    expect(themeButton).toHaveTextContent('THEME');
+  });
+
+  it('renders settings link with icon and text label', () => {
+    render(<Header settingsHref="/settings" renderLink={({ href, className, children }) => (
+      <a href={href} className={className}>{children}</a>
+    )} />);
+    const settingsLink = screen.getByRole('link', { name: /settings/i });
+    expect(settingsLink).toHaveTextContent('⚙');
+    expect(settingsLink).toHaveTextContent('SETTINGS');
   });
 
   it('does not render theme toggle when onThemeToggle not provided', () => {

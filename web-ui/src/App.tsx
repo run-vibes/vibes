@@ -26,9 +26,8 @@ function RootLayout() {
   const { theme, toggleTheme } = useTheme();
 
   const navItems = [
-    { label: 'DASH', href: '/', isActive: location.pathname === '/' },
-    { label: 'SESS', href: '/sessions', isActive: location.pathname.startsWith('/sessions') },
-    { label: 'FIRE', href: '/firehose', isActive: location.pathname === '/firehose' },
+    { label: 'SESSIONS', href: '/sessions', isActive: location.pathname.startsWith('/sessions') },
+    { label: 'FIREHOSE', href: '/firehose', isActive: location.pathname === '/firehose' },
     { label: 'GROOVE', href: '/groove', isGroove: true, isActive: location.pathname.startsWith('/groove') },
   ];
 

@@ -1,1 +1,1 @@
-../../stages/backlog/stories/chore-0001-nav-cleanup.md
+../../../stages/done/stories/chore-0001-nav-cleanup.md

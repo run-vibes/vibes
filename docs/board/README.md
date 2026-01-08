@@ -12,7 +12,6 @@
 
 | Story | Type | Priority | Epics |
 |-------|------|----------|-------|
-| [chore-0001-nav-cleanup](stages/backlog/stories/chore-0001-nav-cleanup.md) | chore | medium | web-ui |
 | [chore-0002-firehose-filter-cleanup](stages/backlog/stories/chore-0002-firehose-filter-cleanup.md) | chore | low | web-ui |
 | [chore-0003-assessment-tier-buttons](stages/backlog/stories/chore-0003-assessment-tier-buttons.md) | chore | low | web-ui |
 | [feat-0004-subnav](stages/backlog/stories/feat-0004-subnav.md) | feat | medium | web-ui |
@@ -79,6 +78,7 @@
 
 - [bug-0001-cwd-propagation](stages/done/stories/bug-0001-cwd-propagation.md)
 - [bug-0002-firehose-not-loading-historical-events](stages/done/stories/bug-0002-firehose-not-loading-historical-events.md)
+- [chore-0001-nav-cleanup](stages/done/stories/chore-0001-nav-cleanup.md)
 - [feat-0003-web-ui-navigation-hierarchy](stages/done/stories/feat-0003-web-ui-navigation-hierarchy.md)
 - [m14-chore-01-design](stages/done/stories/m14-chore-01-design.md)
 - [m14-chore-02-implementation](stages/done/stories/m14-chore-02-implementation.md)

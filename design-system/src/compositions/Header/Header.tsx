@@ -64,12 +64,14 @@ export const Header = forwardRef<HTMLElement, HeaderProps>(
               onClick={onThemeToggle}
               aria-label="Toggle theme"
             >
-              {theme === 'dark' ? '☀' : '🌙'}
+              <span className={styles.actionIcon}>◐</span>
+              <span className={styles.actionLabel}>THEME</span>
             </button>
           )}
           {settingsHref && (
-            <Link href={settingsHref} className={styles.settingsLink}>
-              ⚙
+            <Link href={settingsHref} className={styles.settingsLink} aria-label="Settings">
+              <span className={styles.actionIcon}>⚙</span>
+              <span className={styles.actionLabel}>SETTINGS</span>
             </Link>
           )}
         </div>
