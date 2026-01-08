@@ -225,6 +225,8 @@ Skip planning for:
 
 ## Story Lifecycle
 
+> **⚠️ IMPORTANT:** Always use `just board` commands to change story state. Never manually move files or update symlinks—the commands handle this automatically.
+
 ### 1. Create Story
 
 ```bash

@@ -7,7 +7,7 @@ import type { VibesEvent } from '../lib/types';
 import { extractTimestampFromUuidv7 } from '../lib/uuidv7';
 import './Firehose.css';
 
-const EVENT_TYPES = ['SESSION', 'CLAUDE', 'TOOL', 'HOOK', 'ERROR', 'ASSESS'] as const;
+const EVENT_TYPES = ['SESSION', 'HOOK', 'ERROR'] as const;
 
 interface SessionInfo {
   id: string;
@@ -197,7 +197,6 @@ export function FirehosePage() {
       typeCounts,
       eventsPerHour,
       activeSessions: sessions.filter(s => s.status === 'active').length,
-      totalLearns: typeCounts['ASSESS'] || 0,
       totalErrors: typeCounts['ERROR'] || 0,
       sparklineRates: recentRates,
     };
@@ -364,10 +363,6 @@ export function FirehosePage() {
                 <div className="stat">
                   <div className="stat-value">{metrics.activeSessions}</div>
                   <div className="stat-label">ACTIVE</div>
-                </div>
-                <div className="stat">
-                  <div className="stat-value">{metrics.totalLearns}</div>
-                  <div className="stat-label">LEARNS</div>
                 </div>
                 <div className="stat">
                   <div className={`stat-value ${metrics.totalErrors > 0 ? 'error' : ''}`}>

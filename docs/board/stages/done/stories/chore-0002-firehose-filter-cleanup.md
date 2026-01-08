@@ -2,7 +2,7 @@
 id: chore-0002-firehose-filter-cleanup
 title: "Chore: Remove Unused Firehose Filters"
 type: chore
-status: backlog
+status: done
 priority: low
 epics: [web-ui]
 depends: []
@@ -25,8 +25,8 @@ Remove unused filter buttons from the firehose page to simplify the UI.
 
 ## Acceptance Criteria
 
-- [ ] Claude filter button removed
-- [ ] Tool filter button removed
-- [ ] Assess filter button removed
-- [ ] Remaining filters still work correctly
-- [ ] No dead code left behind
+- [x] Claude filter button removed
+- [x] Tool filter button removed
+- [x] Assess filter button removed
+- [x] Remaining filters still work correctly
+- [x] No dead code left behind
