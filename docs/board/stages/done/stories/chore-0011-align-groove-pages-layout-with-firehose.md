@@ -2,7 +2,7 @@
 id: CHORE0011
 title: Align Groove pages layout with Firehose
 type: chore
-status: backlog
+status: done
 priority: medium
 epics: [web-ui]
 depends: []
@@ -19,11 +19,11 @@ The Groove pages (`/groove` Security and `/groove/assessment`) have different sp
 
 ## Acceptance Criteria
 
-- [ ] Security page (`/groove`) uses same page padding as Firehose
-- [ ] Assessment page (`/groove/assessment`) uses same page padding as Firehose
-- [ ] Section headers and content spacing match Firehose patterns
-- [ ] Grid/list layouts use same gap values
-- [ ] Page headers styled consistently
+- [x] Security page (`/groove`) uses same page padding as Firehose
+- [x] Assessment page (`/groove/assessment`) uses same page padding as Firehose
+- [x] Section headers and content spacing match Firehose patterns
+- [x] Grid/list layouts use same gap values
+- [x] Page headers styled consistently
 
 ## Implementation Notes
 
