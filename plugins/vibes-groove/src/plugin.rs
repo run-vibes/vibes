@@ -10,7 +10,11 @@ use vibes_plugin_api::{
     RouteRequest, RouteResponse, RouteSpec,
 };
 
-use crate::assessment::{AssessmentConfig, SyncAssessmentProcessor};
+use crate::assessment::{
+    ActivityStatus, AssessmentConfig, AssessmentHistoryResponse, AssessmentStatsResponse,
+    AssessmentStatusResponse, CircuitBreakerStatus, SamplingStatus, SessionHistoryItem,
+    SessionStats, SyncAssessmentProcessor, TierDistribution,
+};
 
 use crate::CozoStore;
 use crate::paths::GroovePaths;
@@ -197,75 +201,10 @@ pub struct ErrorResponse {
     pub code: String,
 }
 
-/// Assessment status response for HTTP API
-#[derive(Debug, Serialize, Deserialize)]
-pub struct AssessmentStatusResponse {
-    pub circuit_breaker: CircuitBreakerStatus,
-    pub sampling: SamplingStatus,
-    pub activity: ActivityStatus,
-}
-
-/// Circuit breaker status for API
-#[derive(Debug, Serialize, Deserialize)]
-pub struct CircuitBreakerStatus {
-    pub enabled: bool,
-    pub cooldown_seconds: u32,
-    pub max_interventions_per_session: u32,
-}
-
-/// Sampling status for API
-#[derive(Debug, Serialize, Deserialize)]
-pub struct SamplingStatus {
-    pub base_rate: f64,
-    pub burnin_sessions: u32,
-}
-
-/// Activity status for API
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ActivityStatus {
-    pub active_sessions: usize,
-    pub events_stored: usize,
-    pub sessions: Vec<String>,
-}
-
-/// Assessment history response for HTTP API
-#[derive(Debug, Serialize, Deserialize)]
-pub struct AssessmentHistoryResponse {
-    pub sessions: Vec<SessionHistoryItem>,
-    pub has_more: bool,
-}
-
-/// Single session's history
-#[derive(Debug, Serialize, Deserialize)]
-pub struct SessionHistoryItem {
-    pub session_id: String,
-    pub event_count: usize,
-    pub result_types: Vec<String>,
-}
-
-/// Assessment stats response for HTTP API
-#[derive(Debug, Serialize, Deserialize)]
-pub struct AssessmentStatsResponse {
-    pub tier_distribution: TierDistribution,
-    pub total_assessments: usize,
-    pub top_sessions: Vec<SessionStats>,
-}
-
-/// Count of assessments by tier
-#[derive(Debug, Serialize, Deserialize)]
-pub struct TierDistribution {
-    pub lightweight: usize,
-    pub medium: usize,
-    pub heavy: usize,
-    pub checkpoint: usize,
-}
-
-/// Session with assessment count
-#[derive(Debug, Serialize, Deserialize)]
-pub struct SessionStats {
-    pub session_id: String,
-    pub assessment_count: usize,
-}
+// Assessment API types are now in crate::assessment::api_types
+// (AssessmentStatusResponse, CircuitBreakerStatus, SamplingStatus, ActivityStatus,
+//  AssessmentHistoryResponse, SessionHistoryItem, AssessmentStatsResponse,
+//  TierDistribution, SessionStats)
 
 // ============================================================================
 // Server URL Configuration (for CLI → Server HTTP)

@@ -1,1 +1,1 @@
-../../stages/backlog/stories/refactor-0008-consolidate-assessment-types-module.md
+../../stages/in-progress/stories/refactor-0008-consolidate-assessment-types-module.md

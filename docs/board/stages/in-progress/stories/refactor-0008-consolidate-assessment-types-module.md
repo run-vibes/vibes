@@ -2,7 +2,7 @@
 id: REFACTOR0008
 title: Consolidate assessment types module
 type: refactor
-status: backlog
+status: in-progress
 priority: low
 epics: [plugin-system]
 depends: []

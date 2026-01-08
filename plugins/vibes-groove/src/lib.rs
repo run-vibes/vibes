@@ -36,6 +36,12 @@ pub use assessment::{
     SessionId, UserId,
 };
 
+// Assessment API type re-exports (for HTTP/CLI consumers)
+pub use assessment::{
+    ActivityStatus, AssessmentHistoryResponse, AssessmentStatsResponse, AssessmentStatusResponse,
+    CircuitBreakerStatus, SamplingStatus, SessionHistoryItem, SessionStats, TierDistribution,
+};
+
 // Security re-exports
 pub use security::{
     ContentHash, ContentScanner, CreationEvent, CustodyEvent, CustodyEventType, DlpScanner,

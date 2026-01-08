@@ -1,10 +1,11 @@
-# Planning Board
-
-> Auto-generated from directory structure. Run `just board generate` to update.
+Generated README.md
+Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
-*No stories in progress*
+| Story | Type | Priority | Epics |
+|-------|------|----------|-------|
+| [refactor-0008-consolidate-assessment-types-module](stages/in-progress/stories/refactor-0008-consolidate-assessment-types-module.md) | refactor | low | plugin-system |
 
 ## Backlog
 
@@ -19,7 +20,6 @@
 | [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli |
 | [feat-0014-production-iggy-polling-for-assessment-queries](stages/backlog/stories/feat-0014-production-iggy-polling-for-assessment-queries.md) | feat | medium | core,plugin-system |
 | [m29-feat-0012-wire-circuit-breaker-intervention](stages/backlog/stories/m29-feat-0012-wire-circuit-breaker-intervention.md) | feat | high | core,plugin-system |
-| [refactor-0008-consolidate-assessment-types-module](stages/backlog/stories/refactor-0008-consolidate-assessment-types-module.md) | refactor | low | plugin-system |
 
 ## Epics
 
