@@ -13,7 +13,7 @@
         overlays = [ (import rust-overlay) ];
         pkgs = import nixpkgs { inherit system overlays; };
         rust = pkgs.rust-bin.stable.latest.default.override {
-          extensions = [ "rust-src" "rust-analyzer" ];
+          extensions = [ "rust-src" "rust-analyzer" "llvm-tools" ];
         };
         isLinux = pkgs.stdenv.isLinux;
       in {
@@ -24,6 +24,7 @@
             pkgs.cargo-nextest
             pkgs.cargo-mutants
             pkgs.cargo-watch
+            pkgs.cargo-llvm-cov
             # Native build deps for CozoDB/RocksDB
             pkgs.clang
             pkgs.llvmPackages.libclang
@@ -42,6 +43,7 @@
             echo "  just          - list commands"
             echo "  just test     - run tests"
             echo "  just dev      - watch mode"
+            echo "  just coverage - test coverage report"
           '' + pkgs.lib.optionalString isLinux ''
             # Use mold linker on Linux for faster linking
             export CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=clang

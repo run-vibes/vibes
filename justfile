@@ -50,6 +50,30 @@ fmt-check:
 mutants:
     cargo mutants
 
+# ─── Test Coverage ──────────────────────────────────────────────────────────
+
+# Generate coverage report (HTML, opens in browser)
+coverage:
+    cargo llvm-cov --html --open
+
+# Generate coverage report without opening browser
+coverage-html:
+    cargo llvm-cov --html
+    @echo "✓ Coverage report: target/llvm-cov/html/index.html"
+
+# Generate coverage summary to terminal
+coverage-summary:
+    cargo llvm-cov
+
+# Generate LCOV format (for CI/codecov)
+coverage-lcov:
+    cargo llvm-cov --lcov --output-path target/lcov.info
+    @echo "✓ LCOV report: target/lcov.info"
+
+# Coverage for a specific package
+coverage-package PACKAGE:
+    cargo llvm-cov --package {{PACKAGE}} --html --open
+
 # Build (vibes + iggy for debug)
 build: build-web _check-submodules
     cargo build
