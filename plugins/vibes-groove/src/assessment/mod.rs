@@ -45,5 +45,5 @@ pub use processor::AssessmentProcessor;
 pub use sampling::{SamplingContext, SamplingDecision, SamplingStrategy};
 pub use session_buffer::{SessionBuffer, SessionBufferConfig};
 pub use session_end::{SessionEnd, SessionEndDetector, SessionEndReason};
-pub use sync_processor::SyncAssessmentProcessor;
+pub use sync_processor::{CircuitBreakerSummary, SamplingSummary, SyncAssessmentProcessor};
 pub use types::*;

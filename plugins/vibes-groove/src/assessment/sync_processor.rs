@@ -289,6 +289,68 @@ impl SyncAssessmentProcessor {
         let cm = self.checkpoint_manager.lock().unwrap();
         cm.checkpoint_count(session_id)
     }
+
+    // ─── Aggregate Query Methods (for CLI assess commands) ────────────────
+
+    /// Get the total count of stored assessment results.
+    #[must_use]
+    pub fn stored_results_count(&self) -> usize {
+        let stored = self.stored_results.lock().unwrap();
+        stored.len()
+    }
+
+    /// Get list of all active sessions with stored results.
+    #[must_use]
+    pub fn active_sessions(&self) -> Vec<String> {
+        let stored = self.stored_results.lock().unwrap();
+        let mut sessions: std::collections::HashSet<String> = std::collections::HashSet::new();
+        for result in stored.iter() {
+            sessions.insert(result.result.session_id.clone());
+        }
+        sessions.into_iter().collect()
+    }
+
+    /// Get summary of circuit breaker configuration.
+    #[must_use]
+    pub fn circuit_breaker_summary(&self) -> CircuitBreakerSummary {
+        CircuitBreakerSummary {
+            enabled: self.config.circuit_breaker.enabled,
+            cooldown_seconds: self.config.circuit_breaker.cooldown_seconds,
+            max_interventions_per_session: self
+                .config
+                .circuit_breaker
+                .max_interventions_per_session,
+        }
+    }
+
+    /// Get summary of sampling configuration.
+    #[must_use]
+    pub fn sampling_summary(&self) -> SamplingSummary {
+        SamplingSummary {
+            base_rate: self.config.sampling.base_rate,
+            burnin_sessions: self.config.sampling.burnin_sessions,
+        }
+    }
+}
+
+/// Summary of circuit breaker configuration for CLI output.
+#[derive(Debug, Clone)]
+pub struct CircuitBreakerSummary {
+    /// Whether circuit breaker is enabled.
+    pub enabled: bool,
+    /// Cooldown period in seconds.
+    pub cooldown_seconds: u32,
+    /// Maximum interventions per session.
+    pub max_interventions_per_session: u32,
+}
+
+/// Summary of sampling configuration for CLI output.
+#[derive(Debug, Clone)]
+pub struct SamplingSummary {
+    /// Base sampling rate (0.0-1.0).
+    pub base_rate: f64,
+    /// Number of burnin sessions.
+    pub burnin_sessions: u32,
 }
 
 impl std::fmt::Debug for SyncAssessmentProcessor {
@@ -614,5 +676,86 @@ mod tests {
                 result.event_id
             );
         }
+    }
+
+    // ─── Aggregate Query Tests (CLI assess commands) ─────────────────────
+
+    #[test]
+    fn test_stored_results_count_starts_at_zero() {
+        let config = AssessmentConfig::default();
+        let processor = SyncAssessmentProcessor::new(config);
+
+        assert_eq!(processor.stored_results_count(), 0);
+    }
+
+    #[test]
+    fn test_stored_results_count_increases_with_events() {
+        let config = AssessmentConfig::default();
+        let processor = SyncAssessmentProcessor::new(config);
+
+        // Process some events
+        for i in 0..3 {
+            let raw = make_raw_event("count-test", &format!("Message {i}"));
+            processor.process(&raw);
+        }
+
+        // Should have at least 3 lightweight results
+        assert!(
+            processor.stored_results_count() >= 3,
+            "Expected at least 3 results, got {}",
+            processor.stored_results_count()
+        );
+    }
+
+    #[test]
+    fn test_active_sessions_starts_empty() {
+        let config = AssessmentConfig::default();
+        let processor = SyncAssessmentProcessor::new(config);
+
+        assert!(processor.active_sessions().is_empty());
+    }
+
+    #[test]
+    fn test_active_sessions_tracks_sessions() {
+        let config = AssessmentConfig::default();
+        let processor = SyncAssessmentProcessor::new(config);
+
+        // Process events for two sessions
+        processor.process(&make_raw_event("session-a", "Hello"));
+        processor.process(&make_raw_event("session-b", "World"));
+        processor.process(&make_raw_event("session-a", "Again"));
+
+        let sessions = processor.active_sessions();
+        assert_eq!(sessions.len(), 2);
+        assert!(sessions.contains(&"session-a".to_string()));
+        assert!(sessions.contains(&"session-b".to_string()));
+    }
+
+    #[test]
+    fn test_circuit_breaker_summary_returns_config() {
+        let mut config = AssessmentConfig::default();
+        config.circuit_breaker.enabled = true;
+        config.circuit_breaker.cooldown_seconds = 60;
+        config.circuit_breaker.max_interventions_per_session = 5;
+
+        let processor = SyncAssessmentProcessor::new(config);
+        let summary = processor.circuit_breaker_summary();
+
+        assert!(summary.enabled);
+        assert_eq!(summary.cooldown_seconds, 60);
+        assert_eq!(summary.max_interventions_per_session, 5);
+    }
+
+    #[test]
+    fn test_sampling_summary_returns_config() {
+        let mut config = AssessmentConfig::default();
+        config.sampling.base_rate = 0.15;
+        config.sampling.burnin_sessions = 10;
+
+        let processor = SyncAssessmentProcessor::new(config);
+        let summary = processor.sampling_summary();
+
+        assert!((summary.base_rate - 0.15).abs() < 0.001);
+        assert_eq!(summary.burnin_sessions, 10);
     }
 }
