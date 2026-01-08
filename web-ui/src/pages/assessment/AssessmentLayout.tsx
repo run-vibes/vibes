@@ -2,8 +2,8 @@ import { Outlet, Link } from '@tanstack/react-router';
 import './AssessmentLayout.css';
 
 const TABS = [
-  { label: 'Stream', href: '/groove/assessment', exact: true },
   { label: 'Status', href: '/groove/assessment/status', exact: false },
+  { label: 'Stream', href: '/groove/assessment/stream', exact: false },
   { label: 'History', href: '/groove/assessment/history', exact: false },
 ];
 

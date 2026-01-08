@@ -119,22 +119,32 @@ const assessmentLayoutRoute = createRoute({
   component: AssessmentLayout,
 })
 
-const assessmentIndexRoute = createRoute({
-  getParentRoute: () => assessmentLayoutRoute,
-  path: '/',
-  component: AssessmentStream,
-})
-
 const assessmentStatusRoute = createRoute({
   getParentRoute: () => assessmentLayoutRoute,
   path: '/status',
   component: AssessmentStatus,
 })
 
+const assessmentStreamRoute = createRoute({
+  getParentRoute: () => assessmentLayoutRoute,
+  path: '/stream',
+  component: AssessmentStream,
+})
+
 const assessmentHistoryRoute = createRoute({
   getParentRoute: () => assessmentLayoutRoute,
   path: '/history',
   component: AssessmentHistory,
+})
+
+// Redirect index to status
+const assessmentIndexRoute = createRoute({
+  getParentRoute: () => assessmentLayoutRoute,
+  path: '/',
+  beforeLoad: () => {
+    throw { redirect: { to: '/groove/assessment/status' } };
+  },
+  component: () => null,
 })
 
 const debugRoute = createRoute({
@@ -160,6 +170,7 @@ const routeTree = rootRoute.addChildren([
   assessmentLayoutRoute.addChildren([
     assessmentIndexRoute,
     assessmentStatusRoute,
+    assessmentStreamRoute,
     assessmentHistoryRoute,
   ]),
   debugRoute,

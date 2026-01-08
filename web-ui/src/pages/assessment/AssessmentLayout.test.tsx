@@ -59,18 +59,18 @@ describe('AssessmentLayout', () => {
     expect(screen.getByTestId('outlet')).toBeInTheDocument();
   });
 
-  test('stream tab links to /groove/assessment', () => {
-    render(<AssessmentLayout />);
-
-    const streamLink = screen.getByRole('link', { name: /stream/i });
-    expect(streamLink).toHaveAttribute('href', '/groove/assessment');
-  });
-
   test('status tab links to /groove/assessment/status', () => {
     render(<AssessmentLayout />);
 
     const statusLink = screen.getByRole('link', { name: /status/i });
     expect(statusLink).toHaveAttribute('href', '/groove/assessment/status');
+  });
+
+  test('stream tab links to /groove/assessment/stream', () => {
+    render(<AssessmentLayout />);
+
+    const streamLink = screen.getByRole('link', { name: /stream/i });
+    expect(streamLink).toHaveAttribute('href', '/groove/assessment/stream');
   });
 
   test('history tab links to /groove/assessment/history', () => {
@@ -81,29 +81,29 @@ describe('AssessmentLayout', () => {
   });
 
   describe('active tab highlighting', () => {
-    test('stream tab is active on /groove/assessment', () => {
-      currentPathname = '/groove/assessment';
-      render(<AssessmentLayout />);
-
-      const streamLink = screen.getByRole('link', { name: /stream/i });
-      const statusLink = screen.getByRole('link', { name: /status/i });
-      const historyLink = screen.getByRole('link', { name: /history/i });
-
-      expect(streamLink).toHaveClass('active');
-      expect(statusLink).not.toHaveClass('active');
-      expect(historyLink).not.toHaveClass('active');
-    });
-
     test('status tab is active on /groove/assessment/status', () => {
       currentPathname = '/groove/assessment/status';
       render(<AssessmentLayout />);
 
-      const streamLink = screen.getByRole('link', { name: /stream/i });
       const statusLink = screen.getByRole('link', { name: /status/i });
+      const streamLink = screen.getByRole('link', { name: /stream/i });
       const historyLink = screen.getByRole('link', { name: /history/i });
 
-      expect(streamLink).not.toHaveClass('active');
       expect(statusLink).toHaveClass('active');
+      expect(streamLink).not.toHaveClass('active');
+      expect(historyLink).not.toHaveClass('active');
+    });
+
+    test('stream tab is active on /groove/assessment/stream', () => {
+      currentPathname = '/groove/assessment/stream';
+      render(<AssessmentLayout />);
+
+      const statusLink = screen.getByRole('link', { name: /status/i });
+      const streamLink = screen.getByRole('link', { name: /stream/i });
+      const historyLink = screen.getByRole('link', { name: /history/i });
+
+      expect(statusLink).not.toHaveClass('active');
+      expect(streamLink).toHaveClass('active');
       expect(historyLink).not.toHaveClass('active');
     });
 
@@ -111,12 +111,12 @@ describe('AssessmentLayout', () => {
       currentPathname = '/groove/assessment/history';
       render(<AssessmentLayout />);
 
-      const streamLink = screen.getByRole('link', { name: /stream/i });
       const statusLink = screen.getByRole('link', { name: /status/i });
+      const streamLink = screen.getByRole('link', { name: /stream/i });
       const historyLink = screen.getByRole('link', { name: /history/i });
 
-      expect(streamLink).not.toHaveClass('active');
       expect(statusLink).not.toHaveClass('active');
+      expect(streamLink).not.toHaveClass('active');
       expect(historyLink).toHaveClass('active');
     });
   });
