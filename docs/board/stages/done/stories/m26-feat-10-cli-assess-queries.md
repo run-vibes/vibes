@@ -2,13 +2,13 @@
 id: F011
 title: "Feature: Wire CLI Assess Commands to Query Real Data"
 type: feat
-status: backlog
+status: done
 priority: medium
 epics: [core, cli, plugin-system]
 depends: []
 estimate:
 created: 2026-01-04
-updated: 2026-01-07
+updated: 2026-01-08
 milestone: 26-assessment-framework
 ---
 

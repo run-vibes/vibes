@@ -4,9 +4,7 @@
 
 ## In Progress
 
-| Story | Type | Priority | Epics |
-|-------|------|----------|-------|
-| [m26-feat-10-cli-assess-queries](stages/in-progress/stories/m26-feat-10-cli-assess-queries.md) | feat | medium | core,cli,plugin-system |
+*No stories in progress*
 
 ## Backlog
 
@@ -88,6 +86,7 @@
 - [m26-feat-02-processor-wiring](stages/done/stories/m26-feat-02-processor-wiring.md)
 - [m26-feat-06-iggy-assessment-log](stages/done/stories/m26-feat-06-iggy-assessment-log.md)
 - [m26-feat-09-complete-hook-support](stages/done/stories/m26-feat-09-complete-hook-support.md)
+- [m26-feat-10-cli-assess-queries](stages/done/stories/m26-feat-10-cli-assess-queries.md)
 - [m26-fix-04-plugin-route-mounting](stages/done/stories/m26-fix-04-plugin-route-mounting.md)
 - [m26-fix-05-event-flow-to-firehose](stages/done/stories/m26-fix-05-event-flow-to-firehose.md)
 - [m26-fix-08-assessment-multiselect](stages/done/stories/m26-fix-08-assessment-multiselect.md)
