@@ -114,41 +114,33 @@ generate_story_id() {
         return
     fi
 
-    local prefix counter_var
     case "$type" in
         feat|feature)
-            prefix="F"
             LAST_STORY_ID=$(printf "F%03d" "$FEAT_COUNTER")
             ((FEAT_COUNTER++))
             ;;
         bug)
-            prefix="B"
             LAST_STORY_ID=$(printf "B%03d" "$BUG_COUNTER")
             ((BUG_COUNTER++))
             ;;
         fix)
             # fix maps to bug
-            prefix="B"
             LAST_STORY_ID=$(printf "B%03d" "$BUG_COUNTER")
             ((BUG_COUNTER++))
             ;;
         chore)
-            prefix="C"
             LAST_STORY_ID=$(printf "C%03d" "$CHORE_COUNTER")
             ((CHORE_COUNTER++))
             ;;
         refactor)
-            prefix="R"
             LAST_STORY_ID=$(printf "R%03d" "$REFACTOR_COUNTER")
             ((REFACTOR_COUNTER++))
             ;;
         docs)
-            prefix="D"
             LAST_STORY_ID=$(printf "D%03d" "$DOCS_COUNTER")
             ((DOCS_COUNTER++))
             ;;
         *)
-            prefix="F"
             LAST_STORY_ID=$(printf "F%03d" "$FEAT_COUNTER")
             ((FEAT_COUNTER++))
             ;;
@@ -238,7 +230,6 @@ create_story_frontmatter() {
 
     # Format epics as YAML array
     local epics_yaml
-    epics_yaml=$(echo "$epics_csv" | tr ',' '\n' | sed 's/^/  - /' | tr '\n' ',' | sed 's/,$//')
     epics_yaml="[$(echo "$epics_csv" | sed 's/,/, /g')]"
 
     # Build frontmatter
@@ -318,9 +309,20 @@ process_story() {
         epics_csv="core"
     fi
 
+    # Extract milestone number and prefix filename to avoid collisions
+    # e.g., "milestone-36-firehose" -> "m36-feat-01-backend.md"
+    local dest_filename="$filename"
+    if [[ -n "$milestone_name" ]]; then
+        local milestone_num
+        milestone_num=$(echo "$milestone_name" | grep -oE 'milestone-([0-9]+)' | grep -oE '[0-9]+' || true)
+        if [[ -n "$milestone_num" ]]; then
+            dest_filename="m${milestone_num}-${filename}"
+        fi
+    fi
+
     # Target path
     local dest_dir="stages/$stage/stories"
-    local dest_path="$dest_dir/$filename"
+    local dest_path="$dest_dir/$dest_filename"
 
     debug "Processing: $src_path -> $dest_path (epics: $epics_csv)"
 
@@ -341,7 +343,7 @@ process_story() {
         # Create symlinks in epic directories
         IFS=',' read -ra epic_array <<< "$epics_csv"
         for epic in "${epic_array[@]}"; do
-            create_epic_symlink "stages/$stage/stories/$filename" "$epic"
+            create_epic_symlink "stages/$stage/stories/$dest_filename" "$epic"
         done
     fi
 }
