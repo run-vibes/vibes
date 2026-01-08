@@ -74,7 +74,7 @@
 | [35-ios-app](milestones/35-ios-app/) | planned | mobile |
 | [36-firehose-infinite-scroll](milestones/36-firehose-infinite-scroll/) | done | web-ui |
 | [37-crt-design-system](milestones/37-crt-design-system/) | planned | web-ui |
-| [38-board-restructure](milestones/38-board-restructure/) | planned | core |
+| [38-board-restructure](milestones/38-board-restructure/) | done | core |
 
 ## Done
 

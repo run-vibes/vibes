@@ -1,7 +1,7 @@
 ---
 id: 38-board-restructure
 title: Board Restructure
-status: planned
+status: done
 epics: [core]
 ---
 
