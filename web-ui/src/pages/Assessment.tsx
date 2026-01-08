@@ -1,6 +1,5 @@
 // web-ui/src/pages/Assessment.tsx
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import { Link, useLocation } from '@tanstack/react-router';
 import { StreamView, EventInspector, Badge } from '@vibes/design-system';
 import type { DisplayEvent, ContextEvent } from '@vibes/design-system';
 import { useAssessment } from '../hooks/useAssessment';
@@ -9,28 +8,6 @@ import { extractTimestampFromUuidv7 } from '../lib/uuidv7';
 import './Assessment.css';
 
 const ASSESSMENT_TIERS = ['lightweight', 'medium', 'heavy'] as const;
-
-function GrooveNav() {
-  const location = useLocation();
-  const isAssessment = location.pathname === '/groove/assessment';
-
-  return (
-    <nav className="groove-nav">
-      <Link
-        to="/groove"
-        className={`groove-nav-link ${!isAssessment ? 'active' : ''}`}
-      >
-        Security
-      </Link>
-      <Link
-        to="/groove/assessment"
-        className={`groove-nav-link ${isAssessment ? 'active' : ''}`}
-      >
-        Assessment
-      </Link>
-    </nav>
-  );
-}
 
 function toDisplayEvent(event: AssessmentEvent): DisplayEvent {
   const baseEvent = {
@@ -204,8 +181,7 @@ export function AssessmentPage() {
     <div className="assessment-page">
       <div className="assessment-header">
         <div className="assessment-title">
-          <h1>Groove</h1>
-          <GrooveNav />
+          <h1>Assessment</h1>
           <div className="assessment-status">
             {isConnected ? (
               <Badge status="success">Connected</Badge>

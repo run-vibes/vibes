@@ -1,1 +1,1 @@
-../../stages/backlog/stories/feat-0004-subnav.md
+../../stages/done/stories/feat-0004-subnav.md

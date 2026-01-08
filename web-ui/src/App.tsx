@@ -6,7 +6,7 @@ import {
   Link,
   useLocation,
 } from '@tanstack/react-router'
-import { Header } from '@vibes/design-system'
+import { Header, SubnavBar } from '@vibes/design-system'
 import { Sessions } from './pages/Sessions'
 import { Session } from './pages/Session'
 import { QuarantinePage } from './pages/Quarantine'
@@ -25,11 +25,22 @@ function RootLayout() {
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
 
+  const isGroovePath = location.pathname.startsWith('/groove');
+
   const navItems = [
     { label: 'SESSIONS', href: '/sessions', isActive: location.pathname.startsWith('/sessions') },
     { label: 'FIREHOSE', href: '/firehose', isActive: location.pathname === '/firehose' },
-    { label: 'GROOVE', href: '/groove', isGroove: true, isActive: location.pathname.startsWith('/groove') },
+    { label: 'GROOVE', href: '/groove', isGroove: true, isActive: isGroovePath, hasSubnav: true },
   ];
+
+  const grooveSubnavItems = [
+    { label: 'Security', href: '/groove', icon: '🛡', isActive: location.pathname === '/groove' },
+    { label: 'Assessment', href: '/groove/assessment', icon: '◈', isActive: location.pathname === '/groove/assessment' },
+  ];
+
+  const renderLink = ({ href, className, children }: { href: string; className: string; children: React.ReactNode }) => (
+    <Link to={href} className={className}>{children}</Link>
+  );
 
   return (
     <div className="app">
@@ -40,9 +51,14 @@ function RootLayout() {
         theme={theme}
         onThemeToggle={toggleTheme}
         settingsHref="/settings"
-        renderLink={({ href, className, children }) => (
-          <Link to={href} className={className}>{children}</Link>
-        )}
+        renderLink={renderLink}
+      />
+      <SubnavBar
+        isOpen={isGroovePath}
+        label="GROOVE"
+        items={grooveSubnavItems}
+        plugin="groove"
+        renderLink={renderLink}
       />
       <main className="main">
         <Outlet />

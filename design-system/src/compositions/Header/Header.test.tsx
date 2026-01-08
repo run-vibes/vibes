@@ -78,6 +78,15 @@ describe('Header', () => {
     expect(screen.getByText(/Groove/)).toBeInTheDocument();
   });
 
+  it('renders subnav indicator for items with hasSubnav', () => {
+    render(
+      <Header
+        navItems={[{ label: 'Groove', href: '/groove', hasSubnav: true }]}
+      />
+    );
+    expect(screen.getByText('▾')).toBeInTheDocument();
+  });
+
   it('merges custom className', () => {
     render(<Header className="custom-class" />);
     expect(screen.getByRole('banner')).toHaveClass('custom-class');
