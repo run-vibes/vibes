@@ -210,9 +210,14 @@ _next-id TYPE:
 
     # Search in all stages for stories with this type prefix
     for f in $(find stages -name "${type}-*.md" -o -name "*-${type}-*.md" 2>/dev/null); do
-        # Extract number from patterns like feat-01, m26-feat-02, F012
-        num=$(basename "$f" .md | grep -oE '[0-9]+' | head -1)
-        if [[ -n "$num" ]] && [[ "$num" -gt "$max" ]]; then
+        # Extract sequence number after type prefix (e.g., feat-01, m37-feat-01)
+        # Pattern: TYPE-NN where NN is the sequence number we want
+        num=$(basename "$f" .md | grep -oE "(feat|bug|chore|refactor|fix|docs)-[0-9]+" | grep -oE "[0-9]+$")
+        # Skip if no match found
+        [[ -z "$num" ]] && continue
+        # Strip leading zeros to avoid octal interpretation (e.g., 08 -> 8)
+        num=$((10#$num))
+        if [[ "$num" -gt "$max" ]]; then
             max=$num
         fi
     done
@@ -684,7 +689,8 @@ link STORY EPIC:
     current_epics=$(grep -m1 "^epics:" "$story_path" 2>/dev/null | sed 's/^epics: *//' | tr -d '[]' || echo "")
     if [[ -z "$current_epics" ]]; then
         new_epics="[$epic]"
-    elif [[ "$current_epics" != *"$epic"* ]]; then
+    # Use word boundary matching to avoid substring matches (e.g., 'cli' matching 'cli-tools')
+    elif ! echo ", $current_epics," | grep -q ", *$epic *,"; then
         new_epics="[$current_epics, $epic]"
     else
         new_epics="[$current_epics]"
@@ -721,8 +727,9 @@ unlink STORY EPIC:
 
     # Update frontmatter epics field
     current_epics=$(grep -m1 "^epics:" "$story_path" 2>/dev/null | sed 's/^epics: *//' | tr -d '[]' || echo "")
-    # Remove the epic from the list
-    new_epics=$(echo "$current_epics" | sed "s/$epic//g" | sed 's/, ,/,/g' | sed 's/^, //g' | sed 's/, $//g' | tr -s ', ')
+    # Remove the epic from the list using word boundary matching
+    # Convert to comma-separated with padding, remove exact match, clean up
+    new_epics=$(echo ", $current_epics," | sed "s/, *$epic *,/,/g" | sed 's/^, *//;s/, *$//' | sed 's/  */ /g')
     sed -i "s/^epics: .*/epics: [$new_epics]/" "$story_path"
     echo "Updated story frontmatter"
 
