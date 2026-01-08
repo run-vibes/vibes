@@ -10,17 +10,7 @@
 
 ## Backlog
 
-| Story | Type | Priority | Epics |
-|-------|------|----------|-------|
-| [m37-chore-09-cleanup](stages/backlog/stories/m37-chore-09-cleanup.md) | chore | medium | web-ui |
-| [m37-feat-01-design-tokens](stages/backlog/stories/m37-feat-01-design-tokens.md) | feat | medium | web-ui |
-| [m37-feat-02-theme-toggle](stages/backlog/stories/m37-feat-02-theme-toggle.md) | feat | medium | web-ui |
-| [m37-feat-03-crt-effects](stages/backlog/stories/m37-feat-03-crt-effects.md) | feat | medium | web-ui |
-| [m37-feat-04-typography](stages/backlog/stories/m37-feat-04-typography.md) | feat | medium | web-ui |
-| [m37-feat-05-core-components](stages/backlog/stories/m37-feat-05-core-components.md) | feat | medium | web-ui |
-| [m37-feat-06-navigation](stages/backlog/stories/m37-feat-06-navigation.md) | feat | medium | web-ui |
-| [m37-feat-07-firehose](stages/backlog/stories/m37-feat-07-firehose.md) | feat | medium | web-ui |
-| [m37-feat-08-session-cards](stages/backlog/stories/m37-feat-08-session-cards.md) | feat | medium | web-ui |
+*Backlog empty*
 
 ## Epics
 
@@ -73,7 +63,7 @@
 | [34-cli-enhancements](milestones/34-cli-enhancements/) | planned | cli |
 | [35-ios-app](milestones/35-ios-app/) | planned | mobile |
 | [36-firehose-infinite-scroll](milestones/36-firehose-infinite-scroll/) | done | web-ui |
-| [37-crt-design-system](milestones/37-crt-design-system/) | planned | web-ui |
+| [37-crt-design-system](milestones/37-crt-design-system/) | done | web-ui |
 | [38-board-restructure](milestones/38-board-restructure/) | done | core |
 
 ## Done
@@ -102,5 +92,14 @@
 - [m36-feat-05-ui-polish](stages/done/stories/m36-feat-05-ui-polish.md)
 - [m36-feat-06-uuidv7-sequencing](stages/done/stories/m36-feat-06-uuidv7-sequencing.md)
 - [m36-refactor-01-single-partition](stages/done/stories/m36-refactor-01-single-partition.md)
+- [m37-chore-09-cleanup](stages/done/stories/m37-chore-09-cleanup.md)
+- [m37-feat-01-design-tokens](stages/done/stories/m37-feat-01-design-tokens.md)
+- [m37-feat-02-theme-toggle](stages/done/stories/m37-feat-02-theme-toggle.md)
+- [m37-feat-03-crt-effects](stages/done/stories/m37-feat-03-crt-effects.md)
+- [m37-feat-04-typography](stages/done/stories/m37-feat-04-typography.md)
+- [m37-feat-05-core-components](stages/done/stories/m37-feat-05-core-components.md)
+- [m37-feat-06-navigation](stages/done/stories/m37-feat-06-navigation.md)
+- [m37-feat-07-firehose](stages/done/stories/m37-feat-07-firehose.md)
+- [m37-feat-08-session-cards](stages/done/stories/m37-feat-08-session-cards.md)
 
 </details>

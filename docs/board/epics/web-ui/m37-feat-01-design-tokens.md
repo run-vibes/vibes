@@ -1,1 +1,1 @@
-../../stages/backlog/stories/m37-feat-01-design-tokens.md
+../../stages/done/stories/m37-feat-01-design-tokens.md

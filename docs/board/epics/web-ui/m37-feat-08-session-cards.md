@@ -1,1 +1,1 @@
-../../stages/backlog/stories/m37-feat-08-session-cards.md
+../../stages/done/stories/m37-feat-08-session-cards.md

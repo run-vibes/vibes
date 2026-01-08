@@ -1,7 +1,7 @@
 ---
 id: 37-crt-design-system
 title: Crt Design System
-status: planned
+status: done
 epics: [web-ui]
 ---
 
