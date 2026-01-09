@@ -96,9 +96,9 @@ pub use strategy::{
 pub use dashboard::{
     AblationCoverage, ActivityEntry, ActivityType, AdaptiveParamStatus, AttributionData,
     AttributionEntry, AttributionSummary, CategoryDistribution, ComponentHealth, ContributorBrief,
-    DashboardData, DashboardMessage, DashboardRequest, DashboardTopic, HealthData, HealthSummary,
-    LearningBrief, LearningDetailData, LearningOverrideEntry, LearningSummary, LearningsData,
-    LearningsFilter, OverviewData, Period, SessionContribution, SessionTimelineData,
-    SessionTimelineEntry, StrategyDistributionsData, StrategyOverridesData, StrategyWeight,
-    SystemStatus, TrendDirection, TrendSummary,
+    DashboardData, DashboardHandler, DashboardMessage, DashboardRequest, DashboardTopic,
+    HealthData, HealthSummary, LearningBrief, LearningDetailData, LearningOverrideEntry,
+    LearningSummary, LearningsData, LearningsFilter, OverviewData, Period, SessionContribution,
+    SessionTimelineData, SessionTimelineEntry, StrategyDistributionsData, StrategyOverridesData,
+    StrategyWeight, SystemStatus, TrendDirection, TrendSummary,
 };

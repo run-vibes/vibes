@@ -2,6 +2,8 @@
 //!
 //! Provides real-time dashboard updates via WebSocket with topic-based subscriptions.
 
+mod handler;
 mod types;
 
+pub use handler::DashboardHandler;
 pub use types::*;
