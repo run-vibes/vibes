@@ -451,6 +451,8 @@ fn mean_pooling_impl(
 mod tests {
     use super::*;
 
+    // --- Cosine similarity tests ---
+
     #[test]
     fn test_cosine_similarity_identical() {
         let v = vec![1.0, 2.0, 3.0];
@@ -476,5 +478,228 @@ mod tests {
         let a = vec![1.0, 2.0, 3.0];
         let b = vec![0.0, 0.0, 0.0];
         assert_eq!(cosine_similarity(&a, &b), 0.0);
+    }
+
+    #[test]
+    fn test_cosine_similarity_range() {
+        // Similarity should always be in [-1, 1]
+        let a = vec![0.5, -0.3, 0.8];
+        let b = vec![-0.2, 0.7, 0.1];
+        let sim = cosine_similarity(&a, &b);
+        assert!((-1.0..=1.0).contains(&sim));
+    }
+
+    // --- Mean pooling tests ---
+
+    #[test]
+    fn test_mean_pooling_single_token() {
+        let shape = [1, 1, 3]; // batch=1, seq=1, hidden=3
+        let hidden_states = [1.0, 2.0, 3.0];
+        let attention_mask = [1];
+
+        let result = mean_pooling_impl(&shape, &hidden_states, &attention_mask).unwrap();
+        assert_eq!(result, vec![1.0, 2.0, 3.0]);
+    }
+
+    #[test]
+    fn test_mean_pooling_two_tokens() {
+        let shape = [1, 2, 3]; // batch=1, seq=2, hidden=3
+        let hidden_states = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0];
+        let attention_mask = [1, 1];
+
+        let result = mean_pooling_impl(&shape, &hidden_states, &attention_mask).unwrap();
+        // Mean of [1,2,3] and [4,5,6] = [2.5, 3.5, 4.5]
+        assert_eq!(result, vec![2.5, 3.5, 4.5]);
+    }
+
+    #[test]
+    fn test_mean_pooling_with_padding() {
+        let shape = [1, 3, 2]; // batch=1, seq=3, hidden=2
+        let hidden_states = [1.0, 2.0, 3.0, 4.0, 0.0, 0.0]; // Last token is padding
+        let attention_mask = [1, 1, 0]; // Only first two tokens count
+
+        let result = mean_pooling_impl(&shape, &hidden_states, &attention_mask).unwrap();
+        // Mean of [1,2] and [3,4] = [2.0, 3.0]
+        assert_eq!(result, vec![2.0, 3.0]);
+    }
+
+    #[test]
+    fn test_mean_pooling_empty_mask_error() {
+        let shape = [1, 2, 2];
+        let hidden_states = [1.0, 2.0, 3.0, 4.0];
+        let attention_mask = [0, 0]; // All masked out
+
+        let result = mean_pooling_impl(&shape, &hidden_states, &attention_mask);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_mean_pooling_invalid_shape() {
+        let shape = [1, 2]; // 2D instead of 3D
+        let hidden_states = [1.0, 2.0];
+        let attention_mask = [1, 1];
+
+        let result = mean_pooling_impl(&shape, &hidden_states, &attention_mask);
+        assert!(result.is_err());
+    }
+
+    // --- Utility function tests ---
+
+    #[test]
+    fn test_default_cache_dir() {
+        let dir = default_cache_dir();
+        assert!(dir.ends_with("gte-small"));
+    }
+
+    #[test]
+    fn test_model_exists_false_for_nonexistent() {
+        let dir = PathBuf::from("/nonexistent/path/to/model");
+        assert!(!LocalEmbedder::model_exists(&dir));
+    }
+
+    #[test]
+    fn test_model_info_debug() {
+        let info = ModelInfo {
+            model_name: "test".to_string(),
+            dimensions: 384,
+            model_dir: PathBuf::from("/test"),
+        };
+        let debug_str = format!("{:?}", info);
+        assert!(debug_str.contains("test"));
+        assert!(debug_str.contains("384"));
+    }
+
+    #[test]
+    fn test_embedder_error_display() {
+        let err = EmbedderError::ModelNotFound("/path".to_string());
+        assert!(err.to_string().contains("/path"));
+
+        let err = EmbedderError::DownloadError("network error".to_string());
+        assert!(err.to_string().contains("network error"));
+    }
+
+    #[test]
+    fn test_gte_small_dimensions_constant() {
+        assert_eq!(GTE_SMALL_DIMENSIONS, 384);
+    }
+
+    // --- Integration tests (require model to be present) ---
+
+    /// Helper to check if model is available for integration tests
+    fn model_available() -> bool {
+        LocalEmbedder::default_model_exists()
+    }
+
+    #[tokio::test]
+    async fn test_embedding_dimensions() {
+        if !model_available() {
+            eprintln!("Skipping test_embedding_dimensions: model not available");
+            return;
+        }
+
+        let embedder = LocalEmbedder::new().expect("Failed to load model");
+        let embedding = embedder.embed("test text").await.expect("Embedding failed");
+
+        assert_eq!(embedding.len(), GTE_SMALL_DIMENSIONS);
+    }
+
+    #[tokio::test]
+    async fn test_embedding_determinism() {
+        if !model_available() {
+            eprintln!("Skipping test_embedding_determinism: model not available");
+            return;
+        }
+
+        let embedder = LocalEmbedder::new().expect("Failed to load model");
+        let text = "This is a test sentence for embedding.";
+
+        let embedding1 = embedder.embed(text).await.expect("First embedding failed");
+        let embedding2 = embedder.embed(text).await.expect("Second embedding failed");
+
+        // Same input should produce same output
+        assert_eq!(embedding1.len(), embedding2.len());
+        for (a, b) in embedding1.iter().zip(embedding2.iter()) {
+            assert!((a - b).abs() < 1e-6, "Embeddings differ: {} vs {}", a, b);
+        }
+    }
+
+    #[tokio::test]
+    async fn test_batch_embedding() {
+        if !model_available() {
+            eprintln!("Skipping test_batch_embedding: model not available");
+            return;
+        }
+
+        let embedder = LocalEmbedder::new().expect("Failed to load model");
+        let texts = ["Hello world", "Goodbye moon", "Testing embeddings"];
+
+        let embeddings = embedder
+            .embed_batch(&texts)
+            .await
+            .expect("Batch embedding failed");
+
+        assert_eq!(embeddings.len(), 3);
+        for emb in &embeddings {
+            assert_eq!(emb.len(), GTE_SMALL_DIMENSIONS);
+        }
+    }
+
+    #[tokio::test]
+    async fn test_similar_texts_have_high_similarity() {
+        if !model_available() {
+            eprintln!("Skipping test_similar_texts_have_high_similarity: model not available");
+            return;
+        }
+
+        let embedder = LocalEmbedder::new().expect("Failed to load model");
+
+        let emb1 = embedder
+            .embed("The cat sat on the mat")
+            .await
+            .expect("Embed failed");
+        let emb2 = embedder
+            .embed("A cat was sitting on a mat")
+            .await
+            .expect("Embed failed");
+        let emb3 = embedder
+            .embed("Quantum mechanics describes particle behavior")
+            .await
+            .expect("Embed failed");
+
+        let sim_similar = cosine_similarity(&emb1, &emb2);
+        let sim_different = cosine_similarity(&emb1, &emb3);
+
+        // Similar sentences should have higher similarity than different ones
+        assert!(
+            sim_similar > sim_different,
+            "Expected similar texts to have higher similarity: {} vs {}",
+            sim_similar,
+            sim_different
+        );
+    }
+
+    #[tokio::test]
+    async fn test_health_check() {
+        if !model_available() {
+            eprintln!("Skipping test_health_check: model not available");
+            return;
+        }
+
+        let embedder = LocalEmbedder::new().expect("Failed to load model");
+        let info = embedder.health_check().await.expect("Health check failed");
+
+        assert_eq!(info.model_name, "gte-small");
+        assert_eq!(info.dimensions, GTE_SMALL_DIMENSIONS);
+    }
+
+    #[tokio::test]
+    async fn test_embedder_dimensions_method() {
+        if !model_available() {
+            eprintln!("Skipping test_embedder_dimensions_method: model not available");
+            return;
+        }
+
+        let embedder = LocalEmbedder::new().expect("Failed to load model");
+        assert_eq!(embedder.dimensions(), GTE_SMALL_DIMENSIONS);
     }
 }
