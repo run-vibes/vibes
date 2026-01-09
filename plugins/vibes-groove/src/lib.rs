@@ -46,7 +46,10 @@ pub use assessment::{
 
 // Extraction re-exports
 pub use extraction::{
-    ExtractionEvent, ExtractionMethod, ExtractionSource, LearningCandidate, PatternType,
+    ConsumerResult as ExtractionConsumerResult, ExtractionConfig, ExtractionConsumer,
+    ExtractionEvent, ExtractionMethod, ExtractionResult, ExtractionSource, LearningCandidate,
+    PatternType, StartConsumerError as ExtractionStartError, TranscriptFetcher,
+    extraction_consumer_loop, start_extraction_consumer,
 };
 
 // Security re-exports
