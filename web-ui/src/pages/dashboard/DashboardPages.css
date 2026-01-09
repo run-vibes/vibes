@@ -16,3 +16,47 @@
   color: var(--text-dim);
   font-size: var(--font-size-sm);
 }
+
+/* ─── Loading & Error States ──────────────────────────────────────────────── */
+
+.loading-text {
+  color: var(--text-dim);
+  font-size: var(--font-size-sm);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.error-text {
+  color: var(--error, #ff0000);
+  font-size: var(--font-size-sm);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* ─── Overview Grid ───────────────────────────────────────────────────────── */
+
+.dashboard-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-3, 1rem);
+}
+
+/* First card (TrendCard) spans 2 columns on larger screens */
+@media (min-width: 768px) {
+  .dashboard-overview-grid > :first-child {
+    grid-column: span 2;
+  }
+}
+
+/* Full width on mobile */
+@media (max-width: 767px) {
+  .dashboard-overview-grid {
+    grid-template-columns: 1fr;
+  }
+}

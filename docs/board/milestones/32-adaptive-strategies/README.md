@@ -1,7 +1,7 @@
 ---
 id: 32-adaptive-strategies
 title: Adaptive Strategies
-status: planned
+status: done
 epics: [plugin-system]
 ---
 
