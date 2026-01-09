@@ -15,7 +15,6 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use tokio::net::TcpListener;
-use tokio_util::sync::CancellationToken;
 use vibes_core::{
     HookInstaller, HookInstallerConfig, NotificationConfig, NotificationService, SubscriptionStore,
     VapidKeyManager,
@@ -239,8 +238,8 @@ impl VibesServer {
         let event_log = Arc::clone(&self.state.event_log);
         let broadcaster = self.state.event_broadcaster();
 
-        // Create shutdown token for consumers that need it
-        let shutdown = CancellationToken::new();
+        // Get shutdown token from AppState - cancelled when server shuts down
+        let shutdown = self.state.consumer_shutdown_token();
 
         let mut manager = ConsumerManager::new(Arc::clone(&event_log));
 
