@@ -2,7 +2,7 @@
 id: FEAT0029
 title: Ablation manager (Layer 3)
 type: feat
-status: pending
+status: done
 priority: high
 epics: [plugin-system]
 depends: [FEAT0026]

@@ -13,8 +13,6 @@
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
 | [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli |
-| [feat-0028-temporal-correlation](stages/backlog/stories/feat-0028-temporal-correlation.md) | feat | high | plugin-system |
-| [feat-0029-ablation-manager](stages/backlog/stories/feat-0029-ablation-manager.md) | feat | high | plugin-system |
 | [feat-0031-attribution-consumer](stages/backlog/stories/feat-0031-attribution-consumer.md) | feat | high | plugin-system |
 | [feat-0032-auto-deprecation](stages/backlog/stories/feat-0032-auto-deprecation.md) | feat | high | plugin-system |
 | [feat-0033-attribution-cli](stages/backlog/stories/feat-0033-attribution-cli.md) | feat | high | plugin-system |
@@ -119,6 +117,8 @@
 - [feat-0025-extraction-cli](stages/done/stories/feat-0025-extraction-cli.md)
 - [feat-0026-attribution-types-storage](stages/done/stories/feat-0026-attribution-types-storage.md)
 - [feat-0027-activation-detection](stages/done/stories/feat-0027-activation-detection.md)
+- [feat-0028-temporal-correlation](stages/done/stories/feat-0028-temporal-correlation.md)
+- [feat-0029-ablation-manager](stages/done/stories/feat-0029-ablation-manager.md)
 - [feat-0030-value-aggregation](stages/done/stories/feat-0030-value-aggregation.md)
 - [m14-chore-01-design](stages/done/stories/m14-chore-01-design.md)
 - [m14-chore-02-implementation](stages/done/stories/m14-chore-02-implementation.md)

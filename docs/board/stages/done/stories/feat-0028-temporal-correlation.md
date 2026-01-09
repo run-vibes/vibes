@@ -2,7 +2,7 @@
 id: FEAT0028
 title: Temporal correlation (Layer 2)
 type: feat
-status: pending
+status: done
 priority: high
 epics: [plugin-system]
 depends: [FEAT0026]
