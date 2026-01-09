@@ -2,7 +2,7 @@
 id: FEAT0026
 title: Attribution types and storage
 type: feat
-status: pending
+status: done
 priority: high
 epics: [plugin-system]
 depends: []

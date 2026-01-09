@@ -12,7 +12,6 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
 | [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli |
-| [feat-0026-attribution-types-storage](stages/backlog/stories/feat-0026-attribution-types-storage.md) | feat | high | plugin-system |
 | [feat-0027-activation-detection](stages/backlog/stories/feat-0027-activation-detection.md) | feat | high | plugin-system |
 | [feat-0028-temporal-correlation](stages/backlog/stories/feat-0028-temporal-correlation.md) | feat | high | plugin-system |
 | [feat-0029-ablation-manager](stages/backlog/stories/feat-0029-ablation-manager.md) | feat | high | plugin-system |
@@ -119,6 +118,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 - [feat-0023-error-recovery-detector](stages/done/stories/feat-0023-error-recovery-detector.md)
 - [feat-0024-extraction-consumer](stages/done/stories/feat-0024-extraction-consumer.md)
 - [feat-0025-extraction-cli](stages/done/stories/feat-0025-extraction-cli.md)
+- [feat-0026-attribution-types-storage](stages/done/stories/feat-0026-attribution-types-storage.md)
 - [m14-chore-01-design](stages/done/stories/m14-chore-01-design.md)
 - [m14-chore-02-implementation](stages/done/stories/m14-chore-02-implementation.md)
 - [m26-chore-01-eventbus-cleanup](stages/done/stories/m26-chore-01-eventbus-cleanup.md)
