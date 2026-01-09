@@ -1206,9 +1206,11 @@ impl GroovePlugin {
             // Recent activity from actual data
             let sessions = processor.active_sessions();
             let event_count = processor.stored_results_count();
+            let intervention_count = processor.total_intervention_count();
             output.push_str("Recent Activity:\n");
             output.push_str(&format!("  Active sessions: {}\n", sessions.len()));
-            output.push_str(&format!("  Events stored:   {}\n\n", event_count));
+            output.push_str(&format!("  Events stored:   {}\n", event_count));
+            output.push_str(&format!("  Interventions:   {}\n\n", intervention_count));
         } else {
             // No processor (CLI mode) - try to fetch from running server
             let config = url_config.unwrap_or_else(Self::load_server_config);
@@ -1251,8 +1253,12 @@ impl GroovePlugin {
                         status.activity.active_sessions
                     ));
                     output.push_str(&format!(
-                        "  Events stored:   {}\n\n",
+                        "  Events stored:   {}\n",
                         status.activity.events_stored
+                    ));
+                    output.push_str(&format!(
+                        "  Interventions:   {}\n\n",
+                        status.activity.intervention_count
                     ));
                 }
                 Err(e) => {

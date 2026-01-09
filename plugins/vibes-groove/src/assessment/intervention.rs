@@ -49,7 +49,9 @@ pub struct InterventionConfig {
 impl Default for InterventionConfig {
     fn default() -> Self {
         Self {
-            enabled: true,
+            // Disabled by default to prevent tests/CLI from creating hook files.
+            // Enable explicitly when running with proper hooks_dir configured.
+            enabled: false,
             hooks_dir: None,
             max_per_session: 3,
             use_claude_hooks: true,
@@ -459,7 +461,8 @@ mod tests {
     fn test_intervention_config_defaults() {
         let config = InterventionConfig::default();
 
-        assert!(config.enabled);
+        // Disabled by default to prevent accidental hook file creation
+        assert!(!config.enabled);
         assert!(config.hooks_dir.is_none());
         assert_eq!(config.max_per_session, 3);
         assert!(config.use_claude_hooks);
