@@ -26,6 +26,10 @@ default:
     echo "                              Create epic directory"
     echo "  just board new milestone \"name\""
     echo "                              Create milestone directory"
+    echo "  just board start-milestone <id>"
+    echo "                              Set milestone to in-progress"
+    echo "  just board done-milestone <id>"
+    echo "                              Set milestone to done"
     echo "  just board link <story> <epic>   Add story to epic"
     echo "  just board unlink <story> <epic> Remove story from epic"
     echo "  just board link-epic <epic> <milestone>  Add epic to milestone"
@@ -708,6 +712,108 @@ done ID SUMMARY="__PROMPT__":
             echo "Added to CHANGELOG.md"
         fi
     fi
+
+    # Regenerate README
+    just board generate > README.md
+    echo "Board updated"
+
+# Start a milestone (set status to in-progress)
+start-milestone ID:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd "{{board_dir}}"
+
+    milestone="{{ID}}"
+
+    # Find milestone directory (allow partial match)
+    ms_dir=""
+    for d in milestones/*/; do
+        if [[ "$(basename "$d")" == *"$milestone"* ]]; then
+            ms_dir="$d"
+            break
+        fi
+    done
+
+    if [[ -z "$ms_dir" ]] || [[ ! -d "$ms_dir" ]]; then
+        echo "Error: Milestone '$milestone' not found"
+        echo "Available milestones:"
+        for m in milestones/*/; do
+            [[ -d "$m" ]] && echo "  - $(basename "$m")"
+        done
+        exit 1
+    fi
+
+    ms_name=$(basename "$ms_dir")
+    ms_readme="${ms_dir}README.md"
+
+    if [[ ! -f "$ms_readme" ]]; then
+        echo "Error: Milestone README not found at $ms_readme"
+        exit 1
+    fi
+
+    # Check current status
+    current_status=$(grep -m1 "^status:" "$ms_readme" 2>/dev/null | sed 's/^status: *//' || echo "")
+    if [[ "$current_status" == "in-progress" ]]; then
+        echo "Milestone '$ms_name' is already in-progress"
+        exit 0
+    fi
+    if [[ "$current_status" == "done" ]]; then
+        echo "Error: Milestone '$ms_name' is already done"
+        exit 1
+    fi
+
+    # Update status
+    sed -i 's/^status: .*/status: in-progress/' "$ms_readme"
+    echo "Started milestone: $ms_name"
+
+    # Regenerate README
+    just board generate > README.md
+    echo "Board updated"
+
+# Complete a milestone (set status to done)
+done-milestone ID:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd "{{board_dir}}"
+
+    milestone="{{ID}}"
+
+    # Find milestone directory (allow partial match)
+    ms_dir=""
+    for d in milestones/*/; do
+        if [[ "$(basename "$d")" == *"$milestone"* ]]; then
+            ms_dir="$d"
+            break
+        fi
+    done
+
+    if [[ -z "$ms_dir" ]] || [[ ! -d "$ms_dir" ]]; then
+        echo "Error: Milestone '$milestone' not found"
+        echo "Available milestones:"
+        for m in milestones/*/; do
+            [[ -d "$m" ]] && echo "  - $(basename "$m")"
+        done
+        exit 1
+    fi
+
+    ms_name=$(basename "$ms_dir")
+    ms_readme="${ms_dir}README.md"
+
+    if [[ ! -f "$ms_readme" ]]; then
+        echo "Error: Milestone README not found at $ms_readme"
+        exit 1
+    fi
+
+    # Check current status
+    current_status=$(grep -m1 "^status:" "$ms_readme" 2>/dev/null | sed 's/^status: *//' || echo "")
+    if [[ "$current_status" == "done" ]]; then
+        echo "Milestone '$ms_name' is already done"
+        exit 0
+    fi
+
+    # Update status
+    sed -i 's/^status: .*/status: done/' "$ms_readme"
+    echo "Completed milestone: $ms_name"
 
     # Regenerate README
     just board generate > README.md

@@ -1,7 +1,7 @@
 ---
 id: 30-learning-extraction
 title: Learning Extraction
-status: planned
+status: in-progress
 epics: [plugin-system]
 ---
 

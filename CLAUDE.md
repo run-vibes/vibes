@@ -77,6 +77,8 @@ Commands are organized into modules. Use `just <module>` to see available subcom
 | `just board new milestone "name"` | Create new milestone |
 | `just board start <id>` | Move story to in-progress |
 | `just board done <id>` | Move story to done |
+| `just board start-milestone <id>` | Set milestone to in-progress |
+| `just board done-milestone <id>` | Set milestone to done |
 
 ## Workflow
 
@@ -131,6 +133,20 @@ See [docs/board/CONVENTIONS.md](docs/board/CONVENTIONS.md) for detailed planning
 | Complete work | `just board done <story-id>` |
 
 These commands handle file moves, symlink updates, and changelog entries automatically.
+
+### Milestone Management
+
+**When starting the FIRST story of a milestone:**
+
+1. Run `just board start-milestone <id>`
+2. Commit with message: `chore(board): start milestone NN-name`
+
+**When completing the LAST story of a milestone:**
+
+1. Run `just board done-milestone <id>`
+2. Commit with message: `chore(board): complete milestone NN-name`
+
+Milestone files live in `docs/board/milestones/<id>/README.md`.
 
 ### Completing Work
 
