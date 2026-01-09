@@ -3,9 +3,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
-| Story | Type | Priority | Epics |
-|-------|------|----------|-------|
-| [bug-0003-pty-created-with-hardcoded-dimensions-ignoring-client-size](stages/in-progress/stories/bug-0003-pty-created-with-hardcoded-dimensions-ignoring-client-size.md) | bug | high | core |
+*No stories in progress*
 
 ## Backlog
 
@@ -77,6 +75,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 
 - [bug-0001-cwd-propagation](stages/done/stories/bug-0001-cwd-propagation.md)
 - [bug-0002-firehose-not-loading-historical-events](stages/done/stories/bug-0002-firehose-not-loading-historical-events.md)
+- [bug-0003-pty-created-with-hardcoded-dimensions-ignoring-client-size](stages/done/stories/bug-0003-pty-created-with-hardcoded-dimensions-ignoring-client-size.md)
 - [chore-0001-nav-cleanup](stages/done/stories/chore-0001-nav-cleanup.md)
 - [chore-0002-firehose-filter-cleanup](stages/done/stories/chore-0002-firehose-filter-cleanup.md)
 - [chore-0003-assessment-tier-buttons](stages/done/stories/chore-0003-assessment-tier-buttons.md)

@@ -2,7 +2,7 @@
 id: BUG0003
 title: PTY created with hardcoded dimensions ignoring client size
 type: bug
-status: in-progress
+status: done
 priority: high
 epics: [core]
 depends: []
