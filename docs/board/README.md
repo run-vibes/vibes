@@ -1,5 +1,6 @@
-Generated README.md
-Auto-generated from directory structure. Run `just board generate` to update.
+# Planning Board
+
+> Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
@@ -9,9 +10,13 @@ Auto-generated from directory structure. Run `just board generate` to update.
 
 | Story | Type | Priority | Epics |
 |-------|------|----------|-------|
+| [chore-0017-remove-assess-button-icon](stages/backlog/stories/chore-0017-remove-assess-button-icon.md) | chore | low | plugin-system |
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
 | [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli |
+| [feat-0015-paginate-assessment-history](stages/backlog/stories/feat-0015-paginate-assessment-history.md) | feat | medium | core,plugin-system |
+| [feat-0016-precompute-tier-distribution-stats](stages/backlog/stories/feat-0016-precompute-tier-distribution-stats.md) | feat | medium | core,plugin-system |
+| [feat-0017-link-more-to-history-page](stages/backlog/stories/feat-0017-link-more-to-history-page.md) | feat | low | plugin-system |
 
 ## Epics
 
