@@ -293,8 +293,8 @@ mod tests {
 
     #[test]
     fn client_constructs_correct_url() {
-        let client = IggyHttpClient::new("localhost", 3001);
-        assert_eq!(client.base_url(), "http://localhost:3001");
+        let client = IggyHttpClient::new("localhost", 7431);
+        assert_eq!(client.base_url(), "http://localhost:7431");
     }
 
     #[test]
@@ -311,13 +311,13 @@ mod tests {
 
     #[test]
     fn client_starts_unauthenticated() {
-        let client = IggyHttpClient::new("localhost", 3001);
+        let client = IggyHttpClient::new("localhost", 7431);
         assert!(!client.is_authenticated());
     }
 
     #[tokio::test]
     async fn send_message_requires_auth() {
-        let client = IggyHttpClient::new("localhost", 3001);
+        let client = IggyHttpClient::new("localhost", 7431);
         let result = client.send_message("vibes", "events", b"test").await;
         assert!(result.is_err());
         assert!(
@@ -344,14 +344,14 @@ mod tests {
         // Clear any existing token first
         let _ = IggyHttpClient::clear_cached_token();
 
-        let client = IggyHttpClient::new("localhost", 3001);
+        let client = IggyHttpClient::new("localhost", 7431);
         let token = client.load_cached_token();
         assert!(token.is_none());
     }
 
     #[test]
     fn cache_token_requires_token() {
-        let client = IggyHttpClient::new("localhost", 3001);
+        let client = IggyHttpClient::new("localhost", 7431);
         let result = client.cache_token();
         assert!(result.is_err());
         assert!(
@@ -368,14 +368,14 @@ mod tests {
         let _ = IggyHttpClient::clear_cached_token();
 
         // Create client with a token
-        let mut client = IggyHttpClient::new("localhost", 3001);
+        let mut client = IggyHttpClient::new("localhost", 7431);
         client.token = Some("test-token-12345".to_string());
 
         // Cache the token
         client.cache_token().expect("Failed to cache token");
 
         // Load it back with a new client
-        let client2 = IggyHttpClient::new("localhost", 3001);
+        let client2 = IggyHttpClient::new("localhost", 7431);
         let loaded = client2.load_cached_token();
 
         assert_eq!(loaded, Some("test-token-12345".to_string()));
@@ -387,7 +387,7 @@ mod tests {
     #[test]
     fn clear_cached_token_removes_file() {
         // Create a token file
-        let mut client = IggyHttpClient::new("localhost", 3001);
+        let mut client = IggyHttpClient::new("localhost", 7431);
         client.token = Some("temp-token".to_string());
         let _ = client.cache_token();
 

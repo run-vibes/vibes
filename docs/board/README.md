@@ -1,5 +1,6 @@
-Generated README.md
-Auto-generated from directory structure. Run `just board generate` to update.
+# Planning Board
+
+> Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
@@ -85,6 +86,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 - [chore-0015-cli-help-text-audit](stages/done/stories/chore-0015-cli-help-text-audit.md)
 - [chore-0016-proper-shutdown-signal-coordination-for-plugin-manager](stages/done/stories/chore-0016-proper-shutdown-signal-coordination-for-plugin-manager.md)
 - [chore-0017-remove-assess-button-icon](stages/done/stories/chore-0017-remove-assess-button-icon.md)
+- [chore-0018-change-default-iggy-port](stages/done/stories/chore-0018-change-default-iggy-port.md)
 - [docs-0001-fix-broken-documentation-links](stages/done/stories/docs-0001-fix-broken-documentation-links.md)
 - [docs-0002-update-prd-for-current-architecture](stages/done/stories/docs-0002-update-prd-for-current-architecture.md)
 - [feat-0003-web-ui-navigation-hierarchy](stages/done/stories/feat-0003-web-ui-navigation-hierarchy.md)

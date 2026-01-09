@@ -84,8 +84,8 @@ fn default_http_port() -> u16 {
         return p;
     }
     // HTTP port for Iggy REST API.
-    // Uses 3001 to avoid conflicts with common dev servers (React defaults to 3000).
-    3001
+    // Uses 7431 to avoid conflicts with common dev servers (3000-3999 range).
+    7431
 }
 
 fn default_health_check_interval() -> Duration {

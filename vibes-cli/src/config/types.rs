@@ -120,8 +120,8 @@ pub struct TunnelConfigSection {
 }
 
 /// Default HTTP port for Iggy REST API
-/// Uses 3001 to avoid conflicts with common dev servers (React defaults to 3000)
-pub const DEFAULT_IGGY_HTTP_PORT: u16 = 3001;
+/// Uses 7431 to avoid conflicts with common dev servers (3000-3999 range)
+pub const DEFAULT_IGGY_HTTP_PORT: u16 = 7431;
 
 /// Configuration for connecting to Iggy HTTP API
 #[derive(Debug, Clone, Deserialize)]
@@ -191,7 +191,7 @@ mod tests {
 
         assert_eq!(config.host, "127.0.0.1");
         assert_eq!(config.http_port, DEFAULT_IGGY_HTTP_PORT);
-        assert_eq!(config.http_port, 3001);
+        assert_eq!(config.http_port, 7431);
         assert_eq!(config.username, "iggy");
         assert_eq!(config.password, "iggy");
     }
@@ -199,7 +199,7 @@ mod tests {
     #[test]
     fn iggy_config_base_url() {
         let config = IggyClientConfig::default();
-        assert_eq!(config.base_url(), "http://127.0.0.1:3001");
+        assert_eq!(config.base_url(), "http://127.0.0.1:7431");
 
         let custom = IggyClientConfig {
             host: "iggy.example.com".to_string(),
@@ -223,7 +223,7 @@ mod tests {
         let config = IggyClientConfig::from_env();
 
         assert_eq!(config.host, "127.0.0.1");
-        assert_eq!(config.http_port, 3001);
+        assert_eq!(config.http_port, 7431);
         assert_eq!(config.username, "iggy");
         assert_eq!(config.password, "iggy");
     }
