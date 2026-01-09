@@ -12,7 +12,6 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
 | [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli |
-| [feat-0045-learnings-page](stages/backlog/stories/feat-0045-learnings-page.md) | feat | high | plugin-system |
 | [feat-0046-learning-actions](stages/backlog/stories/feat-0046-learning-actions.md) | feat | medium | plugin-system |
 | [feat-0047-attribution-page](stages/backlog/stories/feat-0047-attribution-page.md) | feat | high | plugin-system |
 | [feat-0048-strategy-page](stages/backlog/stories/feat-0048-strategy-page.md) | feat | high | plugin-system |
@@ -141,6 +140,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 - [feat-0042-dashboard-layout](stages/done/stories/feat-0042-dashboard-layout.md)
 - [feat-0043-websocket-dashboard](stages/done/stories/feat-0043-websocket-dashboard.md)
 - [feat-0044-overview-page](stages/done/stories/feat-0044-overview-page.md)
+- [feat-0045-learnings-page](stages/done/stories/feat-0045-learnings-page.md)
 - [m14-chore-01-design](stages/done/stories/m14-chore-01-design.md)
 - [m14-chore-02-implementation](stages/done/stories/m14-chore-02-implementation.md)
 - [m26-chore-01-eventbus-cleanup](stages/done/stories/m26-chore-01-eventbus-cleanup.md)

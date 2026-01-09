@@ -1,0 +1,50 @@
+.value-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.value-bar__track {
+  flex: 1;
+  height: 6px;
+  background: var(--bg-surface, #111);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.value-bar__fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.value-bar--positive .value-bar__fill {
+  background: linear-gradient(90deg, rgba(0, 255, 0, 0.4), var(--success, #00ff00));
+}
+
+.value-bar--negative .value-bar__fill {
+  background: linear-gradient(90deg, rgba(255, 0, 0, 0.4), var(--error, #ff0000));
+}
+
+.value-bar--neutral .value-bar__fill {
+  background: var(--text-dim, #888);
+}
+
+.value-bar__text {
+  font-size: 0.75rem;
+  font-family: var(--font-mono, monospace);
+  min-width: 3rem;
+  text-align: right;
+}
+
+.value-bar--positive .value-bar__text {
+  color: var(--success, #00ff00);
+}
+
+.value-bar--negative .value-bar__text {
+  color: var(--error, #ff0000);
+}
+
+.value-bar--neutral .value-bar__text {
+  color: var(--text-dim, #888);
+}

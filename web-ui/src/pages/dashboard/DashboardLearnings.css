@@ -1,0 +1,52 @@
+.dashboard-learnings {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.dashboard-learnings__layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  gap: 1px;
+  background: var(--border-dim, #333);
+}
+
+/* ─── Left Panel (Filters + List) ─────────────────────────────────────────── */
+
+.dashboard-learnings__left {
+  display: flex;
+  flex-direction: column;
+  width: 40%;
+  min-width: 280px;
+  max-width: 500px;
+  background: var(--bg-surface, #111);
+}
+
+/* ─── Right Panel (Detail) ────────────────────────────────────────────────── */
+
+.dashboard-learnings__right {
+  flex: 1;
+  background: var(--bg-surface, #111);
+  overflow-y: auto;
+}
+
+/* ─── Responsive Stacking ─────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .dashboard-learnings__layout {
+    flex-direction: column;
+  }
+
+  .dashboard-learnings__left {
+    width: 100%;
+    max-width: none;
+    max-height: 50%;
+  }
+
+  .dashboard-learnings__right {
+    flex: 1;
+    min-height: 0;
+  }
+}
