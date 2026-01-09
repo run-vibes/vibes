@@ -296,6 +296,80 @@ pub struct DeleteResponse {
 //  AssessmentHistoryResponse, SessionHistoryItem, AssessmentStatsResponse,
 //  TierDistribution, SessionStats)
 
+// ─── Attribution API Response Types ───────────────────────────────────────────
+
+/// Attribution engine status response
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AttributionStatusResponse {
+    pub total_learnings: u64,
+    pub active_learnings: u64,
+    pub deprecated_learnings: u64,
+    pub experimental_learnings: u64,
+    pub attributions_24h: u64,
+    pub average_value: f64,
+    pub consumer_running: bool,
+}
+
+/// Attribution values list response
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AttributionValuesResponse {
+    pub values: Vec<LearningValueSummary>,
+    pub total: u64,
+}
+
+/// Summary of a learning's attribution value
+#[derive(Debug, Serialize, Deserialize)]
+pub struct LearningValueSummary {
+    pub learning_id: String,
+    pub estimated_value: f64,
+    pub confidence: f64,
+    pub session_count: u32,
+    pub status: String,
+}
+
+/// Detailed attribution response for a specific learning
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AttributionDetailResponse {
+    pub learning_id: String,
+    pub estimated_value: f64,
+    pub confidence: f64,
+    pub session_count: u32,
+    pub activation_rate: f64,
+    pub temporal_value: f64,
+    pub temporal_confidence: f64,
+    pub ablation_value: Option<f64>,
+    pub ablation_confidence: Option<f64>,
+    pub status: String,
+    pub status_reason: Option<String>,
+    pub recent_sessions: Vec<AttributionSessionSummary>,
+}
+
+/// Summary of attribution for a specific session
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AttributionSessionSummary {
+    pub session_id: String,
+    pub timestamp: String,
+    pub was_activated: bool,
+    pub attributed_value: f64,
+}
+
+/// Attribution explanation response
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AttributionExplainResponse {
+    pub learning_id: String,
+    pub session_id: String,
+    pub timestamp: String,
+    pub was_activated: bool,
+    pub activation_confidence: f64,
+    pub activation_signals: Vec<String>,
+    pub temporal_positive: f64,
+    pub temporal_negative: f64,
+    pub net_temporal: f64,
+    pub was_withheld: bool,
+    pub session_outcome: f64,
+    pub attributed_value: f64,
+}
+
 // ============================================================================
 // Server URL Configuration (for CLI → Server HTTP)
 // ============================================================================
@@ -611,6 +685,12 @@ impl Plugin for GroovePlugin {
             ["learn", "show"] => self.cmd_learn_show(args),
             ["learn", "delete"] => self.cmd_learn_delete(args),
             ["learn", "export"] => self.cmd_learn_export(args),
+            ["learn", "enable"] => self.cmd_learn_enable(args),
+            ["learn", "disable"] => self.cmd_learn_disable(args),
+            ["attr", "status"] => self.cmd_attr_status(args),
+            ["attr", "values"] => self.cmd_attr_values(args),
+            ["attr", "show"] => self.cmd_attr_show(args),
+            ["attr", "explain"] => self.cmd_attr_explain(args),
             _ => Err(PluginError::UnknownCommand(path.join(" "))),
         }
     }
@@ -636,6 +716,14 @@ impl Plugin for GroovePlugin {
             (HttpMethod::Get, "/learnings") => self.route_learnings_list(&request),
             (HttpMethod::Get, "/learnings/:id") => self.route_learnings_get(&request),
             (HttpMethod::Delete, "/learnings/:id") => self.route_learnings_delete(&request),
+            (HttpMethod::Post, "/learnings/:id/enable") => self.route_learnings_enable(&request),
+            (HttpMethod::Post, "/learnings/:id/disable") => self.route_learnings_disable(&request),
+            (HttpMethod::Get, "/attr/status") => self.route_attr_status(),
+            (HttpMethod::Get, "/attr/values") => self.route_attr_values(&request),
+            (HttpMethod::Get, "/attr/show/:id") => self.route_attr_show(&request),
+            (HttpMethod::Get, "/attr/explain/:learning_id/:session_id") => {
+                self.route_attr_explain(&request)
+            }
             _ => Err(PluginError::UnknownRoute(format!("{:?} {}", method, path))),
         }
     }
@@ -798,6 +886,89 @@ impl GroovePlugin {
             }],
         })?;
 
+        // learn enable <id>
+        ctx.register_command(CommandSpec {
+            path: vec!["learn".into(), "enable".into()],
+            description: "Re-enable a deprecated learning".into(),
+            args: vec![ArgSpec {
+                name: "id".into(),
+                description: "Learning ID to enable".into(),
+                required: true,
+            }],
+        })?;
+
+        // learn disable <id> [reason]
+        ctx.register_command(CommandSpec {
+            path: vec!["learn".into(), "disable".into()],
+            description: "Manually deprecate a learning".into(),
+            args: vec![
+                ArgSpec {
+                    name: "id".into(),
+                    description: "Learning ID to disable".into(),
+                    required: true,
+                },
+                ArgSpec {
+                    name: "reason".into(),
+                    description: "Reason for deprecation".into(),
+                    required: false,
+                },
+            ],
+        })?;
+
+        // attr status
+        ctx.register_command(CommandSpec {
+            path: vec!["attr".into(), "status".into()],
+            description: "Show attribution engine status".into(),
+            args: vec![],
+        })?;
+
+        // attr values [--sort] [--limit]
+        ctx.register_command(CommandSpec {
+            path: vec!["attr".into(), "values".into()],
+            description: "List learning values".into(),
+            args: vec![
+                ArgSpec {
+                    name: "sort".into(),
+                    description: "Sort by: value, confidence, sessions (default: value)".into(),
+                    required: false,
+                },
+                ArgSpec {
+                    name: "limit".into(),
+                    description: "Maximum results (default: 20)".into(),
+                    required: false,
+                },
+            ],
+        })?;
+
+        // attr show <id>
+        ctx.register_command(CommandSpec {
+            path: vec!["attr".into(), "show".into()],
+            description: "Show detailed attribution for a learning".into(),
+            args: vec![ArgSpec {
+                name: "id".into(),
+                description: "Learning ID to show".into(),
+                required: true,
+            }],
+        })?;
+
+        // attr explain <learning_id> <session_id>
+        ctx.register_command(CommandSpec {
+            path: vec!["attr".into(), "explain".into()],
+            description: "Explain attribution for a specific session".into(),
+            args: vec![
+                ArgSpec {
+                    name: "learning_id".into(),
+                    description: "Learning ID".into(),
+                    required: true,
+                },
+                ArgSpec {
+                    name: "session_id".into(),
+                    description: "Session ID".into(),
+                    required: true,
+                },
+            ],
+        })?;
+
         Ok(())
     }
 
@@ -869,6 +1040,38 @@ impl GroovePlugin {
         ctx.register_route(RouteSpec {
             method: HttpMethod::Delete,
             path: "/learnings/:id".into(),
+        })?;
+
+        // Attribution routes
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Get,
+            path: "/attr/status".into(),
+        })?;
+
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Get,
+            path: "/attr/values".into(),
+        })?;
+
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Get,
+            path: "/attr/show/:id".into(),
+        })?;
+
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Get,
+            path: "/attr/explain/:learning_id/:session_id".into(),
+        })?;
+
+        // Learn enable/disable routes
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Post,
+            path: "/learnings/:id/enable".into(),
+        })?;
+
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Post,
+            path: "/learnings/:id/disable".into(),
         })?;
 
         Ok(())
@@ -2189,6 +2392,195 @@ impl GroovePlugin {
         Ok(CommandOutput::Text(json))
     }
 
+    // ─── Learn Enable/Disable Commands ────────────────────────────────
+
+    fn cmd_learn_enable(
+        &self,
+        args: &vibes_plugin_api::CommandArgs,
+    ) -> Result<CommandOutput, PluginError> {
+        if Self::wants_help(&args.args) {
+            return Ok(CommandOutput::Text(
+                "Usage: vibes groove learn enable <id>\n\n\
+                 Re-enable a deprecated learning.\n\n\
+                 Arguments:\n\
+                   <id>         Learning ID to enable\n"
+                    .to_string(),
+            ));
+        }
+
+        let id = args
+            .args
+            .first()
+            .ok_or_else(|| PluginError::custom("Missing learning ID"))?;
+
+        let mut output = String::new();
+        output.push_str(&format!("Enabling learning: {}\n", id));
+        output.push_str("(Not yet implemented - requires server connection)\n");
+
+        Ok(CommandOutput::Text(output))
+    }
+
+    fn cmd_learn_disable(
+        &self,
+        args: &vibes_plugin_api::CommandArgs,
+    ) -> Result<CommandOutput, PluginError> {
+        if Self::wants_help(&args.args) {
+            return Ok(CommandOutput::Text(
+                "Usage: vibes groove learn disable <id> [reason]\n\n\
+                 Manually deprecate a learning.\n\n\
+                 Arguments:\n\
+                   <id>         Learning ID to disable\n\
+                   [reason]     Optional reason for deprecation\n"
+                    .to_string(),
+            ));
+        }
+
+        let id = args
+            .args
+            .first()
+            .ok_or_else(|| PluginError::custom("Missing learning ID"))?;
+        let reason = args.args.get(1).cloned();
+
+        let mut output = String::new();
+        output.push_str(&format!("Disabling learning: {}\n", id));
+        if let Some(r) = reason {
+            output.push_str(&format!("Reason: {}\n", r));
+        }
+        output.push_str("(Not yet implemented - requires server connection)\n");
+
+        Ok(CommandOutput::Text(output))
+    }
+
+    // ─── Attribution Commands ─────────────────────────────────────────
+
+    fn cmd_attr_status(
+        &self,
+        args: &vibes_plugin_api::CommandArgs,
+    ) -> Result<CommandOutput, PluginError> {
+        if Self::wants_help(&args.args) {
+            return Ok(CommandOutput::Text(
+                "Usage: vibes groove attr status\n\n\
+                 Show attribution engine status.\n"
+                    .to_string(),
+            ));
+        }
+
+        let mut output = String::new();
+        output.push_str("Attribution Engine Status\n");
+        output.push_str("========================================\n\n");
+
+        // In CLI mode, we'd fetch from server
+        // For now, return placeholder data
+        output.push_str("Learnings:\n");
+        output.push_str("  Total:        0\n");
+        output.push_str("  Active:       0\n");
+        output.push_str("  Deprecated:   0\n");
+        output.push_str("  Experimental: 0\n\n");
+
+        output.push_str("Activity (24h):\n");
+        output.push_str("  Attributions: 0\n");
+        output.push_str("  Avg value:    N/A\n\n");
+
+        output.push_str("Consumer: not running\n");
+
+        Ok(CommandOutput::Text(output))
+    }
+
+    fn cmd_attr_values(
+        &self,
+        args: &vibes_plugin_api::CommandArgs,
+    ) -> Result<CommandOutput, PluginError> {
+        if Self::wants_help(&args.args) {
+            return Ok(CommandOutput::Text(
+                "Usage: vibes groove attr values [OPTIONS]\n\n\
+                 List learning values.\n\n\
+                 Options:\n\
+                   --sort <SORT>    Sort by: value, confidence, sessions (default: value)\n\
+                   --limit <N>      Maximum results (default: 20)\n\
+                   --help, -h       Show this help message\n"
+                    .to_string(),
+            ));
+        }
+
+        let _sort = Self::parse_flag(&args.args, "--sort").unwrap_or_else(|| "value".to_string());
+        let _limit: usize = Self::parse_flag(&args.args, "--limit")
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(20);
+
+        let mut output = String::new();
+        output.push_str("Learning Values\n");
+        output.push_str("========================================\n\n");
+        output.push_str("ID                                    Value   Conf    Sessions  Status\n");
+        output.push_str("------------------------------------  ------  ------  --------  ------\n");
+        output.push_str("\nNo learnings with attribution data.\n");
+
+        Ok(CommandOutput::Text(output))
+    }
+
+    fn cmd_attr_show(
+        &self,
+        args: &vibes_plugin_api::CommandArgs,
+    ) -> Result<CommandOutput, PluginError> {
+        if Self::wants_help(&args.args) {
+            return Ok(CommandOutput::Text(
+                "Usage: vibes groove attr show <id>\n\n\
+                 Show detailed attribution for a learning.\n\n\
+                 Arguments:\n\
+                   <id>         Learning ID to show\n"
+                    .to_string(),
+            ));
+        }
+
+        let id = args
+            .args
+            .first()
+            .ok_or_else(|| PluginError::custom("Missing learning ID"))?;
+
+        let mut output = String::new();
+        output.push_str(&format!("Attribution Details: {}\n", id));
+        output.push_str("========================================\n\n");
+        output.push_str("Learning not found or no attribution data available.\n");
+
+        Ok(CommandOutput::Text(output))
+    }
+
+    fn cmd_attr_explain(
+        &self,
+        args: &vibes_plugin_api::CommandArgs,
+    ) -> Result<CommandOutput, PluginError> {
+        if Self::wants_help(&args.args) {
+            return Ok(CommandOutput::Text(
+                "Usage: vibes groove attr explain <learning_id> <session_id>\n\n\
+                 Explain attribution for a specific session.\n\n\
+                 Arguments:\n\
+                   <learning_id>  Learning ID\n\
+                   <session_id>   Session ID\n"
+                    .to_string(),
+            ));
+        }
+
+        let learning_id = args
+            .args
+            .first()
+            .ok_or_else(|| PluginError::custom("Missing learning ID"))?;
+        let session_id = args
+            .args
+            .get(1)
+            .ok_or_else(|| PluginError::custom("Missing session ID"))?;
+
+        let mut output = String::new();
+        output.push_str(&format!(
+            "Attribution Explanation\n\
+             ========================================\n\n\
+             Learning: {}\n\
+             Session:  {}\n\n\
+             No attribution record found for this combination.\n",
+            learning_id, session_id
+        ));
+
+        Ok(CommandOutput::Text(output))
+    }
+
     // ─── Route Handlers ───────────────────────────────────────────────
 
     fn route_get_policy(&self) -> Result<RouteResponse, PluginError> {
@@ -2834,6 +3226,142 @@ impl GroovePlugin {
                 ),
             }
         })
+    }
+
+    // ─── Learn Enable/Disable Routes ──────────────────────────────────
+
+    fn route_learnings_enable(&self, request: &RouteRequest) -> Result<RouteResponse, PluginError> {
+        let id_str = request
+            .params
+            .get("id")
+            .ok_or_else(|| PluginError::InvalidInput("Missing id parameter".into()))?;
+
+        // Validate UUID format
+        let _id: uuid::Uuid = id_str
+            .parse()
+            .map_err(|_| PluginError::InvalidInput(format!("Invalid UUID: {}", id_str)))?;
+
+        // For now, return a placeholder response
+        RouteResponse::json(
+            200,
+            &serde_json::json!({
+                "success": true,
+                "id": id_str,
+                "status": "active",
+                "message": "Learning re-enabled (not yet implemented)"
+            }),
+        )
+    }
+
+    fn route_learnings_disable(
+        &self,
+        request: &RouteRequest,
+    ) -> Result<RouteResponse, PluginError> {
+        let id_str = request
+            .params
+            .get("id")
+            .ok_or_else(|| PluginError::InvalidInput("Missing id parameter".into()))?;
+
+        // Validate UUID format
+        let _id: uuid::Uuid = id_str
+            .parse()
+            .map_err(|_| PluginError::InvalidInput(format!("Invalid UUID: {}", id_str)))?;
+
+        // For now, return a placeholder response
+        RouteResponse::json(
+            200,
+            &serde_json::json!({
+                "success": true,
+                "id": id_str,
+                "status": "deprecated",
+                "message": "Learning disabled (not yet implemented)"
+            }),
+        )
+    }
+
+    // ─── Attribution Routes ───────────────────────────────────────────
+
+    fn route_attr_status(&self) -> Result<RouteResponse, PluginError> {
+        let response = AttributionStatusResponse {
+            total_learnings: 0,
+            active_learnings: 0,
+            deprecated_learnings: 0,
+            experimental_learnings: 0,
+            attributions_24h: 0,
+            average_value: 0.0,
+            consumer_running: false,
+        };
+
+        RouteResponse::json(200, &response)
+    }
+
+    fn route_attr_values(&self, request: &RouteRequest) -> Result<RouteResponse, PluginError> {
+        let _limit: usize = request
+            .query
+            .get("limit")
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(20);
+
+        let _sort = request
+            .query
+            .get("sort")
+            .cloned()
+            .unwrap_or_else(|| "value".to_string());
+
+        let response = AttributionValuesResponse {
+            values: vec![],
+            total: 0,
+        };
+
+        RouteResponse::json(200, &response)
+    }
+
+    fn route_attr_show(&self, request: &RouteRequest) -> Result<RouteResponse, PluginError> {
+        let id_str = request
+            .params
+            .get("id")
+            .ok_or_else(|| PluginError::InvalidInput("Missing id parameter".into()))?;
+
+        // Validate UUID format
+        let _id: uuid::Uuid = id_str
+            .parse()
+            .map_err(|_| PluginError::InvalidInput(format!("Invalid UUID: {}", id_str)))?;
+
+        RouteResponse::json(
+            404,
+            &ErrorResponse {
+                error: format!("Attribution data not found for learning: {}", id_str),
+                code: "NOT_FOUND".to_string(),
+            },
+        )
+    }
+
+    fn route_attr_explain(&self, request: &RouteRequest) -> Result<RouteResponse, PluginError> {
+        let learning_id = request
+            .params
+            .get("learning_id")
+            .ok_or_else(|| PluginError::InvalidInput("Missing learning_id parameter".into()))?;
+
+        let session_id = request
+            .params
+            .get("session_id")
+            .ok_or_else(|| PluginError::InvalidInput("Missing session_id parameter".into()))?;
+
+        // Validate learning_id UUID format
+        let _id: uuid::Uuid = learning_id
+            .parse()
+            .map_err(|_| PluginError::InvalidInput(format!("Invalid UUID: {}", learning_id)))?;
+
+        RouteResponse::json(
+            404,
+            &ErrorResponse {
+                error: format!(
+                    "Attribution record not found for learning {} session {}",
+                    learning_id, session_id
+                ),
+                code: "NOT_FOUND".to_string(),
+            },
+        )
     }
 }
 
@@ -4085,5 +4613,176 @@ mod tests {
             }
             _ => panic!("Expected Text output"),
         }
+    }
+
+    // ─── Attribution CLI Tests ─────────────────────────────────────────────
+
+    #[test]
+    fn test_attribution_status_response_serialization() {
+        // Test that AttributionStatusResponse can be serialized/deserialized
+        let response = AttributionStatusResponse {
+            total_learnings: 10,
+            active_learnings: 8,
+            deprecated_learnings: 2,
+            experimental_learnings: 0,
+            attributions_24h: 150,
+            average_value: 0.65,
+            consumer_running: true,
+        };
+
+        let json = serde_json::to_string(&response).unwrap();
+        let parsed: AttributionStatusResponse = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(parsed.total_learnings, 10);
+        assert_eq!(parsed.active_learnings, 8);
+        assert_eq!(parsed.attributions_24h, 150);
+    }
+
+    #[test]
+    fn test_attribution_values_response_serialization() {
+        // Test that AttributionValuesResponse can be serialized/deserialized
+        let response = AttributionValuesResponse {
+            values: vec![LearningValueSummary {
+                learning_id: "test-id".into(),
+                estimated_value: 0.75,
+                confidence: 0.9,
+                session_count: 15,
+                status: "active".into(),
+            }],
+            total: 1,
+        };
+
+        let json = serde_json::to_string(&response).unwrap();
+        let parsed: AttributionValuesResponse = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(parsed.values.len(), 1);
+        assert_eq!(parsed.values[0].estimated_value, 0.75);
+    }
+
+    #[test]
+    fn test_on_load_registers_attr_commands() {
+        let mut plugin = GroovePlugin::default();
+        let mut ctx = create_test_context();
+
+        plugin.on_load(&mut ctx).unwrap();
+
+        let commands = ctx.pending_commands();
+        let paths: Vec<_> = commands.iter().map(|c| c.path.join(" ")).collect();
+
+        // Verify attr commands are registered
+        assert!(
+            paths.contains(&"attr status".to_string()),
+            "Should register 'attr status'. Registered: {:?}",
+            paths
+        );
+        assert!(
+            paths.contains(&"attr values".to_string()),
+            "Should register 'attr values'. Registered: {:?}",
+            paths
+        );
+        assert!(
+            paths.contains(&"attr show".to_string()),
+            "Should register 'attr show'. Registered: {:?}",
+            paths
+        );
+        assert!(
+            paths.contains(&"attr explain".to_string()),
+            "Should register 'attr explain'. Registered: {:?}",
+            paths
+        );
+    }
+
+    #[test]
+    fn test_on_load_registers_attr_routes() {
+        let mut plugin = GroovePlugin::default();
+        let mut ctx = create_test_context();
+
+        plugin.on_load(&mut ctx).unwrap();
+
+        let routes = ctx.pending_routes();
+        let paths: Vec<_> = routes.iter().map(|r| r.path.clone()).collect();
+
+        // Verify attr routes are registered
+        assert!(
+            paths.contains(&"/attr/status".to_string()),
+            "Should register '/attr/status'. Registered: {:?}",
+            paths
+        );
+        assert!(
+            paths.contains(&"/attr/values".to_string()),
+            "Should register '/attr/values'. Registered: {:?}",
+            paths
+        );
+        assert!(
+            paths.contains(&"/attr/show/:id".to_string()),
+            "Should register '/attr/show/:id'. Registered: {:?}",
+            paths
+        );
+    }
+
+    #[test]
+    fn test_on_load_registers_learn_enable_disable_commands() {
+        let mut plugin = GroovePlugin::default();
+        let mut ctx = create_test_context();
+
+        plugin.on_load(&mut ctx).unwrap();
+
+        let commands = ctx.pending_commands();
+        let paths: Vec<_> = commands.iter().map(|c| c.path.join(" ")).collect();
+
+        // Verify learn enable/disable commands are registered
+        assert!(
+            paths.contains(&"learn enable".to_string()),
+            "Should register 'learn enable'. Registered: {:?}",
+            paths
+        );
+        assert!(
+            paths.contains(&"learn disable".to_string()),
+            "Should register 'learn disable'. Registered: {:?}",
+            paths
+        );
+    }
+
+    #[test]
+    fn test_handle_command_attr_status() {
+        let mut plugin = GroovePlugin::default();
+        let mut ctx = create_test_context();
+        let args = vibes_plugin_api::CommandArgs::default();
+
+        // Test attr status command dispatch
+        let result = plugin.handle_command(&["attr", "status"], &args, &mut ctx);
+        assert!(result.is_ok(), "attr status command should succeed");
+    }
+
+    #[test]
+    fn test_route_attr_status() {
+        let plugin = GroovePlugin::default();
+        let result = plugin.route_attr_status().unwrap();
+
+        assert_eq!(result.status, 200);
+        assert_eq!(result.content_type, "application/json");
+
+        let response: AttributionStatusResponse = serde_json::from_slice(&result.body).unwrap();
+        // Default plugin has no attribution data
+        assert_eq!(response.total_learnings, 0);
+    }
+
+    #[test]
+    fn test_route_attr_values() {
+        let plugin = GroovePlugin::default();
+        let request = RouteRequest {
+            params: HashMap::new(),
+            query: [("limit".into(), "10".into())].into_iter().collect(),
+            body: vec![],
+            headers: HashMap::new(),
+        };
+
+        let result = plugin.route_attr_values(&request).unwrap();
+
+        assert_eq!(result.status, 200);
+
+        let response: AttributionValuesResponse = serde_json::from_slice(&result.body).unwrap();
+        assert_eq!(response.total, 0);
+        assert!(response.values.is_empty());
     }
 }
