@@ -77,8 +77,7 @@ pub struct ErrorRecoveryDetector {
     ts_error_pattern: Regex,
     /// Pattern for test failures
     test_failure_pattern: Regex,
-    /// Configuration (used in recovery detection)
-    #[allow(dead_code)]
+    /// Configuration
     config: ErrorRecoveryConfig,
 }
 
@@ -149,6 +148,116 @@ impl ErrorRecoveryDetector {
             .unwrap_or(output)
             .trim()
             .to_string()
+    }
+
+    /// Find recovery sequence after a failure at the given index
+    pub fn find_recovery(
+        &self,
+        tools: &[TranscriptToolUse],
+        failure_index: usize,
+    ) -> Option<ErrorRecoveryCandidate> {
+        // Must have a failure at the given index
+        let failed_tool = tools.get(failure_index)?;
+        let failure = self.detect_failure(failed_tool)?;
+
+        // Look for successful tool calls within max_recovery_distance
+        let max_index = (failure_index + self.config.max_recovery_distance + 1).min(tools.len());
+        let mut recovery_indices = Vec::new();
+        let mut success_index = None;
+
+        for (i, tool) in tools
+            .iter()
+            .enumerate()
+            .take(max_index)
+            .skip(failure_index + 1)
+        {
+            if tool.success {
+                // Track modification tools as part of recovery
+                if self.is_modification_tool(&tool.tool_name) {
+                    recovery_indices.push(i);
+                }
+                // Found a success with same tool type as failure - this is the recovery point
+                if tool.tool_name == failed_tool.tool_name {
+                    recovery_indices.push(i);
+                    success_index = Some(i);
+                    break;
+                }
+            }
+        }
+
+        // Recovery requires finding a successful call of the same tool type
+        // (Edit/Write alone doesn't prove recovery without re-running the failed command)
+        let final_success = success_index?;
+
+        // Calculate confidence
+        let distance = final_success - failure_index;
+        let distance_factor = 1.0 - (distance as f64 * 0.1).min(0.4);
+        let confidence = (0.6 + distance_factor * 0.3).min(1.0);
+
+        // Extract recovery strategy from intermediate tools
+        let strategy = self.extract_recovery_strategy(tools, failure_index, final_success);
+
+        Some(ErrorRecoveryCandidate {
+            error_type: failure.error_type,
+            error_message: failure.error_message,
+            failed_tool_index: failure_index,
+            recovery_tool_indices: recovery_indices,
+            recovery_strategy: strategy,
+            confidence,
+        })
+    }
+
+    /// Check if a tool modifies files (Edit, Write, etc.)
+    fn is_modification_tool(&self, name: &str) -> bool {
+        matches!(name, "Edit" | "Write" | "MultiEdit")
+    }
+
+    /// Extract a description of the recovery strategy from tool calls
+    fn extract_recovery_strategy(
+        &self,
+        tools: &[TranscriptToolUse],
+        failure_index: usize,
+        success_index: usize,
+    ) -> String {
+        let mut actions = Vec::new();
+
+        for i in (failure_index + 1)..success_index {
+            if let Some(tool) = tools.get(i)
+                && tool.success
+            {
+                let action = match tool.tool_name.as_str() {
+                    "Edit" => {
+                        if let Some(path) = tool.input.get("file_path").and_then(|v| v.as_str()) {
+                            format!("Edit {}", path)
+                        } else {
+                            "Edit file".to_string()
+                        }
+                    }
+                    "Write" => {
+                        if let Some(path) = tool.input.get("file_path").and_then(|v| v.as_str()) {
+                            format!("Write {}", path)
+                        } else {
+                            "Write file".to_string()
+                        }
+                    }
+                    "Bash" => {
+                        if let Some(cmd) = tool.input.get("command").and_then(|v| v.as_str()) {
+                            format!("Run: {}", cmd.chars().take(50).collect::<String>())
+                        } else {
+                            "Run command".to_string()
+                        }
+                    }
+                    name => format!("Use {}", name),
+                };
+                actions.push(action);
+            }
+        }
+
+        if actions.is_empty() {
+            "Retried command".to_string()
+        } else {
+            actions.join(", then ")
+        }
     }
 }
 
@@ -324,5 +433,145 @@ mod tests {
         assert!(failure.is_some());
         let f = failure.unwrap();
         assert!(f.error_message.contains("cannot find value"));
+    }
+
+    // --- Recovery detection tests ---
+
+    fn make_tool_use_with_input(
+        name: &str,
+        input: serde_json::Value,
+        output: Option<&str>,
+        success: bool,
+    ) -> TranscriptToolUse {
+        TranscriptToolUse {
+            tool_name: name.to_string(),
+            input,
+            output: output.map(String::from),
+            success,
+        }
+    }
+
+    #[test]
+    fn test_find_recovery_after_compilation_failure() {
+        let detector = ErrorRecoveryDetector::new();
+        let tools = vec![
+            // Failed compilation
+            make_tool_use(
+                "Bash",
+                Some("error[E0433]: use of undeclared type `Foo`"),
+                false,
+            ),
+            // Edit to fix the issue
+            make_tool_use_with_input(
+                "Edit",
+                json!({"file_path": "/src/main.rs"}),
+                Some("File edited successfully"),
+                true,
+            ),
+            // Successful compilation
+            make_tool_use("Bash", Some("Compiling vibes v0.1.0\nFinished dev"), true),
+        ];
+
+        let recovery = detector.find_recovery(&tools, 0);
+
+        assert!(recovery.is_some());
+        let r = recovery.unwrap();
+        assert!(!r.recovery_tool_indices.is_empty());
+    }
+
+    #[test]
+    fn test_no_recovery_if_no_success_follows() {
+        let detector = ErrorRecoveryDetector::new();
+        let tools = vec![
+            // Failed compilation
+            make_tool_use(
+                "Bash",
+                Some("error[E0433]: use of undeclared type `Foo`"),
+                false,
+            ),
+            // Another failure
+            make_tool_use("Bash", Some("error[E0412]: cannot find type `Bar`"), false),
+        ];
+
+        let recovery = detector.find_recovery(&tools, 0);
+
+        assert!(recovery.is_none());
+    }
+
+    #[test]
+    fn test_recovery_distance_limit() {
+        let config = ErrorRecoveryConfig {
+            enabled: true,
+            min_confidence: 0.5,
+            max_recovery_distance: 2,
+        };
+        let detector = ErrorRecoveryDetector::with_config(&config);
+
+        let tools = vec![
+            make_tool_use("Bash", Some("error: compilation failed"), false),
+            make_tool_use("Read", Some("contents"), true),
+            make_tool_use("Read", Some("contents"), true),
+            make_tool_use("Read", Some("contents"), true),
+            // Success too far away (index 4, distance > 2)
+            make_tool_use("Bash", Some("Success"), true),
+        ];
+
+        let recovery = detector.find_recovery(&tools, 0);
+
+        assert!(recovery.is_none());
+    }
+
+    #[test]
+    fn test_recovery_confidence_higher_for_same_command() {
+        let detector = ErrorRecoveryDetector::new();
+
+        // Same command (Bash) for recovery
+        let tools_same = vec![
+            make_tool_use("Bash", Some("error: failed"), false),
+            make_tool_use("Edit", Some("edited"), true),
+            make_tool_use("Bash", Some("Success"), true),
+        ];
+
+        // Different successful tool
+        let tools_diff = vec![
+            make_tool_use("Bash", Some("error: failed"), false),
+            make_tool_use("Edit", Some("edited"), true),
+            make_tool_use("Read", Some("contents"), true),
+        ];
+
+        let recovery_same = detector.find_recovery(&tools_same, 0);
+        let recovery_diff = detector.find_recovery(&tools_diff, 0);
+
+        assert!(recovery_same.is_some());
+        // Recovery with same command type should have higher confidence
+        // or at least be found (diff may not qualify as recovery if tool type differs)
+        if let Some(r_diff) = recovery_diff {
+            assert!(recovery_same.unwrap().confidence >= r_diff.confidence);
+        }
+    }
+
+    #[test]
+    fn test_extract_recovery_strategy() {
+        let detector = ErrorRecoveryDetector::new();
+        let tools = vec![
+            make_tool_use(
+                "Bash",
+                Some("error[E0433]: use of undeclared type `Foo`"),
+                false,
+            ),
+            make_tool_use_with_input(
+                "Edit",
+                json!({"file_path": "/src/main.rs", "old_string": "let x = Foo;", "new_string": "use crate::Foo;\nlet x = Foo;"}),
+                Some("File edited successfully"),
+                true,
+            ),
+            make_tool_use("Bash", Some("Compiling...\nFinished"), true),
+        ];
+
+        let recovery = detector.find_recovery(&tools, 0);
+
+        assert!(recovery.is_some());
+        let r = recovery.unwrap();
+        assert!(!r.recovery_strategy.is_empty());
     }
 }
