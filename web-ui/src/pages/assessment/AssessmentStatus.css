@@ -163,10 +163,21 @@
 }
 
 .session-item.more {
-  color: var(--phosphor);
   background: transparent;
   border: none;
   font-style: italic;
+}
+
+.session-item.more a {
+  color: var(--phosphor);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color var(--transition-fast), text-shadow var(--transition-fast);
+}
+
+.session-item.more a:hover {
+  color: var(--phosphor-bright);
+  text-shadow: 0 0 8px var(--phosphor-glow);
 }
 
 /* === Tier Distribution Card === */

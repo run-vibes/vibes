@@ -1,5 +1,6 @@
 // web-ui/src/pages/assessment/AssessmentStatus.tsx
 import { useEffect, useState } from 'react';
+import { Link } from '@tanstack/react-router';
 import { Group } from '@visx/group';
 import { Pie } from '@visx/shape';
 import { scaleOrdinal } from '@visx/scale';
@@ -285,7 +286,9 @@ export function AssessmentStatus() {
                   </li>
                 ))}
                 {activity.sessions.length > 5 && (
-                  <li className="session-item more">+{activity.sessions.length - 5} more</li>
+                  <li className="session-item more">
+                    <Link to="/groove/assessment/history">+{activity.sessions.length - 5} more</Link>
+                  </li>
                 )}
               </ul>
             </div>

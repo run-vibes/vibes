@@ -2,7 +2,7 @@
 id: FEAT0017
 title: Link +more text to assessment history page
 type: feat
-status: backlog
+status: done
 priority: low
 epics: [plugin-system]
 depends: []

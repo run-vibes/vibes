@@ -13,7 +13,6 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
 | [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli |
 | [feat-0016-precompute-tier-distribution-stats](stages/backlog/stories/feat-0016-precompute-tier-distribution-stats.md) | feat | medium | core,plugin-system |
-| [feat-0017-link-more-to-history-page](stages/backlog/stories/feat-0017-link-more-to-history-page.md) | feat | low | plugin-system |
 
 ## Epics
 
@@ -94,6 +93,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 - [feat-0005-session-terminal-outline](stages/done/stories/feat-0005-session-terminal-outline.md)
 - [feat-0014-production-iggy-polling-for-assessment-queries](stages/done/stories/feat-0014-production-iggy-polling-for-assessment-queries.md)
 - [feat-0015-paginate-assessment-history](stages/done/stories/feat-0015-paginate-assessment-history.md)
+- [feat-0017-link-more-to-history-page](stages/done/stories/feat-0017-link-more-to-history-page.md)
 - [m14-chore-01-design](stages/done/stories/m14-chore-01-design.md)
 - [m14-chore-02-implementation](stages/done/stories/m14-chore-02-implementation.md)
 - [m26-chore-01-eventbus-cleanup](stages/done/stories/m26-chore-01-eventbus-cleanup.md)
