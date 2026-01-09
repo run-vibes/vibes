@@ -69,5 +69,6 @@ pub use plugin::GroovePlugin;
 pub use attribution::{
     ATTRIBUTION_SCHEMA, AblationExperiment, AblationResult, ActivationConfig, ActivationDetector,
     ActivationResult, ActivationSignal, AttributionRecord, AttributionStore, CozoAttributionStore,
-    HybridActivationDetector, LearningStatus, LearningValue, SessionOutcome,
+    ExponentialDecayCorrelator, HybridActivationDetector, LearningStatus, LearningValue,
+    SessionOutcome, TemporalConfig, TemporalCorrelator, TemporalResult,
 };

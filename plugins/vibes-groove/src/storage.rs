@@ -93,6 +93,7 @@ mod tests {
             enterprises: HashMap::new(),
             deduplication: crate::DeduplicationConfig::default(),
             correction: crate::CorrectionConfig::default(),
+            temporal: crate::TemporalConfig::default(),
         }
     }
 
@@ -156,6 +157,7 @@ mod tests {
             )]),
             deduplication: crate::DeduplicationConfig::default(),
             correction: crate::CorrectionConfig::default(),
+            temporal: crate::TemporalConfig::default(),
         };
 
         let storage = GrooveStorage::new(&config)
@@ -207,6 +209,7 @@ mod tests {
             )]),
             deduplication: crate::DeduplicationConfig::default(),
             correction: crate::CorrectionConfig::default(),
+            temporal: crate::TemporalConfig::default(),
         };
 
         let storage = GrooveStorage::new(&config)
