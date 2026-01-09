@@ -1,1 +1,1 @@
-../../stages/backlog/stories/feat-0021-semantic-deduplication.md
+../../stages/in-progress/stories/feat-0021-semantic-deduplication.md
