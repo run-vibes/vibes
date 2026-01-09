@@ -10,6 +10,7 @@
 
 | Story | Type | Priority | Epics |
 |-------|------|----------|-------|
+| [bug-0003-pty-created-with-hardcoded-dimensions-ignoring-client-size](stages/backlog/stories/bug-0003-pty-created-with-hardcoded-dimensions-ignoring-client-size.md) | bug | high | core |
 | [chore-0016-proper-shutdown-signal-coordination-for-plugin-manager](stages/backlog/stories/chore-0016-proper-shutdown-signal-coordination-for-plugin-manager.md) | chore | low | core |
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
