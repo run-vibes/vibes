@@ -1,6 +1,5 @@
-# Planning Board
-
-> Auto-generated from directory structure. Run `just board generate` to update.
+Generated README.md
+Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
@@ -13,7 +12,6 @@
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
 | [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli |
-| [feat-0032-auto-deprecation](stages/backlog/stories/feat-0032-auto-deprecation.md) | feat | high | plugin-system |
 | [feat-0033-attribution-cli](stages/backlog/stories/feat-0033-attribution-cli.md) | feat | high | plugin-system |
 | [feat-0034-strategy-types-storage](stages/backlog/stories/feat-0034-strategy-types-storage.md) | feat | high | plugin-system |
 | [feat-0035-strategy-distribution](stages/backlog/stories/feat-0035-strategy-distribution.md) | feat | high | plugin-system |
@@ -120,6 +118,7 @@
 - [feat-0029-ablation-manager](stages/done/stories/feat-0029-ablation-manager.md)
 - [feat-0030-value-aggregation](stages/done/stories/feat-0030-value-aggregation.md)
 - [feat-0031-attribution-consumer](stages/done/stories/feat-0031-attribution-consumer.md)
+- [feat-0032-auto-deprecation](stages/done/stories/feat-0032-auto-deprecation.md)
 - [m14-chore-01-design](stages/done/stories/m14-chore-01-design.md)
 - [m14-chore-02-implementation](stages/done/stories/m14-chore-02-implementation.md)
 - [m26-chore-01-eventbus-cleanup](stages/done/stories/m26-chore-01-eventbus-cleanup.md)

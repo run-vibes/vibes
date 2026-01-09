@@ -2,7 +2,7 @@
 id: FEAT0032
 title: Auto-deprecation
 type: feat
-status: pending
+status: done
 priority: high
 epics: [plugin-system]
 depends: [FEAT0030]

@@ -24,7 +24,9 @@ use super::activation::ActivationDetector;
 use super::aggregation::ValueAggregator;
 use super::store::AttributionStore;
 use super::temporal::TemporalCorrelator;
-use super::types::{ActivationSignal, AttributionRecord, LearningStatus, LearningValue};
+use super::types::{
+    ActivationSignal, AttributionRecord, DeprecationEvent, LearningStatus, LearningValue,
+};
 use super::{AblationConfig, AblationManager, AblationStrategy, ActivationConfig, TemporalConfig};
 
 /// Default poll timeout for attribution consumer.
@@ -321,8 +323,24 @@ where
                 .update_learning_value(current_value, &temporal, activation_rate);
 
         // Check if learning was deprecated
-        if matches!(learning_value.status, LearningStatus::Deprecated { .. }) {
-            result.deprecated.push(learning_id);
+        if let LearningStatus::Deprecated { reason } = &learning_value.status {
+            warn!(
+                learning_id = %learning_id,
+                session_id = %session_id,
+                value = learning_value.estimated_value,
+                confidence = learning_value.confidence,
+                session_count = learning_value.session_count,
+                "Learning auto-deprecated due to negative value"
+            );
+
+            result.deprecation_events.push(DeprecationEvent {
+                learning_id,
+                timestamp: Utc::now(),
+                reason: reason.clone(),
+                final_value: learning_value.estimated_value,
+                confidence: learning_value.confidence,
+                session_count: learning_value.session_count,
+            });
         }
 
         // 6. Store attribution record
@@ -367,8 +385,8 @@ pub struct AttributionResult {
     pub session_id: Option<SessionId>,
     /// Number of learnings processed
     pub learnings_processed: u32,
-    /// Learnings that were deprecated due to negative value
-    pub deprecated: Vec<LearningId>,
+    /// Deprecation events that occurred during processing
+    pub deprecation_events: Vec<DeprecationEvent>,
     /// Errors encountered (learning_id, error message)
     pub errors: Vec<(LearningId, String)>,
     /// Whether attribution was disabled
@@ -560,7 +578,7 @@ where
                                     debug!(
                                         session_id = ?result.session_id,
                                         learnings = result.learnings_processed,
-                                        deprecated = result.deprecated.len(),
+                                        deprecations = result.deprecation_events.len(),
                                         errors = result.errors.len(),
                                         "Processed attribution event"
                                     );
@@ -980,6 +998,25 @@ mod tests {
 
         let disabled = AttributionResult::disabled();
         assert!(!disabled.is_success());
+    }
+
+    #[test]
+    fn test_attribution_result_with_deprecation_events() {
+        let mut result = AttributionResult::new(&SessionId::from("test-session"));
+        assert!(result.deprecation_events.is_empty());
+
+        // Add a deprecation event
+        result.deprecation_events.push(DeprecationEvent {
+            learning_id: Uuid::now_v7(),
+            timestamp: Utc::now(),
+            reason: "Value below threshold".into(),
+            final_value: -0.5,
+            confidence: 0.9,
+            session_count: 50,
+        });
+
+        assert_eq!(result.deprecation_events.len(), 1);
+        assert!(result.is_success()); // deprecations don't make it a failure
     }
 
     #[tokio::test]

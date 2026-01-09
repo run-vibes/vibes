@@ -123,6 +123,25 @@ pub struct AblationResult {
     pub is_significant: bool,
 }
 
+/// Event emitted when a learning is auto-deprecated
+///
+/// Published to Iggy for downstream processing and audit trail.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeprecationEvent {
+    /// The learning that was deprecated
+    pub learning_id: LearningId,
+    /// When the deprecation occurred
+    pub timestamp: DateTime<Utc>,
+    /// Reason for deprecation
+    pub reason: String,
+    /// Final estimated value that triggered deprecation
+    pub final_value: f64,
+    /// Confidence in the value estimate
+    pub confidence: f64,
+    /// Number of sessions used to compute value
+    pub session_count: u32,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -213,5 +232,42 @@ mod tests {
 
         assert_eq!(value.session_count, 10);
         assert!(value.ablation_value.is_some());
+    }
+
+    #[test]
+    fn test_deprecation_event_creation() {
+        let learning_id = Uuid::now_v7();
+        let event = DeprecationEvent {
+            learning_id,
+            timestamp: Utc::now(),
+            reason: "Value -0.50 below threshold -0.30 with 90% confidence".into(),
+            final_value: -0.5,
+            confidence: 0.9,
+            session_count: 50,
+        };
+
+        assert_eq!(event.learning_id, learning_id);
+        assert!(event.final_value < 0.0);
+        assert!(event.confidence > 0.8);
+        assert!(event.reason.contains("threshold"));
+    }
+
+    #[test]
+    fn test_deprecation_event_serialization() {
+        let event = DeprecationEvent {
+            learning_id: Uuid::now_v7(),
+            timestamp: Utc::now(),
+            reason: "Auto-deprecated".into(),
+            final_value: -0.4,
+            confidence: 0.85,
+            session_count: 25,
+        };
+
+        let json = serde_json::to_string(&event).unwrap();
+        let parsed: DeprecationEvent = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(parsed.learning_id, event.learning_id);
+        assert_eq!(parsed.reason, event.reason);
+        assert!((parsed.final_value - event.final_value).abs() < f64::EPSILON);
     }
 }
