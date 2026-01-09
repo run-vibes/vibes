@@ -3665,33 +3665,157 @@ impl GroovePlugin {
     }
 
     fn route_strategy_distributions(&self) -> Result<RouteResponse, PluginError> {
-        let response = StrategyDistributionsResponse {
-            distributions: vec![],
+        let paths = match GroovePaths::new() {
+            Some(p) => p,
+            None => {
+                return RouteResponse::json(
+                    503,
+                    &ErrorResponse {
+                        error: "Groove not initialized. Run 'vibes groove init' first.".to_string(),
+                        code: "NOT_INITIALIZED".to_string(),
+                    },
+                );
+            }
         };
-        RouteResponse::json(200, &response)
+
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            let _ = CozoStrategyStore::init_schema(&store.db());
+            let strategy_store = CozoStrategyStore::new(store.db());
+
+            let distributions = strategy_store
+                .load_distributions()
+                .await
+                .unwrap_or_default();
+
+            let summaries: Vec<DistributionSummary> = distributions
+                .iter()
+                .map(|((category, context_type), dist)| {
+                    let (leading_strategy, leading_weight) = dist
+                        .strategy_weights
+                        .iter()
+                        .max_by(|a, b| a.1.value.partial_cmp(&b.1.value).unwrap())
+                        .map(|(v, w)| (v.as_str().to_string(), w.value))
+                        .unwrap_or(("unknown".to_string(), 0.0));
+
+                    DistributionSummary {
+                        category: category.as_str().to_string(),
+                        context_type: context_type.as_str().to_string(),
+                        session_count: dist.session_count,
+                        leading_strategy,
+                        leading_weight,
+                    }
+                })
+                .collect();
+
+            RouteResponse::json(
+                200,
+                &StrategyDistributionsResponse {
+                    distributions: summaries,
+                },
+            )
+        })
     }
 
     fn route_strategy_show(&self, request: &RouteRequest) -> Result<RouteResponse, PluginError> {
-        let category = request
+        let category_str = request
             .params
             .get("category")
             .ok_or_else(|| PluginError::InvalidInput("Missing category parameter".into()))?;
 
-        let context_type = request
+        let context_type_str = request
             .params
             .get("context_type")
             .ok_or_else(|| PluginError::InvalidInput("Missing context_type parameter".into()))?;
 
-        RouteResponse::json(
-            404,
-            &ErrorResponse {
-                error: format!(
-                    "Distribution not found for category '{}' context '{}'",
-                    category, context_type
+        let paths = match GroovePaths::new() {
+            Some(p) => p,
+            None => {
+                return RouteResponse::json(
+                    503,
+                    &ErrorResponse {
+                        error: "Groove not initialized.".to_string(),
+                        code: "NOT_INITIALIZED".to_string(),
+                    },
+                );
+            }
+        };
+
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            let _ = CozoStrategyStore::init_schema(&store.db());
+            let strategy_store = CozoStrategyStore::new(store.db());
+
+            let distributions = strategy_store
+                .load_distributions()
+                .await
+                .unwrap_or_default();
+            let overrides = strategy_store.load_overrides().await.unwrap_or_default();
+
+            // Find matching distribution
+            let matching = distributions.iter().find(|((cat, ctx), _)| {
+                cat.as_str() == category_str && ctx.as_str() == context_type_str
+            });
+
+            match matching {
+                Some(((_cat, _ctx), dist)) => {
+                    let weights: Vec<StrategyWeightInfo> = dist
+                        .strategy_weights
+                        .iter()
+                        .map(|(variant, param)| StrategyWeightInfo {
+                            variant: variant.as_str().to_string(),
+                            weight: param.value,
+                            alpha: param.prior_alpha,
+                            beta: param.prior_beta,
+                        })
+                        .collect();
+
+                    // Find learnings specialized in this category
+                    let specialized_learnings: Vec<String> = overrides
+                        .iter()
+                        .filter(|(_, o)| {
+                            o.base_category.as_str() == category_str
+                                && o.specialized_weights.is_some()
+                        })
+                        .map(|(id, _)| id.to_string())
+                        .collect();
+
+                    RouteResponse::json(
+                        200,
+                        &StrategyDistributionDetail {
+                            category: category_str.clone(),
+                            context_type: context_type_str.clone(),
+                            session_count: dist.session_count,
+                            weights,
+                            specialized_learnings,
+                            updated_at: dist.updated_at.to_rfc3339(),
+                        },
+                    )
+                }
+                None => RouteResponse::json(
+                    404,
+                    &ErrorResponse {
+                        error: format!(
+                            "Distribution not found for category '{}' context '{}'",
+                            category_str, context_type_str
+                        ),
+                        code: "NOT_FOUND".to_string(),
+                    },
                 ),
-                code: "NOT_FOUND".to_string(),
-            },
-        )
+            }
+        })
     }
 
     fn route_strategy_learning(
@@ -3703,46 +3827,190 @@ impl GroovePlugin {
             .get("id")
             .ok_or_else(|| PluginError::InvalidInput("Missing id parameter".into()))?;
 
-        let _id: uuid::Uuid = id_str
+        let learning_id: uuid::Uuid = id_str
             .parse()
             .map_err(|_| PluginError::InvalidInput(format!("Invalid UUID: {}", id_str)))?;
 
-        RouteResponse::json(
-            404,
-            &ErrorResponse {
-                error: format!("Strategy override not found for learning: {}", id_str),
-                code: "NOT_FOUND".to_string(),
-            },
-        )
+        let paths = match GroovePaths::new() {
+            Some(p) => p,
+            None => {
+                return RouteResponse::json(
+                    503,
+                    &ErrorResponse {
+                        error: "Groove not initialized.".to_string(),
+                        code: "NOT_INITIALIZED".to_string(),
+                    },
+                );
+            }
+        };
+
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            let _ = CozoStrategyStore::init_schema(&store.db());
+            let strategy_store = CozoStrategyStore::new(store.db());
+
+            let overrides = strategy_store.load_overrides().await.unwrap_or_default();
+            let distributions = strategy_store
+                .load_distributions()
+                .await
+                .unwrap_or_default();
+
+            match overrides.get(&learning_id) {
+                Some(override_) => {
+                    let is_specialized = override_.specialized_weights.is_some();
+
+                    // Get effective weights (specialized or from category)
+                    let effective_weights: Vec<StrategyWeightInfo> =
+                        if let Some(ref specialized) = override_.specialized_weights {
+                            specialized
+                                .iter()
+                                .map(|(v, p)| StrategyWeightInfo {
+                                    variant: v.as_str().to_string(),
+                                    weight: p.value,
+                                    alpha: p.prior_alpha,
+                                    beta: p.prior_beta,
+                                })
+                                .collect()
+                        } else {
+                            // Fall back to category distribution
+                            distributions
+                                .iter()
+                                .find(|((cat, _), _)| cat == &override_.base_category)
+                                .map(|(_, dist)| {
+                                    dist.strategy_weights
+                                        .iter()
+                                        .map(|(v, p)| StrategyWeightInfo {
+                                            variant: v.as_str().to_string(),
+                                            weight: p.value,
+                                            alpha: p.prior_alpha,
+                                            beta: p.prior_beta,
+                                        })
+                                        .collect()
+                                })
+                                .unwrap_or_default()
+                        };
+
+                    // Get category weights for comparison
+                    let category_weights: Vec<StrategyWeightInfo> = distributions
+                        .iter()
+                        .find(|((cat, _), _)| cat == &override_.base_category)
+                        .map(|(_, dist)| {
+                            dist.strategy_weights
+                                .iter()
+                                .map(|(v, p)| StrategyWeightInfo {
+                                    variant: v.as_str().to_string(),
+                                    weight: p.value,
+                                    alpha: p.prior_alpha,
+                                    beta: p.prior_beta,
+                                })
+                                .collect()
+                        })
+                        .unwrap_or_default();
+
+                    RouteResponse::json(
+                        200,
+                        &LearningStrategyResponse {
+                            learning_id: learning_id.to_string(),
+                            base_category: override_.base_category.as_str().to_string(),
+                            is_specialized,
+                            session_count: override_.session_count,
+                            specialization_threshold: override_.specialization_threshold,
+                            effective_weights,
+                            category_weights,
+                        },
+                    )
+                }
+                None => RouteResponse::json(
+                    404,
+                    &ErrorResponse {
+                        error: format!("Strategy override not found for learning: {}", id_str),
+                        code: "NOT_FOUND".to_string(),
+                    },
+                ),
+            }
+        })
     }
 
     fn route_strategy_history(&self, request: &RouteRequest) -> Result<RouteResponse, PluginError> {
-        let learning_id = request
+        let learning_id_str = request
             .params
             .get("learning_id")
             .ok_or_else(|| PluginError::InvalidInput("Missing learning_id parameter".into()))?;
 
-        let _id: uuid::Uuid = learning_id
+        let learning_id: uuid::Uuid = learning_id_str
             .parse()
-            .map_err(|_| PluginError::InvalidInput(format!("Invalid UUID: {}", learning_id)))?;
+            .map_err(|_| PluginError::InvalidInput(format!("Invalid UUID: {}", learning_id_str)))?;
 
-        let _limit: usize = request
+        let limit: usize = request
             .query
             .get("limit")
             .and_then(|s| s.parse().ok())
             .unwrap_or(20);
 
-        let response = StrategyHistoryResponse { events: vec![] };
-        RouteResponse::json(200, &response)
+        let paths = match GroovePaths::new() {
+            Some(p) => p,
+            None => {
+                return RouteResponse::json(
+                    503,
+                    &ErrorResponse {
+                        error: "Groove not initialized.".to_string(),
+                        code: "NOT_INITIALIZED".to_string(),
+                    },
+                );
+            }
+        };
+
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            let _ = CozoStrategyStore::init_schema(&store.db());
+            let strategy_store = CozoStrategyStore::new(store.db());
+
+            let events = strategy_store
+                .get_strategy_history(learning_id, limit)
+                .await
+                .unwrap_or_default();
+
+            let event_summaries: Vec<StrategyEventSummary> = events
+                .iter()
+                .map(|e| StrategyEventSummary {
+                    event_id: e.event_id.to_string(),
+                    session_id: e.session_id.to_string(),
+                    strategy_variant: e.strategy.variant().as_str().to_string(),
+                    outcome_value: e.outcome.value,
+                    outcome_confidence: e.outcome.confidence,
+                    outcome_source: e.outcome.source.as_str().to_string(),
+                    timestamp: e.timestamp.to_rfc3339(),
+                })
+                .collect();
+
+            RouteResponse::json(
+                200,
+                &StrategyHistoryResponse {
+                    events: event_summaries,
+                },
+            )
+        })
     }
 
     fn route_strategy_reset(&self, request: &RouteRequest) -> Result<RouteResponse, PluginError> {
-        let category = request
+        let category_str = request
             .params
             .get("category")
             .ok_or_else(|| PluginError::InvalidInput("Missing category parameter".into()))?;
 
-        let context_type = request
+        let context_type_str = request
             .params
             .get("context_type")
             .ok_or_else(|| PluginError::InvalidInput("Missing context_type parameter".into()))?;
@@ -3763,14 +4031,64 @@ impl GroovePlugin {
             );
         }
 
-        RouteResponse::json(
-            200,
-            &serde_json::json!({
-                "message": format!("Distribution reset for {} / {}", category, context_type),
-                "category": category,
-                "context_type": context_type
-            }),
-        )
+        let paths = match GroovePaths::new() {
+            Some(p) => p,
+            None => {
+                return RouteResponse::json(
+                    503,
+                    &ErrorResponse {
+                        error: "Groove not initialized.".to_string(),
+                        code: "NOT_INITIALIZED".to_string(),
+                    },
+                );
+            }
+        };
+
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            let _ = CozoStrategyStore::init_schema(&store.db());
+            let strategy_store = CozoStrategyStore::new(store.db());
+
+            let mut distributions = strategy_store.load_distributions().await.unwrap_or_default();
+
+            // Find and reset the matching distribution
+            let key_to_reset = distributions.keys().find(|(cat, ctx)| {
+                cat.as_str() == category_str && ctx.as_str() == context_type_str
+            }).cloned();
+
+            match key_to_reset {
+                Some(key) => {
+                    // Create fresh distribution with default priors
+                    use crate::strategy::StrategyDistribution;
+                    distributions.insert(key.clone(), StrategyDistribution::new(key.0.clone(), key.1));
+
+                    strategy_store.save_distributions(&distributions).await
+                        .map_err(|e| PluginError::custom(format!("Failed to save: {}", e)))?;
+
+                    RouteResponse::json(
+                        200,
+                        &serde_json::json!({
+                            "message": format!("Distribution reset for {} / {}", category_str, context_type_str),
+                            "category": category_str,
+                            "context_type": context_type_str
+                        }),
+                    )
+                }
+                None => RouteResponse::json(
+                    404,
+                    &ErrorResponse {
+                        error: format!("Distribution not found for {} / {}", category_str, context_type_str),
+                        code: "NOT_FOUND".to_string(),
+                    },
+                ),
+            }
+        })
     }
 
     fn route_strategy_reset_learning(
@@ -3782,7 +4100,7 @@ impl GroovePlugin {
             .get("id")
             .ok_or_else(|| PluginError::InvalidInput("Missing id parameter".into()))?;
 
-        let _id: uuid::Uuid = id_str
+        let learning_id: uuid::Uuid = id_str
             .parse()
             .map_err(|_| PluginError::InvalidInput(format!("Invalid UUID: {}", id_str)))?;
 
@@ -3802,13 +4120,60 @@ impl GroovePlugin {
             );
         }
 
-        RouteResponse::json(
-            200,
-            &serde_json::json!({
-                "message": format!("Learning specialization cleared for {}", id_str),
-                "learning_id": id_str
-            }),
-        )
+        let paths = match GroovePaths::new() {
+            Some(p) => p,
+            None => {
+                return RouteResponse::json(
+                    503,
+                    &ErrorResponse {
+                        error: "Groove not initialized.".to_string(),
+                        code: "NOT_INITIALIZED".to_string(),
+                    },
+                );
+            }
+        };
+
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            let _ = CozoStrategyStore::init_schema(&store.db());
+            let strategy_store = CozoStrategyStore::new(store.db());
+
+            let mut overrides = strategy_store.load_overrides().await.unwrap_or_default();
+
+            match overrides.get_mut(&learning_id) {
+                Some(override_) => {
+                    // Clear specialization but keep the override record
+                    override_.specialized_weights = None;
+                    override_.session_count = 0;
+
+                    strategy_store
+                        .save_overrides(&overrides)
+                        .await
+                        .map_err(|e| PluginError::custom(format!("Failed to save: {}", e)))?;
+
+                    RouteResponse::json(
+                        200,
+                        &serde_json::json!({
+                            "message": format!("Learning specialization cleared for {}", id_str),
+                            "learning_id": id_str
+                        }),
+                    )
+                }
+                None => RouteResponse::json(
+                    404,
+                    &ErrorResponse {
+                        error: format!("Learning override not found: {}", id_str),
+                        code: "NOT_FOUND".to_string(),
+                    },
+                ),
+            }
+        })
     }
 }
 
