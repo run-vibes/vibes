@@ -55,9 +55,17 @@ export function Session() {
   // Send attach request when connected
   useEffect(() => {
     if (isConnected && connectionState === 'connecting') {
+      // Estimate initial terminal dimensions from window size.
+      // Character cell is approximately 9px wide x 17px tall for monospace fonts.
+      // Account for some padding (48px horizontal, 96px vertical for header/padding).
+      const estimatedCols = Math.max(40, Math.floor((window.innerWidth - 48) / 9));
+      const estimatedRows = Math.max(10, Math.floor((window.innerHeight - 96) / 17));
+
       send({
         type: 'attach',
         session_id: sessionId,
+        cols: estimatedCols,
+        rows: estimatedRows,
       });
     }
   }, [isConnected, sessionId, send, connectionState]);

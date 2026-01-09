@@ -48,17 +48,23 @@ impl PtyManager {
         cwd: Option<String>,
     ) -> Result<String, PtyError> {
         let id = Uuid::new_v4().to_string();
-        self.create_session_with_id(id, name, cwd)
+        self.create_session_with_id(id, name, cwd, None, None)
     }
 
-    /// Create a new PTY session with a specific ID
+    /// Create a new PTY session with a specific ID and optional dimensions
+    ///
+    /// If cols/rows are provided, they override the config defaults.
     pub fn create_session_with_id(
         &mut self,
         id: String,
         name: Option<String>,
         cwd: Option<String>,
+        cols: Option<u16>,
+        rows: Option<u16>,
     ) -> Result<String, PtyError> {
-        let session = self.backend.create_session(id.clone(), name, cwd)?;
+        let session = self
+            .backend
+            .create_session(id.clone(), name, cwd, cols, rows)?;
         self.sessions.insert(id.clone(), session);
         Ok(id)
     }

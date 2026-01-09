@@ -16,11 +16,15 @@ use super::{PtyConfig, PtyError};
 /// Trait for PTY backend implementations
 pub trait PtyBackend: Send + Sync {
     /// Create a new PTY session
+    ///
+    /// If cols/rows are provided, they override the config defaults.
     fn create_session(
         &self,
         id: String,
         name: Option<String>,
         cwd: Option<String>,
+        cols: Option<u16>,
+        rows: Option<u16>,
     ) -> Result<PtySession, PtyError>;
 }
 
@@ -42,11 +46,19 @@ impl PtyBackend for RealPtyBackend {
         id: String,
         name: Option<String>,
         cwd: Option<String>,
+        cols: Option<u16>,
+        rows: Option<u16>,
     ) -> Result<PtySession, PtyError> {
+        // Use provided dimensions or fall back to config defaults
+        let actual_cols = cols.unwrap_or(self.config.initial_cols);
+        let actual_rows = rows.unwrap_or(self.config.initial_rows);
+
         tracing::info!(
             id = %id,
             name = ?name,
             cwd = ?cwd,
+            cols = actual_cols,
+            rows = actual_rows,
             command = %self.config.claude_path.display(),
             "Spawning real PTY session"
         );
@@ -55,8 +67,8 @@ impl PtyBackend for RealPtyBackend {
 
         let pair = pty_system
             .openpty(PtySize {
-                rows: self.config.initial_rows,
-                cols: self.config.initial_cols,
+                rows: actual_rows,
+                cols: actual_cols,
                 pixel_width: 0,
                 pixel_height: 0,
             })
@@ -164,11 +176,19 @@ impl PtyBackend for MockPtyBackend {
         id: String,
         name: Option<String>,
         cwd: Option<String>,
+        cols: Option<u16>,
+        rows: Option<u16>,
     ) -> Result<PtySession, PtyError> {
+        // Use provided dimensions or defaults for mock
+        let actual_cols = cols.unwrap_or(80);
+        let actual_rows = rows.unwrap_or(24);
+
         tracing::info!(
             id = %id,
             name = ?name,
             cwd = ?cwd,
+            cols = actual_cols,
+            rows = actual_rows,
             "Creating mock PTY session (no real process)"
         );
 
@@ -177,8 +197,8 @@ impl PtyBackend for MockPtyBackend {
         let pty_system = native_pty_system();
         let pair = pty_system
             .openpty(PtySize {
-                rows: 24,
-                cols: 80,
+                rows: actual_rows,
+                cols: actual_cols,
                 pixel_width: 0,
                 pixel_height: 0,
             })
@@ -238,7 +258,13 @@ mod tests {
     #[test]
     fn mock_backend_creates_session() {
         let backend = MockPtyBackend::new();
-        let session = backend.create_session("test-id".to_string(), Some("test".to_string()), None);
+        let session = backend.create_session(
+            "test-id".to_string(),
+            Some("test".to_string()),
+            None,
+            None,
+            None,
+        );
         assert!(session.is_ok());
         let session = session.unwrap();
         assert_eq!(session.id, "test-id");
@@ -259,7 +285,13 @@ mod tests {
     fn mock_backend_creates_session_with_cwd() {
         let backend = MockPtyBackend::new();
         let cwd = Some("/tmp/test-dir".to_string());
-        let session = backend.create_session("test-id".to_string(), Some("test".to_string()), cwd);
+        let session = backend.create_session(
+            "test-id".to_string(),
+            Some("test".to_string()),
+            cwd,
+            None,
+            None,
+        );
         assert!(session.is_ok());
         let session = session.unwrap();
         assert_eq!(session.id, "test-id");
@@ -279,7 +311,7 @@ mod tests {
         };
         let backend = RealPtyBackend::new(config);
         let session = backend
-            .create_session("test-env".to_string(), None, None)
+            .create_session("test-env".to_string(), None, None, None, None)
             .expect("Failed to create session");
 
         // Give the process time to run and produce output

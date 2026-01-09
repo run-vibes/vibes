@@ -354,8 +354,15 @@ async fn handle_text_message(
             session_id,
             name,
             cwd,
+            cols,
+            rows,
         } => {
-            debug!("PTY attach requested for session: {}", session_id);
+            debug!(
+                "PTY attach requested for session: {} ({}x{})",
+                session_id,
+                cols.unwrap_or(120),
+                rows.unwrap_or(40)
+            );
 
             // Clone name before it's moved for potential SessionCreated event
             let session_name = name.clone();
@@ -363,71 +370,81 @@ async fn handle_text_message(
             let mut pty_manager = state.pty_manager.write().await;
 
             // Check if session exists and capture scrollback length for replay limiting
-            let (cols, rows, _scrollback_len) =
-                if let Some(handle) = pty_manager.get_handle(&session_id) {
-                    // Session exists - capture scrollback length BEFORE marking as attached.
-                    // This prevents duplicate content: any output that arrives after this point
-                    // will be sent as pty_output AND would also be in scrollback for replay.
-                    // By recording the length now, replay will only include content up to here.
-                    let scrollback_len = handle.get_scrollback().len();
+            let (attach_cols, attach_rows, _scrollback_len) = if let Some(handle) =
+                pty_manager.get_handle(&session_id)
+            {
+                // Session exists - capture scrollback length BEFORE marking as attached.
+                // This prevents duplicate content: any output that arrives after this point
+                // will be sent as pty_output AND would also be in scrollback for replay.
+                // By recording the length now, replay will only include content up to here.
+                let scrollback_len = handle.get_scrollback().len();
 
-                    // Mark as attached with the scrollback snapshot length
-                    conn_state.attach_pty(&session_id, scrollback_len);
+                // Mark as attached with the scrollback snapshot length
+                conn_state.attach_pty(&session_id, scrollback_len);
 
-                    // NOTE: Default PTY dimensions (120x40) are used initially.
-                    // The client overrides these via PtyResize message after attach.
-                    (120, 40, scrollback_len)
-                } else {
-                    // Create new PTY session with the client's session ID
-                    match pty_manager.create_session_with_id(session_id.clone(), name, cwd) {
-                        Ok(created_id) => {
-                            debug!("Created new PTY session: {}", created_id);
+                // Resize PTY to match client dimensions immediately.
+                // This ensures future output uses correct dimensions.
+                // Note: Scrollback was generated with old dimensions and may look wrong.
+                let attach_cols = cols.unwrap_or(120);
+                let attach_rows = rows.unwrap_or(40);
+                if let Err(e) = handle.resize(attach_cols, attach_rows).await {
+                    warn!("Failed to resize PTY on attach: {}", e);
+                }
 
-                            // Append session created event to EventLog for consumer processing
-                            state.append_event(VibesEvent::SessionCreated {
-                                session_id: created_id.clone(),
-                                name: session_name,
+                (attach_cols, attach_rows, scrollback_len)
+            } else {
+                // Create new PTY session with client's requested dimensions
+                match pty_manager.create_session_with_id(session_id.clone(), name, cwd, cols, rows)
+                {
+                    Ok(created_id) => {
+                        debug!("Created new PTY session: {}", created_id);
+
+                        // Append session created event to EventLog for consumer processing
+                        state.append_event(VibesEvent::SessionCreated {
+                            session_id: created_id.clone(),
+                            name: session_name,
+                        });
+
+                        // New session has no scrollback yet
+                        conn_state.attach_pty(&session_id, 0);
+
+                        // Get handle for output reading
+                        if let Some(handle) = pty_manager.get_handle(&created_id) {
+                            // Spawn background task to read PTY output
+                            let state_clone = state.clone();
+                            let session_id_clone = created_id.clone();
+                            tokio::spawn(async move {
+                                pty_output_reader(state_clone, session_id_clone, handle).await;
                             });
-
-                            // New session has no scrollback yet
-                            conn_state.attach_pty(&session_id, 0);
-
-                            // Get handle for output reading
-                            if let Some(handle) = pty_manager.get_handle(&created_id) {
-                                // Spawn background task to read PTY output
-                                let state_clone = state.clone();
-                                let session_id_clone = created_id.clone();
-                                tokio::spawn(async move {
-                                    pty_output_reader(state_clone, session_id_clone, handle).await;
-                                });
-                            }
-
-                            // Initial dimensions from config - client will resize after attach
-                            // scrollback_len is 0 for new sessions
-                            (120, 40, 0)
                         }
-                        Err(e) => {
-                            let error = ServerMessage::Error {
-                                session_id: Some(session_id),
-                                message: format!("Failed to create PTY session: {}", e),
-                                code: "PTY_CREATE_FAILED".to_string(),
-                            };
-                            let json = serde_json::to_string(&error)?;
-                            sender.send(Message::Text(json)).await?;
-                            return Ok(());
-                        }
+
+                        // Return the dimensions that were actually used for the new PTY
+                        // (client-provided or defaults from config)
+                        // scrollback_len is 0 for new sessions
+                        (cols.unwrap_or(120), rows.unwrap_or(40), 0)
                     }
-                };
+                    Err(e) => {
+                        let error = ServerMessage::Error {
+                            session_id: Some(session_id),
+                            message: format!("Failed to create PTY session: {}", e),
+                            code: "PTY_CREATE_FAILED".to_string(),
+                        };
+                        let json = serde_json::to_string(&error)?;
+                        sender.send(Message::Text(json)).await?;
+                        return Ok(());
+                    }
+                }
+            };
 
             // Note: Scrollback replay is deferred until first PtyResize.
             // This ensures the PTY dimensions match the client's terminal size,
             // which is critical for mobile clients with narrower screens.
 
-            // Send AttachAck
+            // Send AttachAck with the actual dimensions used
             let ack = ServerMessage::AttachAck {
                 session_id,
-                cols,
-                rows,
+                cols: attach_cols,
+                rows: attach_rows,
             };
             let json = serde_json::to_string(&ack)?;
             sender.send(Message::Text(json)).await?;
@@ -584,4 +601,58 @@ async fn pty_output_reader(
     }
 
     debug!("PTY output reader finished for session: {}", session_id);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn connection_state_needs_replay_after_attach() {
+        let mut state = ConnectionState::new(InputSource::WebUi);
+
+        // Attach to session
+        state.attach_pty("session-1", 0);
+
+        // Should need replay
+        assert!(state.needs_replay("session-1"));
+    }
+
+    #[test]
+    fn connection_state_replay_marked_sent() {
+        let mut state = ConnectionState::new(InputSource::WebUi);
+
+        // Attach to session
+        state.attach_pty("session-1", 0);
+        assert!(state.needs_replay("session-1"));
+
+        // Mark replay as sent
+        state.mark_replay_sent("session-1");
+        assert!(!state.needs_replay("session-1"));
+    }
+
+    #[test]
+    fn connection_state_detach_clears_all_state() {
+        let mut state = ConnectionState::new(InputSource::WebUi);
+
+        // Attach to session
+        state.attach_pty("session-1", 100);
+        assert!(state.is_attached_to_pty("session-1"));
+
+        // Detach
+        state.detach_pty("session-1");
+        assert!(!state.is_attached_to_pty("session-1"));
+        assert!(!state.needs_replay("session-1"));
+    }
+
+    #[test]
+    fn connection_state_replay_limit_preserved() {
+        let mut state = ConnectionState::new(InputSource::WebUi);
+
+        // Attach with specific scrollback length
+        state.attach_pty("session-1", 500);
+
+        // Replay limit should be preserved
+        assert_eq!(state.get_replay_limit("session-1"), 500);
+    }
 }
