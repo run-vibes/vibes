@@ -260,7 +260,7 @@ export function useDashboardLearnings(filters?: LearningsFilter) {
   });
 }
 
-export function useDashboardLearningDetail(id: string) {
+export function useDashboardLearningDetail(id?: string) {
   return useQuery<LearningDetailData>({
     queryKey: ['dashboard', 'learning', id],
     queryFn: async () => {
