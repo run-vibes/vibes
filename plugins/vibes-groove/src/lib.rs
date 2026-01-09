@@ -18,6 +18,7 @@ pub mod plugin;
 pub mod security;
 pub mod storage;
 pub mod store;
+pub mod strategy;
 pub mod types;
 
 // Re-exports - commented out until modules are implemented
@@ -75,4 +76,12 @@ pub use attribution::{
     ExponentialDecayCorrelator, HybridActivationDetector, LearningLoader, LearningStatus,
     LearningValue, LightweightEventFetcher, SessionOutcome, TemporalConfig, TemporalCorrelator,
     TemporalResult, ValueAggregator, attribution_consumer_loop, start_attribution_consumer,
+};
+
+// Strategy re-exports
+pub use strategy::{
+    CallbackMethod, ContextPosition, ContextType, CozoStrategyStore, DeferralTrigger,
+    InjectionFormat, InjectionStrategy, LearningStrategyOverride, OutcomeSource, STRATEGY_SCHEMA,
+    StrategyDistribution, StrategyEvent, StrategyOutcome, StrategyParams, StrategyStore,
+    StrategyVariant, SubagentType,
 };
