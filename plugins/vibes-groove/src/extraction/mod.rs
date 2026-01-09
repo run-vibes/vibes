@@ -6,6 +6,7 @@
 
 pub mod dedup;
 pub mod embedder;
+pub mod patterns;
 pub mod types;
 
 pub use dedup::{DEFAULT_SIMILARITY_THRESHOLD, DeduplicationStrategy, SemanticDedup};

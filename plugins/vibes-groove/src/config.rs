@@ -10,6 +10,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 use crate::extraction::DEFAULT_SIMILARITY_THRESHOLD;
+use crate::extraction::patterns::CorrectionConfig;
 
 /// Configuration for the groove storage system.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -21,6 +22,9 @@ pub struct GrooveConfig {
     /// Deduplication settings
     #[serde(default)]
     pub deduplication: DeduplicationConfig,
+    /// Correction pattern detection settings
+    #[serde(default)]
+    pub correction: CorrectionConfig,
 }
 
 /// Configuration for semantic deduplication
@@ -74,6 +78,7 @@ impl Default for GrooveConfig {
             user_db_path,
             enterprises: HashMap::new(),
             deduplication: DeduplicationConfig::default(),
+            correction: CorrectionConfig::default(),
         }
     }
 }
