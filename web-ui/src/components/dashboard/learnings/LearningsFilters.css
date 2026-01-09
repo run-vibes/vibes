@@ -1,0 +1,60 @@
+.learnings-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: var(--bg-elevated, #1a1a1a);
+  border-bottom: 1px solid var(--border-dim, #333);
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 120px;
+  flex: 1;
+}
+
+.filter-group label {
+  font-size: 0.6875rem;
+  color: var(--text-dim, #888);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.filter-group select {
+  padding: 0.375rem 0.5rem;
+  font-size: 0.8125rem;
+  font-family: var(--font-mono, monospace);
+  color: var(--text-primary, #fff);
+  background: var(--bg-surface, #111);
+  border: 1px solid var(--border-dim, #333);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.filter-group select:hover {
+  border-color: var(--phosphor, #00ff00);
+}
+
+.filter-group select:focus {
+  outline: none;
+  border-color: var(--phosphor, #00ff00);
+  box-shadow: 0 0 4px var(--phosphor, #00ff00);
+}
+
+.filter-group select option {
+  background: var(--bg-surface, #111);
+  color: var(--text-primary, #fff);
+}
+
+@media (max-width: 600px) {
+  .learnings-filters {
+    flex-direction: column;
+  }
+
+  .filter-group {
+    min-width: 100%;
+  }
+}
