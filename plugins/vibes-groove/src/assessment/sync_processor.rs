@@ -23,6 +23,7 @@ use super::intervention::{
 };
 use super::lightweight::{LightweightDetector, LightweightDetectorConfig, SessionState};
 use super::session_buffer::{SessionBuffer, SessionBufferConfig};
+use super::stats_accumulator::{StatsAccumulator, StatsSnapshot, TierCounts};
 use super::types::SessionId;
 
 /// Maximum number of results to store in memory.
@@ -62,6 +63,8 @@ pub struct SyncAssessmentProcessor {
     max_results: usize,
     /// Hook intervention system for injecting learnings.
     intervention: Mutex<HookIntervention>,
+    /// Pre-computed stats accumulator for fast dashboard queries.
+    stats_accumulator: Mutex<StatsAccumulator>,
 }
 
 impl SyncAssessmentProcessor {
@@ -94,6 +97,7 @@ impl SyncAssessmentProcessor {
             stored_results: Mutex::new(VecDeque::new()),
             max_results: DEFAULT_MAX_RESULTS,
             intervention: Mutex::new(intervention),
+            stats_accumulator: Mutex::new(StatsAccumulator::new()),
         }
     }
 
@@ -259,15 +263,23 @@ impl SyncAssessmentProcessor {
             }
         }
 
-        // Store results for querying
+        // Store results for querying and update stats
         if !results.is_empty() {
             let mut stored = self.stored_results.lock().unwrap();
+            let mut stats = self.stats_accumulator.lock().unwrap();
+
             for result in &results {
+                // Store for query API
                 stored.push_front(StoredResult {
                     event_id: result.event_id.clone(),
                     result: result.clone(),
                 });
+
+                // Update pre-computed stats (offset = stored results count as monotonic ID)
+                let offset = stored.len() as u64;
+                stats.update(&result.session_id, &result.result_type, offset);
             }
+
             // Trim to max size
             while stored.len() > self.max_results {
                 stored.pop_back();
@@ -439,6 +451,49 @@ impl SyncAssessmentProcessor {
     pub fn interventions_enabled(&self) -> bool {
         let intervention = self.intervention.lock().unwrap();
         intervention.is_enabled()
+    }
+
+    // ─── Pre-computed Stats Methods ──────────────────────────────────────
+
+    /// Get the global tier distribution from pre-computed stats.
+    #[must_use]
+    pub fn global_tier_counts(&self) -> TierCounts {
+        let stats = self.stats_accumulator.lock().unwrap();
+        stats.global_counts().clone()
+    }
+
+    /// Get tier distribution for a specific session.
+    #[must_use]
+    pub fn session_tier_counts(&self, session_id: &str) -> Option<TierCounts> {
+        let stats = self.stats_accumulator.lock().unwrap();
+        stats.session_counts(session_id).cloned()
+    }
+
+    /// Get total assessment count from pre-computed stats.
+    #[must_use]
+    pub fn total_assessment_count(&self) -> usize {
+        let stats = self.stats_accumulator.lock().unwrap();
+        stats.total_assessments()
+    }
+
+    /// Get top N sessions by assessment count.
+    #[must_use]
+    pub fn top_sessions(&self, n: usize) -> Vec<(String, usize)> {
+        let stats = self.stats_accumulator.lock().unwrap();
+        stats.top_sessions(n)
+    }
+
+    /// Get a snapshot of current stats for persistence.
+    #[must_use]
+    pub fn stats_snapshot(&self) -> StatsSnapshot {
+        let stats = self.stats_accumulator.lock().unwrap();
+        stats.snapshot()
+    }
+
+    /// Restore stats from a snapshot (for recovery after restart).
+    pub fn restore_stats(&self, snapshot: StatsSnapshot) {
+        let mut stats = self.stats_accumulator.lock().unwrap();
+        *stats = StatsAccumulator::from_snapshot(snapshot);
     }
 }
 
@@ -963,5 +1018,122 @@ mod tests {
             );
         }
         // Note: If circuit doesn't open, that's also valid - depends on exact EMA calculations
+    }
+
+    // ─── Pre-computed Stats Tests ────────────────────────────────────────
+
+    #[test]
+    fn test_global_tier_counts_starts_empty() {
+        let config = AssessmentConfig::default();
+        let processor = SyncAssessmentProcessor::new(config);
+
+        let counts = processor.global_tier_counts();
+        assert_eq!(counts.lightweight, 0);
+        assert_eq!(counts.medium, 0);
+        assert_eq!(counts.heavy, 0);
+        assert_eq!(counts.checkpoint, 0);
+    }
+
+    #[test]
+    fn test_global_tier_counts_increments_on_process() {
+        let config = AssessmentConfig::default();
+        let processor = SyncAssessmentProcessor::new(config);
+
+        // Process some events
+        for i in 0..3 {
+            let raw = make_raw_event("stats-test", &format!("Message {i}"));
+            processor.process(&raw);
+        }
+
+        let counts = processor.global_tier_counts();
+        // Should have lightweight counts (each message generates a lightweight result)
+        assert!(
+            counts.lightweight >= 3,
+            "Expected at least 3 lightweight, got {}",
+            counts.lightweight
+        );
+    }
+
+    #[test]
+    fn test_total_assessment_count() {
+        let config = AssessmentConfig::default();
+        let processor = SyncAssessmentProcessor::new(config);
+
+        assert_eq!(processor.total_assessment_count(), 0);
+
+        for i in 0..5 {
+            let raw = make_raw_event("count-test", &format!("Message {i}"));
+            processor.process(&raw);
+        }
+
+        // Should have at least 5 assessments (one per message)
+        assert!(
+            processor.total_assessment_count() >= 5,
+            "Expected at least 5 assessments, got {}",
+            processor.total_assessment_count()
+        );
+    }
+
+    #[test]
+    fn test_session_tier_counts() {
+        let config = AssessmentConfig::default();
+        let processor = SyncAssessmentProcessor::new(config);
+
+        // Process events for specific session
+        for i in 0..3 {
+            let raw = make_raw_event("session-stats", &format!("Message {i}"));
+            processor.process(&raw);
+        }
+
+        let counts = processor.session_tier_counts("session-stats");
+        assert!(counts.is_some());
+        assert!(counts.unwrap().lightweight >= 3);
+
+        // Non-existent session should return None
+        assert!(processor.session_tier_counts("nonexistent").is_none());
+    }
+
+    #[test]
+    fn test_top_sessions() {
+        let config = AssessmentConfig::default();
+        let processor = SyncAssessmentProcessor::new(config);
+
+        // Session A: 3 events
+        for i in 0..3 {
+            processor.process(&make_raw_event("session-a", &format!("A{i}")));
+        }
+
+        // Session B: 5 events
+        for i in 0..5 {
+            processor.process(&make_raw_event("session-b", &format!("B{i}")));
+        }
+
+        let top = processor.top_sessions(10);
+        assert_eq!(top.len(), 2);
+        // Session B should be first (more events)
+        assert_eq!(top[0].0, "session-b");
+        assert_eq!(top[1].0, "session-a");
+    }
+
+    #[test]
+    fn test_stats_snapshot_and_restore() {
+        let config = AssessmentConfig::default();
+        let processor = SyncAssessmentProcessor::new(config);
+
+        // Generate some stats
+        for i in 0..5 {
+            processor.process(&make_raw_event("snapshot-test", &format!("Msg{i}")));
+        }
+
+        // Take snapshot
+        let snapshot = processor.stats_snapshot();
+        assert!(snapshot.total_assessments >= 5);
+
+        // Create new processor and restore
+        let processor2 = SyncAssessmentProcessor::new(AssessmentConfig::default());
+        assert_eq!(processor2.total_assessment_count(), 0);
+
+        processor2.restore_stats(snapshot);
+        assert!(processor2.total_assessment_count() >= 5);
     }
 }

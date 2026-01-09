@@ -37,6 +37,7 @@ pub mod processor;
 pub mod sampling;
 pub mod session_buffer;
 pub mod session_end;
+pub mod stats_accumulator;
 pub mod sync_processor;
 pub mod types;
 
@@ -68,5 +69,6 @@ pub use processor::AssessmentProcessor;
 pub use sampling::{SamplingContext, SamplingDecision, SamplingStrategy};
 pub use session_buffer::{SessionBuffer, SessionBufferConfig};
 pub use session_end::{SessionEnd, SessionEndDetector, SessionEndReason};
+pub use stats_accumulator::{StatsAccumulator, StatsSnapshot, TierCounts};
 pub use sync_processor::{CircuitBreakerSummary, SamplingSummary, SyncAssessmentProcessor};
 pub use types::*;
