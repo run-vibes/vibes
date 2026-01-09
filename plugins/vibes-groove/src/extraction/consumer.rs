@@ -367,6 +367,84 @@ impl ExtractionResult {
     }
 }
 
+/// Events emitted by the extraction consumer to the `groove.extraction` topic.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum ExtractionEvent {
+    /// A new learning was created from extraction
+    LearningCreated {
+        /// ID of the newly created learning
+        learning_id: uuid::Uuid,
+        /// Category of the learning
+        category: LearningCategory,
+        /// Confidence score
+        confidence: f64,
+        /// Source event ID that triggered this extraction
+        source_event_id: Option<EventId>,
+    },
+    /// A learning was merged with an existing one
+    LearningMerged {
+        /// ID of the learning that was merged into
+        learning_id: uuid::Uuid,
+        /// ID of the duplicate that was merged
+        merged_from: uuid::Uuid,
+        /// Source event ID that triggered this extraction
+        source_event_id: Option<EventId>,
+    },
+    /// Extraction failed for a candidate
+    ExtractionFailed {
+        /// Reason for the failure
+        reason: String,
+        /// Source event ID
+        source_event_id: Option<EventId>,
+        /// Optional error details
+        error: Option<String>,
+    },
+}
+
+impl ExtractionEvent {
+    /// Create a LearningCreated event
+    pub fn learning_created(
+        learning_id: uuid::Uuid,
+        category: LearningCategory,
+        confidence: f64,
+        source_event_id: Option<EventId>,
+    ) -> Self {
+        Self::LearningCreated {
+            learning_id,
+            category,
+            confidence,
+            source_event_id,
+        }
+    }
+
+    /// Create a LearningMerged event
+    pub fn learning_merged(
+        learning_id: uuid::Uuid,
+        merged_from: uuid::Uuid,
+        source_event_id: Option<EventId>,
+    ) -> Self {
+        Self::LearningMerged {
+            learning_id,
+            merged_from,
+            source_event_id,
+        }
+    }
+
+    /// Create an ExtractionFailed event
+    pub fn extraction_failed(
+        reason: impl Into<String>,
+        source_event_id: Option<EventId>,
+        error: Option<String>,
+    ) -> Self {
+        Self::ExtractionFailed {
+            reason: reason.into(),
+            source_event_id,
+            error,
+        }
+    }
+}
+
 /// Result of running the extraction consumer loop.
 #[derive(Debug)]
 pub enum ConsumerResult {
@@ -386,15 +464,17 @@ pub enum ConsumerResult {
 ///
 /// * `consumer` - The event consumer to poll from.
 /// * `processor` - The extraction consumer processor.
+/// * `event_producer` - Optional event log to emit ExtractionEvents to.
 /// * `shutdown` - Cancellation token to signal shutdown.
 ///
 /// # Returns
 ///
 /// Returns `ConsumerResult::Shutdown` on graceful shutdown, or
 /// `ConsumerResult::Error` if an unrecoverable error occurred.
-pub async fn extraction_consumer_loop<S, E, D, T>(
+pub async fn extraction_consumer_loop<S, E, D, T, P>(
     mut consumer: Box<dyn EventConsumer<HeavyEvent>>,
     processor: Arc<ExtractionConsumer<S, E, D, T>>,
+    event_producer: Option<Arc<P>>,
     shutdown: CancellationToken,
 ) -> ConsumerResult
 where
@@ -402,6 +482,7 @@ where
     E: Embedder + 'static,
     D: DeduplicationStrategy + 'static,
     T: TranscriptFetcher + 'static,
+    P: vibes_iggy::EventLog<ExtractionEvent> + 'static,
 {
     let config = &processor.config;
     info!(group = %config.group, "Extraction consumer starting");
@@ -434,14 +515,59 @@ where
 
                         let mut last_offset: Option<Offset> = None;
                         for (offset, event) in batch {
+                            let source_event_id = Some(event.context.event_id);
+
                             // Process the heavy event through extraction pipeline
-                            if let Err(e) = processor.process_heavy_event(&event).await {
-                                error!(
-                                    event_id = ?event.context.event_id,
-                                    error = %e,
-                                    "Failed to process heavy event"
-                                );
-                                // Continue processing other events
+                            match processor.process_heavy_event(&event).await {
+                                Ok(result) => {
+                                    // Emit events for created learnings
+                                    if let Some(ref producer) = event_producer {
+                                        for learning_id in &result.created {
+                                            // Default to CodePattern for now - the actual category
+                                            // would need to be tracked in ExtractionResult
+                                            let event = ExtractionEvent::learning_created(
+                                                *learning_id,
+                                                LearningCategory::CodePattern,
+                                                processor.min_confidence(),
+                                                source_event_id,
+                                            );
+                                            if let Err(e) = producer.append(event).await {
+                                                error!(error = %e, "Failed to emit LearningCreated event");
+                                            }
+                                        }
+
+                                        // Emit events for merged learnings
+                                        for (merged_from, learning_id) in &result.merged {
+                                            let event = ExtractionEvent::learning_merged(
+                                                *learning_id,
+                                                *merged_from,
+                                                source_event_id,
+                                            );
+                                            if let Err(e) = producer.append(event).await {
+                                                error!(error = %e, "Failed to emit LearningMerged event");
+                                            }
+                                        }
+                                    }
+                                }
+                                Err(e) => {
+                                    error!(
+                                        event_id = ?event.context.event_id,
+                                        error = %e,
+                                        "Failed to process heavy event"
+                                    );
+
+                                    // Emit failure event
+                                    if let Some(ref producer) = event_producer {
+                                        let event = ExtractionEvent::extraction_failed(
+                                            "Processing failed",
+                                            source_event_id,
+                                            Some(e.to_string()),
+                                        );
+                                        if let Err(emit_err) = producer.append(event).await {
+                                            error!(error = %emit_err, "Failed to emit ExtractionFailed event");
+                                        }
+                                    }
+                                }
                             }
                             last_offset = Some(offset);
                         }
@@ -475,14 +601,16 @@ where
 ///
 /// * `event_log` - The event log to consume HeavyEvents from
 /// * `processor` - The extraction processor
+/// * `event_producer` - Optional event log to emit ExtractionEvents to
 /// * `shutdown` - Cancellation token for graceful shutdown
 ///
 /// # Returns
 ///
 /// Returns a `JoinHandle` that can be awaited to wait for the consumer to stop.
-pub async fn start_extraction_consumer<S, E, D, T, L>(
+pub async fn start_extraction_consumer<S, E, D, T, L, P>(
     event_log: Arc<L>,
     processor: Arc<ExtractionConsumer<S, E, D, T>>,
+    event_producer: Option<Arc<P>>,
     shutdown: CancellationToken,
 ) -> std::result::Result<JoinHandle<ConsumerResult>, StartConsumerError>
 where
@@ -491,6 +619,7 @@ where
     D: DeduplicationStrategy + 'static,
     T: TranscriptFetcher + 'static,
     L: vibes_iggy::EventLog<HeavyEvent> + 'static,
+    P: vibes_iggy::EventLog<ExtractionEvent> + 'static,
 {
     let group = &processor.config.group;
 
@@ -503,8 +632,9 @@ where
     info!(group = %group, "Starting extraction consumer");
 
     // Spawn the consumer loop
-    let handle =
-        tokio::spawn(async move { extraction_consumer_loop(consumer, processor, shutdown).await });
+    let handle = tokio::spawn(async move {
+        extraction_consumer_loop(consumer, processor, event_producer, shutdown).await
+    });
 
     Ok(handle)
 }
@@ -992,9 +1122,15 @@ mod tests {
         let shutdown = CancellationToken::new();
         let shutdown_clone = shutdown.clone();
 
-        // Spawn consumer loop
+        // Spawn consumer loop (no event producer for this test)
         let handle = tokio::spawn(async move {
-            extraction_consumer_loop(iggy_consumer, processor, shutdown_clone).await
+            extraction_consumer_loop::<_, _, _, _, InMemoryEventLog<ExtractionEvent>>(
+                iggy_consumer,
+                processor,
+                None,
+                shutdown_clone,
+            )
+            .await
         });
 
         // Give it time to start processing
@@ -1049,10 +1185,16 @@ mod tests {
         let shutdown_clone = shutdown.clone();
         let store_clone = store.clone();
 
-        // Spawn consumer loop
+        // Spawn consumer loop (no event producer for this test)
         let handle = tokio::spawn(async move {
             let consumer = log.consumer("process-test").await.unwrap();
-            extraction_consumer_loop(consumer, processor, shutdown_clone).await
+            extraction_consumer_loop::<_, _, _, _, InMemoryEventLog<ExtractionEvent>>(
+                consumer,
+                processor,
+                None,
+                shutdown_clone,
+            )
+            .await
         });
 
         // Give it time to process
@@ -1141,10 +1283,15 @@ mod tests {
 
         let shutdown = CancellationToken::new();
 
-        // Start consumer
-        let handle = start_extraction_consumer(log, processor, shutdown.clone())
-            .await
-            .expect("should start successfully");
+        // Start consumer (no event producer for this test)
+        let handle = start_extraction_consumer::<_, _, _, _, _, InMemoryEventLog<ExtractionEvent>>(
+            log,
+            processor,
+            None,
+            shutdown.clone(),
+        )
+        .await
+        .expect("should start successfully");
 
         // Give it time to process
         tokio::time::sleep(Duration::from_millis(200)).await;
@@ -1160,5 +1307,91 @@ mod tests {
 
         assert!(matches!(result, ConsumerResult::Shutdown));
         assert_eq!(store.stored_count(), 1);
+    }
+
+    #[tokio::test]
+    async fn test_extraction_consumer_emits_events() {
+        // Setup event logs for HeavyEvents and ExtractionEvents
+        let heavy_log = Arc::new(InMemoryEventLog::<HeavyEvent>::new());
+        let extraction_log = Arc::new(InMemoryEventLog::<ExtractionEvent>::new());
+
+        // Append 2 events
+        for i in 0..2 {
+            heavy_log
+                .append(make_heavy_event(vec![ExtractionCandidate::new(
+                    (0, 5),
+                    format!("event {i} learning"),
+                    0.9,
+                )]))
+                .await
+                .unwrap();
+        }
+
+        // Create processor
+        let store = Arc::new(MockStore::new());
+        let embedder = Arc::new(MockEmbedder::new());
+        let dedup = Arc::new(MockDedup);
+        let fetcher = Arc::new(MockTranscriptFetcher::new());
+        let config = ExtractionConfig::new()
+            .with_poll_timeout(Duration::from_millis(50))
+            .with_batch_size(10);
+
+        let processor = Arc::new(ExtractionConsumer::new(
+            store.clone(),
+            embedder,
+            dedup,
+            fetcher,
+            config,
+        ));
+
+        let shutdown = CancellationToken::new();
+        let shutdown_clone = shutdown.clone();
+        let extraction_log_clone = extraction_log.clone();
+
+        // Spawn consumer loop with event producer
+        let handle = tokio::spawn(async move {
+            let consumer = heavy_log.consumer("emit-test").await.unwrap();
+            extraction_consumer_loop(
+                consumer,
+                processor,
+                Some(extraction_log_clone),
+                shutdown_clone,
+            )
+            .await
+        });
+
+        // Give it time to process
+        tokio::time::sleep(Duration::from_millis(200)).await;
+
+        // Signal shutdown
+        shutdown.cancel();
+
+        // Wait for completion
+        tokio::time::timeout(Duration::from_secs(1), handle)
+            .await
+            .expect("should complete within timeout")
+            .expect("task should not panic");
+
+        // Should have emitted 2 LearningCreated events
+        assert_eq!(extraction_log.len().await, 2);
+
+        // Verify event contents
+        let mut consumer = extraction_log.consumer("verify").await.unwrap();
+        let batch = consumer.poll(10, Duration::from_millis(100)).await.unwrap();
+
+        assert_eq!(batch.len(), 2);
+        for (_, event) in batch {
+            match event {
+                ExtractionEvent::LearningCreated {
+                    category,
+                    confidence,
+                    ..
+                } => {
+                    assert_eq!(category, LearningCategory::CodePattern);
+                    assert!((confidence - 0.6).abs() < f64::EPSILON);
+                }
+                _ => panic!("Expected LearningCreated event"),
+            }
+        }
     }
 }

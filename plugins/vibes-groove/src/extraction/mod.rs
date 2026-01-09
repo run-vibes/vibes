@@ -11,8 +11,8 @@ pub mod patterns;
 pub mod types;
 
 pub use consumer::{
-    ConsumerResult, ExtractionConfig, ExtractionConsumer, ExtractionResult, StartConsumerError,
-    TranscriptFetcher, extraction_consumer_loop, start_extraction_consumer,
+    ConsumerResult, ExtractionConfig, ExtractionConsumer, ExtractionEvent, ExtractionResult,
+    StartConsumerError, TranscriptFetcher, extraction_consumer_loop, start_extraction_consumer,
 };
 pub use dedup::{DEFAULT_SIMILARITY_THRESHOLD, DeduplicationStrategy, SemanticDedup};
 pub use embedder::{
