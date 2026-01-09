@@ -1769,61 +1769,30 @@ impl GroovePlugin {
 
     fn route_assess_stats(&self) -> Result<RouteResponse, PluginError> {
         if let Some(processor) = &self.processor {
-            let sessions = processor.active_sessions();
+            // Use pre-computed stats from accumulator (O(1) instead of O(n))
+            let tier_counts = processor.global_tier_counts();
+            let total = processor.total_assessment_count();
+            let top = processor.top_sessions(10);
 
-            // Get all results to compute stats
-            let query = AssessmentQuery::new();
-            let response = processor.query(query);
-
-            // Count by tier (result_type)
-            let mut lightweight = 0;
-            let mut medium = 0;
-            let mut heavy = 0;
-            let mut checkpoint = 0;
-
-            // Count by session
-            let mut session_counts: std::collections::HashMap<String, usize> =
-                std::collections::HashMap::new();
-
-            for result in &response.results {
-                // Count tier distribution
-                match result.result_type.as_str() {
-                    "lightweight" => lightweight += 1,
-                    "medium" => medium += 1,
-                    "heavy" => heavy += 1,
-                    "checkpoint" => checkpoint += 1,
-                    _ => {}
-                }
-
-                // Count per session
-                *session_counts.entry(result.session_id.clone()).or_insert(0) += 1;
-            }
-
-            // Get top sessions sorted by count (descending)
-            let mut top_sessions: Vec<SessionStats> = sessions
+            // Convert to API response format
+            let top_sessions: Vec<SessionStats> = top
                 .into_iter()
-                .map(|session_id| {
-                    let count = session_counts.get(&session_id).copied().unwrap_or(0);
-                    SessionStats {
-                        session_id,
-                        assessment_count: count,
-                    }
+                .map(|(session_id, count)| SessionStats {
+                    session_id,
+                    assessment_count: count,
                 })
                 .collect();
-
-            top_sessions.sort_by(|a, b| b.assessment_count.cmp(&a.assessment_count));
-            top_sessions.truncate(10); // Top 10 sessions
 
             RouteResponse::json(
                 200,
                 &AssessmentStatsResponse {
                     tier_distribution: TierDistribution {
-                        lightweight,
-                        medium,
-                        heavy,
-                        checkpoint,
+                        lightweight: tier_counts.lightweight,
+                        medium: tier_counts.medium,
+                        heavy: tier_counts.heavy,
+                        checkpoint: tier_counts.checkpoint,
                     },
-                    total_assessments: response.results.len(),
+                    total_assessments: total,
                     top_sessions,
                 },
             )

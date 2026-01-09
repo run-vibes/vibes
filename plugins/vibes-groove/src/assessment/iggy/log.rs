@@ -50,8 +50,12 @@ pub mod topics {
     pub const MEDIUM_TOPIC: &str = "medium";
     /// Topic for heavy (full session) assessment events.
     pub const HEAVY_TOPIC: &str = "heavy";
+    /// Topic for pre-computed stats snapshots.
+    pub const STATS_TOPIC: &str = "stats";
     /// Number of partitions (1 for simple offset tracking).
     pub const PARTITION_COUNT: u32 = 1;
+    /// Default retention count for stats snapshots.
+    pub const DEFAULT_STATS_RETENTION: u32 = 100;
 }
 
 /// Maximum events to buffer during disconnect before dropping oldest.
@@ -152,11 +156,12 @@ impl IggyAssessmentLog {
             }
         }
 
-        // Create topics for each tier
+        // Create topics for each tier and stats
         for topic_name in [
             topics::LIGHTWEIGHT_TOPIC,
             topics::MEDIUM_TOPIC,
             topics::HEAVY_TOPIC,
+            topics::STATS_TOPIC,
         ] {
             match self
                 .client
@@ -393,6 +398,121 @@ impl IggyAssessmentLog {
         });
 
         Ok(all_events)
+    }
+
+    // ─── Stats Snapshot Methods ──────────────────────────────────────────
+
+    /// Send a stats snapshot to the stats topic.
+    pub async fn send_stats_snapshot(
+        &self,
+        snapshot: &crate::assessment::stats_accumulator::StatsSnapshot,
+    ) -> Result<()> {
+        if !*self.connected.read().await {
+            debug!("Iggy not connected, skipping stats snapshot send");
+            return Ok(());
+        }
+
+        let stream_id = Identifier::named(topics::STREAM_NAME)
+            .map_err(|e| GrooveError::Assessment(format!("Invalid stream name: {e}")))?;
+        let topic_id = Identifier::named(topics::STATS_TOPIC)
+            .map_err(|e| GrooveError::Assessment(format!("Invalid topic name: {e}")))?;
+
+        // Serialize snapshot to JSON
+        let payload = serde_json::to_vec(snapshot)
+            .map_err(|e| GrooveError::Assessment(format!("Failed to serialize snapshot: {e}")))?;
+
+        let message = IggyMessage::builder()
+            .payload(payload.into())
+            .build()
+            .map_err(|e| GrooveError::Assessment(e.to_string()))?;
+
+        // Use balanced partitioning (single partition)
+        let partitioning = Partitioning::balanced();
+
+        let mut messages = [message];
+        self.client
+            .send_messages(&stream_id, &topic_id, &partitioning, &mut messages)
+            .await
+            .map_err(|e| GrooveError::Assessment(format!("Failed to send stats snapshot: {e}")))?;
+
+        debug!(
+            offset = snapshot.last_offset,
+            total = snapshot.total_assessments,
+            "Sent stats snapshot to Iggy"
+        );
+
+        Ok(())
+    }
+
+    /// Read the latest stats snapshot from the stats topic.
+    ///
+    /// Returns None if no snapshots exist yet.
+    pub async fn read_latest_stats_snapshot(
+        &self,
+    ) -> Result<Option<crate::assessment::stats_accumulator::StatsSnapshot>> {
+        if !*self.connected.read().await {
+            debug!("Iggy not connected, cannot read stats snapshot");
+            return Ok(None);
+        }
+
+        let stream_id = Identifier::named(topics::STREAM_NAME)
+            .map_err(|e| GrooveError::Assessment(format!("Invalid stream name: {e}")))?;
+        let topic_id = Identifier::named(topics::STATS_TOPIC)
+            .map_err(|e| GrooveError::Assessment(format!("Invalid topic name: {e}")))?;
+
+        let consumer_id = std::process::id();
+        let consumer = Consumer::new(Identifier::numeric(consumer_id).expect("valid consumer ID"));
+
+        // Poll from the end to get the latest message
+        let strategy = PollingStrategy::last();
+
+        let polled = match self
+            .client
+            .poll_messages(
+                &stream_id,
+                &topic_id,
+                Some(0), // partition 0
+                &consumer,
+                &strategy,
+                1, // just need the last one
+                false,
+            )
+            .await
+        {
+            Ok(messages) => messages,
+            Err(e) => {
+                let err_str = e.to_string().to_lowercase();
+                if err_str.contains("offset")
+                    || err_str.contains("not found")
+                    || err_str.contains("no messages")
+                {
+                    debug!("No stats snapshots in topic yet");
+                    return Ok(None);
+                }
+                return Err(GrooveError::Assessment(format!(
+                    "Failed to poll stats topic: {e}"
+                )));
+            }
+        };
+
+        if polled.messages.is_empty() {
+            return Ok(None);
+        }
+
+        let msg = &polled.messages[0];
+        match serde_json::from_slice(&msg.payload) {
+            Ok(snapshot) => {
+                info!(
+                    offset = polled.current_offset,
+                    "Loaded stats snapshot from Iggy"
+                );
+                Ok(Some(snapshot))
+            }
+            Err(e) => {
+                warn!(error = %e, "Failed to deserialize stats snapshot");
+                Ok(None)
+            }
+        }
     }
 }
 
