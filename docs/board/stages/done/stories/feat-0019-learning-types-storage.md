@@ -2,7 +2,7 @@
 id: FEAT0019
 title: Learning types and storage
 type: feat
-status: backlog
+status: done
 priority: high
 epics: [plugin-system]
 depends: []
@@ -99,11 +99,11 @@ This is the foundation story for M30 Learning Extraction. All other stories in t
 
 ## Acceptance Criteria
 
-- [ ] All learning types defined with serde derives
-- [ ] LearningStore trait defined with all methods
-- [ ] CozoDB implementation passes all tests
-- [ ] HNSW index created for embedding similarity
-- [ ] `cargo test -p vibes-groove extraction::store` passes
+- [x] All learning types defined with serde derives
+- [x] LearningStore trait defined with all methods
+- [x] CozoDB implementation passes all tests
+- [x] HNSW index created for embedding similarity
+- [x] `cargo test -p vibes-groove extraction::store` passes
 
 ## Completion
 
