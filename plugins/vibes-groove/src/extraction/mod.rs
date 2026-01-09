@@ -10,7 +10,10 @@ pub mod embedder;
 pub mod patterns;
 pub mod types;
 
-pub use consumer::{ExtractionConfig, ExtractionConsumer, ExtractionResult, TranscriptFetcher};
+pub use consumer::{
+    ConsumerResult, ExtractionConfig, ExtractionConsumer, ExtractionResult, StartConsumerError,
+    TranscriptFetcher, extraction_consumer_loop, start_extraction_consumer,
+};
 pub use dedup::{DEFAULT_SIMILARITY_THRESHOLD, DeduplicationStrategy, SemanticDedup};
 pub use embedder::{
     Embedder, EmbedderError, EmbedderResult, GTE_SMALL_DIMENSIONS, LocalEmbedder, ModelInfo,

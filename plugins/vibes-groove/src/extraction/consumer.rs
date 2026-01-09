@@ -9,7 +9,10 @@ use std::time::Duration;
 
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
-use tracing::debug;
+use tokio::task::JoinHandle;
+use tokio_util::sync::CancellationToken;
+use tracing::{debug, error, info, trace};
+use vibes_iggy::{EventConsumer, Offset, SeekPosition};
 
 use crate::assessment::{EventId, HeavyEvent, SessionId};
 use crate::capture::ParsedTranscript;
@@ -364,6 +367,156 @@ impl ExtractionResult {
     }
 }
 
+/// Result of running the extraction consumer loop.
+#[derive(Debug)]
+pub enum ConsumerResult {
+    /// Consumer stopped due to shutdown signal.
+    Shutdown,
+    /// Consumer stopped due to an error.
+    Error(String),
+}
+
+/// Run the extraction consumer loop.
+///
+/// This function processes HeavyEvents from the assessment log and runs the
+/// extraction pipeline on each event. It runs until the shutdown token is
+/// cancelled or an error occurs.
+///
+/// # Arguments
+///
+/// * `consumer` - The event consumer to poll from.
+/// * `processor` - The extraction consumer processor.
+/// * `shutdown` - Cancellation token to signal shutdown.
+///
+/// # Returns
+///
+/// Returns `ConsumerResult::Shutdown` on graceful shutdown, or
+/// `ConsumerResult::Error` if an unrecoverable error occurred.
+pub async fn extraction_consumer_loop<S, E, D, T>(
+    mut consumer: Box<dyn EventConsumer<HeavyEvent>>,
+    processor: Arc<ExtractionConsumer<S, E, D, T>>,
+    shutdown: CancellationToken,
+) -> ConsumerResult
+where
+    S: LearningStore + 'static,
+    E: Embedder + 'static,
+    D: DeduplicationStrategy + 'static,
+    T: TranscriptFetcher + 'static,
+{
+    let config = &processor.config;
+    info!(group = %config.group, "Extraction consumer starting");
+
+    // Seek to beginning to process all events (can resume from committed offset)
+    if let Err(e) = consumer.seek(SeekPosition::Beginning).await {
+        error!(error = %e, "Failed to seek to start position");
+        return ConsumerResult::Error(format!("Seek failed: {e}"));
+    }
+
+    loop {
+        tokio::select! {
+            biased;
+
+            _ = shutdown.cancelled() => {
+                info!(group = %config.group, "Extraction consumer received shutdown signal");
+                return ConsumerResult::Shutdown;
+            }
+
+            result = consumer.poll(config.batch_size, config.poll_timeout()) => {
+                match result {
+                    Ok(batch) => {
+                        if batch.is_empty() {
+                            trace!(group = %config.group, "Empty batch, waiting before retry");
+                            tokio::time::sleep(config.poll_timeout()).await;
+                            continue;
+                        }
+
+                        debug!(group = %config.group, count = batch.len(), "Processing batch");
+
+                        let mut last_offset: Option<Offset> = None;
+                        for (offset, event) in batch {
+                            // Process the heavy event through extraction pipeline
+                            if let Err(e) = processor.process_heavy_event(&event).await {
+                                error!(
+                                    event_id = ?event.context.event_id,
+                                    error = %e,
+                                    "Failed to process heavy event"
+                                );
+                                // Continue processing other events
+                            }
+                            last_offset = Some(offset);
+                        }
+
+                        // Commit after processing batch
+                        if let Some(offset) = last_offset
+                            && let Err(e) = consumer.commit(offset).await
+                        {
+                            error!(group = %config.group, error = %e, "Failed to commit offset");
+                            // Continue processing - commit failure is not fatal
+                        }
+                    }
+                    Err(e) => {
+                        error!(group = %config.group, error = %e, "Poll failed");
+                        // Back off on error
+                        tokio::time::sleep(Duration::from_secs(1)).await;
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Start the extraction consumer.
+///
+/// This is the main entry point for starting extraction processing.
+/// It creates the consumer and spawns a background task that runs until
+/// the shutdown token is cancelled.
+///
+/// # Arguments
+///
+/// * `event_log` - The event log to consume HeavyEvents from
+/// * `processor` - The extraction processor
+/// * `shutdown` - Cancellation token for graceful shutdown
+///
+/// # Returns
+///
+/// Returns a `JoinHandle` that can be awaited to wait for the consumer to stop.
+pub async fn start_extraction_consumer<S, E, D, T, L>(
+    event_log: Arc<L>,
+    processor: Arc<ExtractionConsumer<S, E, D, T>>,
+    shutdown: CancellationToken,
+) -> std::result::Result<JoinHandle<ConsumerResult>, StartConsumerError>
+where
+    S: LearningStore + 'static,
+    E: Embedder + 'static,
+    D: DeduplicationStrategy + 'static,
+    T: TranscriptFetcher + 'static,
+    L: vibes_iggy::EventLog<HeavyEvent> + 'static,
+{
+    let group = &processor.config.group;
+
+    // Create consumer from event log
+    let consumer = event_log
+        .consumer(group)
+        .await
+        .map_err(|e| StartConsumerError::ConsumerCreation(e.to_string()))?;
+
+    info!(group = %group, "Starting extraction consumer");
+
+    // Spawn the consumer loop
+    let handle =
+        tokio::spawn(async move { extraction_consumer_loop(consumer, processor, shutdown).await });
+
+    Ok(handle)
+}
+
+/// Error type for starting the extraction consumer.
+#[derive(Debug, thiserror::Error)]
+pub enum StartConsumerError {
+    /// Failed to create a consumer from the event log.
+    #[error("Failed to create consumer: {0}")]
+    ConsumerCreation(String),
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -373,6 +526,7 @@ mod tests {
     use crate::types::LearningId;
     use std::collections::HashMap;
     use std::sync::Mutex;
+    use vibes_iggy::{EventLog as _, InMemoryEventLog};
 
     // --- Mock implementations ---
 
@@ -803,5 +957,208 @@ mod tests {
 
         // Should have LLM candidate + correction pattern
         assert!(result.candidates_processed >= 2);
+    }
+
+    // --- Consumer loop tests ---
+
+    #[tokio::test]
+    async fn test_extraction_consumer_respects_shutdown() {
+        // Setup: EventLog with HeavyEvent
+        let log = Arc::new(InMemoryEventLog::<HeavyEvent>::new());
+
+        // Append one event
+        log.append(make_heavy_event(vec![ExtractionCandidate::new(
+            (0, 5),
+            "test learning",
+            0.9,
+        )]))
+        .await
+        .unwrap();
+
+        // Create consumer
+        let iggy_consumer = log.consumer("extraction-shutdown-test").await.unwrap();
+
+        // Create processor
+        let store = Arc::new(MockStore::new());
+        let embedder = Arc::new(MockEmbedder::new());
+        let dedup = Arc::new(MockDedup);
+        let fetcher = Arc::new(MockTranscriptFetcher::new());
+        let config = ExtractionConfig::new().with_poll_timeout(Duration::from_millis(50));
+        let processor = Arc::new(ExtractionConsumer::new(
+            store, embedder, dedup, fetcher, config,
+        ));
+
+        // Create shutdown token
+        let shutdown = CancellationToken::new();
+        let shutdown_clone = shutdown.clone();
+
+        // Spawn consumer loop
+        let handle = tokio::spawn(async move {
+            extraction_consumer_loop(iggy_consumer, processor, shutdown_clone).await
+        });
+
+        // Give it time to start processing
+        tokio::time::sleep(Duration::from_millis(100)).await;
+
+        // Signal shutdown
+        shutdown.cancel();
+
+        // Wait for consumer to stop
+        let result = tokio::time::timeout(Duration::from_secs(1), handle)
+            .await
+            .expect("should complete within timeout")
+            .expect("task should not panic");
+
+        // Should have shut down gracefully
+        assert!(matches!(result, ConsumerResult::Shutdown));
+    }
+
+    #[tokio::test]
+    async fn test_extraction_consumer_processes_events() {
+        let log = Arc::new(InMemoryEventLog::<HeavyEvent>::new());
+
+        // Append 3 events
+        for i in 0..3 {
+            log.append(make_heavy_event(vec![ExtractionCandidate::new(
+                (0, 5),
+                format!("learning {i}"),
+                0.9,
+            )]))
+            .await
+            .unwrap();
+        }
+
+        // Create processor that tracks calls
+        let store = Arc::new(MockStore::new());
+        let embedder = Arc::new(MockEmbedder::new());
+        let dedup = Arc::new(MockDedup);
+        let fetcher = Arc::new(MockTranscriptFetcher::new());
+        let config = ExtractionConfig::new()
+            .with_poll_timeout(Duration::from_millis(50))
+            .with_batch_size(10);
+
+        let processor = Arc::new(ExtractionConsumer::new(
+            store.clone(),
+            embedder,
+            dedup,
+            fetcher,
+            config,
+        ));
+
+        let shutdown = CancellationToken::new();
+        let shutdown_clone = shutdown.clone();
+        let store_clone = store.clone();
+
+        // Spawn consumer loop
+        let handle = tokio::spawn(async move {
+            let consumer = log.consumer("process-test").await.unwrap();
+            extraction_consumer_loop(consumer, processor, shutdown_clone).await
+        });
+
+        // Give it time to process
+        tokio::time::sleep(Duration::from_millis(200)).await;
+
+        // Signal shutdown
+        shutdown.cancel();
+
+        // Wait for completion
+        tokio::time::timeout(Duration::from_secs(1), handle)
+            .await
+            .expect("should complete within timeout")
+            .expect("task should not panic");
+
+        // Should have stored 3 learnings (one per event)
+        assert_eq!(store_clone.stored_count(), 3);
+    }
+
+    #[tokio::test]
+    async fn test_extraction_consumer_commits_after_batch() {
+        let log = Arc::new(InMemoryEventLog::<HeavyEvent>::new());
+
+        // Append events
+        for i in 0..3 {
+            log.append(make_heavy_event(vec![ExtractionCandidate::new(
+                (0, 5),
+                format!("commit test {i}"),
+                0.9,
+            )]))
+            .await
+            .unwrap();
+        }
+
+        // Create consumer and process events
+        let mut consumer = log.consumer("commit-test-group").await.unwrap();
+        consumer.seek(SeekPosition::Beginning).await.unwrap();
+
+        // Initial committed offset should be 0
+        assert_eq!(consumer.committed_offset(), 0);
+
+        // Poll and process
+        let batch = consumer
+            .poll(100, Duration::from_millis(100))
+            .await
+            .unwrap();
+        assert_eq!(batch.len(), 3);
+
+        // Commit the last offset
+        let last_offset = batch.last_offset().unwrap();
+        consumer.commit(last_offset).await.unwrap();
+
+        // Committed offset should now be updated
+        assert_eq!(consumer.committed_offset(), last_offset);
+
+        // Create a new consumer in the same group - should resume from committed offset
+        let consumer2 = log.consumer("commit-test-group").await.unwrap();
+        assert_eq!(consumer2.committed_offset(), last_offset);
+    }
+
+    #[tokio::test]
+    async fn test_start_extraction_consumer() {
+        let log = Arc::new(InMemoryEventLog::<HeavyEvent>::new());
+
+        // Append one event
+        log.append(make_heavy_event(vec![ExtractionCandidate::new(
+            (0, 5),
+            "start test",
+            0.9,
+        )]))
+        .await
+        .unwrap();
+
+        let store = Arc::new(MockStore::new());
+        let embedder = Arc::new(MockEmbedder::new());
+        let dedup = Arc::new(MockDedup);
+        let fetcher = Arc::new(MockTranscriptFetcher::new());
+        let config = ExtractionConfig::new().with_poll_timeout(Duration::from_millis(50));
+
+        let processor = Arc::new(ExtractionConsumer::new(
+            store.clone(),
+            embedder,
+            dedup,
+            fetcher,
+            config,
+        ));
+
+        let shutdown = CancellationToken::new();
+
+        // Start consumer
+        let handle = start_extraction_consumer(log, processor, shutdown.clone())
+            .await
+            .expect("should start successfully");
+
+        // Give it time to process
+        tokio::time::sleep(Duration::from_millis(200)).await;
+
+        // Signal shutdown
+        shutdown.cancel();
+
+        // Wait for completion
+        let result = tokio::time::timeout(Duration::from_secs(1), handle)
+            .await
+            .expect("should complete within timeout")
+            .expect("task should not panic");
+
+        assert!(matches!(result, ConsumerResult::Shutdown));
+        assert_eq!(store.stored_count(), 1);
     }
 }
