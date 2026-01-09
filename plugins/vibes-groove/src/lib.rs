@@ -20,7 +20,7 @@ pub mod store;
 pub mod types;
 
 // Re-exports - commented out until modules are implemented
-pub use config::{EnterpriseConfig, GrooveConfig, ProjectContext};
+pub use config::{DeduplicationConfig, EnterpriseConfig, GrooveConfig, ProjectContext};
 pub use error::{GrooveError, Result};
 pub use export::{EXPORT_VERSION, GrooveExport, ImportStats, LearningExport};
 pub use paths::GroovePaths;

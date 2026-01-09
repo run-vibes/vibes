@@ -91,6 +91,7 @@ mod tests {
         GrooveConfig {
             user_db_path: path.to_path_buf(),
             enterprises: HashMap::new(),
+            deduplication: crate::DeduplicationConfig::default(),
         }
     }
 
@@ -152,6 +153,7 @@ mod tests {
                     sync_url: None,
                 },
             )]),
+            deduplication: crate::DeduplicationConfig::default(),
         };
 
         let storage = GrooveStorage::new(&config)
@@ -201,6 +203,7 @@ mod tests {
                     sync_url: None,
                 },
             )]),
+            deduplication: crate::DeduplicationConfig::default(),
         };
 
         let storage = GrooveStorage::new(&config)

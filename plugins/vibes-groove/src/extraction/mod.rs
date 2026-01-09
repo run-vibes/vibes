@@ -4,9 +4,11 @@
 //! It processes heavy assessment events, runs pattern detection, deduplicates
 //! learnings, and persists them to the learning store.
 
+pub mod dedup;
 pub mod embedder;
 pub mod types;
 
+pub use dedup::{DEFAULT_SIMILARITY_THRESHOLD, DeduplicationStrategy, SemanticDedup};
 pub use embedder::{
     Embedder, EmbedderError, EmbedderResult, GTE_SMALL_DIMENSIONS, LocalEmbedder, ModelInfo,
     cosine_similarity, default_cache_dir,

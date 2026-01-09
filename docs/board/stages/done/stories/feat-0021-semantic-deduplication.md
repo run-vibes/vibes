@@ -2,13 +2,13 @@
 id: FEAT0021
 title: Semantic deduplication
 type: feat
-status: backlog
+status: done
 priority: high
 epics: [plugin-system]
 depends: [FEAT0020]
 estimate: 2h
 created: 2026-01-08
-updated: 2026-01-08
+updated: 2026-01-09
 milestone: 30-learning-extraction
 ---
 
