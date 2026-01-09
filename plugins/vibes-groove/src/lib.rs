@@ -23,6 +23,7 @@ pub mod types;
 pub use config::{DeduplicationConfig, EnterpriseConfig, GrooveConfig, ProjectContext};
 pub use error::{GrooveError, Result};
 pub use export::{EXPORT_VERSION, GrooveExport, ImportStats, LearningExport};
+pub use extraction::patterns::{CorrectionConfig, CorrectionDetector};
 pub use paths::GroovePaths;
 pub use storage::GrooveStorage;
 pub use store::{
