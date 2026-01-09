@@ -5,6 +5,7 @@ import {
   Outlet,
   Link,
   useLocation,
+  redirect,
 } from '@tanstack/react-router'
 import { Header, SubnavBar } from '@vibes/design-system'
 import { Sessions } from './pages/Sessions'
@@ -40,7 +41,7 @@ function RootLayout() {
 
   const grooveSubnavItems = [
     { label: 'Security', href: '/groove', icon: '🛡', isActive: location.pathname === '/groove' },
-    { label: 'Assessment', href: '/groove/assessment', icon: '◈', isActive: location.pathname.startsWith('/groove/assessment') },
+    { label: 'Assessment', href: '/groove/assessment/status', icon: '◈', isActive: location.pathname.startsWith('/groove/assessment') },
   ];
 
   const renderLink = ({ href, className, children }: { href: string; className: string; children: React.ReactNode }) => (
@@ -142,7 +143,7 @@ const assessmentIndexRoute = createRoute({
   getParentRoute: () => assessmentLayoutRoute,
   path: '/',
   beforeLoad: () => {
-    throw { redirect: { to: '/groove/assessment/status' } };
+    throw redirect({ to: '/groove/assessment/status' });
   },
   component: () => null,
 })
