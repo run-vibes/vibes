@@ -2,6 +2,13 @@ import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { AssessmentStatus } from './AssessmentStatus';
 
+// Mock TanStack Router Link
+vi.mock('@tanstack/react-router', () => ({
+  Link: ({ to, children }: { to: string; children: React.ReactNode }) => (
+    <a href={to}>{children}</a>
+  ),
+}));
+
 // Mock fetch globally
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
@@ -221,5 +228,29 @@ describe('AssessmentStatus', () => {
     await waitFor(() => {
       expect(screen.getByText(/not initialized/i)).toBeInTheDocument();
     });
+  });
+
+  test('displays +more link when more than 5 sessions exist', async () => {
+    mockBothEndpoints(
+      createStatusResponse({
+        activity: {
+          active_sessions: 8,
+          events_stored: 100,
+          sessions: ['sess-1', 'sess-2', 'sess-3', 'sess-4', 'sess-5', 'sess-6', 'sess-7', 'sess-8'],
+        },
+      }),
+      createStatsResponse({ total_assessments: 0 })
+    );
+
+    render(<AssessmentStatus />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/activity/i)).toBeInTheDocument();
+    });
+
+    // Should show "+3 more" link
+    const moreLink = screen.getByRole('link', { name: /\+3 more/i });
+    expect(moreLink).toBeInTheDocument();
+    expect(moreLink).toHaveAttribute('href', '/groove/assessment/history');
   });
 });
