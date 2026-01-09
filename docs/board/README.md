@@ -3,7 +3,9 @@ Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
-*No stories in progress*
+| Story | Type | Priority | Epics |
+|-------|------|----------|-------|
+| [feat-0045-learnings-page](stages/in-progress/stories/feat-0045-learnings-page.md) | feat | high | plugin-system |
 
 ## Backlog
 
@@ -12,7 +14,6 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
 | [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli |
-| [feat-0045-learnings-page](stages/backlog/stories/feat-0045-learnings-page.md) | feat | high | plugin-system |
 | [feat-0046-learning-actions](stages/backlog/stories/feat-0046-learning-actions.md) | feat | medium | plugin-system |
 | [feat-0047-attribution-page](stages/backlog/stories/feat-0047-attribution-page.md) | feat | high | plugin-system |
 | [feat-0048-strategy-page](stages/backlog/stories/feat-0048-strategy-page.md) | feat | high | plugin-system |

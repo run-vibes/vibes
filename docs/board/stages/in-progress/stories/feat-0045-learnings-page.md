@@ -2,7 +2,7 @@
 id: FEAT0045
 title: Learnings page (split view)
 type: feat
-status: pending
+status: in-progress
 priority: high
 epics: [plugin-system]
 depends: [FEAT0043]
