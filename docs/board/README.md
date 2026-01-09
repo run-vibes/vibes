@@ -3,9 +3,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
-| Story | Type | Priority | Epics |
-|-------|------|----------|-------|
-| [chore-0014-resolve-remaining-code-todos](stages/in-progress/stories/chore-0014-resolve-remaining-code-todos.md) | chore | medium | core,cli |
+*No stories in progress*
 
 ## Backlog
 
@@ -82,6 +80,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 - [chore-0010-align-sessions-page-layout-with-firehose](stages/done/stories/chore-0010-align-sessions-page-layout-with-firehose.md)
 - [chore-0011-align-groove-pages-layout-with-firehose](stages/done/stories/chore-0011-align-groove-pages-layout-with-firehose.md)
 - [chore-0013-add-test-coverage-metrics](stages/done/stories/chore-0013-add-test-coverage-metrics.md)
+- [chore-0014-resolve-remaining-code-todos](stages/done/stories/chore-0014-resolve-remaining-code-todos.md)
 - [chore-0015-cli-help-text-audit](stages/done/stories/chore-0015-cli-help-text-audit.md)
 - [docs-0001-fix-broken-documentation-links](stages/done/stories/docs-0001-fix-broken-documentation-links.md)
 - [docs-0002-update-prd-for-current-architecture](stages/done/stories/docs-0002-update-prd-for-current-architecture.md)
