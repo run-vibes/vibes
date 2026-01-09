@@ -3,9 +3,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
-| Story | Type | Priority | Epics |
-|-------|------|----------|-------|
-| [m29-feat-0012-wire-circuit-breaker-intervention](stages/in-progress/stories/m29-feat-0012-wire-circuit-breaker-intervention.md) | feat | high | core,plugin-system |
+*No stories in progress*
 
 ## Backlog
 
@@ -103,6 +101,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 - [m26-fix-08-assessment-multiselect](stages/done/stories/m26-fix-08-assessment-multiselect.md)
 - [m26-refactor-07-plugin-lifecycle](stages/done/stories/m26-refactor-07-plugin-lifecycle.md)
 - [m27-chore-0012-align-settings-page-with-crt-design-system](stages/done/stories/m27-chore-0012-align-settings-page-with-crt-design-system.md)
+- [m29-feat-0012-wire-circuit-breaker-intervention](stages/done/stories/m29-feat-0012-wire-circuit-breaker-intervention.md)
 - [m29-feat-11-web-ui-assess-queries](stages/done/stories/m29-feat-11-web-ui-assess-queries.md)
 - [m36-feat-01-backend-pagination](stages/done/stories/m36-feat-01-backend-pagination.md)
 - [m36-feat-02-backend-filters](stages/done/stories/m36-feat-02-backend-filters.md)
