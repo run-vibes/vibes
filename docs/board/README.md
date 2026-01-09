@@ -3,7 +3,9 @@ Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
-*No stories in progress*
+| Story | Type | Priority | Epics |
+|-------|------|----------|-------|
+| [feat-0025-extraction-cli](stages/in-progress/stories/feat-0025-extraction-cli.md) | feat | medium | plugin-system |
 
 ## Backlog
 
@@ -13,7 +15,6 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
 | [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli |
 | [feat-0024-extraction-consumer](stages/backlog/stories/feat-0024-extraction-consumer.md) | feat | high | plugin-system |
-| [feat-0025-extraction-cli](stages/backlog/stories/feat-0025-extraction-cli.md) | feat | medium | plugin-system |
 | [feat-0026-attribution-types-storage](stages/backlog/stories/feat-0026-attribution-types-storage.md) | feat | high | plugin-system |
 | [feat-0027-activation-detection](stages/backlog/stories/feat-0027-activation-detection.md) | feat | high | plugin-system |
 | [feat-0028-temporal-correlation](stages/backlog/stories/feat-0028-temporal-correlation.md) | feat | high | plugin-system |

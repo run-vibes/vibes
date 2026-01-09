@@ -469,6 +469,11 @@ impl Plugin for GroovePlugin {
             ["quarantine", "stats"] => self.cmd_quarantine_stats(),
             ["assess", "status"] => self.cmd_assess_status(args),
             ["assess", "history"] => self.cmd_assess_history(args),
+            ["learn", "status"] => self.cmd_learn_status(args),
+            ["learn", "list"] => self.cmd_learn_list(args),
+            ["learn", "show"] => self.cmd_learn_show(args),
+            ["learn", "delete"] => self.cmd_learn_delete(args),
+            ["learn", "export"] => self.cmd_learn_export(args),
             _ => Err(PluginError::UnknownCommand(path.join(" "))),
         }
     }
@@ -588,6 +593,66 @@ impl GroovePlugin {
             args: vec![ArgSpec {
                 name: "session_id".into(),
                 description: "Session ID to show history for".into(),
+                required: false,
+            }],
+        })?;
+
+        // learn status
+        ctx.register_command(CommandSpec {
+            path: vec!["learn".into(), "status".into()],
+            description: "Show extraction status and counts".into(),
+            args: vec![],
+        })?;
+
+        // learn list [--scope] [--category]
+        ctx.register_command(CommandSpec {
+            path: vec!["learn".into(), "list".into()],
+            description: "List learnings with optional filters".into(),
+            args: vec![
+                ArgSpec {
+                    name: "scope".into(),
+                    description: "Filter by scope (project, user, global)".into(),
+                    required: false,
+                },
+                ArgSpec {
+                    name: "category".into(),
+                    description:
+                        "Filter by category (correction, error_recovery, pattern, preference)"
+                            .into(),
+                    required: false,
+                },
+            ],
+        })?;
+
+        // learn show <id>
+        ctx.register_command(CommandSpec {
+            path: vec!["learn".into(), "show".into()],
+            description: "Show full learning details".into(),
+            args: vec![ArgSpec {
+                name: "id".into(),
+                description: "Learning ID to show".into(),
+                required: true,
+            }],
+        })?;
+
+        // learn delete <id>
+        ctx.register_command(CommandSpec {
+            path: vec!["learn".into(), "delete".into()],
+            description: "Delete a learning".into(),
+            args: vec![ArgSpec {
+                name: "id".into(),
+                description: "Learning ID to delete".into(),
+                required: true,
+            }],
+        })?;
+
+        // learn export [--scope]
+        ctx.register_command(CommandSpec {
+            path: vec!["learn".into(), "export".into()],
+            description: "Export learnings as JSON".into(),
+            args: vec![ArgSpec {
+                name: "scope".into(),
+                description: "Filter by scope (project, user, global)".into(),
                 required: false,
             }],
         })?;
@@ -1487,6 +1552,123 @@ impl GroovePlugin {
         }
 
         Ok(CommandOutput::Text(output))
+    }
+
+    // ─── Learn Commands ───────────────────────────────────────────────
+
+    fn cmd_learn_status(
+        &self,
+        args: &vibes_plugin_api::CommandArgs,
+    ) -> Result<CommandOutput, PluginError> {
+        if Self::wants_help(&args.args) {
+            return Ok(CommandOutput::Text(
+                "Usage: vibes groove learn status\n\n\
+                 Show learning extraction status and counts.\n"
+                    .to_string(),
+            ));
+        }
+
+        // TODO: Implement full status with store queries
+        Ok(CommandOutput::Text(
+            "Learning Extraction Status\n\
+             ========================================\n\n\
+             Learnings by scope:\n\
+               Project: 0\n\
+               User: 0\n\
+               Global: 0\n\n\
+             Learnings by category:\n\
+               Correction: 0\n\
+               ErrorRecovery: 0\n\
+               Pattern: 0\n\
+               Preference: 0\n\n\
+             Embedder: gte-small (384 dims) - not loaded\n\
+             Last extraction: never\n"
+                .to_string(),
+        ))
+    }
+
+    fn cmd_learn_list(
+        &self,
+        args: &vibes_plugin_api::CommandArgs,
+    ) -> Result<CommandOutput, PluginError> {
+        if Self::wants_help(&args.args) {
+            return Ok(CommandOutput::Text(
+                "Usage: vibes groove learn list [OPTIONS]\n\n\
+                 List learnings with optional filters.\n\n\
+                 Options:\n\
+                   --scope <SCOPE>      Filter by scope (project, user, global)\n\
+                   --category <CAT>     Filter by category (correction, error_recovery, pattern, preference)\n\
+                   --help, -h           Show this help message\n"
+                    .to_string(),
+            ));
+        }
+
+        // TODO: Query store with filters
+        Ok(CommandOutput::Text(
+            "ID       Category        Confidence  Description\n\
+             ──────── ─────────────── ─────────── ───────────────────────────────\n\
+             (no learnings yet)\n"
+                .to_string(),
+        ))
+    }
+
+    fn cmd_learn_show(
+        &self,
+        args: &vibes_plugin_api::CommandArgs,
+    ) -> Result<CommandOutput, PluginError> {
+        if Self::wants_help(&args.args) || args.args.is_empty() {
+            return Ok(CommandOutput::Text(
+                "Usage: vibes groove learn show <ID>\n\n\
+                 Show full details for a learning.\n\n\
+                 Arguments:\n\
+                   <ID>  Learning ID to show\n"
+                    .to_string(),
+            ));
+        }
+
+        let id = &args.args[0];
+        // TODO: Query store by ID
+        Ok(CommandOutput::Text(format!("Learning not found: {}\n", id)))
+    }
+
+    fn cmd_learn_delete(
+        &self,
+        args: &vibes_plugin_api::CommandArgs,
+    ) -> Result<CommandOutput, PluginError> {
+        if Self::wants_help(&args.args) || args.args.is_empty() {
+            return Ok(CommandOutput::Text(
+                "Usage: vibes groove learn delete <ID>\n\n\
+                 Delete a learning.\n\n\
+                 Arguments:\n\
+                   <ID>  Learning ID to delete\n"
+                    .to_string(),
+            ));
+        }
+
+        let id = &args.args[0];
+        // TODO: Delete from store with confirmation
+        Ok(CommandOutput::Text(format!("Learning not found: {}\n", id)))
+    }
+
+    fn cmd_learn_export(
+        &self,
+        args: &vibes_plugin_api::CommandArgs,
+    ) -> Result<CommandOutput, PluginError> {
+        if Self::wants_help(&args.args) {
+            return Ok(CommandOutput::Text(
+                "Usage: vibes groove learn export [OPTIONS]\n\n\
+                 Export learnings as JSON.\n\n\
+                 Options:\n\
+                   --scope <SCOPE>  Filter by scope (project, user, global)\n\
+                   --help, -h       Show this help message\n"
+                    .to_string(),
+            ));
+        }
+
+        // TODO: Query store and serialize to JSON
+        Ok(CommandOutput::Text(
+            "{\n  \"learnings\": [],\n  \"exported_at\": \"2026-01-09T00:00:00Z\"\n}\n".to_string(),
+        ))
     }
 
     // ─── Route Handlers ───────────────────────────────────────────────

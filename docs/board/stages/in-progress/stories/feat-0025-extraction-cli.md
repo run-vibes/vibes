@@ -2,13 +2,13 @@
 id: FEAT0025
 title: Learning extraction CLI commands
 type: feat
-status: backlog
+status: in-progress
 priority: medium
 epics: [plugin-system]
 depends: [FEAT0024]
 estimate: 2h
 created: 2026-01-08
-updated: 2026-01-08
+updated: 2026-01-09
 milestone: 30-learning-extraction
 ---
 
