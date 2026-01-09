@@ -50,6 +50,32 @@ pub trait LearningStore: Send + Sync {
 
     /// Count learnings (for stats)
     async fn count(&self) -> Result<u64, GrooveError>;
+
+    /// Update an existing learning
+    async fn update(&self, learning: &Learning) -> Result<(), GrooveError>;
+
+    /// Find similar learnings above a similarity threshold
+    /// Returns learnings with similarity >= threshold
+    async fn find_similar(
+        &self,
+        embedding: &[f32],
+        threshold: f64,
+        limit: usize,
+    ) -> Result<Vec<(Learning, f64)>, GrooveError>;
+
+    /// Find learnings suitable for injection based on session context
+    async fn find_for_injection(
+        &self,
+        scope: &Scope,
+        context_embedding: Option<&[f32]>,
+        limit: usize,
+    ) -> Result<Vec<Learning>, GrooveError>;
+
+    /// Count learnings by scope
+    async fn count_by_scope(&self, scope: &Scope) -> Result<u64, GrooveError>;
+
+    /// Count learnings by category
+    async fn count_by_category(&self, category: &LearningCategory) -> Result<u64, GrooveError>;
 }
 
 /// System parameter storage
