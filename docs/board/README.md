@@ -3,9 +3,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
-| Story | Type | Priority | Epics |
-|-------|------|----------|-------|
-| [feat-0041-strategy-cli](stages/in-progress/stories/feat-0041-strategy-cli.md) | feat | high | plugin-system |
+*No stories in progress*
 
 ## Backlog
 
@@ -142,6 +140,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 - [feat-0038-distribution-updater](stages/done/stories/feat-0038-distribution-updater.md)
 - [feat-0039-strategy-consumer](stages/done/stories/feat-0039-strategy-consumer.md)
 - [feat-0040-novelty-hook](stages/done/stories/feat-0040-novelty-hook.md)
+- [feat-0041-strategy-cli](stages/done/stories/feat-0041-strategy-cli.md)
 - [m14-chore-01-design](stages/done/stories/m14-chore-01-design.md)
 - [m14-chore-02-implementation](stages/done/stories/m14-chore-02-implementation.md)
 - [m26-chore-01-eventbus-cleanup](stages/done/stories/m26-chore-01-eventbus-cleanup.md)
