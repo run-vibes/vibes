@@ -15,7 +15,6 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use tokio::net::TcpListener;
-use tokio_util::sync::CancellationToken;
 use vibes_core::{
     HookInstaller, HookInstallerConfig, NotificationConfig, NotificationService, SubscriptionStore,
     VapidKeyManager,
@@ -239,8 +238,8 @@ impl VibesServer {
         let event_log = Arc::clone(&self.state.event_log);
         let broadcaster = self.state.event_broadcaster();
 
-        // Create shutdown token for consumers that need it
-        let shutdown = CancellationToken::new();
+        // Get shutdown token from AppState - cancelled when server shuts down
+        let shutdown = self.state.consumer_shutdown_token();
 
         let mut manager = ConsumerManager::new(Arc::clone(&event_log));
 
@@ -291,11 +290,18 @@ impl VibesServer {
         }
 
         // The manager is moved into the spawned task to keep it alive.
-        // FUTURE: Replace pending() with proper shutdown signal coordination
+        // When shutdown signal is received, gracefully stop consumers.
         tokio::spawn(async move {
-            let _manager = manager; // Keep manager alive
-            let _shutdown = shutdown; // Keep shutdown token alive
-            std::future::pending::<()>().await;
+            // Wait for shutdown signal
+            shutdown.cancelled().await;
+
+            // Signal all consumers to stop
+            tracing::info!("Shutdown signal received, stopping plugin consumers");
+            manager.shutdown();
+
+            // Wait for consumers to complete in-flight work
+            manager.wait_for_shutdown().await;
+            tracing::info!("Plugin consumers stopped");
         });
     }
 

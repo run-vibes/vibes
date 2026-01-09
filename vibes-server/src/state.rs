@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 use chrono::{DateTime, Utc};
 use tokio::sync::{RwLock, broadcast};
+use tokio_util::sync::CancellationToken;
 use vibes_core::{
     AccessConfig, PluginHost, PluginHostConfig, StoredEvent, SubscriptionStore, TunnelConfig,
     TunnelManager, VapidKeyManager, VibesEvent,
@@ -63,6 +64,8 @@ pub struct AppState {
     iggy_manager: Option<Arc<IggyManager>>,
     /// Broadcast channel for assessment results from plugins
     assessment_broadcaster: broadcast::Sender<PluginAssessmentResult>,
+    /// Shutdown token for EventLog consumers
+    consumer_shutdown: CancellationToken,
     /// Plugin host for managing plugins
     ///
     /// MUST be last - plugins are unloaded when this drops, so all plugin types
@@ -98,6 +101,7 @@ impl AppState {
             pty_manager,
             iggy_manager: None,
             assessment_broadcaster,
+            consumer_shutdown: CancellationToken::new(),
         }
     }
 
@@ -139,6 +143,7 @@ impl AppState {
             pty_broadcaster,
             iggy_manager: None,
             assessment_broadcaster,
+            consumer_shutdown: CancellationToken::new(),
             plugin_host,
         }
     }
@@ -169,6 +174,7 @@ impl AppState {
             pty_manager,
             iggy_manager: None,
             assessment_broadcaster,
+            consumer_shutdown: CancellationToken::new(),
         }
     }
 
@@ -209,6 +215,7 @@ impl AppState {
             pty_manager,
             iggy_manager,
             assessment_broadcaster,
+            consumer_shutdown: CancellationToken::new(),
         })
     }
 
@@ -245,6 +252,7 @@ impl AppState {
             pty_manager,
             iggy_manager,
             assessment_broadcaster,
+            consumer_shutdown: CancellationToken::new(),
         })
     }
 
@@ -342,6 +350,7 @@ impl AppState {
             pty_manager,
             iggy_manager: None,
             assessment_broadcaster,
+            consumer_shutdown: CancellationToken::new(),
         }
     }
 
@@ -370,6 +379,7 @@ impl AppState {
             pty_manager,
             iggy_manager: None,
             assessment_broadcaster,
+            consumer_shutdown: CancellationToken::new(),
         }
     }
 
@@ -403,17 +413,29 @@ impl AppState {
         self.assessment_broadcaster.send(result).unwrap_or(0)
     }
 
-    /// Gracefully shutdown the server, stopping all managed subprocesses.
+    /// Gracefully shutdown the server, stopping all managed subprocesses and consumers.
     ///
     /// This should be called before the server exits to ensure clean termination
-    /// of the Iggy server subprocess.
+    /// of the Iggy server subprocess and EventLog consumers.
     pub async fn shutdown(&self) {
+        // Signal EventLog consumers to stop
+        tracing::info!("Cancelling consumer shutdown token");
+        self.consumer_shutdown.cancel();
+
         if let Some(manager) = &self.iggy_manager {
             tracing::info!("Stopping Iggy server subprocess");
             if let Err(e) = manager.stop().await {
                 tracing::error!("Error stopping Iggy server: {}", e);
             }
         }
+    }
+
+    /// Get the consumer shutdown token for EventLog consumers.
+    ///
+    /// This token is cancelled when `shutdown()` is called, allowing consumers
+    /// to gracefully stop processing.
+    pub fn consumer_shutdown_token(&self) -> CancellationToken {
+        self.consumer_shutdown.clone()
     }
 
     /// Get a reference to the tunnel manager
@@ -652,6 +674,35 @@ mod tests {
         let state = AppState::new();
         state.shutdown().await;
         // No panic = success
+    }
+
+    #[tokio::test]
+    async fn test_shutdown_cancels_consumer_token() {
+        let state = AppState::new();
+        let shutdown_token = state.consumer_shutdown_token();
+
+        // Token should not be cancelled initially
+        assert!(!shutdown_token.is_cancelled());
+
+        // Call shutdown
+        state.shutdown().await;
+
+        // Token should now be cancelled
+        assert!(shutdown_token.is_cancelled());
+    }
+
+    #[tokio::test]
+    async fn test_consumer_shutdown_token_is_shared() {
+        let state = AppState::new();
+        let token1 = state.consumer_shutdown_token();
+        let token2 = state.consumer_shutdown_token();
+
+        // Cancel via one token
+        token1.cancel();
+
+        // Both should see the cancellation
+        assert!(token1.is_cancelled());
+        assert!(token2.is_cancelled());
     }
 
     // ==================== Event Appending Tests ====================
