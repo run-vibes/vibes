@@ -299,6 +299,101 @@ impl IggyAssessmentLog {
     pub async fn is_connected(&self) -> bool {
         *self.connected.read().await
     }
+
+    /// Poll all events from a specific topic.
+    ///
+    /// Returns all events from the topic. This is used internally by read methods.
+    async fn poll_topic(&self, topic_name: &str) -> Result<Vec<AssessmentEvent>> {
+        let stream_id = Identifier::named(topics::STREAM_NAME)
+            .map_err(|e| GrooveError::Assessment(format!("Invalid stream name: {e}")))?;
+        let topic_id = Identifier::named(topic_name)
+            .map_err(|e| GrooveError::Assessment(format!("Invalid topic name: {e}")))?;
+
+        // Use a unique consumer ID for this read operation
+        let consumer_id = std::process::id();
+        let consumer = Consumer::new(Identifier::numeric(consumer_id).expect("valid consumer ID"));
+
+        // Poll from the beginning
+        let strategy = PollingStrategy::offset(0);
+
+        let polled = match self
+            .client
+            .poll_messages(
+                &stream_id,
+                &topic_id,
+                Some(0), // partition 0
+                &consumer,
+                &strategy,
+                10_000, // max messages per poll
+                false,  // auto_commit = false
+            )
+            .await
+        {
+            Ok(messages) => messages,
+            Err(e) => {
+                let err_str = e.to_string().to_lowercase();
+                // Empty topic or invalid offset is not an error - just return empty
+                if err_str.contains("offset")
+                    || err_str.contains("not found")
+                    || err_str.contains("no messages")
+                {
+                    debug!(topic = topic_name, "No messages in topic");
+                    return Ok(Vec::new());
+                }
+                return Err(GrooveError::Assessment(format!(
+                    "Failed to poll topic '{topic_name}': {e}"
+                )));
+            }
+        };
+
+        debug!(
+            topic = topic_name,
+            count = polled.messages.len(),
+            "Polled messages from Iggy"
+        );
+
+        // Deserialize events
+        let mut events = Vec::with_capacity(polled.messages.len());
+        for msg in polled.messages {
+            match serde_json::from_slice::<AssessmentEvent>(&msg.payload) {
+                Ok(event) => events.push(event),
+                Err(e) => {
+                    warn!(
+                        topic = topic_name,
+                        error = %e,
+                        "Failed to deserialize assessment event, skipping"
+                    );
+                }
+            }
+        }
+
+        Ok(events)
+    }
+
+    /// Poll all events from all assessment topics.
+    ///
+    /// Combines events from lightweight, medium, and heavy topics.
+    async fn poll_all_topics(&self) -> Result<Vec<AssessmentEvent>> {
+        let mut all_events = Vec::new();
+
+        for topic_name in [
+            topics::LIGHTWEIGHT_TOPIC,
+            topics::MEDIUM_TOPIC,
+            topics::HEAVY_TOPIC,
+        ] {
+            let events = self.poll_topic(topic_name).await?;
+            all_events.extend(events);
+        }
+
+        // Sort by timestamp for consistent ordering
+        all_events.sort_by(|a, b| {
+            let ts_a = a.timestamp();
+            let ts_b = b.timestamp();
+            ts_a.cmp(&ts_b)
+        });
+
+        Ok(all_events)
+    }
 }
 
 impl std::fmt::Debug for IggyAssessmentLog {
@@ -364,14 +459,22 @@ impl AssessmentLog for IggyAssessmentLog {
     }
 
     async fn read_session(&self, session_id: &SessionId) -> Result<Vec<AssessmentEvent>> {
-        // Client-side filtering from buffer
-        // TODO: In production, poll from Iggy topics and filter
-        let buffer = self.buffer.read().await;
-        Ok(buffer
-            .iter()
-            .filter(|e| e.session_id() == session_id)
-            .cloned()
-            .collect())
+        // If connected to Iggy, poll from topics
+        if *self.connected.read().await {
+            let all_events = self.poll_all_topics().await?;
+            Ok(all_events
+                .into_iter()
+                .filter(|e| e.session_id() == session_id)
+                .collect())
+        } else {
+            // Fallback to buffer when disconnected
+            let buffer = self.buffer.read().await;
+            Ok(buffer
+                .iter()
+                .filter(|e| e.session_id() == session_id)
+                .cloned()
+                .collect())
+        }
     }
 
     async fn read_range(
@@ -379,21 +482,28 @@ impl AssessmentLog for IggyAssessmentLog {
         start: DateTime<Utc>,
         end: DateTime<Utc>,
     ) -> Result<Vec<AssessmentEvent>> {
-        // Client-side filtering from buffer
-        // TODO: In production, poll from Iggy topics and filter by timestamp
-        let buffer = self.buffer.read().await;
-        Ok(buffer
-            .iter()
-            .filter(|e| {
-                let ts = match e {
-                    AssessmentEvent::Lightweight(e) => e.context.timestamp,
-                    AssessmentEvent::Medium(e) => e.context.timestamp,
-                    AssessmentEvent::Heavy(e) => e.context.timestamp,
-                };
-                ts >= start && ts <= end
-            })
-            .cloned()
-            .collect())
+        // If connected to Iggy, poll from topics
+        if *self.connected.read().await {
+            let all_events = self.poll_all_topics().await?;
+            Ok(all_events
+                .into_iter()
+                .filter(|e| {
+                    let ts = e.timestamp();
+                    ts >= start && ts <= end
+                })
+                .collect())
+        } else {
+            // Fallback to buffer when disconnected
+            let buffer = self.buffer.read().await;
+            Ok(buffer
+                .iter()
+                .filter(|e| {
+                    let ts = e.timestamp();
+                    ts >= start && ts <= end
+                })
+                .cloned()
+                .collect())
+        }
     }
 
     fn subscribe(&self) -> broadcast::Receiver<AssessmentEvent> {

@@ -823,6 +823,12 @@ impl AssessmentEvent {
             Self::Heavy(e) => &e.context,
         }
     }
+
+    /// Get the timestamp for this event.
+    #[must_use]
+    pub fn timestamp(&self) -> DateTime<Utc> {
+        self.context().timestamp
+    }
 }
 
 #[cfg(test)]
@@ -1360,5 +1366,23 @@ mod tests {
         assert_eq!(accessed_ctx.session_id.as_str(), "context-test");
         assert_eq!(accessed_ctx.active_learnings.len(), 1);
         assert_eq!(accessed_ctx.active_learnings[0], learning_id);
+    }
+
+    #[test]
+    fn test_assessment_event_timestamp_accessor() {
+        let ctx = AssessmentContext::new("timestamp-test");
+        let expected_timestamp = ctx.timestamp;
+
+        let event = AssessmentEvent::Lightweight(LightweightEvent {
+            context: ctx,
+            message_idx: 0,
+            signals: vec![],
+            frustration_ema: 0.0,
+            success_ema: 1.0,
+            triggering_event_id: Uuid::now_v7(),
+        });
+
+        // Timestamp should match context timestamp
+        assert_eq!(event.timestamp(), expected_timestamp);
     }
 }

@@ -7,8 +7,9 @@ import {
   createRoute,
   createMemoryHistory,
   Outlet,
+  redirect,
 } from '@tanstack/react-router';
-import { AssessmentLayout, AssessmentStream } from './index';
+import { AssessmentLayout } from './index';
 
 // This test file verifies that assessment routes are properly configured
 // We test the route configuration separately from the App to isolate concerns
@@ -25,16 +26,26 @@ function createTestRouter(initialPath: string) {
     component: AssessmentLayout,
   });
 
+  // Index redirects to status
   const assessmentIndexRoute = createRoute({
     getParentRoute: () => assessmentLayoutRoute,
     path: '/',
-    component: AssessmentStream,
+    beforeLoad: () => {
+      throw redirect({ to: '/groove/assessment/status' });
+    },
+    component: () => null,
   });
 
   const assessmentStatusRoute = createRoute({
     getParentRoute: () => assessmentLayoutRoute,
     path: '/status',
     component: () => <div data-testid="status-page">Status Page</div>,
+  });
+
+  const assessmentStreamRoute = createRoute({
+    getParentRoute: () => assessmentLayoutRoute,
+    path: '/stream',
+    component: () => <div data-testid="stream-page">Stream Page</div>,
   });
 
   const assessmentHistoryRoute = createRoute({
@@ -47,6 +58,7 @@ function createTestRouter(initialPath: string) {
     assessmentLayoutRoute.addChildren([
       assessmentIndexRoute,
       assessmentStatusRoute,
+      assessmentStreamRoute,
       assessmentHistoryRoute,
     ]),
   ]);
