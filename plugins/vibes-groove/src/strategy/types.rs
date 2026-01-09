@@ -456,6 +456,25 @@ impl StrategyDistribution {
             updated_at: Utc::now(),
         }
     }
+
+    /// Get the weight for a strategy variant
+    pub fn get_weight(&self, variant: StrategyVariant) -> Option<&AdaptiveParam> {
+        self.strategy_weights.get(&variant)
+    }
+
+    /// Update the weight for a strategy variant based on an outcome
+    ///
+    /// The value is the outcome signal (-1 to +1), and confidence weights the update.
+    pub fn update_weight(&mut self, variant: StrategyVariant, value: f64, confidence: f64) {
+        if let Some(param) = self.strategy_weights.get_mut(&variant) {
+            // Convert outcome value from [-1, +1] to [0, 1] for AdaptiveParam
+            // +1.0 -> 1.0 (success), -1.0 -> 0.0 (failure), 0.0 -> 0.5 (neutral)
+            let outcome = (value.clamp(-1.0, 1.0) + 1.0) / 2.0;
+            let weight = confidence.clamp(0.0, 1.0);
+            param.update(outcome, weight);
+            self.updated_at = Utc::now();
+        }
+    }
 }
 
 /// Per-learning specialization (inherits from category distribution)
@@ -490,6 +509,27 @@ impl LearningStrategyOverride {
         self.specialized_weights = Some(dist.strategy_weights.clone());
         self.updated_at = Utc::now();
     }
+
+    /// Check if this override has specialized weights
+    pub fn is_specialized(&self) -> bool {
+        self.specialized_weights.is_some()
+    }
+}
+
+/// Get effective weights for a learning, resolving the hierarchy
+///
+/// If the learning has specialized weights, use those. Otherwise, fall back
+/// to the category distribution weights.
+pub fn get_effective_weights<'a>(
+    override_: Option<&'a LearningStrategyOverride>,
+    category_dist: &'a StrategyDistribution,
+) -> &'a std::collections::HashMap<StrategyVariant, AdaptiveParam> {
+    if let Some(override_) = override_
+        && let Some(ref specialized) = override_.specialized_weights
+    {
+        return specialized;
+    }
+    &category_dist.strategy_weights
 }
 
 /// Parameters for a specific strategy variant
@@ -713,5 +753,111 @@ mod tests {
         assert_eq!(DeferralTrigger::TopicMatch.as_str(), "topic_match");
         assert_eq!(DeferralTrigger::ErrorMatch.as_str(), "error_match");
         assert_eq!(DeferralTrigger::MessageCount(5).as_str(), "message_count");
+    }
+
+    // Distribution hierarchy tests (FEAT0035)
+
+    #[test]
+    fn test_distribution_get_weight() {
+        let dist =
+            StrategyDistribution::new(LearningCategory::CodePattern, ContextType::Interactive);
+
+        let weight = dist.get_weight(StrategyVariant::MainContext);
+        assert!(weight.is_some());
+        // Default prior is 3.0/10.0 = ~0.3
+        assert!((weight.unwrap().value - 0.3).abs() < 0.01);
+
+        let weight = dist.get_weight(StrategyVariant::Deferred);
+        assert!(weight.is_some());
+        // Default prior is 4.0/10.0 = ~0.4
+        assert!((weight.unwrap().value - 0.4).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_distribution_update_weight() {
+        let mut dist =
+            StrategyDistribution::new(LearningCategory::CodePattern, ContextType::Interactive);
+
+        let before = dist.get_weight(StrategyVariant::MainContext).unwrap().value;
+
+        // Positive outcome should increase the weight
+        dist.update_weight(StrategyVariant::MainContext, 1.0, 0.8);
+
+        let after = dist.get_weight(StrategyVariant::MainContext).unwrap().value;
+        assert!(after > before);
+    }
+
+    #[test]
+    fn test_override_is_specialized() {
+        let mut override_ =
+            LearningStrategyOverride::new(Uuid::now_v7(), LearningCategory::CodePattern);
+
+        assert!(!override_.is_specialized());
+
+        let dist =
+            StrategyDistribution::new(LearningCategory::CodePattern, ContextType::Interactive);
+        override_.specialize_from(&dist);
+
+        assert!(override_.is_specialized());
+    }
+
+    #[test]
+    fn test_get_effective_weights_uses_override_when_specialized() {
+        let dist =
+            StrategyDistribution::new(LearningCategory::CodePattern, ContextType::Interactive);
+        let mut override_ =
+            LearningStrategyOverride::new(Uuid::now_v7(), LearningCategory::CodePattern);
+
+        // Before specialization, should use category distribution
+        let weights = get_effective_weights(Some(&override_), &dist);
+        assert!(std::ptr::eq(weights, &dist.strategy_weights));
+
+        // Specialize and modify the override weights
+        override_.specialize_from(&dist);
+
+        // After specialization, should use override weights
+        let weights = get_effective_weights(Some(&override_), &dist);
+        assert!(std::ptr::eq(
+            weights,
+            override_.specialized_weights.as_ref().unwrap()
+        ));
+    }
+
+    #[test]
+    fn test_get_effective_weights_fallback_to_category() {
+        let dist =
+            StrategyDistribution::new(LearningCategory::CodePattern, ContextType::Interactive);
+
+        // No override at all
+        let weights = get_effective_weights(None, &dist);
+        assert!(std::ptr::eq(weights, &dist.strategy_weights));
+    }
+
+    #[test]
+    fn test_distribution_serialization_roundtrip() {
+        let dist =
+            StrategyDistribution::new(LearningCategory::ErrorRecovery, ContextType::CodeReview);
+
+        let json = serde_json::to_string(&dist).unwrap();
+        let parsed: StrategyDistribution = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(parsed.category, dist.category);
+        assert_eq!(parsed.context_type, dist.context_type);
+        assert_eq!(parsed.session_count, dist.session_count);
+    }
+
+    #[test]
+    fn test_override_serialization_roundtrip() {
+        let mut override_ =
+            LearningStrategyOverride::new(Uuid::now_v7(), LearningCategory::Preference);
+        let dist = StrategyDistribution::new(LearningCategory::Preference, ContextType::Planning);
+        override_.specialize_from(&dist);
+
+        let json = serde_json::to_string(&override_).unwrap();
+        let parsed: LearningStrategyOverride = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(parsed.learning_id, override_.learning_id);
+        assert_eq!(parsed.base_category, override_.base_category);
+        assert!(parsed.is_specialized());
     }
 }

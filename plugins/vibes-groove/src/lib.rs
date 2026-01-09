@@ -83,5 +83,5 @@ pub use strategy::{
     CallbackMethod, ContextPosition, ContextType, CozoStrategyStore, DeferralTrigger,
     InjectionFormat, InjectionStrategy, LearningStrategyOverride, OutcomeSource, STRATEGY_SCHEMA,
     StrategyDistribution, StrategyEvent, StrategyOutcome, StrategyParams, StrategyStore,
-    StrategyVariant, SubagentType,
+    StrategyVariant, SubagentType, get_effective_weights,
 };
