@@ -57,7 +57,7 @@
 | [26-firehose-infinite-scroll](milestones/26-firehose-infinite-scroll/) | done | web-ui |
 | [27-crt-design-system](milestones/27-crt-design-system/) | done | web-ui |
 | [28-board-restructure](milestones/28-board-restructure/) | done | core |
-| [29-assessment-framework](milestones/29-assessment-framework/) | in-progress | core,cli,plugin-system |
+| [29-assessment-framework](milestones/29-assessment-framework/) | done | core,cli,plugin-system |
 | [30-learning-extraction](milestones/30-learning-extraction/) | planned | plugin-system |
 | [31-attribution-engine](milestones/31-attribution-engine/) | planned | plugin-system |
 | [32-adaptive-strategies](milestones/32-adaptive-strategies/) | planned | plugin-system |

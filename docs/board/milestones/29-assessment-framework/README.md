@@ -1,7 +1,7 @@
 ---
-id: 26-assessment-framework
+id: 29-assessment-framework
 title: Assessment Framework
-status: in-progress
+status: done
 epics: [core, cli, plugin-system]
 ---
 
