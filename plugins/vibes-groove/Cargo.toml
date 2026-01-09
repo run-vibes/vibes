@@ -57,6 +57,12 @@ sha2 = "0.10"
 hex = "0.4"
 regex = "1"
 
+# Embeddings (local ONNX model)
+ort = { version = "2.0.0-rc.11", default-features = false, features = [
+    "std", "ndarray", "download-binaries", "copy-dylibs", "tls-rustls"
+] }
+tokenizers = { version = "0.21", default-features = false, features = ["fancy-regex"] }
+
 # Plugin API
 vibes-plugin-api = { path = "../../vibes-plugin-api" }
 
