@@ -793,4 +793,159 @@ mod tests {
         // Should have proper source
         assert_eq!(candidate.source.session_id.as_str(), "test-session");
     }
+
+    // --- Error scenario tests ---
+
+    #[test]
+    fn test_command_error_recovery() {
+        let detector = ErrorRecoveryDetector::new();
+        let transcript = make_transcript(
+            vec![
+                // Command not found
+                make_tool_use_with_input(
+                    "Bash",
+                    json!({"command": "npx unknown-tool"}),
+                    Some("command not found: npx"),
+                    false,
+                ),
+                // Install and retry
+                make_tool_use_with_input(
+                    "Bash",
+                    json!({"command": "npm install -g unknown-tool"}),
+                    Some("installed"),
+                    true,
+                ),
+                make_tool_use_with_input(
+                    "Bash",
+                    json!({"command": "npx unknown-tool"}),
+                    Some("Success"),
+                    true,
+                ),
+            ],
+            vec![],
+        );
+
+        let candidates = detector.detect(&transcript).unwrap();
+
+        assert_eq!(candidates.len(), 1);
+        assert!(matches!(
+            candidates[0].source.extraction_method,
+            ExtractionMethod::Pattern(PatternType::ErrorRecovery)
+        ));
+    }
+
+    #[test]
+    fn test_test_failure_recovery() {
+        let detector = ErrorRecoveryDetector::new();
+        let transcript = make_transcript(
+            vec![
+                make_tool_use(
+                    "Bash",
+                    Some("test result: FAILED. 5 passed; 1 failed;"),
+                    false,
+                ),
+                make_tool_use_with_input(
+                    "Edit",
+                    json!({"file_path": "/tests/test_foo.rs"}),
+                    Some("fixed assertion"),
+                    true,
+                ),
+                make_tool_use("Bash", Some("test result: ok. 6 passed;"), true),
+            ],
+            vec![],
+        );
+
+        let candidates = detector.detect(&transcript).unwrap();
+
+        assert_eq!(candidates.len(), 1);
+        let candidate = &candidates[0];
+        assert!(candidate.description.contains("test failure"));
+    }
+
+    // --- Confidence tests ---
+
+    #[test]
+    fn test_confidence_decreases_with_distance() {
+        let detector = ErrorRecoveryDetector::new();
+
+        // Close recovery (distance 1)
+        let close_recovery = make_transcript(
+            vec![
+                make_tool_use("Bash", Some("error: failed"), false),
+                make_tool_use("Bash", Some("Success"), true),
+            ],
+            vec![],
+        );
+
+        // Farther recovery (distance 3)
+        let far_recovery = make_transcript(
+            vec![
+                make_tool_use("Bash", Some("error: failed"), false),
+                make_tool_use("Edit", Some("edit1"), true),
+                make_tool_use("Edit", Some("edit2"), true),
+                make_tool_use("Bash", Some("Success"), true),
+            ],
+            vec![],
+        );
+
+        let close_candidates = detector.detect(&close_recovery).unwrap();
+        let far_candidates = detector.detect(&far_recovery).unwrap();
+
+        assert_eq!(close_candidates.len(), 1);
+        assert_eq!(far_candidates.len(), 1);
+        assert!(
+            close_candidates[0].confidence > far_candidates[0].confidence,
+            "Close recovery should have higher confidence"
+        );
+    }
+
+    #[test]
+    fn test_learning_candidate_has_message_range() {
+        let detector = ErrorRecoveryDetector::new();
+        let transcript = make_transcript(
+            vec![
+                make_tool_use("Read", Some("file contents"), true), // index 0
+                make_tool_use("Bash", Some("error: failed"), false), // index 1 - failure
+                make_tool_use("Edit", Some("edited"), true),        // index 2
+                make_tool_use("Bash", Some("Success"), true),       // index 3 - recovery
+            ],
+            vec![],
+        );
+
+        let candidates = detector.detect(&transcript).unwrap();
+
+        assert_eq!(candidates.len(), 1);
+        let range = candidates[0].source.message_range;
+        assert!(range.is_some());
+        let (start, end) = range.unwrap();
+        assert_eq!(start, 1); // failure at index 1
+        assert_eq!(end, 3); // recovery at index 3
+    }
+
+    #[test]
+    fn test_no_detection_with_empty_tool_uses() {
+        let detector = ErrorRecoveryDetector::new();
+        let transcript = make_transcript(vec![], vec![("user", "Hello"), ("assistant", "Hi")]);
+
+        let candidates = detector.detect(&transcript).unwrap();
+
+        assert!(candidates.is_empty());
+    }
+
+    #[test]
+    fn test_no_detection_with_only_successes() {
+        let detector = ErrorRecoveryDetector::new();
+        let transcript = make_transcript(
+            vec![
+                make_tool_use("Bash", Some("Success"), true),
+                make_tool_use("Edit", Some("edited"), true),
+                make_tool_use("Bash", Some("Done"), true),
+            ],
+            vec![],
+        );
+
+        let candidates = detector.detect(&transcript).unwrap();
+
+        assert!(candidates.is_empty());
+    }
 }
