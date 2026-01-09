@@ -34,6 +34,15 @@ const statusMap = {
   failed: 'error',
 } as const;
 
+// User-friendly status labels
+const statusLabels: Record<SessionStatus, string> = {
+  idle: 'Ready',
+  processing: 'Working',
+  waiting: 'Waiting',
+  finished: 'Done',
+  failed: 'Error',
+};
+
 /** Check if status indicates an active session */
 function isActiveStatus(status: SessionStatus): boolean {
   return status === 'processing' || status === 'waiting';
@@ -74,50 +83,43 @@ export const SessionCard = forwardRef<HTMLElement, SessionCardProps>(
     return (
       <Tag ref={ref as React.Ref<HTMLAnchorElement & HTMLElement>} className={classes} onClick={onClick} href={href} {...props}>
         <div className={styles.header}>
-          <div>
-            <div className={styles.titleSection}>
-              <span className={`${styles.statusDot} ${styles[status]}`} />
-              {name && <h3 className={styles.title}>{name}</h3>}
-            </div>
-            <div className={styles.id}>{id}</div>
+          <div className={styles.titleSection}>
+            <span className={`${styles.statusDot} ${styles[status]}`} />
+            <h3 className={styles.title}>{name || id}</h3>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-            {actions && actions.length > 0 && (
-              <div className={styles.actions}>
-                {actions.map((action, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    className={styles.actionButton}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      action.onClick(e);
-                    }}
-                    aria-label={action.label}
-                    title={action.label}
-                  >
-                    {action.icon}
-                  </button>
-                ))}
-              </div>
-            )}
-            <Badge status={statusMap[status]}>{status}</Badge>
-          </div>
-        </div>
-        <div className={styles.meta}>
-          <div className={styles.subscribers}>
-            <span className={styles.subscriberIcon}>&#x1F464;</span>
-            <span>{subscribers}</span>
-          </div>
-          <span className={styles.time}>{timeAgo}</span>
-          {(durationStr || eventCount !== undefined) && (
-            <div className={styles.badgeGroup}>
-              {durationStr && <span className={styles.metaBadge}>{durationStr}</span>}
-              {eventCount !== undefined && (
-                <span className={styles.metaBadge}>{eventCount} events</span>
-              )}
+          {actions && actions.length > 0 && (
+            <div className={styles.actions}>
+              {actions.map((action, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  className={styles.actionButton}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    action.onClick(e);
+                  }}
+                  aria-label={action.label}
+                  title={action.label}
+                >
+                  {action.icon}
+                </button>
+              ))}
             </div>
           )}
+        </div>
+        <div className={styles.meta}>
+          <span className={styles.time}>{timeAgo}</span>
+          <div className={styles.metaRight}>
+            {(durationStr || eventCount !== undefined) && (
+              <div className={styles.badgeGroup}>
+                {durationStr && <span className={styles.metaBadge}>{durationStr}</span>}
+                {eventCount !== undefined && (
+                  <span className={styles.metaBadge}>{eventCount} events</span>
+                )}
+              </div>
+            )}
+            <Badge status={statusMap[status]}>{statusLabels[status]}</Badge>
+          </div>
         </div>
       </Tag>
     );

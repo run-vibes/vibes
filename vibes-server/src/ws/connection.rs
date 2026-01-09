@@ -382,9 +382,16 @@ async fn handle_text_message(
                 // Mark as attached with the scrollback snapshot length
                 conn_state.attach_pty(&session_id, scrollback_len);
 
-                // For existing sessions, use client dimensions or defaults.
-                // Client will send PtyResize after to sync dimensions.
-                (cols.unwrap_or(120), rows.unwrap_or(40), scrollback_len)
+                // Resize PTY to match client dimensions immediately.
+                // This ensures future output uses correct dimensions.
+                // Note: Scrollback was generated with old dimensions and may look wrong.
+                let attach_cols = cols.unwrap_or(120);
+                let attach_rows = rows.unwrap_or(40);
+                if let Err(e) = handle.resize(attach_cols, attach_rows).await {
+                    warn!("Failed to resize PTY on attach: {}", e);
+                }
+
+                (attach_cols, attach_rows, scrollback_len)
             } else {
                 // Create new PTY session with client's requested dimensions
                 match pty_manager.create_session_with_id(session_id.clone(), name, cwd, cols, rows)
@@ -594,4 +601,58 @@ async fn pty_output_reader(
     }
 
     debug!("PTY output reader finished for session: {}", session_id);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn connection_state_needs_replay_after_attach() {
+        let mut state = ConnectionState::new(InputSource::WebUi);
+
+        // Attach to session
+        state.attach_pty("session-1", 0);
+
+        // Should need replay
+        assert!(state.needs_replay("session-1"));
+    }
+
+    #[test]
+    fn connection_state_replay_marked_sent() {
+        let mut state = ConnectionState::new(InputSource::WebUi);
+
+        // Attach to session
+        state.attach_pty("session-1", 0);
+        assert!(state.needs_replay("session-1"));
+
+        // Mark replay as sent
+        state.mark_replay_sent("session-1");
+        assert!(!state.needs_replay("session-1"));
+    }
+
+    #[test]
+    fn connection_state_detach_clears_all_state() {
+        let mut state = ConnectionState::new(InputSource::WebUi);
+
+        // Attach to session
+        state.attach_pty("session-1", 100);
+        assert!(state.is_attached_to_pty("session-1"));
+
+        // Detach
+        state.detach_pty("session-1");
+        assert!(!state.is_attached_to_pty("session-1"));
+        assert!(!state.needs_replay("session-1"));
+    }
+
+    #[test]
+    fn connection_state_replay_limit_preserved() {
+        let mut state = ConnectionState::new(InputSource::WebUi);
+
+        // Attach with specific scrollback length
+        state.attach_pty("session-1", 500);
+
+        // Replay limit should be preserved
+        assert_eq!(state.get_replay_limit("session-1"), 500);
+    }
 }

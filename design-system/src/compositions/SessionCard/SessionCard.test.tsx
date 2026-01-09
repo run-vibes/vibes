@@ -9,43 +9,35 @@ describe('SessionCard', () => {
     updatedAt: new Date('2024-01-01T12:00:00Z'),
   };
 
-  it('renders session id', () => {
+  it('renders session id as title when no name provided', () => {
     render(<SessionCard {...defaultProps} />);
     expect(screen.getByText('sess-abc123')).toBeInTheDocument();
   });
 
-  it('renders session name when provided', () => {
+  it('renders session name as title when provided', () => {
     render(<SessionCard {...defaultProps} name="auth-refactor" />);
     expect(screen.getByText('auth-refactor')).toBeInTheDocument();
+    // Should not show id when name is provided
+    expect(screen.queryByText('sess-abc123')).not.toBeInTheDocument();
   });
 
-  it('renders status badge', () => {
+  it('renders status badge with friendly label', () => {
     render(<SessionCard {...defaultProps} status="processing" />);
-    expect(screen.getByText('processing')).toBeInTheDocument();
+    expect(screen.getByText('Working')).toBeInTheDocument();
   });
 
-  it('renders different statuses correctly', () => {
+  it('renders different statuses with friendly labels', () => {
     const { rerender } = render(<SessionCard {...defaultProps} status="idle" />);
-    expect(screen.getByText('idle')).toBeInTheDocument();
+    expect(screen.getByText('Ready')).toBeInTheDocument();
 
     rerender(<SessionCard {...defaultProps} status="waiting" />);
-    expect(screen.getByText('waiting')).toBeInTheDocument();
+    expect(screen.getByText('Waiting')).toBeInTheDocument();
 
     rerender(<SessionCard {...defaultProps} status="finished" />);
-    expect(screen.getByText('finished')).toBeInTheDocument();
+    expect(screen.getByText('Done')).toBeInTheDocument();
 
     rerender(<SessionCard {...defaultProps} status="failed" />);
-    expect(screen.getByText('failed')).toBeInTheDocument();
-  });
-
-  it('renders subscriber count', () => {
-    render(<SessionCard {...defaultProps} subscribers={3} />);
-    expect(screen.getByText('3')).toBeInTheDocument();
-  });
-
-  it('defaults to 0 subscribers', () => {
-    render(<SessionCard {...defaultProps} />);
-    expect(screen.getByText('0')).toBeInTheDocument();
+    expect(screen.getByText('Error')).toBeInTheDocument();
   });
 
   it('calls onClick when clicked', () => {

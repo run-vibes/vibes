@@ -5,21 +5,25 @@ import './Sessions.css';
 
 // Map backend session state to design-system SessionStatus
 function mapStateToStatus(state: string): SessionStatus {
-  switch (state) {
+  switch (state.toLowerCase()) {
     case 'processing':
       return 'processing';
     case 'waiting':
+    case 'waiting_permission':
       return 'waiting';
     case 'finished':
     case 'completed':
+    case 'exited':
       return 'finished';
     case 'failed':
     case 'error':
       return 'failed';
     default:
+      // PTY sessions in "Running" or idle state are ready for input
       return 'idle';
   }
 }
+
 
 export function Sessions() {
   const navigate = useNavigate();
@@ -67,14 +71,6 @@ export function Sessions() {
           >
             {isCreating ? 'Creating...' : '+ New'}
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={refresh}
-            disabled={isLoading}
-          >
-            ↻
-          </Button>
         </div>
       </div>
 
@@ -104,10 +100,10 @@ export function Sessions() {
             {sessions.map((session) => (
               <SessionCard
                 key={session.id}
-                id={session.id}
+                id={session.id.slice(0, 8)}
                 name={session.name}
                 status={mapStateToStatus(session.state)}
-                updatedAt={new Date(session.last_activity_at)}
+                updatedAt={new Date(session.last_activity_at * 1000)}
                 subscribers={session.subscriber_count}
                 href={`/sessions/${session.id}`}
                 onClick={(e) => {
@@ -116,8 +112,8 @@ export function Sessions() {
                 }}
                 actions={[
                   {
-                    icon: '×',
-                    label: 'Kill session',
+                    icon: '⏻',
+                    label: 'End session',
                     onClick: () => killSession(session.id),
                   },
                 ]}
