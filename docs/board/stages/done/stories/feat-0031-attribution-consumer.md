@@ -2,7 +2,7 @@
 id: FEAT0031
 title: Attribution consumer
 type: feat
-status: pending
+status: done
 priority: high
 epics: [plugin-system]
 depends: [FEAT0027, FEAT0028, FEAT0030]
