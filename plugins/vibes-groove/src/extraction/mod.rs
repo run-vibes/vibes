@@ -8,7 +8,7 @@ pub mod dedup;
 pub mod embedder;
 pub mod types;
 
-pub use dedup::DeduplicationStrategy;
+pub use dedup::{DEFAULT_SIMILARITY_THRESHOLD, DeduplicationStrategy, SemanticDedup};
 pub use embedder::{
     Embedder, EmbedderError, EmbedderResult, GTE_SMALL_DIMENSIONS, LocalEmbedder, ModelInfo,
     cosine_similarity, default_cache_dir,
