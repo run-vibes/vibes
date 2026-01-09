@@ -20,6 +20,7 @@ use crate::CozoStore;
 use crate::paths::GroovePaths;
 use crate::security::load_policy_or_default;
 use crate::security::{OrgRole, Policy, ReviewOutcome, TrustLevel};
+use crate::strategy::{CozoStrategyStore, StrategyStore};
 use crate::types::{Learning, LearningCategory, Scope};
 
 /// Initialize the groove database at the configured path
@@ -3597,14 +3598,70 @@ impl GroovePlugin {
     // ─── Strategy Routes ─────────────────────────────────────────────────
 
     fn route_strategy_status(&self) -> Result<RouteResponse, PluginError> {
-        let response = StrategyStatusResponse {
-            total_distributions: 0,
-            total_overrides: 0,
-            events_24h: 0,
-            consumer_running: false,
-            top_strategies: vec![],
+        let paths = match GroovePaths::new() {
+            Some(p) => p,
+            None => {
+                return RouteResponse::json(
+                    503,
+                    &ErrorResponse {
+                        error: "Groove not initialized. Run 'vibes groove init' first.".to_string(),
+                        code: "NOT_INITIALIZED".to_string(),
+                    },
+                );
+            }
         };
-        RouteResponse::json(200, &response)
+
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            // Initialize strategy schema if needed (idempotent)
+            let _ = CozoStrategyStore::init_schema(&store.db());
+            let strategy_store = CozoStrategyStore::new(store.db());
+
+            // Load distributions and overrides
+            let distributions = strategy_store
+                .load_distributions()
+                .await
+                .unwrap_or_default();
+            let overrides = strategy_store.load_overrides().await.unwrap_or_default();
+
+            // Calculate top strategies across all distributions
+            let mut top_strategies: Vec<TopStrategyInfo> = vec![];
+            for ((category, _context_type), dist) in &distributions {
+                if let Some((variant, weight)) = dist
+                    .strategy_weights
+                    .iter()
+                    .max_by(|a, b| a.1.value.partial_cmp(&b.1.value).unwrap())
+                {
+                    top_strategies.push(TopStrategyInfo {
+                        variant: variant.as_str().to_string(),
+                        category: category.as_str().to_string(),
+                        weight: weight.value,
+                        session_count: dist.session_count,
+                    });
+                }
+            }
+
+            // Sort by weight descending and take top 5
+            top_strategies.sort_by(|a, b| b.weight.partial_cmp(&a.weight).unwrap());
+            top_strategies.truncate(5);
+
+            RouteResponse::json(
+                200,
+                &StrategyStatusResponse {
+                    total_distributions: distributions.len() as u64,
+                    total_overrides: overrides.len() as u64,
+                    events_24h: 0,           // TODO: query events with timestamp filter
+                    consumer_running: false, // TODO: check consumer status
+                    top_strategies,
+                },
+            )
+        })
     }
 
     fn route_strategy_distributions(&self) -> Result<RouteResponse, PluginError> {

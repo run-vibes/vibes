@@ -54,6 +54,13 @@ impl CozoStore {
         self.initialized
     }
 
+    /// Get the underlying database instance
+    ///
+    /// Useful for sharing the DB with other stores (e.g., strategy store)
+    pub fn db(&self) -> Arc<DbInstance> {
+        self.db.clone()
+    }
+
     /// Get current schema version from database
     pub async fn get_schema_version(&self) -> Result<u32> {
         let query = "?[version] := *schema_version{version}, version = max(version)";
@@ -147,11 +154,6 @@ impl CozoStore {
         self.db
             .run_script(query, params, cozo::ScriptMutability::Mutable)
             .map_err(|e| GrooveError::Database(format!("Mutation failed: {e}")))
-    }
-
-    /// Get a reference to the underlying database
-    pub fn db(&self) -> &DbInstance {
-        &self.db
     }
 
     /// Store a new learning, returns its ID
