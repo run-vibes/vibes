@@ -1,1 +1,1 @@
-../../stages/backlog/stories/feat-0024-extraction-consumer.md
+../../stages/done/stories/feat-0024-extraction-consumer.md
