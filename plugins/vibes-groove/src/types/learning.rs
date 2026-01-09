@@ -49,17 +49,26 @@ impl Learning {
 /// Category of learning for filtering and organization
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum LearningCategory {
+    /// User corrected Claude's behavior
+    Correction,
+    /// Detected code patterns worth remembering
     CodePattern,
+    /// User preferences
     Preference,
+    /// Solutions to specific problems
     Solution,
+    /// Successful error recovery strategies
     ErrorRecovery,
+    /// Tool usage patterns
     ToolUsage,
+    /// Knowledge about the harness (Claude Code, etc.)
     HarnessKnowledge,
 }
 
 impl LearningCategory {
     pub fn as_str(&self) -> &'static str {
         match self {
+            Self::Correction => "correction",
             Self::CodePattern => "code_pattern",
             Self::Preference => "preference",
             Self::Solution => "solution",
@@ -87,6 +96,7 @@ impl FromStr for LearningCategory {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
+            "correction" => Ok(Self::Correction),
             "code_pattern" => Ok(Self::CodePattern),
             "preference" => Ok(Self::Preference),
             "solution" => Ok(Self::Solution),
@@ -152,6 +162,7 @@ mod tests {
     #[test]
     fn test_learning_category_roundtrip() {
         for category in [
+            LearningCategory::Correction,
             LearningCategory::CodePattern,
             LearningCategory::Preference,
             LearningCategory::Solution,

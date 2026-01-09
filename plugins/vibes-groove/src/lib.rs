@@ -10,6 +10,7 @@ pub mod capture;
 pub mod config;
 pub mod error;
 pub mod export;
+pub mod extraction;
 pub mod inject;
 pub mod paths;
 pub mod plugin;
@@ -40,6 +41,11 @@ pub use assessment::{
 pub use assessment::{
     ActivityStatus, AssessmentHistoryResponse, AssessmentStatsResponse, AssessmentStatusResponse,
     CircuitBreakerStatus, SamplingStatus, SessionHistoryItem, SessionStats, TierDistribution,
+};
+
+// Extraction re-exports
+pub use extraction::{
+    ExtractionEvent, ExtractionMethod, ExtractionSource, LearningCandidate, PatternType,
 };
 
 // Security re-exports
