@@ -1,1 +1,1 @@
-../../stages/backlog/stories/feat-0020-local-embedder.md
+../../stages/done/stories/feat-0020-local-embedder.md
