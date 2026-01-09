@@ -81,11 +81,12 @@ pub use attribution::{
 // Strategy re-exports
 pub use strategy::{
     CallbackMethod, ContextPosition, ContextType, CozoStrategyStore, DeferralTrigger,
-    DistributionUpdater, InjectionFormat, InjectionStrategy, LearningStrategyOverride, NoveltyHook,
-    OutcomeRouter, OutcomeRouterConfig, OutcomeSource, STRATEGY_SCHEMA, SessionContext,
-    SessionContextProvider, StartStrategyConsumerError, StrategyConsumer, StrategyConsumerConfig,
-    StrategyConsumerLoopResult, StrategyConsumerResult, StrategyDistribution, StrategyEvent,
-    StrategyInput, StrategyLearner, StrategyLearnerConfig, StrategyLearningLoader, StrategyOutcome,
-    StrategyParams, StrategyStore, StrategyVariant, SubagentType, UpdaterConfig,
-    UsedStrategyProvider, get_effective_weights, start_strategy_consumer, strategy_consumer_loop,
+    DistributionUpdater, InjectionFormat, InjectionStrategy, LearningStrategyOverride,
+    NoOpNoveltyHook, NoveltyHook, OutcomeRouter, OutcomeRouterConfig, OutcomeSource,
+    STRATEGY_SCHEMA, SessionContext, SessionContextProvider, StartStrategyConsumerError,
+    StrategyConsumer, StrategyConsumerConfig, StrategyConsumerLoopResult, StrategyConsumerResult,
+    StrategyDistribution, StrategyEvent, StrategyInput, StrategyLearner, StrategyLearnerConfig,
+    StrategyLearningLoader, StrategyOutcome, StrategyParams, StrategyStore, StrategyVariant,
+    SubagentType, UpdaterConfig, UsedStrategyProvider, get_effective_weights,
+    start_strategy_consumer, strategy_consumer_loop,
 };

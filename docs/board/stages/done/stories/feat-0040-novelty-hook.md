@@ -2,7 +2,7 @@
 id: FEAT0040
 title: Novelty hook extension point
 type: feat
-status: pending
+status: done
 priority: medium
 epics: [plugin-system]
 depends: [FEAT0039]
@@ -150,11 +150,11 @@ The adaptive strategies system needs hooks for future novelty detection (identif
 
 ## Acceptance Criteria
 
-- [ ] `NoveltyHook` trait defined with clear interface
-- [ ] `NoOpNoveltyHook` provides default implementation
-- [ ] Extension point documented with future ideas
-- [ ] Consumer invokes hook when registered
-- [ ] All tests pass
+- [x] `NoveltyHook` trait defined with clear interface
+- [x] `NoOpNoveltyHook` provides default implementation
+- [x] Extension point documented with future ideas
+- [x] Consumer invokes hook when registered
+- [x] All tests pass
 
 ## Completion
 
