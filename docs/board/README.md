@@ -1,5 +1,6 @@
-Generated README.md
-Auto-generated from directory structure. Run `just board generate` to update.
+# Planning Board
+
+> Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
@@ -67,8 +68,8 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [27-crt-design-system](milestones/27-crt-design-system/) | done | web-ui |
 | [28-board-restructure](milestones/28-board-restructure/) | done | core |
 | [29-assessment-framework](milestones/29-assessment-framework/) | done | core,cli,plugin-system |
-| [30-learning-extraction](milestones/30-learning-extraction/) | in-progress | plugin-system |
-| [31-attribution-engine](milestones/31-attribution-engine/) | planned | plugin-system |
+| [30-learning-extraction](milestones/30-learning-extraction/) | done | plugin-system |
+| [31-attribution-engine](milestones/31-attribution-engine/) | in-progress | plugin-system |
 | [32-adaptive-strategies](milestones/32-adaptive-strategies/) | planned | plugin-system |
 | [33-groove-dashboard](milestones/33-groove-dashboard/) | planned | plugin-system |
 | [34-open-world-adaptation](milestones/34-open-world-adaptation/) | planned | plugin-system |
