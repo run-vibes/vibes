@@ -1,5 +1,6 @@
-Generated README.md
-Auto-generated from directory structure. Run `just board generate` to update.
+# Planning Board
+
+> Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
@@ -16,6 +17,22 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [feat-0023-error-recovery-detector](stages/backlog/stories/feat-0023-error-recovery-detector.md) | feat | high | plugin-system |
 | [feat-0024-extraction-consumer](stages/backlog/stories/feat-0024-extraction-consumer.md) | feat | high | plugin-system |
 | [feat-0025-extraction-cli](stages/backlog/stories/feat-0025-extraction-cli.md) | feat | medium | plugin-system |
+| [feat-0026-attribution-types-storage](stages/backlog/stories/feat-0026-attribution-types-storage.md) | feat | high | plugin-system |
+| [feat-0027-activation-detection](stages/backlog/stories/feat-0027-activation-detection.md) | feat | high | plugin-system |
+| [feat-0028-temporal-correlation](stages/backlog/stories/feat-0028-temporal-correlation.md) | feat | high | plugin-system |
+| [feat-0029-ablation-manager](stages/backlog/stories/feat-0029-ablation-manager.md) | feat | high | plugin-system |
+| [feat-0030-value-aggregation](stages/backlog/stories/feat-0030-value-aggregation.md) | feat | high | plugin-system |
+| [feat-0031-attribution-consumer](stages/backlog/stories/feat-0031-attribution-consumer.md) | feat | high | plugin-system |
+| [feat-0032-auto-deprecation](stages/backlog/stories/feat-0032-auto-deprecation.md) | feat | high | plugin-system |
+| [feat-0033-attribution-cli](stages/backlog/stories/feat-0033-attribution-cli.md) | feat | high | plugin-system |
+| [feat-0034-strategy-types-storage](stages/backlog/stories/feat-0034-strategy-types-storage.md) | feat | high | plugin-system |
+| [feat-0035-strategy-distribution](stages/backlog/stories/feat-0035-strategy-distribution.md) | feat | high | plugin-system |
+| [feat-0036-thompson-sampling](stages/backlog/stories/feat-0036-thompson-sampling.md) | feat | high | plugin-system |
+| [feat-0037-outcome-router](stages/backlog/stories/feat-0037-outcome-router.md) | feat | high | plugin-system |
+| [feat-0038-distribution-updater](stages/backlog/stories/feat-0038-distribution-updater.md) | feat | high | plugin-system |
+| [feat-0039-strategy-consumer](stages/backlog/stories/feat-0039-strategy-consumer.md) | feat | high | plugin-system |
+| [feat-0040-novelty-hook](stages/backlog/stories/feat-0040-novelty-hook.md) | feat | medium | plugin-system |
+| [feat-0041-strategy-cli](stages/backlog/stories/feat-0041-strategy-cli.md) | feat | high | plugin-system |
 
 ## Epics
 
