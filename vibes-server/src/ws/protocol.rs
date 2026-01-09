@@ -54,6 +54,12 @@ pub enum ClientMessage {
         /// Optional working directory for the spawned process
         #[serde(default, skip_serializing_if = "Option::is_none")]
         cwd: Option<String>,
+        /// Initial terminal columns (used when creating new session)
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        cols: Option<u16>,
+        /// Initial terminal rows (used when creating new session)
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        rows: Option<u16>,
     },
 
     /// Detach from a session
@@ -287,6 +293,8 @@ mod tests {
             session_id: "sess-1".to_string(),
             name: None,
             cwd: None,
+            cols: None,
+            rows: None,
         };
         let json = serde_json::to_string(&msg).unwrap();
         let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
@@ -300,6 +308,8 @@ mod tests {
             session_id: "sess-1".to_string(),
             name: Some("my-session".to_string()),
             cwd: None,
+            cols: None,
+            rows: None,
         };
         let json = serde_json::to_string(&msg).unwrap();
         let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
@@ -314,8 +324,8 @@ mod tests {
         let parsed: ClientMessage = serde_json::from_str(json).unwrap();
         assert!(matches!(
             parsed,
-            ClientMessage::Attach { session_id, name, cwd }
-            if session_id == "sess-1" && name.is_none() && cwd.is_none()
+            ClientMessage::Attach { session_id, name, cwd, cols, rows }
+            if session_id == "sess-1" && name.is_none() && cwd.is_none() && cols.is_none() && rows.is_none()
         ));
     }
 
@@ -325,6 +335,8 @@ mod tests {
             session_id: "sess-1".to_string(),
             name: Some("my-session".to_string()),
             cwd: Some("/home/user/project".to_string()),
+            cols: None,
+            rows: None,
         };
         let json = serde_json::to_string(&msg).unwrap();
         let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
@@ -339,9 +351,25 @@ mod tests {
         let parsed: ClientMessage = serde_json::from_str(json).unwrap();
         assert!(matches!(
             parsed,
-            ClientMessage::Attach { session_id, name, cwd }
-            if session_id == "sess-1" && name.is_none() && cwd.is_none()
+            ClientMessage::Attach { session_id, name, cwd, cols, rows }
+            if session_id == "sess-1" && name.is_none() && cwd.is_none() && cols.is_none() && rows.is_none()
         ));
+    }
+
+    #[test]
+    fn test_client_message_attach_with_dimensions_roundtrip() {
+        let msg = ClientMessage::Attach {
+            session_id: "sess-1".to_string(),
+            name: None,
+            cwd: None,
+            cols: Some(80),
+            rows: Some(24),
+        };
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+        assert!(json.contains(r#""cols":80"#));
+        assert!(json.contains(r#""rows":24"#));
     }
 
     #[test]

@@ -105,8 +105,13 @@ pub async fn run(args: ClaudeArgs) -> Result<()> {
         .ok()
         .and_then(|p| p.to_str().map(String::from));
 
-    // Send attach request with optional session name and cwd
-    client.attach(&session_id, session_name, cwd).await?;
+    // Get initial terminal size to create PTY with correct dimensions
+    let (cols, rows) = crossterm::terminal::size().unwrap_or((80, 24));
+
+    // Send attach request with session name, cwd, and initial dimensions
+    client
+        .attach(&session_id, session_name, cwd, Some(cols), Some(rows))
+        .await?;
 
     // Wait for attach acknowledgment
     let (initial_cols, initial_rows) = wait_for_attach_ack(&mut client, &session_id).await?;

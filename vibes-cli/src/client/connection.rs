@@ -107,16 +107,21 @@ impl VibesClient {
     /// If `name` is provided and the session doesn't exist, a new session will be
     /// created with this human-readable name.
     /// If `cwd` is provided, the spawned process will use it as its working directory.
+    /// Attach to a PTY session with optional initial dimensions
     pub async fn attach(
         &self,
         session_id: &str,
         name: Option<String>,
         cwd: Option<String>,
+        cols: Option<u16>,
+        rows: Option<u16>,
     ) -> Result<()> {
         self.send(ClientMessage::Attach {
             session_id: session_id.to_string(),
             name,
             cwd,
+            cols,
+            rows,
         })
         .await
     }

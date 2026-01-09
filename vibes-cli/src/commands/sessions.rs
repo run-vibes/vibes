@@ -92,8 +92,8 @@ async fn attach_session(session_id: &str) -> Result<()> {
 
     let mut client = VibesClient::connect().await?;
 
-    // Attach to the session to receive output (no name or cwd since session already exists)
-    client.attach(session_id, None, None).await?;
+    // Attach to the session to receive output (no name, cwd, or dimensions since session already exists)
+    client.attach(session_id, None, None, None, None).await?;
 
     eprintln!("Attached to session: {}", session_id);
     eprintln!("Streaming PTY output... (Ctrl+C to detach)");
