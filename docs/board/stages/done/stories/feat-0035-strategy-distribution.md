@@ -2,7 +2,7 @@
 id: FEAT0035
 title: Strategy distribution hierarchy
 type: feat
-status: pending
+status: done
 priority: high
 epics: [plugin-system]
 depends: [FEAT0034]
