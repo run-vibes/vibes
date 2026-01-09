@@ -4,6 +4,8 @@
 //! It processes heavy assessment events, runs pattern detection, deduplicates
 //! learnings, and persists them to the learning store.
 
+pub mod embedder;
 pub mod types;
 
+pub use embedder::{Embedder, EmbedderError, EmbedderResult, cosine_similarity};
 pub use types::*;
