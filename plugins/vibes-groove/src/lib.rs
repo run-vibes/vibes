@@ -71,7 +71,7 @@ pub use attribution::{
     AblationStrategy, ActivationConfig, ActivationDetector, ActivationResult, ActivationSignal,
     AggregationConfig, AttributionConfig, AttributionConsumer, AttributionConsumerLoopResult,
     AttributionConsumerResult, AttributionRecord, AttributionStartConsumerError, AttributionStore,
-    AttributionTranscriptFetcher, ConservativeAblation, CozoAttributionStore,
+    AttributionTranscriptFetcher, ConservativeAblation, CozoAttributionStore, DeprecationEvent,
     ExponentialDecayCorrelator, HybridActivationDetector, LearningLoader, LearningStatus,
     LearningValue, LightweightEventFetcher, SessionOutcome, TemporalConfig, TemporalCorrelator,
     TemporalResult, ValueAggregator, attribution_consumer_loop, start_attribution_consumer,

@@ -12,7 +12,6 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
 | [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli |
-| [feat-0032-auto-deprecation](stages/backlog/stories/feat-0032-auto-deprecation.md) | feat | high | plugin-system |
 | [feat-0033-attribution-cli](stages/backlog/stories/feat-0033-attribution-cli.md) | feat | high | plugin-system |
 | [feat-0034-strategy-types-storage](stages/backlog/stories/feat-0034-strategy-types-storage.md) | feat | high | plugin-system |
 | [feat-0035-strategy-distribution](stages/backlog/stories/feat-0035-strategy-distribution.md) | feat | high | plugin-system |
@@ -67,8 +66,8 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [27-crt-design-system](milestones/27-crt-design-system/) | done | web-ui |
 | [28-board-restructure](milestones/28-board-restructure/) | done | core |
 | [29-assessment-framework](milestones/29-assessment-framework/) | done | core,cli,plugin-system |
-| [30-learning-extraction](milestones/30-learning-extraction/) | in-progress | plugin-system |
-| [31-attribution-engine](milestones/31-attribution-engine/) | planned | plugin-system |
+| [30-learning-extraction](milestones/30-learning-extraction/) | done | plugin-system |
+| [31-attribution-engine](milestones/31-attribution-engine/) | in-progress | plugin-system |
 | [32-adaptive-strategies](milestones/32-adaptive-strategies/) | planned | plugin-system |
 | [33-groove-dashboard](milestones/33-groove-dashboard/) | planned | plugin-system |
 | [34-open-world-adaptation](milestones/34-open-world-adaptation/) | planned | plugin-system |
@@ -119,6 +118,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 - [feat-0029-ablation-manager](stages/done/stories/feat-0029-ablation-manager.md)
 - [feat-0030-value-aggregation](stages/done/stories/feat-0030-value-aggregation.md)
 - [feat-0031-attribution-consumer](stages/done/stories/feat-0031-attribution-consumer.md)
+- [feat-0032-auto-deprecation](stages/done/stories/feat-0032-auto-deprecation.md)
 - [m14-chore-01-design](stages/done/stories/m14-chore-01-design.md)
 - [m14-chore-02-implementation](stages/done/stories/m14-chore-02-implementation.md)
 - [m26-chore-01-eventbus-cleanup](stages/done/stories/m26-chore-01-eventbus-cleanup.md)

@@ -28,6 +28,6 @@ pub use temporal::{
     ExponentialDecayCorrelator, TemporalConfig, TemporalCorrelator, TemporalResult,
 };
 pub use types::{
-    AblationExperiment, AblationResult, ActivationSignal, AttributionRecord, LearningStatus,
-    LearningValue, SessionOutcome,
+    AblationExperiment, AblationResult, ActivationSignal, AttributionRecord, DeprecationEvent,
+    LearningStatus, LearningValue, SessionOutcome,
 };
