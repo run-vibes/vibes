@@ -7,5 +7,8 @@
 pub mod embedder;
 pub mod types;
 
-pub use embedder::{Embedder, EmbedderError, EmbedderResult, cosine_similarity};
+pub use embedder::{
+    Embedder, EmbedderError, EmbedderResult, GTE_SMALL_DIMENSIONS, LocalEmbedder,
+    cosine_similarity, default_cache_dir,
+};
 pub use types::*;
