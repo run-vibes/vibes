@@ -167,6 +167,142 @@ impl LocalEmbedder {
     pub fn default_model_exists() -> bool {
         Self::model_exists(default_cache_dir())
     }
+
+    /// Download the gte-small model files to the specified directory
+    ///
+    /// Downloads from HuggingFace:
+    /// - model.onnx (~67MB)
+    /// - tokenizer.json (~700KB)
+    #[instrument(skip_all, fields(model_dir = %model_dir.as_ref().display()))]
+    pub async fn download_model<P: AsRef<Path>>(model_dir: P) -> EmbedderResult<()> {
+        let model_dir = model_dir.as_ref();
+        std::fs::create_dir_all(model_dir)?;
+
+        let model_path = model_dir.join("model.onnx");
+        let tokenizer_path = model_dir.join("tokenizer.json");
+
+        // HuggingFace URLs for Supabase/gte-small ONNX model
+        const MODEL_URL: &str =
+            "https://huggingface.co/Supabase/gte-small/resolve/main/onnx/model.onnx";
+        const TOKENIZER_URL: &str =
+            "https://huggingface.co/Supabase/gte-small/resolve/main/tokenizer.json";
+
+        // Download model if not present
+        if !model_path.exists() {
+            tracing::info!("Downloading gte-small model (~67MB)...");
+            download_file(MODEL_URL, &model_path).await?;
+            tracing::info!("Model downloaded to {}", model_path.display());
+        } else {
+            debug!("Model already exists at {}", model_path.display());
+        }
+
+        // Download tokenizer if not present
+        if !tokenizer_path.exists() {
+            tracing::info!("Downloading tokenizer...");
+            download_file(TOKENIZER_URL, &tokenizer_path).await?;
+            tracing::info!("Tokenizer downloaded to {}", tokenizer_path.display());
+        } else {
+            debug!("Tokenizer already exists at {}", tokenizer_path.display());
+        }
+
+        Ok(())
+    }
+
+    /// Download model to default cache directory
+    pub async fn download_default_model() -> EmbedderResult<()> {
+        Self::download_model(default_cache_dir()).await
+    }
+
+    /// Ensure model exists, downloading if necessary, then load it
+    #[instrument(skip_all)]
+    pub async fn ensure_model() -> EmbedderResult<Self> {
+        let model_dir = default_cache_dir();
+        if !Self::model_exists(&model_dir) {
+            Self::download_model(&model_dir).await?;
+        }
+        // Load synchronously (model loading is fast, download is slow)
+        Self::from_dir(model_dir)
+    }
+
+    /// Run a health check on the embedder
+    ///
+    /// Verifies the model is working by generating a test embedding.
+    /// Returns model information on success.
+    pub async fn health_check(&self) -> EmbedderResult<ModelInfo> {
+        // Generate a test embedding to verify model works
+        let test_text = "health check";
+        let embedding = self.embed(test_text).await?;
+
+        // Verify dimensions
+        if embedding.len() != GTE_SMALL_DIMENSIONS {
+            return Err(EmbedderError::InferenceError(format!(
+                "Expected {} dimensions, got {}",
+                GTE_SMALL_DIMENSIONS,
+                embedding.len()
+            )));
+        }
+
+        // Verify embedding is not all zeros
+        let sum: f32 = embedding.iter().map(|x| x.abs()).sum();
+        if sum < f32::EPSILON {
+            return Err(EmbedderError::InferenceError(
+                "Health check embedding is all zeros".to_string(),
+            ));
+        }
+
+        Ok(ModelInfo {
+            model_name: "gte-small".to_string(),
+            dimensions: GTE_SMALL_DIMENSIONS,
+            model_dir: self.model_dir.clone(),
+        })
+    }
+}
+
+/// Information about a loaded model
+#[derive(Debug, Clone)]
+pub struct ModelInfo {
+    /// Model name (e.g., "gte-small")
+    pub model_name: String,
+    /// Embedding dimensions
+    pub dimensions: usize,
+    /// Directory containing model files
+    pub model_dir: PathBuf,
+}
+
+/// Download a file from URL to disk
+async fn download_file(url: &str, path: &Path) -> EmbedderResult<()> {
+    use std::io::Write;
+
+    let client = reqwest::Client::new();
+    let response = client
+        .get(url)
+        .send()
+        .await
+        .map_err(|e| EmbedderError::DownloadError(format!("Failed to fetch {}: {}", url, e)))?;
+
+    if !response.status().is_success() {
+        return Err(EmbedderError::DownloadError(format!(
+            "Failed to download {}: HTTP {}",
+            url,
+            response.status()
+        )));
+    }
+
+    let bytes = response
+        .bytes()
+        .await
+        .map_err(|e| EmbedderError::DownloadError(format!("Failed to read response: {}", e)))?;
+
+    // Write to a temporary file first, then rename for atomicity
+    let temp_path = path.with_extension("tmp");
+    let mut file = std::fs::File::create(&temp_path)?;
+    file.write_all(&bytes)?;
+    file.sync_all()?;
+    drop(file);
+
+    std::fs::rename(&temp_path, path)?;
+
+    Ok(())
 }
 
 #[async_trait]
