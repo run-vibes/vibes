@@ -2,7 +2,7 @@
 id: FEAT0036
 title: Thompson sampling learner
 type: feat
-status: pending
+status: done
 priority: high
 epics: [plugin-system]
 depends: [FEAT0035]
