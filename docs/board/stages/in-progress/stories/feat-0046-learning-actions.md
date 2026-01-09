@@ -2,7 +2,7 @@
 id: FEAT0046
 title: Learning actions (enable/disable/delete)
 type: feat
-status: pending
+status: in-progress
 priority: medium
 epics: [plugin-system]
 depends: [FEAT0045]

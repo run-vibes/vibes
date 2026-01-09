@@ -1,0 +1,107 @@
+.confirm-dialog__overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fade-in 0.15s ease-out;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.confirm-dialog {
+  background: var(--bg-surface, #111);
+  border: 1px solid var(--phosphor, #00ff00);
+  border-radius: 8px;
+  padding: 1.5rem;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 0 20px rgba(0, 255, 0, 0.15);
+  animation: slide-up 0.15s ease-out;
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.confirm-dialog__title {
+  margin: 0 0 0.75rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+}
+
+.confirm-dialog__message {
+  margin: 0 0 1.5rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--text-secondary, #aaa);
+}
+
+.confirm-dialog__actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.confirm-dialog__button {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.confirm-dialog__button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.confirm-dialog__button--cancel {
+  background: transparent;
+  border: 1px solid var(--border-dim, #333);
+  color: var(--text-secondary, #aaa);
+}
+
+.confirm-dialog__button--cancel:hover:not(:disabled) {
+  border-color: var(--text-secondary, #aaa);
+  color: var(--text-primary, #fff);
+}
+
+.confirm-dialog__button--confirm {
+  background: var(--phosphor, #00ff00);
+  border: 1px solid var(--phosphor, #00ff00);
+  color: var(--bg-base, #000);
+}
+
+.confirm-dialog__button--confirm:hover:not(:disabled) {
+  background: var(--phosphor-bright, #33ff33);
+  border-color: var(--phosphor-bright, #33ff33);
+}
+
+.confirm-dialog__button--destructive {
+  background: var(--danger, #ff4444);
+  border-color: var(--danger, #ff4444);
+}
+
+.confirm-dialog__button--destructive:hover:not(:disabled) {
+  background: var(--danger-bright, #ff6666);
+  border-color: var(--danger-bright, #ff6666);
+}
