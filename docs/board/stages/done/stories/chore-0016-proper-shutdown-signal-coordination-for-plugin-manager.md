@@ -2,7 +2,7 @@
 id: CHORE0016
 title: proper shutdown signal coordination for plugin manager
 type: chore
-status: backlog
+status: done
 priority: low
 epics: [core]
 depends: []

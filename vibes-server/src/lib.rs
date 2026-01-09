@@ -291,11 +291,18 @@ impl VibesServer {
         }
 
         // The manager is moved into the spawned task to keep it alive.
-        // FUTURE: Replace pending() with proper shutdown signal coordination
+        // When shutdown signal is received, gracefully stop consumers.
         tokio::spawn(async move {
-            let _manager = manager; // Keep manager alive
-            let _shutdown = shutdown; // Keep shutdown token alive
-            std::future::pending::<()>().await;
+            // Wait for shutdown signal
+            shutdown.cancelled().await;
+
+            // Signal all consumers to stop
+            tracing::info!("Shutdown signal received, stopping plugin consumers");
+            manager.shutdown();
+
+            // Wait for consumers to complete in-flight work
+            manager.wait_for_shutdown().await;
+            tracing::info!("Plugin consumers stopped");
         });
     }
 
