@@ -2,7 +2,7 @@
 id: FEAT0042
 title: Dashboard layout and routing
 type: feat
-status: pending
+status: done
 priority: high
 epics: [plugin-system]
 depends: []

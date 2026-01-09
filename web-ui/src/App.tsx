@@ -18,6 +18,14 @@ import {
   AssessmentStatus,
   AssessmentHistory,
 } from './pages/assessment'
+import {
+  DashboardLayout,
+  DashboardOverview,
+  DashboardLearnings,
+  DashboardAttribution,
+  DashboardStrategy,
+  DashboardHealth,
+} from './pages/dashboard'
 import { DebugPage } from './pages/Debug'
 import { StreamsPage } from './pages/Streams'
 import { SettingsPage } from './pages/Settings'
@@ -42,6 +50,7 @@ function RootLayout() {
   const grooveSubnavItems = [
     { label: 'Security', href: '/groove', icon: '🛡', isActive: location.pathname === '/groove' },
     { label: 'Assessment', href: '/groove/assessment/status', icon: '◈', isActive: location.pathname.startsWith('/groove/assessment') },
+    { label: 'Dashboard', href: '/groove/dashboard/overview', icon: '📊', isActive: location.pathname.startsWith('/groove/dashboard') },
   ];
 
   const renderLink = ({ href, className, children }: { href: string; className: string; children: React.ReactNode }) => (
@@ -148,6 +157,53 @@ const assessmentIndexRoute = createRoute({
   component: () => null,
 })
 
+// Dashboard routes - nested under layout
+const dashboardLayoutRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/groove/dashboard',
+  component: DashboardLayout,
+})
+
+const dashboardOverviewRoute = createRoute({
+  getParentRoute: () => dashboardLayoutRoute,
+  path: '/overview',
+  component: DashboardOverview,
+})
+
+const dashboardLearningsRoute = createRoute({
+  getParentRoute: () => dashboardLayoutRoute,
+  path: '/learnings',
+  component: DashboardLearnings,
+})
+
+const dashboardAttributionRoute = createRoute({
+  getParentRoute: () => dashboardLayoutRoute,
+  path: '/attribution',
+  component: DashboardAttribution,
+})
+
+const dashboardStrategyRoute = createRoute({
+  getParentRoute: () => dashboardLayoutRoute,
+  path: '/strategy',
+  component: DashboardStrategy,
+})
+
+const dashboardHealthRoute = createRoute({
+  getParentRoute: () => dashboardLayoutRoute,
+  path: '/health',
+  component: DashboardHealth,
+})
+
+// Redirect dashboard index to overview
+const dashboardIndexRoute = createRoute({
+  getParentRoute: () => dashboardLayoutRoute,
+  path: '/',
+  beforeLoad: () => {
+    throw redirect({ to: '/groove/dashboard/overview' });
+  },
+  component: () => null,
+})
+
 const debugRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/debug',
@@ -173,6 +229,14 @@ const routeTree = rootRoute.addChildren([
     assessmentStatusRoute,
     assessmentStreamRoute,
     assessmentHistoryRoute,
+  ]),
+  dashboardLayoutRoute.addChildren([
+    dashboardIndexRoute,
+    dashboardOverviewRoute,
+    dashboardLearningsRoute,
+    dashboardAttributionRoute,
+    dashboardStrategyRoute,
+    dashboardHealthRoute,
   ]),
   debugRoute,
   settingsRoute,

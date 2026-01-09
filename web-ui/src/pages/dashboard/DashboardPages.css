@@ -1,0 +1,18 @@
+.dashboard-page {
+  padding: var(--space-4);
+  flex: 1;
+  min-height: 0;
+}
+
+.dashboard-page h2 {
+  font-family: var(--font-display);
+  font-size: var(--font-size-lg);
+  color: var(--phosphor);
+  margin: 0 0 var(--space-3);
+  text-transform: uppercase;
+}
+
+.placeholder-text {
+  color: var(--text-dim);
+  font-size: var(--font-size-sm);
+}
