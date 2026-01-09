@@ -49,7 +49,9 @@ pub struct InterventionConfig {
 impl Default for InterventionConfig {
     fn default() -> Self {
         Self {
-            enabled: true,
+            // Disabled by default to prevent tests/CLI from creating hook files.
+            // Enable explicitly when running with proper hooks_dir configured.
+            enabled: false,
             hooks_dir: None,
             max_per_session: 3,
             use_claude_hooks: true,
@@ -186,7 +188,57 @@ impl HookIntervention {
             .unwrap_or_else(|| PathBuf::from(".claude/hooks"))
     }
 
-    /// Apply an intervention for a session.
+    /// Apply an intervention for a session (synchronous version).
+    ///
+    /// Writes a hook file containing the learning if:
+    /// - Interventions are enabled
+    /// - Session hasn't exceeded the intervention limit
+    /// - The learning hasn't already been applied to this session
+    ///
+    /// This is the synchronous version for use in `SyncAssessmentProcessor`.
+    pub fn intervene_sync(
+        &mut self,
+        session_id: &SessionId,
+        learning: &Learning,
+    ) -> Result<InterventionResult, InterventionError> {
+        if !self.config.enabled {
+            return Err(InterventionError::Disabled);
+        }
+
+        // Check session state
+        {
+            let session = self.sessions.entry(session_id.clone()).or_default();
+
+            // Check intervention limit
+            if session.count >= self.config.max_per_session {
+                return Ok(InterventionResult::Skipped {
+                    reason: format!(
+                        "session intervention limit reached ({})",
+                        self.config.max_per_session
+                    ),
+                });
+            }
+
+            // Check if learning already applied
+            if session.applied_learnings.contains(&learning.id) {
+                return Ok(InterventionResult::Skipped {
+                    reason: format!("learning '{}' already applied to session", learning.id),
+                });
+            }
+        }
+
+        // Write the hook synchronously
+        let hook_path = self.write_hook_sync(session_id, learning)?;
+
+        // Track the intervention
+        let session = self.sessions.entry(session_id.clone()).or_default();
+        session.count += 1;
+        session.applied_learnings.push(learning.id.clone());
+
+        Ok(InterventionResult::Applied { hook_path })
+    }
+
+    /// Apply an intervention for a session (async version).
     ///
     /// Writes a hook file containing the learning if:
     /// - Interventions are enabled
@@ -234,7 +286,7 @@ impl HookIntervention {
         Ok(InterventionResult::Applied { hook_path })
     }
 
-    /// Write a hook file for a learning.
+    /// Write a hook file for a learning (async version).
     async fn write_hook(
         &self,
         session_id: &SessionId,
@@ -270,9 +322,46 @@ impl HookIntervention {
         Ok(hook_path)
     }
 
+    /// Write a hook file for a learning (synchronous version).
+    fn write_hook_sync(
+        &self,
+        session_id: &SessionId,
+        learning: &Learning,
+    ) -> Result<PathBuf, InterventionError> {
+        let hooks_dir = self.hooks_dir();
+
+        // Ensure hooks directory exists
+        std::fs::create_dir_all(&hooks_dir).map_err(InterventionError::CreateDirFailed)?;
+
+        // Generate hook filename
+        let filename = format!(
+            "vibes_learning_{}_{}.sh",
+            sanitize_filename(session_id.as_str()),
+            sanitize_filename(&learning.id)
+        );
+        let hook_path = hooks_dir.join(&filename);
+
+        // Generate hook content
+        let content = if self.config.use_claude_hooks {
+            generate_claude_hook(learning)
+        } else {
+            generate_simple_hook(learning)
+        };
+
+        // Write the hook file
+        std::fs::write(&hook_path, content).map_err(InterventionError::WriteFailed)?;
+
+        Ok(hook_path)
+    }
+
     /// Get the number of interventions for a session.
     pub fn intervention_count(&self, session_id: &SessionId) -> u32 {
         self.sessions.get(session_id).map(|s| s.count).unwrap_or(0)
+    }
+
+    /// Get the total number of interventions across all sessions.
+    pub fn total_intervention_count(&self) -> u32 {
+        self.sessions.values().map(|s| s.count).sum()
     }
 
     /// Check if a learning has been applied to a session.
@@ -372,7 +461,8 @@ mod tests {
     fn test_intervention_config_defaults() {
         let config = InterventionConfig::default();
 
-        assert!(config.enabled);
+        // Disabled by default to prevent accidental hook file creation
+        assert!(!config.enabled);
         assert!(config.hooks_dir.is_none());
         assert_eq!(config.max_per_session, 3);
         assert!(config.use_claude_hooks);
@@ -636,5 +726,82 @@ mod tests {
     #[test]
     fn test_shell_escape_empty() {
         assert_eq!(shell_escape(""), "''");
+    }
+
+    // ─── Sync intervention tests ─────────────────────────────────────────
+
+    #[test]
+    fn test_intervention_sync_writes_hook() {
+        use tempfile::TempDir;
+
+        let temp_dir = TempDir::new().expect("create temp dir");
+        let hooks_dir = temp_dir.path().join("hooks");
+
+        let config = InterventionConfig {
+            enabled: true,
+            hooks_dir: Some(hooks_dir.clone()),
+            max_per_session: 3,
+            use_claude_hooks: true,
+        };
+        let mut intervention = HookIntervention::new(config);
+        let session_id = SessionId::from("sync-test-session");
+        let learning = Learning::new("sync-test-id", "Sync Test Title", "Sync test content");
+
+        let result = intervention
+            .intervene_sync(&session_id, &learning)
+            .expect("intervene_sync should succeed");
+
+        assert!(result.is_applied());
+        if let InterventionResult::Applied { hook_path } = result {
+            assert!(hook_path.exists());
+            let content = std::fs::read_to_string(&hook_path).expect("read hook");
+            assert!(content.contains("vibes-groove learning hook"));
+            assert!(content.contains("Sync Test Title"));
+        }
+
+        // Verify tracking works same as async version
+        assert_eq!(intervention.intervention_count(&session_id), 1);
+        assert!(intervention.learning_applied(&session_id, "sync-test-id"));
+    }
+
+    #[test]
+    fn test_intervention_sync_respects_disabled() {
+        let config = InterventionConfig {
+            enabled: false,
+            ..Default::default()
+        };
+        let mut intervention = HookIntervention::new(config);
+        let session_id = SessionId::from("disabled-session");
+        let learning = Learning::new("test-id", "Title", "Content");
+
+        let result = intervention.intervene_sync(&session_id, &learning);
+        assert!(matches!(result, Err(InterventionError::Disabled)));
+    }
+
+    #[test]
+    fn test_intervention_sync_respects_limit() {
+        use tempfile::TempDir;
+
+        let temp_dir = TempDir::new().expect("create temp dir");
+        let config = InterventionConfig {
+            enabled: true,
+            hooks_dir: Some(temp_dir.path().join("hooks")),
+            max_per_session: 2,
+            use_claude_hooks: true,
+        };
+        let mut intervention = HookIntervention::new(config);
+        let session_id = SessionId::from("limit-session");
+
+        // Apply two interventions
+        for i in 0..2 {
+            let learning = Learning::new(format!("learn-{i}"), "Title", "Content");
+            let result = intervention.intervene_sync(&session_id, &learning).unwrap();
+            assert!(result.is_applied());
+        }
+
+        // Third should be skipped
+        let learning = Learning::new("learn-3", "Title", "Content");
+        let result = intervention.intervene_sync(&session_id, &learning).unwrap();
+        assert!(result.is_skipped());
     }
 }

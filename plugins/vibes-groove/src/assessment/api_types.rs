@@ -69,6 +69,9 @@ pub struct ActivityStatus {
     pub events_stored: usize,
     /// List of active session IDs.
     pub sessions: Vec<String>,
+    /// Total number of interventions triggered across all sessions.
+    #[serde(default)]
+    pub intervention_count: u32,
 }
 
 // ============================================================================
@@ -158,6 +161,7 @@ mod tests {
                 active_sessions: 2,
                 events_stored: 100,
                 sessions: vec!["sess-1".to_string(), "sess-2".to_string()],
+                intervention_count: 0,
             },
         };
 

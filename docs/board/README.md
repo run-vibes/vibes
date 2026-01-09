@@ -1,6 +1,5 @@
-# Planning Board
-
-> Auto-generated from directory structure. Run `just board generate` to update.
+Generated README.md
+Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
@@ -14,7 +13,6 @@
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
 | [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli |
-| [m29-feat-0012-wire-circuit-breaker-intervention](stages/backlog/stories/m29-feat-0012-wire-circuit-breaker-intervention.md) | feat | high | core,plugin-system |
 
 ## Epics
 
@@ -103,6 +101,7 @@
 - [m26-fix-08-assessment-multiselect](stages/done/stories/m26-fix-08-assessment-multiselect.md)
 - [m26-refactor-07-plugin-lifecycle](stages/done/stories/m26-refactor-07-plugin-lifecycle.md)
 - [m27-chore-0012-align-settings-page-with-crt-design-system](stages/done/stories/m27-chore-0012-align-settings-page-with-crt-design-system.md)
+- [m29-feat-0012-wire-circuit-breaker-intervention](stages/done/stories/m29-feat-0012-wire-circuit-breaker-intervention.md)
 - [m29-feat-11-web-ui-assess-queries](stages/done/stories/m29-feat-11-web-ui-assess-queries.md)
 - [m36-feat-01-backend-pagination](stages/done/stories/m36-feat-01-backend-pagination.md)
 - [m36-feat-02-backend-filters](stages/done/stories/m36-feat-02-backend-filters.md)

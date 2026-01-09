@@ -20,6 +20,7 @@ interface ActivityStatus {
   active_sessions: number;
   events_stored: number;
   sessions: string[];
+  intervention_count?: number;
 }
 
 interface AssessmentStatusResponse {
@@ -267,6 +268,12 @@ export function AssessmentStatus() {
               <span className="status-label">Events Stored</span>
               <span className="status-value highlight">{activity.events_stored}</span>
             </div>
+            {activity.intervention_count !== undefined && activity.intervention_count > 0 && (
+              <div className="status-row">
+                <span className="status-label">Interventions</span>
+                <span className="status-value warning">{activity.intervention_count}</span>
+              </div>
+            )}
           </div>
           {activity.sessions.length > 0 && (
             <div className="status-sessions">

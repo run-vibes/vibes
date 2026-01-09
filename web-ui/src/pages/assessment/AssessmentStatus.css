@@ -124,6 +124,11 @@
   color: var(--cyan);
 }
 
+.status-value.warning {
+  color: var(--amber);
+  text-shadow: 0 0 8px var(--amber);
+}
+
 /* === Sessions List === */
 .status-sessions {
   margin-top: var(--space-3);
