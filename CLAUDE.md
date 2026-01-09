@@ -154,12 +154,16 @@ Milestone files live in `docs/board/milestones/<id>/README.md`.
 
 1. Run `just pre-commit` — all checks pass
 
-2. Update the board:
+2. **Refactor pass:** Run `code-simplicity-reviewer` agent on changes
+   - Reviews for unnecessary complexity, over-engineering, YAGNI violations
+   - Simplify any flagged code before proceeding
+
+3. Update the board:
    - Check acceptance criteria in story file
    - Set frontmatter `status: done`
    - Run `just board done <story-id>` (moves file, updates symlinks, adds changelog)
 
-3. Commit, push, create PR
+4. Commit, push, create PR
 
 ## Git Conventions
 

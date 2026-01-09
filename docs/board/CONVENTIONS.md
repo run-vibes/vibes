@@ -549,10 +549,13 @@ Then invoke:
 After implementing all tasks:
 
 1. **Verify:** Run `just pre-commit` (fmt + clippy + test)
-2. **Update story:** Set frontmatter `status: done`
-3. **Move story:** Run `just board done <story-id>`
-4. **Commit:** Include story status change in commit
-5. **Push and PR:** Create PR with conventional commit title
+2. **Refactor:** Run `code-simplicity-reviewer` agent on changes
+   - Reviews for unnecessary complexity, over-engineering, YAGNI violations
+   - Simplify any flagged code before proceeding
+3. **Update story:** Set frontmatter `status: done`
+4. **Move story:** Run `just board done <story-id>`
+5. **Commit:** Include story status change in commit
+6. **Push and PR:** Create PR with conventional commit title
 
 > **Claude must always update the story status and move the story before creating a PR.**
 
