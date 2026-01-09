@@ -254,10 +254,33 @@ impl ServerUrlConfig {
 
     /// Build full URL for assessment history endpoint
     pub fn history_url(&self, session_id: Option<&str>) -> String {
+        self.history_url_with_pagination(session_id, None, None)
+    }
+
+    /// Build URL for assessment history with pagination parameters
+    pub fn history_url_with_pagination(
+        &self,
+        session_id: Option<&str>,
+        page: Option<usize>,
+        per_page: Option<usize>,
+    ) -> String {
         let base = format!("{}{}", self.base_url(), API_ASSESS_HISTORY_PATH);
-        match session_id {
-            Some(id) => format!("{}?session={}", base, id),
-            None => base,
+        let mut params: Vec<String> = Vec::new();
+
+        if let Some(id) = session_id {
+            params.push(format!("session={}", id));
+        }
+        if let Some(p) = page {
+            params.push(format!("page={}", p));
+        }
+        if let Some(pp) = per_page {
+            params.push(format!("per_page={}", pp));
+        }
+
+        if params.is_empty() {
+            base
+        } else {
+            format!("{}?{}", base, params.join("&"))
         }
     }
 
@@ -703,6 +726,51 @@ impl GroovePlugin {
         (url_config, remaining)
     }
 
+    /// Parse --page and --per-page flags from arguments
+    pub fn parse_pagination_flags(args: &[String]) -> (Option<usize>, Option<usize>, Vec<String>) {
+        let mut page = None;
+        let mut per_page = None;
+        let mut remaining = Vec::new();
+        let mut skip_next = false;
+
+        for (i, arg) in args.iter().enumerate() {
+            if skip_next {
+                skip_next = false;
+                continue;
+            }
+
+            if arg == "--page" {
+                if let Some(val) = args.get(i + 1) {
+                    page = val.parse().ok();
+                    skip_next = true;
+                }
+                continue;
+            } else if arg.starts_with("--page=") {
+                if let Some(val) = arg.strip_prefix("--page=") {
+                    page = val.parse().ok();
+                }
+                continue;
+            }
+
+            if arg == "--per-page" {
+                if let Some(val) = args.get(i + 1) {
+                    per_page = val.parse().ok();
+                    skip_next = true;
+                }
+                continue;
+            } else if arg.starts_with("--per-page=") {
+                if let Some(val) = arg.strip_prefix("--per-page=") {
+                    per_page = val.parse().ok();
+                }
+                continue;
+            }
+
+            remaining.push(arg.clone());
+        }
+
+        (page, per_page, remaining)
+    }
+
     /// Check if args contain --help or -h
     pub fn wants_help(args: &[String]) -> bool {
         args.iter().any(|a| a == "--help" || a == "-h")
@@ -771,7 +839,17 @@ impl GroovePlugin {
         session_id: Option<&str>,
         config: &ServerUrlConfig,
     ) -> Result<AssessmentHistoryResponse, String> {
-        let url = config.history_url(session_id);
+        Self::fetch_history_with_pagination(session_id, config, None, None).await
+    }
+
+    /// Fetch assessment history with pagination using explicit config
+    pub async fn fetch_history_with_pagination(
+        session_id: Option<&str>,
+        config: &ServerUrlConfig,
+        page: Option<usize>,
+        per_page: Option<usize>,
+    ) -> Result<AssessmentHistoryResponse, String> {
+        let url = config.history_url_with_pagination(session_id, page, per_page);
 
         let client = reqwest::Client::builder()
             .timeout(std::time::Duration::from_secs(5))
@@ -808,11 +886,15 @@ impl GroovePlugin {
     fn fetch_history_blocking(
         session_id: Option<&str>,
         config: &ServerUrlConfig,
+        page: Option<usize>,
+        per_page: Option<usize>,
     ) -> Result<AssessmentHistoryResponse, String> {
         let rt = tokio::runtime::Runtime::new()
             .map_err(|e| format!("Failed to create runtime: {}", e))?;
         let config = config.clone();
-        rt.block_on(Self::fetch_history_with_config(session_id, &config))
+        rt.block_on(Self::fetch_history_with_pagination(
+            session_id, &config, page, per_page,
+        ))
     }
 
     // ─── Command Handlers ─────────────────────────────────────────────
@@ -1294,14 +1376,19 @@ impl GroovePlugin {
                  Arguments:\n\
                    [SESSION_ID]  Session ID to show details for (optional)\n\n\
                  Options:\n\
-                   --url <URL>  Server URL (default: from .vibes/config.toml or http://127.0.0.1:7432)\n\
-                   --help, -h   Show this help message\n"
+                   --url <URL>       Server URL (default: from .vibes/config.toml or http://127.0.0.1:7432)\n\
+                   --page <N>        Page number (default: 1)\n\
+                   --per-page <N>    Items per page (default: 20, max: 100)\n\
+                   --help, -h        Show this help message\n"
                     .to_string(),
             ));
         }
 
         // Parse --url flag
         let (url_config, remaining) = Self::parse_url_flag(&args.args);
+
+        // Parse --page and --per-page flags
+        let (page, per_page, remaining) = Self::parse_pagination_flags(&remaining);
 
         // Session ID is the first non-flag argument
         let session_id = remaining.first().map(|s| s.as_str());
@@ -1364,7 +1451,7 @@ impl GroovePlugin {
             let config = url_config.unwrap_or_else(Self::load_server_config);
             output.push_str(&format!("(Querying server at {})\n\n", config.base_url()));
 
-            match Self::fetch_history_blocking(session_id, &config) {
+            match Self::fetch_history_blocking(session_id, &config, page, per_page) {
                 Ok(history) => {
                     if history.sessions.is_empty() {
                         output.push_str("Recent Sessions:\n");
@@ -1598,6 +1685,20 @@ impl GroovePlugin {
     fn route_assess_history(&self, request: &RouteRequest) -> Result<RouteResponse, PluginError> {
         let session_filter = request.query.get("session").cloned();
 
+        // Parse pagination parameters with defaults
+        let page: usize = request
+            .query
+            .get("page")
+            .and_then(|p| p.parse().ok())
+            .unwrap_or(1)
+            .max(1); // Ensure minimum of 1
+        let per_page: usize = request
+            .query
+            .get("per_page")
+            .and_then(|p| p.parse().ok())
+            .unwrap_or(20)
+            .clamp(1, 100); // Clamp between 1 and 100
+
         if let Some(processor) = &self.processor {
             let sessions = processor.active_sessions();
 
@@ -1608,8 +1709,20 @@ impl GroovePlugin {
                 sessions
             };
 
-            // Get event counts and types for each session
-            let items: Vec<SessionHistoryItem> = filtered_sessions
+            let total = filtered_sessions.len();
+            let total_pages = total.div_ceil(per_page);
+            let start = (page - 1) * per_page;
+            let end = (start + per_page).min(total);
+
+            // Paginate the sessions
+            let paginated_sessions: Vec<_> = if start < total {
+                filtered_sessions[start..end].to_vec()
+            } else {
+                vec![]
+            };
+
+            // Get event counts and types for each session in this page
+            let items: Vec<SessionHistoryItem> = paginated_sessions
                 .into_iter()
                 .map(|session_id| {
                     let query = AssessmentQuery::new().with_session(&session_id);
@@ -1636,7 +1749,11 @@ impl GroovePlugin {
                 200,
                 &AssessmentHistoryResponse {
                     sessions: items,
-                    has_more: false,
+                    has_more: page < total_pages,
+                    page,
+                    per_page,
+                    total,
+                    total_pages,
                 },
             )
         } else {
@@ -2804,6 +2921,58 @@ mod tests {
             }
             _ => panic!("Expected Text output"),
         }
+    }
+
+    #[test]
+    fn test_cmd_assess_history_help_shows_pagination_flags() {
+        let plugin = GroovePlugin::default();
+        let mut args = vibes_plugin_api::CommandArgs::default();
+        args.args.push("--help".to_string());
+
+        let result = plugin.cmd_assess_history(&args).unwrap();
+        match result {
+            CommandOutput::Text(text) => {
+                assert!(text.contains("--page"), "Help should mention --page option");
+                assert!(
+                    text.contains("--per-page"),
+                    "Help should mention --per-page option"
+                );
+            }
+            _ => panic!("Expected Text output"),
+        }
+    }
+
+    #[test]
+    fn test_history_url_includes_pagination_params() {
+        let config = ServerUrlConfig::from_url("http://localhost:7432").unwrap();
+
+        // No pagination params by default
+        let url = config.history_url_with_pagination(None, None, None);
+        assert_eq!(url, "http://localhost:7432/api/groove/assess/history");
+
+        // With page only
+        let url = config.history_url_with_pagination(None, Some(2), None);
+        assert!(url.contains("page=2"), "URL should contain page param");
+
+        // With both pagination params
+        let url = config.history_url_with_pagination(None, Some(3), Some(50));
+        assert!(url.contains("page=3"), "URL should contain page param");
+        assert!(
+            url.contains("per_page=50"),
+            "URL should contain per_page param"
+        );
+
+        // With session and pagination
+        let url = config.history_url_with_pagination(Some("sess-123"), Some(1), Some(20));
+        assert!(
+            url.contains("session=sess-123"),
+            "URL should contain session param"
+        );
+        assert!(url.contains("page=1"), "URL should contain page param");
+        assert!(
+            url.contains("per_page=20"),
+            "URL should contain per_page param"
+        );
     }
 
     // ─── API Endpoint URL Tests ────────────────────────────────────────────────

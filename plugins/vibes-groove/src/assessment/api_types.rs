@@ -87,6 +87,14 @@ pub struct AssessmentHistoryResponse {
     pub sessions: Vec<SessionHistoryItem>,
     /// Whether there are more results beyond this page.
     pub has_more: bool,
+    /// Current page number (1-indexed).
+    pub page: usize,
+    /// Number of items per page.
+    pub per_page: usize,
+    /// Total number of sessions.
+    pub total: usize,
+    /// Total number of pages.
+    pub total_pages: usize,
 }
 
 /// Summary of a single session's assessment history.
@@ -191,6 +199,10 @@ mod tests {
                 },
             ],
             has_more: true,
+            page: 1,
+            per_page: 20,
+            total: 2,
+            total_pages: 1,
         };
 
         let json = serde_json::to_string(&response).expect("should serialize");
@@ -239,5 +251,31 @@ mod tests {
         assert_eq!(parsed.medium, 0);
         assert_eq!(parsed.heavy, 0);
         assert_eq!(parsed.checkpoint, 0);
+    }
+
+    #[test]
+    fn assessment_history_response_includes_pagination_metadata() {
+        let response = AssessmentHistoryResponse {
+            sessions: vec![SessionHistoryItem {
+                session_id: "sess-123".to_string(),
+                event_count: 15,
+                result_types: vec!["lightweight".to_string()],
+            }],
+            has_more: true,
+            page: 2,
+            per_page: 20,
+            total: 45,
+            total_pages: 3,
+        };
+
+        let json = serde_json::to_string(&response).expect("should serialize");
+        let parsed: AssessmentHistoryResponse =
+            serde_json::from_str(&json).expect("should deserialize");
+
+        assert_eq!(parsed.page, 2);
+        assert_eq!(parsed.per_page, 20);
+        assert_eq!(parsed.total, 45);
+        assert_eq!(parsed.total_pages, 3);
+        assert!(parsed.has_more);
     }
 }
