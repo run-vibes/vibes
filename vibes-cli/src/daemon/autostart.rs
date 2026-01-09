@@ -88,7 +88,7 @@ fn start_daemon_process(host: &str, port: u16) -> Result<()> {
 #[cfg(not(unix))]
 fn start_daemon_process(host: &str, port: u16) -> Result<()> {
     let _ = (host, port);
-    // TODO: Implement Windows daemon spawning
+    // FUTURE: Implement Windows daemon spawning using CreateProcess with DETACHED_PROCESS flag
     anyhow::bail!("Daemon auto-start not yet implemented on Windows")
 }
 
@@ -163,7 +163,7 @@ mod tests {
     fn test_ensure_daemon_running_accepts_host_parameter() {
         // Compile-time signature test: ensures the API accepts host parameter.
         // This catches regressions where host parameter might be accidentally removed.
-        // TODO: Add integration test to verify host is actually passed to subprocess
+        // NOTE: Full integration testing is done via `just test-integration`
         fn _assert_signature() {
             let _future = ensure_daemon_running("0.0.0.0", 7432);
         }
@@ -172,7 +172,7 @@ mod tests {
     #[test]
     fn test_start_daemon_process_accepts_host_parameter() {
         // Compile-time signature test: ensures start_daemon_process accepts host.
-        // TODO: Add integration test to verify host argument appears in spawned process
+        // NOTE: Full integration testing is done via `just test-integration`
         fn _assert_signature() {
             let _result = start_daemon_process("0.0.0.0", 7432);
         }

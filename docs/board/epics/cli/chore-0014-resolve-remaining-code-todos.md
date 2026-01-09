@@ -1,1 +1,1 @@
-../../stages/backlog/stories/chore-0014-resolve-remaining-code-todos.md
+../../stages/in-progress/stories/chore-0014-resolve-remaining-code-todos.md

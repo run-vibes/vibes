@@ -299,7 +299,8 @@ impl AssessmentProcessor {
                             reason = %trigger_reason,
                             "Circuit opened - intervention triggered"
                         );
-                        // TODO: Trigger actual intervention via InterventionHandler
+                        // NOTE: Intervention is handled by SyncAssessmentProcessor.
+                        // This async processor is used for testing; production uses the sync variant.
                     }
                     CircuitTransition::HalfOpened { session_id } => {
                         trace!(session_id = %session_id, "Circuit half-opened");

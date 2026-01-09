@@ -2,7 +2,7 @@
 id: CHORE0014
 title: Resolve remaining code TODOs
 type: chore
-status: backlog
+status: in-progress
 priority: medium
 epics: [core,cli]
 depends: [m29-feat-0012-wire-circuit-breaker-intervention]

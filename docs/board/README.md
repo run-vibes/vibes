@@ -3,13 +3,14 @@ Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
-*No stories in progress*
+| Story | Type | Priority | Epics |
+|-------|------|----------|-------|
+| [chore-0014-resolve-remaining-code-todos](stages/in-progress/stories/chore-0014-resolve-remaining-code-todos.md) | chore | medium | core,cli |
 
 ## Backlog
 
 | Story | Type | Priority | Epics |
 |-------|------|----------|-------|
-| [chore-0014-resolve-remaining-code-todos](stages/backlog/stories/chore-0014-resolve-remaining-code-todos.md) | chore | medium | core,cli |
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
 | [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli |
