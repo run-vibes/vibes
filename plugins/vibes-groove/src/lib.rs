@@ -6,6 +6,7 @@
 
 // Module declarations - commented out until implemented
 pub mod assessment;
+pub mod attribution;
 pub mod capture;
 pub mod config;
 pub mod error;
@@ -63,3 +64,9 @@ pub use security::{
 
 // Plugin re-export
 pub use plugin::GroovePlugin;
+
+// Attribution re-exports
+pub use attribution::{
+    ATTRIBUTION_SCHEMA, AblationExperiment, AblationResult, ActivationSignal, AttributionRecord,
+    AttributionStore, CozoAttributionStore, LearningStatus, LearningValue, SessionOutcome,
+};
