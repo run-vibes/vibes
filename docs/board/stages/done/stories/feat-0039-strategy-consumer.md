@@ -2,7 +2,7 @@
 id: FEAT0039
 title: Strategy consumer
 type: feat
-status: pending
+status: done
 priority: high
 epics: [plugin-system]
 depends: [FEAT0036, FEAT0038]
