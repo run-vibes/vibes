@@ -1,7 +1,7 @@
 ---
 id: 33-groove-dashboard
 title: Groove Dashboard
-status: planned
+status: in-progress
 epics: [plugin-system]
 ---
 

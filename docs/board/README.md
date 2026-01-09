@@ -78,8 +78,8 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [29-assessment-framework](milestones/29-assessment-framework/) | done | core,cli,plugin-system |
 | [30-learning-extraction](milestones/30-learning-extraction/) | done | plugin-system |
 | [31-attribution-engine](milestones/31-attribution-engine/) | done | plugin-system |
-| [32-adaptive-strategies](milestones/32-adaptive-strategies/) | planned | plugin-system |
-| [33-groove-dashboard](milestones/33-groove-dashboard/) | planned | plugin-system |
+| [32-adaptive-strategies](milestones/32-adaptive-strategies/) | done | plugin-system |
+| [33-groove-dashboard](milestones/33-groove-dashboard/) | in-progress | plugin-system |
 | [34-open-world-adaptation](milestones/34-open-world-adaptation/) | planned | plugin-system |
 | [35-setup-wizards](milestones/35-setup-wizards/) | planned | cli |
 | [36-default-plugins](milestones/36-default-plugins/) | planned | plugin-system |
