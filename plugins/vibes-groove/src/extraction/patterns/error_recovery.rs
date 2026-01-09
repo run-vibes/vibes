@@ -5,7 +5,10 @@
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
-use crate::capture::TranscriptToolUse;
+use crate::Result;
+use crate::assessment::{EventId, SessionId};
+use crate::capture::{ParsedTranscript, TranscriptToolUse};
+use crate::extraction::{ExtractionMethod, ExtractionSource, LearningCandidate, PatternType};
 
 /// Type of error that was encountered
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -258,6 +261,92 @@ impl ErrorRecoveryDetector {
         } else {
             actions.join(", then ")
         }
+    }
+
+    /// Detect error recovery patterns in a transcript
+    pub fn detect(&self, transcript: &ParsedTranscript) -> Result<Vec<LearningCandidate>> {
+        let mut candidates = Vec::new();
+        let tools = &transcript.tool_uses;
+
+        // Track which failures we've already processed
+        let mut processed_failures = std::collections::HashSet::new();
+
+        for (i, tool) in tools.iter().enumerate() {
+            // Skip if already processed or not a failure
+            if processed_failures.contains(&i) || self.detect_failure(tool).is_none() {
+                continue;
+            }
+
+            // Try to find a recovery for this failure
+            if let Some(recovery) = self.find_recovery(tools, i) {
+                // Skip if below confidence threshold
+                if recovery.confidence < self.config.min_confidence {
+                    continue;
+                }
+
+                // Mark all recovery indices as processed to avoid double-counting
+                for &idx in &recovery.recovery_tool_indices {
+                    processed_failures.insert(idx);
+                }
+
+                // Convert to LearningCandidate
+                let candidate = self.to_learning_candidate(transcript, &recovery, i);
+                candidates.push(candidate);
+            }
+        }
+
+        Ok(candidates)
+    }
+
+    /// Convert an error recovery to a learning candidate
+    fn to_learning_candidate(
+        &self,
+        transcript: &ParsedTranscript,
+        recovery: &ErrorRecoveryCandidate,
+        failure_index: usize,
+    ) -> LearningCandidate {
+        let error_type_str = match &recovery.error_type {
+            ErrorType::CompilationError => "compilation error",
+            ErrorType::TestFailure => "test failure",
+            ErrorType::CommandError => "command error",
+            ErrorType::RuntimeError => "runtime error",
+            ErrorType::Other(s) => s.as_str(),
+        };
+
+        let description = format!(
+            "Recovered from {}: {}",
+            error_type_str,
+            truncate(&recovery.error_message, 100)
+        );
+
+        let insight = format!(
+            "When encountering '{}', resolve by: {}",
+            truncate(&recovery.error_message, 50),
+            &recovery.recovery_strategy
+        );
+
+        let last_recovery = recovery
+            .recovery_tool_indices
+            .last()
+            .copied()
+            .unwrap_or(failure_index);
+        let source = ExtractionSource::new(
+            SessionId::from(transcript.session_id.as_str()),
+            EventId::new(),
+            ExtractionMethod::Pattern(PatternType::ErrorRecovery),
+        )
+        .with_message_range(failure_index as u32, last_recovery as u32);
+
+        LearningCandidate::new(description, insight, recovery.confidence, source)
+    }
+}
+
+/// Truncate a string to a maximum length
+fn truncate(s: &str, max_len: usize) -> String {
+    if s.len() <= max_len {
+        s.to_string()
+    } else {
+        format!("{}...", &s[..max_len.saturating_sub(3)])
     }
 }
 
@@ -573,5 +662,135 @@ mod tests {
         assert!(recovery.is_some());
         let r = recovery.unwrap();
         assert!(!r.recovery_strategy.is_empty());
+    }
+
+    // --- Full detect() tests ---
+
+    use crate::capture::{ParsedTranscript, TranscriptMessage, TranscriptMetadata};
+
+    fn make_transcript(
+        tool_uses: Vec<TranscriptToolUse>,
+        messages: Vec<(&str, &str)>,
+    ) -> ParsedTranscript {
+        ParsedTranscript {
+            session_id: "test-session".to_string(),
+            messages: messages
+                .into_iter()
+                .map(|(role, content)| TranscriptMessage {
+                    role: role.to_string(),
+                    content: content.to_string(),
+                    timestamp: None,
+                })
+                .collect(),
+            tool_uses,
+            metadata: TranscriptMetadata::default(),
+        }
+    }
+
+    #[test]
+    fn test_detect_returns_learning_candidates() {
+        let detector = ErrorRecoveryDetector::new();
+        let transcript = make_transcript(
+            vec![
+                make_tool_use("Bash", Some("error[E0433]: undeclared type"), false),
+                make_tool_use_with_input(
+                    "Edit",
+                    json!({"file_path": "/src/main.rs"}),
+                    Some("edited"),
+                    true,
+                ),
+                make_tool_use("Bash", Some("Finished dev"), true),
+            ],
+            vec![
+                ("user", "Build the project"),
+                ("assistant", "I'll build it"),
+            ],
+        );
+
+        let candidates = detector.detect(&transcript).unwrap();
+
+        assert_eq!(candidates.len(), 1);
+        assert!(candidates[0].confidence >= 0.5);
+    }
+
+    #[test]
+    fn test_detect_finds_multiple_recoveries() {
+        let detector = ErrorRecoveryDetector::new();
+        let transcript = make_transcript(
+            vec![
+                // First failure and recovery
+                make_tool_use("Bash", Some("error: compilation failed"), false),
+                make_tool_use("Edit", Some("edited"), true),
+                make_tool_use("Bash", Some("Success"), true),
+                // Second failure and recovery
+                make_tool_use("Bash", Some("test result: FAILED"), false),
+                make_tool_use("Edit", Some("fixed test"), true),
+                make_tool_use("Bash", Some("test result: ok"), true),
+            ],
+            vec![],
+        );
+
+        let candidates = detector.detect(&transcript).unwrap();
+
+        assert_eq!(candidates.len(), 2);
+    }
+
+    #[test]
+    fn test_detect_filters_by_min_confidence() {
+        let config = ErrorRecoveryConfig {
+            enabled: true,
+            min_confidence: 0.95, // Very high threshold
+            max_recovery_distance: 5,
+        };
+        let detector = ErrorRecoveryDetector::with_config(&config);
+
+        let transcript = make_transcript(
+            vec![
+                make_tool_use("Bash", Some("error: failed"), false),
+                make_tool_use("Read", Some("contents"), true),
+                make_tool_use("Read", Some("contents"), true),
+                make_tool_use("Edit", Some("edited"), true),
+                make_tool_use("Bash", Some("Success"), true),
+            ],
+            vec![],
+        );
+
+        let candidates = detector.detect(&transcript).unwrap();
+
+        // Should filter out low-confidence recoveries
+        assert!(candidates.is_empty());
+    }
+
+    #[test]
+    fn test_detect_creates_proper_learning_candidate() {
+        let detector = ErrorRecoveryDetector::new();
+        let transcript = make_transcript(
+            vec![
+                make_tool_use("Bash", Some("error[E0433]: cannot find type `Foo`"), false),
+                make_tool_use_with_input(
+                    "Edit",
+                    json!({"file_path": "/src/lib.rs"}),
+                    Some("edited"),
+                    true,
+                ),
+                make_tool_use("Bash", Some("Compiling...\nFinished"), true),
+            ],
+            vec![],
+        );
+
+        let candidates = detector.detect(&transcript).unwrap();
+
+        assert_eq!(candidates.len(), 1);
+        let candidate = &candidates[0];
+        // Should have description about error recovery
+        assert!(
+            candidate.description.contains("error")
+                || candidate.description.contains("Error")
+                || candidate.description.contains("recovery")
+        );
+        // Should have insight about what to do
+        assert!(!candidate.insight.is_empty());
+        // Should have proper source
+        assert_eq!(candidate.source.session_id.as_str(), "test-session");
     }
 }
