@@ -2,13 +2,13 @@
 id: FEAT0022
 title: Correction detector
 type: feat
-status: backlog
+status: done
 priority: high
 epics: [plugin-system]
 depends: []
 estimate: 2h
 created: 2026-01-08
-updated: 2026-01-08
+updated: 2026-01-09
 milestone: 30-learning-extraction
 ---
 
@@ -140,12 +140,12 @@ When users correct Claude ("no, use X instead of Y"), this signals a preference 
 
 ## Acceptance Criteria
 
-- [ ] Default correction patterns defined
-- [ ] Custom patterns configurable
-- [ ] Detects corrections in transcripts
-- [ ] Extracts meaningful preferences
-- [ ] Calculates reasonable confidence scores
-- [ ] All tests pass
+- [x] Default correction patterns defined
+- [x] Custom patterns configurable
+- [x] Detects corrections in transcripts
+- [x] Extracts meaningful preferences
+- [x] Calculates reasonable confidence scores
+- [x] All tests pass
 
 ## Completion
 
