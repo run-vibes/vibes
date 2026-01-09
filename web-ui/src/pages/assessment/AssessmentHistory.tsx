@@ -11,6 +11,10 @@ interface SessionHistoryItem {
 interface AssessmentHistoryResponse {
   sessions: SessionHistoryItem[];
   has_more: boolean;
+  page: number;
+  per_page: number;
+  total: number;
+  total_pages: number;
 }
 
 interface ErrorResponse {
@@ -26,13 +30,18 @@ type FetchState =
 export function AssessmentHistory() {
   const [state, setState] = useState<FetchState>({ status: 'loading' });
   const [selectedSession, setSelectedSession] = useState<string>('');
+  const [currentPage, setCurrentPage] = useState<number>(1);
 
   useEffect(() => {
     async function fetchHistory() {
       try {
-        const url = selectedSession
-          ? `/api/groove/assess/history?session=${encodeURIComponent(selectedSession)}`
-          : '/api/groove/assess/history';
+        const params = new URLSearchParams();
+        if (selectedSession) {
+          params.set('session', selectedSession);
+        }
+        params.set('page', currentPage.toString());
+
+        const url = `/api/groove/assess/history?${params.toString()}`;
 
         const response = await fetch(url);
 
@@ -54,10 +63,23 @@ export function AssessmentHistory() {
     }
 
     fetchHistory();
-  }, [selectedSession]);
+  }, [selectedSession, currentPage]);
 
   const handleSessionChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedSession(event.target.value);
+    setCurrentPage(1); // Reset to page 1 when session filter changes
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (state.status === 'success' && state.data.page < state.data.total_pages) {
+      setCurrentPage(currentPage + 1);
+    }
   };
 
   if (state.status === 'loading') {
@@ -79,7 +101,7 @@ export function AssessmentHistory() {
     );
   }
 
-  const { sessions } = state.data;
+  const { sessions, page, total_pages } = state.data;
 
   if (sessions.length === 0) {
     return (
@@ -129,6 +151,26 @@ export function AssessmentHistory() {
           </div>
         ))}
       </div>
+
+      {total_pages > 1 && (
+        <div className="pagination-controls">
+          <button
+            className="pagination-button"
+            onClick={handlePrevPage}
+            disabled={page <= 1}
+          >
+            Prev
+          </button>
+          <span className="pagination-info">Page {page} of {total_pages}</span>
+          <button
+            className="pagination-button"
+            onClick={handleNextPage}
+            disabled={page >= total_pages}
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -2,7 +2,7 @@
 id: FEAT0015
 title: Paginate assessment history endpoint
 type: feat
-status: backlog
+status: done
 priority: medium
 epics: [core,plugin-system]
 depends: []
