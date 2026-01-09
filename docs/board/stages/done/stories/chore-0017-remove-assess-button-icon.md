@@ -2,7 +2,7 @@
 id: CHORE0017
 title: Remove icon from ASSESS button in stream view
 type: chore
-status: backlog
+status: done
 priority: low
 epics: [plugin-system]
 depends: []

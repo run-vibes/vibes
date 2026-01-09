@@ -229,10 +229,6 @@
   background-color: rgba(204, 140, 0, 0.1);
 }
 
-.assess .type::before {
-  content: '\25C9 '; /* Circled dot */
-}
-
 /* Selected state */
 .selected {
   background-color: var(--surface-light);
