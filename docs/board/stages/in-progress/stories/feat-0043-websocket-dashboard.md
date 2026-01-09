@@ -2,7 +2,7 @@
 id: FEAT0043
 title: WebSocket dashboard endpoint
 type: feat
-status: pending
+status: in-progress
 priority: high
 epics: [plugin-system]
 depends: [FEAT0042]

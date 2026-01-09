@@ -9,6 +9,7 @@ pub mod assessment;
 pub mod attribution;
 pub mod capture;
 pub mod config;
+pub mod dashboard;
 pub mod error;
 pub mod export;
 pub mod extraction;
@@ -89,4 +90,15 @@ pub use strategy::{
     StrategyLearningLoader, StrategyOutcome, StrategyParams, StrategyStore, StrategyVariant,
     SubagentType, UpdaterConfig, UsedStrategyProvider, get_effective_weights,
     start_strategy_consumer, strategy_consumer_loop,
+};
+
+// Dashboard re-exports
+pub use dashboard::{
+    AblationCoverage, ActivityEntry, ActivityType, AdaptiveParamStatus, AttributionData,
+    AttributionEntry, AttributionSummary, CategoryDistribution, ComponentHealth, ContributorBrief,
+    DashboardData, DashboardMessage, DashboardRequest, DashboardTopic, HealthData, HealthSummary,
+    LearningBrief, LearningDetailData, LearningOverrideEntry, LearningSummary, LearningsData,
+    LearningsFilter, OverviewData, Period, SessionContribution, SessionTimelineData,
+    SessionTimelineEntry, StrategyDistributionsData, StrategyOverridesData, StrategyWeight,
+    SystemStatus, TrendDirection, TrendSummary,
 };
