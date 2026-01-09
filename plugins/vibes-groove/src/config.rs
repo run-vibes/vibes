@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-use crate::attribution::TemporalConfig;
+use crate::attribution::{AblationConfig, TemporalConfig};
 use crate::extraction::DEFAULT_SIMILARITY_THRESHOLD;
 use crate::extraction::patterns::CorrectionConfig;
 
@@ -29,6 +29,9 @@ pub struct GrooveConfig {
     /// Temporal correlation settings for attribution
     #[serde(default)]
     pub temporal: TemporalConfig,
+    /// Ablation testing settings for attribution
+    #[serde(default)]
+    pub ablation: AblationConfig,
 }
 
 /// Configuration for semantic deduplication
@@ -84,6 +87,7 @@ impl Default for GrooveConfig {
             deduplication: DeduplicationConfig::default(),
             correction: CorrectionConfig::default(),
             temporal: TemporalConfig::default(),
+            ablation: AblationConfig::default(),
         }
     }
 }

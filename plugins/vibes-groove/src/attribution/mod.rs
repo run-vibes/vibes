@@ -3,11 +3,13 @@
 //! The attribution engine determines which learnings help or hurt sessions
 //! by analyzing signals across multiple dimensions and time.
 
+mod ablation;
 mod activation;
 mod store;
 mod temporal;
 mod types;
 
+pub use ablation::{AblationConfig, AblationManager, AblationStrategy, ConservativeAblation};
 pub use activation::{
     ActivationConfig, ActivationDetector, ActivationResult, HybridActivationDetector,
 };

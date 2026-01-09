@@ -94,6 +94,7 @@ mod tests {
             deduplication: crate::DeduplicationConfig::default(),
             correction: crate::CorrectionConfig::default(),
             temporal: crate::TemporalConfig::default(),
+            ablation: crate::AblationConfig::default(),
         }
     }
 
@@ -158,6 +159,7 @@ mod tests {
             deduplication: crate::DeduplicationConfig::default(),
             correction: crate::CorrectionConfig::default(),
             temporal: crate::TemporalConfig::default(),
+            ablation: crate::AblationConfig::default(),
         };
 
         let storage = GrooveStorage::new(&config)
@@ -210,6 +212,7 @@ mod tests {
             deduplication: crate::DeduplicationConfig::default(),
             correction: crate::CorrectionConfig::default(),
             temporal: crate::TemporalConfig::default(),
+            ablation: crate::AblationConfig::default(),
         };
 
         let storage = GrooveStorage::new(&config)
