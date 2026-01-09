@@ -370,6 +370,93 @@ pub struct AttributionExplainResponse {
     pub attributed_value: f64,
 }
 
+// ─── Strategy API Response Types ─────────────────────────────────────────────
+
+/// Strategy learner status response
+#[derive(Debug, Serialize, Deserialize)]
+pub struct StrategyStatusResponse {
+    pub total_distributions: u64,
+    pub total_overrides: u64,
+    pub events_24h: u64,
+    pub consumer_running: bool,
+    pub top_strategies: Vec<TopStrategyInfo>,
+}
+
+/// Information about a top-performing strategy
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TopStrategyInfo {
+    pub variant: String,
+    pub category: String,
+    pub weight: f64,
+    pub session_count: u32,
+}
+
+/// List of strategy distributions response
+#[derive(Debug, Serialize, Deserialize)]
+pub struct StrategyDistributionsResponse {
+    pub distributions: Vec<DistributionSummary>,
+}
+
+/// Summary of a single distribution
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DistributionSummary {
+    pub category: String,
+    pub context_type: String,
+    pub session_count: u32,
+    pub leading_strategy: String,
+    pub leading_weight: f64,
+}
+
+/// Detailed distribution response
+#[derive(Debug, Serialize, Deserialize)]
+pub struct StrategyDistributionDetail {
+    pub category: String,
+    pub context_type: String,
+    pub session_count: u32,
+    pub weights: Vec<StrategyWeightInfo>,
+    pub specialized_learnings: Vec<String>,
+    pub updated_at: String,
+}
+
+/// Weight information for a strategy variant
+#[derive(Debug, Serialize, Deserialize)]
+pub struct StrategyWeightInfo {
+    pub variant: String,
+    pub weight: f64,
+    pub alpha: f64,
+    pub beta: f64,
+}
+
+/// Learning strategy override response
+#[derive(Debug, Serialize, Deserialize)]
+pub struct LearningStrategyResponse {
+    pub learning_id: String,
+    pub base_category: String,
+    pub is_specialized: bool,
+    pub session_count: u32,
+    pub specialization_threshold: u32,
+    pub effective_weights: Vec<StrategyWeightInfo>,
+    pub category_weights: Vec<StrategyWeightInfo>,
+}
+
+/// Strategy selection history response
+#[derive(Debug, Serialize, Deserialize)]
+pub struct StrategyHistoryResponse {
+    pub events: Vec<StrategyEventSummary>,
+}
+
+/// Summary of a strategy selection event
+#[derive(Debug, Serialize, Deserialize)]
+pub struct StrategyEventSummary {
+    pub event_id: String,
+    pub session_id: String,
+    pub strategy_variant: String,
+    pub outcome_value: f64,
+    pub outcome_confidence: f64,
+    pub outcome_source: String,
+    pub timestamp: String,
+}
+
 // ============================================================================
 // Server URL Configuration (for CLI → Server HTTP)
 // ============================================================================
@@ -724,6 +811,22 @@ impl Plugin for GroovePlugin {
             (HttpMethod::Get, "/attr/explain/:learning_id/:session_id") => {
                 self.route_attr_explain(&request)
             }
+            // Strategy routes
+            (HttpMethod::Get, "/strategy/status") => self.route_strategy_status(),
+            (HttpMethod::Get, "/strategy/distributions") => self.route_strategy_distributions(),
+            (HttpMethod::Get, "/strategy/show/:category/:context_type") => {
+                self.route_strategy_show(&request)
+            }
+            (HttpMethod::Get, "/strategy/learning/:id") => self.route_strategy_learning(&request),
+            (HttpMethod::Get, "/strategy/history/:learning_id") => {
+                self.route_strategy_history(&request)
+            }
+            (HttpMethod::Post, "/strategy/reset/:category/:context_type") => {
+                self.route_strategy_reset(&request)
+            }
+            (HttpMethod::Post, "/strategy/reset-learning/:id") => {
+                self.route_strategy_reset_learning(&request)
+            }
             _ => Err(PluginError::UnknownRoute(format!("{:?} {}", method, path))),
         }
     }
@@ -969,6 +1072,97 @@ impl GroovePlugin {
             ],
         })?;
 
+        // strategy status
+        ctx.register_command(CommandSpec {
+            path: vec!["strategy".into(), "status".into()],
+            description: "Show strategy learner status".into(),
+            args: vec![],
+        })?;
+
+        // strategy distributions
+        ctx.register_command(CommandSpec {
+            path: vec!["strategy".into(), "distributions".into()],
+            description: "List category distributions".into(),
+            args: vec![],
+        })?;
+
+        // strategy show <category> <context_type>
+        ctx.register_command(CommandSpec {
+            path: vec!["strategy".into(), "show".into()],
+            description: "Detailed distribution breakdown".into(),
+            args: vec![
+                ArgSpec {
+                    name: "category".into(),
+                    description:
+                        "Learning category (code_pattern, preference, solution, correction)".into(),
+                    required: true,
+                },
+                ArgSpec {
+                    name: "context_type".into(),
+                    description: "Context type (interactive, code_review, batch)".into(),
+                    required: true,
+                },
+            ],
+        })?;
+
+        // strategy learning <id>
+        ctx.register_command(CommandSpec {
+            path: vec!["strategy".into(), "learning".into()],
+            description: "Show learning's strategy override".into(),
+            args: vec![ArgSpec {
+                name: "id".into(),
+                description: "Learning ID".into(),
+                required: true,
+            }],
+        })?;
+
+        // strategy history <learning_id> [limit]
+        ctx.register_command(CommandSpec {
+            path: vec!["strategy".into(), "history".into()],
+            description: "Strategy selection history for a learning".into(),
+            args: vec![
+                ArgSpec {
+                    name: "learning_id".into(),
+                    description: "Learning ID".into(),
+                    required: true,
+                },
+                ArgSpec {
+                    name: "limit".into(),
+                    description: "Maximum events to show (default: 20)".into(),
+                    required: false,
+                },
+            ],
+        })?;
+
+        // strategy reset <category> <context_type> --confirm
+        ctx.register_command(CommandSpec {
+            path: vec!["strategy".into(), "reset".into()],
+            description: "Reset category to default priors".into(),
+            args: vec![
+                ArgSpec {
+                    name: "category".into(),
+                    description: "Learning category".into(),
+                    required: true,
+                },
+                ArgSpec {
+                    name: "context_type".into(),
+                    description: "Context type".into(),
+                    required: true,
+                },
+            ],
+        })?;
+
+        // strategy reset-learning <id> --confirm
+        ctx.register_command(CommandSpec {
+            path: vec!["strategy".into(), "reset-learning".into()],
+            description: "Clear learning specialization".into(),
+            args: vec![ArgSpec {
+                name: "id".into(),
+                description: "Learning ID".into(),
+                required: true,
+            }],
+        })?;
+
         Ok(())
     }
 
@@ -1072,6 +1266,42 @@ impl GroovePlugin {
         ctx.register_route(RouteSpec {
             method: HttpMethod::Post,
             path: "/learnings/:id/disable".into(),
+        })?;
+
+        // Strategy routes
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Get,
+            path: "/strategy/status".into(),
+        })?;
+
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Get,
+            path: "/strategy/distributions".into(),
+        })?;
+
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Get,
+            path: "/strategy/show/:category/:context_type".into(),
+        })?;
+
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Get,
+            path: "/strategy/learning/:id".into(),
+        })?;
+
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Get,
+            path: "/strategy/history/:learning_id".into(),
+        })?;
+
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Post,
+            path: "/strategy/reset/:category/:context_type".into(),
+        })?;
+
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Post,
+            path: "/strategy/reset-learning/:id".into(),
         })?;
 
         Ok(())
@@ -3361,6 +3591,166 @@ impl GroovePlugin {
                 ),
                 code: "NOT_FOUND".to_string(),
             },
+        )
+    }
+
+    // ─── Strategy Routes ─────────────────────────────────────────────────
+
+    fn route_strategy_status(&self) -> Result<RouteResponse, PluginError> {
+        let response = StrategyStatusResponse {
+            total_distributions: 0,
+            total_overrides: 0,
+            events_24h: 0,
+            consumer_running: false,
+            top_strategies: vec![],
+        };
+        RouteResponse::json(200, &response)
+    }
+
+    fn route_strategy_distributions(&self) -> Result<RouteResponse, PluginError> {
+        let response = StrategyDistributionsResponse {
+            distributions: vec![],
+        };
+        RouteResponse::json(200, &response)
+    }
+
+    fn route_strategy_show(&self, request: &RouteRequest) -> Result<RouteResponse, PluginError> {
+        let category = request
+            .params
+            .get("category")
+            .ok_or_else(|| PluginError::InvalidInput("Missing category parameter".into()))?;
+
+        let context_type = request
+            .params
+            .get("context_type")
+            .ok_or_else(|| PluginError::InvalidInput("Missing context_type parameter".into()))?;
+
+        RouteResponse::json(
+            404,
+            &ErrorResponse {
+                error: format!(
+                    "Distribution not found for category '{}' context '{}'",
+                    category, context_type
+                ),
+                code: "NOT_FOUND".to_string(),
+            },
+        )
+    }
+
+    fn route_strategy_learning(
+        &self,
+        request: &RouteRequest,
+    ) -> Result<RouteResponse, PluginError> {
+        let id_str = request
+            .params
+            .get("id")
+            .ok_or_else(|| PluginError::InvalidInput("Missing id parameter".into()))?;
+
+        let _id: uuid::Uuid = id_str
+            .parse()
+            .map_err(|_| PluginError::InvalidInput(format!("Invalid UUID: {}", id_str)))?;
+
+        RouteResponse::json(
+            404,
+            &ErrorResponse {
+                error: format!("Strategy override not found for learning: {}", id_str),
+                code: "NOT_FOUND".to_string(),
+            },
+        )
+    }
+
+    fn route_strategy_history(&self, request: &RouteRequest) -> Result<RouteResponse, PluginError> {
+        let learning_id = request
+            .params
+            .get("learning_id")
+            .ok_or_else(|| PluginError::InvalidInput("Missing learning_id parameter".into()))?;
+
+        let _id: uuid::Uuid = learning_id
+            .parse()
+            .map_err(|_| PluginError::InvalidInput(format!("Invalid UUID: {}", learning_id)))?;
+
+        let _limit: usize = request
+            .query
+            .get("limit")
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(20);
+
+        let response = StrategyHistoryResponse { events: vec![] };
+        RouteResponse::json(200, &response)
+    }
+
+    fn route_strategy_reset(&self, request: &RouteRequest) -> Result<RouteResponse, PluginError> {
+        let category = request
+            .params
+            .get("category")
+            .ok_or_else(|| PluginError::InvalidInput("Missing category parameter".into()))?;
+
+        let context_type = request
+            .params
+            .get("context_type")
+            .ok_or_else(|| PluginError::InvalidInput("Missing context_type parameter".into()))?;
+
+        let confirm = request
+            .query
+            .get("confirm")
+            .map(|s| s == "true")
+            .unwrap_or(false);
+
+        if !confirm {
+            return RouteResponse::json(
+                400,
+                &ErrorResponse {
+                    error: "Reset requires confirmation. Pass ?confirm=true".to_string(),
+                    code: "CONFIRMATION_REQUIRED".to_string(),
+                },
+            );
+        }
+
+        RouteResponse::json(
+            200,
+            &serde_json::json!({
+                "message": format!("Distribution reset for {} / {}", category, context_type),
+                "category": category,
+                "context_type": context_type
+            }),
+        )
+    }
+
+    fn route_strategy_reset_learning(
+        &self,
+        request: &RouteRequest,
+    ) -> Result<RouteResponse, PluginError> {
+        let id_str = request
+            .params
+            .get("id")
+            .ok_or_else(|| PluginError::InvalidInput("Missing id parameter".into()))?;
+
+        let _id: uuid::Uuid = id_str
+            .parse()
+            .map_err(|_| PluginError::InvalidInput(format!("Invalid UUID: {}", id_str)))?;
+
+        let confirm = request
+            .query
+            .get("confirm")
+            .map(|s| s == "true")
+            .unwrap_or(false);
+
+        if !confirm {
+            return RouteResponse::json(
+                400,
+                &ErrorResponse {
+                    error: "Reset requires confirmation. Pass ?confirm=true".to_string(),
+                    code: "CONFIRMATION_REQUIRED".to_string(),
+                },
+            );
+        }
+
+        RouteResponse::json(
+            200,
+            &serde_json::json!({
+                "message": format!("Learning specialization cleared for {}", id_str),
+                "learning_id": id_str
+            }),
         )
     }
 }

@@ -2,7 +2,7 @@
 id: FEAT0041
 title: Strategy CLI commands
 type: feat
-status: pending
+status: in-progress
 priority: high
 epics: [plugin-system]
 depends: [FEAT0039]
