@@ -36,7 +36,7 @@ pub trait ActivationDetector: Send + Sync {
 }
 
 /// Configuration for activation detection
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ActivationConfig {
     /// Minimum similarity score to consider a match (default: 0.75)
     pub similarity_threshold: f64,

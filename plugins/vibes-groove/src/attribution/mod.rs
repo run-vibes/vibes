@@ -6,6 +6,7 @@
 mod ablation;
 mod activation;
 mod aggregation;
+mod consumer;
 mod store;
 mod temporal;
 mod types;
@@ -15,6 +16,13 @@ pub use activation::{
     ActivationConfig, ActivationDetector, ActivationResult, HybridActivationDetector,
 };
 pub use aggregation::{AggregationConfig, ValueAggregator};
+pub use consumer::{
+    AttributionConfig, AttributionConsumer, AttributionResult as AttributionConsumerResult,
+    ConsumerLoopResult as AttributionConsumerLoopResult, LearningLoader, LightweightEventFetcher,
+    StartConsumerError as AttributionStartConsumerError,
+    TranscriptFetcher as AttributionTranscriptFetcher, attribution_consumer_loop,
+    start_attribution_consumer,
+};
 pub use store::{ATTRIBUTION_SCHEMA, AttributionStore, CozoAttributionStore};
 pub use temporal::{
     ExponentialDecayCorrelator, TemporalConfig, TemporalCorrelator, TemporalResult,

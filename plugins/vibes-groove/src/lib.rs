@@ -69,8 +69,10 @@ pub use plugin::GroovePlugin;
 pub use attribution::{
     ATTRIBUTION_SCHEMA, AblationConfig, AblationExperiment, AblationManager, AblationResult,
     AblationStrategy, ActivationConfig, ActivationDetector, ActivationResult, ActivationSignal,
-    AggregationConfig, AttributionRecord, AttributionStore, ConservativeAblation,
-    CozoAttributionStore, ExponentialDecayCorrelator, HybridActivationDetector, LearningStatus,
-    LearningValue, SessionOutcome, TemporalConfig, TemporalCorrelator, TemporalResult,
-    ValueAggregator,
+    AggregationConfig, AttributionConfig, AttributionConsumer, AttributionConsumerLoopResult,
+    AttributionConsumerResult, AttributionRecord, AttributionStartConsumerError, AttributionStore,
+    AttributionTranscriptFetcher, ConservativeAblation, CozoAttributionStore,
+    ExponentialDecayCorrelator, HybridActivationDetector, LearningLoader, LearningStatus,
+    LearningValue, LightweightEventFetcher, SessionOutcome, TemporalConfig, TemporalCorrelator,
+    TemporalResult, ValueAggregator, attribution_consumer_loop, start_attribution_consumer,
 };
