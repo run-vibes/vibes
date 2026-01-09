@@ -2,7 +2,7 @@
 id: FEAT0021
 title: Semantic deduplication
 type: feat
-status: in-progress
+status: done
 priority: high
 epics: [plugin-system]
 depends: [FEAT0020]

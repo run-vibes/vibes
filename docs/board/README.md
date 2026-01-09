@@ -3,9 +3,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
-| Story | Type | Priority | Epics |
-|-------|------|----------|-------|
-| [feat-0021-semantic-deduplication](stages/in-progress/stories/feat-0021-semantic-deduplication.md) | feat | high | plugin-system |
+*No stories in progress*
 
 ## Backlog
 
@@ -104,6 +102,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 - [feat-0017-link-more-to-history-page](stages/done/stories/feat-0017-link-more-to-history-page.md)
 - [feat-0019-learning-types-storage](stages/done/stories/feat-0019-learning-types-storage.md)
 - [feat-0020-local-embedder](stages/done/stories/feat-0020-local-embedder.md)
+- [feat-0021-semantic-deduplication](stages/done/stories/feat-0021-semantic-deduplication.md)
 - [m14-chore-01-design](stages/done/stories/m14-chore-01-design.md)
 - [m14-chore-02-implementation](stages/done/stories/m14-chore-02-implementation.md)
 - [m26-chore-01-eventbus-cleanup](stages/done/stories/m26-chore-01-eventbus-cleanup.md)
