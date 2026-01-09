@@ -220,6 +220,9 @@ impl TestClient {
     }
 
     /// Wait for PTY output, returns decoded bytes
+    /// NOTE: This returns only the FIRST pty_output message. For tests that need
+    /// to wait for specific content (which may arrive across multiple messages),
+    /// use `expect_pty_output_containing` instead.
     #[allow(dead_code)]
     pub async fn expect_pty_output(&mut self, session_id: &str, timeout: Duration) -> Vec<u8> {
         use base64::Engine;
@@ -238,6 +241,48 @@ impl TestClient {
             }
         }
         panic!("Timeout waiting for pty_output");
+    }
+
+    /// Wait for PTY output containing specific text, accumulating across multiple messages.
+    /// This is more robust than `expect_pty_output` when output may be split across
+    /// multiple WebSocket messages (common with PTY output).
+    #[allow(dead_code)]
+    pub async fn expect_pty_output_containing(
+        &mut self,
+        session_id: &str,
+        expected: &str,
+        timeout: Duration,
+    ) -> Vec<u8> {
+        use base64::Engine;
+
+        let mut accumulated = Vec::new();
+        let start = std::time::Instant::now();
+
+        while start.elapsed() < timeout {
+            if let Some(text) = self.conn.recv_timeout(Duration::from_millis(50)).await {
+                let msg: serde_json::Value = serde_json::from_str(&text).unwrap();
+                if msg["type"] == "pty_output" && msg["session_id"] == session_id {
+                    let data = msg["data"].as_str().unwrap();
+                    let decoded = base64::engine::general_purpose::STANDARD
+                        .decode(data)
+                        .unwrap();
+                    accumulated.extend(decoded);
+
+                    // Check if we've accumulated enough to contain expected text
+                    let accumulated_str = String::from_utf8_lossy(&accumulated);
+                    if accumulated_str.contains(expected) {
+                        return accumulated;
+                    }
+                }
+                // Not our message or not yet complete, continue waiting
+            }
+        }
+
+        let accumulated_str = String::from_utf8_lossy(&accumulated);
+        panic!(
+            "Timeout waiting for pty_output containing '{}'. Got: {:?}",
+            expected, accumulated_str
+        );
     }
 
     /// Wait for PTY exit

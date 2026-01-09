@@ -9,7 +9,6 @@ Auto-generated from directory structure. Run `just board generate` to update.
 
 | Story | Type | Priority | Epics |
 |-------|------|----------|-------|
-| [bug-0004-fix-flaky-pty-integration-tests](stages/backlog/stories/bug-0004-fix-flaky-pty-integration-tests.md) | bug | medium |  |
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
 | [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli |
@@ -82,6 +81,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 - [bug-0001-cwd-propagation](stages/done/stories/bug-0001-cwd-propagation.md)
 - [bug-0002-firehose-not-loading-historical-events](stages/done/stories/bug-0002-firehose-not-loading-historical-events.md)
 - [bug-0003-pty-created-with-hardcoded-dimensions-ignoring-client-size](stages/done/stories/bug-0003-pty-created-with-hardcoded-dimensions-ignoring-client-size.md)
+- [bug-0004-fix-flaky-pty-integration-tests](stages/done/stories/bug-0004-fix-flaky-pty-integration-tests.md)
 - [chore-0001-nav-cleanup](stages/done/stories/chore-0001-nav-cleanup.md)
 - [chore-0002-firehose-filter-cleanup](stages/done/stories/chore-0002-firehose-filter-cleanup.md)
 - [chore-0003-assessment-tier-buttons](stages/done/stories/chore-0003-assessment-tier-buttons.md)

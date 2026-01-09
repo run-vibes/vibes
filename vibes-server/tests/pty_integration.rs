@@ -68,8 +68,9 @@ async fn pty_input_produces_output() {
     client.pty_input_bytes(&session_id, b"hello\n").await;
 
     // Should receive the echoed output
+    // Use expect_pty_output_containing for robustness against split messages
     let output = client
-        .expect_pty_output(&session_id, Duration::from_secs(2))
+        .expect_pty_output_containing(&session_id, "hello", Duration::from_secs(2))
         .await;
 
     // Output should contain "hello" (cat echoes input)
@@ -115,11 +116,12 @@ async fn multiple_clients_receive_same_pty_output() {
     client1.pty_input_bytes(&session_id, b"shared\n").await;
 
     // Both clients should receive the output
+    // Use expect_pty_output_containing for robustness against split messages
     let output1 = client1
-        .expect_pty_output(&session_id, Duration::from_secs(2))
+        .expect_pty_output_containing(&session_id, "shared", Duration::from_secs(2))
         .await;
     let output2 = client2
-        .expect_pty_output(&session_id, Duration::from_secs(2))
+        .expect_pty_output_containing(&session_id, "shared", Duration::from_secs(2))
         .await;
 
     let output1_str = String::from_utf8_lossy(&output1);
@@ -153,8 +155,9 @@ async fn session_id_mismatch_regression() {
 
     // If session IDs match correctly, we should get output back
     // If there's a mismatch (bug), this will timeout
+    // Use expect_pty_output_containing to handle output split across messages
     let output = client
-        .expect_pty_output(session_id, Duration::from_secs(2))
+        .expect_pty_output_containing(session_id, "test", Duration::from_secs(2))
         .await;
 
     let output_str = String::from_utf8_lossy(&output);
@@ -211,11 +214,12 @@ async fn second_client_can_attach_to_discovered_session() {
     client1.pty_input_bytes(&session_id, b"mirrored\n").await;
 
     // BOTH clients should receive the output (mirroring)
+    // Use expect_pty_output_containing for robustness against split messages
     let output1 = client1
-        .expect_pty_output(&session_id, Duration::from_secs(2))
+        .expect_pty_output_containing(&session_id, "mirrored", Duration::from_secs(2))
         .await;
     let output2 = client2
-        .expect_pty_output(&session_id, Duration::from_secs(2))
+        .expect_pty_output_containing(&session_id, "mirrored", Duration::from_secs(2))
         .await;
 
     let output1_str = String::from_utf8_lossy(&output1);
@@ -331,9 +335,10 @@ async fn ctrl_c_terminates_pty_process() {
     client.attach(&session_id).await;
 
     // Verify cat is running by sending some data first
+    // Use expect_pty_output_containing for robustness against split messages
     client.pty_input_bytes(&session_id, b"hello\n").await;
     let output = client
-        .expect_pty_output(&session_id, Duration::from_secs(2))
+        .expect_pty_output_containing(&session_id, "hello", Duration::from_secs(2))
         .await;
     assert!(
         String::from_utf8_lossy(&output).contains("hello"),
@@ -346,8 +351,9 @@ async fn ctrl_c_terminates_pty_process() {
 
     // cat should exit - we should receive pty_exit message
     // First we may receive the ^C echo, then the exit
+    // Use a longer timeout as process termination can be slow under load
     let exit_code = client
-        .expect_pty_exit(&session_id, Duration::from_secs(2))
+        .expect_pty_exit(&session_id, Duration::from_secs(5))
         .await;
 
     // Exit code should be None (signal) or 130 (128 + SIGINT)
@@ -394,8 +400,9 @@ async fn replay_excludes_content_received_after_attach() {
         .await;
 
     // Client 2 receives this as pty_output (real-time)
+    // Use expect_pty_output_containing for robustness against split messages
     let realtime_output = client2
-        .expect_pty_output(&session_id, Duration::from_secs(2))
+        .expect_pty_output_containing(&session_id, "after_attach", Duration::from_secs(2))
         .await;
     let realtime_str = String::from_utf8_lossy(&realtime_output);
     assert!(
