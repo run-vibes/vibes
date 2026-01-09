@@ -20,9 +20,10 @@ use crate::attribution::AttributionRecord;
 use crate::types::Learning;
 
 use super::learner::SessionContext;
+use super::novelty::NoveltyHook;
 use super::router::{OutcomeRouter, OutcomeRouterConfig};
 use super::store::StrategyStore;
-use super::types::{InjectionStrategy, StrategyEvent, StrategyOutcome};
+use super::types::{InjectionStrategy, StrategyEvent};
 use super::updater::{DistributionUpdater, UpdaterConfig};
 
 /// Default poll timeout for strategy consumer.
@@ -83,19 +84,6 @@ impl StrategyConsumerConfig {
     pub fn poll_timeout(&self) -> Duration {
         Duration::from_millis(self.poll_timeout_ms)
     }
-}
-
-/// Hook for novelty detection (future extension point)
-#[async_trait]
-pub trait NoveltyHook: Send + Sync {
-    /// Called when a strategy outcome is computed
-    async fn on_strategy_outcome(
-        &self,
-        learning: &Learning,
-        context: &SessionContext,
-        strategy: &InjectionStrategy,
-        outcome: &StrategyOutcome,
-    ) -> Result<()>;
 }
 
 /// Input event for strategy processing
@@ -484,7 +472,9 @@ mod tests {
     use super::*;
     use crate::assessment::types::{AssessmentContext, LightweightSignal};
     use crate::assessment::{EventId, HarnessType, InjectionMethod};
-    use crate::strategy::types::{ContextPosition, ContextType, InjectionFormat, StrategyVariant};
+    use crate::strategy::{
+        ContextPosition, ContextType, InjectionFormat, StrategyOutcome, StrategyVariant,
+    };
     use crate::types::{LearningCategory, LearningContent, LearningSource, Scope};
     use chrono::Utc;
     use std::collections::HashMap;
@@ -719,6 +709,10 @@ mod tests {
                 .lock()
                 .unwrap()
                 .push((learning.id, strategy.variant()));
+            Ok(())
+        }
+
+        async fn on_session_end(&self, _session_id: SessionId) -> Result<()> {
             Ok(())
         }
     }
