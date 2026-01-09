@@ -13,7 +13,6 @@
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
 | [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli |
-| [feat-0038-distribution-updater](stages/backlog/stories/feat-0038-distribution-updater.md) | feat | high | plugin-system |
 | [feat-0039-strategy-consumer](stages/backlog/stories/feat-0039-strategy-consumer.md) | feat | high | plugin-system |
 | [feat-0040-novelty-hook](stages/backlog/stories/feat-0040-novelty-hook.md) | feat | medium | plugin-system |
 | [feat-0041-strategy-cli](stages/backlog/stories/feat-0041-strategy-cli.md) | feat | high | plugin-system |
@@ -142,6 +141,7 @@
 - [feat-0035-strategy-distribution](stages/done/stories/feat-0035-strategy-distribution.md)
 - [feat-0036-thompson-sampling](stages/done/stories/feat-0036-thompson-sampling.md)
 - [feat-0037-outcome-router](stages/done/stories/feat-0037-outcome-router.md)
+- [feat-0038-distribution-updater](stages/done/stories/feat-0038-distribution-updater.md)
 - [m14-chore-01-design](stages/done/stories/m14-chore-01-design.md)
 - [m14-chore-02-implementation](stages/done/stories/m14-chore-02-implementation.md)
 - [m26-chore-01-eventbus-cleanup](stages/done/stories/m26-chore-01-eventbus-cleanup.md)

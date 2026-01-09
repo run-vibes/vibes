@@ -2,7 +2,7 @@
 id: FEAT0038
 title: Distribution updater
 type: feat
-status: pending
+status: done
 priority: high
 epics: [plugin-system]
 depends: [FEAT0035, FEAT0037]
