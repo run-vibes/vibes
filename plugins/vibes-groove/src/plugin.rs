@@ -20,6 +20,7 @@ use crate::CozoStore;
 use crate::paths::GroovePaths;
 use crate::security::load_policy_or_default;
 use crate::security::{OrgRole, Policy, ReviewOutcome, TrustLevel};
+use crate::types::{Learning, LearningCategory, Scope};
 
 /// Initialize the groove database at the configured path
 ///
@@ -201,6 +202,95 @@ pub struct ErrorResponse {
     pub code: String,
 }
 
+// ─── Learning API Response Types ──────────────────────────────────────────────
+
+/// Learning extraction status response
+#[derive(Debug, Serialize, Deserialize)]
+pub struct LearningStatusResponse {
+    pub counts_by_scope: ScopeCounts,
+    pub counts_by_category: CategoryCounts,
+    pub embedder: EmbedderStatus,
+    pub last_extraction: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ScopeCounts {
+    pub project: u64,
+    pub user: u64,
+    pub global: u64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CategoryCounts {
+    pub correction: u64,
+    pub error_recovery: u64,
+    pub pattern: u64,
+    pub preference: u64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct EmbedderStatus {
+    pub model: String,
+    pub dimensions: usize,
+    pub healthy: bool,
+}
+
+/// Learning list response
+#[derive(Debug, Serialize, Deserialize)]
+pub struct LearningListResponse {
+    pub learnings: Vec<LearningSummary>,
+    pub total: u64,
+    pub page: usize,
+    pub per_page: usize,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct LearningSummary {
+    pub id: String,
+    pub category: String,
+    pub confidence: f64,
+    pub description: String,
+    pub scope: String,
+    pub created_at: String,
+}
+
+/// Learning detail response
+#[derive(Debug, Serialize, Deserialize)]
+pub struct LearningDetailResponse {
+    pub id: String,
+    pub scope: String,
+    pub category: String,
+    pub description: String,
+    pub insight: String,
+    pub pattern: Option<serde_json::Value>,
+    pub confidence: f64,
+    pub created_at: String,
+    pub updated_at: String,
+    pub source: LearningSourceResponse,
+    pub embedding_dimensions: Option<usize>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct LearningSourceResponse {
+    pub source_type: String,
+    pub session_id: Option<String>,
+    pub message_index: Option<u32>,
+}
+
+/// Learning export response
+#[derive(Debug, Serialize, Deserialize)]
+pub struct LearningExportResponse {
+    pub learnings: Vec<LearningDetailResponse>,
+    pub exported_at: String,
+}
+
+/// Delete response
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DeleteResponse {
+    pub deleted: bool,
+    pub id: String,
+}
+
 // Assessment API types are now in crate::assessment::api_types
 // (AssessmentStatusResponse, CircuitBreakerStatus, SamplingStatus, ActivityStatus,
 //  AssessmentHistoryResponse, SessionHistoryItem, AssessmentStatsResponse,
@@ -224,6 +314,12 @@ pub const API_ASSESS_HISTORY_PATH: &str = "/api/groove/assess/history";
 
 /// API endpoint path for assessment stats
 pub const API_ASSESS_STATS_PATH: &str = "/api/groove/assess/stats";
+
+/// API endpoint path for learning status
+pub const API_LEARN_STATUS_PATH: &str = "/api/groove/learnings/status";
+
+/// API endpoint path for learning list
+pub const API_LEARN_LIST_PATH: &str = "/api/groove/learnings";
 
 /// Server configuration for CLI HTTP calls
 #[derive(Debug, Clone)]
@@ -296,6 +392,47 @@ impl ServerUrlConfig {
         let port = url.port().unwrap_or(DEFAULT_SERVER_PORT);
 
         Ok(Self { host, port })
+    }
+
+    /// Build full URL for learnings status endpoint
+    pub fn learnings_status_url(&self) -> String {
+        format!("{}{}", self.base_url(), API_LEARN_STATUS_PATH)
+    }
+
+    /// Build URL for learnings list with pagination and filters
+    pub fn learnings_list_url(
+        &self,
+        scope: Option<&str>,
+        category: Option<&str>,
+        page: Option<usize>,
+        per_page: Option<usize>,
+    ) -> String {
+        let base = format!("{}{}", self.base_url(), API_LEARN_LIST_PATH);
+        let mut params: Vec<String> = Vec::new();
+
+        if let Some(s) = scope {
+            params.push(format!("scope={}", s));
+        }
+        if let Some(c) = category {
+            params.push(format!("category={}", c));
+        }
+        if let Some(p) = page {
+            params.push(format!("page={}", p));
+        }
+        if let Some(pp) = per_page {
+            params.push(format!("per_page={}", pp));
+        }
+
+        if params.is_empty() {
+            base
+        } else {
+            format!("{}?{}", base, params.join("&"))
+        }
+    }
+
+    /// Build URL for a specific learning by ID
+    pub fn learning_url(&self, id: &str) -> String {
+        format!("{}{}/{}", self.base_url(), API_LEARN_LIST_PATH, id)
     }
 }
 
@@ -495,6 +632,10 @@ impl Plugin for GroovePlugin {
             (HttpMethod::Get, "/assess/status") => self.route_assess_status(),
             (HttpMethod::Get, "/assess/history") => self.route_assess_history(&request),
             (HttpMethod::Get, "/assess/stats") => self.route_assess_stats(),
+            (HttpMethod::Get, "/learnings/status") => self.route_learnings_status(),
+            (HttpMethod::Get, "/learnings") => self.route_learnings_list(&request),
+            (HttpMethod::Get, "/learnings/:id") => self.route_learnings_get(&request),
+            (HttpMethod::Delete, "/learnings/:id") => self.route_learnings_delete(&request),
             _ => Err(PluginError::UnknownRoute(format!("{:?} {}", method, path))),
         }
     }
@@ -709,6 +850,27 @@ impl GroovePlugin {
             path: "/assess/stats".into(),
         })?;
 
+        // Learning routes
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Get,
+            path: "/learnings/status".into(),
+        })?;
+
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Get,
+            path: "/learnings".into(),
+        })?;
+
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Get,
+            path: "/learnings/:id".into(),
+        })?;
+
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Delete,
+            path: "/learnings/:id".into(),
+        })?;
+
         Ok(())
     }
 
@@ -789,6 +951,19 @@ impl GroovePlugin {
         }
 
         (url_config, remaining)
+    }
+
+    /// Parse a single flag value from arguments (e.g., --scope project)
+    pub fn parse_flag(args: &[String], flag: &str) -> Option<String> {
+        for (i, arg) in args.iter().enumerate() {
+            if arg == flag {
+                return args.get(i + 1).cloned();
+            }
+            if let Some(value) = arg.strip_prefix(&format!("{}=", flag)) {
+                return Some(value.to_string());
+            }
+        }
+        None
     }
 
     /// Parse --page and --per-page flags from arguments
@@ -960,6 +1135,194 @@ impl GroovePlugin {
         rt.block_on(Self::fetch_history_with_pagination(
             session_id, &config, page, per_page,
         ))
+    }
+
+    // ─── Learnings HTTP Client Methods ────────────────────────────────
+
+    /// Fetch learnings status from server
+    pub async fn fetch_learnings_status_with_config(
+        config: &ServerUrlConfig,
+    ) -> Result<LearningStatusResponse, String> {
+        let url = config.learnings_status_url();
+
+        let client = reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(5))
+            .build()
+            .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
+
+        let response = client.get(&url).send().await.map_err(|e| {
+            format!(
+                "Failed to connect to server at {}: {}",
+                config.base_url(),
+                e
+            )
+        })?;
+
+        if !response.status().is_success() {
+            return Err(format!("Server returned error: {}", response.status()));
+        }
+
+        response
+            .json::<LearningStatusResponse>()
+            .await
+            .map_err(|e| format!("Failed to parse response: {}", e))
+    }
+
+    /// Blocking version of fetch_learnings_status
+    fn fetch_learnings_status_blocking(
+        config: &ServerUrlConfig,
+    ) -> Result<LearningStatusResponse, String> {
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| format!("Failed to create runtime: {}", e))?;
+        let config = config.clone();
+        rt.block_on(Self::fetch_learnings_status_with_config(&config))
+    }
+
+    /// Fetch learnings list from server with optional filters
+    pub async fn fetch_learnings_list_with_config(
+        config: &ServerUrlConfig,
+        scope: Option<&str>,
+        category: Option<&str>,
+        page: Option<usize>,
+        per_page: Option<usize>,
+    ) -> Result<LearningListResponse, String> {
+        let url = config.learnings_list_url(scope, category, page, per_page);
+
+        let client = reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(5))
+            .build()
+            .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
+
+        let response = client.get(&url).send().await.map_err(|e| {
+            format!(
+                "Failed to connect to server at {}: {}",
+                config.base_url(),
+                e
+            )
+        })?;
+
+        if !response.status().is_success() {
+            return Err(format!("Server returned error: {}", response.status()));
+        }
+
+        response
+            .json::<LearningListResponse>()
+            .await
+            .map_err(|e| format!("Failed to parse response: {}", e))
+    }
+
+    /// Blocking version of fetch_learnings_list
+    fn fetch_learnings_list_blocking(
+        config: &ServerUrlConfig,
+        scope: Option<&str>,
+        category: Option<&str>,
+        page: Option<usize>,
+        per_page: Option<usize>,
+    ) -> Result<LearningListResponse, String> {
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| format!("Failed to create runtime: {}", e))?;
+        let config = config.clone();
+        let scope = scope.map(|s| s.to_string());
+        let category = category.map(|c| c.to_string());
+        rt.block_on(Self::fetch_learnings_list_with_config(
+            &config,
+            scope.as_deref(),
+            category.as_deref(),
+            page,
+            per_page,
+        ))
+    }
+
+    /// Fetch a specific learning by ID
+    pub async fn fetch_learning_with_config(
+        config: &ServerUrlConfig,
+        id: &str,
+    ) -> Result<LearningDetailResponse, String> {
+        let url = config.learning_url(id);
+
+        let client = reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(5))
+            .build()
+            .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
+
+        let response = client.get(&url).send().await.map_err(|e| {
+            format!(
+                "Failed to connect to server at {}: {}",
+                config.base_url(),
+                e
+            )
+        })?;
+
+        if response.status() == reqwest::StatusCode::NOT_FOUND {
+            return Err(format!("Learning not found: {}", id));
+        }
+
+        if !response.status().is_success() {
+            return Err(format!("Server returned error: {}", response.status()));
+        }
+
+        response
+            .json::<LearningDetailResponse>()
+            .await
+            .map_err(|e| format!("Failed to parse response: {}", e))
+    }
+
+    /// Blocking version of fetch_learning
+    fn fetch_learning_blocking(
+        config: &ServerUrlConfig,
+        id: &str,
+    ) -> Result<LearningDetailResponse, String> {
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| format!("Failed to create runtime: {}", e))?;
+        let config = config.clone();
+        let id = id.to_string();
+        rt.block_on(Self::fetch_learning_with_config(&config, &id))
+    }
+
+    /// Delete a learning by ID
+    pub async fn delete_learning_with_config(
+        config: &ServerUrlConfig,
+        id: &str,
+    ) -> Result<DeleteResponse, String> {
+        let url = config.learning_url(id);
+
+        let client = reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(5))
+            .build()
+            .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
+
+        let response = client.delete(&url).send().await.map_err(|e| {
+            format!(
+                "Failed to connect to server at {}: {}",
+                config.base_url(),
+                e
+            )
+        })?;
+
+        if response.status() == reqwest::StatusCode::NOT_FOUND {
+            return Err(format!("Learning not found: {}", id));
+        }
+
+        if !response.status().is_success() {
+            return Err(format!("Server returned error: {}", response.status()));
+        }
+
+        response
+            .json::<DeleteResponse>()
+            .await
+            .map_err(|e| format!("Failed to parse response: {}", e))
+    }
+
+    /// Blocking version of delete_learning
+    fn delete_learning_blocking(
+        config: &ServerUrlConfig,
+        id: &str,
+    ) -> Result<DeleteResponse, String> {
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| format!("Failed to create runtime: {}", e))?;
+        let config = config.clone();
+        let id = id.to_string();
+        rt.block_on(Self::delete_learning_with_config(&config, &id))
     }
 
     // ─── Command Handlers ─────────────────────────────────────────────
@@ -1568,23 +1931,54 @@ impl GroovePlugin {
             ));
         }
 
-        // TODO: Implement full status with store queries
-        Ok(CommandOutput::Text(
-            "Learning Extraction Status\n\
-             ========================================\n\n\
-             Learnings by scope:\n\
-               Project: 0\n\
-               User: 0\n\
-               Global: 0\n\n\
-             Learnings by category:\n\
-               Correction: 0\n\
-               ErrorRecovery: 0\n\
-               Pattern: 0\n\
-               Preference: 0\n\n\
-             Embedder: gte-small (384 dims) - not loaded\n\
-             Last extraction: never\n"
-                .to_string(),
-        ))
+        // Load server config and fetch status
+        let config = Self::load_server_config();
+        let status = Self::fetch_learnings_status_blocking(&config)
+            .map_err(|e| PluginError::custom(format!("Failed to fetch status: {}", e)))?;
+
+        let mut output = String::new();
+        output.push_str("Learning Extraction Status\n");
+        output.push_str("========================================\n\n");
+
+        output.push_str("Learnings by scope:\n");
+        output.push_str(&format!("  Project: {}\n", status.counts_by_scope.project));
+        output.push_str(&format!("  User: {}\n", status.counts_by_scope.user));
+        output.push_str(&format!("  Global: {}\n\n", status.counts_by_scope.global));
+
+        output.push_str("Learnings by category:\n");
+        output.push_str(&format!(
+            "  Correction: {}\n",
+            status.counts_by_category.correction
+        ));
+        output.push_str(&format!(
+            "  ErrorRecovery: {}\n",
+            status.counts_by_category.error_recovery
+        ));
+        output.push_str(&format!(
+            "  Pattern: {}\n",
+            status.counts_by_category.pattern
+        ));
+        output.push_str(&format!(
+            "  Preference: {}\n\n",
+            status.counts_by_category.preference
+        ));
+
+        let embedder_status = if status.embedder.healthy {
+            "loaded"
+        } else {
+            "not loaded"
+        };
+        output.push_str(&format!(
+            "Embedder: {} ({} dims) - {}\n",
+            status.embedder.model, status.embedder.dimensions, embedder_status
+        ));
+
+        match status.last_extraction {
+            Some(ts) => output.push_str(&format!("Last extraction: {}\n", ts)),
+            None => output.push_str("Last extraction: never\n"),
+        }
+
+        Ok(CommandOutput::Text(output))
     }
 
     fn cmd_learn_list(
@@ -1603,13 +1997,55 @@ impl GroovePlugin {
             ));
         }
 
-        // TODO: Query store with filters
-        Ok(CommandOutput::Text(
-            "ID       Category        Confidence  Description\n\
-             ──────── ─────────────── ─────────── ───────────────────────────────\n\
-             (no learnings yet)\n"
-                .to_string(),
-        ))
+        // Parse optional filters
+        let scope = Self::parse_flag(&args.args, "--scope");
+        let category = Self::parse_flag(&args.args, "--category");
+
+        // Load server config and fetch list
+        let config = Self::load_server_config();
+        let list = Self::fetch_learnings_list_blocking(
+            &config,
+            scope.as_deref(),
+            category.as_deref(),
+            None,
+            None,
+        )
+        .map_err(|e| PluginError::custom(format!("Failed to fetch learnings: {}", e)))?;
+
+        if list.learnings.is_empty() {
+            return Ok(CommandOutput::Text("No learnings found.\n".to_string()));
+        }
+
+        let mut output = String::new();
+        output.push_str("ID       Category        Confidence  Scope    Description\n");
+        output.push_str(
+            "──────── ─────────────── ─────────── ──────── ─────────────────────────────\n",
+        );
+
+        for learning in &list.learnings {
+            let id_short = if learning.id.len() > 8 {
+                &learning.id[..8]
+            } else {
+                &learning.id
+            };
+            let desc_truncated = if learning.description.len() > 29 {
+                format!("{}...", &learning.description[..26])
+            } else {
+                learning.description.clone()
+            };
+            output.push_str(&format!(
+                "{:<8} {:<15} {:>10.2}  {:<8} {}\n",
+                id_short, learning.category, learning.confidence, learning.scope, desc_truncated
+            ));
+        }
+
+        output.push_str(&format!(
+            "\nShowing {} of {} learnings\n",
+            list.learnings.len(),
+            list.total
+        ));
+
+        Ok(CommandOutput::Text(output))
     }
 
     fn cmd_learn_show(
@@ -1627,8 +2063,39 @@ impl GroovePlugin {
         }
 
         let id = &args.args[0];
-        // TODO: Query store by ID
-        Ok(CommandOutput::Text(format!("Learning not found: {}\n", id)))
+
+        // Load server config and fetch learning
+        let config = Self::load_server_config();
+        let learning = Self::fetch_learning_blocking(&config, id).map_err(PluginError::custom)?;
+
+        let mut output = String::new();
+        output.push_str(&format!("Learning: {}\n", learning.id));
+        output.push_str("========================================\n\n");
+        output.push_str(&format!("Category:    {}\n", learning.category));
+        output.push_str(&format!("Confidence:  {:.2}\n", learning.confidence));
+        output.push_str(&format!("Scope:       {}\n", learning.scope));
+        output.push_str(&format!("Created:     {}\n\n", learning.created_at));
+
+        output.push_str("Description:\n");
+        output.push_str(&format!("  {}\n\n", learning.description));
+
+        output.push_str("Insight:\n");
+        output.push_str(&format!("  {}\n\n", learning.insight));
+
+        output.push_str("Source:\n");
+        output.push_str(&format!("  Type: {}\n", learning.source.source_type));
+        if let Some(session) = &learning.source.session_id {
+            output.push_str(&format!("  Session: {}\n", session));
+        }
+        if let Some(idx) = &learning.source.message_index {
+            output.push_str(&format!("  Message: {}\n", idx));
+        }
+
+        if let Some(pattern) = &learning.pattern {
+            output.push_str(&format!("\nPattern: {}\n", pattern));
+        }
+
+        Ok(CommandOutput::Text(output))
     }
 
     fn cmd_learn_delete(
@@ -1646,8 +2113,19 @@ impl GroovePlugin {
         }
 
         let id = &args.args[0];
-        // TODO: Delete from store with confirmation
-        Ok(CommandOutput::Text(format!("Learning not found: {}\n", id)))
+
+        // Load server config and delete learning
+        let config = Self::load_server_config();
+        let result = Self::delete_learning_blocking(&config, id).map_err(PluginError::custom)?;
+
+        if result.deleted {
+            Ok(CommandOutput::Text(format!(
+                "Deleted learning: {}\n",
+                result.id
+            )))
+        } else {
+            Ok(CommandOutput::Text(format!("Learning not found: {}\n", id)))
+        }
     }
 
     fn cmd_learn_export(
@@ -1665,10 +2143,50 @@ impl GroovePlugin {
             ));
         }
 
-        // TODO: Query store and serialize to JSON
-        Ok(CommandOutput::Text(
-            "{\n  \"learnings\": [],\n  \"exported_at\": \"2026-01-09T00:00:00Z\"\n}\n".to_string(),
-        ))
+        // Parse optional scope filter
+        let scope = Self::parse_flag(&args.args, "--scope");
+
+        // Load server config and fetch learnings
+        let config = Self::load_server_config();
+        let list = Self::fetch_learnings_list_blocking(
+            &config,
+            scope.as_deref(),
+            None,       // No category filter for export
+            None,       // No pagination for export
+            Some(1000), // Large page size to get all learnings
+        )
+        .map_err(|e| PluginError::custom(format!("Failed to fetch learnings: {}", e)))?;
+
+        // Build export response
+        let export = LearningExportResponse {
+            learnings: list
+                .learnings
+                .into_iter()
+                .map(|l| LearningDetailResponse {
+                    id: l.id,
+                    scope: l.scope,
+                    category: l.category,
+                    description: l.description,
+                    insight: String::new(), // Not available in summary
+                    pattern: None,
+                    confidence: l.confidence,
+                    created_at: l.created_at,
+                    updated_at: String::new(), // Not available in summary
+                    source: LearningSourceResponse {
+                        source_type: "unknown".to_string(),
+                        session_id: None,
+                        message_index: None,
+                    },
+                    embedding_dimensions: None,
+                })
+                .collect(),
+            exported_at: chrono::Utc::now().to_rfc3339(),
+        };
+
+        let json = serde_json::to_string_pretty(&export)
+            .map_err(|e| PluginError::custom(format!("Failed to serialize export: {}", e)))?;
+
+        Ok(CommandOutput::Text(json))
     }
 
     // ─── Route Handlers ───────────────────────────────────────────────
@@ -1987,6 +2505,335 @@ impl GroovePlugin {
                 },
             )
         }
+    }
+
+    // ─── Learning Route Handlers ──────────────────────────────────────────────
+
+    fn route_learnings_status(&self) -> Result<RouteResponse, PluginError> {
+        // Open store on-demand
+        let paths = match GroovePaths::new() {
+            Some(p) => p,
+            None => {
+                return RouteResponse::json(
+                    503,
+                    &ErrorResponse {
+                        error: "Groove not initialized. Run 'vibes groove init' first.".to_string(),
+                        code: "NOT_INITIALIZED".to_string(),
+                    },
+                );
+            }
+        };
+
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            // Query counts by scope
+            let project_count = store
+                .count_by_scope(&Scope::Project("*".to_string()))
+                .await
+                .unwrap_or(0);
+            let user_count = store
+                .count_by_scope(&Scope::User("*".to_string()))
+                .await
+                .unwrap_or(0);
+            let global_count = store.count_by_scope(&Scope::Global).await.unwrap_or(0);
+
+            // Query counts by category
+            let correction_count = store
+                .count_by_category(&LearningCategory::Correction)
+                .await
+                .unwrap_or(0);
+            let error_recovery_count = store
+                .count_by_category(&LearningCategory::ErrorRecovery)
+                .await
+                .unwrap_or(0);
+            let pattern_count = store
+                .count_by_category(&LearningCategory::CodePattern)
+                .await
+                .unwrap_or(0);
+            let preference_count = store
+                .count_by_category(&LearningCategory::Preference)
+                .await
+                .unwrap_or(0);
+
+            RouteResponse::json(
+                200,
+                &LearningStatusResponse {
+                    counts_by_scope: ScopeCounts {
+                        project: project_count,
+                        user: user_count,
+                        global: global_count,
+                    },
+                    counts_by_category: CategoryCounts {
+                        correction: correction_count,
+                        error_recovery: error_recovery_count,
+                        pattern: pattern_count,
+                        preference: preference_count,
+                    },
+                    embedder: EmbedderStatus {
+                        model: "gte-small".to_string(),
+                        dimensions: 384,
+                        healthy: true, // TODO: Check actual embedder status
+                    },
+                    last_extraction: None, // TODO: Track last extraction time
+                },
+            )
+        })
+    }
+
+    fn route_learnings_list(&self, request: &RouteRequest) -> Result<RouteResponse, PluginError> {
+        let scope_filter = request.query.get("scope").cloned();
+        let category_filter = request.query.get("category").cloned();
+        let page: usize = request
+            .query
+            .get("page")
+            .and_then(|p| p.parse().ok())
+            .unwrap_or(1)
+            .max(1);
+        let per_page: usize = request
+            .query
+            .get("per_page")
+            .and_then(|p| p.parse().ok())
+            .unwrap_or(20)
+            .clamp(1, 100);
+
+        let paths = match GroovePaths::new() {
+            Some(p) => p,
+            None => {
+                return RouteResponse::json(
+                    503,
+                    &ErrorResponse {
+                        error: "Groove not initialized".to_string(),
+                        code: "NOT_INITIALIZED".to_string(),
+                    },
+                );
+            }
+        };
+
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            // Get all learnings (with optional filters)
+            let all_learnings: Vec<Learning> = if let Some(ref scope_str) = scope_filter {
+                let scope = match scope_str.as_str() {
+                    "project" => Scope::Project("*".to_string()),
+                    "user" => Scope::User("*".to_string()),
+                    "global" => Scope::Global,
+                    _ => Scope::Project("*".to_string()),
+                };
+                store.find_by_scope(&scope).await.unwrap_or_default()
+            } else if let Some(ref cat_str) = category_filter {
+                let category = match cat_str.as_str() {
+                    "correction" => LearningCategory::Correction,
+                    "error_recovery" => LearningCategory::ErrorRecovery,
+                    "pattern" => LearningCategory::CodePattern,
+                    "preference" => LearningCategory::Preference,
+                    _ => LearningCategory::CodePattern,
+                };
+                store.find_by_category(&category).await.unwrap_or_default()
+            } else {
+                // Get all learnings by querying each scope
+                let mut all = Vec::new();
+                if let Ok(learnings) = store.find_by_scope(&Scope::Global).await {
+                    all.extend(learnings);
+                }
+                all
+            };
+
+            let total = all_learnings.len() as u64;
+            let start = (page - 1) * per_page;
+            let end = (start + per_page).min(all_learnings.len());
+
+            let paginated: Vec<LearningSummary> = if start < all_learnings.len() {
+                all_learnings[start..end]
+                    .iter()
+                    .map(|l| LearningSummary {
+                        id: l.id.to_string(),
+                        category: l.category.as_str().to_string(),
+                        confidence: l.confidence,
+                        description: l.content.description.clone(),
+                        scope: l.scope.to_db_string(),
+                        created_at: l.created_at.to_rfc3339(),
+                    })
+                    .collect()
+            } else {
+                vec![]
+            };
+
+            RouteResponse::json(
+                200,
+                &LearningListResponse {
+                    learnings: paginated,
+                    total,
+                    page,
+                    per_page,
+                },
+            )
+        })
+    }
+
+    fn route_learnings_get(&self, request: &RouteRequest) -> Result<RouteResponse, PluginError> {
+        let id_str = request
+            .params
+            .get("id")
+            .ok_or_else(|| PluginError::InvalidInput("Missing id parameter".into()))?;
+
+        let id: uuid::Uuid = id_str
+            .parse()
+            .map_err(|_| PluginError::InvalidInput(format!("Invalid UUID: {}", id_str)))?;
+
+        let paths = match GroovePaths::new() {
+            Some(p) => p,
+            None => {
+                return RouteResponse::json(
+                    503,
+                    &ErrorResponse {
+                        error: "Groove not initialized".to_string(),
+                        code: "NOT_INITIALIZED".to_string(),
+                    },
+                );
+            }
+        };
+
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            match store.get(id).await {
+                Ok(Some(learning)) => {
+                    let (source_type, session_id, message_index): (
+                        String,
+                        Option<String>,
+                        Option<u32>,
+                    ) = match &learning.source {
+                        crate::LearningSource::Transcript {
+                            session_id,
+                            message_index,
+                        } => (
+                            "transcript".to_string(),
+                            Some(session_id.clone()),
+                            Some(*message_index as u32),
+                        ),
+                        crate::LearningSource::UserCreated => ("manual".to_string(), None, None),
+                        crate::LearningSource::Imported { .. } => {
+                            ("import".to_string(), None, None)
+                        }
+                        crate::LearningSource::Promoted { .. } => {
+                            ("promoted".to_string(), None, None)
+                        }
+                        crate::LearningSource::EnterpriseCurated { .. } => {
+                            ("enterprise".to_string(), None, None)
+                        }
+                    };
+
+                    RouteResponse::json(
+                        200,
+                        &LearningDetailResponse {
+                            id: learning.id.to_string(),
+                            scope: learning.scope.to_db_string(),
+                            category: learning.category.as_str().to_string(),
+                            description: learning.content.description.clone(),
+                            insight: learning.content.insight.clone(),
+                            pattern: learning.content.pattern.clone(),
+                            confidence: learning.confidence,
+                            created_at: learning.created_at.to_rfc3339(),
+                            updated_at: learning.updated_at.to_rfc3339(),
+                            source: LearningSourceResponse {
+                                source_type,
+                                session_id,
+                                message_index,
+                            },
+                            embedding_dimensions: None, // Embeddings stored separately
+                        },
+                    )
+                }
+                Ok(None) => RouteResponse::json(
+                    404,
+                    &ErrorResponse {
+                        error: format!("Learning not found: {}", id),
+                        code: "NOT_FOUND".to_string(),
+                    },
+                ),
+                Err(e) => RouteResponse::json(
+                    500,
+                    &ErrorResponse {
+                        error: format!("Database error: {}", e),
+                        code: "DB_ERROR".to_string(),
+                    },
+                ),
+            }
+        })
+    }
+
+    fn route_learnings_delete(&self, request: &RouteRequest) -> Result<RouteResponse, PluginError> {
+        let id_str = request
+            .params
+            .get("id")
+            .ok_or_else(|| PluginError::InvalidInput("Missing id parameter".into()))?;
+
+        let id: uuid::Uuid = id_str
+            .parse()
+            .map_err(|_| PluginError::InvalidInput(format!("Invalid UUID: {}", id_str)))?;
+
+        let paths = match GroovePaths::new() {
+            Some(p) => p,
+            None => {
+                return RouteResponse::json(
+                    503,
+                    &ErrorResponse {
+                        error: "Groove not initialized".to_string(),
+                        code: "NOT_INITIALIZED".to_string(),
+                    },
+                );
+            }
+        };
+
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            match store.delete(id).await {
+                Ok(true) => RouteResponse::json(
+                    200,
+                    &DeleteResponse {
+                        deleted: true,
+                        id: id.to_string(),
+                    },
+                ),
+                Ok(false) => RouteResponse::json(
+                    404,
+                    &ErrorResponse {
+                        error: format!("Learning not found: {}", id),
+                        code: "NOT_FOUND".to_string(),
+                    },
+                ),
+                Err(e) => RouteResponse::json(
+                    500,
+                    &ErrorResponse {
+                        error: format!("Database error: {}", e),
+                        code: "DB_ERROR".to_string(),
+                    },
+                ),
+            }
+        })
     }
 }
 

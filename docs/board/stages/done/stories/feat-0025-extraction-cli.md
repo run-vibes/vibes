@@ -2,7 +2,7 @@
 id: FEAT0025
 title: Learning extraction CLI commands
 type: feat
-status: in-progress
+status: done
 priority: medium
 epics: [plugin-system]
 depends: [FEAT0024]
@@ -176,13 +176,13 @@ Users need CLI commands to view, manage, and export learnings. These commands qu
 
 ## Acceptance Criteria
 
-- [ ] `vibes groove learn status` shows counts and health
-- [ ] `vibes groove learn list` shows learnings with filters
-- [ ] `vibes groove learn show <id>` shows full details
-- [ ] `vibes groove learn delete <id>` removes with confirmation
-- [ ] `vibes groove learn export` outputs JSON
-- [ ] HTTP routes support all operations
-- [ ] All commands work end-to-end
+- [x] `vibes groove learn status` shows counts and health
+- [x] `vibes groove learn list` shows learnings with filters
+- [x] `vibes groove learn show <id>` shows full details
+- [x] `vibes groove learn delete <id>` removes with confirmation
+- [x] `vibes groove learn export` outputs JSON
+- [x] HTTP routes support all operations
+- [x] All commands work end-to-end
 
 ## Completion
 

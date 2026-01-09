@@ -1,1 +1,1 @@
-../../stages/in-progress/stories/feat-0025-extraction-cli.md
+../../stages/done/stories/feat-0025-extraction-cli.md

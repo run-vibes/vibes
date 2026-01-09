@@ -1,11 +1,10 @@
-Generated README.md
-Auto-generated from directory structure. Run `just board generate` to update.
+# Planning Board
+
+> Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
-| Story | Type | Priority | Epics |
-|-------|------|----------|-------|
-| [feat-0025-extraction-cli](stages/in-progress/stories/feat-0025-extraction-cli.md) | feat | medium | plugin-system |
+*No stories in progress*
 
 ## Backlog
 
@@ -120,6 +119,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 - [feat-0021-semantic-deduplication](stages/done/stories/feat-0021-semantic-deduplication.md)
 - [feat-0022-correction-detector](stages/done/stories/feat-0022-correction-detector.md)
 - [feat-0023-error-recovery-detector](stages/done/stories/feat-0023-error-recovery-detector.md)
+- [feat-0025-extraction-cli](stages/done/stories/feat-0025-extraction-cli.md)
 - [m14-chore-01-design](stages/done/stories/m14-chore-01-design.md)
 - [m14-chore-02-implementation](stages/done/stories/m14-chore-02-implementation.md)
 - [m26-chore-01-eventbus-cleanup](stages/done/stories/m26-chore-01-eventbus-cleanup.md)
