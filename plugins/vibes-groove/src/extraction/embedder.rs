@@ -269,7 +269,16 @@ pub struct ModelInfo {
     pub model_dir: PathBuf,
 }
 
-/// Download a file from URL to disk
+/// Download a file from URL to disk using atomic writes
+///
+/// Uses the temp-file-then-rename pattern for crash safety:
+/// 1. Download to `{path}.tmp`
+/// 2. `sync_all()` to flush to disk
+/// 3. Atomic `rename()` to final path
+///
+/// This prevents partial/corrupted files if the download is interrupted
+/// (network failure, process crash, power loss). The file either exists
+/// completely or not at all - never in a half-written state.
 async fn download_file(url: &str, path: &Path) -> EmbedderResult<()> {
     use std::io::Write;
 
@@ -293,7 +302,8 @@ async fn download_file(url: &str, path: &Path) -> EmbedderResult<()> {
         .await
         .map_err(|e| EmbedderError::DownloadError(format!("Failed to read response: {}", e)))?;
 
-    // Write to a temporary file first, then rename for atomicity
+    // Atomic write: temp file → sync → rename
+    // rename() is atomic on POSIX systems when source and dest are on same filesystem
     let temp_path = path.with_extension("tmp");
     let mut file = std::fs::File::create(&temp_path)?;
     file.write_all(&bytes)?;
