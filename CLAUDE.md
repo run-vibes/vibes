@@ -154,7 +154,7 @@ Milestone files live in `docs/board/milestones/<id>/README.md`.
 
 1. Run `just pre-commit` — all checks pass
 
-2. **Refactor pass:** Run `code-simplicity-reviewer` agent on changes
+2. **Refactor pass:** Run `code-simplifier:code-simplifier` agent on changes
    - Reviews for unnecessary complexity, over-engineering, YAGNI violations
    - Simplify any flagged code before proceeding
 
