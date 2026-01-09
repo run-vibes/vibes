@@ -5,6 +5,7 @@
 
 mod ablation;
 mod activation;
+mod aggregation;
 mod store;
 mod temporal;
 mod types;
@@ -13,6 +14,7 @@ pub use ablation::{AblationConfig, AblationManager, AblationStrategy, Conservati
 pub use activation::{
     ActivationConfig, ActivationDetector, ActivationResult, HybridActivationDetector,
 };
+pub use aggregation::{AggregationConfig, ValueAggregator};
 pub use store::{ATTRIBUTION_SCHEMA, AttributionStore, CozoAttributionStore};
 pub use temporal::{
     ExponentialDecayCorrelator, TemporalConfig, TemporalCorrelator, TemporalResult,
