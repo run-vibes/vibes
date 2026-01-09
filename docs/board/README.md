@@ -1,5 +1,6 @@
-Generated README.md
-Auto-generated from directory structure. Run `just board generate` to update.
+# Planning Board
+
+> Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
@@ -20,6 +21,28 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [feat-0039-strategy-consumer](stages/backlog/stories/feat-0039-strategy-consumer.md) | feat | high | plugin-system |
 | [feat-0040-novelty-hook](stages/backlog/stories/feat-0040-novelty-hook.md) | feat | medium | plugin-system |
 | [feat-0041-strategy-cli](stages/backlog/stories/feat-0041-strategy-cli.md) | feat | high | plugin-system |
+| [feat-0042-dashboard-layout](stages/backlog/stories/feat-0042-dashboard-layout.md) | feat | high | plugin-system |
+| [feat-0043-websocket-dashboard](stages/backlog/stories/feat-0043-websocket-dashboard.md) | feat | high | plugin-system |
+| [feat-0044-overview-page](stages/backlog/stories/feat-0044-overview-page.md) | feat | high | plugin-system |
+| [feat-0045-learnings-page](stages/backlog/stories/feat-0045-learnings-page.md) | feat | high | plugin-system |
+| [feat-0046-learning-actions](stages/backlog/stories/feat-0046-learning-actions.md) | feat | medium | plugin-system |
+| [feat-0047-attribution-page](stages/backlog/stories/feat-0047-attribution-page.md) | feat | high | plugin-system |
+| [feat-0048-strategy-page](stages/backlog/stories/feat-0048-strategy-page.md) | feat | high | plugin-system |
+| [feat-0049-health-page](stages/backlog/stories/feat-0049-health-page.md) | feat | medium | plugin-system |
+| [feat-0050-chart-components](stages/backlog/stories/feat-0050-chart-components.md) | feat | medium | plugin-system |
+| [feat-0051-learning-indicator](stages/backlog/stories/feat-0051-learning-indicator.md) | feat | low | plugin-system |
+| [feat-0052-openworld-types](stages/backlog/stories/feat-0052-openworld-types.md) | feat | high | plugin-system |
+| [feat-0053-novelty-detector](stages/backlog/stories/feat-0053-novelty-detector.md) | feat | high | plugin-system |
+| [feat-0054-dbscan-clustering](stages/backlog/stories/feat-0054-dbscan-clustering.md) | feat | high | plugin-system |
+| [feat-0055-gap-detector](stages/backlog/stories/feat-0055-gap-detector.md) | feat | high | plugin-system |
+| [feat-0056-graduated-response](stages/backlog/stories/feat-0056-graduated-response.md) | feat | high | plugin-system |
+| [feat-0057-solution-generator](stages/backlog/stories/feat-0057-solution-generator.md) | feat | medium | plugin-system |
+| [feat-0058-openworld-hook](stages/backlog/stories/feat-0058-openworld-hook.md) | feat | high | plugin-system |
+| [feat-0059-openworld-store](stages/backlog/stories/feat-0059-openworld-store.md) | feat | high | plugin-system |
+| [feat-0060-openworld-consumer](stages/backlog/stories/feat-0060-openworld-consumer.md) | feat | high | plugin-system |
+| [feat-0061-cli-novelty](stages/backlog/stories/feat-0061-cli-novelty.md) | feat | medium | plugin-system |
+| [feat-0062-cli-gaps](stages/backlog/stories/feat-0062-cli-gaps.md) | feat | medium | plugin-system |
+| [feat-0063-openworld-config](stages/backlog/stories/feat-0063-openworld-config.md) | feat | high | plugin-system |
 
 ## Epics
 
