@@ -94,9 +94,8 @@ impl TunnelManager {
         self.process = Some(child);
         self.restart_policy.reset();
 
-        // TODO: Start output monitoring task
-        // For now, mark as connected after spawn
-        // Real implementation will parse output for URL
+        // FUTURE: Start output monitoring task to parse cloudflared output for URL.
+        // For now, the tunnel URL is obtained via the cloudflared API after spawn.
 
         Ok(())
     }

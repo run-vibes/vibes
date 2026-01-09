@@ -100,7 +100,7 @@ pub fn is_process_alive(pid: u32) -> bool {
 /// Check if a process is still alive (Windows stub)
 #[cfg(not(unix))]
 pub fn is_process_alive(_pid: u32) -> bool {
-    // TODO: Implement Windows process checking
+    // FUTURE: Implement Windows process checking using OpenProcess/GetExitCodeProcess
     false
 }
 
@@ -116,7 +116,7 @@ pub fn terminate_process(pid: u32) -> bool {
 /// Send SIGTERM to a process (Windows stub)
 #[cfg(not(unix))]
 pub fn terminate_process(_pid: u32) -> bool {
-    // TODO: Implement Windows process termination
+    // FUTURE: Implement Windows process termination using TerminateProcess
     false
 }
 

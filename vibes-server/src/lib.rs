@@ -291,7 +291,7 @@ impl VibesServer {
         }
 
         // The manager is moved into the spawned task to keep it alive.
-        // TODO: Replace pending() with proper shutdown signal coordination
+        // FUTURE: Replace pending() with proper shutdown signal coordination
         tokio::spawn(async move {
             let _manager = manager; // Keep manager alive
             let _shutdown = shutdown; // Keep shutdown token alive

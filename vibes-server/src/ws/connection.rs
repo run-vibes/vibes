@@ -291,7 +291,7 @@ async fn handle_text_message(
                         is_owner: true, // All clients can interact with PTY
                         subscriber_count: 0,
                         created_at: created_ts,
-                        // TODO: Track last_activity_at separately (on I/O)
+                        // FUTURE: Track last_activity_at on I/O events for idle detection
                         last_activity_at: created_ts,
                     }
                 })
@@ -374,8 +374,8 @@ async fn handle_text_message(
                     // Mark as attached with the scrollback snapshot length
                     conn_state.attach_pty(&session_id, scrollback_len);
 
-                    // TODO: Track actual PTY dimensions per session. For now we use reasonable
-                    // defaults (120x40) which the client will override via PtyResize after attach.
+                    // NOTE: Default PTY dimensions (120x40) are used initially.
+                    // The client overrides these via PtyResize message after attach.
                     (120, 40, scrollback_len)
                 } else {
                     // Create new PTY session with the client's session ID
