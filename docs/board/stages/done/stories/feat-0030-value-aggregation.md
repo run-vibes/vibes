@@ -2,7 +2,7 @@
 id: FEAT0030
 title: Value aggregation (Layer 4)
 type: feat
-status: pending
+status: done
 priority: high
 epics: [plugin-system]
 depends: [FEAT0026, FEAT0028, FEAT0029]

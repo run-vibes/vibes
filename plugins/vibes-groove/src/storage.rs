@@ -95,6 +95,7 @@ mod tests {
             correction: crate::CorrectionConfig::default(),
             temporal: crate::TemporalConfig::default(),
             ablation: crate::AblationConfig::default(),
+            aggregation: crate::AggregationConfig::default(),
         }
     }
 
@@ -160,6 +161,7 @@ mod tests {
             correction: crate::CorrectionConfig::default(),
             temporal: crate::TemporalConfig::default(),
             ablation: crate::AblationConfig::default(),
+            aggregation: crate::AggregationConfig::default(),
         };
 
         let storage = GrooveStorage::new(&config)
@@ -213,6 +215,7 @@ mod tests {
             correction: crate::CorrectionConfig::default(),
             temporal: crate::TemporalConfig::default(),
             ablation: crate::AblationConfig::default(),
+            aggregation: crate::AggregationConfig::default(),
         };
 
         let storage = GrooveStorage::new(&config)
