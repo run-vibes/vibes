@@ -12,7 +12,6 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
 | [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli |
-| [feat-0020-local-embedder](stages/backlog/stories/feat-0020-local-embedder.md) | feat | high | plugin-system |
 | [feat-0021-semantic-deduplication](stages/backlog/stories/feat-0021-semantic-deduplication.md) | feat | high | plugin-system |
 | [feat-0022-correction-detector](stages/backlog/stories/feat-0022-correction-detector.md) | feat | high | plugin-system |
 | [feat-0023-error-recovery-detector](stages/backlog/stories/feat-0023-error-recovery-detector.md) | feat | high | plugin-system |
@@ -63,7 +62,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [27-crt-design-system](milestones/27-crt-design-system/) | done | web-ui |
 | [28-board-restructure](milestones/28-board-restructure/) | done | core |
 | [29-assessment-framework](milestones/29-assessment-framework/) | done | core,cli,plugin-system |
-| [30-learning-extraction](milestones/30-learning-extraction/) | planned | plugin-system |
+| [30-learning-extraction](milestones/30-learning-extraction/) | in-progress | plugin-system |
 | [31-attribution-engine](milestones/31-attribution-engine/) | planned | plugin-system |
 | [32-adaptive-strategies](milestones/32-adaptive-strategies/) | planned | plugin-system |
 | [33-groove-dashboard](milestones/33-groove-dashboard/) | planned | plugin-system |
@@ -103,6 +102,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 - [feat-0016-precompute-tier-distribution-stats](stages/done/stories/feat-0016-precompute-tier-distribution-stats.md)
 - [feat-0017-link-more-to-history-page](stages/done/stories/feat-0017-link-more-to-history-page.md)
 - [feat-0019-learning-types-storage](stages/done/stories/feat-0019-learning-types-storage.md)
+- [feat-0020-local-embedder](stages/done/stories/feat-0020-local-embedder.md)
 - [m14-chore-01-design](stages/done/stories/m14-chore-01-design.md)
 - [m14-chore-02-implementation](stages/done/stories/m14-chore-02-implementation.md)
 - [m26-chore-01-eventbus-cleanup](stages/done/stories/m26-chore-01-eventbus-cleanup.md)
