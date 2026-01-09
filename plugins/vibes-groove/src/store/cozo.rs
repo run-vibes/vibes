@@ -1014,6 +1014,185 @@ impl CozoStore {
             created_at,
         }))
     }
+
+    /// Update an existing learning
+    pub async fn update(&self, learning: &Learning) -> Result<()> {
+        let id_str = learning.id.to_string();
+        let scope_str = learning.scope.to_db_string();
+        let category_str = learning.category.as_str();
+        let description = learning.content.description.replace('\'', "''");
+        let pattern_json = learning
+            .content
+            .pattern
+            .as_ref()
+            .map(|p| format!("'{}'", p.to_string().replace('\'', "''")))
+            .unwrap_or_else(|| "null".to_string());
+        let insight = learning.content.insight.replace('\'', "''");
+        let confidence = learning.confidence;
+        let created_at = learning.created_at.timestamp();
+        let updated_at = Utc::now().timestamp();
+        let source_type = learning.source.source_type();
+        let source_json = serde_json::to_string(&learning.source)
+            .map_err(|e| GrooveError::Serialization(e.to_string()))?
+            .replace('\'', "''");
+
+        let query = format!(
+            r#"?[id, scope, category, description, pattern_json, insight, confidence, created_at, updated_at, source_type, source_json] <- [[
+                '{}', '{}', '{}', '{}', {}, '{}', {}, {}, {}, '{}', '{}'
+            ]]
+            :put learning {{
+                id => scope, category, description, pattern_json, insight, confidence, created_at, updated_at, source_type, source_json
+            }}"#,
+            id_str,
+            scope_str,
+            category_str,
+            description,
+            pattern_json,
+            insight,
+            confidence,
+            created_at,
+            updated_at,
+            source_type,
+            source_json
+        );
+
+        self.run_mutation(&query, Default::default()).await?;
+        Ok(())
+    }
+
+    /// Find similar learnings above a similarity threshold
+    ///
+    /// Uses HNSW index for efficient similarity search. The threshold is
+    /// specified as a cosine similarity value (0.0-1.0), where higher is more similar.
+    /// Internally converts to distance (2 - 2*similarity) for HNSW search.
+    pub async fn find_similar(
+        &self,
+        embedding: &[f32],
+        threshold: f64,
+        limit: usize,
+    ) -> Result<Vec<(Learning, f64)>> {
+        // Validate embedding dimension
+        if embedding.len() != Self::EMBEDDING_DIM {
+            return Err(GrooveError::Database(format!(
+                "Invalid embedding dimension: expected {}, got {}",
+                Self::EMBEDDING_DIM,
+                embedding.len()
+            )));
+        }
+
+        // Use semantic_search and filter by threshold
+        // semantic_search returns cosine distance (0 = identical, 2 = opposite)
+        // Convert threshold (similarity) to max_distance: distance = 2 - 2*similarity
+        // For similarity >= threshold: distance <= 2 - 2*threshold
+        let max_distance = 2.0 - 2.0 * threshold;
+
+        let results = self.semantic_search(embedding, limit * 2).await?;
+
+        // Filter by distance threshold and convert to similarity
+        let filtered: Vec<(Learning, f64)> = results
+            .into_iter()
+            .filter(|(_, distance)| *distance <= max_distance)
+            .map(|(learning, distance)| {
+                // Convert distance back to similarity
+                let similarity = 1.0 - distance / 2.0;
+                (learning, similarity)
+            })
+            .take(limit)
+            .collect();
+
+        Ok(filtered)
+    }
+
+    /// Find learnings suitable for injection based on session context
+    ///
+    /// If a context embedding is provided, returns learnings ordered by relevance.
+    /// Otherwise returns learnings by confidence and recency.
+    pub async fn find_for_injection(
+        &self,
+        scope: &Scope,
+        context_embedding: Option<&[f32]>,
+        limit: usize,
+    ) -> Result<Vec<Learning>> {
+        if let Some(embedding) = context_embedding {
+            // Use semantic search filtered by scope
+            let results = self.semantic_search(embedding, limit * 3).await?;
+
+            // Filter by scope and take limit
+            let scope_str = scope.to_db_string();
+            let filtered: Vec<Learning> = results
+                .into_iter()
+                .filter(|(l, _)| l.scope.to_db_string() == scope_str)
+                .map(|(l, _)| l)
+                .take(limit)
+                .collect();
+
+            Ok(filtered)
+        } else {
+            // Fallback to scope-based retrieval ordered by confidence
+            let scope_str = scope.to_db_string();
+            let query = format!(
+                r#"?[id, scope, category, description, pattern_json, insight, confidence, created_at, updated_at, source_type, source_json] :=
+                    *learning{{id, scope, category, description, pattern_json, insight, confidence, created_at, updated_at, source_type, source_json}},
+                    scope == '{}'
+                :order -confidence, -updated_at
+                :limit {}"#,
+                scope_str, limit
+            );
+
+            let rows = self.run_query(&query, Default::default()).await?;
+
+            let mut learnings = Vec::new();
+            for row in &rows.rows {
+                if let Some(learning) = self.row_to_learning(row)? {
+                    learnings.push(learning);
+                }
+            }
+
+            Ok(learnings)
+        }
+    }
+
+    /// Count learnings by scope
+    pub async fn count_by_scope(&self, scope: &Scope) -> Result<u64> {
+        let scope_str = scope.to_db_string();
+        let query = format!(
+            "?[count(id)] := *learning{{id, scope}}, scope == '{}'",
+            scope_str
+        );
+
+        let rows = self.run_query(&query, Default::default()).await?;
+
+        if rows.rows.is_empty() {
+            return Ok(0);
+        }
+
+        let count = rows.rows[0][0]
+            .get_int()
+            .ok_or_else(|| GrooveError::Database("Invalid count type".into()))?;
+
+        Ok(count as u64)
+    }
+
+    /// Count learnings by category
+    pub async fn count_by_category(&self, category: &LearningCategory) -> Result<u64> {
+        let category_str = category.as_str();
+        let query = format!(
+            "?[count(id)] := *learning{{id, category}}, category == '{}'",
+            category_str
+        );
+
+        let rows = self.run_query(&query, Default::default()).await?;
+
+        if rows.rows.is_empty() {
+            return Ok(0);
+        }
+
+        let count = rows.rows[0][0]
+            .get_int()
+            .ok_or_else(|| GrooveError::Database("Invalid count type".into()))?;
+
+        Ok(count as u64)
+    }
 }
 
 #[cfg(test)]
@@ -1984,5 +2163,276 @@ mod tests {
         let retrieved = store.get(original_id).await.unwrap();
         assert!(retrieved.is_some());
         assert_eq!(retrieved.unwrap().id, original_id);
+    }
+
+    // =============================================================================
+    // Tests for new extraction-related methods
+    // =============================================================================
+
+    #[tokio::test]
+    async fn test_update_learning() {
+        let tmp = TempDir::new().unwrap();
+        let store = CozoStore::open(tmp.path()).await.unwrap();
+
+        // Store a learning
+        let mut learning = Learning::new(
+            Scope::User("test".into()),
+            LearningCategory::Preference,
+            LearningContent {
+                description: "Original description".into(),
+                pattern: None,
+                insight: "Original insight".into(),
+            },
+            LearningSource::UserCreated,
+        );
+        store.store(&learning).await.unwrap();
+
+        // Update it
+        learning.content.description = "Updated description".into();
+        learning.content.insight = "Updated insight".into();
+        learning.confidence = 0.9;
+
+        store.update(&learning).await.unwrap();
+
+        // Verify the update
+        let retrieved = store.get(learning.id).await.unwrap().unwrap();
+        assert_eq!(retrieved.content.description, "Updated description");
+        assert_eq!(retrieved.content.insight, "Updated insight");
+        assert!((retrieved.confidence - 0.9).abs() < f64::EPSILON);
+    }
+
+    #[tokio::test]
+    async fn test_find_similar_with_threshold() {
+        let tmp = TempDir::new().unwrap();
+        let store = CozoStore::open(tmp.path()).await.unwrap();
+
+        // Create learnings with embeddings
+        let learning1 = Learning::new(
+            Scope::Global,
+            LearningCategory::CodePattern,
+            LearningContent {
+                description: "Pattern A".into(),
+                pattern: None,
+                insight: "Insight A".into(),
+            },
+            LearningSource::UserCreated,
+        );
+        store.store(&learning1).await.unwrap();
+        let embedding1 = make_test_embedding(0);
+        store
+            .store_embedding(learning1.id, &embedding1)
+            .await
+            .unwrap();
+
+        let learning2 = Learning::new(
+            Scope::Global,
+            LearningCategory::CodePattern,
+            LearningContent {
+                description: "Pattern B".into(),
+                pattern: None,
+                insight: "Insight B".into(),
+            },
+            LearningSource::UserCreated,
+        );
+        store.store(&learning2).await.unwrap();
+        let embedding2 = make_test_embedding(100); // Very different
+        store
+            .store_embedding(learning2.id, &embedding2)
+            .await
+            .unwrap();
+
+        // Search with high similarity threshold - should find only closest
+        let query = make_test_embedding(0);
+        let results = store.find_similar(&query, 0.9, 10).await.unwrap();
+
+        // Should find at least the very similar one
+        assert!(!results.is_empty());
+        // First result should be learning1 (same embedding)
+        assert_eq!(results[0].0.id, learning1.id);
+        // Similarity should be >= threshold
+        assert!(results[0].1 >= 0.9);
+    }
+
+    #[tokio::test]
+    async fn test_find_for_injection_with_embedding() {
+        let tmp = TempDir::new().unwrap();
+        let store = CozoStore::open(tmp.path()).await.unwrap();
+
+        let scope = Scope::Project("/test".into());
+
+        // Create learnings with embeddings
+        let learning1 = Learning::new(
+            scope.clone(),
+            LearningCategory::Preference,
+            LearningContent {
+                description: "Project preference".into(),
+                pattern: None,
+                insight: "insight".into(),
+            },
+            LearningSource::UserCreated,
+        );
+        store.store(&learning1).await.unwrap();
+        let embedding1 = make_test_embedding(0);
+        store
+            .store_embedding(learning1.id, &embedding1)
+            .await
+            .unwrap();
+
+        // Create learning in different scope
+        let learning2 = Learning::new(
+            Scope::Global,
+            LearningCategory::Preference,
+            LearningContent {
+                description: "Global preference".into(),
+                pattern: None,
+                insight: "insight".into(),
+            },
+            LearningSource::UserCreated,
+        );
+        store.store(&learning2).await.unwrap();
+        store
+            .store_embedding(learning2.id, &embedding1)
+            .await
+            .unwrap();
+
+        // Find for injection with context
+        let results = store
+            .find_for_injection(&scope, Some(&embedding1), 10)
+            .await
+            .unwrap();
+
+        // Should only return project-scoped learning
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].id, learning1.id);
+    }
+
+    #[tokio::test]
+    async fn test_find_for_injection_without_embedding() {
+        let tmp = TempDir::new().unwrap();
+        let store = CozoStore::open(tmp.path()).await.unwrap();
+
+        let scope = Scope::User("alice".into());
+
+        // Create learnings with different confidence
+        for (i, conf) in [0.9, 0.5, 0.7].iter().enumerate() {
+            let mut learning = Learning::new(
+                scope.clone(),
+                LearningCategory::Preference,
+                LearningContent {
+                    description: format!("Preference {}", i),
+                    pattern: None,
+                    insight: format!("insight {}", i),
+                },
+                LearningSource::UserCreated,
+            );
+            learning.confidence = *conf;
+            store.store(&learning).await.unwrap();
+        }
+
+        // Find for injection without context - should order by confidence
+        let results = store.find_for_injection(&scope, None, 10).await.unwrap();
+
+        assert_eq!(results.len(), 3);
+        // Should be ordered by confidence descending
+        assert!((results[0].confidence - 0.9).abs() < f64::EPSILON);
+        assert!((results[1].confidence - 0.7).abs() < f64::EPSILON);
+        assert!((results[2].confidence - 0.5).abs() < f64::EPSILON);
+    }
+
+    #[tokio::test]
+    async fn test_count_by_scope() {
+        let tmp = TempDir::new().unwrap();
+        let store = CozoStore::open(tmp.path()).await.unwrap();
+
+        let scope1 = Scope::User("alice".into());
+        let scope2 = Scope::User("bob".into());
+
+        // Create 3 learnings for alice, 2 for bob
+        for _ in 0..3 {
+            let learning = Learning::new(
+                scope1.clone(),
+                LearningCategory::Preference,
+                LearningContent {
+                    description: "Test".into(),
+                    pattern: None,
+                    insight: "insight".into(),
+                },
+                LearningSource::UserCreated,
+            );
+            store.store(&learning).await.unwrap();
+        }
+        for _ in 0..2 {
+            let learning = Learning::new(
+                scope2.clone(),
+                LearningCategory::Preference,
+                LearningContent {
+                    description: "Test".into(),
+                    pattern: None,
+                    insight: "insight".into(),
+                },
+                LearningSource::UserCreated,
+            );
+            store.store(&learning).await.unwrap();
+        }
+
+        assert_eq!(store.count_by_scope(&scope1).await.unwrap(), 3);
+        assert_eq!(store.count_by_scope(&scope2).await.unwrap(), 2);
+        assert_eq!(store.count_by_scope(&Scope::Global).await.unwrap(), 0);
+    }
+
+    #[tokio::test]
+    async fn test_count_by_category() {
+        let tmp = TempDir::new().unwrap();
+        let store = CozoStore::open(tmp.path()).await.unwrap();
+
+        // Create learnings with different categories
+        for _ in 0..3 {
+            let learning = Learning::new(
+                Scope::Global,
+                LearningCategory::Preference,
+                LearningContent {
+                    description: "Test".into(),
+                    pattern: None,
+                    insight: "insight".into(),
+                },
+                LearningSource::UserCreated,
+            );
+            store.store(&learning).await.unwrap();
+        }
+        for _ in 0..2 {
+            let learning = Learning::new(
+                Scope::Global,
+                LearningCategory::Correction,
+                LearningContent {
+                    description: "Test".into(),
+                    pattern: None,
+                    insight: "insight".into(),
+                },
+                LearningSource::UserCreated,
+            );
+            store.store(&learning).await.unwrap();
+        }
+
+        assert_eq!(
+            store
+                .count_by_category(&LearningCategory::Preference)
+                .await
+                .unwrap(),
+            3
+        );
+        assert_eq!(
+            store
+                .count_by_category(&LearningCategory::Correction)
+                .await
+                .unwrap(),
+            2
+        );
+        assert_eq!(
+            store
+                .count_by_category(&LearningCategory::ErrorRecovery)
+                .await
+                .unwrap(),
+            0
+        );
     }
 }
