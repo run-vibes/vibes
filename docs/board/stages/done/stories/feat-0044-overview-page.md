@@ -2,7 +2,7 @@
 id: FEAT0044
 title: Overview page with cards
 type: feat
-status: in-progress
+status: done
 priority: high
 epics: [plugin-system]
 depends: [FEAT0043]
