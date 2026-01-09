@@ -265,6 +265,10 @@ impl ErrorRecoveryDetector {
 
     /// Detect error recovery patterns in a transcript
     pub fn detect(&self, transcript: &ParsedTranscript) -> Result<Vec<LearningCandidate>> {
+        if !self.config.enabled {
+            return Ok(Vec::new());
+        }
+
         let mut candidates = Vec::new();
         let tools = &transcript.tool_uses;
 
@@ -946,6 +950,30 @@ mod tests {
 
         let candidates = detector.detect(&transcript).unwrap();
 
+        assert!(candidates.is_empty());
+    }
+
+    #[test]
+    fn test_detect_disabled_returns_empty() {
+        let config = ErrorRecoveryConfig {
+            enabled: false,
+            min_confidence: 0.5,
+            max_recovery_distance: 5,
+        };
+        let detector = ErrorRecoveryDetector::with_config(&config);
+
+        // Transcript with valid recovery pattern
+        let transcript = make_transcript(
+            vec![
+                make_tool_use("Bash", Some("error: failed"), false),
+                make_tool_use("Bash", Some("Success"), true),
+            ],
+            vec![],
+        );
+
+        let candidates = detector.detect(&transcript).unwrap();
+
+        // Should return empty when disabled
         assert!(candidates.is_empty());
     }
 }
