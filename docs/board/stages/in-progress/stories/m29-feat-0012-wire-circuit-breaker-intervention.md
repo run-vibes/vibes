@@ -2,7 +2,7 @@
 id: FEAT0012
 title: Wire circuit breaker intervention
 type: feat
-status: backlog
+status: in-progress
 priority: high
 epics: [core,plugin-system]
 depends: []

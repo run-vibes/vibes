@@ -1,1 +1,1 @@
-../../stages/backlog/stories/m29-feat-0012-wire-circuit-breaker-intervention.md
+../../stages/in-progress/stories/m29-feat-0012-wire-circuit-breaker-intervention.md

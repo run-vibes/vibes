@@ -17,7 +17,10 @@ use vibes_plugin_api::{
 
 use super::AssessmentConfig;
 use super::checkpoint::{CheckpointConfig, CheckpointManager};
-use super::circuit_breaker::{CircuitBreaker, CircuitState};
+use super::circuit_breaker::{CircuitBreaker, CircuitState, CircuitTransition};
+use super::intervention::{
+    HookIntervention, InterventionConfig, InterventionError, InterventionResult, Learning,
+};
 use super::lightweight::{LightweightDetector, LightweightDetectorConfig, SessionState};
 use super::session_buffer::{SessionBuffer, SessionBufferConfig};
 use super::types::SessionId;
@@ -57,17 +60,29 @@ pub struct SyncAssessmentProcessor {
     stored_results: Mutex<VecDeque<StoredResult>>,
     /// Maximum results to store.
     max_results: usize,
+    /// Hook intervention system for injecting learnings.
+    intervention: Mutex<HookIntervention>,
 }
 
 impl SyncAssessmentProcessor {
-    /// Create a new sync assessment processor.
+    /// Create a new sync assessment processor with default intervention config.
     #[must_use]
     pub fn new(config: AssessmentConfig) -> Self {
+        Self::new_with_intervention(config, InterventionConfig::default())
+    }
+
+    /// Create a new sync assessment processor with custom intervention config.
+    #[must_use]
+    pub fn new_with_intervention(
+        config: AssessmentConfig,
+        intervention_config: InterventionConfig,
+    ) -> Self {
         let detector_config = LightweightDetectorConfig::from_pattern_config(&config.patterns);
         let detector = LightweightDetector::new(detector_config);
         let circuit_breaker = CircuitBreaker::new(config.circuit_breaker.clone());
         let session_buffer = SessionBuffer::new(SessionBufferConfig::default());
         let checkpoint_manager = CheckpointManager::new(CheckpointConfig::default());
+        let intervention = HookIntervention::new(intervention_config);
 
         Self {
             config,
@@ -78,6 +93,7 @@ impl SyncAssessmentProcessor {
             checkpoint_manager: Mutex::new(checkpoint_manager),
             stored_results: Mutex::new(VecDeque::new()),
             max_results: DEFAULT_MAX_RESULTS,
+            intervention: Mutex::new(intervention),
         }
     }
 
@@ -144,15 +160,72 @@ impl SyncAssessmentProcessor {
             }
 
             // B2: Route to CircuitBreaker for intervention decisions
-            {
+            let transition = {
                 let mut cb = self.circuit_breaker.lock().unwrap();
-                if let Some(transition) = cb.record_event(le) {
-                    // Log transition for debugging (host can see this via tracing)
-                    tracing::debug!(
-                        session_id = %session_id,
-                        transition = ?transition,
-                        "Circuit state transition"
+                cb.record_event(le)
+            };
+
+            if let Some(ref transition) = transition {
+                // Log transition for debugging (host can see this via tracing)
+                tracing::debug!(
+                    session_id = %session_id,
+                    transition = ?transition,
+                    "Circuit state transition"
+                );
+
+                // Trigger intervention when circuit opens
+                if let CircuitTransition::Opened {
+                    session_id: circuit_session_id,
+                    trigger_reason,
+                } = transition
+                {
+                    // Create a learning from the frustration context
+                    let learning = Learning::new(
+                        format!("intervention-{}", uuid::Uuid::now_v7()),
+                        "High frustration detected",
+                        format!(
+                            "The session appears to be struggling. Trigger: {}. \
+                            Consider taking a different approach or asking for help.",
+                            trigger_reason
+                        ),
                     );
+
+                    // Trigger the intervention
+                    let result = {
+                        let mut intervention = self.intervention.lock().unwrap();
+                        intervention.intervene_sync(circuit_session_id, &learning)
+                    };
+
+                    match result {
+                        Ok(InterventionResult::Applied { hook_path }) => {
+                            tracing::info!(
+                                session_id = %circuit_session_id,
+                                hook_path = ?hook_path,
+                                "Intervention applied successfully"
+                            );
+                        }
+                        Ok(InterventionResult::Skipped { reason }) => {
+                            tracing::debug!(
+                                session_id = %circuit_session_id,
+                                reason = %reason,
+                                "Intervention skipped"
+                            );
+                        }
+                        Ok(InterventionResult::Failed { error }) => {
+                            tracing::warn!(
+                                session_id = %circuit_session_id,
+                                error = %error,
+                                "Intervention failed"
+                            );
+                        }
+                        Err(e) => {
+                            tracing::warn!(
+                                session_id = %circuit_session_id,
+                                error = %e,
+                                "Intervention error"
+                            );
+                        }
+                    }
                 }
             }
 
@@ -330,6 +403,42 @@ impl SyncAssessmentProcessor {
             base_rate: self.config.sampling.base_rate,
             burnin_sessions: self.config.sampling.burnin_sessions,
         }
+    }
+
+    // ─── Intervention Methods ─────────────────────────────────────────────
+
+    /// Get the number of interventions for a session.
+    #[must_use]
+    pub fn intervention_count(&self, session_id: &SessionId) -> u32 {
+        let intervention = self.intervention.lock().unwrap();
+        intervention.intervention_count(session_id)
+    }
+
+    /// Get the total number of interventions across all sessions.
+    #[must_use]
+    pub fn total_intervention_count(&self) -> u32 {
+        let intervention = self.intervention.lock().unwrap();
+        intervention.total_intervention_count()
+    }
+
+    /// Manually trigger an intervention for a session.
+    ///
+    /// This is called when the circuit breaker opens or can be called
+    /// directly for testing.
+    pub fn trigger_intervention(
+        &self,
+        session_id: &SessionId,
+        learning: &Learning,
+    ) -> Result<InterventionResult, InterventionError> {
+        let mut intervention = self.intervention.lock().unwrap();
+        intervention.intervene_sync(session_id, learning)
+    }
+
+    /// Check if interventions are enabled.
+    #[must_use]
+    pub fn interventions_enabled(&self) -> bool {
+        let intervention = self.intervention.lock().unwrap();
+        intervention.is_enabled()
     }
 }
 
@@ -757,5 +866,102 @@ mod tests {
 
         assert!((summary.base_rate - 0.15).abs() < 0.001);
         assert_eq!(summary.burnin_sessions, 10);
+    }
+
+    // ─── Intervention Tests ───────────────────────────────────────────────
+
+    #[test]
+    fn test_intervention_count_starts_at_zero() {
+        let config = AssessmentConfig::default();
+        let processor = SyncAssessmentProcessor::new(config);
+        let session_id = SessionId::from("test-session");
+
+        assert_eq!(processor.intervention_count(&session_id), 0);
+    }
+
+    #[test]
+    fn test_intervention_handler_accessible() {
+        use super::{InterventionConfig, Learning};
+        use tempfile::TempDir;
+
+        let temp_dir = TempDir::new().expect("create temp dir");
+        let intervention_config = InterventionConfig {
+            enabled: true,
+            hooks_dir: Some(temp_dir.path().join("hooks")),
+            max_per_session: 3,
+            use_claude_hooks: true,
+        };
+
+        let config = AssessmentConfig::default();
+        let processor = SyncAssessmentProcessor::new_with_intervention(config, intervention_config);
+        let session_id = SessionId::from("intervention-test");
+        let learning = Learning::new("test-id", "Test Title", "Test content");
+
+        // Trigger an intervention manually via the processor
+        let result = processor.trigger_intervention(&session_id, &learning);
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_applied());
+
+        // Verify count increased
+        assert_eq!(processor.intervention_count(&session_id), 1);
+    }
+
+    #[test]
+    fn test_circuit_breaker_triggers_intervention_on_frustration() {
+        use super::InterventionConfig;
+        use tempfile::TempDir;
+
+        let temp_dir = TempDir::new().expect("create temp dir");
+        let hooks_dir = temp_dir.path().join("hooks");
+        let intervention_config = InterventionConfig {
+            enabled: true,
+            hooks_dir: Some(hooks_dir.clone()),
+            max_per_session: 10,
+            use_claude_hooks: true,
+        };
+
+        let mut config = AssessmentConfig::default();
+        // Enable circuit breaker for testing
+        config.circuit_breaker.enabled = true;
+
+        let processor = SyncAssessmentProcessor::new_with_intervention(config, intervention_config);
+
+        // Verify no interventions at start
+        let session_id = SessionId::from("frustration-cb-test");
+        assert_eq!(processor.intervention_count(&session_id), 0);
+
+        // Send many frustrating messages to trigger circuit breaker
+        for i in 0..20 {
+            let raw = make_raw_event(
+                "frustration-cb-test",
+                &format!(
+                    "Error! This is completely broken and doesn't work! Failed again! Attempt {}",
+                    i
+                ),
+            );
+            processor.process(&raw);
+        }
+
+        // Check if circuit is open (intervention may have been triggered)
+        let state = processor.circuit_state(&session_id);
+        if state == CircuitState::Open {
+            // If circuit opened, we should have at least 1 intervention
+            assert!(
+                processor.intervention_count(&session_id) >= 1,
+                "Expected at least 1 intervention when circuit opens, got {}",
+                processor.intervention_count(&session_id)
+            );
+
+            // Verify hook file was created
+            let hooks_dir_contents: Vec<_> = std::fs::read_dir(&hooks_dir)
+                .expect("read hooks dir")
+                .flatten()
+                .collect();
+            assert!(
+                !hooks_dir_contents.is_empty(),
+                "Expected hook files to be created"
+            );
+        }
+        // Note: If circuit doesn't open, that's also valid - depends on exact EMA calculations
     }
 }

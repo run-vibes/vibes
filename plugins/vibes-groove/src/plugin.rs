@@ -1574,6 +1574,7 @@ impl GroovePlugin {
                         active_sessions: sessions.len(),
                         events_stored: event_count,
                         sessions,
+                        intervention_count: processor.total_intervention_count(),
                     },
                 },
             )
