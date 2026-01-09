@@ -828,6 +828,22 @@ impl Plugin for GroovePlugin {
             (HttpMethod::Post, "/strategy/reset-learning/:id") => {
                 self.route_strategy_reset_learning(&request)
             }
+            // Dashboard routes
+            (HttpMethod::Get, "/dashboard/overview") => self.route_dashboard_overview(),
+            (HttpMethod::Get, "/dashboard/learnings") => self.route_dashboard_learnings(&request),
+            (HttpMethod::Get, "/dashboard/learnings/:id") => {
+                self.route_dashboard_learning_detail(&request)
+            }
+            (HttpMethod::Get, "/dashboard/attribution") => {
+                self.route_dashboard_attribution(&request)
+            }
+            (HttpMethod::Get, "/dashboard/health") => self.route_dashboard_health(),
+            (HttpMethod::Get, "/dashboard/strategy/distributions") => {
+                self.route_dashboard_strategy_distributions()
+            }
+            (HttpMethod::Get, "/dashboard/strategy/overrides") => {
+                self.route_dashboard_strategy_overrides()
+            }
             _ => Err(PluginError::UnknownRoute(format!("{:?} {}", method, path))),
         }
     }
@@ -1303,6 +1319,42 @@ impl GroovePlugin {
         ctx.register_route(RouteSpec {
             method: HttpMethod::Post,
             path: "/strategy/reset-learning/:id".into(),
+        })?;
+
+        // Dashboard routes
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Get,
+            path: "/dashboard/overview".into(),
+        })?;
+
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Get,
+            path: "/dashboard/learnings".into(),
+        })?;
+
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Get,
+            path: "/dashboard/learnings/:id".into(),
+        })?;
+
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Get,
+            path: "/dashboard/attribution".into(),
+        })?;
+
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Get,
+            path: "/dashboard/health".into(),
+        })?;
+
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Get,
+            path: "/dashboard/strategy/distributions".into(),
+        })?;
+
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Get,
+            path: "/dashboard/strategy/overrides".into(),
         })?;
 
         Ok(())
@@ -4175,6 +4227,114 @@ impl GroovePlugin {
             }
         })
     }
+
+    // ─── Dashboard Route Handlers ────────────────────────────────────
+
+    fn route_dashboard_overview(&self) -> Result<RouteResponse, PluginError> {
+        use crate::dashboard::{DashboardData, OverviewData};
+        RouteResponse::json(200, &DashboardData::Overview(OverviewData::default()))
+    }
+
+    fn route_dashboard_learnings(
+        &self,
+        _request: &RouteRequest,
+    ) -> Result<RouteResponse, PluginError> {
+        use crate::dashboard::{DashboardData, LearningsData};
+        RouteResponse::json(200, &DashboardData::Learnings(LearningsData::default()))
+    }
+
+    fn route_dashboard_learning_detail(
+        &self,
+        request: &RouteRequest,
+    ) -> Result<RouteResponse, PluginError> {
+        use crate::dashboard::{DashboardData, LearningDetailData};
+
+        let id_str = request
+            .params
+            .get("id")
+            .ok_or_else(|| PluginError::InvalidInput("Missing id parameter".into()))?;
+
+        let learning_id: uuid::Uuid = id_str
+            .parse()
+            .map_err(|_| PluginError::InvalidInput(format!("Invalid UUID: {}", id_str)))?;
+
+        let paths = match GroovePaths::new() {
+            Some(p) => p,
+            None => {
+                return RouteResponse::json(
+                    503,
+                    &ErrorResponse {
+                        error: "Groove not initialized.".to_string(),
+                        code: "NOT_INITIALIZED".to_string(),
+                    },
+                );
+            }
+        };
+
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            let learning = store
+                .get(learning_id)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to fetch learning: {}", e)))?
+                .ok_or_else(|| {
+                    PluginError::custom(format!("Learning not found: {}", learning_id))
+                })?;
+
+            let detail = LearningDetailData {
+                id: learning.id,
+                content: learning.content.description,
+                category: learning.category,
+                scope: learning.scope,
+                status: crate::attribution::LearningStatus::Active,
+                estimated_value: 0.0,
+                confidence: learning.confidence,
+                times_injected: 0,
+                activation_rate: 0.0,
+                session_count: 0,
+                created_at: learning.created_at,
+                source_session: None,
+                extraction_method: "Unknown".to_string(),
+            };
+
+            RouteResponse::json(200, &DashboardData::LearningDetail(detail))
+        })
+    }
+
+    fn route_dashboard_attribution(
+        &self,
+        _request: &RouteRequest,
+    ) -> Result<RouteResponse, PluginError> {
+        use crate::dashboard::{AttributionData, DashboardData};
+        RouteResponse::json(200, &DashboardData::Attribution(AttributionData::default()))
+    }
+
+    fn route_dashboard_health(&self) -> Result<RouteResponse, PluginError> {
+        use crate::dashboard::{DashboardData, HealthData};
+        RouteResponse::json(200, &DashboardData::Health(HealthData::default()))
+    }
+
+    fn route_dashboard_strategy_distributions(&self) -> Result<RouteResponse, PluginError> {
+        use crate::dashboard::{DashboardData, StrategyDistributionsData};
+        RouteResponse::json(
+            200,
+            &DashboardData::StrategyDistributions(StrategyDistributionsData::default()),
+        )
+    }
+
+    fn route_dashboard_strategy_overrides(&self) -> Result<RouteResponse, PluginError> {
+        use crate::dashboard::{DashboardData, StrategyOverridesData};
+        RouteResponse::json(
+            200,
+            &DashboardData::StrategyOverrides(StrategyOverridesData::default()),
+        )
+    }
 }
 
 // Export the plugin for dynamic loading
@@ -4548,6 +4708,21 @@ mod tests {
         };
         let result = plugin.handle_route(HttpMethod::Get, "/unknown", request, &mut ctx);
         assert!(result.is_err());
+
+        // Test dashboard route dispatch
+        let request = RouteRequest {
+            params: HashMap::new(),
+            query: HashMap::new(),
+            body: vec![],
+            headers: HashMap::new(),
+        };
+        let result = plugin.handle_route(HttpMethod::Get, "/dashboard/overview", request, &mut ctx);
+        assert!(result.is_ok());
+        let response = result.unwrap();
+        assert_eq!(response.status, 200);
+
+        let data: serde_json::Value = serde_json::from_slice(&response.body).unwrap();
+        assert_eq!(data["data_type"], "overview");
     }
 
     #[test]
@@ -5596,5 +5771,94 @@ mod tests {
         let response: AttributionValuesResponse = serde_json::from_slice(&result.body).unwrap();
         assert_eq!(response.total, 0);
         assert!(response.values.is_empty());
+    }
+
+    // ─── Dashboard Route Tests ───────────────────────────────────────
+
+    #[test]
+    fn test_route_dashboard_overview() {
+        let plugin = GroovePlugin::default();
+        let result = plugin.route_dashboard_overview().unwrap();
+
+        assert_eq!(result.status, 200);
+        assert_eq!(result.content_type, "application/json");
+
+        // Verify it's valid JSON with correct data_type
+        let data: serde_json::Value = serde_json::from_slice(&result.body).unwrap();
+        assert_eq!(data["data_type"], "overview");
+    }
+
+    #[test]
+    fn test_route_dashboard_learnings() {
+        let plugin = GroovePlugin::default();
+        let request = RouteRequest {
+            params: HashMap::new(),
+            query: HashMap::new(),
+            body: vec![],
+            headers: HashMap::new(),
+        };
+
+        let result = plugin.route_dashboard_learnings(&request).unwrap();
+
+        assert_eq!(result.status, 200);
+        assert_eq!(result.content_type, "application/json");
+
+        let data: serde_json::Value = serde_json::from_slice(&result.body).unwrap();
+        assert_eq!(data["data_type"], "learnings");
+    }
+
+    #[test]
+    fn test_route_dashboard_health() {
+        let plugin = GroovePlugin::default();
+        let result = plugin.route_dashboard_health().unwrap();
+
+        assert_eq!(result.status, 200);
+        assert_eq!(result.content_type, "application/json");
+
+        let data: serde_json::Value = serde_json::from_slice(&result.body).unwrap();
+        assert_eq!(data["data_type"], "health");
+    }
+
+    #[test]
+    fn test_route_dashboard_attribution() {
+        let plugin = GroovePlugin::default();
+        let request = RouteRequest {
+            params: HashMap::new(),
+            query: HashMap::new(),
+            body: vec![],
+            headers: HashMap::new(),
+        };
+
+        let result = plugin.route_dashboard_attribution(&request).unwrap();
+
+        assert_eq!(result.status, 200);
+        assert_eq!(result.content_type, "application/json");
+
+        let data: serde_json::Value = serde_json::from_slice(&result.body).unwrap();
+        assert_eq!(data["data_type"], "attribution");
+    }
+
+    #[test]
+    fn test_route_dashboard_strategy_distributions() {
+        let plugin = GroovePlugin::default();
+        let result = plugin.route_dashboard_strategy_distributions().unwrap();
+
+        assert_eq!(result.status, 200);
+        assert_eq!(result.content_type, "application/json");
+
+        let data: serde_json::Value = serde_json::from_slice(&result.body).unwrap();
+        assert_eq!(data["data_type"], "strategy_distributions");
+    }
+
+    #[test]
+    fn test_route_dashboard_strategy_overrides() {
+        let plugin = GroovePlugin::default();
+        let result = plugin.route_dashboard_strategy_overrides().unwrap();
+
+        assert_eq!(result.status, 200);
+        assert_eq!(result.content_type, "application/json");
+
+        let data: serde_json::Value = serde_json::from_slice(&result.body).unwrap();
+        assert_eq!(data["data_type"], "strategy_overrides");
     }
 }
