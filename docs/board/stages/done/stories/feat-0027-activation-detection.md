@@ -2,7 +2,7 @@
 id: FEAT0027
 title: Activation detection (Layer 1)
 type: feat
-status: pending
+status: done
 priority: high
 epics: [plugin-system]
 depends: [FEAT0026]
