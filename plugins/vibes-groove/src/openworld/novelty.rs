@@ -15,6 +15,7 @@ use crate::error::Result;
 use crate::extraction::embedder::{Embedder, cosine_similarity};
 use crate::types::AdaptiveParam;
 
+use super::clustering::{DbscanConfig, DistanceMetric, incremental_dbscan};
 use super::traits::OpenWorldStore;
 use super::types::{AnomalyCluster, ClusterId, NoveltyResult, PatternFingerprint};
 
@@ -346,6 +347,66 @@ impl NoveltyDetector {
 
         centroid
     }
+
+    /// Trigger DBSCAN clustering on pending outliers
+    ///
+    /// Uses incremental DBSCAN to:
+    /// 1. Add points to existing clusters within eps distance
+    /// 2. Form new clusters from dense regions
+    /// 3. Keep sparse points as pending outliers
+    #[instrument(skip(self))]
+    pub async fn maybe_recluster(&mut self) -> Result<()> {
+        if self.pending_outliers.is_empty() {
+            return Ok(());
+        }
+
+        debug!(
+            pending = self.pending_outliers.len(),
+            clusters = self.clusters.len(),
+            "Running DBSCAN clustering"
+        );
+
+        // Configure DBSCAN based on current threshold
+        // Use cosine distance for embedding similarity
+        let config = DbscanConfig {
+            eps: 1.0 - self.similarity_threshold.value as f32, // Convert similarity to distance
+            min_points: self.config.min_cluster_size,
+            metric: DistanceMetric::Cosine,
+        };
+
+        // Run incremental DBSCAN
+        let result = incremental_dbscan(&self.pending_outliers, &mut self.clusters, &config);
+
+        // Save new clusters to store
+        for cluster in &result.new_clusters {
+            self.store.save_cluster(cluster).await?;
+        }
+
+        // Add new clusters to local state
+        self.clusters.extend(result.new_clusters);
+
+        // Remove clustered points from pending
+        let clustered_set: std::collections::HashSet<usize> =
+            result.clustered_indices.into_iter().collect();
+
+        let remaining: Vec<_> = self
+            .pending_outliers
+            .iter()
+            .enumerate()
+            .filter(|(i, _)| !clustered_set.contains(i))
+            .map(|(_, fp)| fp.clone())
+            .collect();
+
+        self.pending_outliers = remaining;
+
+        debug!(
+            clusters = self.clusters.len(),
+            remaining = self.pending_outliers.len(),
+            "DBSCAN clustering complete"
+        );
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -541,5 +602,144 @@ mod tests {
 
         let centroid = detector.compute_centroid(&members);
         assert_eq!(centroid, vec![2.0, 3.0, 4.0]);
+    }
+
+    // =========================================================================
+    // DBSCAN integration tests
+    // =========================================================================
+
+    #[tokio::test]
+    async fn test_maybe_recluster_forms_cluster_from_dense_pending() {
+        let embedder = Arc::new(MockEmbedder::new(3));
+        let store = Arc::new(NoOpOpenWorldStore);
+        let mut detector = NoveltyDetector::new(embedder, store, NoveltyConfig::default());
+
+        // Add 5 points close together - should form a cluster
+        let dense_points = vec![
+            PatternFingerprint {
+                hash: 1,
+                embedding: vec![0.0, 0.0, 1.0],
+                context_summary: "a".to_string(),
+                created_at: Utc::now(),
+            },
+            PatternFingerprint {
+                hash: 2,
+                embedding: vec![0.1, 0.0, 1.0],
+                context_summary: "b".to_string(),
+                created_at: Utc::now(),
+            },
+            PatternFingerprint {
+                hash: 3,
+                embedding: vec![0.0, 0.1, 1.0],
+                context_summary: "c".to_string(),
+                created_at: Utc::now(),
+            },
+            PatternFingerprint {
+                hash: 4,
+                embedding: vec![0.1, 0.1, 1.0],
+                context_summary: "d".to_string(),
+                created_at: Utc::now(),
+            },
+            PatternFingerprint {
+                hash: 5,
+                embedding: vec![0.05, 0.05, 1.0],
+                context_summary: "e".to_string(),
+                created_at: Utc::now(),
+            },
+        ];
+
+        for fp in dense_points {
+            detector.pending_outliers.push(fp);
+        }
+
+        assert_eq!(detector.pending_count(), 5);
+        assert_eq!(detector.cluster_count(), 0);
+
+        detector.maybe_recluster().await.unwrap();
+
+        // Dense points should form at least one cluster
+        assert!(detector.cluster_count() >= 1);
+        // Some or all points should have been clustered
+        assert!(detector.pending_count() < 5);
+    }
+
+    #[tokio::test]
+    async fn test_maybe_recluster_leaves_sparse_points_pending() {
+        let embedder = Arc::new(MockEmbedder::new(3));
+        let store = Arc::new(NoOpOpenWorldStore);
+        let mut detector = NoveltyDetector::new(embedder, store, NoveltyConfig::default());
+
+        // Add 3 points far apart - should NOT form a cluster
+        let sparse_points = vec![
+            PatternFingerprint {
+                hash: 1,
+                embedding: vec![1.0, 0.0, 0.0],
+                context_summary: "x".to_string(),
+                created_at: Utc::now(),
+            },
+            PatternFingerprint {
+                hash: 2,
+                embedding: vec![0.0, 1.0, 0.0],
+                context_summary: "y".to_string(),
+                created_at: Utc::now(),
+            },
+            PatternFingerprint {
+                hash: 3,
+                embedding: vec![0.0, 0.0, 1.0],
+                context_summary: "z".to_string(),
+                created_at: Utc::now(),
+            },
+        ];
+
+        for fp in sparse_points {
+            detector.pending_outliers.push(fp);
+        }
+
+        detector.maybe_recluster().await.unwrap();
+
+        // No clusters should form from orthogonal points
+        assert_eq!(detector.cluster_count(), 0);
+        // All points should remain pending
+        assert_eq!(detector.pending_count(), 3);
+    }
+
+    #[tokio::test]
+    async fn test_maybe_recluster_joins_existing_cluster() {
+        let embedder = Arc::new(MockEmbedder::new(3));
+        let store = Arc::new(NoOpOpenWorldStore);
+        let mut detector = NoveltyDetector::new(embedder, store, NoveltyConfig::default());
+
+        // Create existing cluster at (0,0,1)
+        let existing = AnomalyCluster {
+            id: uuid::Uuid::now_v7(),
+            centroid: vec![0.0, 0.0, 1.0],
+            members: vec![PatternFingerprint {
+                hash: 100,
+                embedding: vec![0.0, 0.0, 1.0],
+                context_summary: "existing".to_string(),
+                created_at: Utc::now(),
+            }],
+            created_at: Utc::now(),
+            last_seen: Utc::now(),
+        };
+        detector.clusters.push(existing);
+
+        // Add point close to existing cluster
+        let nearby = PatternFingerprint {
+            hash: 200,
+            embedding: vec![0.1, 0.1, 1.0],
+            context_summary: "nearby".to_string(),
+            created_at: Utc::now(),
+        };
+        detector.pending_outliers.push(nearby);
+
+        detector.maybe_recluster().await.unwrap();
+
+        // Should join existing cluster, not form new one
+        assert_eq!(detector.cluster_count(), 1);
+        // The existing cluster should have 2 members now
+        assert_eq!(detector.clusters[0].members.len(), 2);
+        // Pending should be empty
+        assert_eq!(detector.pending_count(), 0);
     }
 }
