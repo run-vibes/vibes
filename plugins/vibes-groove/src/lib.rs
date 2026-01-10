@@ -106,9 +106,9 @@ pub use dashboard::{
 
 // Open-world adaptation re-exports
 pub use openworld::{
-    AnomalyCluster, CapabilityGap, ClusterId, DbscanConfig, DbscanResult, DistanceMetric,
-    FailureId, FailureRecord, FailureType, GapCategory, GapId, GapSeverity, GapStatus,
-    NoOpOpenWorldStore, NoveltyConfig, NoveltyContext, NoveltyDetector, NoveltyResult,
-    OpenWorldEvent, OpenWorldStore, PatternFingerprint, ResponseAction, ResponseStage,
-    SolutionAction, SolutionSource, StrategyChange, SuggestedSolution,
+    AnomalyCluster, CapabilityGap, CapabilityGapDetector, ClusterId, DbscanConfig, DbscanResult,
+    DistanceMetric, FailureId, FailureRecord, FailureType, GapCategory, GapId, GapSeverity,
+    GapStatus, GapsConfig, NoOpOpenWorldStore, NoveltyConfig, NoveltyContext, NoveltyDetector,
+    NoveltyResult, OpenWorldEvent, OpenWorldStore, PatternFingerprint, ResponseAction,
+    ResponseStage, SolutionAction, SolutionSource, StrategyChange, SuggestedSolution,
 };
