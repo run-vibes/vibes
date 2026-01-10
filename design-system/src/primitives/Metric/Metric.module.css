@@ -1,0 +1,40 @@
+/* design-system/src/primitives/Metric/Metric.module.css
+ * CRT Essence Design System - Metric Component
+ *
+ * Label + phosphor-glowing value pair for dashboard stats
+ */
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.label {
+  font-size: var(--font-size-xs);
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.value {
+  font-family: var(--font-display);
+  font-size: var(--font-size-2xl);
+  font-weight: 400;
+  color: var(--phosphor);
+  text-shadow: 0 0 8px var(--phosphor-glow);
+}
+
+/* Size variants */
+.sm .value {
+  font-size: var(--font-size-lg);
+}
+
+.lg .value {
+  font-size: var(--font-size-3xl);
+}
+
+.xl .value {
+  font-size: var(--font-size-4xl);
+  text-shadow: 0 0 12px var(--phosphor-glow);
+}

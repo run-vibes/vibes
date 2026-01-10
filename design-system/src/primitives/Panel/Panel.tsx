@@ -3,7 +3,7 @@ import styles from './Panel.module.css';
 
 export interface PanelProps extends HTMLAttributes<HTMLDivElement> {
   title?: string;
-  variant?: 'default' | 'elevated' | 'inset';
+  variant?: 'default' | 'elevated' | 'inset' | 'crt';
   actions?: ReactNode;
   noPadding?: boolean;
 }

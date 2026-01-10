@@ -35,6 +35,11 @@ describe('Panel', () => {
     expect(hasModuleClass(container.firstChild as HTMLElement, 'inset')).toBe(true);
   });
 
+  it('applies crt variant', () => {
+    const { container } = render(<Panel variant="crt">Content</Panel>);
+    expect(hasModuleClass(container.firstChild as HTMLElement, 'crt')).toBe(true);
+  });
+
   it('renders actions when provided', () => {
     render(
       <Panel title="Settings" actions={<button>Action</button>}>

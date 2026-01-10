@@ -38,6 +38,18 @@
   animation: pulse 1s ease-in-out infinite;
 }
 
+/* Dashboard-friendly aliases */
+.ok .dot {
+  background-color: var(--green, #44ff44);
+  box-shadow: 0 0 8px var(--green, #44ff44);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.degraded .dot {
+  background-color: var(--yellow, #ffff00);
+  box-shadow: 0 0 6px rgba(255, 255, 0, 0.5);
+}
+
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }

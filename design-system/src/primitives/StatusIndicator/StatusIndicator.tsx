@@ -2,7 +2,7 @@ import { HTMLAttributes, forwardRef } from 'react';
 import styles from './StatusIndicator.module.css';
 
 export interface StatusIndicatorProps extends HTMLAttributes<HTMLDivElement> {
-  state: 'live' | 'paused' | 'offline' | 'error';
+  state: 'live' | 'paused' | 'offline' | 'error' | 'ok' | 'degraded';
   label?: string;
 }
 

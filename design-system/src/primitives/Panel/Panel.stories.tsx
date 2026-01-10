@@ -53,6 +53,36 @@ export const Variants = () => (
         Inset for nested content areas.
       </p>
     </Panel>
+    <Panel variant="crt" title="CRT">
+      <p style={{ margin: 0, color: 'var(--color-text-secondary)' }}>
+        Sharp corners with phosphor glow title for dashboard cards.
+      </p>
+    </Panel>
+  </div>
+);
+
+export const CRTDashboard = () => (
+  <div style={{ padding: '2rem', backgroundColor: 'var(--screen)', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
+    <Panel variant="crt" title="Learnings">
+      <p style={{ margin: 0, color: 'var(--text)' }}>
+        Recent patterns discovered from sessions.
+      </p>
+    </Panel>
+    <Panel variant="crt" title="Attribution">
+      <p style={{ margin: 0, color: 'var(--text)' }}>
+        Top contributors and impact metrics.
+      </p>
+    </Panel>
+    <Panel variant="crt" title="Strategy">
+      <p style={{ margin: 0, color: 'var(--text)' }}>
+        Current distribution and overrides.
+      </p>
+    </Panel>
+    <Panel variant="crt" title="Health">
+      <p style={{ margin: 0, color: 'var(--text)' }}>
+        System status and diagnostics.
+      </p>
+    </Panel>
   </div>
 );
 

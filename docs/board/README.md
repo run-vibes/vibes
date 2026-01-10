@@ -1,6 +1,5 @@
-# Planning Board
-
-> Auto-generated from directory structure. Run `just board generate` to update.
+Generated README.md
+Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
@@ -25,7 +24,6 @@
 | [feat-0061-cli-novelty](stages/backlog/stories/feat-0061-cli-novelty.md) | feat | medium | plugin-system |
 | [feat-0062-cli-gaps](stages/backlog/stories/feat-0062-cli-gaps.md) | feat | medium | plugin-system |
 | [feat-0063-openworld-config](stages/backlog/stories/feat-0063-openworld-config.md) | feat | high | plugin-system |
-| [refactor-0070-design-system-extraction](stages/backlog/stories/refactor-0070-design-system-extraction.md) |  |  |  |
 
 ## Epics
 
@@ -182,5 +180,6 @@
 - [m37-feat-08-session-cards](stages/done/stories/m37-feat-08-session-cards.md)
 - [refactor-0008-consolidate-assessment-types-module](stages/done/stories/refactor-0008-consolidate-assessment-types-module.md)
 - [refactor-0069-dashboard-visual-consistency](stages/done/stories/refactor-0069-dashboard-visual-consistency.md)
+- [refactor-0070-design-system-extraction](stages/done/stories/refactor-0070-design-system-extraction.md)
 
 </details>

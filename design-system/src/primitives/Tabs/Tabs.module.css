@@ -1,0 +1,50 @@
+/* design-system/src/primitives/Tabs/Tabs.module.css
+ * CRT Essence Design System - Tabs Component
+ *
+ * Phosphor glow tab navigation with CRT aesthetic
+ */
+
+.tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.tab {
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-display);
+  font-weight: 400;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.tab:hover {
+  color: var(--phosphor);
+}
+
+.tab:focus {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--phosphor-dim);
+}
+
+.tab.active {
+  color: var(--phosphor);
+  border-bottom-color: var(--phosphor);
+  text-shadow: 0 0 8px var(--phosphor-glow);
+}
+
+.tab:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tab:disabled:hover {
+  color: var(--text-dim);
+}
