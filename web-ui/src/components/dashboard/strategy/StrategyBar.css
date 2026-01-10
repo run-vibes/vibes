@@ -1,0 +1,52 @@
+.strategy-bar {
+  display: grid;
+  grid-template-columns: 8rem 1fr 3rem;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.strategy-bar__label {
+  font-size: 0.75rem;
+  color: var(--crt-text-dim);
+  text-align: right;
+}
+
+.strategy-bar__track {
+  height: 8px;
+  background: var(--crt-bg-tertiary);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.strategy-bar__fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.strategy-bar__fill--prefix {
+  background: var(--crt-green);
+}
+
+.strategy-bar__fill--earlycontext {
+  background: var(--crt-accent);
+}
+
+.strategy-bar__fill--midcontext {
+  background: var(--crt-purple, #9b87f5);
+}
+
+.strategy-bar__fill--justbeforequery {
+  background: var(--crt-orange, #f59e0b);
+}
+
+.strategy-bar__fill--deferral {
+  background: var(--crt-text-dim);
+}
+
+.strategy-bar__value {
+  font-family: var(--crt-font-mono);
+  font-size: 0.75rem;
+  color: var(--crt-text);
+  text-align: right;
+}
