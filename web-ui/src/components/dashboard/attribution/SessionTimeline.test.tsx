@@ -13,9 +13,14 @@ const mockActivatedLearning: ActivatedLearning = {
   contribution: 0.15,
 };
 
+// Use relative dates for "Today" and "Yesterday" tests
+const today = new Date();
+const yesterday = new Date(today);
+yesterday.setDate(yesterday.getDate() - 1);
+
 const mockSession: SessionTimelineEntry = {
   session_id: 'session-abc',
-  timestamp: '2026-01-09T14:30:00Z',
+  timestamp: today.toISOString(),
   score: 0.82,
   activated_learnings: [
     mockActivatedLearning,
@@ -26,7 +31,7 @@ const mockSession: SessionTimelineEntry = {
 
 const mockNegativeSession: SessionTimelineEntry = {
   session_id: 'session-def',
-  timestamp: '2026-01-08T10:00:00Z',
+  timestamp: yesterday.toISOString(),
   score: 0.45,
   activated_learnings: [
     { learning_id: 'learn-789', content: 'Avoid console.log', contribution: -0.12 },
