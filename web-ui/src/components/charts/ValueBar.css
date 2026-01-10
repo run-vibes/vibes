@@ -1,0 +1,48 @@
+.value-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.value-bar__track {
+  flex: 1;
+  height: 8px;
+  background: var(--crt-surface);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.value-bar__zero {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--crt-border);
+  transform: translateX(-50%);
+  z-index: 1;
+}
+
+.value-bar__fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  transition: left 0.2s ease, width 0.2s ease;
+}
+
+.value-bar__fill--positive {
+  background: linear-gradient(90deg, var(--crt-warning) 0%, var(--crt-success) 100%);
+}
+
+.value-bar__fill--negative {
+  background: linear-gradient(90deg, var(--crt-error) 0%, var(--crt-warning) 100%);
+}
+
+.value-bar__value {
+  font-size: 0.75rem;
+  font-family: var(--crt-font-mono);
+  color: var(--crt-text-dim);
+  min-width: 5ch;
+  text-align: right;
+}

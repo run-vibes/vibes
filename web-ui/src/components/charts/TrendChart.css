@@ -1,0 +1,39 @@
+.trend-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.trend-chart svg {
+  overflow: visible;
+}
+
+.trend-chart .trend-line {
+  filter: drop-shadow(0 0 3px currentColor);
+}
+
+.trend-chart__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 0.5rem;
+  justify-content: center;
+}
+
+.trend-chart__legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  color: var(--crt-text-dim);
+}
+
+.trend-chart__legend-color {
+  width: 12px;
+  height: 3px;
+  border-radius: 1px;
+}
+
+.trend-chart__legend-label {
+  font-family: var(--crt-font-mono);
+}

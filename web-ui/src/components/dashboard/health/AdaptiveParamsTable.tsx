@@ -1,4 +1,5 @@
 import type { AdaptiveParam, ParamTrend } from '../../../hooks/useDashboard';
+import { Sparkline } from '../../charts/Sparkline';
 import './AdaptiveParamsTable.css';
 
 export interface AdaptiveParamsTableProps {
@@ -25,6 +26,8 @@ export function AdaptiveParamsTable({ params }: AdaptiveParamsTableProps) {
     );
   }
 
+  const hasSparklines = params.some((p) => p.sparklineData && p.sparklineData.length > 0);
+
   return (
     <table className="adaptive-params-table">
       <thead>
@@ -32,6 +35,7 @@ export function AdaptiveParamsTable({ params }: AdaptiveParamsTableProps) {
           <th>Name</th>
           <th>Current</th>
           <th>Mean</th>
+          {hasSparklines && <th>History</th>}
           <th>Trend</th>
         </tr>
       </thead>
@@ -41,6 +45,18 @@ export function AdaptiveParamsTable({ params }: AdaptiveParamsTableProps) {
             <td className="adaptive-params-table__name">{param.name}</td>
             <td className="adaptive-params-table__value">{param.current}</td>
             <td className="adaptive-params-table__value">{param.mean}</td>
+            {hasSparklines && (
+              <td className="adaptive-params-table__sparkline">
+                {param.sparklineData && param.sparklineData.length > 0 && (
+                  <Sparkline
+                    data={param.sparklineData}
+                    width={60}
+                    height={20}
+                    color={param.trend === 'up' ? 'var(--crt-success)' : param.trend === 'down' ? 'var(--crt-error)' : 'var(--crt-text-dim)'}
+                  />
+                )}
+              </td>
+            )}
             <td className={`adaptive-params-table__trend adaptive-params-table__trend--${param.trend}`}>
               {getTrendIndicator(param.trend)}
             </td>

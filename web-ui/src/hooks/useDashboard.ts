@@ -225,6 +225,7 @@ export interface AdaptiveParam {
   current: number;
   mean: number;
   trend: ParamTrend;
+  sparklineData?: number[];
 }
 
 export interface ActivityEvent {

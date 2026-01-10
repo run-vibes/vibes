@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router';
+import { Sparkline } from '../charts/Sparkline';
 import './TrendCard.css';
 
 export type TrendDirection = 'rising' | 'falling' | 'stable';
@@ -39,12 +40,7 @@ export function TrendCard({
 
       {sparklineData && sparklineData.length > 0 && (
         <div className="trend-card__sparkline" data-testid="sparkline-placeholder">
-          {/* Placeholder - actual sparkline in FEAT0050 */}
-          <div className="sparkline-placeholder">
-            {sparklineData.map((_, i) => (
-              <span key={i} className="sparkline-bar" />
-            ))}
-          </div>
+          <Sparkline data={sparklineData} width={120} height={32} showArea />
         </div>
       )}
 
