@@ -1,11 +1,13 @@
 import type { LearningDetailData, Scope } from '../../../hooks/useDashboard';
 import { LearningStatusBadge } from './LearningStatusBadge';
 import { ValueBar } from './ValueBar';
+import { LearningActions } from './LearningActions';
 import './LearningDetail.css';
 
 export interface LearningDetailProps {
   data?: LearningDetailData;
   isLoading?: boolean;
+  onActionComplete?: () => void;
 }
 
 function formatScope(scope: Scope): string {
@@ -35,7 +37,7 @@ function formatValue(value: number): string {
   return `${sign}${value.toFixed(2)}`;
 }
 
-export function LearningDetail({ data, isLoading }: LearningDetailProps) {
+export function LearningDetail({ data, isLoading, onActionComplete }: LearningDetailProps) {
   if (isLoading) {
     return (
       <div className="learning-detail learning-detail--empty">
@@ -123,7 +125,11 @@ export function LearningDetail({ data, isLoading }: LearningDetailProps) {
       </section>
 
       <section className="learning-detail__actions">
-        {/* Action buttons placeholder for FEAT0046 */}
+        <LearningActions
+          learningId={data.id}
+          status={data.status}
+          onActionComplete={onActionComplete}
+        />
       </section>
     </div>
   );
