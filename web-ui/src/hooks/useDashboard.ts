@@ -216,6 +216,24 @@ export interface ActivityEntry {
   activity_type: ActivityType;
 }
 
+// Types for health page components
+export type ParamTrend = 'up' | 'down' | 'stable';
+export type EventType = 'extraction' | 'attribution' | 'strategy' | 'error';
+
+export interface AdaptiveParam {
+  name: string;
+  current: number;
+  mean: number;
+  trend: ParamTrend;
+}
+
+export interface ActivityEvent {
+  id: string;
+  type: EventType;
+  description: string;
+  timestamp: string;
+}
+
 export interface HealthData {
   data_type: 'health';
   overall_status: SystemStatus;

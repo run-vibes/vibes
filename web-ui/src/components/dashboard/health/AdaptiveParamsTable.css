@@ -1,0 +1,58 @@
+.adaptive-params-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.adaptive-params-table--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: var(--crt-text-dim);
+  font-style: italic;
+}
+
+.adaptive-params-table th {
+  text-align: left;
+  padding: 0.75rem;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--crt-text-dim);
+  border-bottom: 1px solid var(--crt-border);
+}
+
+.adaptive-params-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--crt-border-dim);
+  color: var(--crt-text);
+}
+
+.adaptive-params-table__name {
+  font-family: var(--crt-font-mono);
+  font-size: 0.8125rem;
+}
+
+.adaptive-params-table__value {
+  font-family: var(--crt-font-mono);
+  text-align: right;
+}
+
+.adaptive-params-table__trend {
+  text-align: center;
+  font-size: 1rem;
+}
+
+.adaptive-params-table__trend--up {
+  color: var(--crt-success);
+}
+
+.adaptive-params-table__trend--down {
+  color: var(--crt-error);
+}
+
+.adaptive-params-table__trend--stable {
+  color: var(--crt-text-dim);
+}
