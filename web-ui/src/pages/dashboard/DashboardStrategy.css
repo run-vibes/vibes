@@ -1,0 +1,49 @@
+.dashboard-strategy {
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-strategy__loading,
+.dashboard-strategy__error {
+  padding: 2rem;
+  text-align: center;
+  color: var(--crt-text-dim);
+}
+
+.dashboard-strategy__error {
+  color: var(--crt-error);
+}
+
+.dashboard-strategy__distributions {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.dashboard-strategy__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.dashboard-strategy__header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--crt-text);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dashboard-strategy__summary {
+  font-size: 0.875rem;
+  color: var(--crt-text-dim);
+}
+
+.dashboard-strategy__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1rem;
+}
