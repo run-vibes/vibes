@@ -1,9 +1,11 @@
+/* CRT-styled learning detail panel */
+
 .learning-detail {
-  padding: 1rem;
+  padding: var(--space-4);
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: var(--space-4);
 }
 
 .learning-detail--empty {
@@ -14,8 +16,8 @@
 }
 
 .learning-detail__placeholder {
-  color: var(--text-dim, #888);
-  font-size: 0.875rem;
+  color: var(--text-dim);
+  font-size: var(--font-size-sm);
   text-align: center;
 }
 
@@ -30,42 +32,44 @@
 .learning-detail__badges {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 .learning-detail__category {
-  font-size: 0.75rem;
-  color: var(--phosphor, #00ff00);
+  font-size: var(--font-size-xs);
+  font-family: var(--font-display);
+  color: var(--phosphor);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-weight: 600;
+  letter-spacing: 0.1em;
+  font-weight: 400;
+  text-shadow: 0 0 6px var(--phosphor-glow);
 }
 
 /* ─── Content ─────────────────────────────────────────────────────────────── */
 
 .learning-detail__content {
-  padding: 1rem;
-  background: var(--bg-elevated, #1a1a1a);
-  border-radius: 6px;
-  border: 1px solid var(--border-dim, #333);
+  padding: var(--space-4);
+  background: var(--screen);
+  border: 1px solid var(--border);
 }
 
 .learning-detail__content p {
   margin: 0;
-  font-size: 0.9375rem;
+  font-size: var(--font-size-base);
   line-height: 1.6;
-  color: var(--text-primary, #fff);
+  color: var(--text);
 }
 
 /* ─── Sections ────────────────────────────────────────────────────────────── */
 
 .section-title {
-  margin: 0 0 0.75rem;
-  font-size: 0.6875rem;
-  color: var(--text-dim, #888);
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-xs);
+  font-family: var(--font-display);
+  color: var(--text-dim);
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  font-weight: 600;
+  font-weight: 400;
 }
 
 /* ─── Metrics Grid ────────────────────────────────────────────────────────── */
@@ -73,27 +77,28 @@
 .metrics-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-  gap: 1rem;
+  gap: var(--space-4);
 }
 
 .metric {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: var(--space-1);
 }
 
 .metric__label {
-  font-size: 0.6875rem;
-  color: var(--text-dim, #888);
+  font-size: var(--font-size-xs);
+  color: var(--text-dim);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.1em;
 }
 
 .metric__value {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--text-primary, #fff);
-  font-family: var(--font-mono, monospace);
+  font-size: var(--font-size-xl);
+  font-weight: 400;
+  color: var(--phosphor);
+  font-family: var(--font-display);
+  text-shadow: 0 0 8px var(--phosphor-glow);
 }
 
 /* ─── Info List ───────────────────────────────────────────────────────────── */
@@ -102,15 +107,15 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .info-item {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  padding: 0.375rem 0;
-  border-bottom: 1px solid var(--border-dim, #333);
+  padding: var(--space-1) 0;
+  border-bottom: 1px solid var(--border);
 }
 
 .info-item:last-child {
@@ -118,26 +123,26 @@
 }
 
 .info-item dt {
-  font-size: 0.75rem;
-  color: var(--text-dim, #888);
+  font-size: var(--font-size-xs);
+  color: var(--text-dim);
 }
 
 .info-item dd {
   margin: 0;
-  font-size: 0.8125rem;
-  color: var(--text-primary, #fff);
+  font-size: var(--font-size-sm);
+  color: var(--text);
 }
 
 .session-id {
-  font-family: var(--font-mono, monospace);
-  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
 }
 
 /* ─── Actions ─────────────────────────────────────────────────────────────── */
 
 .learning-detail__actions {
   display: flex;
-  gap: 0.5rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid var(--border-dim, #333);
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border);
 }

@@ -1,17 +1,49 @@
+/* web-ui/src/pages/dashboard/DashboardLayout.css
+ * CRT-styled dashboard layout - matches Firehose/Sessions patterns
+ */
+
+/* === Container === */
 .dashboard-layout {
   display: flex;
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  gap: var(--space-2);
   background: var(--screen);
+  font-family: var(--font-mono);
+  padding: var(--space-4);
 }
 
+/* === Header === */
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.dashboard-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.dashboard-title {
+  font-family: var(--font-display);
+  font-size: var(--font-size-xl);
+  font-weight: 400;
+  color: var(--phosphor);
+  text-shadow: 0 0 10px var(--phosphor-glow);
+  letter-spacing: 0.1em;
+  margin: 0;
+}
+
+/* === Tab Navigation === */
 .dashboard-tabs {
   display: flex;
   gap: var(--space-1);
-  padding: var(--space-2) var(--space-4);
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
 }
 
 .dashboard-tab {
@@ -37,9 +69,31 @@
   text-shadow: 0 0 8px var(--phosphor-glow);
 }
 
+/* === Content Area === */
 .dashboard-layout > .dashboard-content {
   display: flex;
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+/* === Responsive === */
+@media (max-width: 768px) {
+  .dashboard-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+  }
+
+  .dashboard-header-left {
+    justify-content: center;
+  }
+
+  .dashboard-tabs {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
 }

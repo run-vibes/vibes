@@ -12,20 +12,25 @@ const TABS = [
 export function DashboardLayout() {
   return (
     <div className="dashboard-layout">
-      <nav className="dashboard-tabs">
-        {TABS.map((tab) => (
-          <Link
-            key={tab.href}
-            to={tab.href}
-            className="dashboard-tab"
-            activeOptions={{ exact: tab.exact }}
-            activeProps={{ className: 'dashboard-tab active' }}
-            inactiveProps={{ className: 'dashboard-tab' }}
-          >
-            {tab.label}
-          </Link>
-        ))}
-      </nav>
+      <header className="dashboard-header">
+        <div className="dashboard-header-left">
+          <h1 className="dashboard-title">DASHBOARD</h1>
+        </div>
+        <nav className="dashboard-tabs">
+          {TABS.map((tab) => (
+            <Link
+              key={tab.href}
+              to={tab.href}
+              className="dashboard-tab"
+              activeOptions={{ exact: tab.exact }}
+              activeProps={{ className: 'dashboard-tab active' }}
+              inactiveProps={{ className: 'dashboard-tab' }}
+            >
+              {tab.label}
+            </Link>
+          ))}
+        </nav>
+      </header>
       <div className="dashboard-content">
         <Outlet />
       </div>

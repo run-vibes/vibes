@@ -1,62 +1,69 @@
+/* CRT-styled adaptive params table */
+
 .adaptive-params-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.875rem;
+  font-size: var(--font-size-sm);
 }
 
 .adaptive-params-table--empty {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
-  color: var(--crt-text-dim);
+  padding: var(--space-6);
+  color: var(--text-dim);
   font-style: italic;
 }
 
 .adaptive-params-table th {
   text-align: left;
-  padding: 0.75rem;
-  font-weight: 600;
-  font-size: 0.75rem;
+  padding: var(--space-3);
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: var(--font-size-xs);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--crt-text-dim);
-  border-bottom: 1px solid var(--crt-border);
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  border-bottom: 1px solid var(--border);
 }
 
 .adaptive-params-table td {
-  padding: 0.75rem;
-  border-bottom: 1px solid var(--crt-border-dim);
-  color: var(--crt-text);
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
 }
 
 .adaptive-params-table__name {
-  font-family: var(--crt-font-mono);
-  font-size: 0.8125rem;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
 }
 
 .adaptive-params-table__value {
-  font-family: var(--crt-font-mono);
+  font-family: var(--font-mono);
   text-align: right;
+  color: var(--phosphor);
+  text-shadow: 0 0 6px var(--phosphor-glow);
 }
 
 .adaptive-params-table__trend {
   text-align: center;
-  font-size: 1rem;
+  font-size: var(--font-size-base);
 }
 
 .adaptive-params-table__trend--up {
-  color: var(--crt-success);
+  color: var(--green, #44ff44);
+  text-shadow: 0 0 6px rgba(68, 255, 68, 0.5);
 }
 
 .adaptive-params-table__trend--down {
-  color: var(--crt-error);
+  color: var(--red, #ff4444);
+  text-shadow: 0 0 6px rgba(255, 68, 68, 0.5);
 }
 
 .adaptive-params-table__trend--stable {
-  color: var(--crt-text-dim);
+  color: var(--text-dim);
 }
 
 .adaptive-params-table__sparkline {
-  padding: 0.5rem 0.75rem;
+  padding: var(--space-2) var(--space-3);
 }

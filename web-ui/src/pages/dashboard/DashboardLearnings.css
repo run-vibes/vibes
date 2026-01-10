@@ -1,3 +1,7 @@
+/* web-ui/src/pages/dashboard/DashboardLearnings.css
+ * CRT-styled learnings page layout
+ */
+
 .dashboard-learnings {
   display: flex;
   flex-direction: column;
@@ -10,7 +14,7 @@
   flex: 1;
   min-height: 0;
   gap: 1px;
-  background: var(--border-dim, #333);
+  background: var(--border);
 }
 
 /* ─── Left Panel (Filters + List) ─────────────────────────────────────────── */
@@ -21,14 +25,14 @@
   width: 40%;
   min-width: 280px;
   max-width: 500px;
-  background: var(--bg-surface, #111);
+  background: var(--surface);
 }
 
 /* ─── Right Panel (Detail) ────────────────────────────────────────────────── */
 
 .dashboard-learnings__right {
   flex: 1;
-  background: var(--bg-surface, #111);
+  background: var(--surface);
   overflow-y: auto;
 }
 

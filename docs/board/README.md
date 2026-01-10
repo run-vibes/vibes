@@ -179,5 +179,6 @@ Auto-generated from directory structure. Run `just board generate` to update.
 - [m37-feat-07-firehose](stages/done/stories/m37-feat-07-firehose.md)
 - [m37-feat-08-session-cards](stages/done/stories/m37-feat-08-session-cards.md)
 - [refactor-0008-consolidate-assessment-types-module](stages/done/stories/refactor-0008-consolidate-assessment-types-module.md)
+- [refactor-0069-dashboard-visual-consistency](stages/done/stories/refactor-0069-dashboard-visual-consistency.md)
 
 </details>
