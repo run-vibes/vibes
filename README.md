@@ -26,6 +26,14 @@ The vibe engineering mech suit.
 - **Continual Learning** — groove learns your patterns and preferences across sessions
 - **Cross-Platform** — Single binary for Linux, macOS, and Windows
 
+### Coming Soon
+
+- **Model Management** — Unified API for cloud (Anthropic, OpenAI) and local models (Ollama, llama.cpp)
+- **Agent Orchestration** — Multi-agent sessions with swarms for parallel and pipelined workflows
+- **Evaluation Framework** — Benchmark against SWE-Bench, track longitudinal performance
+- **Observability** — OpenTelemetry tracing, metrics, cost tracking, and alerts
+- **TUI** — Interactive terminal interface for agent control, embeddable in web
+
 ## Quick Start
 
 ```bash

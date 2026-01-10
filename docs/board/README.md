@@ -38,11 +38,16 @@
 
 | Epic | Status | Stories |
 |------|--------|---------|
+| [agents](epics/agents/) | planned | 0 |
 | [cli](epics/cli/) | active | 13 |
 | [core](epics/core/) | active | 22 |
+| [evals](epics/evals/) | planned | 0 |
 | [mobile](epics/mobile/) | active | 0 |
+| [models](epics/models/) | planned | 0 |
 | [networking](epics/networking/) | active | 0 |
+| [observability](epics/observability/) | planned | 0 |
 | [plugin-system](epics/plugin-system/) | active | 23 |
+| [tui](epics/tui/) | planned | 0 |
 | [verification](epics/verification/) | active | 0 |
 | [web-ui](epics/web-ui/) | active | 25 |
 
@@ -88,6 +93,11 @@
 | [36-default-plugins](milestones/36-default-plugins/) | planned | plugin-system |
 | [37-cli-enhancements](milestones/37-cli-enhancements/) | planned | cli |
 | [38-ios-app](milestones/38-ios-app/) | planned | mobile |
+| [39-models-registry-auth](milestones/39-models-registry-auth/) | planned | models |
+| [40-agent-core](milestones/40-agent-core/) | planned | agents |
+| [41-eval-core](milestones/41-eval-core/) | planned | evals |
+| [42-observability-tracing](milestones/42-observability-tracing/) | planned | observability |
+| [43-tui-core](milestones/43-tui-core/) | planned | tui |
 
 ## Done
 
