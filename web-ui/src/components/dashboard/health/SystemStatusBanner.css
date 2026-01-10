@@ -1,0 +1,35 @@
+.status-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.status-banner--ok {
+  background: color-mix(in srgb, var(--crt-success) 15%, transparent);
+  border: 1px solid var(--crt-success);
+  color: var(--crt-success);
+}
+
+.status-banner--degraded {
+  background: color-mix(in srgb, var(--crt-warning) 15%, transparent);
+  border: 1px solid var(--crt-warning);
+  color: var(--crt-warning);
+}
+
+.status-banner--error {
+  background: color-mix(in srgb, var(--crt-error) 15%, transparent);
+  border: 1px solid var(--crt-error);
+  color: var(--crt-error);
+}
+
+.status-banner__label {
+  font-size: 1rem;
+}
+
+.status-banner__timestamp {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
