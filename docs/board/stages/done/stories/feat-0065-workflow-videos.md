@@ -2,7 +2,7 @@
 id: FEAT0065
 title: Workflow video recording
 type: feat
-status: pending
+status: done
 priority: medium
 epics: [verification]
 depends: [FEAT0064]

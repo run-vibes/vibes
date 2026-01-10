@@ -100,8 +100,12 @@ jobs:
           # Use mock PTY mode since Claude CLI isn't installed in CI
           VIBES_MOCK_PTY: "1"
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: playwright-report
-          path: e2e-tests/playwright-report/
+          name: playwright-results
+          path: |
+            e2e-tests/playwright-report/
+            e2e-tests/test-results/
+          retention-days: 7

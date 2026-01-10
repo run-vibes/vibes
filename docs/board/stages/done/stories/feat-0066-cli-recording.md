@@ -2,7 +2,7 @@
 id: FEAT0066
 title: CLI recording with VHS
 type: feat
-status: pending
+status: done
 priority: medium
 epics: [verification]
 depends: []

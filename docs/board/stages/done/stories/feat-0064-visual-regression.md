@@ -2,7 +2,7 @@
 id: FEAT0064
 title: Visual regression testing
 type: feat
-status: pending
+status: done
 priority: medium
 epics: [verification]
 depends: []

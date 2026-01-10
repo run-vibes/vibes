@@ -2,7 +2,7 @@
 id: DOCS0068
 title: Documentation review
 type: docs
-status: pending
+status: done
 priority: low
 epics: [verification]
 depends: []

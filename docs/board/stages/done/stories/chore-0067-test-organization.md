@@ -2,7 +2,7 @@
 id: CHORE0067
 title: Test organization cleanup
 type: chore
-status: pending
+status: done
 priority: low
 epics: [verification]
 depends: []
