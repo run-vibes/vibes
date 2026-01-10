@@ -107,7 +107,8 @@ pub use dashboard::{
 // Open-world adaptation re-exports
 pub use openworld::{
     AnomalyCluster, CapabilityGap, ClusterId, FailureId, FailureRecord, FailureType, GapCategory,
-    GapId, GapSeverity, GapStatus, NoOpOpenWorldStore, NoveltyResult, OpenWorldEvent,
-    OpenWorldStore, PatternFingerprint, ResponseAction, ResponseStage, SolutionAction,
-    SolutionSource, StrategyChange, SuggestedSolution,
+    GapId, GapSeverity, GapStatus, NoOpOpenWorldStore, NoveltyConfig, NoveltyContext,
+    NoveltyDetector, NoveltyResult, OpenWorldEvent, OpenWorldStore, PatternFingerprint,
+    ResponseAction, ResponseStage, SolutionAction, SolutionSource, StrategyChange,
+    SuggestedSolution,
 };

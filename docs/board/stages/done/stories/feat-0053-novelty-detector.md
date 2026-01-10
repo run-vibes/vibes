@@ -2,7 +2,7 @@
 id: FEAT0053
 title: NoveltyDetector with embedding reuse
 type: feat
-status: pending
+status: done
 priority: high
 epics: [plugin-system]
 depends: [FEAT0052]

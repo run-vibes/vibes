@@ -25,8 +25,11 @@
 //! - [`ResponseAction`] - Action to take in response to novelty
 //! - [`OpenWorldEvent`] - Events emitted by the system
 
+mod novelty;
 mod traits;
 mod types;
+
+pub use novelty::{NoveltyConfig, NoveltyContext, NoveltyDetector};
 
 pub use traits::{NoOpOpenWorldStore, OpenWorldStore};
 pub use types::{
