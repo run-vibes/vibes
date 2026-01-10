@@ -602,6 +602,171 @@ pub struct DevicePairingAuth;         // Future: QR code pairing
 
 ---
 
+### Phase 6: Model Management Platform
+
+**Goal:** Unified model management for cloud and local inference
+
+See [models epic](board/epics/models/README.md) for full design.
+
+#### Milestone 6.1: Registry & Auth
+- Model catalog with capability discovery
+- Credential management (system keyring + env fallback)
+- Provider trait abstraction
+
+#### Milestone 6.2: Cloud Providers
+- Anthropic, OpenAI integration
+- Google Gemini, Groq support
+- Streaming and tool use
+
+#### Milestone 6.3: Local Models
+- Ollama integration (pull, run, embed)
+- llama.cpp GGUF support
+- Model weight management
+
+#### Milestone 6.4: Routing & Cache
+- Smart model selection rules
+- Response caching (memory, file, SQLite)
+- Cost optimization routing
+
+**Deliverable:** `vibes-models` crate with unified inference API
+
+---
+
+### Phase 7: Agent Orchestration
+
+**Goal:** Orchestrate multiple agents within sessions
+
+See [agents epic](board/epics/agents/README.md) for full design.
+
+#### Milestone 7.1: Agent Core
+- Agent trait and lifecycle management
+- Agent types: Ad-hoc, Background, Subagent, Interactive
+- Task system with metrics
+
+#### Milestone 7.2: Session Integration
+- Session-agent relationship (sessions contain agents)
+- Agent communication (messages, handoffs)
+- Multi-agent sessions
+
+#### Milestone 7.3: Swarm Framework
+- Swarm strategies: Parallel, Pipeline, Supervisor, Debate
+- Merge strategies for parallel work
+- Coordination and messaging
+
+#### Milestone 7.4: Remote Execution
+- Execute agents on remote vibes instances
+- Distributed swarms across machines
+- Resource management
+
+**Deliverable:** Agent orchestration enabling multi-agent workflows
+
+---
+
+### Phase 8: Evaluation Framework
+
+**Goal:** Measure performance against benchmarks and over time
+
+See [evals epic](board/epics/evals/README.md) for full design.
+
+#### Milestone 8.1: Eval Core
+- Metrics definitions and storage
+- Time-series data collection
+- Study lifecycle management
+
+#### Milestone 8.2: Benchmark Mode
+- SWE-Bench integration
+- Remote Labor Index support
+- Custom benchmark suites
+
+#### Milestone 8.3: Longitudinal Mode
+- Continuous measurement over days/weeks
+- Checkpoints and trend analysis
+- Session, workflow, swarm evaluation
+
+#### Milestone 8.4: Reports
+- Trend analysis and forecasting
+- Comprehensive eval reports
+- Export (CSV, JSON)
+
+**Deliverable:** Validate vibes+groove against industry standards
+
+---
+
+### Phase 9: Observability Stack
+
+**Goal:** Full observability with tracing, metrics, and cost tracking
+
+See [observability epic](board/epics/observability/README.md) for full design.
+
+#### Milestone 9.1: Tracing Core
+- OpenTelemetry-based distributed tracing
+- Automatic span instrumentation
+- Export to Jaeger, OTLP
+
+#### Milestone 9.2: Structured Logging
+- Context-aware structured logs
+- Log levels and filtering
+- Multiple export targets
+
+#### Milestone 9.3: Built-in Metrics
+- Model, agent, session, swarm metrics
+- System metrics (memory, CPU, network)
+- Prometheus export
+
+#### Milestone 9.4: Cost Tracking
+- Token counting per model
+- Cost aggregation by session, agent
+- Cost alerts and budgets
+
+#### Milestone 9.5: Alerts
+- Rule-based alerting
+- Notification channels (webhook, Slack, email)
+- Alert management
+
+**Deliverable:** Production-ready observability for vibes deployments
+
+---
+
+### Phase 10: Terminal User Interface
+
+**Goal:** Interactive TUI for controlling agents and sessions
+
+See [tui epic](board/epics/tui/README.md) for full design.
+
+#### Milestone 10.1: TUI Core
+- ratatui-based application structure
+- View stack and navigation
+- Vim-style keybindings
+
+#### Milestone 10.2: Dashboard
+- Overview of sessions, agents, swarms
+- Real-time activity feed
+- Quick actions
+
+#### Milestone 10.3: Agent Control
+- Agent detail view
+- Permission approval interface
+- Pause, resume, cancel controls
+
+#### Milestone 10.4: Swarm Visualization
+- Swarm progress display
+- Agent coordination view
+- Merge results
+
+#### Milestone 10.5: Theme System
+- CRT-inspired default theme
+- Custom theme support
+- Accessibility considerations
+
+#### Milestone 10.6: PTY Server
+- PTY server for web embedding
+- xterm.js integration
+- Terminal-in-browser
+
+**Deliverable:** Full TUI for vibes control, embeddable in Web UI
+
+---
+
 ### Future Phases
 
 #### Phase F1: Android App
