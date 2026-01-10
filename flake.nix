@@ -25,6 +25,8 @@
             pkgs.cargo-mutants
             pkgs.cargo-watch
             pkgs.cargo-llvm-cov
+            # CLI recording
+            pkgs.vhs
             # Native build deps for CozoDB/RocksDB
             pkgs.clang
             pkgs.llvmPackages.libclang

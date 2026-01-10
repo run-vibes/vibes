@@ -23,6 +23,9 @@ mod web '.justfiles/web.just'
 # Plugin management
 mod plugin '.justfiles/plugin.just'
 
+# CLI recording commands
+mod cli '.justfiles/cli.just'
+
 # ─── Top-Level Commands ──────────────────────────────────────────────────────
 
 # Default: show available commands

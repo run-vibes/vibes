@@ -34,6 +34,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [mobile](epics/mobile/) | active | 0 |
 | [networking](epics/networking/) | active | 0 |
 | [plugin-system](epics/plugin-system/) | active | 23 |
+| [verification](epics/verification/) | active | 0 |
 | [web-ui](epics/web-ui/) | active | 25 |
 
 ## Milestones
@@ -99,8 +100,10 @@ Auto-generated from directory structure. Run `just board generate` to update.
 - [chore-0016-proper-shutdown-signal-coordination-for-plugin-manager](stages/done/stories/chore-0016-proper-shutdown-signal-coordination-for-plugin-manager.md)
 - [chore-0017-remove-assess-button-icon](stages/done/stories/chore-0017-remove-assess-button-icon.md)
 - [chore-0018-change-default-iggy-port](stages/done/stories/chore-0018-change-default-iggy-port.md)
+- [chore-0067-test-organization](stages/done/stories/chore-0067-test-organization.md)
 - [docs-0001-fix-broken-documentation-links](stages/done/stories/docs-0001-fix-broken-documentation-links.md)
 - [docs-0002-update-prd-for-current-architecture](stages/done/stories/docs-0002-update-prd-for-current-architecture.md)
+- [docs-0068-documentation-review](stages/done/stories/docs-0068-documentation-review.md)
 - [feat-0003-web-ui-navigation-hierarchy](stages/done/stories/feat-0003-web-ui-navigation-hierarchy.md)
 - [feat-0004-subnav](stages/done/stories/feat-0004-subnav.md)
 - [feat-0005-session-terminal-outline](stages/done/stories/feat-0005-session-terminal-outline.md)
@@ -141,6 +144,9 @@ Auto-generated from directory structure. Run `just board generate` to update.
 - [feat-0049-health-page](stages/done/stories/feat-0049-health-page.md)
 - [feat-0050-chart-components](stages/done/stories/feat-0050-chart-components.md)
 - [feat-0051-learning-indicator](stages/done/stories/feat-0051-learning-indicator.md)
+- [feat-0064-visual-regression](stages/done/stories/feat-0064-visual-regression.md)
+- [feat-0065-workflow-videos](stages/done/stories/feat-0065-workflow-videos.md)
+- [feat-0066-cli-recording](stages/done/stories/feat-0066-cli-recording.md)
 - [m14-chore-01-design](stages/done/stories/m14-chore-01-design.md)
 - [m14-chore-02-implementation](stages/done/stories/m14-chore-02-implementation.md)
 - [m26-chore-01-eventbus-cleanup](stages/done/stories/m26-chore-01-eventbus-cleanup.md)

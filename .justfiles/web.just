@@ -46,3 +46,15 @@ e2e-debug:
 # Install Playwright browsers
 e2e-setup:
     npx playwright install chromium --with-deps
+
+# Run visual regression tests only
+visual:
+    npm run test:e2e -- --grep "Visual"
+
+# Update visual regression baselines
+visual-update:
+    npm run test:e2e -- --grep "Visual" --update-snapshots
+
+# Run workflow tests only (generates videos)
+workflows:
+    npm run test:e2e -- --grep "Workflow"
