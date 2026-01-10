@@ -1,52 +1,56 @@
+/* CRT-styled strategy bar */
+
 .strategy-bar {
   display: grid;
   grid-template-columns: 8rem 1fr 3rem;
-  gap: 0.5rem;
+  gap: var(--space-2);
   align-items: center;
 }
 
 .strategy-bar__label {
-  font-size: 0.75rem;
-  color: var(--crt-text-dim);
+  font-size: var(--font-size-xs);
+  color: var(--text-dim);
   text-align: right;
 }
 
 .strategy-bar__track {
   height: 8px;
-  background: var(--crt-bg-tertiary);
-  border-radius: 4px;
+  background: var(--screen);
   overflow: hidden;
 }
 
 .strategy-bar__fill {
   height: 100%;
-  border-radius: 4px;
   transition: width 0.3s ease;
 }
 
 .strategy-bar__fill--prefix {
-  background: var(--crt-green);
+  background: var(--green, #44ff44);
+  box-shadow: 0 0 4px rgba(68, 255, 68, 0.5);
 }
 
 .strategy-bar__fill--earlycontext {
-  background: var(--crt-accent);
+  background: var(--phosphor);
+  box-shadow: 0 0 4px var(--phosphor-glow);
 }
 
 .strategy-bar__fill--midcontext {
-  background: var(--crt-purple, #9b87f5);
+  background: #9b87f5;
+  box-shadow: 0 0 4px rgba(155, 135, 245, 0.5);
 }
 
 .strategy-bar__fill--justbeforequery {
-  background: var(--crt-orange, #f59e0b);
+  background: #f59e0b;
+  box-shadow: 0 0 4px rgba(245, 158, 11, 0.5);
 }
 
 .strategy-bar__fill--deferral {
-  background: var(--crt-text-dim);
+  background: var(--text-dim);
 }
 
 .strategy-bar__value {
-  font-family: var(--crt-font-mono);
-  font-size: 0.75rem;
-  color: var(--crt-text);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--text);
   text-align: right;
 }

@@ -1,68 +1,70 @@
+/* CRT-styled ablation coverage panel */
+
 .ablation-coverage {
-  background: var(--crt-bg-secondary);
-  border: 1px solid var(--crt-border);
-  border-radius: 4px;
-  padding: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: var(--space-4);
 }
 
 .ablation-coverage__title {
-  margin: 0 0 0.75rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--crt-text-dim);
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-display);
+  font-weight: 400;
+  color: var(--text-dim);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.1em;
 }
 
 .ablation-coverage__bar-container {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 .ablation-coverage__bar {
   flex: 1;
   height: 8px;
-  background: var(--crt-bg-tertiary);
-  border-radius: 4px;
+  background: var(--screen);
   overflow: hidden;
 }
 
 .ablation-coverage__bar-fill {
   height: 100%;
-  background: var(--crt-accent);
-  border-radius: 4px;
+  background: var(--phosphor);
+  box-shadow: 0 0 4px var(--phosphor-glow);
   transition: width 0.3s ease;
 }
 
 .ablation-coverage__percent {
-  font-family: var(--crt-font-mono);
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--crt-accent);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-base);
+  font-weight: 400;
+  color: var(--phosphor);
+  text-shadow: 0 0 8px var(--phosphor-glow);
   min-width: 3rem;
   text-align: right;
 }
 
 .ablation-coverage__stats {
   display: flex;
-  gap: 1rem;
-  margin-top: 0.75rem;
+  gap: var(--space-4);
+  margin-top: var(--space-3);
 }
 
 .ablation-coverage__stat {
-  font-size: 0.75rem;
-  color: var(--crt-text-dim);
+  font-size: var(--font-size-xs);
+  color: var(--text-dim);
 }
 
 .ablation-coverage__stat--completed {
-  color: var(--crt-green);
+  color: var(--green, #44ff44);
 }
 
 .ablation-coverage__stat--progress {
-  color: var(--crt-accent);
+  color: var(--phosphor);
 }
 
 .ablation-coverage__stat--pending {
-  color: var(--crt-text-dim);
+  color: var(--text-dim);
 }

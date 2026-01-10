@@ -1,15 +1,19 @@
+/* CRT-styled attribution page */
+
 .dashboard-attribution {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }
 
 .dashboard-attribution__loading,
 .dashboard-attribution__error {
-  padding: 2rem;
+  padding: var(--space-6);
   text-align: center;
-  color: var(--crt-text-dim);
+  color: var(--text-dim);
 }
 
 .dashboard-attribution__error {
-  color: var(--crt-error);
+  color: var(--red, #ff4444);
 }

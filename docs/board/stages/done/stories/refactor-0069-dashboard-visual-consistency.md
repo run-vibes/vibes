@@ -2,7 +2,7 @@
 id: REFACTOR0069
 title: Dashboard visual consistency with CRT theme
 type: refactor
-status: pending
+status: done
 priority: medium
 epics: [web-ui]
 depends: []
@@ -158,13 +158,13 @@ The new dashboard section (Overview, Learnings, Attribution, Strategy, Health) w
 
 ## Acceptance Criteria
 
-- [ ] Dashboard has header panel with glowing title
-- [ ] All dashboard pages use bordered panels
-- [ ] Stat values have phosphor glow effects
-- [ ] Panel headers use font-display with letter-spacing
-- [ ] Visual style matches Firehose and Sessions pages
-- [ ] All tests pass
-- [ ] Visual baselines updated
+- [x] Dashboard has header panel with glowing title
+- [x] All dashboard pages use bordered panels
+- [x] Stat values have phosphor glow effects
+- [x] Panel headers use font-display with letter-spacing
+- [x] Visual style matches Firehose and Sessions pages
+- [x] All tests pass
+- [x] Visual baselines updated
 
 ## Completion
 

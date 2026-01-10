@@ -1,35 +1,36 @@
+/* CRT-styled override item */
+
 .override-item {
-  background: var(--crt-bg-secondary);
-  border: 1px solid var(--crt-border);
-  border-radius: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
   overflow: hidden;
 }
 
 .override-item--specialized {
-  border-color: var(--crt-accent);
+  border-color: var(--phosphor);
 }
 
 .override-item__header {
   display: grid;
   grid-template-columns: 1fr auto auto;
-  gap: 1rem;
+  gap: var(--space-4);
   align-items: center;
-  padding: 0.75rem;
+  padding: var(--space-3);
   width: 100%;
   text-align: left;
   background: transparent;
   border: none;
-  color: var(--crt-text);
+  color: var(--text);
   font: inherit;
 }
 
 .override-item__header--expandable {
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background var(--transition-fast);
 }
 
 .override-item__header--expandable:hover {
-  background: var(--crt-bg-hover);
+  background: var(--phosphor-subtle);
 }
 
 .override-item__main {
@@ -38,8 +39,8 @@
 
 .override-item__content {
   display: block;
-  font-size: 0.875rem;
-  color: var(--crt-text);
+  font-size: var(--font-size-sm);
+  color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -47,52 +48,53 @@
 
 .override-item__meta {
   display: flex;
-  gap: 1rem;
-  margin-top: 0.25rem;
-  font-size: 0.75rem;
-  color: var(--crt-text-dim);
+  gap: var(--space-4);
+  margin-top: var(--space-1);
+  font-size: var(--font-size-xs);
+  color: var(--text-dim);
 }
 
 .override-item__status {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 0.25rem;
+  gap: var(--space-1);
 }
 
 .override-item__badge {
-  padding: 0.125rem 0.5rem;
-  font-size: 0.625rem;
-  font-weight: 600;
+  padding: 2px var(--space-2);
+  font-size: 10px;
+  font-family: var(--font-display);
+  font-weight: 400;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-radius: 2px;
+  letter-spacing: 0.1em;
 }
 
 .override-item__badge--specialized {
-  background: var(--crt-accent);
-  color: var(--crt-bg);
+  background: var(--phosphor);
+  color: var(--screen);
 }
 
 .override-item__badge--inheriting {
-  background: var(--crt-bg-tertiary);
-  color: var(--crt-text-dim);
+  background: var(--screen);
+  color: var(--text-dim);
+  border: 1px solid var(--border);
 }
 
 .override-item__threshold {
-  font-size: 0.625rem;
-  color: var(--crt-text-dim);
+  font-size: 10px;
+  color: var(--text-dim);
 }
 
 .override-item__expand {
-  font-size: 0.75rem;
-  color: var(--crt-text-dim);
+  font-size: var(--font-size-xs);
+  color: var(--text-dim);
   width: 1rem;
   text-align: center;
 }
 
 .override-item__weights {
-  padding: 0.75rem;
-  border-top: 1px solid var(--crt-border);
-  background: var(--crt-bg-tertiary);
+  padding: var(--space-3);
+  border-top: 1px solid var(--border);
+  background: var(--screen);
 }
