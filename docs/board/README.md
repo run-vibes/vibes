@@ -1,5 +1,6 @@
-Generated README.md
-Auto-generated from directory structure. Run `just board generate` to update.
+# Planning Board
+
+> Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
@@ -9,8 +10,10 @@ Auto-generated from directory structure. Run `just board generate` to update.
 
 | Story | Type | Priority | Epics |
 |-------|------|----------|-------|
+| [chore-0067-test-organization](stages/backlog/stories/chore-0067-test-organization.md) | chore | low | verification |
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
+| [docs-0068-documentation-review](stages/backlog/stories/docs-0068-documentation-review.md) | docs | low | verification |
 | [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli |
 | [feat-0052-openworld-types](stages/backlog/stories/feat-0052-openworld-types.md) | feat | high | plugin-system |
 | [feat-0053-novelty-detector](stages/backlog/stories/feat-0053-novelty-detector.md) | feat | high | plugin-system |
@@ -24,6 +27,9 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [feat-0061-cli-novelty](stages/backlog/stories/feat-0061-cli-novelty.md) | feat | medium | plugin-system |
 | [feat-0062-cli-gaps](stages/backlog/stories/feat-0062-cli-gaps.md) | feat | medium | plugin-system |
 | [feat-0063-openworld-config](stages/backlog/stories/feat-0063-openworld-config.md) | feat | high | plugin-system |
+| [feat-0064-visual-regression](stages/backlog/stories/feat-0064-visual-regression.md) | feat | medium | verification |
+| [feat-0065-workflow-videos](stages/backlog/stories/feat-0065-workflow-videos.md) | feat | medium | verification |
+| [feat-0066-cli-recording](stages/backlog/stories/feat-0066-cli-recording.md) | feat | medium | verification |
 
 ## Epics
 
@@ -34,6 +40,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [mobile](epics/mobile/) | active | 0 |
 | [networking](epics/networking/) | active | 0 |
 | [plugin-system](epics/plugin-system/) | active | 23 |
+| [verification](epics/verification/) | active | 0 |
 | [web-ui](epics/web-ui/) | active | 25 |
 
 ## Milestones
