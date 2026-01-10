@@ -1,0 +1,15 @@
+.dashboard-attribution {
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-attribution__loading,
+.dashboard-attribution__error {
+  padding: 2rem;
+  text-align: center;
+  color: var(--crt-text-dim);
+}
+
+.dashboard-attribution__error {
+  color: var(--crt-error);
+}
