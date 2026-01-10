@@ -2,7 +2,7 @@
 id: FEAT0048
 title: Strategy page (distributions + overrides)
 type: feat
-status: in-progress
+status: done
 priority: high
 epics: [plugin-system]
 depends: [FEAT0043]
