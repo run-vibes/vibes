@@ -1,0 +1,59 @@
+/* CRT-styled 404 page */
+
+.not-found {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+  padding: var(--space-6);
+  background: var(--screen);
+}
+
+.not-found__content {
+  text-align: center;
+  max-width: 400px;
+}
+
+.not-found__code {
+  font-family: var(--font-display);
+  font-size: 6rem;
+  font-weight: 400;
+  color: var(--phosphor);
+  text-shadow: 0 0 20px var(--phosphor-glow);
+  margin: 0;
+  line-height: 1;
+}
+
+.not-found__message {
+  font-family: var(--font-display);
+  font-size: var(--font-size-xl);
+  color: var(--text);
+  margin: var(--space-4) 0;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.not-found__hint {
+  font-size: var(--font-size-sm);
+  color: var(--text-dim);
+  margin: 0 0 var(--space-6);
+}
+
+.not-found__link {
+  display: inline-block;
+  padding: var(--space-3) var(--space-5);
+  font-family: var(--font-display);
+  font-size: var(--font-size-sm);
+  color: var(--phosphor);
+  text-decoration: none;
+  border: 1px solid var(--phosphor);
+  transition: all var(--transition-fast);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.not-found__link:hover {
+  background: var(--phosphor);
+  color: var(--screen);
+  box-shadow: 0 0 15px var(--phosphor-glow);
+}

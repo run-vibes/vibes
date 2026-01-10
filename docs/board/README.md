@@ -1,6 +1,5 @@
-# Planning Board
-
-> Auto-generated from directory structure. Run `just board generate` to update.
+Generated README.md
+Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
@@ -10,7 +9,6 @@
 
 | Story | Type | Priority | Epics |
 |-------|------|----------|-------|
-| [bug-0005-dashboard-trends-route-not-found](stages/backlog/stories/bug-0005-dashboard-trends-route-not-found.md) |  |  |  |
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
 | [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli |
@@ -91,6 +89,7 @@
 - [bug-0002-firehose-not-loading-historical-events](stages/done/stories/bug-0002-firehose-not-loading-historical-events.md)
 - [bug-0003-pty-created-with-hardcoded-dimensions-ignoring-client-size](stages/done/stories/bug-0003-pty-created-with-hardcoded-dimensions-ignoring-client-size.md)
 - [bug-0004-fix-flaky-pty-integration-tests](stages/done/stories/bug-0004-fix-flaky-pty-integration-tests.md)
+- [bug-0005-dashboard-trends-route-not-found](stages/done/stories/bug-0005-dashboard-trends-route-not-found.md)
 - [chore-0001-nav-cleanup](stages/done/stories/chore-0001-nav-cleanup.md)
 - [chore-0002-firehose-filter-cleanup](stages/done/stories/chore-0002-firehose-filter-cleanup.md)
 - [chore-0003-assessment-tier-buttons](stages/done/stories/chore-0003-assessment-tier-buttons.md)
