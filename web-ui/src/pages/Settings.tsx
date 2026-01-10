@@ -4,11 +4,13 @@ import { Button } from '@vibes/design-system';
 import { NotificationSettings } from '../components/NotificationSettings';
 import { useTunnelStatus } from '../hooks/useTunnelStatus';
 import { useCrtEffects } from '../hooks/useCrtEffects';
+import { useGrooveSettings } from '../hooks/useGrooveSettings';
 import './Settings.css';
 
 export function SettingsPage() {
   const { data: tunnel, isLoading: tunnelLoading, error: tunnelError } = useTunnelStatus();
   const { enabled: crtEffectsEnabled, setEffects: setCrtEffects } = useCrtEffects();
+  const { settings: grooveSettings, updateSetting: updateGrooveSetting } = useGrooveSettings();
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     const saved = localStorage.getItem('vibes-theme');
     return (saved === 'light' || saved === 'dark') ? saved : 'dark';
@@ -93,6 +95,54 @@ export function SettingsPage() {
         <div className="settings-panel">
           <h2 className="settings-panel-title">NOTIFICATIONS</h2>
           <NotificationSettings />
+        </div>
+
+        <div className="settings-panel">
+          <h2 className="settings-panel-title">GROOVE</h2>
+          <div className="setting-row">
+            <div className="setting-info">
+              <div className="setting-label">Learning Indicator</div>
+              <span className="setting-description">Show learning status indicator in header</span>
+            </div>
+            <div className="setting-control">
+              <div className="theme-toggle">
+                <button
+                  className={`theme-option ${grooveSettings.showLearningIndicator ? 'active' : ''}`}
+                  onClick={() => updateGrooveSetting('showLearningIndicator', true)}
+                >
+                  On
+                </button>
+                <button
+                  className={`theme-option ${!grooveSettings.showLearningIndicator ? 'active' : ''}`}
+                  onClick={() => updateGrooveSetting('showLearningIndicator', false)}
+                >
+                  Off
+                </button>
+              </div>
+            </div>
+          </div>
+          <div className="setting-row">
+            <div className="setting-info">
+              <div className="setting-label">Dashboard Auto-Refresh</div>
+              <span className="setting-description">Automatically refresh dashboard data</span>
+            </div>
+            <div className="setting-control">
+              <div className="theme-toggle">
+                <button
+                  className={`theme-option ${grooveSettings.dashboardAutoRefresh ? 'active' : ''}`}
+                  onClick={() => updateGrooveSetting('dashboardAutoRefresh', true)}
+                >
+                  On
+                </button>
+                <button
+                  className={`theme-option ${!grooveSettings.dashboardAutoRefresh ? 'active' : ''}`}
+                  onClick={() => updateGrooveSetting('dashboardAutoRefresh', false)}
+                >
+                  Off
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="settings-panel">

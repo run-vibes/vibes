@@ -12,7 +12,6 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
 | [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli |
-| [feat-0051-learning-indicator](stages/backlog/stories/feat-0051-learning-indicator.md) | feat | low | plugin-system |
 | [feat-0052-openworld-types](stages/backlog/stories/feat-0052-openworld-types.md) | feat | high | plugin-system |
 | [feat-0053-novelty-detector](stages/backlog/stories/feat-0053-novelty-detector.md) | feat | high | plugin-system |
 | [feat-0054-dbscan-clustering](stages/backlog/stories/feat-0054-dbscan-clustering.md) | feat | high | plugin-system |
@@ -141,6 +140,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 - [feat-0048-strategy-page](stages/done/stories/feat-0048-strategy-page.md)
 - [feat-0049-health-page](stages/done/stories/feat-0049-health-page.md)
 - [feat-0050-chart-components](stages/done/stories/feat-0050-chart-components.md)
+- [feat-0051-learning-indicator](stages/done/stories/feat-0051-learning-indicator.md)
 - [m14-chore-01-design](stages/done/stories/m14-chore-01-design.md)
 - [m14-chore-02-implementation](stages/done/stories/m14-chore-02-implementation.md)
 - [m26-chore-01-eventbus-cleanup](stages/done/stories/m26-chore-01-eventbus-cleanup.md)
