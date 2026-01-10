@@ -3,9 +3,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
-| Story | Type | Priority | Epics |
-|-------|------|----------|-------|
-| [feat-0050-chart-components](stages/in-progress/stories/feat-0050-chart-components.md) | feat | medium | plugin-system |
+*No stories in progress*
 
 ## Backlog
 
@@ -142,6 +140,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 - [feat-0047-attribution-page](stages/done/stories/feat-0047-attribution-page.md)
 - [feat-0048-strategy-page](stages/done/stories/feat-0048-strategy-page.md)
 - [feat-0049-health-page](stages/done/stories/feat-0049-health-page.md)
+- [feat-0050-chart-components](stages/done/stories/feat-0050-chart-components.md)
 - [m14-chore-01-design](stages/done/stories/m14-chore-01-design.md)
 - [m14-chore-02-implementation](stages/done/stories/m14-chore-02-implementation.md)
 - [m26-chore-01-eventbus-cleanup](stages/done/stories/m26-chore-01-eventbus-cleanup.md)
