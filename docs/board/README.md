@@ -1,5 +1,6 @@
-Generated README.md
-Auto-generated from directory structure. Run `just board generate` to update.
+# Planning Board
+
+> Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
@@ -24,6 +25,14 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [feat-0061-cli-novelty](stages/backlog/stories/feat-0061-cli-novelty.md) | feat | medium | plugin-system |
 | [feat-0062-cli-gaps](stages/backlog/stories/feat-0062-cli-gaps.md) | feat | medium | plugin-system |
 | [feat-0063-openworld-config](stages/backlog/stories/feat-0063-openworld-config.md) | feat | high | plugin-system |
+| [feat-0071-setup-wizard-infrastructure](stages/backlog/stories/feat-0071-setup-wizard-infrastructure.md) | feat |  |  |
+| [feat-0072-cloudflared-state-detection](stages/backlog/stories/feat-0072-cloudflared-state-detection.md) | feat |  |  |
+| [feat-0073-tunnel-wizard-quick-mode](stages/backlog/stories/feat-0073-tunnel-wizard-quick-mode.md) | feat |  |  |
+| [feat-0074-tunnel-wizard-named-mode](stages/backlog/stories/feat-0074-tunnel-wizard-named-mode.md) | feat |  |  |
+| [feat-0075-tunnel-wizard-no-cloudflared](stages/backlog/stories/feat-0075-tunnel-wizard-no-cloudflared.md) | feat |  |  |
+| [feat-0076-auth-setup-wizard](stages/backlog/stories/feat-0076-auth-setup-wizard.md) | feat |  |  |
+| [feat-0077-config-save-load](stages/backlog/stories/feat-0077-config-save-load.md) | feat |  |  |
+| [feat-0078-connectivity-validation](stages/backlog/stories/feat-0078-connectivity-validation.md) | feat |  |  |
 
 ## Epics
 
