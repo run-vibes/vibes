@@ -2,7 +2,7 @@
 id: FEAT0050
 title: Sparkline and chart components
 type: feat
-status: pending
+status: done
 priority: medium
 epics: [plugin-system]
 depends: [FEAT0044]
