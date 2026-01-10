@@ -14,6 +14,7 @@ pub mod error;
 pub mod export;
 pub mod extraction;
 pub mod inject;
+pub mod openworld;
 pub mod paths;
 pub mod plugin;
 pub mod security;
@@ -101,4 +102,12 @@ pub use dashboard::{
     LearningSummary, LearningsData, LearningsFilter, OverviewData, Period, SessionContribution,
     SessionTimelineData, SessionTimelineEntry, StrategyDistributionsData, StrategyOverridesData,
     StrategyWeight, SystemStatus, TrendDirection, TrendSummary,
+};
+
+// Open-world adaptation re-exports
+pub use openworld::{
+    AnomalyCluster, CapabilityGap, ClusterId, FailureId, FailureRecord, FailureType, GapCategory,
+    GapId, GapSeverity, GapStatus, NoOpOpenWorldStore, NoveltyResult, OpenWorldEvent,
+    OpenWorldStore, PatternFingerprint, ResponseAction, ResponseStage, SolutionAction,
+    SolutionSource, StrategyChange, SuggestedSolution,
 };
