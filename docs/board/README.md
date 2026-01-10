@@ -1,5 +1,6 @@
-Generated README.md
-Auto-generated from directory structure. Run `just board generate` to update.
+# Planning Board
+
+> Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
@@ -9,6 +10,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 
 | Story | Type | Priority | Epics |
 |-------|------|----------|-------|
+| [bug-0005-dashboard-trends-route-not-found](stages/backlog/stories/bug-0005-dashboard-trends-route-not-found.md) |  |  |  |
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
 | [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli |
