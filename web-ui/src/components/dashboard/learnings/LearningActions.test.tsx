@@ -202,5 +202,25 @@ describe('LearningActions', () => {
         expect(onActionComplete).toHaveBeenCalled();
       });
     });
+
+    it('calls onError when action fails', async () => {
+      mockFetch.mockResolvedValueOnce({ ok: false });
+      const onError = vi.fn();
+
+      render(
+        <LearningActions
+          {...defaultProps}
+          status="disabled"
+          onError={onError}
+        />,
+        { wrapper: createWrapper() }
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: /enable/i }));
+
+      await waitFor(() => {
+        expect(onError).toHaveBeenCalledWith(expect.any(Error));
+      });
+    });
   });
 });
