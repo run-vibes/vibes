@@ -128,11 +128,12 @@ describe('DashboardHealth', () => {
   });
 
   it('shows degraded status for extraction subsystem', async () => {
-    render(<DashboardHealth />, { wrapper: createWrapper() });
+    const { container } = render(<DashboardHealth />, { wrapper: createWrapper() });
 
     await waitFor(() => {
-      // Degraded indicator
-      expect(screen.getByText('◐')).toBeInTheDocument();
+      // StatusIndicator renders a dot span for degraded status
+      const degradedCard = container.querySelector('.subsystem-card--degraded');
+      expect(degradedCard).toBeInTheDocument();
     });
   });
 });

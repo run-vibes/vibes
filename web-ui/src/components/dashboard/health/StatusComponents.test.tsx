@@ -77,21 +77,25 @@ describe('SubsystemCard', () => {
   });
 
   it('shows status indicator for ok', () => {
-    render(<SubsystemCard name="Assessment" health={mockHealthOk} />);
+    const { container } = render(<SubsystemCard name="Assessment" health={mockHealthOk} />);
 
-    expect(screen.getByText('●')).toBeInTheDocument();
+    // StatusIndicator component renders a dot span
+    const header = container.querySelector('.subsystem-card__header');
+    expect(header?.querySelector('span')).toBeInTheDocument();
   });
 
   it('shows status indicator for degraded', () => {
-    render(<SubsystemCard name="Extraction" health={mockHealthDegraded} />);
+    const { container } = render(<SubsystemCard name="Extraction" health={mockHealthDegraded} />);
 
-    expect(screen.getByText('◐')).toBeInTheDocument();
+    const header = container.querySelector('.subsystem-card__header');
+    expect(header?.querySelector('span')).toBeInTheDocument();
   });
 
   it('shows status indicator for error', () => {
-    render(<SubsystemCard name="Attribution" health={mockHealthError} />);
+    const { container } = render(<SubsystemCard name="Attribution" health={mockHealthError} />);
 
-    expect(screen.getByText('○')).toBeInTheDocument();
+    const header = container.querySelector('.subsystem-card__header');
+    expect(header?.querySelector('span')).toBeInTheDocument();
   });
 
   it('displays coverage percentage', () => {

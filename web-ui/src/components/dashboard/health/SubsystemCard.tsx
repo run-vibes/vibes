@@ -1,3 +1,4 @@
+import { StatusIndicator } from '@vibes/design-system';
 import type { ComponentHealth, SystemStatus } from '../../../hooks/useDashboard';
 import './SubsystemCard.css';
 
@@ -7,16 +8,9 @@ export interface SubsystemCardProps {
   warning?: string;
 }
 
-function getStatusIndicator(status: SystemStatus): string {
-  switch (status) {
-    case 'ok':
-      return '●';
-    case 'degraded':
-      return '◐';
-    case 'error':
-      return '○';
-  }
-}
+// Map SystemStatus to StatusIndicator state
+type StatusIndicatorState = 'ok' | 'degraded' | 'error';
+const toIndicatorState = (status: SystemStatus): StatusIndicatorState => status;
 
 function formatPercent(value: number): string {
   return `${Math.round(value * 100)}%`;
@@ -36,9 +30,7 @@ export function SubsystemCard({ name, health, warning }: SubsystemCardProps) {
   return (
     <div className={`subsystem-card subsystem-card--${health.status}`}>
       <div className="subsystem-card__header">
-        <span className={`subsystem-card__indicator subsystem-card__indicator--${health.status}`}>
-          {getStatusIndicator(health.status)}
-        </span>
+        <StatusIndicator state={toIndicatorState(health.status)} />
         <h4 className="subsystem-card__name">{name}</h4>
       </div>
 

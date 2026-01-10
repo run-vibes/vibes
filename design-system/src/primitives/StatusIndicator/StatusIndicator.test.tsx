@@ -37,6 +37,16 @@ describe('StatusIndicator', () => {
     expect(hasModuleClass(container.firstChild as HTMLElement, 'error')).toBe(true);
   });
 
+  it('applies ok state (dashboard alias)', () => {
+    const { container } = render(<StatusIndicator state="ok" />);
+    expect(hasModuleClass(container.firstChild as HTMLElement, 'ok')).toBe(true);
+  });
+
+  it('applies degraded state (dashboard alias)', () => {
+    const { container } = render(<StatusIndicator state="degraded" />);
+    expect(hasModuleClass(container.firstChild as HTMLElement, 'degraded')).toBe(true);
+  });
+
   it('renders label when provided', () => {
     render(<StatusIndicator state="live" label="Connected" />);
     expect(screen.getByText('Connected')).toBeInTheDocument();

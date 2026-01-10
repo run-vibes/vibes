@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router';
+import { Panel, Metric } from '@vibes/design-system';
 import type { StrategyDistributionsData } from '../../hooks/useDashboard';
 import './DashboardCards.css';
 
@@ -12,20 +13,10 @@ export function StrategyCard({ data }: StrategyCardProps) {
   const totalLearnings = data?.total_learnings ?? 0;
 
   return (
-    <div className="dashboard-card">
-      <h3 className="dashboard-card__title">Strategy</h3>
-
+    <Panel variant="crt" title="Strategy" className="dashboard-card">
       <div className="dashboard-card__metrics">
-        <div className="metric">
-          <span className="metric__label">Distributions</span>
-          <span className="metric__value">{distributions.length}</span>
-        </div>
-        <div className="metric">
-          <span className="metric__label">Specialized</span>
-          <span className="metric__value">
-            {specializedCount}/{totalLearnings}
-          </span>
-        </div>
+        <Metric label="Distributions" value={distributions.length} />
+        <Metric label="Specialized" value={`${specializedCount}/${totalLearnings}`} />
       </div>
 
       {distributions.length > 0 && (
@@ -45,6 +36,6 @@ export function StrategyCard({ data }: StrategyCardProps) {
       <Link to="/groove/dashboard/strategy" className="dashboard-card__link">
         View →
       </Link>
-    </div>
+    </Panel>
   );
 }

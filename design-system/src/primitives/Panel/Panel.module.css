@@ -39,6 +39,25 @@
   box-shadow: var(--shadow-inset-sm);
 }
 
+/* CRT variant - sharp corners, phosphor glow titles */
+.crt {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0;
+}
+
+.crt .title {
+  color: var(--phosphor);
+  text-shadow: 0 0 8px var(--phosphor-glow);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.crt .header {
+  background-color: transparent;
+  border-bottom: 1px solid var(--border);
+}
+
 /* Header section */
 .header {
   display: flex;

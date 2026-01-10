@@ -14,6 +14,14 @@ export const States = () => (
   </div>
 );
 
+export const DashboardStates = () => (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '2rem', backgroundColor: 'var(--screen)' }}>
+    <StatusIndicator state="ok" label="OK" />
+    <StatusIndicator state="degraded" label="Degraded" />
+    <StatusIndicator state="error" label="Error" />
+  </div>
+);
+
 export const DotsOnly = () => (
   <div style={{ display: 'flex', gap: '1rem', padding: '2rem', backgroundColor: 'var(--color-bg-base)', alignItems: 'center' }}>
     <StatusIndicator state="live" />

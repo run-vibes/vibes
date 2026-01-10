@@ -7,6 +7,7 @@ set working-directory := '..'
 default:
     @echo "Web UI commands:"
     @echo "  just web build       Build web-ui (required for server)"
+    @echo "  just web ladle       Run Ladle (design system component explorer)"
     @echo "  just web typecheck   TypeScript type check (no emit)"
     @echo "  just web test        Run web-ui tests"
     @echo "  just web install     Install npm dependencies"
@@ -18,6 +19,14 @@ default:
 # Build web-ui (required for server)
 build:
     npm run build
+
+# Run Ladle design system component explorer
+ladle:
+    npm run dev --workspace=@vibes/design-system
+
+# Build Ladle for static hosting
+ladle-build:
+    npm run build --workspace=@vibes/design-system
 
 # TypeScript type check (no emit)
 typecheck:

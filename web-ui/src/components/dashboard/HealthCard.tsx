@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router';
+import { Panel, Metric, StatusIndicator } from '@vibes/design-system';
 import type { HealthSummary, SystemStatus } from '../../hooks/useDashboard';
 import './DashboardCards.css';
 
@@ -11,6 +12,10 @@ const STATUS_LABELS: Record<SystemStatus, string> = {
   degraded: 'Degraded',
   error: 'Error',
 };
+
+// Map SystemStatus to StatusIndicator state
+type StatusIndicatorState = 'ok' | 'degraded' | 'error';
+const toIndicatorState = (status: SystemStatus): StatusIndicatorState => status;
 
 function formatTimeAgo(dateStr: string): string {
   const date = new Date(dateStr);
@@ -29,36 +34,26 @@ function formatTimeAgo(dateStr: string): string {
 export function HealthCard({ data }: HealthCardProps) {
   if (!data) {
     return (
-      <div className="dashboard-card">
-        <h3 className="dashboard-card__title">Health</h3>
+      <Panel variant="crt" title="Health" className="dashboard-card">
         <p className="empty-text">No health data</p>
-      </div>
+      </Panel>
     );
   }
 
   const { overall_status, assessment_coverage, ablation_coverage, last_activity } = data;
 
   return (
-    <div className="dashboard-card">
-      <h3 className="dashboard-card__title">Health</h3>
-
-      <div className="dashboard-card__status">
-        <span
-          className={`status-indicator status-indicator--${overall_status}`}
-          data-testid="status-indicator"
-        />
-        <span className="status-label">{STATUS_LABELS[overall_status]}</span>
-      </div>
+    <Panel variant="crt" title="Health" className="dashboard-card">
+      <StatusIndicator
+        state={toIndicatorState(overall_status)}
+        label={STATUS_LABELS[overall_status]}
+        data-testid="status-indicator"
+        className="dashboard-card__status"
+      />
 
       <div className="dashboard-card__metrics">
-        <div className="metric">
-          <span className="metric__label">Assessment</span>
-          <span className="metric__value">{assessment_coverage}%</span>
-        </div>
-        <div className="metric">
-          <span className="metric__label">Ablation</span>
-          <span className="metric__value">{ablation_coverage}%</span>
-        </div>
+        <Metric label="Assessment" value={`${assessment_coverage}%`} />
+        <Metric label="Ablation" value={`${ablation_coverage}%`} />
       </div>
 
       {last_activity && (
@@ -70,6 +65,6 @@ export function HealthCard({ data }: HealthCardProps) {
       <Link to="/groove/dashboard/health" className="dashboard-card__link">
         View →
       </Link>
-    </div>
+    </Panel>
   );
 }
