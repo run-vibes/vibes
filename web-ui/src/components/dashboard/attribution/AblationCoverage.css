@@ -1,0 +1,68 @@
+.ablation-coverage {
+  background: var(--crt-bg-secondary);
+  border: 1px solid var(--crt-border);
+  border-radius: 4px;
+  padding: 1rem;
+}
+
+.ablation-coverage__title {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--crt-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ablation-coverage__bar-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ablation-coverage__bar {
+  flex: 1;
+  height: 8px;
+  background: var(--crt-bg-tertiary);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ablation-coverage__bar-fill {
+  height: 100%;
+  background: var(--crt-accent);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.ablation-coverage__percent {
+  font-family: var(--crt-font-mono);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--crt-accent);
+  min-width: 3rem;
+  text-align: right;
+}
+
+.ablation-coverage__stats {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+.ablation-coverage__stat {
+  font-size: 0.75rem;
+  color: var(--crt-text-dim);
+}
+
+.ablation-coverage__stat--completed {
+  color: var(--crt-green);
+}
+
+.ablation-coverage__stat--progress {
+  color: var(--crt-accent);
+}
+
+.ablation-coverage__stat--pending {
+  color: var(--crt-text-dim);
+}

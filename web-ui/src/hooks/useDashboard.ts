@@ -128,6 +128,29 @@ export interface AttributionData {
   ablation_coverage: AblationCoverage;
 }
 
+// ─── Session Timeline Types ─────────────────────────────────────────────────
+
+export type SessionOutcome = 'positive' | 'negative' | 'neutral';
+
+export interface ActivatedLearning {
+  learning_id: string;
+  content: string;
+  contribution: number;
+}
+
+export interface SessionTimelineEntry {
+  session_id: string;
+  timestamp: string;
+  score: number;
+  activated_learnings: ActivatedLearning[];
+  outcome: SessionOutcome;
+}
+
+export interface SessionTimelineData {
+  data_type: 'session_timeline';
+  sessions: SessionTimelineEntry[];
+}
+
 // ─── Strategy Types ──────────────────────────────────────────────────────────
 
 export type InjectionStrategy =
@@ -283,6 +306,28 @@ export function useDashboardAttribution(days?: number) {
       const response = await fetch(`/api/groove/dashboard/attribution${params}`);
       if (!response.ok) {
         throw new Error('Failed to fetch dashboard attribution');
+      }
+      return response.json();
+    },
+    refetchInterval: 30000,
+  });
+}
+
+export function useDashboardSessionTimeline(days?: number, outcome?: SessionOutcome) {
+  const params = new URLSearchParams();
+  if (days) params.set('days', String(days));
+  if (outcome) params.set('outcome', outcome);
+  const queryString = params.toString();
+  const url = queryString
+    ? `/api/groove/dashboard/session-timeline?${queryString}`
+    : '/api/groove/dashboard/session-timeline';
+
+  return useQuery<SessionTimelineData>({
+    queryKey: ['dashboard', 'session-timeline', days, outcome],
+    queryFn: async () => {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error('Failed to fetch session timeline');
       }
       return response.json();
     },

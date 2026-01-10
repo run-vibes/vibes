@@ -1,0 +1,120 @@
+.timeline-item {
+  border: 1px solid var(--crt-border);
+  border-radius: 4px;
+  background: var(--crt-bg-secondary);
+  overflow: hidden;
+}
+
+.timeline-item--negative {
+  border-color: var(--crt-warning);
+}
+
+.timeline-item__header {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto auto;
+  gap: 1rem;
+  align-items: center;
+  width: 100%;
+  padding: 0.75rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  color: var(--crt-text);
+  font: inherit;
+  transition: background 0.15s;
+}
+
+.timeline-item__header:hover {
+  background: var(--crt-bg-hover);
+}
+
+.timeline-item__session-id {
+  font-family: var(--crt-font-mono);
+  font-size: 0.875rem;
+  color: var(--crt-accent);
+}
+
+.timeline-item__score {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 8rem;
+}
+
+.timeline-item__score-value {
+  font-family: var(--crt-font-mono);
+  font-size: 0.875rem;
+  font-weight: 600;
+  min-width: 2.5rem;
+}
+
+.timeline-item__score-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--crt-bg-tertiary);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.timeline-item__score-bar-fill {
+  height: 100%;
+  background: var(--crt-green);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.timeline-item--negative .timeline-item__score-bar-fill {
+  background: var(--crt-warning);
+}
+
+.timeline-item__count {
+  font-size: 0.75rem;
+  color: var(--crt-text-dim);
+  min-width: 6rem;
+}
+
+.timeline-item__outcome {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--crt-warning);
+  text-transform: uppercase;
+}
+
+.timeline-item__expand {
+  font-size: 0.75rem;
+  color: var(--crt-text-dim);
+  width: 1rem;
+  text-align: center;
+}
+
+.timeline-item__details {
+  padding: 0 0.75rem 0.75rem;
+  border-top: 1px solid var(--crt-border);
+}
+
+.timeline-item__learnings {
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem 0 0;
+}
+
+.timeline-item__learning {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.375rem 0;
+  font-size: 0.875rem;
+}
+
+.timeline-item__learning-content {
+  color: var(--crt-text);
+}
+
+.timeline-item__learning-contribution {
+  font-family: var(--crt-font-mono);
+  color: var(--crt-green);
+}
+
+.timeline-item__learning-contribution--negative {
+  color: var(--crt-error);
+}
