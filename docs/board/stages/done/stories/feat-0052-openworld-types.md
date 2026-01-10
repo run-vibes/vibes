@@ -2,7 +2,7 @@
 id: FEAT0052
 title: Core types and traits
 type: feat
-status: pending
+status: done
 priority: high
 epics: [plugin-system]
 depends: []

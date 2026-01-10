@@ -1,6 +1,5 @@
-# Planning Board
-
-> Auto-generated from directory structure. Run `just board generate` to update.
+Generated README.md
+Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
@@ -13,7 +12,6 @@
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
 | [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli |
-| [feat-0052-openworld-types](stages/backlog/stories/feat-0052-openworld-types.md) | feat | high | plugin-system |
 | [feat-0053-novelty-detector](stages/backlog/stories/feat-0053-novelty-detector.md) | feat | high | plugin-system |
 | [feat-0054-dbscan-clustering](stages/backlog/stories/feat-0054-dbscan-clustering.md) | feat | high | plugin-system |
 | [feat-0055-gap-detector](stages/backlog/stories/feat-0055-gap-detector.md) | feat | high | plugin-system |
@@ -164,6 +162,7 @@
 - [feat-0049-health-page](stages/done/stories/feat-0049-health-page.md)
 - [feat-0050-chart-components](stages/done/stories/feat-0050-chart-components.md)
 - [feat-0051-learning-indicator](stages/done/stories/feat-0051-learning-indicator.md)
+- [feat-0052-openworld-types](stages/done/stories/feat-0052-openworld-types.md)
 - [feat-0064-visual-regression](stages/done/stories/feat-0064-visual-regression.md)
 - [feat-0065-workflow-videos](stages/done/stories/feat-0065-workflow-videos.md)
 - [feat-0066-cli-recording](stages/done/stories/feat-0066-cli-recording.md)
