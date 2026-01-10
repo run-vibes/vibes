@@ -14,10 +14,13 @@ use crate::{
     },
 };
 
+use crate::attribution::LearningStatus;
+use chrono::Utc;
+
 /// Handler for dashboard data queries
 pub struct DashboardHandler {
     learning_store: Arc<dyn LearningStore>,
-    _attribution_store: Arc<dyn AttributionStore>,
+    attribution_store: Arc<dyn AttributionStore>,
     _strategy_store: Arc<dyn StrategyStore>,
 }
 
@@ -30,7 +33,7 @@ impl DashboardHandler {
     ) -> Self {
         Self {
             learning_store,
-            _attribution_store: attribution_store,
+            attribution_store,
             _strategy_store: strategy_store,
         }
     }
@@ -111,6 +114,82 @@ impl DashboardHandler {
 
     async fn get_health_data(&self) -> Result<DashboardData, String> {
         Ok(DashboardData::Health(HealthData::default()))
+    }
+
+    // ============================================================
+    // Learning Actions
+    // ============================================================
+
+    /// Disable a learning (prevents injection)
+    pub async fn handle_disable_learning(&self, id: LearningId) -> Result<(), String> {
+        // Get or create learning value
+        let mut value = self
+            .attribution_store
+            .get_learning_value(id)
+            .await
+            .map_err(|e| e.to_string())?
+            .unwrap_or_else(|| crate::attribution::LearningValue {
+                learning_id: id,
+                estimated_value: 0.0,
+                confidence: 0.0,
+                session_count: 0,
+                activation_rate: 0.0,
+                temporal_value: 0.0,
+                temporal_confidence: 0.0,
+                ablation_value: None,
+                ablation_confidence: None,
+                status: LearningStatus::Active,
+                updated_at: Utc::now(),
+            });
+
+        value.status = LearningStatus::Disabled;
+        value.updated_at = Utc::now();
+
+        self.attribution_store
+            .update_learning_value(&value)
+            .await
+            .map_err(|e| e.to_string())
+    }
+
+    /// Enable a learning (allows injection)
+    pub async fn handle_enable_learning(&self, id: LearningId) -> Result<(), String> {
+        // Get or create learning value
+        let mut value = self
+            .attribution_store
+            .get_learning_value(id)
+            .await
+            .map_err(|e| e.to_string())?
+            .unwrap_or_else(|| crate::attribution::LearningValue {
+                learning_id: id,
+                estimated_value: 0.0,
+                confidence: 0.0,
+                session_count: 0,
+                activation_rate: 0.0,
+                temporal_value: 0.0,
+                temporal_confidence: 0.0,
+                ablation_value: None,
+                ablation_confidence: None,
+                status: LearningStatus::Disabled,
+                updated_at: Utc::now(),
+            });
+
+        value.status = LearningStatus::Active;
+        value.updated_at = Utc::now();
+
+        self.attribution_store
+            .update_learning_value(&value)
+            .await
+            .map_err(|e| e.to_string())
+    }
+
+    /// Delete a learning permanently
+    pub async fn handle_delete_learning(&self, id: LearningId) -> Result<(), String> {
+        self.learning_store
+            .delete(id)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        Ok(())
     }
 }
 
@@ -518,5 +597,39 @@ mod tests {
             "Expected Err for non-existent learning, got {:?}",
             result
         );
+    }
+
+    // ============================================================
+    // Learning Action Tests
+    // ============================================================
+
+    #[tokio::test]
+    async fn handle_disable_learning_creates_value_if_not_exists() {
+        use uuid::Uuid;
+        let handler = create_test_handler();
+        let id = Uuid::now_v7();
+
+        let result = handler.handle_disable_learning(id).await;
+        assert!(result.is_ok(), "Expected Ok, got {:?}", result);
+    }
+
+    #[tokio::test]
+    async fn handle_enable_learning_creates_value_if_not_exists() {
+        use uuid::Uuid;
+        let handler = create_test_handler();
+        let id = Uuid::now_v7();
+
+        let result = handler.handle_enable_learning(id).await;
+        assert!(result.is_ok(), "Expected Ok, got {:?}", result);
+    }
+
+    #[tokio::test]
+    async fn handle_delete_learning_succeeds() {
+        use uuid::Uuid;
+        let handler = create_test_handler();
+        let id = Uuid::now_v7();
+
+        let result = handler.handle_delete_learning(id).await;
+        assert!(result.is_ok(), "Expected Ok, got {:?}", result);
     }
 }

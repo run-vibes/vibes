@@ -240,6 +240,7 @@ impl AttributionStore for CozoAttributionStore {
     async fn update_learning_value(&self, value: &LearningValue) -> Result<()> {
         let (status_str, status_reason) = match &value.status {
             LearningStatus::Active => ("active", None),
+            LearningStatus::Disabled => ("disabled", None),
             LearningStatus::Deprecated { reason } => ("deprecated", Some(reason.clone())),
             LearningStatus::Experimental => ("experimental", None),
         };

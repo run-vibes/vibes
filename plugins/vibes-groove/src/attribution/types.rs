@@ -70,6 +70,8 @@ pub struct LearningValue {
 pub enum LearningStatus {
     /// Learning is actively being used
     Active,
+    /// Learning has been manually disabled (won't be injected)
+    Disabled,
     /// Learning has been deprecated (auto or manual)
     Deprecated { reason: String },
     /// Learning is under evaluation
@@ -80,6 +82,7 @@ impl LearningStatus {
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::Active => "active",
+            Self::Disabled => "disabled",
             Self::Deprecated { .. } => "deprecated",
             Self::Experimental => "experimental",
         }
@@ -88,6 +91,7 @@ impl LearningStatus {
     pub fn from_str_with_reason(s: &str, reason: Option<String>) -> Self {
         match s {
             "active" => Self::Active,
+            "disabled" => Self::Disabled,
             "deprecated" => Self::Deprecated {
                 reason: reason.unwrap_or_default(),
             },
@@ -150,6 +154,7 @@ mod tests {
     #[test]
     fn test_learning_status_roundtrip() {
         assert_eq!(LearningStatus::Active.as_str(), "active");
+        assert_eq!(LearningStatus::Disabled.as_str(), "disabled");
         assert_eq!(
             LearningStatus::Deprecated {
                 reason: "low value".into()
@@ -162,6 +167,10 @@ mod tests {
         assert_eq!(
             LearningStatus::from_str_with_reason("active", None),
             LearningStatus::Active
+        );
+        assert_eq!(
+            LearningStatus::from_str_with_reason("disabled", None),
+            LearningStatus::Disabled
         );
         assert_eq!(
             LearningStatus::from_str_with_reason("deprecated", Some("test".into())),
