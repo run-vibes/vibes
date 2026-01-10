@@ -2,7 +2,7 @@
 id: FEAT0049
 title: Health page
 type: feat
-status: pending
+status: in-progress
 priority: medium
 epics: [plugin-system]
 depends: [FEAT0043]
