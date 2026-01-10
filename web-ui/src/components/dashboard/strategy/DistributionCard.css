@@ -1,0 +1,33 @@
+.distribution-card {
+  background: var(--crt-bg-secondary);
+  border: 1px solid var(--crt-border);
+  border-radius: 4px;
+  padding: 1rem;
+}
+
+.distribution-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--crt-border);
+}
+
+.distribution-card__title {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--crt-text);
+}
+
+.distribution-card__sessions {
+  font-size: 0.75rem;
+  color: var(--crt-text-dim);
+}
+
+.distribution-card__bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
