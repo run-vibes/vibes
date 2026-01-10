@@ -3,7 +3,9 @@ Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
-*No stories in progress*
+| Story | Type | Priority | Epics |
+|-------|------|----------|-------|
+| [feat-0053-novelty-detector](stages/in-progress/stories/feat-0053-novelty-detector.md) | feat | high | plugin-system |
 
 ## Backlog
 
@@ -12,7 +14,6 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
 | [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli |
-| [feat-0053-novelty-detector](stages/backlog/stories/feat-0053-novelty-detector.md) | feat | high | plugin-system |
 | [feat-0054-dbscan-clustering](stages/backlog/stories/feat-0054-dbscan-clustering.md) | feat | high | plugin-system |
 | [feat-0055-gap-detector](stages/backlog/stories/feat-0055-gap-detector.md) | feat | high | plugin-system |
 | [feat-0056-graduated-response](stages/backlog/stories/feat-0056-graduated-response.md) | feat | high | plugin-system |
