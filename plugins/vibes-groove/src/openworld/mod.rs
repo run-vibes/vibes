@@ -25,10 +25,15 @@
 //! - [`ResponseAction`] - Action to take in response to novelty
 //! - [`OpenWorldEvent`] - Events emitted by the system
 
+mod clustering;
 mod novelty;
 mod traits;
 mod types;
 
+pub use clustering::{
+    DbscanConfig, DbscanResult, DistanceMetric, compute_centroid, cosine_distance,
+    euclidean_distance, incremental_dbscan, region_query,
+};
 pub use novelty::{NoveltyConfig, NoveltyContext, NoveltyDetector};
 
 pub use traits::{NoOpOpenWorldStore, OpenWorldStore};

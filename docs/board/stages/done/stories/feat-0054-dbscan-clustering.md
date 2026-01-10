@@ -2,7 +2,7 @@
 id: FEAT0054
 title: Incremental DBSCAN clustering
 type: feat
-status: pending
+status: done
 priority: high
 epics: [plugin-system]
 depends: [FEAT0053]
