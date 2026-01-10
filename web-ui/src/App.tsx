@@ -30,6 +30,7 @@ import {
 import { DebugPage } from './pages/Debug'
 import { StreamsPage } from './pages/Streams'
 import { SettingsPage } from './pages/Settings'
+import { NotFound } from './pages/NotFound'
 import { useAuth, useTheme } from './hooks'
 import { useWebSocket } from './hooks/useWebSocket'
 import { useGrooveSettings } from './hooks/useGrooveSettings'
@@ -97,6 +98,7 @@ function RootLayout() {
 // Define routes
 const rootRoute = createRootRoute({
   component: RootLayout,
+  notFoundComponent: NotFound,
 })
 
 const indexRoute = createRoute({
@@ -140,6 +142,7 @@ const assessmentLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/groove/assessment',
   component: AssessmentLayout,
+  notFoundComponent: NotFound,
 })
 
 const assessmentStatusRoute = createRoute({
@@ -175,6 +178,7 @@ const dashboardLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/groove/dashboard',
   component: DashboardLayout,
+  notFoundComponent: NotFound,
 })
 
 const dashboardOverviewRoute = createRoute({
