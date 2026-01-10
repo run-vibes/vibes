@@ -3,9 +3,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
-| Story | Type | Priority | Epics |
-|-------|------|----------|-------|
-| [feat-0053-novelty-detector](stages/in-progress/stories/feat-0053-novelty-detector.md) | feat | high | plugin-system |
+*No stories in progress*
 
 ## Backlog
 
@@ -164,6 +162,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 - [feat-0050-chart-components](stages/done/stories/feat-0050-chart-components.md)
 - [feat-0051-learning-indicator](stages/done/stories/feat-0051-learning-indicator.md)
 - [feat-0052-openworld-types](stages/done/stories/feat-0052-openworld-types.md)
+- [feat-0053-novelty-detector](stages/done/stories/feat-0053-novelty-detector.md)
 - [feat-0064-visual-regression](stages/done/stories/feat-0064-visual-regression.md)
 - [feat-0065-workflow-videos](stages/done/stories/feat-0065-workflow-videos.md)
 - [feat-0066-cli-recording](stages/done/stories/feat-0066-cli-recording.md)
