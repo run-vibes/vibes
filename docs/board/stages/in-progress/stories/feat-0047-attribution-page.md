@@ -2,7 +2,7 @@
 id: FEAT0047
 title: Attribution page (leaderboard + timeline)
 type: feat
-status: pending
+status: in-progress
 priority: high
 epics: [plugin-system]
 depends: [FEAT0043]
