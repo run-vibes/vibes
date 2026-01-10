@@ -22,6 +22,7 @@ export interface HeaderProps extends HTMLAttributes<HTMLElement> {
   onThemeToggle?: () => void;
   settingsHref?: string;
   renderLink?: (props: LinkProps) => ReactNode;
+  toolbarItems?: ReactNode;
 }
 
 const DefaultLink = ({ href, className, children }: LinkProps) => (
@@ -29,7 +30,7 @@ const DefaultLink = ({ href, className, children }: LinkProps) => (
 );
 
 export const Header = forwardRef<HTMLElement, HeaderProps>(
-  ({ navItems = [], identity, theme = 'dark', onThemeToggle, settingsHref, renderLink, className = '', ...props }, ref) => {
+  ({ navItems = [], identity, theme = 'dark', onThemeToggle, settingsHref, renderLink, toolbarItems, className = '', ...props }, ref) => {
     const classes = [styles.header, className].filter(Boolean).join(' ');
 
     const Link = renderLink ?? DefaultLink;
@@ -57,6 +58,7 @@ export const Header = forwardRef<HTMLElement, HeaderProps>(
         </nav>
 
         <div className={styles.actions}>
+          {toolbarItems}
           {identity && <span className={styles.identity}>{identity.email}</span>}
           {onThemeToggle && (
             <button

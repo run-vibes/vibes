@@ -2,7 +2,7 @@
 id: FEAT0051
 title: Learning indicator (Settings + Header)
 type: feat
-status: pending
+status: done
 priority: low
 epics: [plugin-system]
 depends: [FEAT0043]

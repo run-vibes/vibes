@@ -1,0 +1,96 @@
+.learning-indicator {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.learning-indicator:hover {
+  background: var(--crt-surface);
+}
+
+.learning-indicator:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--crt-accent);
+}
+
+.learning-indicator__icon {
+  font-size: 1.125rem;
+  line-height: 1;
+  transition: filter 0.15s, transform 0.15s;
+}
+
+/* Idle state */
+.learning-indicator--idle .learning-indicator__icon {
+  opacity: 0.6;
+  filter: grayscale(50%);
+}
+
+/* Active state with pulse */
+.learning-indicator--active .learning-indicator__icon {
+  animation: pulse 1.5s ease-in-out infinite;
+  filter: drop-shadow(0 0 4px var(--crt-success));
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+/* Error state */
+.learning-indicator--error .learning-indicator__icon {
+  filter: hue-rotate(180deg) drop-shadow(0 0 4px var(--crt-error));
+}
+
+/* Tooltip */
+.learning-indicator__tooltip {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 8px;
+  padding: 6px 12px;
+  background: var(--crt-surface);
+  border: 1px solid var(--crt-border);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-family: var(--crt-font-mono);
+  color: var(--crt-text);
+  white-space: nowrap;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.learning-indicator__tooltip::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-bottom-color: var(--crt-border);
+}
+
+.learning-indicator__tooltip::after {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-bottom-color: var(--crt-surface);
+}

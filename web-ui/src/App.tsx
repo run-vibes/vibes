@@ -5,6 +5,7 @@ import {
   Outlet,
   Link,
   useLocation,
+  useNavigate,
   redirect,
 } from '@tanstack/react-router'
 import { Header, SubnavBar } from '@vibes/design-system'
@@ -31,13 +32,17 @@ import { StreamsPage } from './pages/Streams'
 import { SettingsPage } from './pages/Settings'
 import { useAuth, useTheme } from './hooks'
 import { useWebSocket } from './hooks/useWebSocket'
+import { useGrooveSettings } from './hooks/useGrooveSettings'
+import { LearningIndicator } from './components/LearningIndicator'
 
 // Root layout component
 function RootLayout() {
   const { addMessageHandler } = useWebSocket();
   const { identity, isAuthenticated } = useAuth({ addMessageHandler });
   const location = useLocation();
+  const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+  const { settings: grooveSettings } = useGrooveSettings();
 
   const isGroovePath = location.pathname.startsWith('/groove');
 
@@ -66,6 +71,14 @@ function RootLayout() {
         onThemeToggle={toggleTheme}
         settingsHref="/settings"
         renderLink={renderLink}
+        toolbarItems={
+          grooveSettings.showLearningIndicator && (
+            <LearningIndicator
+              state="idle"
+              onClick={() => navigate({ to: '/groove/dashboard/overview' })}
+            />
+          )
+        }
       />
       <SubnavBar
         isOpen={isGroovePath}

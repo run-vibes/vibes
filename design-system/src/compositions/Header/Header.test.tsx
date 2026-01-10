@@ -105,4 +105,24 @@ describe('Header', () => {
     );
     expect(screen.getByText('Test')).toHaveAttribute('data-href', '/test');
   });
+
+  it('renders toolbar items when provided', () => {
+    render(
+      <Header
+        toolbarItems={<span data-testid="custom-indicator">Custom</span>}
+      />
+    );
+    expect(screen.getByTestId('custom-indicator')).toBeInTheDocument();
+  });
+
+  it('renders toolbar items before theme toggle', () => {
+    render(
+      <Header
+        toolbarItems={<span>Indicator</span>}
+        onThemeToggle={() => {}}
+      />
+    );
+    const actions = screen.getByRole('banner').querySelector('[class*="actions"]');
+    expect(actions?.textContent).toMatch(/Indicator.*THEME/);
+  });
 });
