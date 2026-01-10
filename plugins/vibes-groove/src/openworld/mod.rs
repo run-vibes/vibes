@@ -26,6 +26,7 @@
 //! - [`OpenWorldEvent`] - Events emitted by the system
 
 mod clustering;
+mod gaps;
 mod novelty;
 mod traits;
 mod types;
@@ -34,6 +35,7 @@ pub use clustering::{
     DbscanConfig, DbscanResult, DistanceMetric, compute_centroid, cosine_distance,
     euclidean_distance, incremental_dbscan, region_query,
 };
+pub use gaps::{CapabilityGapDetector, GapsConfig};
 pub use novelty::{NoveltyConfig, NoveltyContext, NoveltyDetector};
 
 pub use traits::{NoOpOpenWorldStore, OpenWorldStore};

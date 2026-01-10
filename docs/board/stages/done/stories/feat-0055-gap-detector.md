@@ -2,7 +2,7 @@
 id: FEAT0055
 title: CapabilityGapDetector
 type: feat
-status: pending
+status: done
 priority: high
 epics: [plugin-system]
 depends: [FEAT0052]
