@@ -3,7 +3,9 @@ Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
-*No stories in progress*
+| Story | Type | Priority | Epics |
+|-------|------|----------|-------|
+| [feat-0061-cli-novelty](stages/in-progress/stories/feat-0061-cli-novelty.md) | feat | medium | plugin-system |
 
 ## Backlog
 
@@ -12,7 +14,6 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
 | [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli |
-| [feat-0061-cli-novelty](stages/backlog/stories/feat-0061-cli-novelty.md) | feat | medium | plugin-system |
 | [feat-0062-cli-gaps](stages/backlog/stories/feat-0062-cli-gaps.md) | feat | medium | plugin-system |
 | [feat-0063-openworld-config](stages/backlog/stories/feat-0063-openworld-config.md) | feat | high | plugin-system |
 | [feat-0071-setup-wizard-infrastructure](stages/backlog/stories/feat-0071-setup-wizard-infrastructure.md) | feat |  |  |
