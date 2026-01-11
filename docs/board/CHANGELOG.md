@@ -2,6 +2,7 @@
 
 > Updated when items move to done. Most recent first.
 
+| 2026-01-11 | CLI commands (gaps) | CLI commands for capability gap management and openworld status |
 | 2026-01-09 | Strategy consumer | Implement StrategyConsumer for orchestrating strategy learning pipeline |
 | 2026-01-08 | "Feature: Wire CLI Assess Commands to Query Real Data" | CLI assess commands now query server via HTTP for status and history |
 | 2026-01-08 | Align Settings page with CRT design system | Aligned Settings page with CRT design system: added padding, responsive grid layout, consistent fonts, and removed Local badge from header |

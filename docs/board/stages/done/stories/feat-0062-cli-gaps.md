@@ -2,7 +2,7 @@
 id: FEAT0062
 title: CLI commands (gaps)
 type: feat
-status: pending
+status: done
 priority: medium
 epics: [plugin-system]
 depends: [FEAT0055, FEAT0057]
