@@ -110,9 +110,9 @@ pub use dashboard::{
 pub use openworld::{
     AnomalyCluster, CapabilityGap, CapabilityGapDetector, ClusterId, DbscanConfig, DbscanResult,
     DistanceMetric, FailureId, FailureRecord, FailureType, GapCategory, GapId, GapSeverity,
-    GapStatus, GapsConfig, GraduatedResponse, NoOpOpenWorldStore, NoveltyConfig, NoveltyContext,
-    NoveltyDetector, NoveltyResult, OPENWORLD_STREAM, OpenWorldEvent, OpenWorldHook,
-    OpenWorldHookConfig, OpenWorldProducer, OpenWorldProducerConfig, OpenWorldStore,
+    GapStatus, GapsConfig, GraduatedResponse, HookStats, NoOpOpenWorldStore, NoveltyConfig,
+    NoveltyContext, NoveltyDetector, NoveltyResult, OPENWORLD_STREAM, OpenWorldEvent,
+    OpenWorldHook, OpenWorldHookConfig, OpenWorldProducer, OpenWorldProducerConfig, OpenWorldStore,
     PatternFingerprint, ProducerStats, ResponseAction, ResponseConfig, ResponseStage,
     SolutionAction, SolutionGenerator, SolutionSource, SolutionsConfig, StrategyChange,
     SuggestedSolution, topics,

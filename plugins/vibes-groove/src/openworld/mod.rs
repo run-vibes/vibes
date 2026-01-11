@@ -43,7 +43,7 @@ pub use consumer::{
     OPENWORLD_STREAM, OpenWorldProducer, OpenWorldProducerConfig, ProducerStats, topics,
 };
 pub use gaps::{CapabilityGapDetector, GapsConfig};
-pub use hook::{OpenWorldHook, OpenWorldHookConfig};
+pub use hook::{HookStats, OpenWorldHook, OpenWorldHookConfig};
 pub use novelty::{NoveltyConfig, NoveltyContext, NoveltyDetector};
 pub use response::{GraduatedResponse, ResponseConfig};
 pub use solutions::{SolutionGenerator, SolutionsConfig};
