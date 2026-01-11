@@ -2,7 +2,7 @@
 id: FEAT0056
 title: GraduatedResponse system
 type: feat
-status: pending
+status: done
 priority: high
 epics: [plugin-system]
 depends: [FEAT0053, FEAT0055]

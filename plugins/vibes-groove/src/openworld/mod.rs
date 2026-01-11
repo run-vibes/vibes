@@ -28,6 +28,7 @@
 mod clustering;
 mod gaps;
 mod novelty;
+mod response;
 mod traits;
 mod types;
 
@@ -37,6 +38,7 @@ pub use clustering::{
 };
 pub use gaps::{CapabilityGapDetector, GapsConfig};
 pub use novelty::{NoveltyConfig, NoveltyContext, NoveltyDetector};
+pub use response::{GraduatedResponse, ResponseConfig};
 
 pub use traits::{NoOpOpenWorldStore, OpenWorldStore};
 pub use types::{
