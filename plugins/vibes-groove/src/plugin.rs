@@ -17,6 +17,7 @@ use crate::assessment::{
 };
 
 use crate::CozoStore;
+use crate::openworld::{AnomalyCluster, ClusterId, OpenWorldStore, PatternFingerprint};
 use crate::paths::GroovePaths;
 use crate::security::load_policy_or_default;
 use crate::security::{OrgRole, Policy, ReviewOutcome, TrustLevel};
@@ -779,6 +780,13 @@ impl Plugin for GroovePlugin {
             ["attr", "values"] => self.cmd_attr_values(args),
             ["attr", "show"] => self.cmd_attr_show(args),
             ["attr", "explain"] => self.cmd_attr_explain(args),
+            // Novelty commands
+            ["novelty", "status"] => self.cmd_novelty_status(args),
+            ["novelty", "clusters"] => self.cmd_novelty_clusters(args),
+            ["novelty", "cluster"] => self.cmd_novelty_cluster(args),
+            ["novelty", "fingerprints"] => self.cmd_novelty_fingerprints(args),
+            ["novelty", "mark-known"] => self.cmd_novelty_mark_known(args),
+            ["novelty", "reset"] => self.cmd_novelty_reset(args),
             _ => Err(PluginError::UnknownCommand(path.join(" "))),
         }
     }
@@ -844,6 +852,15 @@ impl Plugin for GroovePlugin {
             (HttpMethod::Get, "/dashboard/strategy/overrides") => {
                 self.route_dashboard_strategy_overrides()
             }
+            // Novelty routes
+            (HttpMethod::Get, "/novelty/status") => self.route_novelty_status(),
+            (HttpMethod::Get, "/novelty/clusters") => self.route_novelty_clusters(&request),
+            (HttpMethod::Get, "/novelty/clusters/:id") => self.route_novelty_cluster(&request),
+            (HttpMethod::Get, "/novelty/fingerprints") => self.route_novelty_fingerprints(&request),
+            (HttpMethod::Post, "/novelty/mark-known/:hash") => {
+                self.route_novelty_mark_known(&request)
+            }
+            (HttpMethod::Post, "/novelty/reset") => self.route_novelty_reset(&request),
             _ => Err(PluginError::UnknownRoute(format!("{:?} {}", method, path))),
         }
     }
@@ -1087,6 +1104,60 @@ impl GroovePlugin {
                     required: true,
                 },
             ],
+        })?;
+
+        // novelty status
+        ctx.register_command(CommandSpec {
+            path: vec!["novelty".into(), "status".into()],
+            description: "Show novelty detection status".into(),
+            args: vec![],
+        })?;
+
+        // novelty clusters
+        ctx.register_command(CommandSpec {
+            path: vec!["novelty".into(), "clusters".into()],
+            description: "List anomaly clusters".into(),
+            args: vec![],
+        })?;
+
+        // novelty cluster <id>
+        ctx.register_command(CommandSpec {
+            path: vec!["novelty".into(), "cluster".into()],
+            description: "Show cluster details".into(),
+            args: vec![ArgSpec {
+                name: "id".into(),
+                description: "Cluster ID (UUID)".into(),
+                required: true,
+            }],
+        })?;
+
+        // novelty fingerprints
+        ctx.register_command(CommandSpec {
+            path: vec!["novelty".into(), "fingerprints".into()],
+            description: "List known fingerprints".into(),
+            args: vec![],
+        })?;
+
+        // novelty mark-known <hash>
+        ctx.register_command(CommandSpec {
+            path: vec!["novelty".into(), "mark-known".into()],
+            description: "Mark a fingerprint as known".into(),
+            args: vec![ArgSpec {
+                name: "hash".into(),
+                description: "Pattern hash to mark as known".into(),
+                required: true,
+            }],
+        })?;
+
+        // novelty reset
+        ctx.register_command(CommandSpec {
+            path: vec!["novelty".into(), "reset".into()],
+            description: "Reset all novelty data".into(),
+            args: vec![ArgSpec {
+                name: "confirm".into(),
+                description: "Type 'yes' to confirm reset".into(),
+                required: true,
+            }],
         })?;
 
         // strategy status
@@ -1355,6 +1426,37 @@ impl GroovePlugin {
         ctx.register_route(RouteSpec {
             method: HttpMethod::Get,
             path: "/dashboard/strategy/overrides".into(),
+        })?;
+
+        // Novelty routes
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Get,
+            path: "/novelty/status".into(),
+        })?;
+
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Get,
+            path: "/novelty/clusters".into(),
+        })?;
+
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Get,
+            path: "/novelty/clusters/:id".into(),
+        })?;
+
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Get,
+            path: "/novelty/fingerprints".into(),
+        })?;
+
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Post,
+            path: "/novelty/mark-known/:hash".into(),
+        })?;
+
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Post,
+            path: "/novelty/reset".into(),
         })?;
 
         Ok(())
@@ -2864,6 +2966,306 @@ impl GroovePlugin {
         Ok(CommandOutput::Text(output))
     }
 
+    // ─── Novelty Commands ─────────────────────────────────────────────
+
+    fn cmd_novelty_status(
+        &self,
+        args: &vibes_plugin_api::CommandArgs,
+    ) -> Result<CommandOutput, PluginError> {
+        if Self::wants_help(&args.args) {
+            return Ok(CommandOutput::Text(
+                "Usage: vibes groove novelty status\n\n\
+                 Show novelty detection status.\n"
+                    .to_string(),
+            ));
+        }
+
+        let paths = GroovePaths::default();
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            let fingerprints = store.get_fingerprints().await.unwrap_or_default();
+            let clusters = store.get_clusters().await.unwrap_or_default();
+
+            let mut output = String::new();
+            output.push_str("Novelty Detection Status\n");
+            output.push_str("========================================\n\n");
+            output.push_str(&format!("Known patterns:    {}\n", fingerprints.len()));
+            output.push_str(&format!("Active clusters:   {}\n", clusters.len()));
+            output.push_str(&format!(
+                "Total members:     {}\n",
+                clusters.iter().map(|c| c.members.len()).sum::<usize>()
+            ));
+
+            Ok(CommandOutput::Text(output))
+        })
+    }
+
+    fn cmd_novelty_clusters(
+        &self,
+        args: &vibes_plugin_api::CommandArgs,
+    ) -> Result<CommandOutput, PluginError> {
+        if Self::wants_help(&args.args) {
+            return Ok(CommandOutput::Text(
+                "Usage: vibes groove novelty clusters\n\n\
+                 List all anomaly clusters.\n"
+                    .to_string(),
+            ));
+        }
+
+        let paths = GroovePaths::default();
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            let clusters = store.get_clusters().await.unwrap_or_default();
+
+            if clusters.is_empty() {
+                return Ok(CommandOutput::Text("No clusters found.\n".to_string()));
+            }
+
+            let mut output = String::new();
+            output.push_str("Anomaly Clusters\n");
+            output.push_str("========================================\n\n");
+
+            for cluster in &clusters {
+                output.push_str(&format!(
+                    "{}\n  Members: {}  Created: {}  Last seen: {}\n\n",
+                    cluster.id,
+                    cluster.members.len(),
+                    cluster.created_at.format("%Y-%m-%d %H:%M"),
+                    cluster.last_seen.format("%Y-%m-%d %H:%M"),
+                ));
+            }
+
+            Ok(CommandOutput::Text(output))
+        })
+    }
+
+    fn cmd_novelty_cluster(
+        &self,
+        args: &vibes_plugin_api::CommandArgs,
+    ) -> Result<CommandOutput, PluginError> {
+        if Self::wants_help(&args.args) {
+            return Ok(CommandOutput::Text(
+                "Usage: vibes groove novelty cluster <id>\n\n\
+                 Show cluster details.\n\n\
+                 Arguments:\n\
+                   <id>  Cluster ID (UUID)\n"
+                    .to_string(),
+            ));
+        }
+
+        let id_str = args
+            .args
+            .first()
+            .ok_or_else(|| PluginError::custom("Missing cluster ID"))?;
+
+        let id: ClusterId = id_str
+            .parse()
+            .map_err(|_| PluginError::custom("Invalid cluster ID (must be UUID)"))?;
+
+        let paths = GroovePaths::default();
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            match store.get_cluster(id).await {
+                Ok(Some(cluster)) => {
+                    let mut output = String::new();
+                    output.push_str(&format!("Cluster: {}\n", cluster.id));
+                    output.push_str("========================================\n\n");
+                    output.push_str(&format!(
+                        "Created:   {}\n",
+                        cluster.created_at.format("%Y-%m-%d %H:%M:%S")
+                    ));
+                    output.push_str(&format!(
+                        "Last seen: {}\n",
+                        cluster.last_seen.format("%Y-%m-%d %H:%M:%S")
+                    ));
+                    output.push_str(&format!("Members:   {}\n\n", cluster.members.len()));
+
+                    if !cluster.members.is_empty() {
+                        output.push_str("Member Fingerprints:\n");
+                        for member in &cluster.members {
+                            output.push_str(&format!(
+                                "  - Hash: {}  Context: {}\n",
+                                member.hash,
+                                member.context_summary.chars().take(50).collect::<String>()
+                            ));
+                        }
+                    }
+
+                    Ok(CommandOutput::Text(output))
+                }
+                Ok(None) => Err(PluginError::custom(format!("Cluster not found: {}", id))),
+                Err(e) => Err(PluginError::custom(format!(
+                    "Failed to fetch cluster: {}",
+                    e
+                ))),
+            }
+        })
+    }
+
+    fn cmd_novelty_fingerprints(
+        &self,
+        args: &vibes_plugin_api::CommandArgs,
+    ) -> Result<CommandOutput, PluginError> {
+        if Self::wants_help(&args.args) {
+            return Ok(CommandOutput::Text(
+                "Usage: vibes groove novelty fingerprints\n\n\
+                 List known fingerprints.\n"
+                    .to_string(),
+            ));
+        }
+
+        let paths = GroovePaths::default();
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            let fingerprints = store.get_fingerprints().await.unwrap_or_default();
+
+            if fingerprints.is_empty() {
+                return Ok(CommandOutput::Text("No known fingerprints.\n".to_string()));
+            }
+
+            let mut output = String::new();
+            output.push_str("Known Fingerprints\n");
+            output.push_str("========================================\n\n");
+
+            for fp in &fingerprints {
+                output.push_str(&format!(
+                    "Hash: {}  Created: {}\n  Context: {}\n\n",
+                    fp.hash,
+                    fp.created_at.format("%Y-%m-%d %H:%M"),
+                    fp.context_summary.chars().take(60).collect::<String>()
+                ));
+            }
+
+            Ok(CommandOutput::Text(output))
+        })
+    }
+
+    fn cmd_novelty_mark_known(
+        &self,
+        args: &vibes_plugin_api::CommandArgs,
+    ) -> Result<CommandOutput, PluginError> {
+        if Self::wants_help(&args.args) {
+            return Ok(CommandOutput::Text(
+                "Usage: vibes groove novelty mark-known <hash>\n\n\
+                 Mark a pattern as known.\n\n\
+                 Arguments:\n\
+                   <hash>  Pattern hash to mark as known\n"
+                    .to_string(),
+            ));
+        }
+
+        let hash_str = args
+            .args
+            .first()
+            .ok_or_else(|| PluginError::custom("Missing pattern hash"))?;
+
+        let hash: u64 = hash_str
+            .parse()
+            .map_err(|_| PluginError::custom("Invalid hash (must be numeric)"))?;
+
+        let paths = GroovePaths::default();
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            // Create a simple fingerprint with the given hash
+            let fingerprint = PatternFingerprint::new(
+                hash,
+                vec![0.0; 384], // Placeholder embedding
+                format!("Manually marked as known (hash: {})", hash),
+            );
+
+            store
+                .save_fingerprint(&fingerprint)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to save fingerprint: {}", e)))?;
+
+            Ok(CommandOutput::Text(format!(
+                "Marked pattern {} as known.\n",
+                hash
+            )))
+        })
+    }
+
+    fn cmd_novelty_reset(
+        &self,
+        args: &vibes_plugin_api::CommandArgs,
+    ) -> Result<CommandOutput, PluginError> {
+        if Self::wants_help(&args.args) {
+            return Ok(CommandOutput::Text(
+                "Usage: vibes groove novelty reset <confirm>\n\n\
+                 Reset all novelty data.\n\n\
+                 Arguments:\n\
+                   <confirm>  Type 'yes' to confirm reset\n"
+                    .to_string(),
+            ));
+        }
+
+        let confirm = args.args.first().map(String::as_str).unwrap_or("");
+
+        if confirm != "yes" {
+            return Ok(CommandOutput::Text(
+                "Reset aborted. Type 'yes' to confirm: vibes groove novelty reset yes\n"
+                    .to_string(),
+            ));
+        }
+
+        let paths = GroovePaths::default();
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            // Get all clusters and delete them
+            let clusters = store.get_clusters().await.unwrap_or_default();
+            let cluster_count = clusters.len();
+
+            for cluster in clusters {
+                let _ = store.delete_cluster(cluster.id).await;
+            }
+
+            // Note: We don't delete fingerprints as they represent learned known patterns
+            // Only clusters (novel patterns) are reset
+
+            Ok(CommandOutput::Text(format!(
+                "Reset complete. Deleted {} clusters.\n\
+                 Note: Known fingerprints were preserved.\n",
+                cluster_count
+            )))
+        })
+    }
+
     // ─── Route Handlers ───────────────────────────────────────────────
 
     fn route_get_policy(&self) -> Result<RouteResponse, PluginError> {
@@ -4334,6 +4736,172 @@ impl GroovePlugin {
             200,
             &DashboardData::StrategyOverrides(StrategyOverridesData::default()),
         )
+    }
+
+    // ─── Novelty Route Handlers ───────────────────────────────────────
+
+    fn route_novelty_status(&self) -> Result<RouteResponse, PluginError> {
+        let paths = GroovePaths::default();
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            let fingerprints = store.get_fingerprints().await.unwrap_or_default();
+            let clusters = store.get_clusters().await.unwrap_or_default();
+
+            #[derive(Serialize)]
+            struct NoveltyStatusResponse {
+                known_patterns: usize,
+                active_clusters: usize,
+                total_members: usize,
+            }
+
+            RouteResponse::json(
+                200,
+                &NoveltyStatusResponse {
+                    known_patterns: fingerprints.len(),
+                    active_clusters: clusters.len(),
+                    total_members: clusters.iter().map(|c| c.members.len()).sum(),
+                },
+            )
+        })
+    }
+
+    fn route_novelty_clusters(
+        &self,
+        _request: &RouteRequest,
+    ) -> Result<RouteResponse, PluginError> {
+        let paths = GroovePaths::default();
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            let clusters: Vec<AnomalyCluster> = store.get_clusters().await.unwrap_or_default();
+            RouteResponse::json(200, &clusters)
+        })
+    }
+
+    fn route_novelty_cluster(&self, request: &RouteRequest) -> Result<RouteResponse, PluginError> {
+        let id_str = request
+            .params
+            .get("id")
+            .ok_or_else(|| PluginError::InvalidInput("Missing cluster ID".into()))?;
+
+        let id: ClusterId = id_str
+            .parse()
+            .map_err(|_| PluginError::InvalidInput("Invalid cluster ID (must be UUID)".into()))?;
+
+        let paths = GroovePaths::default();
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            match store.get_cluster(id).await {
+                Ok(Some(cluster)) => RouteResponse::json(200, &cluster),
+                Ok(None) => {
+                    RouteResponse::json(404, &serde_json::json!({"error": "Cluster not found"}))
+                }
+                Err(e) => Err(PluginError::custom(format!(
+                    "Failed to fetch cluster: {}",
+                    e
+                ))),
+            }
+        })
+    }
+
+    fn route_novelty_fingerprints(
+        &self,
+        _request: &RouteRequest,
+    ) -> Result<RouteResponse, PluginError> {
+        let paths = GroovePaths::default();
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            let fingerprints: Vec<PatternFingerprint> =
+                store.get_fingerprints().await.unwrap_or_default();
+            RouteResponse::json(200, &fingerprints)
+        })
+    }
+
+    fn route_novelty_mark_known(
+        &self,
+        request: &RouteRequest,
+    ) -> Result<RouteResponse, PluginError> {
+        let hash_str = request
+            .params
+            .get("hash")
+            .ok_or_else(|| PluginError::InvalidInput("Missing hash parameter".into()))?;
+
+        let hash: u64 = hash_str
+            .parse()
+            .map_err(|_| PluginError::InvalidInput("Invalid hash (must be numeric)".into()))?;
+
+        let paths = GroovePaths::default();
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            let fingerprint = PatternFingerprint::new(
+                hash,
+                vec![0.0; 384],
+                format!("Manually marked as known (hash: {})", hash),
+            );
+
+            store
+                .save_fingerprint(&fingerprint)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to save fingerprint: {}", e)))?;
+
+            RouteResponse::json(200, &serde_json::json!({"marked_known": hash}))
+        })
+    }
+
+    fn route_novelty_reset(&self, _request: &RouteRequest) -> Result<RouteResponse, PluginError> {
+        let paths = GroovePaths::default();
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            let clusters = store.get_clusters().await.unwrap_or_default();
+            let cluster_count = clusters.len();
+
+            for cluster in clusters {
+                let _ = store.delete_cluster(cluster.id).await;
+            }
+
+            RouteResponse::json(
+                200,
+                &serde_json::json!({
+                    "reset": true,
+                    "clusters_deleted": cluster_count
+                }),
+            )
+        })
     }
 }
 
@@ -5860,5 +6428,224 @@ mod tests {
 
         let data: serde_json::Value = serde_json::from_slice(&result.body).unwrap();
         assert_eq!(data["data_type"], "strategy_overrides");
+    }
+
+    // ─── Novelty Tests ────────────────────────────────────────────────
+
+    #[test]
+    fn test_novelty_commands_registered() {
+        let mut plugin = GroovePlugin::default();
+        let mut ctx = create_test_context();
+
+        plugin.on_load(&mut ctx).unwrap();
+
+        let commands = ctx.pending_commands();
+        let paths: Vec<_> = commands.iter().map(|c| c.path.join(" ")).collect();
+
+        let expected_novelty_commands = [
+            "novelty status",
+            "novelty clusters",
+            "novelty cluster",
+            "novelty fingerprints",
+            "novelty mark-known",
+            "novelty reset",
+        ];
+
+        for cmd in expected_novelty_commands {
+            assert!(
+                paths.contains(&cmd.to_string()),
+                "Expected novelty command '{}' not found. Registered: {:?}",
+                cmd,
+                paths
+            );
+        }
+    }
+
+    #[test]
+    fn test_novelty_routes_registered() {
+        let mut plugin = GroovePlugin::default();
+        let mut ctx = create_test_context();
+
+        plugin.on_load(&mut ctx).unwrap();
+
+        let routes = ctx.pending_routes();
+        let paths: Vec<_> = routes.iter().map(|r| r.path.clone()).collect();
+
+        let expected_novelty_routes = [
+            "/novelty/status",
+            "/novelty/clusters",
+            "/novelty/clusters/:id",
+            "/novelty/fingerprints",
+            "/novelty/mark-known/:hash",
+            "/novelty/reset",
+        ];
+
+        for route in expected_novelty_routes {
+            assert!(
+                paths.contains(&route.to_string()),
+                "Expected novelty route '{}' not found. Registered: {:?}",
+                route,
+                paths
+            );
+        }
+    }
+
+    #[test]
+    fn test_cmd_novelty_status_help() {
+        let plugin = GroovePlugin::default();
+        let mut args = vibes_plugin_api::CommandArgs::default();
+        args.args.push("--help".into());
+
+        let result = plugin.cmd_novelty_status(&args).unwrap();
+
+        match result {
+            CommandOutput::Text(text) => {
+                assert!(text.contains("Usage:"));
+                assert!(text.contains("novelty status"));
+            }
+            _ => panic!("Expected Text output"),
+        }
+    }
+
+    #[test]
+    fn test_cmd_novelty_clusters_help() {
+        let plugin = GroovePlugin::default();
+        let mut args = vibes_plugin_api::CommandArgs::default();
+        args.args.push("--help".into());
+
+        let result = plugin.cmd_novelty_clusters(&args).unwrap();
+
+        match result {
+            CommandOutput::Text(text) => {
+                assert!(text.contains("Usage:"));
+                assert!(text.contains("novelty clusters"));
+            }
+            _ => panic!("Expected Text output"),
+        }
+    }
+
+    #[test]
+    fn test_cmd_novelty_cluster_help() {
+        let plugin = GroovePlugin::default();
+        let mut args = vibes_plugin_api::CommandArgs::default();
+        args.args.push("--help".into());
+
+        let result = plugin.cmd_novelty_cluster(&args).unwrap();
+
+        match result {
+            CommandOutput::Text(text) => {
+                assert!(text.contains("Usage:"));
+                assert!(text.contains("novelty cluster"));
+                assert!(text.contains("<id>"));
+            }
+            _ => panic!("Expected Text output"),
+        }
+    }
+
+    #[test]
+    fn test_cmd_novelty_fingerprints_help() {
+        let plugin = GroovePlugin::default();
+        let mut args = vibes_plugin_api::CommandArgs::default();
+        args.args.push("--help".into());
+
+        let result = plugin.cmd_novelty_fingerprints(&args).unwrap();
+
+        match result {
+            CommandOutput::Text(text) => {
+                assert!(text.contains("Usage:"));
+                assert!(text.contains("novelty fingerprints"));
+            }
+            _ => panic!("Expected Text output"),
+        }
+    }
+
+    #[test]
+    fn test_cmd_novelty_mark_known_help() {
+        let plugin = GroovePlugin::default();
+        let mut args = vibes_plugin_api::CommandArgs::default();
+        args.args.push("--help".into());
+
+        let result = plugin.cmd_novelty_mark_known(&args).unwrap();
+
+        match result {
+            CommandOutput::Text(text) => {
+                assert!(text.contains("Usage:"));
+                assert!(text.contains("mark-known"));
+                assert!(text.contains("<hash>"));
+            }
+            _ => panic!("Expected Text output"),
+        }
+    }
+
+    #[test]
+    fn test_cmd_novelty_reset_help() {
+        let plugin = GroovePlugin::default();
+        let mut args = vibes_plugin_api::CommandArgs::default();
+        args.args.push("--help".into());
+
+        let result = plugin.cmd_novelty_reset(&args).unwrap();
+
+        match result {
+            CommandOutput::Text(text) => {
+                assert!(text.contains("Usage:"));
+                assert!(text.contains("novelty reset"));
+                assert!(text.contains("confirm"));
+            }
+            _ => panic!("Expected Text output"),
+        }
+    }
+
+    #[test]
+    fn test_cmd_novelty_reset_requires_confirmation() {
+        let plugin = GroovePlugin::default();
+        let args = vibes_plugin_api::CommandArgs::default();
+
+        let result = plugin.cmd_novelty_reset(&args).unwrap();
+
+        match result {
+            CommandOutput::Text(text) => {
+                assert!(text.contains("Reset aborted"));
+                assert!(text.contains("yes"));
+            }
+            _ => panic!("Expected Text output"),
+        }
+    }
+
+    #[test]
+    fn test_cmd_novelty_cluster_missing_id() {
+        let plugin = GroovePlugin::default();
+        let args = vibes_plugin_api::CommandArgs::default();
+
+        let result = plugin.cmd_novelty_cluster(&args);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_cmd_novelty_cluster_invalid_id() {
+        let plugin = GroovePlugin::default();
+        let mut args = vibes_plugin_api::CommandArgs::default();
+        args.args.push("not-a-uuid".into());
+
+        let result = plugin.cmd_novelty_cluster(&args);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_cmd_novelty_mark_known_missing_hash() {
+        let plugin = GroovePlugin::default();
+        let args = vibes_plugin_api::CommandArgs::default();
+
+        let result = plugin.cmd_novelty_mark_known(&args);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_cmd_novelty_mark_known_invalid_hash() {
+        let plugin = GroovePlugin::default();
+        let mut args = vibes_plugin_api::CommandArgs::default();
+        args.args.push("not-a-number".into());
+
+        let result = plugin.cmd_novelty_mark_known(&args);
+        assert!(result.is_err());
     }
 }
