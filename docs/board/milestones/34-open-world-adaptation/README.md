@@ -1,7 +1,7 @@
 ---
 id: 34-open-world-adaptation
 title: Open World Adaptation
-status: planned
+status: done
 epics: [plugin-system]
 ---
 

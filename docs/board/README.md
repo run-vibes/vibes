@@ -12,7 +12,6 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
 | [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli |
-| [feat-0063-openworld-config](stages/backlog/stories/feat-0063-openworld-config.md) | feat | high | plugin-system |
 | [feat-0071-setup-wizard-infrastructure](stages/backlog/stories/feat-0071-setup-wizard-infrastructure.md) | feat |  |  |
 | [feat-0072-cloudflared-state-detection](stages/backlog/stories/feat-0072-cloudflared-state-detection.md) | feat |  |  |
 | [feat-0073-tunnel-wizard-quick-mode](stages/backlog/stories/feat-0073-tunnel-wizard-quick-mode.md) | feat |  |  |
@@ -76,7 +75,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [31-attribution-engine](milestones/31-attribution-engine/) | done | plugin-system |
 | [32-adaptive-strategies](milestones/32-adaptive-strategies/) | done | plugin-system |
 | [33-groove-dashboard](milestones/33-groove-dashboard/) | in-progress | plugin-system |
-| [34-open-world-adaptation](milestones/34-open-world-adaptation/) | planned | plugin-system |
+| [34-open-world-adaptation](milestones/34-open-world-adaptation/) | done | plugin-system |
 | [35-setup-wizards](milestones/35-setup-wizards/) | planned | cli |
 | [36-default-plugins](milestones/36-default-plugins/) | planned | plugin-system |
 | [37-cli-enhancements](milestones/37-cli-enhancements/) | planned | cli |
@@ -163,6 +162,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 - [feat-0060-openworld-consumer](stages/done/stories/feat-0060-openworld-consumer.md)
 - [feat-0061-cli-novelty](stages/done/stories/feat-0061-cli-novelty.md)
 - [feat-0062-cli-gaps](stages/done/stories/feat-0062-cli-gaps.md)
+- [feat-0063-openworld-config](stages/done/stories/feat-0063-openworld-config.md)
 - [feat-0064-visual-regression](stages/done/stories/feat-0064-visual-regression.md)
 - [feat-0065-workflow-videos](stages/done/stories/feat-0065-workflow-videos.md)
 - [feat-0066-cli-recording](stages/done/stories/feat-0066-cli-recording.md)
