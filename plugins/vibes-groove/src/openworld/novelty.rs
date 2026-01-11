@@ -9,6 +9,7 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 use std::sync::Arc;
 
 use chrono::Utc;
+use serde::{Deserialize, Serialize};
 use tracing::{debug, instrument};
 
 use crate::error::Result;
@@ -20,7 +21,7 @@ use super::traits::OpenWorldStore;
 use super::types::{AnomalyCluster, ClusterId, NoveltyResult, PatternFingerprint};
 
 /// Configuration for the novelty detector
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NoveltyConfig {
     /// Initial similarity threshold (0.0-1.0)
     pub initial_threshold: f64,
