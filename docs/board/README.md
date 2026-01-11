@@ -12,7 +12,6 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
 | [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli |
-| [feat-0059-openworld-store](stages/backlog/stories/feat-0059-openworld-store.md) | feat | high | plugin-system |
 | [feat-0060-openworld-consumer](stages/backlog/stories/feat-0060-openworld-consumer.md) | feat | high | plugin-system |
 | [feat-0061-cli-novelty](stages/backlog/stories/feat-0061-cli-novelty.md) | feat | medium | plugin-system |
 | [feat-0062-cli-gaps](stages/backlog/stories/feat-0062-cli-gaps.md) | feat | medium | plugin-system |
@@ -163,6 +162,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 - [feat-0056-graduated-response](stages/done/stories/feat-0056-graduated-response.md)
 - [feat-0057-solution-generator](stages/done/stories/feat-0057-solution-generator.md)
 - [feat-0058-openworld-hook](stages/done/stories/feat-0058-openworld-hook.md)
+- [feat-0059-openworld-store](stages/done/stories/feat-0059-openworld-store.md)
 - [feat-0064-visual-regression](stages/done/stories/feat-0064-visual-regression.md)
 - [feat-0065-workflow-videos](stages/done/stories/feat-0065-workflow-videos.md)
 - [feat-0066-cli-recording](stages/done/stories/feat-0066-cli-recording.md)

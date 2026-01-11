@@ -224,6 +224,20 @@ impl GapCategory {
     }
 }
 
+impl std::str::FromStr for GapCategory {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "missing_knowledge" => Ok(Self::MissingKnowledge),
+            "incorrect_pattern" => Ok(Self::IncorrectPattern),
+            "context_mismatch" => Ok(Self::ContextMismatch),
+            "tool_gap" => Ok(Self::ToolGap),
+            _ => Err(format!("Unknown gap category: {}", s)),
+        }
+    }
+}
+
 /// Severity level of a capability gap
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub enum GapSeverity {
@@ -248,6 +262,20 @@ impl GapSeverity {
             Self::Medium => "medium",
             Self::High => "high",
             Self::Critical => "critical",
+        }
+    }
+}
+
+impl std::str::FromStr for GapSeverity {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "low" => Ok(Self::Low),
+            "medium" => Ok(Self::Medium),
+            "high" => Ok(Self::High),
+            "critical" => Ok(Self::Critical),
+            _ => Err(format!("Unknown gap severity: {}", s)),
         }
     }
 }
@@ -280,6 +308,21 @@ impl GapStatus {
             Self::InProgress => "in_progress",
             Self::Resolved => "resolved",
             Self::Dismissed => "dismissed",
+        }
+    }
+}
+
+impl std::str::FromStr for GapStatus {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "detected" => Ok(Self::Detected),
+            "confirmed" => Ok(Self::Confirmed),
+            "in_progress" => Ok(Self::InProgress),
+            "resolved" => Ok(Self::Resolved),
+            "dismissed" => Ok(Self::Dismissed),
+            _ => Err(format!("Unknown gap status: {}", s)),
         }
     }
 }
@@ -353,6 +396,20 @@ impl FailureType {
             Self::NegativeAttribution => "negative_attribution",
             Self::LowConfidence => "low_confidence",
             Self::ExplicitFeedback => "explicit_feedback",
+        }
+    }
+}
+
+impl std::str::FromStr for FailureType {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "learning_not_activated" => Ok(Self::LearningNotActivated),
+            "negative_attribution" => Ok(Self::NegativeAttribution),
+            "low_confidence" => Ok(Self::LowConfidence),
+            "explicit_feedback" => Ok(Self::ExplicitFeedback),
+            _ => Err(format!("Unknown failure type: {}", s)),
         }
     }
 }
@@ -482,6 +539,19 @@ impl SolutionSource {
             Self::Template => "template",
             Self::PatternAnalysis => "pattern_analysis",
             Self::UserSuggestion => "user_suggestion",
+        }
+    }
+}
+
+impl std::str::FromStr for SolutionSource {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "template" => Ok(Self::Template),
+            "pattern_analysis" => Ok(Self::PatternAnalysis),
+            "user_suggestion" => Ok(Self::UserSuggestion),
+            _ => Err(format!("Unknown solution source: {}", s)),
         }
     }
 }

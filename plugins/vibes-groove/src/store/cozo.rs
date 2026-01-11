@@ -63,7 +63,7 @@ impl CozoStore {
 
     /// Get current schema version from database
     pub async fn get_schema_version(&self) -> Result<u32> {
-        let query = "?[version] := *schema_version{version}, version = max(version)";
+        let query = "?[max(version)] := *schema_version{version}";
 
         match self.run_query(query, Default::default()).await {
             Ok(rows) if !rows.rows.is_empty() => {
@@ -1194,6 +1194,593 @@ impl CozoStore {
             .ok_or_else(|| GrooveError::Database("Invalid count type".into()))?;
 
         Ok(count as u64)
+    }
+}
+
+// =============================================================================
+// OpenWorldStore Implementation
+// =============================================================================
+
+use async_trait::async_trait;
+
+use crate::assessment::SessionId;
+use crate::openworld::{
+    AnomalyCluster, CapabilityGap, ClusterId, FailureRecord, GapCategory, GapId, GapSeverity,
+    GapStatus, OpenWorldEvent, OpenWorldStore, PatternFingerprint, SuggestedSolution,
+};
+
+#[async_trait]
+impl OpenWorldStore for CozoStore {
+    // =========================================================================
+    // Pattern Fingerprints
+    // =========================================================================
+
+    async fn save_fingerprint(&self, fingerprint: &PatternFingerprint) -> Result<()> {
+        let embedding_json = serde_json::to_string(&fingerprint.embedding)
+            .map_err(|e| GrooveError::Serialization(e.to_string()))?
+            .replace('\'', "''");
+        let context_summary = fingerprint.context_summary.replace('\'', "''");
+        let created_at = fingerprint.created_at.timestamp();
+
+        let query = format!(
+            r#"?[hash, embedding_json, context_summary, created_at] <- [[
+                {}, '{}', '{}', {}
+            ]]
+            :put pattern_fingerprint {{
+                hash => embedding_json, context_summary, created_at
+            }}"#,
+            fingerprint.hash, embedding_json, context_summary, created_at
+        );
+
+        self.run_mutation(&query, Default::default()).await?;
+        Ok(())
+    }
+
+    async fn get_fingerprints(&self) -> Result<Vec<PatternFingerprint>> {
+        let query = r#"?[hash, embedding_json, context_summary, created_at] :=
+            *pattern_fingerprint{hash, embedding_json, context_summary, created_at}"#;
+
+        let rows = self.run_query(query, Default::default()).await?;
+
+        let mut fingerprints = Vec::new();
+        for row in &rows.rows {
+            if let Some(fp) = self.row_to_fingerprint(row)? {
+                fingerprints.push(fp);
+            }
+        }
+
+        Ok(fingerprints)
+    }
+
+    async fn find_fingerprints_by_hash(&self, hash: u64) -> Result<Vec<PatternFingerprint>> {
+        let query = format!(
+            r#"?[hash, embedding_json, context_summary, created_at] :=
+                *pattern_fingerprint{{hash, embedding_json, context_summary, created_at}},
+                hash = {}"#,
+            hash
+        );
+
+        let rows = self.run_query(&query, Default::default()).await?;
+
+        let mut fingerprints = Vec::new();
+        for row in &rows.rows {
+            if let Some(fp) = self.row_to_fingerprint(row)? {
+                fingerprints.push(fp);
+            }
+        }
+
+        Ok(fingerprints)
+    }
+
+    // =========================================================================
+    // Anomaly Clusters
+    // =========================================================================
+
+    async fn save_cluster(&self, cluster: &AnomalyCluster) -> Result<()> {
+        let centroid_json = serde_json::to_string(&cluster.centroid)
+            .map_err(|e| GrooveError::Serialization(e.to_string()))?
+            .replace('\'', "''");
+        let members_json = serde_json::to_string(&cluster.members)
+            .map_err(|e| GrooveError::Serialization(e.to_string()))?
+            .replace('\'', "''");
+        let created_at = cluster.created_at.timestamp();
+        let last_seen = cluster.last_seen.timestamp();
+
+        let query = format!(
+            r#"?[id, centroid_json, members_json, created_at, last_seen] <- [[
+                '{}', '{}', '{}', {}, {}
+            ]]
+            :put anomaly_cluster {{
+                id => centroid_json, members_json, created_at, last_seen
+            }}"#,
+            cluster.id, centroid_json, members_json, created_at, last_seen
+        );
+
+        self.run_mutation(&query, Default::default()).await?;
+        Ok(())
+    }
+
+    async fn get_cluster(&self, id: ClusterId) -> Result<Option<AnomalyCluster>> {
+        let query = format!(
+            r#"?[id, centroid_json, members_json, created_at, last_seen] :=
+                *anomaly_cluster{{id, centroid_json, members_json, created_at, last_seen}},
+                id = '{}'"#,
+            id
+        );
+
+        let rows = self.run_query(&query, Default::default()).await?;
+
+        if rows.rows.is_empty() {
+            return Ok(None);
+        }
+
+        self.row_to_cluster(&rows.rows[0])
+    }
+
+    async fn get_clusters(&self) -> Result<Vec<AnomalyCluster>> {
+        let query = r#"?[id, centroid_json, members_json, created_at, last_seen] :=
+            *anomaly_cluster{id, centroid_json, members_json, created_at, last_seen}"#;
+
+        let rows = self.run_query(query, Default::default()).await?;
+
+        let mut clusters = Vec::new();
+        for row in &rows.rows {
+            if let Some(cluster) = self.row_to_cluster(row)? {
+                clusters.push(cluster);
+            }
+        }
+
+        Ok(clusters)
+    }
+
+    async fn delete_cluster(&self, id: ClusterId) -> Result<()> {
+        let query = format!("?[id] <- [['{}']]:rm anomaly_cluster {{id}}", id);
+        self.run_mutation(&query, Default::default()).await?;
+        Ok(())
+    }
+
+    // =========================================================================
+    // Capability Gaps
+    // =========================================================================
+
+    async fn save_gap(&self, gap: &CapabilityGap) -> Result<()> {
+        let solutions_json = serde_json::to_string(&gap.suggested_solutions)
+            .map_err(|e| GrooveError::Serialization(e.to_string()))?
+            .replace('\'', "''");
+        let context_pattern = gap.context_pattern.replace('\'', "''");
+
+        let query = format!(
+            r#"?[id, category, severity, status, context_pattern, failure_count, first_seen, last_seen, solutions_json] <- [[
+                '{}', '{}', '{}', '{}', '{}', {}, {}, {}, '{}'
+            ]]
+            :put capability_gap {{
+                id => category, severity, status, context_pattern, failure_count, first_seen, last_seen, solutions_json
+            }}"#,
+            gap.id,
+            gap.category.as_str(),
+            gap.severity.as_str(),
+            gap.status.as_str(),
+            context_pattern,
+            gap.failure_count,
+            gap.first_seen.timestamp(),
+            gap.last_seen.timestamp(),
+            solutions_json
+        );
+
+        self.run_mutation(&query, Default::default()).await?;
+        Ok(())
+    }
+
+    async fn get_gap(&self, id: GapId) -> Result<Option<CapabilityGap>> {
+        let query = format!(
+            r#"?[id, category, severity, status, context_pattern, failure_count, first_seen, last_seen, solutions_json] :=
+                *capability_gap{{id, category, severity, status, context_pattern, failure_count, first_seen, last_seen, solutions_json}},
+                id = '{}'"#,
+            id
+        );
+
+        let rows = self.run_query(&query, Default::default()).await?;
+
+        if rows.rows.is_empty() {
+            return Ok(None);
+        }
+
+        self.row_to_gap(&rows.rows[0])
+    }
+
+    async fn get_gaps(&self, status: Option<GapStatus>) -> Result<Vec<CapabilityGap>> {
+        let query = if let Some(status) = status {
+            format!(
+                r#"?[id, category, severity, status, context_pattern, failure_count, first_seen, last_seen, solutions_json] :=
+                    *capability_gap{{id, category, severity, status, context_pattern, failure_count, first_seen, last_seen, solutions_json}},
+                    status = '{}'"#,
+                status.as_str()
+            )
+        } else {
+            r#"?[id, category, severity, status, context_pattern, failure_count, first_seen, last_seen, solutions_json] :=
+                *capability_gap{id, category, severity, status, context_pattern, failure_count, first_seen, last_seen, solutions_json}"#.to_string()
+        };
+
+        let rows = self.run_query(&query, Default::default()).await?;
+
+        let mut gaps = Vec::new();
+        for row in &rows.rows {
+            if let Some(gap) = self.row_to_gap(row)? {
+                gaps.push(gap);
+            }
+        }
+
+        Ok(gaps)
+    }
+
+    async fn update_gap_status(&self, id: GapId, status: GapStatus) -> Result<()> {
+        // First get the existing gap
+        let existing = self.get_gap(id).await?;
+        if let Some(mut gap) = existing {
+            gap.status = status;
+            gap.last_seen = Utc::now();
+            self.save_gap(&gap).await?;
+        }
+        Ok(())
+    }
+
+    async fn add_gap_solutions(&self, id: GapId, solutions: Vec<SuggestedSolution>) -> Result<()> {
+        // First get the existing gap
+        let existing = self.get_gap(id).await?;
+        if let Some(mut gap) = existing {
+            gap.suggested_solutions.extend(solutions);
+            gap.last_seen = Utc::now();
+            self.save_gap(&gap).await?;
+        }
+        Ok(())
+    }
+
+    // =========================================================================
+    // Failure Records
+    // =========================================================================
+
+    async fn save_failure(&self, record: &FailureRecord) -> Result<()> {
+        let learning_ids_json = serde_json::to_string(&record.learning_ids)
+            .map_err(|e| GrooveError::Serialization(e.to_string()))?
+            .replace('\'', "''");
+
+        let query = format!(
+            r#"?[id, session_id, failure_type, context_hash, learning_ids_json, timestamp] <- [[
+                '{}', '{}', '{}', {}, '{}', {}
+            ]]
+            :put failure_record {{
+                id => session_id, failure_type, context_hash, learning_ids_json, timestamp
+            }}"#,
+            record.id,
+            record.session_id.as_str(),
+            record.failure_type.as_str(),
+            record.context_hash,
+            learning_ids_json,
+            record.timestamp.timestamp()
+        );
+
+        self.run_mutation(&query, Default::default()).await?;
+        Ok(())
+    }
+
+    async fn get_failures_by_context(&self, context_hash: u64) -> Result<Vec<FailureRecord>> {
+        let query = format!(
+            r#"?[id, session_id, failure_type, context_hash, learning_ids_json, timestamp] :=
+                *failure_record{{id, session_id, failure_type, context_hash, learning_ids_json, timestamp}},
+                context_hash = {}"#,
+            context_hash
+        );
+
+        let rows = self.run_query(&query, Default::default()).await?;
+
+        let mut records = Vec::new();
+        for row in &rows.rows {
+            if let Some(record) = self.row_to_failure(row)? {
+                records.push(record);
+            }
+        }
+
+        Ok(records)
+    }
+
+    async fn get_recent_failures(&self, limit: usize) -> Result<Vec<FailureRecord>> {
+        let query = format!(
+            r#"?[id, session_id, failure_type, context_hash, learning_ids_json, timestamp] :=
+                *failure_record{{id, session_id, failure_type, context_hash, learning_ids_json, timestamp}}
+            :order -timestamp
+            :limit {}"#,
+            limit
+        );
+
+        let rows = self.run_query(&query, Default::default()).await?;
+
+        let mut records = Vec::new();
+        for row in &rows.rows {
+            if let Some(record) = self.row_to_failure(row)? {
+                records.push(record);
+            }
+        }
+
+        Ok(records)
+    }
+
+    // =========================================================================
+    // Events
+    // =========================================================================
+
+    async fn emit_event(&self, event: OpenWorldEvent) -> Result<()> {
+        let event_id = uuid::Uuid::now_v7();
+        let event_type = match &event {
+            OpenWorldEvent::NoveltyDetected { .. } => "novelty_detected",
+            OpenWorldEvent::ClusterUpdated { .. } => "cluster_updated",
+            OpenWorldEvent::GapCreated { .. } => "gap_created",
+            OpenWorldEvent::GapStatusChanged { .. } => "gap_status_changed",
+            OpenWorldEvent::SolutionGenerated { .. } => "solution_generated",
+            OpenWorldEvent::StrategyFeedback { .. } => "strategy_feedback",
+        };
+        let event_data_json = serde_json::to_string(&event)
+            .map_err(|e| GrooveError::Serialization(e.to_string()))?
+            .replace('\'', "''");
+        let timestamp = Utc::now().timestamp();
+
+        let query = format!(
+            r#"?[id, event_type, event_data_json, timestamp] <- [[
+                '{}', '{}', '{}', {}
+            ]]
+            :put novelty_event {{
+                id => event_type, event_data_json, timestamp
+            }}"#,
+            event_id, event_type, event_data_json, timestamp
+        );
+
+        self.run_mutation(&query, Default::default()).await?;
+        Ok(())
+    }
+
+    async fn get_recent_events(&self, limit: usize) -> Result<Vec<OpenWorldEvent>> {
+        let query = format!(
+            r#"?[id, event_type, event_data_json, timestamp] :=
+                *novelty_event{{id, event_type, event_data_json, timestamp}}
+            :order -timestamp
+            :limit {}"#,
+            limit
+        );
+
+        let rows = self.run_query(&query, Default::default()).await?;
+
+        let mut events = Vec::new();
+        for row in &rows.rows {
+            if let Some(event) = self.row_to_event(row)? {
+                events.push(event);
+            }
+        }
+
+        Ok(events)
+    }
+}
+
+// =============================================================================
+// OpenWorldStore Row Converters
+// =============================================================================
+
+impl CozoStore {
+    fn row_to_fingerprint(&self, row: &[DataValue]) -> Result<Option<PatternFingerprint>> {
+        if row.len() < 4 {
+            return Ok(None);
+        }
+
+        let hash = row[0]
+            .get_int()
+            .ok_or_else(|| GrooveError::Database("Invalid hash type".into()))?
+            as u64;
+
+        let embedding_json = row[1]
+            .get_str()
+            .ok_or_else(|| GrooveError::Database("Invalid embedding_json type".into()))?;
+        let embedding: Vec<f32> = serde_json::from_str(embedding_json)
+            .map_err(|e| GrooveError::Serialization(format!("Invalid embedding JSON: {e}")))?;
+
+        let context_summary = row[2]
+            .get_str()
+            .ok_or_else(|| GrooveError::Database("Invalid context_summary type".into()))?
+            .to_string();
+
+        let created_at_ts = row[3]
+            .get_int()
+            .ok_or_else(|| GrooveError::Database("Invalid created_at type".into()))?;
+        let created_at = DateTime::from_timestamp(created_at_ts, 0)
+            .ok_or_else(|| GrooveError::Database("Invalid created_at timestamp".into()))?;
+
+        Ok(Some(PatternFingerprint {
+            hash,
+            embedding,
+            context_summary,
+            created_at,
+        }))
+    }
+
+    fn row_to_cluster(&self, row: &[DataValue]) -> Result<Option<AnomalyCluster>> {
+        if row.len() < 5 {
+            return Ok(None);
+        }
+
+        let id_str = row[0]
+            .get_str()
+            .ok_or_else(|| GrooveError::Database("Invalid cluster id type".into()))?;
+        let id = uuid::Uuid::parse_str(id_str)
+            .map_err(|e| GrooveError::Database(format!("Invalid cluster UUID: {e}")))?;
+
+        let centroid_json = row[1]
+            .get_str()
+            .ok_or_else(|| GrooveError::Database("Invalid centroid_json type".into()))?;
+        let centroid: Vec<f32> = serde_json::from_str(centroid_json)
+            .map_err(|e| GrooveError::Serialization(format!("Invalid centroid JSON: {e}")))?;
+
+        let members_json = row[2]
+            .get_str()
+            .ok_or_else(|| GrooveError::Database("Invalid members_json type".into()))?;
+        let members: Vec<PatternFingerprint> = serde_json::from_str(members_json)
+            .map_err(|e| GrooveError::Serialization(format!("Invalid members JSON: {e}")))?;
+
+        let created_at_ts = row[3]
+            .get_int()
+            .ok_or_else(|| GrooveError::Database("Invalid created_at type".into()))?;
+        let created_at = DateTime::from_timestamp(created_at_ts, 0)
+            .ok_or_else(|| GrooveError::Database("Invalid created_at timestamp".into()))?;
+
+        let last_seen_ts = row[4]
+            .get_int()
+            .ok_or_else(|| GrooveError::Database("Invalid last_seen type".into()))?;
+        let last_seen = DateTime::from_timestamp(last_seen_ts, 0)
+            .ok_or_else(|| GrooveError::Database("Invalid last_seen timestamp".into()))?;
+
+        Ok(Some(AnomalyCluster {
+            id,
+            centroid,
+            members,
+            created_at,
+            last_seen,
+        }))
+    }
+
+    fn row_to_gap(&self, row: &[DataValue]) -> Result<Option<CapabilityGap>> {
+        if row.len() < 9 {
+            return Ok(None);
+        }
+
+        let id_str = row[0]
+            .get_str()
+            .ok_or_else(|| GrooveError::Database("Invalid gap id type".into()))?;
+        let id = uuid::Uuid::parse_str(id_str)
+            .map_err(|e| GrooveError::Database(format!("Invalid gap UUID: {e}")))?;
+
+        let category_str = row[1]
+            .get_str()
+            .ok_or_else(|| GrooveError::Database("Invalid category type".into()))?;
+        let category: GapCategory = category_str
+            .parse()
+            .map_err(|e: String| GrooveError::Database(e))?;
+
+        let severity_str = row[2]
+            .get_str()
+            .ok_or_else(|| GrooveError::Database("Invalid severity type".into()))?;
+        let severity: GapSeverity = severity_str
+            .parse()
+            .map_err(|e: String| GrooveError::Database(e))?;
+
+        let status_str = row[3]
+            .get_str()
+            .ok_or_else(|| GrooveError::Database("Invalid status type".into()))?;
+        let status: GapStatus = status_str
+            .parse()
+            .map_err(|e: String| GrooveError::Database(e))?;
+
+        let context_pattern = row[4]
+            .get_str()
+            .ok_or_else(|| GrooveError::Database("Invalid context_pattern type".into()))?
+            .to_string();
+
+        let failure_count = row[5]
+            .get_int()
+            .ok_or_else(|| GrooveError::Database("Invalid failure_count type".into()))?
+            as u32;
+
+        let first_seen_ts = row[6]
+            .get_int()
+            .ok_or_else(|| GrooveError::Database("Invalid first_seen type".into()))?;
+        let first_seen = DateTime::from_timestamp(first_seen_ts, 0)
+            .ok_or_else(|| GrooveError::Database("Invalid first_seen timestamp".into()))?;
+
+        let last_seen_ts = row[7]
+            .get_int()
+            .ok_or_else(|| GrooveError::Database("Invalid last_seen type".into()))?;
+        let last_seen = DateTime::from_timestamp(last_seen_ts, 0)
+            .ok_or_else(|| GrooveError::Database("Invalid last_seen timestamp".into()))?;
+
+        let solutions_json = row[8]
+            .get_str()
+            .ok_or_else(|| GrooveError::Database("Invalid solutions_json type".into()))?;
+        let suggested_solutions: Vec<SuggestedSolution> = serde_json::from_str(solutions_json)
+            .map_err(|e| GrooveError::Serialization(format!("Invalid solutions JSON: {e}")))?;
+
+        Ok(Some(CapabilityGap {
+            id,
+            category,
+            severity,
+            status,
+            context_pattern,
+            failure_count,
+            first_seen,
+            last_seen,
+            suggested_solutions,
+        }))
+    }
+
+    fn row_to_failure(&self, row: &[DataValue]) -> Result<Option<FailureRecord>> {
+        use crate::openworld::FailureType;
+
+        if row.len() < 6 {
+            return Ok(None);
+        }
+
+        let id_str = row[0]
+            .get_str()
+            .ok_or_else(|| GrooveError::Database("Invalid failure id type".into()))?;
+        let id = uuid::Uuid::parse_str(id_str)
+            .map_err(|e| GrooveError::Database(format!("Invalid failure UUID: {e}")))?;
+
+        let session_id_str = row[1]
+            .get_str()
+            .ok_or_else(|| GrooveError::Database("Invalid session_id type".into()))?;
+        let session_id = SessionId::from(session_id_str);
+
+        let failure_type_str = row[2]
+            .get_str()
+            .ok_or_else(|| GrooveError::Database("Invalid failure_type type".into()))?;
+        let failure_type: FailureType = failure_type_str
+            .parse()
+            .map_err(|e: String| GrooveError::Database(e))?;
+
+        let context_hash = row[3]
+            .get_int()
+            .ok_or_else(|| GrooveError::Database("Invalid context_hash type".into()))?
+            as u64;
+
+        let learning_ids_json = row[4]
+            .get_str()
+            .ok_or_else(|| GrooveError::Database("Invalid learning_ids_json type".into()))?;
+        let learning_ids: Vec<LearningId> = serde_json::from_str(learning_ids_json)
+            .map_err(|e| GrooveError::Serialization(format!("Invalid learning_ids JSON: {e}")))?;
+
+        let timestamp_ts = row[5]
+            .get_int()
+            .ok_or_else(|| GrooveError::Database("Invalid timestamp type".into()))?;
+        let timestamp = DateTime::from_timestamp(timestamp_ts, 0)
+            .ok_or_else(|| GrooveError::Database("Invalid timestamp".into()))?;
+
+        Ok(Some(FailureRecord {
+            id,
+            session_id,
+            failure_type,
+            context_hash,
+            learning_ids,
+            timestamp,
+        }))
+    }
+
+    fn row_to_event(&self, row: &[DataValue]) -> Result<Option<OpenWorldEvent>> {
+        if row.len() < 4 {
+            return Ok(None);
+        }
+
+        let event_data_json = row[2]
+            .get_str()
+            .ok_or_else(|| GrooveError::Database("Invalid event_data_json type".into()))?;
+
+        let event: OpenWorldEvent = serde_json::from_str(event_data_json)
+            .map_err(|e| GrooveError::Serialization(format!("Invalid event JSON: {e}")))?;
+
+        Ok(Some(event))
     }
 }
 
@@ -2436,5 +3023,327 @@ mod tests {
                 .unwrap(),
             0
         );
+    }
+
+    // ==========================================================================
+    // OpenWorldStore Tests
+    // ==========================================================================
+
+    mod openworld_store_tests {
+        use super::*;
+        use crate::assessment::SessionId;
+        use crate::openworld::{
+            AnomalyCluster, CapabilityGap, FailureRecord, FailureType, GapCategory, GapStatus,
+            OpenWorldEvent, OpenWorldStore, PatternFingerprint, SolutionAction, SolutionSource,
+            SuggestedSolution,
+        };
+
+        fn test_fingerprint() -> PatternFingerprint {
+            PatternFingerprint::new(12345, vec![0.1, 0.2, 0.3], "test context".to_string())
+        }
+
+        fn test_cluster() -> AnomalyCluster {
+            let mut cluster = AnomalyCluster::new(vec![0.5, 0.5, 0.5]);
+            cluster.add_member(test_fingerprint());
+            cluster
+        }
+
+        fn test_gap() -> CapabilityGap {
+            CapabilityGap::new(GapCategory::MissingKnowledge, "test pattern".to_string())
+        }
+
+        fn test_failure() -> FailureRecord {
+            FailureRecord::new(
+                SessionId::new("test-session"),
+                FailureType::NegativeAttribution,
+                99999,
+                vec![],
+            )
+        }
+
+        // =====================================================================
+        // Fingerprint tests
+        // =====================================================================
+
+        #[tokio::test]
+        async fn test_save_and_get_fingerprint() {
+            let tmp = TempDir::new().unwrap();
+            let store = CozoStore::open(tmp.path()).await.unwrap();
+
+            let fp = test_fingerprint();
+            store.save_fingerprint(&fp).await.unwrap();
+
+            let all = store.get_fingerprints().await.unwrap();
+            assert_eq!(all.len(), 1);
+            assert_eq!(all[0].hash, fp.hash);
+            assert_eq!(all[0].context_summary, fp.context_summary);
+        }
+
+        #[tokio::test]
+        async fn test_find_fingerprints_by_hash() {
+            let tmp = TempDir::new().unwrap();
+            let store = CozoStore::open(tmp.path()).await.unwrap();
+
+            let fp1 = PatternFingerprint::new(111, vec![0.1], "first".to_string());
+            let fp2 = PatternFingerprint::new(222, vec![0.2], "second".to_string());
+            let fp3 = PatternFingerprint::new(111, vec![0.3], "third".to_string());
+
+            store.save_fingerprint(&fp1).await.unwrap();
+            store.save_fingerprint(&fp2).await.unwrap();
+            store.save_fingerprint(&fp3).await.unwrap();
+
+            let found = store.find_fingerprints_by_hash(111).await.unwrap();
+            // Due to unique constraint on hash, only one should be stored
+            assert!(!found.is_empty());
+        }
+
+        // =====================================================================
+        // Cluster tests
+        // =====================================================================
+
+        #[tokio::test]
+        async fn test_save_and_get_cluster() {
+            let tmp = TempDir::new().unwrap();
+            let store = CozoStore::open(tmp.path()).await.unwrap();
+
+            let cluster = test_cluster();
+            let id = cluster.id;
+            store.save_cluster(&cluster).await.unwrap();
+
+            let retrieved = store.get_cluster(id).await.unwrap();
+            assert!(retrieved.is_some());
+
+            let retrieved = retrieved.unwrap();
+            assert_eq!(retrieved.id, id);
+            assert_eq!(retrieved.centroid.len(), 3);
+            assert_eq!(retrieved.members.len(), 1);
+        }
+
+        #[tokio::test]
+        async fn test_get_all_clusters() {
+            let tmp = TempDir::new().unwrap();
+            let store = CozoStore::open(tmp.path()).await.unwrap();
+
+            let c1 = AnomalyCluster::new(vec![0.1]);
+            let c2 = AnomalyCluster::new(vec![0.2]);
+
+            store.save_cluster(&c1).await.unwrap();
+            store.save_cluster(&c2).await.unwrap();
+
+            let all = store.get_clusters().await.unwrap();
+            assert_eq!(all.len(), 2);
+        }
+
+        #[tokio::test]
+        async fn test_delete_cluster() {
+            let tmp = TempDir::new().unwrap();
+            let store = CozoStore::open(tmp.path()).await.unwrap();
+
+            let cluster = test_cluster();
+            let id = cluster.id;
+            store.save_cluster(&cluster).await.unwrap();
+
+            assert!(store.get_cluster(id).await.unwrap().is_some());
+
+            store.delete_cluster(id).await.unwrap();
+
+            assert!(store.get_cluster(id).await.unwrap().is_none());
+        }
+
+        // =====================================================================
+        // Gap tests
+        // =====================================================================
+
+        #[tokio::test]
+        async fn test_save_and_get_gap() {
+            let tmp = TempDir::new().unwrap();
+            let store = CozoStore::open(tmp.path()).await.unwrap();
+
+            let gap = test_gap();
+            let id = gap.id;
+            store.save_gap(&gap).await.unwrap();
+
+            let retrieved = store.get_gap(id).await.unwrap();
+            assert!(retrieved.is_some());
+
+            let retrieved = retrieved.unwrap();
+            assert_eq!(retrieved.id, id);
+            assert_eq!(retrieved.category, GapCategory::MissingKnowledge);
+            assert_eq!(retrieved.status, GapStatus::Detected);
+        }
+
+        #[tokio::test]
+        async fn test_get_gaps_all() {
+            let tmp = TempDir::new().unwrap();
+            let store = CozoStore::open(tmp.path()).await.unwrap();
+
+            let g1 = CapabilityGap::new(GapCategory::MissingKnowledge, "gap1".to_string());
+            let g2 = CapabilityGap::new(GapCategory::ToolGap, "gap2".to_string());
+
+            store.save_gap(&g1).await.unwrap();
+            store.save_gap(&g2).await.unwrap();
+
+            let all = store.get_gaps(None).await.unwrap();
+            assert_eq!(all.len(), 2);
+        }
+
+        #[tokio::test]
+        async fn test_get_gaps_by_status() {
+            let tmp = TempDir::new().unwrap();
+            let store = CozoStore::open(tmp.path()).await.unwrap();
+
+            let mut g1 = CapabilityGap::new(GapCategory::MissingKnowledge, "gap1".to_string());
+            let g2 = CapabilityGap::new(GapCategory::ToolGap, "gap2".to_string());
+            g1.status = GapStatus::Confirmed;
+
+            store.save_gap(&g1).await.unwrap();
+            store.save_gap(&g2).await.unwrap();
+
+            let detected = store.get_gaps(Some(GapStatus::Detected)).await.unwrap();
+            assert_eq!(detected.len(), 1);
+
+            let confirmed = store.get_gaps(Some(GapStatus::Confirmed)).await.unwrap();
+            assert_eq!(confirmed.len(), 1);
+        }
+
+        #[tokio::test]
+        async fn test_update_gap_status() {
+            let tmp = TempDir::new().unwrap();
+            let store = CozoStore::open(tmp.path()).await.unwrap();
+
+            let gap = test_gap();
+            let id = gap.id;
+            store.save_gap(&gap).await.unwrap();
+
+            store
+                .update_gap_status(id, GapStatus::Confirmed)
+                .await
+                .unwrap();
+
+            let retrieved = store.get_gap(id).await.unwrap().unwrap();
+            assert_eq!(retrieved.status, GapStatus::Confirmed);
+        }
+
+        #[tokio::test]
+        async fn test_add_gap_solutions() {
+            let tmp = TempDir::new().unwrap();
+            let store = CozoStore::open(tmp.path()).await.unwrap();
+
+            let gap = test_gap();
+            let id = gap.id;
+            store.save_gap(&gap).await.unwrap();
+
+            let solution = SuggestedSolution::new(
+                SolutionAction::DisableLearning {
+                    id: uuid::Uuid::nil(),
+                },
+                SolutionSource::Template,
+                0.8,
+            );
+
+            store.add_gap_solutions(id, vec![solution]).await.unwrap();
+
+            let retrieved = store.get_gap(id).await.unwrap().unwrap();
+            assert_eq!(retrieved.suggested_solutions.len(), 1);
+        }
+
+        // =====================================================================
+        // Failure tests
+        // =====================================================================
+
+        #[tokio::test]
+        async fn test_save_and_get_failures() {
+            let tmp = TempDir::new().unwrap();
+            let store = CozoStore::open(tmp.path()).await.unwrap();
+
+            let failure = test_failure();
+            store.save_failure(&failure).await.unwrap();
+
+            let by_context = store.get_failures_by_context(99999).await.unwrap();
+            assert_eq!(by_context.len(), 1);
+            assert_eq!(by_context[0].context_hash, 99999);
+        }
+
+        #[tokio::test]
+        async fn test_get_recent_failures() {
+            let tmp = TempDir::new().unwrap();
+            let store = CozoStore::open(tmp.path()).await.unwrap();
+
+            for i in 0..5 {
+                let failure = FailureRecord::new(
+                    SessionId::new(format!("session-{}", i)),
+                    FailureType::LowConfidence,
+                    i as u64,
+                    vec![],
+                );
+                store.save_failure(&failure).await.unwrap();
+            }
+
+            let recent = store.get_recent_failures(3).await.unwrap();
+            assert_eq!(recent.len(), 3);
+        }
+
+        // =====================================================================
+        // Event tests
+        // =====================================================================
+
+        #[tokio::test]
+        async fn test_emit_and_get_events() {
+            let tmp = TempDir::new().unwrap();
+            let store = CozoStore::open(tmp.path()).await.unwrap();
+
+            let gap = test_gap();
+            let event = OpenWorldEvent::GapCreated { gap };
+
+            store.emit_event(event).await.unwrap();
+
+            let events = store.get_recent_events(10).await.unwrap();
+            assert_eq!(events.len(), 1);
+
+            if let OpenWorldEvent::GapCreated { gap } = &events[0] {
+                assert_eq!(gap.category, GapCategory::MissingKnowledge);
+            } else {
+                panic!("Expected GapCreated event");
+            }
+        }
+
+        #[tokio::test]
+        async fn test_event_types() {
+            let tmp = TempDir::new().unwrap();
+            let store = CozoStore::open(tmp.path()).await.unwrap();
+
+            let events = vec![
+                OpenWorldEvent::GapCreated { gap: test_gap() },
+                OpenWorldEvent::GapStatusChanged {
+                    gap_id: uuid::Uuid::now_v7(),
+                    old: GapStatus::Detected,
+                    new: GapStatus::Confirmed,
+                },
+                OpenWorldEvent::StrategyFeedback {
+                    learning_id: uuid::Uuid::now_v7(),
+                    adjustment: 0.1,
+                },
+            ];
+
+            for event in events {
+                store.emit_event(event).await.unwrap();
+            }
+
+            let retrieved = store.get_recent_events(10).await.unwrap();
+            assert_eq!(retrieved.len(), 3);
+        }
+
+        // =====================================================================
+        // Schema version test
+        // =====================================================================
+
+        #[tokio::test]
+        async fn test_schema_version_is_2() {
+            let tmp = TempDir::new().unwrap();
+            let store = CozoStore::open(tmp.path()).await.unwrap();
+
+            let version = store.get_schema_version().await.unwrap();
+            assert_eq!(version, 2);
+        }
     }
 }
