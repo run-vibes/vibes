@@ -2,7 +2,7 @@
 id: FEAT0060
 title: Iggy consumer and events
 type: feat
-status: pending
+status: done
 priority: high
 epics: [plugin-system]
 depends: [FEAT0058, FEAT0059]

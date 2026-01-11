@@ -26,6 +26,7 @@
 //! - [`OpenWorldEvent`] - Events emitted by the system
 
 mod clustering;
+mod consumer;
 mod gaps;
 mod hook;
 mod novelty;
@@ -37,6 +38,9 @@ mod types;
 pub use clustering::{
     DbscanConfig, DbscanResult, DistanceMetric, compute_centroid, cosine_distance,
     euclidean_distance, incremental_dbscan, region_query,
+};
+pub use consumer::{
+    OPENWORLD_STREAM, OpenWorldProducer, OpenWorldProducerConfig, ProducerStats, topics,
 };
 pub use gaps::{CapabilityGapDetector, GapsConfig};
 pub use hook::{OpenWorldHook, OpenWorldHookConfig};

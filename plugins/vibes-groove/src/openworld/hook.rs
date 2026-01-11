@@ -261,11 +261,12 @@ mod tests {
 // =============================================================================
 
 use std::collections::HashMap;
-use std::sync::RwLock;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::{Arc, RwLock};
 
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
+use tokio::sync::RwLock as TokioRwLock;
 use tracing::{debug, instrument, warn};
 
 use crate::Result;
@@ -273,6 +274,7 @@ use crate::assessment::SessionId;
 use crate::strategy::{InjectionStrategy, NoveltyHook, SessionContext, StrategyOutcome};
 use crate::types::Learning;
 
+use super::consumer::OpenWorldProducer;
 use super::types::{GapCategory, ResponseAction};
 
 /// Configuration for the OpenWorldHook
@@ -339,6 +341,8 @@ pub struct OpenWorldHook {
     config: OpenWorldHookConfig,
     /// Observation tracker
     tracker: RwLock<ObservationTracker>,
+    /// Optional producer for emitting events
+    producer: TokioRwLock<Option<Arc<OpenWorldProducer>>>,
     /// Statistics
     outcomes_processed: AtomicU64,
     negative_outcomes: AtomicU64,
@@ -353,12 +357,18 @@ impl OpenWorldHook {
         Self {
             config,
             tracker: RwLock::new(ObservationTracker::default()),
+            producer: TokioRwLock::new(None),
             outcomes_processed: AtomicU64::new(0),
             negative_outcomes: AtomicU64::new(0),
             low_confidence_outcomes: AtomicU64::new(0),
             exploration_adjustments: AtomicU64::new(0),
             gaps_created: AtomicU64::new(0),
         }
+    }
+
+    /// Set the producer for emitting events
+    pub async fn set_producer(&self, producer: Arc<OpenWorldProducer>) {
+        *self.producer.write().await = Some(producer);
     }
 
     /// Get current statistics
@@ -498,7 +508,8 @@ impl NoveltyHook for OpenWorldHook {
         // Determine response action
         let action = self.determine_response(outcome, context, learning);
 
-        // Log significant actions
+        // Emit events and log significant actions
+        let producer = self.producer.read().await;
         match &action {
             ResponseAction::CreateGap(gap) => {
                 debug!(
@@ -507,6 +518,12 @@ impl NoveltyHook for OpenWorldHook {
                     strategy = ?strategy.variant(),
                     "Created capability gap from strategy outcome"
                 );
+                // Emit gap created event
+                if let Some(ref p) = *producer
+                    && let Err(e) = p.emit_gap_created(gap).await
+                {
+                    warn!(error = %e, "Failed to emit gap created event");
+                }
             }
             ResponseAction::AdjustExploration(bonus) => {
                 debug!(
@@ -514,6 +531,12 @@ impl NoveltyHook for OpenWorldHook {
                     strategy = ?strategy.variant(),
                     "Adjusting exploration due to outcome"
                 );
+                // Emit strategy feedback event
+                if let Some(ref p) = *producer
+                    && let Err(e) = p.emit_strategy_feedback(learning.id, *bonus).await
+                {
+                    warn!(error = %e, "Failed to emit strategy feedback event");
+                }
             }
             _ => {}
         }
