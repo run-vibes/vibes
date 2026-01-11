@@ -3,9 +3,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
-| Story | Type | Priority | Epics |
-|-------|------|----------|-------|
-| [feat-0061-cli-novelty](stages/in-progress/stories/feat-0061-cli-novelty.md) | feat | medium | plugin-system |
+*No stories in progress*
 
 ## Backlog
 
@@ -164,6 +162,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 - [feat-0058-openworld-hook](stages/done/stories/feat-0058-openworld-hook.md)
 - [feat-0059-openworld-store](stages/done/stories/feat-0059-openworld-store.md)
 - [feat-0060-openworld-consumer](stages/done/stories/feat-0060-openworld-consumer.md)
+- [feat-0061-cli-novelty](stages/done/stories/feat-0061-cli-novelty.md)
 - [feat-0064-visual-regression](stages/done/stories/feat-0064-visual-regression.md)
 - [feat-0065-workflow-videos](stages/done/stories/feat-0065-workflow-videos.md)
 - [feat-0066-cli-recording](stages/done/stories/feat-0066-cli-recording.md)

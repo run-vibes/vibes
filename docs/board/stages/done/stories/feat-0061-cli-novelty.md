@@ -2,7 +2,7 @@
 id: FEAT0061
 title: CLI commands (novelty)
 type: feat
-status: in-progress
+status: done
 priority: medium
 epics: [plugin-system]
 depends: [FEAT0053]
