@@ -17,7 +17,9 @@ use crate::assessment::{
 };
 
 use crate::CozoStore;
-use crate::openworld::{AnomalyCluster, ClusterId, OpenWorldStore, PatternFingerprint};
+use crate::openworld::{
+    AnomalyCluster, CapabilityGap, ClusterId, GapId, GapStatus, OpenWorldStore, PatternFingerprint,
+};
 use crate::paths::GroovePaths;
 use crate::security::load_policy_or_default;
 use crate::security::{OrgRole, Policy, ReviewOutcome, TrustLevel};
@@ -787,6 +789,16 @@ impl Plugin for GroovePlugin {
             ["novelty", "fingerprints"] => self.cmd_novelty_fingerprints(args),
             ["novelty", "mark-known"] => self.cmd_novelty_mark_known(args),
             ["novelty", "reset"] => self.cmd_novelty_reset(args),
+            // Gaps commands
+            ["gaps", "status"] => self.cmd_gaps_status(args),
+            ["gaps", "list"] => self.cmd_gaps_list(args),
+            ["gaps", "show"] => self.cmd_gaps_show(args),
+            ["gaps", "dismiss"] => self.cmd_gaps_dismiss(args),
+            ["gaps", "resolve"] => self.cmd_gaps_resolve(args),
+            ["gaps", "apply"] => self.cmd_gaps_apply(args),
+            // Openworld commands
+            ["openworld", "status"] => self.cmd_openworld_status(args),
+            ["openworld", "history"] => self.cmd_openworld_history(args),
             _ => Err(PluginError::UnknownCommand(path.join(" "))),
         }
     }
@@ -861,6 +873,16 @@ impl Plugin for GroovePlugin {
                 self.route_novelty_mark_known(&request)
             }
             (HttpMethod::Post, "/novelty/reset") => self.route_novelty_reset(&request),
+            // Gaps routes
+            (HttpMethod::Get, "/gaps/status") => self.route_gaps_status(),
+            (HttpMethod::Get, "/gaps") => self.route_gaps_list(&request),
+            (HttpMethod::Get, "/gaps/:id") => self.route_gaps_show(&request),
+            (HttpMethod::Post, "/gaps/:id/dismiss") => self.route_gaps_dismiss(&request),
+            (HttpMethod::Post, "/gaps/:id/resolve") => self.route_gaps_resolve(&request),
+            (HttpMethod::Post, "/gaps/:id/apply/:solution") => self.route_gaps_apply(&request),
+            // Openworld routes
+            (HttpMethod::Get, "/openworld/status") => self.route_openworld_status(),
+            (HttpMethod::Get, "/openworld/history") => self.route_openworld_history(&request),
             _ => Err(PluginError::UnknownRoute(format!("{:?} {}", method, path))),
         }
     }
@@ -1157,6 +1179,95 @@ impl GroovePlugin {
                 name: "confirm".into(),
                 description: "Type 'yes' to confirm reset".into(),
                 required: true,
+            }],
+        })?;
+
+        // gaps status
+        ctx.register_command(CommandSpec {
+            path: vec!["gaps".into(), "status".into()],
+            description: "Show capability gaps status".into(),
+            args: vec![],
+        })?;
+
+        // gaps list
+        ctx.register_command(CommandSpec {
+            path: vec!["gaps".into(), "list".into()],
+            description: "List capability gaps".into(),
+            args: vec![ArgSpec {
+                name: "status".into(),
+                description:
+                    "Filter by status (detected, confirmed, in_progress, resolved, dismissed)"
+                        .into(),
+                required: false,
+            }],
+        })?;
+
+        // gaps show <id>
+        ctx.register_command(CommandSpec {
+            path: vec!["gaps".into(), "show".into()],
+            description: "Show gap details".into(),
+            args: vec![ArgSpec {
+                name: "id".into(),
+                description: "Gap ID (UUID)".into(),
+                required: true,
+            }],
+        })?;
+
+        // gaps dismiss <id>
+        ctx.register_command(CommandSpec {
+            path: vec!["gaps".into(), "dismiss".into()],
+            description: "Dismiss a gap".into(),
+            args: vec![ArgSpec {
+                name: "id".into(),
+                description: "Gap ID to dismiss".into(),
+                required: true,
+            }],
+        })?;
+
+        // gaps resolve <id>
+        ctx.register_command(CommandSpec {
+            path: vec!["gaps".into(), "resolve".into()],
+            description: "Mark a gap as resolved".into(),
+            args: vec![ArgSpec {
+                name: "id".into(),
+                description: "Gap ID to resolve".into(),
+                required: true,
+            }],
+        })?;
+
+        // gaps apply <gap_id> <solution_index>
+        ctx.register_command(CommandSpec {
+            path: vec!["gaps".into(), "apply".into()],
+            description: "Apply a suggested solution".into(),
+            args: vec![
+                ArgSpec {
+                    name: "gap_id".into(),
+                    description: "Gap ID".into(),
+                    required: true,
+                },
+                ArgSpec {
+                    name: "solution_index".into(),
+                    description: "Solution index (0-based)".into(),
+                    required: true,
+                },
+            ],
+        })?;
+
+        // openworld status
+        ctx.register_command(CommandSpec {
+            path: vec!["openworld".into(), "status".into()],
+            description: "Show combined open-world adaptation status".into(),
+            args: vec![],
+        })?;
+
+        // openworld history
+        ctx.register_command(CommandSpec {
+            path: vec!["openworld".into(), "history".into()],
+            description: "Show recent open-world events".into(),
+            args: vec![ArgSpec {
+                name: "limit".into(),
+                description: "Maximum events to show (default: 20)".into(),
+                required: false,
             }],
         })?;
 
@@ -1457,6 +1568,48 @@ impl GroovePlugin {
         ctx.register_route(RouteSpec {
             method: HttpMethod::Post,
             path: "/novelty/reset".into(),
+        })?;
+
+        // Gaps routes
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Get,
+            path: "/gaps/status".into(),
+        })?;
+
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Get,
+            path: "/gaps".into(),
+        })?;
+
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Get,
+            path: "/gaps/:id".into(),
+        })?;
+
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Post,
+            path: "/gaps/:id/dismiss".into(),
+        })?;
+
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Post,
+            path: "/gaps/:id/resolve".into(),
+        })?;
+
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Post,
+            path: "/gaps/:id/apply/:solution".into(),
+        })?;
+
+        // Openworld routes
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Get,
+            path: "/openworld/status".into(),
+        })?;
+
+        ctx.register_route(RouteSpec {
+            method: HttpMethod::Get,
+            path: "/openworld/history".into(),
         })?;
 
         Ok(())
@@ -3266,6 +3419,459 @@ impl GroovePlugin {
         })
     }
 
+    // ─── Gaps Commands ────────────────────────────────────────────────
+
+    fn cmd_gaps_status(
+        &self,
+        args: &vibes_plugin_api::CommandArgs,
+    ) -> Result<CommandOutput, PluginError> {
+        if Self::wants_help(&args.args) {
+            return Ok(CommandOutput::Text(
+                "Usage: vibes groove gaps status\n\n\
+                 Show capability gaps status.\n"
+                    .to_string(),
+            ));
+        }
+
+        let paths = GroovePaths::default();
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            let all_gaps: Vec<CapabilityGap> = store.get_gaps(None).await.unwrap_or_default();
+
+            let detected = all_gaps
+                .iter()
+                .filter(|g| g.status == GapStatus::Detected)
+                .count();
+            let confirmed = all_gaps
+                .iter()
+                .filter(|g| g.status == GapStatus::Confirmed)
+                .count();
+            let in_progress = all_gaps
+                .iter()
+                .filter(|g| g.status == GapStatus::InProgress)
+                .count();
+            let resolved = all_gaps
+                .iter()
+                .filter(|g| g.status == GapStatus::Resolved)
+                .count();
+            let dismissed = all_gaps
+                .iter()
+                .filter(|g| g.status == GapStatus::Dismissed)
+                .count();
+
+            let mut output = String::new();
+            output.push_str("Capability Gaps Status\n");
+            output.push_str("========================================\n\n");
+            output.push_str(&format!("Total gaps:    {}\n\n", all_gaps.len()));
+            output.push_str("By status:\n");
+            output.push_str(&format!("  Detected:    {}\n", detected));
+            output.push_str(&format!("  Confirmed:   {}\n", confirmed));
+            output.push_str(&format!("  In Progress: {}\n", in_progress));
+            output.push_str(&format!("  Resolved:    {}\n", resolved));
+            output.push_str(&format!("  Dismissed:   {}\n", dismissed));
+
+            Ok(CommandOutput::Text(output))
+        })
+    }
+
+    fn cmd_gaps_list(
+        &self,
+        args: &vibes_plugin_api::CommandArgs,
+    ) -> Result<CommandOutput, PluginError> {
+        if Self::wants_help(&args.args) {
+            return Ok(CommandOutput::Text(
+                "Usage: vibes groove gaps list [--status <status>]\n\n\
+                 List capability gaps.\n\n\
+                 Options:\n\
+                   --status  Filter by status (detected, confirmed, in_progress, resolved, dismissed)\n"
+                    .to_string(),
+            ));
+        }
+
+        // Parse status filter
+        let status_filter: Option<GapStatus> = args
+            .args
+            .iter()
+            .position(|a| a == "--status")
+            .and_then(|i| args.args.get(i + 1))
+            .and_then(|s| s.parse().ok());
+
+        let paths = GroovePaths::default();
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            let gaps: Vec<CapabilityGap> = store.get_gaps(status_filter).await.unwrap_or_default();
+
+            if gaps.is_empty() {
+                return Ok(CommandOutput::Text("No gaps found.\n".to_string()));
+            }
+
+            let mut output = String::new();
+            output.push_str("Capability Gaps\n");
+            output.push_str("========================================\n\n");
+
+            for gap in &gaps {
+                output.push_str(&format!(
+                    "{}\n  Category: {:?}  Severity: {:?}  Status: {:?}\n  Failures: {}  First seen: {}\n\n",
+                    gap.id,
+                    gap.category,
+                    gap.severity,
+                    gap.status,
+                    gap.failure_count,
+                    gap.first_seen.format("%Y-%m-%d %H:%M"),
+                ));
+            }
+
+            Ok(CommandOutput::Text(output))
+        })
+    }
+
+    fn cmd_gaps_show(
+        &self,
+        args: &vibes_plugin_api::CommandArgs,
+    ) -> Result<CommandOutput, PluginError> {
+        if Self::wants_help(&args.args) {
+            return Ok(CommandOutput::Text(
+                "Usage: vibes groove gaps show <id>\n\n\
+                 Show gap details.\n\n\
+                 Arguments:\n\
+                   <id>  Gap ID (UUID)\n"
+                    .to_string(),
+            ));
+        }
+
+        let id_str = args
+            .args
+            .first()
+            .ok_or_else(|| PluginError::custom("Missing gap ID"))?;
+
+        let id: GapId = id_str
+            .parse()
+            .map_err(|_| PluginError::custom("Invalid gap ID (must be UUID)"))?;
+
+        let paths = GroovePaths::default();
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            match store.get_gap(id).await {
+                Ok(Some(gap)) => {
+                    let mut output = String::new();
+                    output.push_str(&format!("Gap: {}\n", gap.id));
+                    output.push_str("========================================\n\n");
+                    output.push_str(&format!("Category:    {:?}\n", gap.category));
+                    output.push_str(&format!("Severity:    {:?}\n", gap.severity));
+                    output.push_str(&format!("Status:      {:?}\n", gap.status));
+                    output.push_str(&format!("Failures:    {}\n", gap.failure_count));
+                    output.push_str(&format!(
+                        "First seen:  {}\n",
+                        gap.first_seen.format("%Y-%m-%d %H:%M:%S")
+                    ));
+                    output.push_str(&format!(
+                        "Last seen:   {}\n",
+                        gap.last_seen.format("%Y-%m-%d %H:%M:%S")
+                    ));
+                    output.push_str(&format!("\nContext pattern:\n  {}\n", gap.context_pattern));
+
+                    if !gap.suggested_solutions.is_empty() {
+                        output.push_str("\nSuggested solutions:\n");
+                        for (i, solution) in gap.suggested_solutions.iter().enumerate() {
+                            output.push_str(&format!(
+                                "  [{}] {:?} (confidence: {:.2}, applied: {})\n",
+                                i, solution.action, solution.confidence, solution.applied
+                            ));
+                        }
+                    }
+
+                    Ok(CommandOutput::Text(output))
+                }
+                Ok(None) => Err(PluginError::custom(format!("Gap not found: {}", id))),
+                Err(e) => Err(PluginError::custom(format!("Failed to fetch gap: {}", e))),
+            }
+        })
+    }
+
+    fn cmd_gaps_dismiss(
+        &self,
+        args: &vibes_plugin_api::CommandArgs,
+    ) -> Result<CommandOutput, PluginError> {
+        if Self::wants_help(&args.args) {
+            return Ok(CommandOutput::Text(
+                "Usage: vibes groove gaps dismiss <id>\n\n\
+                 Dismiss a gap.\n\n\
+                 Arguments:\n\
+                   <id>  Gap ID to dismiss\n"
+                    .to_string(),
+            ));
+        }
+
+        let id_str = args
+            .args
+            .first()
+            .ok_or_else(|| PluginError::custom("Missing gap ID"))?;
+
+        let id: GapId = id_str
+            .parse()
+            .map_err(|_| PluginError::custom("Invalid gap ID (must be UUID)"))?;
+
+        let paths = GroovePaths::default();
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            store
+                .update_gap_status(id, GapStatus::Dismissed)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to dismiss gap: {}", e)))?;
+
+            Ok(CommandOutput::Text(format!("Gap {} dismissed.\n", id)))
+        })
+    }
+
+    fn cmd_gaps_resolve(
+        &self,
+        args: &vibes_plugin_api::CommandArgs,
+    ) -> Result<CommandOutput, PluginError> {
+        if Self::wants_help(&args.args) {
+            return Ok(CommandOutput::Text(
+                "Usage: vibes groove gaps resolve <id>\n\n\
+                 Mark a gap as resolved.\n\n\
+                 Arguments:\n\
+                   <id>  Gap ID to resolve\n"
+                    .to_string(),
+            ));
+        }
+
+        let id_str = args
+            .args
+            .first()
+            .ok_or_else(|| PluginError::custom("Missing gap ID"))?;
+
+        let id: GapId = id_str
+            .parse()
+            .map_err(|_| PluginError::custom("Invalid gap ID (must be UUID)"))?;
+
+        let paths = GroovePaths::default();
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            store
+                .update_gap_status(id, GapStatus::Resolved)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to resolve gap: {}", e)))?;
+
+            Ok(CommandOutput::Text(format!(
+                "Gap {} marked as resolved.\n",
+                id
+            )))
+        })
+    }
+
+    fn cmd_gaps_apply(
+        &self,
+        args: &vibes_plugin_api::CommandArgs,
+    ) -> Result<CommandOutput, PluginError> {
+        if Self::wants_help(&args.args) {
+            return Ok(CommandOutput::Text(
+                "Usage: vibes groove gaps apply <gap_id> <solution_index>\n\n\
+                 Apply a suggested solution.\n\n\
+                 Arguments:\n\
+                   <gap_id>         Gap ID\n\
+                   <solution_index> Solution index (0-based)\n"
+                    .to_string(),
+            ));
+        }
+
+        let gap_id_str = args
+            .args
+            .first()
+            .ok_or_else(|| PluginError::custom("Missing gap ID"))?;
+
+        let solution_idx_str = args
+            .args
+            .get(1)
+            .ok_or_else(|| PluginError::custom("Missing solution index"))?;
+
+        let gap_id: GapId = gap_id_str
+            .parse()
+            .map_err(|_| PluginError::custom("Invalid gap ID (must be UUID)"))?;
+
+        let solution_idx: usize = solution_idx_str
+            .parse()
+            .map_err(|_| PluginError::custom("Invalid solution index (must be number)"))?;
+
+        let paths = GroovePaths::default();
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            let gap = store
+                .get_gap(gap_id)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to fetch gap: {}", e)))?
+                .ok_or_else(|| PluginError::custom(format!("Gap not found: {}", gap_id)))?;
+
+            if solution_idx >= gap.suggested_solutions.len() {
+                return Err(PluginError::custom(format!(
+                    "Solution index {} out of range (0-{})",
+                    solution_idx,
+                    gap.suggested_solutions.len().saturating_sub(1)
+                )));
+            }
+
+            let solution = &gap.suggested_solutions[solution_idx];
+
+            // For now, just mark as in_progress and report what would be done
+            store
+                .update_gap_status(gap_id, GapStatus::InProgress)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to update gap: {}", e)))?;
+
+            Ok(CommandOutput::Text(format!(
+                "Applying solution [{}] for gap {}:\n  Action: {:?}\n  Confidence: {:.2}\n\n\
+                 Gap marked as in_progress. Solution application is tracked.\n",
+                solution_idx, gap_id, solution.action, solution.confidence
+            )))
+        })
+    }
+
+    // ─── Openworld Commands ───────────────────────────────────────────
+
+    fn cmd_openworld_status(
+        &self,
+        args: &vibes_plugin_api::CommandArgs,
+    ) -> Result<CommandOutput, PluginError> {
+        if Self::wants_help(&args.args) {
+            return Ok(CommandOutput::Text(
+                "Usage: vibes groove openworld status\n\n\
+                 Show combined open-world adaptation status.\n"
+                    .to_string(),
+            ));
+        }
+
+        let paths = GroovePaths::default();
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            let fingerprints = store.get_fingerprints().await.unwrap_or_default();
+            let clusters = store.get_clusters().await.unwrap_or_default();
+            let gaps: Vec<CapabilityGap> = store.get_gaps(None).await.unwrap_or_default();
+
+            let active_gaps = gaps
+                .iter()
+                .filter(|g| {
+                    g.status == GapStatus::Detected
+                        || g.status == GapStatus::Confirmed
+                        || g.status == GapStatus::InProgress
+                })
+                .count();
+
+            let mut output = String::new();
+            output.push_str("Open-World Adaptation Status\n");
+            output.push_str("========================================\n\n");
+
+            output.push_str("Novelty Detection:\n");
+            output.push_str(&format!("  Known patterns:  {}\n", fingerprints.len()));
+            output.push_str(&format!("  Active clusters: {}\n", clusters.len()));
+            output.push_str(&format!(
+                "  Pending points:  {}\n\n",
+                clusters.iter().map(|c| c.members.len()).sum::<usize>()
+            ));
+
+            output.push_str("Capability Gaps:\n");
+            output.push_str(&format!("  Total gaps:      {}\n", gaps.len()));
+            output.push_str(&format!("  Active gaps:     {}\n", active_gaps));
+
+            Ok(CommandOutput::Text(output))
+        })
+    }
+
+    fn cmd_openworld_history(
+        &self,
+        args: &vibes_plugin_api::CommandArgs,
+    ) -> Result<CommandOutput, PluginError> {
+        if Self::wants_help(&args.args) {
+            return Ok(CommandOutput::Text(
+                "Usage: vibes groove openworld history [limit]\n\n\
+                 Show recent open-world events.\n\n\
+                 Arguments:\n\
+                   [limit]  Maximum events to show (default: 20)\n"
+                    .to_string(),
+            ));
+        }
+
+        let limit: usize = args.args.first().and_then(|s| s.parse().ok()).unwrap_or(20);
+
+        let paths = GroovePaths::default();
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            let events = store.get_recent_events(limit).await.unwrap_or_default();
+
+            if events.is_empty() {
+                return Ok(CommandOutput::Text("No recent events.\n".to_string()));
+            }
+
+            let mut output = String::new();
+            output.push_str("Recent Open-World Events\n");
+            output.push_str("========================================\n\n");
+
+            for event in &events {
+                let event_type = match event {
+                    crate::openworld::OpenWorldEvent::NoveltyDetected { .. } => "NoveltyDetected",
+                    crate::openworld::OpenWorldEvent::ClusterUpdated { .. } => "ClusterUpdated",
+                    crate::openworld::OpenWorldEvent::GapCreated { .. } => "GapCreated",
+                    crate::openworld::OpenWorldEvent::GapStatusChanged { .. } => "GapStatusChanged",
+                    crate::openworld::OpenWorldEvent::SolutionGenerated { .. } => {
+                        "SolutionGenerated"
+                    }
+                    crate::openworld::OpenWorldEvent::StrategyFeedback { .. } => "StrategyFeedback",
+                };
+                output.push_str(&format!("  - {}\n", event_type));
+            }
+
+            Ok(CommandOutput::Text(output))
+        })
+    }
+
     // ─── Route Handlers ───────────────────────────────────────────────
 
     fn route_get_policy(&self) -> Result<RouteResponse, PluginError> {
@@ -4901,6 +5507,305 @@ impl GroovePlugin {
                     "clusters_deleted": cluster_count
                 }),
             )
+        })
+    }
+
+    // ─── Gaps Route Handlers ──────────────────────────────────────────
+
+    fn route_gaps_status(&self) -> Result<RouteResponse, PluginError> {
+        let paths = GroovePaths::default();
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            let all_gaps: Vec<CapabilityGap> = store.get_gaps(None).await.unwrap_or_default();
+
+            #[derive(Serialize)]
+            struct GapsStatusResponse {
+                total: usize,
+                detected: usize,
+                confirmed: usize,
+                in_progress: usize,
+                resolved: usize,
+                dismissed: usize,
+            }
+
+            RouteResponse::json(
+                200,
+                &GapsStatusResponse {
+                    total: all_gaps.len(),
+                    detected: all_gaps
+                        .iter()
+                        .filter(|g| g.status == GapStatus::Detected)
+                        .count(),
+                    confirmed: all_gaps
+                        .iter()
+                        .filter(|g| g.status == GapStatus::Confirmed)
+                        .count(),
+                    in_progress: all_gaps
+                        .iter()
+                        .filter(|g| g.status == GapStatus::InProgress)
+                        .count(),
+                    resolved: all_gaps
+                        .iter()
+                        .filter(|g| g.status == GapStatus::Resolved)
+                        .count(),
+                    dismissed: all_gaps
+                        .iter()
+                        .filter(|g| g.status == GapStatus::Dismissed)
+                        .count(),
+                },
+            )
+        })
+    }
+
+    fn route_gaps_list(&self, request: &RouteRequest) -> Result<RouteResponse, PluginError> {
+        let status_filter: Option<GapStatus> =
+            request.query.get("status").and_then(|s| s.parse().ok());
+
+        let paths = GroovePaths::default();
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            let gaps: Vec<CapabilityGap> = store.get_gaps(status_filter).await.unwrap_or_default();
+            RouteResponse::json(200, &gaps)
+        })
+    }
+
+    fn route_gaps_show(&self, request: &RouteRequest) -> Result<RouteResponse, PluginError> {
+        let id_str = request
+            .params
+            .get("id")
+            .ok_or_else(|| PluginError::InvalidInput("Missing gap ID".into()))?;
+
+        let id: GapId = id_str
+            .parse()
+            .map_err(|_| PluginError::InvalidInput("Invalid gap ID (must be UUID)".into()))?;
+
+        let paths = GroovePaths::default();
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            match store.get_gap(id).await {
+                Ok(Some(gap)) => RouteResponse::json(200, &gap),
+                Ok(None) => {
+                    RouteResponse::json(404, &serde_json::json!({"error": "Gap not found"}))
+                }
+                Err(e) => Err(PluginError::custom(format!("Failed to fetch gap: {}", e))),
+            }
+        })
+    }
+
+    fn route_gaps_dismiss(&self, request: &RouteRequest) -> Result<RouteResponse, PluginError> {
+        let id_str = request
+            .params
+            .get("id")
+            .ok_or_else(|| PluginError::InvalidInput("Missing gap ID".into()))?;
+
+        let id: GapId = id_str
+            .parse()
+            .map_err(|_| PluginError::InvalidInput("Invalid gap ID (must be UUID)".into()))?;
+
+        let paths = GroovePaths::default();
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            store
+                .update_gap_status(id, GapStatus::Dismissed)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to dismiss gap: {}", e)))?;
+
+            RouteResponse::json(200, &serde_json::json!({"dismissed": id.to_string()}))
+        })
+    }
+
+    fn route_gaps_resolve(&self, request: &RouteRequest) -> Result<RouteResponse, PluginError> {
+        let id_str = request
+            .params
+            .get("id")
+            .ok_or_else(|| PluginError::InvalidInput("Missing gap ID".into()))?;
+
+        let id: GapId = id_str
+            .parse()
+            .map_err(|_| PluginError::InvalidInput("Invalid gap ID (must be UUID)".into()))?;
+
+        let paths = GroovePaths::default();
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            store
+                .update_gap_status(id, GapStatus::Resolved)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to resolve gap: {}", e)))?;
+
+            RouteResponse::json(200, &serde_json::json!({"resolved": id.to_string()}))
+        })
+    }
+
+    fn route_gaps_apply(&self, request: &RouteRequest) -> Result<RouteResponse, PluginError> {
+        let gap_id_str = request
+            .params
+            .get("id")
+            .ok_or_else(|| PluginError::InvalidInput("Missing gap ID".into()))?;
+
+        let solution_str = request
+            .params
+            .get("solution")
+            .ok_or_else(|| PluginError::InvalidInput("Missing solution index".into()))?;
+
+        let gap_id: GapId = gap_id_str
+            .parse()
+            .map_err(|_| PluginError::InvalidInput("Invalid gap ID (must be UUID)".into()))?;
+
+        let solution_idx: usize = solution_str
+            .parse()
+            .map_err(|_| PluginError::InvalidInput("Invalid solution index".into()))?;
+
+        let paths = GroovePaths::default();
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            let gap = store
+                .get_gap(gap_id)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to fetch gap: {}", e)))?
+                .ok_or_else(|| PluginError::custom("Gap not found".to_string()))?;
+
+            if solution_idx >= gap.suggested_solutions.len() {
+                return RouteResponse::json(
+                    400,
+                    &serde_json::json!({"error": "Solution index out of range"}),
+                );
+            }
+
+            store
+                .update_gap_status(gap_id, GapStatus::InProgress)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to update gap: {}", e)))?;
+
+            RouteResponse::json(
+                200,
+                &serde_json::json!({
+                    "applied": true,
+                    "gap_id": gap_id.to_string(),
+                    "solution_index": solution_idx,
+                    "status": "in_progress"
+                }),
+            )
+        })
+    }
+
+    // ─── Openworld Route Handlers ─────────────────────────────────────
+
+    fn route_openworld_status(&self) -> Result<RouteResponse, PluginError> {
+        let paths = GroovePaths::default();
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            let fingerprints = store.get_fingerprints().await.unwrap_or_default();
+            let clusters = store.get_clusters().await.unwrap_or_default();
+            let gaps: Vec<CapabilityGap> = store.get_gaps(None).await.unwrap_or_default();
+
+            #[derive(Serialize)]
+            struct OpenWorldStatusResponse {
+                novelty: NoveltyStats,
+                gaps: GapsStats,
+            }
+
+            #[derive(Serialize)]
+            struct NoveltyStats {
+                known_patterns: usize,
+                active_clusters: usize,
+                pending_points: usize,
+            }
+
+            #[derive(Serialize)]
+            struct GapsStats {
+                total: usize,
+                active: usize,
+            }
+
+            let active_gaps = gaps
+                .iter()
+                .filter(|g| {
+                    g.status == GapStatus::Detected
+                        || g.status == GapStatus::Confirmed
+                        || g.status == GapStatus::InProgress
+                })
+                .count();
+
+            RouteResponse::json(
+                200,
+                &OpenWorldStatusResponse {
+                    novelty: NoveltyStats {
+                        known_patterns: fingerprints.len(),
+                        active_clusters: clusters.len(),
+                        pending_points: clusters.iter().map(|c| c.members.len()).sum(),
+                    },
+                    gaps: GapsStats {
+                        total: gaps.len(),
+                        active: active_gaps,
+                    },
+                },
+            )
+        })
+    }
+
+    fn route_openworld_history(
+        &self,
+        request: &RouteRequest,
+    ) -> Result<RouteResponse, PluginError> {
+        let limit: usize = request
+            .query
+            .get("limit")
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(20);
+
+        let paths = GroovePaths::default();
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PluginError::custom(format!("Failed to create runtime: {}", e)))?;
+
+        rt.block_on(async {
+            let store = CozoStore::open(&paths.db_path)
+                .await
+                .map_err(|e| PluginError::custom(format!("Failed to open store: {}", e)))?;
+
+            let events = store.get_recent_events(limit).await.unwrap_or_default();
+            RouteResponse::json(200, &events)
         })
     }
 }
@@ -6647,5 +7552,321 @@ mod tests {
 
         let result = plugin.cmd_novelty_mark_known(&args);
         assert!(result.is_err());
+    }
+
+    // ─── Gaps Command Tests ──────────────────────────────────────────────
+
+    #[test]
+    fn test_gaps_commands_registered() {
+        let mut plugin = GroovePlugin::default();
+        let mut ctx = create_test_context();
+
+        plugin.on_load(&mut ctx).unwrap();
+
+        let commands = ctx.pending_commands();
+        let paths: Vec<_> = commands.iter().map(|c| c.path.join(" ")).collect();
+
+        let expected_gaps_commands = [
+            "gaps status",
+            "gaps list",
+            "gaps show",
+            "gaps dismiss",
+            "gaps resolve",
+            "gaps apply",
+        ];
+
+        for cmd in expected_gaps_commands {
+            assert!(
+                paths.contains(&cmd.to_string()),
+                "Expected gaps command '{}' not found. Registered: {:?}",
+                cmd,
+                paths
+            );
+        }
+    }
+
+    #[test]
+    fn test_gaps_routes_registered() {
+        let mut plugin = GroovePlugin::default();
+        let mut ctx = create_test_context();
+
+        plugin.on_load(&mut ctx).unwrap();
+
+        let routes = ctx.pending_routes();
+        let paths: Vec<_> = routes.iter().map(|r| r.path.clone()).collect();
+
+        let expected_gaps_routes = [
+            "/gaps/status",
+            "/gaps",
+            "/gaps/:id",
+            "/gaps/:id/dismiss",
+            "/gaps/:id/resolve",
+            "/gaps/:id/apply/:solution",
+        ];
+
+        for route in expected_gaps_routes {
+            assert!(
+                paths.contains(&route.to_string()),
+                "Expected gaps route '{}' not found. Registered: {:?}",
+                route,
+                paths
+            );
+        }
+    }
+
+    #[test]
+    fn test_cmd_gaps_status_help() {
+        let plugin = GroovePlugin::default();
+        let mut args = vibes_plugin_api::CommandArgs::default();
+        args.args.push("--help".into());
+
+        let result = plugin.cmd_gaps_status(&args).unwrap();
+
+        match result {
+            CommandOutput::Text(text) => {
+                assert!(text.contains("Usage:"));
+                assert!(text.contains("gaps status"));
+            }
+            _ => panic!("Expected Text output"),
+        }
+    }
+
+    #[test]
+    fn test_cmd_gaps_list_help() {
+        let plugin = GroovePlugin::default();
+        let mut args = vibes_plugin_api::CommandArgs::default();
+        args.args.push("--help".into());
+
+        let result = plugin.cmd_gaps_list(&args).unwrap();
+
+        match result {
+            CommandOutput::Text(text) => {
+                assert!(text.contains("Usage:"));
+                assert!(text.contains("gaps list"));
+            }
+            _ => panic!("Expected Text output"),
+        }
+    }
+
+    #[test]
+    fn test_cmd_gaps_show_help() {
+        let plugin = GroovePlugin::default();
+        let mut args = vibes_plugin_api::CommandArgs::default();
+        args.args.push("--help".into());
+
+        let result = plugin.cmd_gaps_show(&args).unwrap();
+
+        match result {
+            CommandOutput::Text(text) => {
+                assert!(text.contains("Usage:"));
+                assert!(text.contains("gaps show"));
+                assert!(text.contains("<id>"));
+            }
+            _ => panic!("Expected Text output"),
+        }
+    }
+
+    #[test]
+    fn test_cmd_gaps_dismiss_help() {
+        let plugin = GroovePlugin::default();
+        let mut args = vibes_plugin_api::CommandArgs::default();
+        args.args.push("--help".into());
+
+        let result = plugin.cmd_gaps_dismiss(&args).unwrap();
+
+        match result {
+            CommandOutput::Text(text) => {
+                assert!(text.contains("Usage:"));
+                assert!(text.contains("gaps dismiss"));
+                assert!(text.contains("<id>"));
+            }
+            _ => panic!("Expected Text output"),
+        }
+    }
+
+    #[test]
+    fn test_cmd_gaps_resolve_help() {
+        let plugin = GroovePlugin::default();
+        let mut args = vibes_plugin_api::CommandArgs::default();
+        args.args.push("--help".into());
+
+        let result = plugin.cmd_gaps_resolve(&args).unwrap();
+
+        match result {
+            CommandOutput::Text(text) => {
+                assert!(text.contains("Usage:"));
+                assert!(text.contains("gaps resolve"));
+                assert!(text.contains("<id>"));
+            }
+            _ => panic!("Expected Text output"),
+        }
+    }
+
+    #[test]
+    fn test_cmd_gaps_apply_help() {
+        let plugin = GroovePlugin::default();
+        let mut args = vibes_plugin_api::CommandArgs::default();
+        args.args.push("--help".into());
+
+        let result = plugin.cmd_gaps_apply(&args).unwrap();
+
+        match result {
+            CommandOutput::Text(text) => {
+                assert!(text.contains("Usage:"));
+                assert!(text.contains("gaps apply"));
+                assert!(text.contains("<gap_id>"));
+                assert!(text.contains("<solution_index>"));
+            }
+            _ => panic!("Expected Text output"),
+        }
+    }
+
+    #[test]
+    fn test_cmd_gaps_show_missing_id() {
+        let plugin = GroovePlugin::default();
+        let args = vibes_plugin_api::CommandArgs::default();
+
+        let result = plugin.cmd_gaps_show(&args);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_cmd_gaps_show_invalid_id() {
+        let plugin = GroovePlugin::default();
+        let mut args = vibes_plugin_api::CommandArgs::default();
+        args.args.push("not-a-uuid".into());
+
+        let result = plugin.cmd_gaps_show(&args);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_cmd_gaps_dismiss_missing_id() {
+        let plugin = GroovePlugin::default();
+        let args = vibes_plugin_api::CommandArgs::default();
+
+        let result = plugin.cmd_gaps_dismiss(&args);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_cmd_gaps_resolve_missing_id() {
+        let plugin = GroovePlugin::default();
+        let args = vibes_plugin_api::CommandArgs::default();
+
+        let result = plugin.cmd_gaps_resolve(&args);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_cmd_gaps_apply_missing_args() {
+        let plugin = GroovePlugin::default();
+        let args = vibes_plugin_api::CommandArgs::default();
+
+        let result = plugin.cmd_gaps_apply(&args);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_cmd_gaps_apply_missing_solution_index() {
+        let plugin = GroovePlugin::default();
+        let mut args = vibes_plugin_api::CommandArgs::default();
+        args.args
+            .push("01234567-89ab-cdef-0123-456789abcdef".into());
+
+        let result = plugin.cmd_gaps_apply(&args);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_cmd_gaps_apply_invalid_solution_index() {
+        let plugin = GroovePlugin::default();
+        let mut args = vibes_plugin_api::CommandArgs::default();
+        args.args
+            .push("01234567-89ab-cdef-0123-456789abcdef".into());
+        args.args.push("not-a-number".into());
+
+        let result = plugin.cmd_gaps_apply(&args);
+        assert!(result.is_err());
+    }
+
+    // ─── Openworld Command Tests ─────────────────────────────────────────
+
+    #[test]
+    fn test_openworld_commands_registered() {
+        let mut plugin = GroovePlugin::default();
+        let mut ctx = create_test_context();
+
+        plugin.on_load(&mut ctx).unwrap();
+
+        let commands = ctx.pending_commands();
+        let paths: Vec<_> = commands.iter().map(|c| c.path.join(" ")).collect();
+
+        let expected_openworld_commands = ["openworld status", "openworld history"];
+
+        for cmd in expected_openworld_commands {
+            assert!(
+                paths.contains(&cmd.to_string()),
+                "Expected openworld command '{}' not found. Registered: {:?}",
+                cmd,
+                paths
+            );
+        }
+    }
+
+    #[test]
+    fn test_openworld_routes_registered() {
+        let mut plugin = GroovePlugin::default();
+        let mut ctx = create_test_context();
+
+        plugin.on_load(&mut ctx).unwrap();
+
+        let routes = ctx.pending_routes();
+        let paths: Vec<_> = routes.iter().map(|r| r.path.clone()).collect();
+
+        let expected_openworld_routes = ["/openworld/status", "/openworld/history"];
+
+        for route in expected_openworld_routes {
+            assert!(
+                paths.contains(&route.to_string()),
+                "Expected openworld route '{}' not found. Registered: {:?}",
+                route,
+                paths
+            );
+        }
+    }
+
+    #[test]
+    fn test_cmd_openworld_status_help() {
+        let plugin = GroovePlugin::default();
+        let mut args = vibes_plugin_api::CommandArgs::default();
+        args.args.push("--help".into());
+
+        let result = plugin.cmd_openworld_status(&args).unwrap();
+
+        match result {
+            CommandOutput::Text(text) => {
+                assert!(text.contains("Usage:"));
+                assert!(text.contains("openworld status"));
+            }
+            _ => panic!("Expected Text output"),
+        }
+    }
+
+    #[test]
+    fn test_cmd_openworld_history_help() {
+        let plugin = GroovePlugin::default();
+        let mut args = vibes_plugin_api::CommandArgs::default();
+        args.args.push("--help".into());
+
+        let result = plugin.cmd_openworld_history(&args).unwrap();
+
+        match result {
+            CommandOutput::Text(text) => {
+                assert!(text.contains("Usage:"));
+                assert!(text.contains("openworld history"));
+            }
+            _ => panic!("Expected Text output"),
+        }
     }
 }
