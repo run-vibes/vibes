@@ -27,6 +27,7 @@
 
 mod clustering;
 mod gaps;
+mod hook;
 mod novelty;
 mod response;
 mod solutions;
@@ -38,6 +39,7 @@ pub use clustering::{
     euclidean_distance, incremental_dbscan, region_query,
 };
 pub use gaps::{CapabilityGapDetector, GapsConfig};
+pub use hook::{OpenWorldHook, OpenWorldHookConfig};
 pub use novelty::{NoveltyConfig, NoveltyContext, NoveltyDetector};
 pub use response::{GraduatedResponse, ResponseConfig};
 pub use solutions::{SolutionGenerator, SolutionsConfig};
