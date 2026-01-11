@@ -2,7 +2,7 @@
 id: FEAT0063
 title: Configuration and wiring
 type: feat
-status: pending
+status: done
 priority: high
 epics: [plugin-system]
 depends: [FEAT0060]
@@ -220,14 +220,14 @@ This is the final story for milestone 34. It connects all open-world components 
 
 ## Acceptance Criteria
 
-- [ ] `OpenWorldConfig` with all nested configs
-- [ ] All components wired in plugin initialization
-- [ ] Components only created when enabled
-- [ ] Strategy consumer receives OpenWorldHook
-- [ ] Module documentation complete
-- [ ] Integration test passes
-- [ ] All tests pass
-- [ ] Pre-commit checks pass
+- [x] `OpenWorldConfig` with all nested configs
+- [x] All components wired in plugin initialization
+- [x] Components only created when enabled
+- [x] Strategy consumer receives OpenWorldHook
+- [x] Module documentation complete
+- [x] Integration test passes
+- [x] All tests pass
+- [x] Pre-commit checks pass
 
 ## Completion
 

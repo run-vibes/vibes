@@ -12,6 +12,7 @@ use std::path::PathBuf;
 use crate::attribution::{AblationConfig, AggregationConfig, TemporalConfig};
 use crate::extraction::DEFAULT_SIMILARITY_THRESHOLD;
 use crate::extraction::patterns::CorrectionConfig;
+use crate::openworld::{GapsConfig, NoveltyConfig, ResponseConfig, SolutionsConfig};
 
 /// Configuration for the groove storage system.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -35,6 +36,9 @@ pub struct GrooveConfig {
     /// Value aggregation settings for attribution
     #[serde(default)]
     pub aggregation: AggregationConfig,
+    /// Open-world adaptation settings
+    #[serde(default)]
+    pub openworld: OpenWorldConfig,
 }
 
 /// Configuration for semantic deduplication
@@ -51,6 +55,42 @@ impl Default for DeduplicationConfig {
         Self {
             enabled: true,
             similarity_threshold: DEFAULT_SIMILARITY_THRESHOLD,
+        }
+    }
+}
+
+/// Configuration for open-world adaptation system
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OpenWorldConfig {
+    /// Whether open-world adaptation is enabled
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+    /// Novelty detection settings
+    #[serde(default)]
+    pub novelty: NoveltyConfig,
+    /// Capability gap detection settings
+    #[serde(default)]
+    pub gaps: GapsConfig,
+    /// Graduated response settings
+    #[serde(default)]
+    pub response: ResponseConfig,
+    /// Solution generation settings
+    #[serde(default)]
+    pub solutions: SolutionsConfig,
+}
+
+fn default_true() -> bool {
+    true
+}
+
+impl Default for OpenWorldConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            novelty: NoveltyConfig::default(),
+            gaps: GapsConfig::default(),
+            response: ResponseConfig::default(),
+            solutions: SolutionsConfig::default(),
         }
     }
 }
@@ -92,6 +132,7 @@ impl Default for GrooveConfig {
             temporal: TemporalConfig::default(),
             ablation: AblationConfig::default(),
             aggregation: AggregationConfig::default(),
+            openworld: OpenWorldConfig::default(),
         }
     }
 }
@@ -156,5 +197,30 @@ mod tests {
     fn test_groove_config_includes_deduplication() {
         let config = GrooveConfig::default();
         assert!(config.deduplication.enabled);
+    }
+
+    #[test]
+    fn test_openworld_config_defaults() {
+        let config = OpenWorldConfig::default();
+        assert!(config.enabled);
+        assert!((config.novelty.initial_threshold - 0.85).abs() < f64::EPSILON);
+        assert_eq!(config.gaps.min_failures_for_gap, 3);
+        assert_eq!(config.response.monitor_threshold, 3);
+        assert_eq!(config.solutions.max_solutions, 5);
+    }
+
+    #[test]
+    fn test_openworld_config_serialization() {
+        let config = OpenWorldConfig::default();
+        let toml = toml::to_string(&config).unwrap();
+        let parsed: OpenWorldConfig = toml::from_str(&toml).unwrap();
+        assert!(parsed.enabled);
+        assert!((parsed.novelty.initial_threshold - 0.85).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_groove_config_includes_openworld() {
+        let config = GrooveConfig::default();
+        assert!(config.openworld.enabled);
     }
 }

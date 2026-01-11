@@ -69,6 +69,36 @@ mod tests {
         assert!(config.low_confidence_threshold < 1.0);
     }
 
+    #[test]
+    fn test_from_openworld_config() {
+        let openworld_config = crate::config::OpenWorldConfig::default();
+        let hook = OpenWorldHook::from_openworld_config(&openworld_config);
+
+        // Verify config values are correctly mapped
+        assert!(hook.config().enabled);
+        assert!(
+            (hook.config().negative_value_threshold
+                - openworld_config.gaps.negative_attribution_threshold)
+                .abs()
+                < f64::EPSILON
+        );
+        assert!(
+            (hook.config().low_confidence_threshold
+                - openworld_config.gaps.low_confidence_threshold)
+                .abs()
+                < f64::EPSILON
+        );
+        assert_eq!(
+            hook.config().gap_creation_threshold,
+            openworld_config.gaps.min_failures_for_gap as u32
+        );
+        assert!(
+            (hook.config().exploration_bonus - openworld_config.response.exploration_adjustment)
+                .abs()
+                < f64::EPSILON
+        );
+    }
+
     // =========================================================================
     // Outcome analysis tests
     // =========================================================================
@@ -364,6 +394,21 @@ impl OpenWorldHook {
             exploration_adjustments: AtomicU64::new(0),
             gaps_created: AtomicU64::new(0),
         }
+    }
+
+    /// Create from the unified OpenWorldConfig
+    ///
+    /// This factory method extracts relevant settings from the top-level config.
+    pub fn from_openworld_config(config: &crate::config::OpenWorldConfig) -> Self {
+        let hook_config = OpenWorldHookConfig {
+            enabled: config.enabled,
+            negative_value_threshold: config.gaps.negative_attribution_threshold,
+            low_confidence_threshold: config.gaps.low_confidence_threshold,
+            gap_creation_threshold: config.gaps.min_failures_for_gap as u32,
+            exploration_bonus: config.response.exploration_adjustment,
+            max_exploration_bonus: config.response.max_exploration_bonus,
+        };
+        Self::new(hook_config)
     }
 
     /// Set the producer for emitting events
