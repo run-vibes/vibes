@@ -2,7 +2,7 @@
 id: FEAT0058
 title: OpenWorldHook (M32 integration)
 type: feat
-status: pending
+status: done
 priority: high
 epics: [plugin-system]
 depends: [FEAT0056, FEAT0057]
@@ -173,13 +173,13 @@ The OpenWorldHook implements M32's NoveltyHook trait, creating a closed feedback
 
 ## Acceptance Criteria
 
-- [ ] `OpenWorldHook` implements `NoveltyHook` trait
-- [ ] `on_strategy_outcome()` runs full pipeline
-- [ ] Response actions are executed correctly
-- [ ] Strategy learner receives exploration feedback
-- [ ] Gap solutions are generated and attached
-- [ ] Wired into M32 `StrategyConsumer`
-- [ ] All tests pass
+- [x] `OpenWorldHook` implements `NoveltyHook` trait
+- [x] `on_strategy_outcome()` runs full pipeline
+- [x] Response actions are executed correctly
+- [x] Strategy learner receives exploration feedback
+- [x] Gap solutions are generated and attached
+- [x] Wired into M32 `StrategyConsumer`
+- [x] All tests pass
 
 ## Completion
 
