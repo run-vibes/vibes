@@ -2,7 +2,7 @@
 id: FEAT0059
 title: CozoDB schema and store
 type: feat
-status: pending
+status: done
 priority: high
 epics: [plugin-system]
 depends: [FEAT0052]
