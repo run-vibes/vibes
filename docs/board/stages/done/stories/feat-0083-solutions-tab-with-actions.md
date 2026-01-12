@@ -2,7 +2,7 @@
 id: FEAT0083
 title: Solutions tab with actions
 type: feat
-status: pending
+status: done
 priority: medium
 epics: [plugin-system]
 depends: [FEAT0080]

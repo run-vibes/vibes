@@ -20,7 +20,6 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [feat-0076-auth-setup-wizard](stages/backlog/stories/feat-0076-auth-setup-wizard.md) | feat | medium | cli |
 | [feat-0077-config-save-load](stages/backlog/stories/feat-0077-config-save-load.md) | feat | medium | cli |
 | [feat-0078-connectivity-validation](stages/backlog/stories/feat-0078-connectivity-validation.md) | feat | medium | cli |
-| [feat-0083-solutions-tab-with-actions](stages/backlog/stories/feat-0083-solutions-tab-with-actions.md) | feat | medium | plugin-system |
 | [feat-0084-activity-tab-with-live-updates](stages/backlog/stories/feat-0084-activity-tab-with-live-updates.md) | feat | medium | plugin-system |
 
 ## Epics
@@ -173,6 +172,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 - [feat-0080-openworld-backend-data-providers](stages/done/stories/feat-0080-openworld-backend-data-providers.md)
 - [feat-0081-novelty-tab-components](stages/done/stories/feat-0081-novelty-tab-components.md)
 - [feat-0082-gaps-tab-with-split-view](stages/done/stories/feat-0082-gaps-tab-with-split-view.md)
+- [feat-0083-solutions-tab-with-actions](stages/done/stories/feat-0083-solutions-tab-with-actions.md)
 - [m14-chore-01-design](stages/done/stories/m14-chore-01-design.md)
 - [m14-chore-02-implementation](stages/done/stories/m14-chore-02-implementation.md)
 - [m26-chore-01-eventbus-cleanup](stages/done/stories/m26-chore-01-eventbus-cleanup.md)
