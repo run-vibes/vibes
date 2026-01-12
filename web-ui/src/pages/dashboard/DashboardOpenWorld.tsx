@@ -1,9 +1,19 @@
 import { useState } from 'react';
-import { NoveltyStats, ClusterList, GapsList, GapDetail } from '../../components/dashboard/openworld';
+import {
+  NoveltyStats,
+  ClusterList,
+  GapsList,
+  GapDetail,
+  SolutionsList,
+} from '../../components/dashboard/openworld';
+import { ConfirmDialog } from '../../components/dashboard/ConfirmDialog';
 import {
   useOpenWorldOverview,
   useOpenWorldGaps,
   useOpenWorldGapDetail,
+  useOpenWorldSolutions,
+  useApplySolution,
+  useDismissSolution,
   type OpenWorldGapsFilter,
 } from '../../hooks/useDashboard';
 import './DashboardOpenWorld.css';
@@ -38,7 +48,7 @@ export function DashboardOpenWorld() {
       <div className="dashboard-openworld__content">
         {activeTab === 'novelty' && <NoveltyPanel />}
         {activeTab === 'gaps' && <GapsPanel />}
-        {activeTab === 'solutions' && <SolutionsPlaceholder />}
+        {activeTab === 'solutions' && <SolutionsPanel />}
         {activeTab === 'activity' && <ActivityPlaceholder />}
       </div>
     </div>
@@ -83,15 +93,75 @@ function GapsPanel() {
   );
 }
 
-function SolutionsPlaceholder() {
+type ConfirmAction = { type: 'apply' | 'dismiss'; solutionId: string } | null;
+
+function SolutionsPanel() {
+  const { data, isLoading } = useOpenWorldSolutions();
+  const applyMutation = useApplySolution();
+  const dismissMutation = useDismissSolution();
+
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null);
+  const [actionLoading, setActionLoading] = useState<string | undefined>();
+
+  const handleApply = (solutionId: string) => {
+    setConfirmAction({ type: 'apply', solutionId });
+  };
+
+  const handleDismiss = (solutionId: string) => {
+    setConfirmAction({ type: 'dismiss', solutionId });
+  };
+
+  const handleConfirm = async () => {
+    if (!confirmAction) return;
+
+    setActionLoading(confirmAction.solutionId);
+
+    try {
+      if (confirmAction.type === 'apply') {
+        await applyMutation.mutateAsync(confirmAction.solutionId);
+      } else {
+        await dismissMutation.mutateAsync(confirmAction.solutionId);
+      }
+    } finally {
+      setActionLoading(undefined);
+      setConfirmAction(null);
+    }
+  };
+
+  const handleCancel = () => {
+    setConfirmAction(null);
+  };
+
   return (
-    <div className="dashboard-openworld__placeholder">
-      <h3>Suggested Solutions</h3>
-      <p>Review and apply solutions for capability gaps.</p>
-      <div className="dashboard-openworld__empty-state">
-        <span className="dashboard-openworld__empty-icon">◇</span>
-        <span>No solutions pending review</span>
-      </div>
+    <div className="dashboard-openworld__panel">
+      <SolutionsList
+        solutions={data?.solutions}
+        total={data?.total}
+        isLoading={isLoading}
+        onApply={handleApply}
+        onDismiss={handleDismiss}
+        actionLoading={actionLoading}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmAction?.type === 'apply'}
+        title="Apply Solution"
+        message="This will apply the suggested solution. Are you sure you want to proceed?"
+        confirmText="Apply"
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+        isLoading={applyMutation.isPending}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmAction?.type === 'dismiss'}
+        title="Dismiss Solution"
+        message="This solution will be marked as dismissed and won't be shown again."
+        confirmText="Dismiss"
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+        isLoading={dismissMutation.isPending}
+      />
     </div>
   );
 }

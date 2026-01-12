@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 // ============================================================================
 // Types (matching Rust dashboard types)
@@ -596,6 +596,48 @@ export function useOpenWorldSolutions() {
       return response.json();
     },
     refetchInterval: 30000,
+  });
+}
+
+export function useApplySolution() {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, Error, string>({
+    mutationFn: async (solutionId: string) => {
+      const response = await fetch(`/api/groove/dashboard/openworld/solutions/${solutionId}/apply`, {
+        method: 'POST',
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to apply solution');
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'openworld', 'solutions'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'openworld', 'gaps'] });
+    },
+  });
+}
+
+export function useDismissSolution() {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, Error, string>({
+    mutationFn: async (solutionId: string) => {
+      const response = await fetch(
+        `/api/groove/dashboard/openworld/solutions/${solutionId}/dismiss`,
+        {
+          method: 'POST',
+        }
+      );
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to dismiss solution');
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'openworld', 'solutions'] });
+    },
   });
 }
 
