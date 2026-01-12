@@ -1,0 +1,67 @@
+/**
+ * ActivityItem styles
+ * Individual event in the activity feed
+ */
+
+.activity-item {
+  padding: 12px;
+  border-bottom: 1px solid rgba(0, 255, 65, 0.1);
+  transition: background-color 0.2s ease;
+}
+
+.activity-item:last-child {
+  border-bottom: none;
+}
+
+.activity-item:hover {
+  background: rgba(0, 255, 65, 0.03);
+}
+
+.activity-item__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.activity-item__time {
+  font-size: 0.7rem;
+  color: rgba(0, 255, 65, 0.5);
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+.activity-item__message {
+  margin: 0;
+  font-size: 0.85rem;
+  color: rgba(0, 255, 65, 0.9);
+  line-height: 1.4;
+}
+
+.activity-item__refs {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.activity-item__ref {
+  font-size: 0.7rem;
+  color: rgba(0, 255, 65, 0.4);
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* New event animation */
+.activity-item--new {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -1,0 +1,73 @@
+/**
+ * ActivityFeed styles
+ * Scrolling event list with CRT styling
+ */
+
+.activity-feed {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.activity-feed__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(0, 255, 65, 0.15);
+}
+
+.activity-feed__count {
+  font-size: 0.75rem;
+  color: rgba(0, 255, 65, 0.6);
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+.activity-feed__list {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 400px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 255, 65, 0.3) transparent;
+}
+
+.activity-feed__list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.activity-feed__list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.activity-feed__list::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 65, 0.3);
+  border-radius: 3px;
+}
+
+.activity-feed__list::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 255, 65, 0.5);
+}
+
+.activity-feed__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: rgba(0, 255, 65, 0.5);
+  font-size: 0.85rem;
+}
+
+.activity-feed__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: rgba(0, 255, 65, 0.4);
+  gap: 8px;
+}
+
+.activity-feed__empty-icon {
+  font-size: 1.5rem;
+  opacity: 0.5;
+}

@@ -33,3 +33,15 @@ export type { SolutionActionsProps } from './SolutionActions';
 
 export { SolutionConfidenceBadge } from './SolutionConfidenceBadge';
 export type { SolutionConfidenceBadgeProps } from './SolutionConfidenceBadge';
+
+export { ActivityStats } from './ActivityStats';
+export type { ActivityStatsProps } from './ActivityStats';
+
+export { ActivityFeed } from './ActivityFeed';
+export type { ActivityFeedProps } from './ActivityFeed';
+
+export { ActivityItem } from './ActivityItem';
+export type { ActivityItemProps } from './ActivityItem';
+
+export { ResponseActionBadge } from './ResponseActionBadge';
+export type { ResponseActionBadgeProps } from './ResponseActionBadge';
