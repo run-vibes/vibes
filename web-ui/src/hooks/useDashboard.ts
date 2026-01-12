@@ -525,6 +525,7 @@ export interface OpenWorldActivityData {
 export interface OpenWorldGapsFilter {
   status?: GapStatus;
   severity?: GapSeverity;
+  category?: GapCategory;
 }
 
 export function useOpenWorldOverview() {
@@ -545,6 +546,7 @@ export function useOpenWorldGaps(filters?: OpenWorldGapsFilter) {
   const params = new URLSearchParams();
   if (filters?.status) params.set('status', filters.status);
   if (filters?.severity) params.set('severity', filters.severity);
+  if (filters?.category) params.set('category', filters.category);
   const queryString = params.toString();
   const url = queryString
     ? `/api/groove/dashboard/openworld/gaps?${queryString}`
