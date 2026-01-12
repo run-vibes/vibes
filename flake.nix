@@ -24,7 +24,6 @@
             pkgs.cargo-nextest
             pkgs.cargo-mutants
             pkgs.cargo-watch
-            pkgs.cargo-llvm-cov
             # CLI recording
             pkgs.vhs
             # Native build deps for CozoDB/RocksDB
@@ -41,6 +40,12 @@
           LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
 
           shellHook = ''
+            # Auto-install cargo-llvm-cov if missing (consistent across all platforms)
+            if ! command -v cargo-llvm-cov &> /dev/null; then
+              echo "Installing cargo-llvm-cov..."
+              cargo install cargo-llvm-cov --quiet
+            fi
+
             echo "vibes dev shell loaded"
             echo "  just          - list commands"
             echo "  just test     - run tests"

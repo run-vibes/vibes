@@ -289,6 +289,8 @@ impl IggyHttpClient {
 
 #[cfg(test)]
 mod tests {
+    use serial_test::serial;
+
     use super::*;
 
     #[test]
@@ -340,6 +342,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn load_cached_token_returns_none_when_no_file() {
         // Clear any existing token first
         let _ = IggyHttpClient::clear_cached_token();
@@ -363,6 +366,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn cache_and_load_token_roundtrip() {
         // Clean up first
         let _ = IggyHttpClient::clear_cached_token();
@@ -385,6 +389,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn clear_cached_token_removes_file() {
         // Create a token file
         let mut client = IggyHttpClient::new("localhost", 7431);
