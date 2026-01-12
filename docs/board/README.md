@@ -21,7 +21,6 @@
 | [feat-0076-auth-setup-wizard](stages/backlog/stories/feat-0076-auth-setup-wizard.md) | feat | medium | cli |
 | [feat-0077-config-save-load](stages/backlog/stories/feat-0077-config-save-load.md) | feat | medium | cli |
 | [feat-0078-connectivity-validation](stages/backlog/stories/feat-0078-connectivity-validation.md) | feat | medium | cli |
-| [feat-0079-openworld-page-and-routing](stages/backlog/stories/feat-0079-openworld-page-and-routing.md) | feat | high | plugin-system |
 | [feat-0080-openworld-backend-data-providers](stages/backlog/stories/feat-0080-openworld-backend-data-providers.md) | feat | high | plugin-system |
 | [feat-0081-novelty-tab-components](stages/backlog/stories/feat-0081-novelty-tab-components.md) | feat | medium | plugin-system |
 | [feat-0082-gaps-tab-with-split-view](stages/backlog/stories/feat-0082-gaps-tab-with-split-view.md) | feat | medium | plugin-system |
@@ -92,7 +91,7 @@
 | [41-eval-core](milestones/41-eval-core/) | planned | evals |
 | [42-observability-tracing](milestones/42-observability-tracing/) | planned | observability |
 | [43-tui-core](milestones/43-tui-core/) | planned | tui |
-| [44-openworld-dashboard](milestones/44-openworld-dashboard/) | planned | plugin-system |
+| [44-openworld-dashboard](milestones/44-openworld-dashboard/) | in-progress | plugin-system |
 
 ## Done
 
@@ -174,6 +173,7 @@
 - [feat-0064-visual-regression](stages/done/stories/feat-0064-visual-regression.md)
 - [feat-0065-workflow-videos](stages/done/stories/feat-0065-workflow-videos.md)
 - [feat-0066-cli-recording](stages/done/stories/feat-0066-cli-recording.md)
+- [feat-0079-openworld-page-and-routing](stages/done/stories/feat-0079-openworld-page-and-routing.md)
 - [m14-chore-01-design](stages/done/stories/m14-chore-01-design.md)
 - [m14-chore-02-implementation](stages/done/stories/m14-chore-02-implementation.md)
 - [m26-chore-01-eventbus-cleanup](stages/done/stories/m26-chore-01-eventbus-cleanup.md)

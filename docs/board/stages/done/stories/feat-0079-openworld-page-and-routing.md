@@ -2,7 +2,7 @@
 id: FEAT0079
 title: OpenWorld page and routing
 type: feat
-status: pending
+status: done
 priority: high
 epics: [plugin-system]
 depends: []
@@ -68,8 +68,8 @@ This is the first story for milestone 44. It creates the page structure and rout
 
 ## Acceptance Criteria
 
-- [ ] OpenWorld tab appears in dashboard navigation
-- [ ] `/dashboard/openworld` route works
-- [ ] Internal tabs (Novelty, Gaps, Solutions, Activity) switch correctly
-- [ ] Follows CRT design system styling
-- [ ] Tests pass
+- [x] OpenWorld tab appears in dashboard navigation
+- [x] `/dashboard/openworld` route works
+- [x] Internal tabs (Novelty, Gaps, Solutions, Activity) switch correctly
+- [x] Follows CRT design system styling
+- [x] Tests pass
