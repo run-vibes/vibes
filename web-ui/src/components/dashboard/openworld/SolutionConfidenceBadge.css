@@ -1,0 +1,30 @@
+/* CRT-styled confidence badge */
+
+.solution-confidence-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+
+.solution-confidence-badge--high {
+  color: var(--phosphor);
+  background: var(--phosphor-glow, rgba(0, 255, 65, 0.1));
+  border: 1px solid var(--phosphor-dim, rgba(0, 255, 65, 0.3));
+}
+
+.solution-confidence-badge--medium {
+  color: var(--amber, #ffb000);
+  background: rgba(255, 176, 0, 0.1);
+  border: 1px solid rgba(255, 176, 0, 0.3);
+}
+
+.solution-confidence-badge--low {
+  color: var(--text-dim);
+  background: var(--surface-elevated, rgba(0, 0, 0, 0.2));
+  border: 1px solid var(--border);
+}

@@ -476,17 +476,23 @@ export interface OpenWorldGapDetailData {
   suggested_solutions: SolutionBrief[];
 }
 
-export interface PendingSolution {
+export type SolutionStatus = 'Pending' | 'Applied' | 'Dismissed';
+
+export interface SolutionEntry {
+  id: string;
   gap_id: string;
   gap_context: string;
   action_type: string;
   description: string;
   confidence: number;
+  status: SolutionStatus;
+  created_at: string;
+  updated_at?: string;
 }
 
 export interface OpenWorldSolutionsData {
   data_type: 'open_world_solutions';
-  pending: PendingSolution[];
+  solutions: SolutionEntry[];
   total: number;
 }
 
