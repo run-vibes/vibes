@@ -55,6 +55,25 @@
   gap: var(--space-4);
 }
 
+/* Split panel layout for list + detail views */
+.dashboard-openworld__split-panel {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  height: 100%;
+  min-height: 0;
+}
+
+.dashboard-openworld__split-left {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.dashboard-openworld__split-right {
+  overflow: hidden;
+  min-height: 0;
+}
+
 /* Placeholder styling */
 .dashboard-openworld__placeholder {
   padding: var(--space-4);
@@ -133,5 +152,10 @@
 
   .dashboard-openworld__placeholder-grid {
     grid-template-columns: 1fr;
+  }
+
+  .dashboard-openworld__split-panel {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr;
   }
 }
