@@ -26,6 +26,7 @@ import {
   DashboardAttribution,
   DashboardStrategy,
   DashboardHealth,
+  DashboardOpenWorld,
 } from './pages/dashboard'
 import { DebugPage } from './pages/Debug'
 import { StreamsPage } from './pages/Streams'
@@ -211,6 +212,12 @@ const dashboardHealthRoute = createRoute({
   component: DashboardHealth,
 })
 
+const dashboardOpenWorldRoute = createRoute({
+  getParentRoute: () => dashboardLayoutRoute,
+  path: '/openworld',
+  component: DashboardOpenWorld,
+})
+
 // Redirect dashboard index to overview
 const dashboardIndexRoute = createRoute({
   getParentRoute: () => dashboardLayoutRoute,
@@ -254,6 +261,7 @@ const routeTree = rootRoute.addChildren([
     dashboardAttributionRoute,
     dashboardStrategyRoute,
     dashboardHealthRoute,
+    dashboardOpenWorldRoute,
   ]),
   debugRoute,
   settingsRoute,

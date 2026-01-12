@@ -7,6 +7,7 @@ const TABS = [
   { label: 'Attribution', href: '/groove/dashboard/attribution', exact: false },
   { label: 'Strategy', href: '/groove/dashboard/strategy', exact: false },
   { label: 'Health', href: '/groove/dashboard/health', exact: false },
+  { label: 'OpenWorld', href: '/groove/dashboard/openworld', exact: false },
 ];
 
 export function DashboardLayout() {
