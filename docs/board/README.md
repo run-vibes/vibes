@@ -1,6 +1,5 @@
-# Planning Board
-
-> Auto-generated from directory structure. Run `just board generate` to update.
+Generated README.md
+Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
@@ -10,7 +9,6 @@
 
 | Story | Type | Priority | Epics |
 |-------|------|----------|-------|
-| [chore-0085-fix-web-ui-chunk-warnings](stages/backlog/stories/chore-0085-fix-web-ui-chunk-warnings.md) | chore | low | dev-environment,web-ui |
 | [chore-0086-fix-nix-mac-cargo-llvm-cov](stages/backlog/stories/chore-0086-fix-nix-mac-cargo-llvm-cov.md) | chore | medium | dev-environment |
 | [chore-0087-use-cranelift-for-builds](stages/backlog/stories/chore-0087-use-cranelift-for-builds.md) | chore | medium | dev-environment |
 | [chore-0088-add-codecov-ci-integration](stages/backlog/stories/chore-0088-add-codecov-ci-integration.md) | chore | medium | dev-environment |
@@ -118,6 +116,7 @@
 - [chore-0017-remove-assess-button-icon](stages/done/stories/chore-0017-remove-assess-button-icon.md)
 - [chore-0018-change-default-iggy-port](stages/done/stories/chore-0018-change-default-iggy-port.md)
 - [chore-0067-test-organization](stages/done/stories/chore-0067-test-organization.md)
+- [chore-0085-fix-web-ui-chunk-warnings](stages/done/stories/chore-0085-fix-web-ui-chunk-warnings.md)
 - [docs-0001-fix-broken-documentation-links](stages/done/stories/docs-0001-fix-broken-documentation-links.md)
 - [docs-0002-update-prd-for-current-architecture](stages/done/stories/docs-0002-update-prd-for-current-architecture.md)
 - [docs-0068-documentation-review](stages/done/stories/docs-0068-documentation-review.md)

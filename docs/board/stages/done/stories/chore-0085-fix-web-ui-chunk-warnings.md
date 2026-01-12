@@ -2,7 +2,7 @@
 id: CHORE0085
 title: Fix web UI chunk size warnings
 type: chore
-status: pending
+status: done
 priority: low
 epics: [dev-environment, web-ui]
 depends: []
