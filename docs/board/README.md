@@ -13,6 +13,7 @@
 | [chore-0085-fix-web-ui-chunk-warnings](stages/backlog/stories/chore-0085-fix-web-ui-chunk-warnings.md) | chore | low | dev-environment,web-ui |
 | [chore-0086-fix-nix-mac-cargo-llvm-cov](stages/backlog/stories/chore-0086-fix-nix-mac-cargo-llvm-cov.md) | chore | medium | dev-environment |
 | [chore-0087-use-cranelift-for-builds](stages/backlog/stories/chore-0087-use-cranelift-for-builds.md) | chore | medium | dev-environment |
+| [chore-0088-add-codecov-ci-integration](stages/backlog/stories/chore-0088-add-codecov-ci-integration.md) | chore | medium | dev-environment |
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
 | [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli |
