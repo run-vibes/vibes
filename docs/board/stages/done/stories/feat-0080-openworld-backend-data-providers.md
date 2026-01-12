@@ -2,7 +2,7 @@
 id: FEAT0080
 title: OpenWorld backend data providers
 type: feat
-status: pending
+status: done
 priority: high
 epics: [plugin-system]
 depends: [FEAT0079]
@@ -75,8 +75,8 @@ This story adds the data layer that connects the openworld components (from M34)
 
 ## Acceptance Criteria
 
-- [ ] All openworld topics defined in DashboardTopic enum
-- [ ] Handlers query OpenWorldStore and OpenWorldHook
-- [ ] Frontend types match backend structures
-- [ ] useDashboard hook supports openworld subscriptions
-- [ ] Tests pass
+- [x] All openworld topics defined in DashboardTopic enum
+- [x] Handlers query OpenWorldStore and OpenWorldHook
+- [x] Frontend types match backend structures
+- [x] useDashboard hook supports openworld subscriptions
+- [x] Tests pass

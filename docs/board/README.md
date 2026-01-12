@@ -21,7 +21,6 @@
 | [feat-0076-auth-setup-wizard](stages/backlog/stories/feat-0076-auth-setup-wizard.md) | feat | medium | cli |
 | [feat-0077-config-save-load](stages/backlog/stories/feat-0077-config-save-load.md) | feat | medium | cli |
 | [feat-0078-connectivity-validation](stages/backlog/stories/feat-0078-connectivity-validation.md) | feat | medium | cli |
-| [feat-0080-openworld-backend-data-providers](stages/backlog/stories/feat-0080-openworld-backend-data-providers.md) | feat | high | plugin-system |
 | [feat-0081-novelty-tab-components](stages/backlog/stories/feat-0081-novelty-tab-components.md) | feat | medium | plugin-system |
 | [feat-0082-gaps-tab-with-split-view](stages/backlog/stories/feat-0082-gaps-tab-with-split-view.md) | feat | medium | plugin-system |
 | [feat-0083-solutions-tab-with-actions](stages/backlog/stories/feat-0083-solutions-tab-with-actions.md) | feat | medium | plugin-system |
@@ -174,6 +173,7 @@
 - [feat-0065-workflow-videos](stages/done/stories/feat-0065-workflow-videos.md)
 - [feat-0066-cli-recording](stages/done/stories/feat-0066-cli-recording.md)
 - [feat-0079-openworld-page-and-routing](stages/done/stories/feat-0079-openworld-page-and-routing.md)
+- [feat-0080-openworld-backend-data-providers](stages/done/stories/feat-0080-openworld-backend-data-providers.md)
 - [m14-chore-01-design](stages/done/stories/m14-chore-01-design.md)
 - [m14-chore-02-implementation](stages/done/stories/m14-chore-02-implementation.md)
 - [m26-chore-01-eventbus-cleanup](stages/done/stories/m26-chore-01-eventbus-cleanup.md)
