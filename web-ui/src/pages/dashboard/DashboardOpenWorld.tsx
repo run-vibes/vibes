@@ -5,6 +5,8 @@ import {
   GapsList,
   GapDetail,
   SolutionsList,
+  ActivityStats,
+  ActivityFeed,
 } from '../../components/dashboard/openworld';
 import { ConfirmDialog } from '../../components/dashboard/ConfirmDialog';
 import {
@@ -12,6 +14,7 @@ import {
   useOpenWorldGaps,
   useOpenWorldGapDetail,
   useOpenWorldSolutions,
+  useOpenWorldActivity,
   useApplySolution,
   useDismissSolution,
   type OpenWorldGapsFilter,
@@ -49,7 +52,7 @@ export function DashboardOpenWorld() {
         {activeTab === 'novelty' && <NoveltyPanel />}
         {activeTab === 'gaps' && <GapsPanel />}
         {activeTab === 'solutions' && <SolutionsPanel />}
-        {activeTab === 'activity' && <ActivityPlaceholder />}
+        {activeTab === 'activity' && <ActivityPanel />}
       </div>
     </div>
   );
@@ -166,29 +169,16 @@ function SolutionsPanel() {
   );
 }
 
-function ActivityPlaceholder() {
+function ActivityPanel() {
+  const { data, isLoading, isFetching } = useOpenWorldActivity();
+
+  // Show live indicator when we have data and are actively fetching updates
+  const isLive = !isLoading && isFetching;
+
   return (
-    <div className="dashboard-openworld__placeholder">
-      <h3>Response Activity</h3>
-      <p>Live feed of graduated response actions.</p>
-      <div className="dashboard-openworld__placeholder-grid">
-        <div className="dashboard-openworld__stat-card">
-          <span className="dashboard-openworld__stat-label">Outcomes</span>
-          <span className="dashboard-openworld__stat-value">0</span>
-        </div>
-        <div className="dashboard-openworld__stat-card">
-          <span className="dashboard-openworld__stat-label">Negative</span>
-          <span className="dashboard-openworld__stat-value">0%</span>
-        </div>
-        <div className="dashboard-openworld__stat-card">
-          <span className="dashboard-openworld__stat-label">Exploration</span>
-          <span className="dashboard-openworld__stat-value">+0.00</span>
-        </div>
-      </div>
-      <div className="dashboard-openworld__empty-state">
-        <span className="dashboard-openworld__empty-icon">●</span>
-        <span>No recent activity</span>
-      </div>
+    <div className="dashboard-openworld__panel">
+      <ActivityStats summary={data?.summary} isLoading={isLoading} isLive={isLive} />
+      <ActivityFeed events={data?.events} isLoading={isLoading} />
     </div>
   );
 }
