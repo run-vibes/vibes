@@ -11,9 +11,9 @@ use crate::{
         ActivitySummary, AttributionData, DashboardData, DashboardTopic, GapBrief, GapCounts,
         HealthData, HookStatsData, LearningDetailData, LearningsData, LearningsFilter,
         OpenWorldActivityData, OpenWorldActivityEntry, OpenWorldEventType, OpenWorldGapDetailData,
-        OpenWorldGapsData, OpenWorldOverviewData, OpenWorldSolutionsData, OverviewData,
-        PendingSolution, Period, SessionTimelineData, SolutionBrief, StrategyDistributionsData,
-        StrategyOverridesData,
+        OpenWorldGapsData, OpenWorldOverviewData, OpenWorldSolutionsData, OverviewData, Period,
+        SessionTimelineData, SolutionBrief, SolutionEntry, SolutionStatus,
+        StrategyDistributionsData, StrategyOverridesData,
     },
     openworld::{GapSeverity, GapStatus, OpenWorldHook, OpenWorldStore},
 };
@@ -308,16 +308,23 @@ impl DashboardHandler {
             }
         };
 
-        // Get all gaps and collect pending (unapplied) solutions
+        // Get all gaps and collect all solutions with status
         let gaps = store.get_gaps(None).await.map_err(|e| e.to_string())?;
 
-        let pending: Vec<PendingSolution> = gaps
+        let solutions: Vec<SolutionEntry> = gaps
             .iter()
             .flat_map(|g| {
-                g.suggested_solutions
-                    .iter()
-                    .filter(|s| !s.applied)
-                    .map(|s| PendingSolution {
+                g.suggested_solutions.iter().enumerate().map(|(idx, s)| {
+                    let status = if s.applied {
+                        SolutionStatus::Applied
+                    } else if s.dismissed {
+                        SolutionStatus::Dismissed
+                    } else {
+                        SolutionStatus::Pending
+                    };
+
+                    SolutionEntry {
+                        id: format!("{}-{}", g.id, idx),
                         gap_id: g.id,
                         gap_context: g.context_pattern.clone(),
                         action_type: format!("{:?}", s.action),
@@ -341,14 +348,18 @@ impl DashboardHandler {
                             }
                         },
                         confidence: s.confidence,
-                    })
+                        status,
+                        created_at: s.created_at,
+                        updated_at: s.updated_at,
+                    }
+                })
             })
             .collect();
 
-        let total = pending.len() as u32;
+        let total = solutions.len() as u32;
 
         Ok(DashboardData::OpenWorldSolutions(OpenWorldSolutionsData {
-            pending,
+            solutions,
             total,
         }))
     }
@@ -520,6 +531,44 @@ impl DashboardHandler {
             .map_err(|e| e.to_string())?;
 
         Ok(())
+    }
+
+    // ============================================================
+    // Solution Actions
+    // ============================================================
+
+    /// Apply a solution (mark as applied)
+    pub async fn handle_apply_solution(
+        &self,
+        gap_id: crate::openworld::GapId,
+        solution_index: usize,
+    ) -> Result<(), String> {
+        let store = match &self.openworld_store {
+            Some(s) => s,
+            None => return Err("OpenWorld store not configured".to_string()),
+        };
+
+        store
+            .apply_solution(gap_id, solution_index)
+            .await
+            .map_err(|e| e.to_string())
+    }
+
+    /// Dismiss a solution (mark as dismissed)
+    pub async fn handle_dismiss_solution(
+        &self,
+        gap_id: crate::openworld::GapId,
+        solution_index: usize,
+    ) -> Result<(), String> {
+        let store = match &self.openworld_store {
+            Some(s) => s,
+            None => return Err("OpenWorld store not configured".to_string()),
+        };
+
+        store
+            .dismiss_solution(gap_id, solution_index)
+            .await
+            .map_err(|e| e.to_string())
     }
 }
 
