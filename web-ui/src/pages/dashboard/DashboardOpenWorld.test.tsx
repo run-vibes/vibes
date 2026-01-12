@@ -3,12 +3,31 @@
  */
 import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DashboardOpenWorld } from './DashboardOpenWorld';
+
+// Create a fresh QueryClient for each test
+function createTestQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  });
+}
+
+function renderWithQueryClient(ui: React.ReactElement) {
+  const queryClient = createTestQueryClient();
+  return render(
+    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
+  );
+}
 
 describe('DashboardOpenWorld', () => {
   describe('tab rendering', () => {
     it('renders all four tabs', () => {
-      render(<DashboardOpenWorld />);
+      renderWithQueryClient(<DashboardOpenWorld />);
 
       expect(screen.getByRole('button', { name: /novelty/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /gaps/i })).toBeInTheDocument();
@@ -17,7 +36,7 @@ describe('DashboardOpenWorld', () => {
     });
 
     it('shows Novelty tab as active by default', () => {
-      render(<DashboardOpenWorld />);
+      renderWithQueryClient(<DashboardOpenWorld />);
 
       const noveltyTab = screen.getByRole('button', { name: /novelty/i });
       expect(noveltyTab).toHaveClass('active');
@@ -26,7 +45,7 @@ describe('DashboardOpenWorld', () => {
 
   describe('tab switching', () => {
     it('switches to Gaps tab when clicked', () => {
-      render(<DashboardOpenWorld />);
+      renderWithQueryClient(<DashboardOpenWorld />);
 
       const gapsTab = screen.getByRole('button', { name: /gaps/i });
       fireEvent.click(gapsTab);
@@ -36,7 +55,7 @@ describe('DashboardOpenWorld', () => {
     });
 
     it('switches to Solutions tab when clicked', () => {
-      render(<DashboardOpenWorld />);
+      renderWithQueryClient(<DashboardOpenWorld />);
 
       const solutionsTab = screen.getByRole('button', { name: /solutions/i });
       fireEvent.click(solutionsTab);
@@ -46,7 +65,7 @@ describe('DashboardOpenWorld', () => {
     });
 
     it('switches to Activity tab when clicked', () => {
-      render(<DashboardOpenWorld />);
+      renderWithQueryClient(<DashboardOpenWorld />);
 
       const activityTab = screen.getByRole('button', { name: /activity/i });
       fireEvent.click(activityTab);
@@ -56,7 +75,7 @@ describe('DashboardOpenWorld', () => {
     });
 
     it('switches back to Novelty tab', () => {
-      render(<DashboardOpenWorld />);
+      renderWithQueryClient(<DashboardOpenWorld />);
 
       // Switch away first
       fireEvent.click(screen.getByRole('button', { name: /gaps/i }));
@@ -66,29 +85,30 @@ describe('DashboardOpenWorld', () => {
       fireEvent.click(noveltyTab);
 
       expect(noveltyTab).toHaveClass('active');
-      expect(screen.getByRole('heading', { name: /novelty detection/i })).toBeInTheDocument();
+      // Should show the Novelty Detection panel
+      expect(screen.getByText('Novelty Detection')).toBeInTheDocument();
     });
   });
 
   describe('Novelty tab content', () => {
-    it('shows stats cards for threshold, pending, and clusters', () => {
-      render(<DashboardOpenWorld />);
+    it('renders NoveltyStats component', () => {
+      renderWithQueryClient(<DashboardOpenWorld />);
 
-      expect(screen.getByText('Threshold')).toBeInTheDocument();
-      expect(screen.getByText('Pending')).toBeInTheDocument();
-      expect(screen.getByText('Clusters')).toBeInTheDocument();
+      // Should render the Novelty Detection panel (loading or with data)
+      expect(screen.getByText('Novelty Detection')).toBeInTheDocument();
     });
 
-    it('shows placeholder values', () => {
-      render(<DashboardOpenWorld />);
+    it('renders ClusterList component', () => {
+      renderWithQueryClient(<DashboardOpenWorld />);
 
-      expect(screen.getByText('0.85')).toBeInTheDocument();
+      // Should render the Recent Clusters panel (loading or with data)
+      expect(screen.getByText('Recent Clusters')).toBeInTheDocument();
     });
   });
 
   describe('Gaps tab content', () => {
     it('shows empty state when no gaps', () => {
-      render(<DashboardOpenWorld />);
+      renderWithQueryClient(<DashboardOpenWorld />);
       fireEvent.click(screen.getByRole('button', { name: /gaps/i }));
 
       expect(screen.getByText(/no capability gaps detected/i)).toBeInTheDocument();
@@ -97,7 +117,7 @@ describe('DashboardOpenWorld', () => {
 
   describe('Solutions tab content', () => {
     it('shows empty state when no solutions', () => {
-      render(<DashboardOpenWorld />);
+      renderWithQueryClient(<DashboardOpenWorld />);
       fireEvent.click(screen.getByRole('button', { name: /solutions/i }));
 
       expect(screen.getByText(/no solutions pending review/i)).toBeInTheDocument();
@@ -106,7 +126,7 @@ describe('DashboardOpenWorld', () => {
 
   describe('Activity tab content', () => {
     it('shows stats cards for outcomes, negative rate, and exploration', () => {
-      render(<DashboardOpenWorld />);
+      renderWithQueryClient(<DashboardOpenWorld />);
       fireEvent.click(screen.getByRole('button', { name: /activity/i }));
 
       expect(screen.getByText('Outcomes')).toBeInTheDocument();
@@ -115,7 +135,7 @@ describe('DashboardOpenWorld', () => {
     });
 
     it('shows empty state for activity feed', () => {
-      render(<DashboardOpenWorld />);
+      renderWithQueryClient(<DashboardOpenWorld />);
       fireEvent.click(screen.getByRole('button', { name: /activity/i }));
 
       expect(screen.getByText(/no recent activity/i)).toBeInTheDocument();
