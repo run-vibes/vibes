@@ -2,7 +2,7 @@
 id: CHORE0086
 title: Fix Nix dev shell on Mac
 type: chore
-status: pending
+status: done
 priority: medium
 epics: [dev-environment]
 depends: []
