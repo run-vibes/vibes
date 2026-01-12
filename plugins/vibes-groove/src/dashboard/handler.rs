@@ -8,10 +8,14 @@ use crate::strategy::StrategyStore;
 use crate::{
     AttributionStore, LearningId, LearningStore,
     dashboard::{
-        AttributionData, DashboardData, DashboardTopic, HealthData, LearningDetailData,
-        LearningsData, LearningsFilter, OverviewData, Period, SessionTimelineData,
-        StrategyDistributionsData, StrategyOverridesData,
+        ActivitySummary, AttributionData, DashboardData, DashboardTopic, GapBrief, GapCounts,
+        HealthData, HookStatsData, LearningDetailData, LearningsData, LearningsFilter,
+        OpenWorldActivityData, OpenWorldActivityEntry, OpenWorldEventType, OpenWorldGapDetailData,
+        OpenWorldGapsData, OpenWorldOverviewData, OpenWorldSolutionsData, OverviewData,
+        PendingSolution, Period, SessionTimelineData, SolutionBrief, StrategyDistributionsData,
+        StrategyOverridesData,
     },
+    openworld::{GapSeverity, GapStatus, OpenWorldHook, OpenWorldStore},
 };
 
 use crate::attribution::LearningStatus;
@@ -22,6 +26,8 @@ pub struct DashboardHandler {
     learning_store: Arc<dyn LearningStore>,
     attribution_store: Arc<dyn AttributionStore>,
     _strategy_store: Arc<dyn StrategyStore>,
+    openworld_store: Option<Arc<dyn OpenWorldStore>>,
+    openworld_hook: Option<Arc<OpenWorldHook>>,
 }
 
 impl DashboardHandler {
@@ -35,7 +41,20 @@ impl DashboardHandler {
             learning_store,
             attribution_store,
             _strategy_store: strategy_store,
+            openworld_store: None,
+            openworld_hook: None,
         }
+    }
+
+    /// Configure openworld data sources
+    pub fn with_openworld(
+        mut self,
+        store: Arc<dyn OpenWorldStore>,
+        hook: Arc<OpenWorldHook>,
+    ) -> Self {
+        self.openworld_store = Some(store);
+        self.openworld_hook = Some(hook);
+        self
     }
 
     /// Get data for a topic
@@ -51,6 +70,14 @@ impl DashboardHandler {
             DashboardTopic::StrategyDistributions => self.get_strategy_distributions_data().await,
             DashboardTopic::StrategyOverrides => self.get_strategy_overrides_data().await,
             DashboardTopic::Health => self.get_health_data().await,
+            DashboardTopic::OpenWorldOverview => self.get_openworld_overview().await,
+            DashboardTopic::OpenWorldGaps { status, severity } => {
+                self.get_openworld_gaps(status.as_ref(), severity.as_ref())
+                    .await
+            }
+            DashboardTopic::OpenWorldGapDetail { id } => self.get_openworld_gap_detail(id).await,
+            DashboardTopic::OpenWorldSolutions => self.get_openworld_solutions().await,
+            DashboardTopic::OpenWorldActivity => self.get_openworld_activity().await,
         }
     }
 
@@ -114,6 +141,309 @@ impl DashboardHandler {
 
     async fn get_health_data(&self) -> Result<DashboardData, String> {
         Ok(DashboardData::Health(HealthData::default()))
+    }
+
+    // ============================================================
+    // OpenWorld Handlers
+    // ============================================================
+
+    async fn get_openworld_overview(&self) -> Result<DashboardData, String> {
+        let (gap_counts, hook_stats) = match (&self.openworld_store, &self.openworld_hook) {
+            (Some(store), Some(hook)) => {
+                // Get gap counts by severity
+                let gaps = store.get_gaps(None).await.map_err(|e| e.to_string())?;
+                let mut counts = GapCounts::default();
+                for gap in &gaps {
+                    match gap.severity {
+                        GapSeverity::Low => counts.low += 1,
+                        GapSeverity::Medium => counts.medium += 1,
+                        GapSeverity::High => counts.high += 1,
+                        GapSeverity::Critical => counts.critical += 1,
+                    }
+                }
+                counts.total = gaps.len() as u32;
+
+                // Get hook stats
+                let stats = hook.stats();
+                let hook_data = HookStatsData {
+                    outcomes_processed: stats.outcomes_processed,
+                    negative_outcomes: stats.negative_outcomes,
+                    low_confidence_outcomes: stats.low_confidence_outcomes,
+                    exploration_adjustments: stats.exploration_adjustments,
+                    gaps_created: stats.gaps_created,
+                };
+
+                (counts, hook_data)
+            }
+            _ => (GapCounts::default(), HookStatsData::default()),
+        };
+
+        // Get cluster count from store
+        let cluster_count = match &self.openworld_store {
+            Some(store) => store
+                .get_clusters()
+                .await
+                .map(|c| c.len() as u32)
+                .unwrap_or(0),
+            None => 0,
+        };
+
+        Ok(DashboardData::OpenWorldOverview(OpenWorldOverviewData {
+            novelty_threshold: 0.85, // TODO: Get from config
+            pending_outliers: 0,     // TODO: Track pending outliers
+            cluster_count,
+            gap_counts,
+            hook_stats,
+        }))
+    }
+
+    async fn get_openworld_gaps(
+        &self,
+        status_filter: Option<&GapStatus>,
+        severity_filter: Option<&GapSeverity>,
+    ) -> Result<DashboardData, String> {
+        let store = match &self.openworld_store {
+            Some(s) => s,
+            None => {
+                return Ok(DashboardData::OpenWorldGaps(OpenWorldGapsData::default()));
+            }
+        };
+
+        let gaps = store
+            .get_gaps(status_filter.copied())
+            .await
+            .map_err(|e| e.to_string())?;
+
+        // Filter by severity if provided
+        let filtered: Vec<_> = gaps
+            .into_iter()
+            .filter(|g| severity_filter.is_none_or(|s| &g.severity == s))
+            .collect();
+
+        let briefs: Vec<GapBrief> = filtered
+            .iter()
+            .map(|g| GapBrief {
+                id: g.id,
+                category: g.category,
+                severity: g.severity,
+                status: g.status,
+                context_pattern: g.context_pattern.clone(),
+                failure_count: g.failure_count,
+                first_seen: g.first_seen,
+                last_seen: g.last_seen,
+                solution_count: g.suggested_solutions.len() as u32,
+            })
+            .collect();
+
+        let total = briefs.len() as u32;
+
+        Ok(DashboardData::OpenWorldGaps(OpenWorldGapsData {
+            gaps: briefs,
+            total,
+        }))
+    }
+
+    async fn get_openworld_gap_detail(
+        &self,
+        id: &crate::openworld::GapId,
+    ) -> Result<DashboardData, String> {
+        let store = match &self.openworld_store {
+            Some(s) => s,
+            None => return Err("OpenWorld store not configured".to_string()),
+        };
+
+        let gap = store
+            .get_gap(*id)
+            .await
+            .map_err(|e| e.to_string())?
+            .ok_or_else(|| format!("Gap not found: {}", id))?;
+
+        let solutions: Vec<SolutionBrief> = gap
+            .suggested_solutions
+            .iter()
+            .map(|s| SolutionBrief {
+                action_type: format!("{:?}", s.action),
+                description: match &s.action {
+                    crate::openworld::SolutionAction::CreateLearning { content, .. } => {
+                        content.clone()
+                    }
+                    crate::openworld::SolutionAction::ModifyLearning { change, .. } => {
+                        change.clone()
+                    }
+                    crate::openworld::SolutionAction::DisableLearning { id } => {
+                        format!("Disable learning {}", id)
+                    }
+                    crate::openworld::SolutionAction::AdjustStrategy { category, .. } => {
+                        format!("Adjust strategy for {:?}", category)
+                    }
+                    crate::openworld::SolutionAction::RequestHumanInput { question } => {
+                        question.clone()
+                    }
+                },
+                confidence: s.confidence,
+                applied: s.applied,
+            })
+            .collect();
+
+        Ok(DashboardData::OpenWorldGapDetail(OpenWorldGapDetailData {
+            id: gap.id,
+            category: gap.category,
+            severity: gap.severity,
+            status: gap.status,
+            context_pattern: gap.context_pattern,
+            failure_count: gap.failure_count,
+            first_seen: gap.first_seen,
+            last_seen: gap.last_seen,
+            suggested_solutions: solutions,
+        }))
+    }
+
+    async fn get_openworld_solutions(&self) -> Result<DashboardData, String> {
+        let store = match &self.openworld_store {
+            Some(s) => s,
+            None => {
+                return Ok(DashboardData::OpenWorldSolutions(
+                    OpenWorldSolutionsData::default(),
+                ));
+            }
+        };
+
+        // Get all gaps and collect pending (unapplied) solutions
+        let gaps = store.get_gaps(None).await.map_err(|e| e.to_string())?;
+
+        let pending: Vec<PendingSolution> = gaps
+            .iter()
+            .flat_map(|g| {
+                g.suggested_solutions
+                    .iter()
+                    .filter(|s| !s.applied)
+                    .map(|s| PendingSolution {
+                        gap_id: g.id,
+                        gap_context: g.context_pattern.clone(),
+                        action_type: format!("{:?}", s.action),
+                        description: match &s.action {
+                            crate::openworld::SolutionAction::CreateLearning {
+                                content, ..
+                            } => content.clone(),
+                            crate::openworld::SolutionAction::ModifyLearning { change, .. } => {
+                                change.clone()
+                            }
+                            crate::openworld::SolutionAction::DisableLearning { id } => {
+                                format!("Disable learning {}", id)
+                            }
+                            crate::openworld::SolutionAction::AdjustStrategy {
+                                category, ..
+                            } => {
+                                format!("Adjust strategy for {:?}", category)
+                            }
+                            crate::openworld::SolutionAction::RequestHumanInput { question } => {
+                                question.clone()
+                            }
+                        },
+                        confidence: s.confidence,
+                    })
+            })
+            .collect();
+
+        let total = pending.len() as u32;
+
+        Ok(DashboardData::OpenWorldSolutions(OpenWorldSolutionsData {
+            pending,
+            total,
+        }))
+    }
+
+    async fn get_openworld_activity(&self) -> Result<DashboardData, String> {
+        let store = match &self.openworld_store {
+            Some(s) => s,
+            None => {
+                return Ok(DashboardData::OpenWorldActivity(
+                    OpenWorldActivityData::default(),
+                ));
+            }
+        };
+
+        let events = store
+            .get_recent_events(50)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        let entries: Vec<OpenWorldActivityEntry> = events
+            .iter()
+            .map(|e| {
+                let (event_type, message, gap_id, learning_id) = match e {
+                    crate::openworld::OpenWorldEvent::NoveltyDetected { fingerprint, .. } => (
+                        OpenWorldEventType::NoveltyDetected,
+                        format!("Novel pattern detected: {}", fingerprint.context_summary),
+                        None,
+                        None,
+                    ),
+                    crate::openworld::OpenWorldEvent::ClusterUpdated { cluster } => (
+                        OpenWorldEventType::ClusterUpdated,
+                        format!("Cluster updated with {} members", cluster.size()),
+                        None,
+                        None,
+                    ),
+                    crate::openworld::OpenWorldEvent::GapCreated { gap } => (
+                        OpenWorldEventType::GapCreated,
+                        format!("Gap created: {:?}", gap.category),
+                        Some(gap.id),
+                        None,
+                    ),
+                    crate::openworld::OpenWorldEvent::GapStatusChanged { gap_id, old, new } => (
+                        OpenWorldEventType::GapStatusChanged,
+                        format!("Gap status: {:?} → {:?}", old, new),
+                        Some(*gap_id),
+                        None,
+                    ),
+                    crate::openworld::OpenWorldEvent::SolutionGenerated { gap_id, solution } => (
+                        OpenWorldEventType::SolutionGenerated,
+                        format!("Solution generated (conf: {:.2})", solution.confidence),
+                        Some(*gap_id),
+                        None,
+                    ),
+                    crate::openworld::OpenWorldEvent::StrategyFeedback {
+                        learning_id,
+                        adjustment,
+                    } => (
+                        OpenWorldEventType::StrategyFeedback,
+                        format!("Strategy feedback: {:+.3}", adjustment),
+                        None,
+                        Some(*learning_id),
+                    ),
+                };
+                OpenWorldActivityEntry {
+                    timestamp: Utc::now(), // TODO: Store timestamp in event
+                    event_type,
+                    message,
+                    gap_id,
+                    learning_id,
+                }
+            })
+            .collect();
+
+        // Calculate summary from hook stats
+        let summary = match &self.openworld_hook {
+            Some(hook) => {
+                let stats = hook.stats();
+                let negative_rate = if stats.outcomes_processed > 0 {
+                    (stats.negative_outcomes as f64 / stats.outcomes_processed as f64) * 100.0
+                } else {
+                    0.0
+                };
+                ActivitySummary {
+                    outcomes_total: stats.outcomes_processed,
+                    negative_rate,
+                    avg_exploration_bonus: 0.0, // TODO: Track average bonus
+                }
+            }
+            None => ActivitySummary::default(),
+        };
+
+        Ok(DashboardData::OpenWorldActivity(OpenWorldActivityData {
+            events: entries,
+            summary,
+        }))
     }
 
     // ============================================================
