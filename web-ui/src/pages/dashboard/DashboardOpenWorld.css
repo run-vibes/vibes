@@ -48,6 +48,13 @@
   overflow-y: auto;
 }
 
+/* Panel layout for tab content */
+.dashboard-openworld__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
 /* Placeholder styling */
 .dashboard-openworld__placeholder {
   padding: var(--space-4);

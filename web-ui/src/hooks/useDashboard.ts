@@ -420,6 +420,14 @@ export interface HookStatsData {
   gaps_created: number;
 }
 
+export interface ClusterBrief {
+  id: string;
+  member_count: number;
+  category_hint?: string;
+  created_at: string;
+  last_seen: string;
+}
+
 export interface OpenWorldOverviewData {
   data_type: 'open_world_overview';
   novelty_threshold: number;
@@ -427,6 +435,7 @@ export interface OpenWorldOverviewData {
   cluster_count: number;
   gap_counts: GapCounts;
   hook_stats: HookStatsData;
+  recent_clusters?: ClusterBrief[];
 }
 
 export interface GapBrief {

@@ -1,0 +1,79 @@
+/* Cluster list styles - CRT themed */
+
+.cluster-list {
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.cluster-list__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+
+.cluster-list__table th {
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+  font-weight: 400;
+  font-size: var(--font-size-xs);
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border-bottom: 1px solid var(--border);
+}
+
+.cluster-list__table td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border-subtle, rgba(0, 255, 65, 0.1));
+}
+
+.cluster-list__table tr:last-child td {
+  border-bottom: none;
+}
+
+/* ─── Cluster Item ───────────────────────────────────────────────────────── */
+
+.cluster-item {
+  transition: background var(--transition-fast);
+}
+
+.cluster-item:hover {
+  background: var(--surface-hover, rgba(0, 255, 65, 0.05));
+}
+
+.cluster-item__id {
+  font-family: var(--font-mono);
+  color: var(--text-dim);
+}
+
+.cluster-item__category {
+  color: var(--text);
+}
+
+.cluster-item__members {
+  color: var(--phosphor);
+  text-shadow: 0 0 6px var(--phosphor-glow);
+  font-family: var(--font-display);
+}
+
+.cluster-item__age {
+  color: var(--text-dim);
+  font-size: var(--font-size-xs);
+}
+
+/* ─── Empty State ────────────────────────────────────────────────────────── */
+
+.cluster-list__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+.cluster-list__empty-icon {
+  font-size: var(--font-size-2xl);
+  opacity: 0.5;
+}
