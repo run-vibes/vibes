@@ -1,0 +1,61 @@
+/**
+ * ActivityStats styles
+ * Includes live indicator with pulsing animation
+ */
+
+.activity-stats {
+  position: relative;
+}
+
+.activity-stats .live-indicator {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+}
+
+.live-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  background: rgba(0, 255, 65, 0.1);
+  border: 1px solid rgba(0, 255, 65, 0.3);
+  border-radius: 2px;
+}
+
+.live-indicator__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #00ff41;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.live-indicator__text {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: #00ff41;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(0, 255, 65, 0.7);
+  }
+  50% {
+    opacity: 0.5;
+    box-shadow: 0 0 0 4px rgba(0, 255, 65, 0);
+  }
+}
+
+/* Disconnected state */
+.live-indicator--disconnected .live-indicator__dot {
+  background: rgba(255, 176, 0, 0.6);
+  animation: none;
+}
+
+.live-indicator--disconnected .live-indicator__text {
+  color: rgba(255, 176, 0, 0.8);
+}

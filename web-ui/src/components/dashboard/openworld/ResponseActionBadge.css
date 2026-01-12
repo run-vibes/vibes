@@ -1,0 +1,44 @@
+/**
+ * ResponseActionBadge styles
+ * CRT-themed event type indicators
+ */
+
+.response-action-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 2px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* Info - cyan for general events */
+.response-action-badge--info {
+  background: rgba(0, 255, 255, 0.15);
+  color: #00ffff;
+  border: 1px solid rgba(0, 255, 255, 0.3);
+}
+
+/* Warning - amber for gaps/issues */
+.response-action-badge--warning {
+  background: rgba(255, 176, 0, 0.15);
+  color: #ffb000;
+  border: 1px solid rgba(255, 176, 0, 0.3);
+}
+
+/* Success - green for positive outcomes */
+.response-action-badge--success {
+  background: rgba(0, 255, 65, 0.15);
+  color: #00ff41;
+  border: 1px solid rgba(0, 255, 65, 0.3);
+}
+
+/* Error - red for failures */
+.response-action-badge--error {
+  background: rgba(255, 0, 0, 0.15);
+  color: #ff4444;
+  border: 1px solid rgba(255, 0, 0, 0.3);
+}
