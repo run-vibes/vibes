@@ -1,5 +1,5 @@
 ---
-id: 44-openworld-dashboard
+id: 36-openworld-dashboard
 title: Open-World Dashboard
 status: done
 epics: [plugin-system]

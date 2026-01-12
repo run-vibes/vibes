@@ -1,5 +1,5 @@
 ---
-id: 42-observability-tracing
+id: 40-observability-tracing
 title: Observability Tracing
 status: planned
 epics: [observability]

@@ -8,7 +8,7 @@ epics: [plugin-system]
 depends: [FEAT0080]
 estimate: 2h
 created: 2026-01-11
-milestone: 44-openworld-dashboard
+milestone: 36-openworld-dashboard
 ---
 
 # Solutions tab with actions

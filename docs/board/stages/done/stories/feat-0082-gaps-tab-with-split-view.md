@@ -8,7 +8,7 @@ epics: [plugin-system]
 depends: [FEAT0080]
 estimate: 3h
 created: 2026-01-11
-milestone: 44-openworld-dashboard
+milestone: 36-openworld-dashboard
 ---
 
 # Gaps tab with split view

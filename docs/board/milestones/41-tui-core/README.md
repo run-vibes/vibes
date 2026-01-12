@@ -1,5 +1,5 @@
 ---
-id: 43-tui-core
+id: 41-tui-core
 title: TUI Core
 status: planned
 epics: [tui]

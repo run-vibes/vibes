@@ -1,5 +1,6 @@
-Generated README.md
-Auto-generated from directory structure. Run `just board generate` to update.
+# Planning Board
+
+> Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
@@ -77,15 +78,15 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [33-groove-dashboard](milestones/33-groove-dashboard/) | done | plugin-system |
 | [34-open-world-adaptation](milestones/34-open-world-adaptation/) | done | plugin-system |
 | [35-setup-wizards](milestones/35-setup-wizards/) | planned | cli |
-| [36-default-plugins](milestones/36-default-plugins/) | planned | plugin-system |
-| [37-cli-enhancements](milestones/37-cli-enhancements/) | planned | cli |
-| [38-ios-app](milestones/38-ios-app/) | planned | mobile |
-| [39-models-registry-auth](milestones/39-models-registry-auth/) | planned | models |
-| [40-agent-core](milestones/40-agent-core/) | planned | agents |
-| [41-eval-core](milestones/41-eval-core/) | planned | evals |
-| [42-observability-tracing](milestones/42-observability-tracing/) | planned | observability |
-| [43-tui-core](milestones/43-tui-core/) | planned | tui |
-| [44-openworld-dashboard](milestones/44-openworld-dashboard/) | done | plugin-system |
+| [36-openworld-dashboard](milestones/36-openworld-dashboard/) | done | plugin-system |
+| [37-models-registry-auth](milestones/37-models-registry-auth/) | planned | models |
+| [38-agent-core](milestones/38-agent-core/) | planned | agents |
+| [39-eval-core](milestones/39-eval-core/) | planned | evals |
+| [40-observability-tracing](milestones/40-observability-tracing/) | planned | observability |
+| [41-tui-core](milestones/41-tui-core/) | planned | tui |
+| [42-default-plugins](milestones/42-default-plugins/) | planned | plugin-system |
+| [43-cli-enhancements](milestones/43-cli-enhancements/) | planned | cli |
+| [44-ios-app](milestones/44-ios-app/) | planned | mobile |
 
 ## Done
 

@@ -1,5 +1,5 @@
 ---
-id: 39-models-registry-auth
+id: 37-models-registry-auth
 title: Models Registry & Auth
 status: planned
 epics: [models]

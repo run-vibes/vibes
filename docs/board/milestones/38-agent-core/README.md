@@ -1,5 +1,5 @@
 ---
-id: 40-agent-core
+id: 38-agent-core
 title: Agent Core
 status: planned
 epics: [agents]
