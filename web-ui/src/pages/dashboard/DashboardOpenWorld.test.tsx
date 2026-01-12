@@ -51,7 +51,9 @@ describe('DashboardOpenWorld', () => {
       fireEvent.click(gapsTab);
 
       expect(gapsTab).toHaveClass('active');
-      expect(screen.getByRole('heading', { name: /capability gaps/i })).toBeInTheDocument();
+      // Gaps tab shows split panel with filters and detail panel
+      expect(screen.getByLabelText('Severity')).toBeInTheDocument();
+      expect(screen.getByText('Gap Detail')).toBeInTheDocument();
     });
 
     it('switches to Solutions tab when clicked', () => {
@@ -107,11 +109,12 @@ describe('DashboardOpenWorld', () => {
   });
 
   describe('Gaps tab content', () => {
-    it('shows empty state when no gaps', () => {
+    it('shows loading state initially', () => {
       renderWithQueryClient(<DashboardOpenWorld />);
       fireEvent.click(screen.getByRole('button', { name: /gaps/i }));
 
-      expect(screen.getByText(/no capability gaps detected/i)).toBeInTheDocument();
+      // Without backend, hooks stay in loading state
+      expect(screen.getByText(/loading gaps/i)).toBeInTheDocument();
     });
   });
 
