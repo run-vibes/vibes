@@ -2,7 +2,9 @@
 id: feat-0074
 title: Tunnel Wizard - Named Mode
 type: feat
-status: backlog
+status: pending
+priority: medium
+epics: [cli]
 milestone: 35-setup-wizards
 ---
 

@@ -2,7 +2,9 @@
 id: feat-0078
 title: Connectivity Validation
 type: feat
-status: backlog
+status: pending
+priority: medium
+epics: [cli]
 milestone: 35-setup-wizards
 ---
 

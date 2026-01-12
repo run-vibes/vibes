@@ -2,7 +2,9 @@
 id: feat-0075
 title: Tunnel Wizard - No Cloudflared
 type: feat
-status: backlog
+status: pending
+priority: medium
+epics: [cli]
 milestone: 35-setup-wizards
 ---
 

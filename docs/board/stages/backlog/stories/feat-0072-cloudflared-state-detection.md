@@ -2,7 +2,9 @@
 id: feat-0072
 title: Cloudflared State Detection
 type: feat
-status: backlog
+status: pending
+priority: medium
+epics: [cli]
 milestone: 35-setup-wizards
 ---
 

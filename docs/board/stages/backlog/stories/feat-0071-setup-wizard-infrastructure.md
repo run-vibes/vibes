@@ -2,7 +2,9 @@
 id: feat-0071
 title: Setup Wizard Infrastructure
 type: feat
-status: backlog
+status: pending
+priority: medium
+epics: [cli]
 milestone: 35-setup-wizards
 ---
 

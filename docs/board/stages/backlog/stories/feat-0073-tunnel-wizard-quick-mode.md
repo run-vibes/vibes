@@ -2,7 +2,9 @@
 id: feat-0073
 title: Tunnel Wizard - Quick Mode
 type: feat
-status: backlog
+status: pending
+priority: medium
+epics: [cli]
 milestone: 35-setup-wizards
 ---
 

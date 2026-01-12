@@ -2,7 +2,9 @@
 id: feat-0076
 title: Auth Setup Wizard
 type: feat
-status: backlog
+status: pending
+priority: medium
+epics: [cli]
 milestone: 35-setup-wizards
 ---
 
