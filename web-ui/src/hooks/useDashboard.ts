@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 // ============================================================================
 // Types (matching Rust dashboard types)
@@ -476,17 +476,23 @@ export interface OpenWorldGapDetailData {
   suggested_solutions: SolutionBrief[];
 }
 
-export interface PendingSolution {
+export type SolutionStatus = 'Pending' | 'Applied' | 'Dismissed';
+
+export interface SolutionEntry {
+  id: string;
   gap_id: string;
   gap_context: string;
   action_type: string;
   description: string;
   confidence: number;
+  status: SolutionStatus;
+  created_at: string;
+  updated_at?: string;
 }
 
 export interface OpenWorldSolutionsData {
   data_type: 'open_world_solutions';
-  pending: PendingSolution[];
+  solutions: SolutionEntry[];
   total: number;
 }
 
@@ -590,6 +596,48 @@ export function useOpenWorldSolutions() {
       return response.json();
     },
     refetchInterval: 30000,
+  });
+}
+
+export function useApplySolution() {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, Error, string>({
+    mutationFn: async (solutionId: string) => {
+      const response = await fetch(`/api/groove/dashboard/openworld/solutions/${solutionId}/apply`, {
+        method: 'POST',
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to apply solution');
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'openworld', 'solutions'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'openworld', 'gaps'] });
+    },
+  });
+}
+
+export function useDismissSolution() {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, Error, string>({
+    mutationFn: async (solutionId: string) => {
+      const response = await fetch(
+        `/api/groove/dashboard/openworld/solutions/${solutionId}/dismiss`,
+        {
+          method: 'POST',
+        }
+      );
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to dismiss solution');
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'openworld', 'solutions'] });
+    },
   });
 }
 

@@ -21,3 +21,15 @@ export type { GapSeverityBadgeProps } from './GapSeverityBadge';
 
 export { GapDetail } from './GapDetail';
 export type { GapDetailProps } from './GapDetail';
+
+export { SolutionsList } from './SolutionsList';
+export type { SolutionsListProps } from './SolutionsList';
+
+export { SolutionItem } from './SolutionItem';
+export type { SolutionItemProps } from './SolutionItem';
+
+export { SolutionActions } from './SolutionActions';
+export type { SolutionActionsProps } from './SolutionActions';
+
+export { SolutionConfidenceBadge } from './SolutionConfidenceBadge';
+export type { SolutionConfidenceBadgeProps } from './SolutionConfidenceBadge';

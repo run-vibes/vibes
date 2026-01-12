@@ -119,11 +119,12 @@ describe('DashboardOpenWorld', () => {
   });
 
   describe('Solutions tab content', () => {
-    it('shows empty state when no solutions', () => {
+    it('shows loading state initially', () => {
       renderWithQueryClient(<DashboardOpenWorld />);
       fireEvent.click(screen.getByRole('button', { name: /solutions/i }));
 
-      expect(screen.getByText(/no solutions pending review/i)).toBeInTheDocument();
+      // Without backend, hooks stay in loading state
+      expect(screen.getByText(/loading solutions/i)).toBeInTheDocument();
     });
   });
 

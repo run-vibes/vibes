@@ -552,23 +552,36 @@ pub struct SolutionBrief {
     pub applied: bool,
 }
 
-/// OpenWorld solutions data - pending solutions for review
+/// Solution status for filtering/grouping
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+pub enum SolutionStatus {
+    Pending,
+    Applied,
+    Dismissed,
+}
+
+/// OpenWorld solutions data - all solutions with status
 #[derive(Debug, Clone, Serialize, Default)]
 pub struct OpenWorldSolutionsData {
-    /// Solutions pending review
-    pub pending: Vec<PendingSolution>,
-    /// Total pending count
+    /// All solutions with status
+    pub solutions: Vec<SolutionEntry>,
+    /// Total count
     pub total: u32,
 }
 
-/// A pending solution for user review
+/// A solution entry with full details and status
 #[derive(Debug, Clone, Serialize)]
-pub struct PendingSolution {
+pub struct SolutionEntry {
+    pub id: String,
     pub gap_id: GapId,
     pub gap_context: String,
     pub action_type: String,
     pub description: String,
     pub confidence: f64,
+    pub status: SolutionStatus,
+    pub created_at: DateTime<Utc>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 /// OpenWorld activity data - recent events

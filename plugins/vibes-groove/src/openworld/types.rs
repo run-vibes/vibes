@@ -432,6 +432,15 @@ pub struct SuggestedSolution {
 
     /// Whether this solution has been applied
     pub applied: bool,
+
+    /// Whether this solution has been dismissed
+    pub dismissed: bool,
+
+    /// When this solution was created
+    pub created_at: DateTime<Utc>,
+
+    /// When this solution was last updated
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 impl SuggestedSolution {
@@ -442,12 +451,22 @@ impl SuggestedSolution {
             source,
             confidence,
             applied: false,
+            dismissed: false,
+            created_at: Utc::now(),
+            updated_at: None,
         }
     }
 
     /// Mark the solution as applied
     pub fn mark_applied(&mut self) {
         self.applied = true;
+        self.updated_at = Some(Utc::now());
+    }
+
+    /// Mark the solution as dismissed
+    pub fn mark_dismissed(&mut self) {
+        self.dismissed = true;
+        self.updated_at = Some(Utc::now());
     }
 }
 

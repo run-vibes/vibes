@@ -62,6 +62,12 @@ pub trait OpenWorldStore: Send + Sync {
     /// Add solutions to a gap
     async fn add_gap_solutions(&self, id: GapId, solutions: Vec<SuggestedSolution>) -> Result<()>;
 
+    /// Apply a solution (mark as applied)
+    async fn apply_solution(&self, gap_id: GapId, solution_index: usize) -> Result<()>;
+
+    /// Dismiss a solution (mark as dismissed)
+    async fn dismiss_solution(&self, gap_id: GapId, solution_index: usize) -> Result<()>;
+
     // ========================================================================
     // Failure Records
     // ========================================================================
@@ -141,6 +147,14 @@ impl OpenWorldStore for NoOpOpenWorldStore {
         _id: GapId,
         _solutions: Vec<SuggestedSolution>,
     ) -> Result<()> {
+        Ok(())
+    }
+
+    async fn apply_solution(&self, _gap_id: GapId, _solution_index: usize) -> Result<()> {
+        Ok(())
+    }
+
+    async fn dismiss_solution(&self, _gap_id: GapId, _solution_index: usize) -> Result<()> {
         Ok(())
     }
 

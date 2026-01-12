@@ -1435,6 +1435,30 @@ impl OpenWorldStore for CozoStore {
         Ok(())
     }
 
+    async fn apply_solution(&self, gap_id: GapId, solution_index: usize) -> Result<()> {
+        let existing = self.get_gap(gap_id).await?;
+        if let Some(mut gap) = existing
+            && solution_index < gap.suggested_solutions.len()
+        {
+            gap.suggested_solutions[solution_index].mark_applied();
+            gap.last_seen = Utc::now();
+            self.save_gap(&gap).await?;
+        }
+        Ok(())
+    }
+
+    async fn dismiss_solution(&self, gap_id: GapId, solution_index: usize) -> Result<()> {
+        let existing = self.get_gap(gap_id).await?;
+        if let Some(mut gap) = existing
+            && solution_index < gap.suggested_solutions.len()
+        {
+            gap.suggested_solutions[solution_index].mark_dismissed();
+            gap.last_seen = Utc::now();
+            self.save_gap(&gap).await?;
+        }
+        Ok(())
+    }
+
     // =========================================================================
     // Failure Records
     // =========================================================================
