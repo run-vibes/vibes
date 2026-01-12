@@ -2,7 +2,7 @@
 id: FEAT0082
 title: Gaps tab with split view
 type: feat
-status: pending
+status: done
 priority: medium
 epics: [plugin-system]
 depends: [FEAT0080]

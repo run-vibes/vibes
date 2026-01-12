@@ -1,0 +1,61 @@
+/* CRT-styled gaps filters */
+
+.gaps-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--screen);
+  border-bottom: 1px solid var(--border);
+}
+
+.gaps-filters .filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 120px;
+  flex: 1;
+}
+
+.gaps-filters .filter-group label {
+  font-size: var(--font-size-xs);
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.gaps-filters .filter-group select {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-mono);
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.gaps-filters .filter-group select:hover {
+  border-color: var(--phosphor-dim);
+}
+
+.gaps-filters .filter-group select:focus {
+  outline: none;
+  border-color: var(--phosphor);
+  box-shadow: 0 0 5px var(--phosphor-glow);
+}
+
+.gaps-filters .filter-group select option {
+  background: var(--surface);
+  color: var(--text);
+}
+
+@media (max-width: 600px) {
+  .gaps-filters {
+    flex-direction: column;
+  }
+
+  .gaps-filters .filter-group {
+    min-width: 100%;
+  }
+}

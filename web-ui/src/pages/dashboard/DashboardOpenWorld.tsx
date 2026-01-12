@@ -1,6 +1,11 @@
 import { useState } from 'react';
-import { NoveltyStats, ClusterList } from '../../components/dashboard/openworld';
-import { useOpenWorldOverview } from '../../hooks/useDashboard';
+import { NoveltyStats, ClusterList, GapsList, GapDetail } from '../../components/dashboard/openworld';
+import {
+  useOpenWorldOverview,
+  useOpenWorldGaps,
+  useOpenWorldGapDetail,
+  type OpenWorldGapsFilter,
+} from '../../hooks/useDashboard';
 import './DashboardOpenWorld.css';
 
 type OpenWorldTab = 'novelty' | 'gaps' | 'solutions' | 'activity';
@@ -32,7 +37,7 @@ export function DashboardOpenWorld() {
 
       <div className="dashboard-openworld__content">
         {activeTab === 'novelty' && <NoveltyPanel />}
-        {activeTab === 'gaps' && <GapsPlaceholder />}
+        {activeTab === 'gaps' && <GapsPanel />}
         {activeTab === 'solutions' && <SolutionsPlaceholder />}
         {activeTab === 'activity' && <ActivityPlaceholder />}
       </div>
@@ -51,14 +56,28 @@ function NoveltyPanel() {
   );
 }
 
-function GapsPlaceholder() {
+function GapsPanel() {
+  const [filters, setFilters] = useState<OpenWorldGapsFilter>({});
+  const [selectedGapId, setSelectedGapId] = useState<string | undefined>();
+
+  const { data: gapsData, isLoading: gapsLoading } = useOpenWorldGaps(filters);
+  const { data: detailData, isLoading: detailLoading } = useOpenWorldGapDetail(selectedGapId);
+
   return (
-    <div className="dashboard-openworld__placeholder">
-      <h3>Capability Gaps</h3>
-      <p>Browse detected capability gaps by severity and status.</p>
-      <div className="dashboard-openworld__empty-state">
-        <span className="dashboard-openworld__empty-icon">○</span>
-        <span>No capability gaps detected</span>
+    <div className="dashboard-openworld__split-panel">
+      <div className="dashboard-openworld__split-left">
+        <GapsList
+          gaps={gapsData?.gaps}
+          total={gapsData?.total}
+          filters={filters}
+          selectedId={selectedGapId}
+          isLoading={gapsLoading}
+          onFiltersChange={setFilters}
+          onSelectGap={setSelectedGapId}
+        />
+      </div>
+      <div className="dashboard-openworld__split-right">
+        <GapDetail data={detailData} isLoading={detailLoading && !!selectedGapId} />
       </div>
     </div>
   );
