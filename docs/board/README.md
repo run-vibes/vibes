@@ -1,5 +1,6 @@
-Generated README.md
-Auto-generated from directory structure. Run `just board generate` to update.
+# Planning Board
+
+> Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
@@ -20,6 +21,12 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [feat-0076-auth-setup-wizard](stages/backlog/stories/feat-0076-auth-setup-wizard.md) | feat |  |  |
 | [feat-0077-config-save-load](stages/backlog/stories/feat-0077-config-save-load.md) | feat |  |  |
 | [feat-0078-connectivity-validation](stages/backlog/stories/feat-0078-connectivity-validation.md) | feat |  |  |
+| [feat-0079-openworld-page-and-routing](stages/backlog/stories/feat-0079-openworld-page-and-routing.md) | feat | high | plugin-system |
+| [feat-0080-openworld-backend-data-providers](stages/backlog/stories/feat-0080-openworld-backend-data-providers.md) | feat | high | plugin-system |
+| [feat-0081-novelty-tab-components](stages/backlog/stories/feat-0081-novelty-tab-components.md) | feat | medium | plugin-system |
+| [feat-0082-gaps-tab-with-split-view](stages/backlog/stories/feat-0082-gaps-tab-with-split-view.md) | feat | medium | plugin-system |
+| [feat-0083-solutions-tab-with-actions](stages/backlog/stories/feat-0083-solutions-tab-with-actions.md) | feat | medium | plugin-system |
+| [feat-0084-activity-tab-with-live-updates](stages/backlog/stories/feat-0084-activity-tab-with-live-updates.md) | feat | medium | plugin-system |
 
 ## Epics
 
@@ -85,6 +92,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [41-eval-core](milestones/41-eval-core/) | planned | evals |
 | [42-observability-tracing](milestones/42-observability-tracing/) | planned | observability |
 | [43-tui-core](milestones/43-tui-core/) | planned | tui |
+| [44-openworld-dashboard](milestones/44-openworld-dashboard/) | planned | plugin-system |
 
 ## Done
 
