@@ -20,7 +20,6 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [feat-0076-auth-setup-wizard](stages/backlog/stories/feat-0076-auth-setup-wizard.md) | feat | medium | cli |
 | [feat-0077-config-save-load](stages/backlog/stories/feat-0077-config-save-load.md) | feat | medium | cli |
 | [feat-0078-connectivity-validation](stages/backlog/stories/feat-0078-connectivity-validation.md) | feat | medium | cli |
-| [feat-0084-activity-tab-with-live-updates](stages/backlog/stories/feat-0084-activity-tab-with-live-updates.md) | feat | medium | plugin-system |
 
 ## Epics
 
@@ -75,7 +74,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [30-learning-extraction](milestones/30-learning-extraction/) | done | plugin-system |
 | [31-attribution-engine](milestones/31-attribution-engine/) | done | plugin-system |
 | [32-adaptive-strategies](milestones/32-adaptive-strategies/) | done | plugin-system |
-| [33-groove-dashboard](milestones/33-groove-dashboard/) | in-progress | plugin-system |
+| [33-groove-dashboard](milestones/33-groove-dashboard/) | done | plugin-system |
 | [34-open-world-adaptation](milestones/34-open-world-adaptation/) | done | plugin-system |
 | [35-setup-wizards](milestones/35-setup-wizards/) | planned | cli |
 | [36-default-plugins](milestones/36-default-plugins/) | planned | plugin-system |
@@ -86,7 +85,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [41-eval-core](milestones/41-eval-core/) | planned | evals |
 | [42-observability-tracing](milestones/42-observability-tracing/) | planned | observability |
 | [43-tui-core](milestones/43-tui-core/) | planned | tui |
-| [44-openworld-dashboard](milestones/44-openworld-dashboard/) | in-progress | plugin-system |
+| [44-openworld-dashboard](milestones/44-openworld-dashboard/) | done | plugin-system |
 
 ## Done
 
@@ -173,6 +172,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 - [feat-0081-novelty-tab-components](stages/done/stories/feat-0081-novelty-tab-components.md)
 - [feat-0082-gaps-tab-with-split-view](stages/done/stories/feat-0082-gaps-tab-with-split-view.md)
 - [feat-0083-solutions-tab-with-actions](stages/done/stories/feat-0083-solutions-tab-with-actions.md)
+- [feat-0084-activity-tab-with-live-updates](stages/done/stories/feat-0084-activity-tab-with-live-updates.md)
 - [m14-chore-01-design](stages/done/stories/m14-chore-01-design.md)
 - [m14-chore-02-implementation](stages/done/stories/m14-chore-02-implementation.md)
 - [m26-chore-01-eventbus-cleanup](stages/done/stories/m26-chore-01-eventbus-cleanup.md)

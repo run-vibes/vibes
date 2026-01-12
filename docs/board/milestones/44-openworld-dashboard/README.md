@@ -1,7 +1,7 @@
 ---
 id: 44-openworld-dashboard
 title: Open-World Dashboard
-status: in-progress
+status: done
 epics: [plugin-system]
 ---
 

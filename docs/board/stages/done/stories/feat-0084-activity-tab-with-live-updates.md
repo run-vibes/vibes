@@ -2,7 +2,7 @@
 id: FEAT0084
 title: Activity tab with live updates
 type: feat
-status: pending
+status: done
 priority: medium
 epics: [plugin-system]
 depends: [FEAT0080]
