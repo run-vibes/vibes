@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { NoveltyStats, ClusterList } from '../../components/dashboard/openworld';
+import { useOpenWorldOverview } from '../../hooks/useDashboard';
 import './DashboardOpenWorld.css';
 
 type OpenWorldTab = 'novelty' | 'gaps' | 'solutions' | 'activity';
@@ -29,7 +31,7 @@ export function DashboardOpenWorld() {
       </nav>
 
       <div className="dashboard-openworld__content">
-        {activeTab === 'novelty' && <NoveltyPlaceholder />}
+        {activeTab === 'novelty' && <NoveltyPanel />}
         {activeTab === 'gaps' && <GapsPlaceholder />}
         {activeTab === 'solutions' && <SolutionsPlaceholder />}
         {activeTab === 'activity' && <ActivityPlaceholder />}
@@ -38,25 +40,13 @@ export function DashboardOpenWorld() {
   );
 }
 
-function NoveltyPlaceholder() {
+function NoveltyPanel() {
+  const { data, isLoading } = useOpenWorldOverview();
+
   return (
-    <div className="dashboard-openworld__placeholder">
-      <h3>Novelty Detection</h3>
-      <p>Monitor adaptive threshold, pending outliers, and cluster formation.</p>
-      <div className="dashboard-openworld__placeholder-grid">
-        <div className="dashboard-openworld__stat-card">
-          <span className="dashboard-openworld__stat-label">Threshold</span>
-          <span className="dashboard-openworld__stat-value">0.85</span>
-        </div>
-        <div className="dashboard-openworld__stat-card">
-          <span className="dashboard-openworld__stat-label">Pending</span>
-          <span className="dashboard-openworld__stat-value">0</span>
-        </div>
-        <div className="dashboard-openworld__stat-card">
-          <span className="dashboard-openworld__stat-label">Clusters</span>
-          <span className="dashboard-openworld__stat-value">0</span>
-        </div>
-      </div>
+    <div className="dashboard-openworld__panel">
+      <NoveltyStats data={data} isLoading={isLoading} />
+      <ClusterList clusters={data?.recent_clusters} isLoading={isLoading} />
     </div>
   );
 }
