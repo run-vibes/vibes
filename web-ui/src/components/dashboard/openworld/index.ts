@@ -18,3 +18,6 @@ export type { GapItemProps } from './GapItem';
 
 export { GapSeverityBadge } from './GapSeverityBadge';
 export type { GapSeverityBadgeProps } from './GapSeverityBadge';
+
+export { GapDetail } from './GapDetail';
+export type { GapDetailProps } from './GapDetail';
