@@ -10,6 +10,9 @@
 
 | Story | Type | Priority | Epics |
 |-------|------|----------|-------|
+| [chore-0085-fix-web-ui-chunk-warnings](stages/backlog/stories/chore-0085-fix-web-ui-chunk-warnings.md) | chore | low | dev-environment,web-ui |
+| [chore-0086-fix-nix-mac-cargo-llvm-cov](stages/backlog/stories/chore-0086-fix-nix-mac-cargo-llvm-cov.md) | chore | medium | dev-environment |
+| [chore-0087-use-cranelift-for-builds](stages/backlog/stories/chore-0087-use-cranelift-for-builds.md) | chore | medium | dev-environment |
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
 | [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli |
@@ -29,7 +32,9 @@
 | [agents](epics/agents/) | planned | 0 |
 | [cli](epics/cli/) | active | 13 |
 | [core](epics/core/) | active | 22 |
+| [dev-environment](epics/dev-environment/) | active | 0 |
 | [evals](epics/evals/) | planned | 0 |
+| [groove](epics/groove/) | active | 0 |
 | [mobile](epics/mobile/) | active | 0 |
 | [models](epics/models/) | planned | 0 |
 | [networking](epics/networking/) | active | 0 |
