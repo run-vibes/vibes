@@ -28,5 +28,25 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Core React - rarely changes, cache separately
+          'vendor-react': ['react', 'react-dom'],
+          // TanStack libraries - routing and data fetching
+          'vendor-tanstack': ['@tanstack/react-query', '@tanstack/react-router'],
+          // Charting library - only needed on dashboard pages
+          'vendor-visx': [
+            '@visx/axis',
+            '@visx/group',
+            '@visx/responsive',
+            '@visx/scale',
+            '@visx/shape',
+          ],
+          // Terminal emulator - only needed on session pages
+          'vendor-xterm': ['@xterm/xterm', '@xterm/addon-fit', '@xterm/addon-web-links'],
+        },
+      },
+    },
   },
 })
