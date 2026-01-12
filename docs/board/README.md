@@ -32,6 +32,7 @@
 | [agents](epics/agents/) | planned | 0 |
 | [cli](epics/cli/) | active | 13 |
 | [core](epics/core/) | active | 22 |
+| [cross-platform](epics/cross-platform/) | active | 0 |
 | [dev-environment](epics/dev-environment/) | active | 0 |
 | [evals](epics/evals/) | planned | 0 |
 | [groove](epics/groove/) | active | 0 |
@@ -40,6 +41,7 @@
 | [networking](epics/networking/) | active | 0 |
 | [observability](epics/observability/) | planned | 0 |
 | [plugin-system](epics/plugin-system/) | active | 23 |
+| [release](epics/release/) | active | 0 |
 | [tui](epics/tui/) | planned | 0 |
 | [verification](epics/verification/) | active | 0 |
 | [web-ui](epics/web-ui/) | active | 25 |
