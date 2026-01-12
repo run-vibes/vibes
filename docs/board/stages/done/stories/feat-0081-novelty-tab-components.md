@@ -2,7 +2,7 @@
 id: FEAT0081
 title: Novelty tab components
 type: feat
-status: pending
+status: done
 priority: medium
 epics: [plugin-system]
 depends: [FEAT0080]
@@ -70,8 +70,8 @@ The Novelty tab shows the current state of novelty detection: adaptive threshold
 
 ## Acceptance Criteria
 
-- [ ] Stats cards display threshold, pending, clusters
-- [ ] Cluster list shows recent clusters with details
-- [ ] Subscribes to OpenWorldOverview topic
-- [ ] Follows CRT design system
-- [ ] Tests pass
+- [x] Stats cards display threshold, pending, clusters
+- [x] Cluster list shows recent clusters with details
+- [x] Subscribes to OpenWorldOverview topic
+- [x] Follows CRT design system
+- [x] Tests pass
