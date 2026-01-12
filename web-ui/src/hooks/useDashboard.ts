@@ -395,3 +395,203 @@ export function useDashboardStrategyOverrides() {
     refetchInterval: 30000,
   });
 }
+
+// ============================================================================
+// OpenWorld Types
+// ============================================================================
+
+export type GapCategory = 'MissingKnowledge' | 'IncorrectPattern' | 'ContextMismatch' | 'ToolGap';
+export type GapSeverity = 'Low' | 'Medium' | 'High' | 'Critical';
+export type GapStatus = 'Detected' | 'Confirmed' | 'InProgress' | 'Resolved' | 'Dismissed';
+
+export interface GapCounts {
+  low: number;
+  medium: number;
+  high: number;
+  critical: number;
+  total: number;
+}
+
+export interface HookStatsData {
+  outcomes_processed: number;
+  negative_outcomes: number;
+  low_confidence_outcomes: number;
+  exploration_adjustments: number;
+  gaps_created: number;
+}
+
+export interface OpenWorldOverviewData {
+  data_type: 'open_world_overview';
+  novelty_threshold: number;
+  pending_outliers: number;
+  cluster_count: number;
+  gap_counts: GapCounts;
+  hook_stats: HookStatsData;
+}
+
+export interface GapBrief {
+  id: string;
+  category: GapCategory;
+  severity: GapSeverity;
+  status: GapStatus;
+  context_pattern: string;
+  failure_count: number;
+  first_seen: string;
+  last_seen: string;
+  solution_count: number;
+}
+
+export interface OpenWorldGapsData {
+  data_type: 'open_world_gaps';
+  gaps: GapBrief[];
+  total: number;
+}
+
+export interface SolutionBrief {
+  action_type: string;
+  description: string;
+  confidence: number;
+  applied: boolean;
+}
+
+export interface OpenWorldGapDetailData {
+  data_type: 'open_world_gap_detail';
+  id: string;
+  category: GapCategory;
+  severity: GapSeverity;
+  status: GapStatus;
+  context_pattern: string;
+  failure_count: number;
+  first_seen: string;
+  last_seen: string;
+  suggested_solutions: SolutionBrief[];
+}
+
+export interface PendingSolution {
+  gap_id: string;
+  gap_context: string;
+  action_type: string;
+  description: string;
+  confidence: number;
+}
+
+export interface OpenWorldSolutionsData {
+  data_type: 'open_world_solutions';
+  pending: PendingSolution[];
+  total: number;
+}
+
+export type OpenWorldEventType =
+  | 'novelty_detected'
+  | 'cluster_updated'
+  | 'gap_created'
+  | 'gap_status_changed'
+  | 'solution_generated'
+  | 'strategy_feedback';
+
+export interface OpenWorldActivityEntry {
+  timestamp: string;
+  event_type: OpenWorldEventType;
+  message: string;
+  gap_id?: string;
+  learning_id?: string;
+}
+
+export interface ActivitySummary {
+  outcomes_total: number;
+  negative_rate: number;
+  avg_exploration_bonus: number;
+}
+
+export interface OpenWorldActivityData {
+  data_type: 'open_world_activity';
+  events: OpenWorldActivityEntry[];
+  summary: ActivitySummary;
+}
+
+// ============================================================================
+// OpenWorld Hooks
+// ============================================================================
+
+export interface OpenWorldGapsFilter {
+  status?: GapStatus;
+  severity?: GapSeverity;
+}
+
+export function useOpenWorldOverview() {
+  return useQuery<OpenWorldOverviewData>({
+    queryKey: ['dashboard', 'openworld', 'overview'],
+    queryFn: async () => {
+      const response = await fetch('/api/groove/dashboard/openworld/overview');
+      if (!response.ok) {
+        throw new Error('Failed to fetch openworld overview');
+      }
+      return response.json();
+    },
+    refetchInterval: 10000, // Poll every 10 seconds
+  });
+}
+
+export function useOpenWorldGaps(filters?: OpenWorldGapsFilter) {
+  const params = new URLSearchParams();
+  if (filters?.status) params.set('status', filters.status);
+  if (filters?.severity) params.set('severity', filters.severity);
+  const queryString = params.toString();
+  const url = queryString
+    ? `/api/groove/dashboard/openworld/gaps?${queryString}`
+    : '/api/groove/dashboard/openworld/gaps';
+
+  return useQuery<OpenWorldGapsData>({
+    queryKey: ['dashboard', 'openworld', 'gaps', filters],
+    queryFn: async () => {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error('Failed to fetch openworld gaps');
+      }
+      return response.json();
+    },
+    refetchInterval: 30000,
+  });
+}
+
+export function useOpenWorldGapDetail(id?: string) {
+  return useQuery<OpenWorldGapDetailData>({
+    queryKey: ['dashboard', 'openworld', 'gap', id],
+    queryFn: async () => {
+      const response = await fetch(`/api/groove/dashboard/openworld/gaps/${id}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch gap detail');
+      }
+      return response.json();
+    },
+    enabled: !!id,
+  });
+}
+
+export function useOpenWorldSolutions() {
+  return useQuery<OpenWorldSolutionsData>({
+    queryKey: ['dashboard', 'openworld', 'solutions'],
+    queryFn: async () => {
+      const response = await fetch('/api/groove/dashboard/openworld/solutions');
+      if (!response.ok) {
+        throw new Error('Failed to fetch openworld solutions');
+      }
+      return response.json();
+    },
+    refetchInterval: 30000,
+  });
+}
+
+export function useOpenWorldActivity() {
+  return useQuery<OpenWorldActivityData>({
+    queryKey: ['dashboard', 'openworld', 'activity'],
+    queryFn: async () => {
+      const response = await fetch('/api/groove/dashboard/openworld/activity');
+      if (!response.ok) {
+        throw new Error('Failed to fetch openworld activity');
+      }
+      return response.json();
+    },
+    refetchInterval: 10000, // Poll more frequently for activity
+  });
+}

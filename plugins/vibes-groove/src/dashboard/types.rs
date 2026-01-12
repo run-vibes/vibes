@@ -8,6 +8,7 @@ use std::collections::HashMap;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
+use crate::openworld::{GapCategory, GapId, GapSeverity, GapStatus};
 use crate::{LearningCategory, LearningId, LearningStatus, Scope, strategy::InjectionStrategy};
 
 /// Filter parameters for learnings queries
@@ -60,6 +61,21 @@ pub enum DashboardTopic {
     StrategyOverrides,
     /// System health metrics
     Health,
+    /// OpenWorld overview - novelty stats, gap counts
+    OpenWorldOverview,
+    /// OpenWorld gaps list with optional filters
+    OpenWorldGaps {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        status: Option<GapStatus>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        severity: Option<GapSeverity>,
+    },
+    /// Single gap detail
+    OpenWorldGapDetail { id: GapId },
+    /// Suggested solutions pending review
+    OpenWorldSolutions,
+    /// OpenWorld activity feed
+    OpenWorldActivity,
 }
 
 /// Server → Client messages
@@ -120,6 +136,11 @@ pub enum DashboardData {
     StrategyDistributions(StrategyDistributionsData),
     StrategyOverrides(StrategyOverridesData),
     Health(HealthData),
+    OpenWorldOverview(OpenWorldOverviewData),
+    OpenWorldGaps(OpenWorldGapsData),
+    OpenWorldGapDetail(OpenWorldGapDetailData),
+    OpenWorldSolutions(OpenWorldSolutionsData),
+    OpenWorldActivity(OpenWorldActivityData),
 }
 
 // ============================================================
@@ -446,6 +467,154 @@ pub enum ActivityType {
     Strategy,
 }
 
+// ============================================================
+// OpenWorld Data
+// ============================================================
+
+/// OpenWorld overview data - novelty stats, gap counts, hook stats
+#[derive(Debug, Clone, Serialize, Default)]
+pub struct OpenWorldOverviewData {
+    /// Current novelty threshold
+    pub novelty_threshold: f64,
+    /// Number of pending outliers
+    pub pending_outliers: u32,
+    /// Number of active clusters
+    pub cluster_count: u32,
+    /// Gap counts by severity
+    pub gap_counts: GapCounts,
+    /// Hook statistics
+    pub hook_stats: HookStatsData,
+}
+
+/// Gap counts by severity
+#[derive(Debug, Clone, Serialize, Default)]
+pub struct GapCounts {
+    pub low: u32,
+    pub medium: u32,
+    pub high: u32,
+    pub critical: u32,
+    pub total: u32,
+}
+
+/// Hook statistics for dashboard display
+#[derive(Debug, Clone, Serialize, Default)]
+pub struct HookStatsData {
+    pub outcomes_processed: u64,
+    pub negative_outcomes: u64,
+    pub low_confidence_outcomes: u64,
+    pub exploration_adjustments: u64,
+    pub gaps_created: u64,
+}
+
+/// OpenWorld gaps list data
+#[derive(Debug, Clone, Serialize, Default)]
+pub struct OpenWorldGapsData {
+    /// List of gaps
+    pub gaps: Vec<GapBrief>,
+    /// Total count
+    pub total: u32,
+}
+
+/// Brief gap info for lists
+#[derive(Debug, Clone, Serialize)]
+pub struct GapBrief {
+    pub id: GapId,
+    pub category: GapCategory,
+    pub severity: GapSeverity,
+    pub status: GapStatus,
+    pub context_pattern: String,
+    pub failure_count: u32,
+    pub first_seen: DateTime<Utc>,
+    pub last_seen: DateTime<Utc>,
+    pub solution_count: u32,
+}
+
+/// Detailed gap data for detail panel
+#[derive(Debug, Clone, Serialize)]
+pub struct OpenWorldGapDetailData {
+    pub id: GapId,
+    pub category: GapCategory,
+    pub severity: GapSeverity,
+    pub status: GapStatus,
+    pub context_pattern: String,
+    pub failure_count: u32,
+    pub first_seen: DateTime<Utc>,
+    pub last_seen: DateTime<Utc>,
+    pub suggested_solutions: Vec<SolutionBrief>,
+}
+
+/// Brief solution info
+#[derive(Debug, Clone, Serialize)]
+pub struct SolutionBrief {
+    pub action_type: String,
+    pub description: String,
+    pub confidence: f64,
+    pub applied: bool,
+}
+
+/// OpenWorld solutions data - pending solutions for review
+#[derive(Debug, Clone, Serialize, Default)]
+pub struct OpenWorldSolutionsData {
+    /// Solutions pending review
+    pub pending: Vec<PendingSolution>,
+    /// Total pending count
+    pub total: u32,
+}
+
+/// A pending solution for user review
+#[derive(Debug, Clone, Serialize)]
+pub struct PendingSolution {
+    pub gap_id: GapId,
+    pub gap_context: String,
+    pub action_type: String,
+    pub description: String,
+    pub confidence: f64,
+}
+
+/// OpenWorld activity data - recent events
+#[derive(Debug, Clone, Serialize, Default)]
+pub struct OpenWorldActivityData {
+    /// Recent activity events
+    pub events: Vec<OpenWorldActivityEntry>,
+    /// Summary stats
+    pub summary: ActivitySummary,
+}
+
+/// Single activity entry
+#[derive(Debug, Clone, Serialize)]
+pub struct OpenWorldActivityEntry {
+    pub timestamp: DateTime<Utc>,
+    pub event_type: OpenWorldEventType,
+    pub message: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub gap_id: Option<GapId>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub learning_id: Option<LearningId>,
+}
+
+/// OpenWorld event types for activity feed
+#[derive(Debug, Clone, Copy, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum OpenWorldEventType {
+    NoveltyDetected,
+    ClusterUpdated,
+    GapCreated,
+    GapStatusChanged,
+    SolutionGenerated,
+    StrategyFeedback,
+}
+
+/// Activity summary for the activity tab
+#[derive(Debug, Clone, Serialize, Default)]
+pub struct ActivitySummary {
+    /// Total outcomes processed
+    pub outcomes_total: u64,
+    /// Negative outcome rate (percentage)
+    pub negative_rate: f64,
+    /// Average exploration bonus applied
+    pub avg_exploration_bonus: f64,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -512,5 +681,44 @@ mod tests {
             }
             _ => panic!("Expected Learnings topic"),
         }
+    }
+
+    #[test]
+    fn openworld_overview_topic_serializes() {
+        let topic = DashboardTopic::OpenWorldOverview;
+        let json = serde_json::to_string(&topic).unwrap();
+        assert!(json.contains("open_world_overview"));
+    }
+
+    #[test]
+    fn openworld_gaps_topic_with_filters() {
+        let json = r#"{"topic":"open_world_gaps","status":"Detected","severity":"High"}"#;
+        let topic: DashboardTopic = serde_json::from_str(json).unwrap();
+        match topic {
+            DashboardTopic::OpenWorldGaps { status, severity } => {
+                assert_eq!(status, Some(GapStatus::Detected));
+                assert_eq!(severity, Some(GapSeverity::High));
+            }
+            _ => panic!("Expected OpenWorldGaps topic"),
+        }
+    }
+
+    #[test]
+    fn openworld_gap_detail_topic() {
+        let id = uuid::Uuid::now_v7();
+        let topic = DashboardTopic::OpenWorldGapDetail { id };
+        let json = serde_json::to_string(&topic).unwrap();
+        assert!(json.contains("open_world_gap_detail"));
+        assert!(json.contains(&id.to_string()));
+    }
+
+    #[test]
+    fn openworld_activity_data_serializes() {
+        let data = OpenWorldActivityData::default();
+        let wrapped = DashboardData::OpenWorldActivity(data);
+        let json = serde_json::to_string(&wrapped).unwrap();
+        assert!(json.contains("open_world_activity"));
+        assert!(json.contains("events"));
+        assert!(json.contains("summary"));
     }
 }
