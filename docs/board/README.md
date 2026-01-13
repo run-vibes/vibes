@@ -22,6 +22,7 @@
 | [feat-0076-auth-setup-wizard](stages/backlog/stories/feat-0076-auth-setup-wizard.md) | feat | medium | cli,networking |
 | [feat-0077-config-save-load](stages/backlog/stories/feat-0077-config-save-load.md) | feat | medium | cli,networking |
 | [feat-0078-connectivity-validation](stages/backlog/stories/feat-0078-connectivity-validation.md) | feat | medium | cli,networking |
+| [feat-0101-header-identity-display](stages/backlog/stories/feat-0101-header-identity-display.md) | feat | low | web-ui,design-system |
 | [m38-feat-01-agent-module-skeleton](stages/backlog/stories/m38-feat-01-agent-module-skeleton.md) | feat | high | agents |
 | [m38-feat-02-agent-trait](stages/backlog/stories/m38-feat-02-agent-trait.md) | feat | high | agents |
 | [m38-feat-03-agent-status](stages/backlog/stories/m38-feat-03-agent-status.md) | feat | high | agents |
@@ -43,7 +44,6 @@
 | [refactor-0097-unified-card-component](stages/backlog/stories/refactor-0097-unified-card-component.md) | refactor | high | web-ui,design-system |
 | [refactor-0098-models-page-styling](stages/backlog/stories/refactor-0098-models-page-styling.md) | refactor | medium | web-ui |
 | [refactor-0099-subnav-light-theme](stages/backlog/stories/refactor-0099-subnav-light-theme.md) | refactor | medium | web-ui,design-system |
-| [refactor-0100-responsive-header-navigation](stages/backlog/stories/refactor-0100-responsive-header-navigation.md) | refactor | high | web-ui,design-system |
 
 ## Epics
 
@@ -246,5 +246,6 @@
 - [refactor-0008-consolidate-assessment-types-module](stages/done/stories/refactor-0008-consolidate-assessment-types-module.md)
 - [refactor-0069-dashboard-visual-consistency](stages/done/stories/refactor-0069-dashboard-visual-consistency.md)
 - [refactor-0070-design-system-extraction](stages/done/stories/refactor-0070-design-system-extraction.md)
+- [refactor-0100-responsive-header-navigation](stages/done/stories/refactor-0100-responsive-header-navigation.md)
 
 </details>

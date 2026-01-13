@@ -75,6 +75,7 @@ function RootLayout() {
         onThemeToggle={toggleTheme}
         settingsHref="/settings"
         renderLink={renderLink}
+        pathname={location.pathname}
         toolbarItems={
           grooveSettings.showLearningIndicator && (
             <LearningIndicator

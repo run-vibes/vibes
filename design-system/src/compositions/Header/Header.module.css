@@ -142,3 +142,48 @@
 .actionLabel {
   font-size: var(--font-size-base);
 }
+
+/* Hamburger button - hidden by default, shown on mobile */
+.hamburger {
+  display: none;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  margin-left: auto;
+}
+
+.hamburger:hover {
+  color: var(--phosphor);
+  border-color: var(--phosphor-dim);
+  text-shadow: 0 0 8px var(--phosphor-glow);
+}
+
+.hamburger:focus-visible {
+  outline: 2px solid var(--phosphor);
+  outline-offset: 2px;
+}
+
+.hamburgerIcon {
+  font-size: var(--font-size-2xl);
+}
+
+/* Responsive: mobile breakpoint at 768px */
+@media (max-width: 768px) {
+  .nav {
+    display: none;
+  }
+
+  .actions {
+    display: none;
+  }
+
+  .hamburger {
+    display: flex;
+  }
+}

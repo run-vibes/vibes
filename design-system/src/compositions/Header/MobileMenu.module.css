@@ -1,0 +1,226 @@
+/* design-system/src/compositions/Header/MobileMenu.module.css */
+
+/* Overlay */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 200ms ease-out, visibility 200ms ease-out;
+  z-index: 998;
+}
+
+.overlayVisible {
+  opacity: 1;
+  visibility: visible;
+}
+
+[data-theme="light"] .overlay {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* Panel */
+.panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 280px;
+  height: 100vh;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  box-shadow:
+    -4px 0 20px rgba(0, 0, 0, 0.3),
+    -2px 0 8px var(--phosphor-subtle);
+  transform: translateX(100%);
+  transition: transform 250ms ease-out;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-4);
+}
+
+.panelOpen {
+  transform: translateX(0);
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .overlay {
+    transition: none;
+  }
+
+  .panel {
+    transition: none;
+  }
+
+  .navLinkInner,
+  .actionButton,
+  .actionLinkInner {
+    animation: none !important;
+  }
+}
+
+/* Close button */
+.closeButton {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid transparent;
+  color: var(--text-dim);
+  font-size: var(--font-size-xl);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.closeButton:hover {
+  color: var(--phosphor);
+  border-color: var(--phosphor-dim);
+  text-shadow: 0 0 8px var(--phosphor-glow);
+}
+
+.closeButton:focus-visible {
+  outline: 2px solid var(--phosphor);
+  outline-offset: 2px;
+}
+
+/* Navigation */
+.nav {
+  display: flex;
+  flex-direction: column;
+  margin-top: var(--space-8);
+}
+
+.navLink {
+  text-decoration: none;
+}
+
+.navLinkInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  font-family: var(--font-display);
+  font-size: var(--font-size-xl);
+  color: var(--text-dim);
+  transition: all var(--transition-fast);
+  border-left: 3px solid transparent;
+  opacity: 0;
+  transform: translateX(10px);
+  animation: slideIn 200ms ease-out forwards;
+}
+
+.navLink:hover .navLinkInner {
+  color: var(--phosphor);
+  text-shadow: 0 0 8px var(--phosphor-glow);
+  background: var(--phosphor-subtle);
+}
+
+.navLinkActive .navLinkInner {
+  color: var(--phosphor);
+  border-left-color: var(--phosphor);
+  background: var(--phosphor-subtle);
+}
+
+.subnavIndicator {
+  font-size: var(--font-size-sm);
+  opacity: 0.5;
+}
+
+.navLinkActive .subnavIndicator {
+  opacity: 1;
+}
+
+/* Divider */
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: var(--space-4) 0;
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.actionButton,
+.actionLink {
+  text-decoration: none;
+}
+
+.actionButton {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-family: var(--font-display);
+  font-size: var(--font-size-lg);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: left;
+  opacity: 0;
+  transform: translateX(10px);
+  animation: slideIn 200ms ease-out forwards;
+}
+
+.actionButton:hover {
+  color: var(--phosphor);
+  text-shadow: 0 0 8px var(--phosphor-glow);
+  background: var(--phosphor-subtle);
+}
+
+.actionButton:focus-visible {
+  outline: 2px solid var(--phosphor);
+  outline-offset: 2px;
+}
+
+.actionLinkInner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  color: var(--text-dim);
+  font-family: var(--font-display);
+  font-size: var(--font-size-lg);
+  transition: all var(--transition-fast);
+  opacity: 0;
+  transform: translateX(10px);
+  animation: slideIn 200ms ease-out forwards;
+}
+
+.actionLink:hover .actionLinkInner {
+  color: var(--phosphor);
+  text-shadow: 0 0 8px var(--phosphor-glow);
+  background: var(--phosphor-subtle);
+}
+
+.actionIcon {
+  font-size: var(--font-size-xl);
+}
+
+.actionLabel {
+  font-size: var(--font-size-base);
+}
+
+/* Stagger animation */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
