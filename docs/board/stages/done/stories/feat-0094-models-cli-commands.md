@@ -2,7 +2,7 @@
 id: FEAT0094
 title: vibes models CLI commands
 type: feat
-status: pending
+status: done
 priority: high
 epics: [models]
 depends: [FEAT0092, FEAT0093]
@@ -65,9 +65,9 @@ vibes models auth --list             # Show configured providers
 
 ## Acceptance Criteria
 
-- [ ] `vibes models list` with filtering options
-- [ ] `vibes models info <model>` shows details
-- [ ] `vibes models auth <provider>` stores in keyring
-- [ ] `vibes models auth --list` shows configured providers
-- [ ] `vibes models auth --delete` removes credentials
-- [ ] Integration tests for CLI commands
+- [x] `vibes models list` with filtering options
+- [x] `vibes models info <model>` shows details
+- [x] `vibes models auth <provider>` stores in keyring
+- [x] `vibes models auth --list` shows configured providers
+- [x] `vibes models auth --delete` removes credentials
+- [x] Unit tests for CLI commands

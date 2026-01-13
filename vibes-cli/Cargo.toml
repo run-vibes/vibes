@@ -13,6 +13,7 @@ path = "src/main.rs"
 [dependencies]
 vibes-core = { path = "../vibes-core" }
 vibes-groove = { path = "../plugins/vibes-groove" }
+vibes-models = { path = "../vibes-models" }
 vibes-plugin-api = { path = "../vibes-plugin-api" }
 vibes-server = { path = "../vibes-server" }
 clap = { version = "4", features = ["derive"] }
@@ -32,6 +33,8 @@ tokio-tungstenite = "0.26"
 futures-util = "0.3"
 crossterm = "0.28"
 base64 = "0.22"
+comfy-table = "7"
+dialoguer = "0.11"
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"
