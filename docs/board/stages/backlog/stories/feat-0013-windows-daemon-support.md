@@ -4,7 +4,7 @@ title: Windows daemon support
 type: feat
 status: backlog
 priority: low
-epics: [cli]
+epics: [cli, cross-platform]
 depends: []
 estimate: 1w
 created: 2026-01-08

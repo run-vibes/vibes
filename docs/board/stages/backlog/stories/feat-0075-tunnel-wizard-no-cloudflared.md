@@ -4,7 +4,7 @@ title: Tunnel Wizard - No Cloudflared
 type: feat
 status: pending
 priority: medium
-epics: [cli]
+epics: [cli, networking]
 milestone: 35-setup-wizards
 ---
 

@@ -4,7 +4,7 @@ title: Auth Setup Wizard
 type: feat
 status: pending
 priority: medium
-epics: [cli]
+epics: [cli, networking]
 milestone: 35-setup-wizards
 ---
 

@@ -1,5 +1,6 @@
-Generated README.md
-Auto-generated from directory structure. Run `just board generate` to update.
+# Planning Board
+
+> Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
@@ -12,15 +13,15 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [chore-0087-use-cranelift-for-builds](stages/backlog/stories/chore-0087-use-cranelift-for-builds.md) | chore | low | dev-environment |
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
-| [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli |
-| [feat-0071-setup-wizard-infrastructure](stages/backlog/stories/feat-0071-setup-wizard-infrastructure.md) | feat | medium | cli |
-| [feat-0072-cloudflared-state-detection](stages/backlog/stories/feat-0072-cloudflared-state-detection.md) | feat | medium | cli |
-| [feat-0073-tunnel-wizard-quick-mode](stages/backlog/stories/feat-0073-tunnel-wizard-quick-mode.md) | feat | medium | cli |
-| [feat-0074-tunnel-wizard-named-mode](stages/backlog/stories/feat-0074-tunnel-wizard-named-mode.md) | feat | medium | cli |
-| [feat-0075-tunnel-wizard-no-cloudflared](stages/backlog/stories/feat-0075-tunnel-wizard-no-cloudflared.md) | feat | medium | cli |
-| [feat-0076-auth-setup-wizard](stages/backlog/stories/feat-0076-auth-setup-wizard.md) | feat | medium | cli |
-| [feat-0077-config-save-load](stages/backlog/stories/feat-0077-config-save-load.md) | feat | medium | cli |
-| [feat-0078-connectivity-validation](stages/backlog/stories/feat-0078-connectivity-validation.md) | feat | medium | cli |
+| [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli,cross-platform |
+| [feat-0071-setup-wizard-infrastructure](stages/backlog/stories/feat-0071-setup-wizard-infrastructure.md) | feat | medium | cli,networking |
+| [feat-0072-cloudflared-state-detection](stages/backlog/stories/feat-0072-cloudflared-state-detection.md) | feat | medium | cli,networking |
+| [feat-0073-tunnel-wizard-quick-mode](stages/backlog/stories/feat-0073-tunnel-wizard-quick-mode.md) | feat | medium | cli,networking |
+| [feat-0074-tunnel-wizard-named-mode](stages/backlog/stories/feat-0074-tunnel-wizard-named-mode.md) | feat | medium | cli,networking |
+| [feat-0075-tunnel-wizard-no-cloudflared](stages/backlog/stories/feat-0075-tunnel-wizard-no-cloudflared.md) | feat | medium | cli,networking |
+| [feat-0076-auth-setup-wizard](stages/backlog/stories/feat-0076-auth-setup-wizard.md) | feat | medium | cli,networking |
+| [feat-0077-config-save-load](stages/backlog/stories/feat-0077-config-save-load.md) | feat | medium | cli,networking |
+| [feat-0078-connectivity-validation](stages/backlog/stories/feat-0078-connectivity-validation.md) | feat | medium | cli,networking |
 
 ## Epics
 
