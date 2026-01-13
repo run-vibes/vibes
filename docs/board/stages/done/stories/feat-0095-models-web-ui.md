@@ -2,7 +2,7 @@
 id: FEAT0095
 title: Models view in web UI
 type: feat
-status: pending
+status: done
 priority: medium
 epics: [models]
 depends: [FEAT0092, FEAT0093]
