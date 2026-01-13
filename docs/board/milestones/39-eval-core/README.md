@@ -26,6 +26,16 @@ First milestone of the Evals epic. Establishes the foundation for evaluation: me
 - Study management (create, checkpoint, stop)
 - `vibes eval study` CLI commands
 
+## Stories
+
+| ID | Title | Priority | Estimate |
+|----|-------|----------|----------|
+| m39-feat-01 | vibes-evals crate skeleton | high | 2h |
+| m39-feat-02 | LongitudinalMetrics types | high | 3h |
+| m39-feat-03 | EvalStorage schema and implementation | high | 4h |
+| m39-feat-04 | Study lifecycle management | high | 4h |
+| m39-feat-05 | vibes eval study CLI commands | medium | 3h |
+
 ## Epics
 
 - [evals](../../epics/evals)
