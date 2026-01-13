@@ -70,10 +70,11 @@ pub struct PluginHostConfig {
 
 impl Default for PluginHostConfig {
     fn default() -> Self {
+        // Use XDG config directory helper for consistency
+        let user_plugin_dir = vibes_paths::config_dir().join("plugins");
+
         Self {
-            user_plugin_dir: dirs::config_dir()
-                .unwrap_or_else(|| PathBuf::from(".config"))
-                .join("vibes/plugins"),
+            user_plugin_dir,
             project_plugin_dir: None,
             handler_timeout: Duration::from_secs(5),
         }

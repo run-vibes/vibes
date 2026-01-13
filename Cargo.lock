@@ -6459,6 +6459,7 @@ dependencies = [
  "vibes-core",
  "vibes-groove",
  "vibes-models",
+ "vibes-paths",
  "vibes-plugin-api",
  "vibes-server",
 ]
@@ -6489,6 +6490,7 @@ dependencies = [
  "tracing",
  "uuid",
  "vibes-iggy",
+ "vibes-paths",
  "vibes-plugin-api",
  "web-push-native",
  "which",
@@ -6544,6 +6546,7 @@ dependencies = [
  "thiserror 2.0.17",
  "tokio",
  "tracing",
+ "vibes-paths",
  "which",
 ]
 
@@ -6576,6 +6579,13 @@ dependencies = [
  "tokio-stream",
  "tokio-test",
  "tracing",
+]
+
+[[package]]
+name = "vibes-paths"
+version = "0.1.0"
+dependencies = [
+ "dirs 5.0.1",
 ]
 
 [[package]]

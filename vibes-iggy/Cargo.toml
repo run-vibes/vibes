@@ -20,6 +20,9 @@ humantime-serde = "1"
 dirs = "5"
 which = "7"
 
+# Vibes utilities
+vibes-paths = { path = "../vibes-paths" }
+
 # System info (for ulimit checks)
 rlimit = "0.10"
 
