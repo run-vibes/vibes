@@ -2,7 +2,7 @@
 id: FEAT0093
 title: CredentialStore for API key management
 type: feat
-status: pending
+status: done
 priority: high
 epics: [models]
 depends: [FEAT0090]
@@ -64,8 +64,8 @@ pub struct ApiKey(SecretString);
 
 ## Acceptance Criteria
 
-- [ ] System keyring integration (cross-platform)
-- [ ] Environment variable fallback
-- [ ] Secure API key type (no Debug, no logging)
-- [ ] CRUD operations for credentials
-- [ ] Unit tests with mock keyring
+- [x] System keyring integration (cross-platform)
+- [x] Environment variable fallback
+- [x] Secure API key type (no Debug, no logging)
+- [x] CRUD operations for credentials
+- [x] Unit tests with mock keyring
