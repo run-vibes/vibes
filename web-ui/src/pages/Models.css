@@ -1,0 +1,115 @@
+.models-page {
+  padding: var(--spacing-lg);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.models-header {
+  margin-bottom: var(--spacing-lg);
+}
+
+.models-header h1 {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--text-primary);
+}
+
+.models-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.models-empty-state {
+  text-align: center;
+  padding: var(--spacing-xl);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+}
+
+.models-empty-state p {
+  margin: var(--spacing-xs) 0;
+}
+
+.models-loading {
+  text-align: center;
+  padding: var(--space-8);
+  color: var(--text-dim);
+}
+
+.models-filters {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.models-filters label {
+  font-family: var(--font-display);
+  font-size: var(--font-size-sm);
+  color: var(--text-dim);
+}
+
+.models-filters select {
+  min-width: 180px;
+}
+
+.models-table-container {
+  overflow-x: auto;
+}
+
+.models-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+}
+
+.models-table th,
+.models-table td {
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.models-table th {
+  font-family: var(--font-display);
+  font-weight: 400;
+  color: var(--text-dim);
+  background: var(--surface);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: var(--font-size-xs);
+}
+
+.models-table tbody tr {
+  transition: background-color var(--transition-fast);
+}
+
+.models-table tbody tr:hover {
+  background-color: var(--surface);
+}
+
+.models-table td {
+  color: var(--text);
+}
+
+/* Capability badges */
+.models-table td:last-child {
+  color: var(--text-dim);
+  font-size: var(--font-size-xs);
+}
+
+/* Provider cell with auth indicator */
+.provider-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.auth-indicator {
+  color: var(--green);
+  font-size: var(--font-size-sm);
+  cursor: help;
+}

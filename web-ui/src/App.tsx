@@ -31,6 +31,7 @@ import {
 import { DebugPage } from './pages/Debug'
 import { StreamsPage } from './pages/Streams'
 import { SettingsPage } from './pages/Settings'
+import { ModelsPage } from './pages/Models'
 import { NotFound } from './pages/NotFound'
 import { useAuth, useTheme } from './hooks'
 import { useWebSocket } from './hooks/useWebSocket'
@@ -51,6 +52,7 @@ function RootLayout() {
   const navItems = [
     { label: 'SESSIONS', href: '/sessions', isActive: location.pathname.startsWith('/sessions') },
     { label: 'FIREHOSE', href: '/firehose', isActive: location.pathname === '/firehose' },
+    { label: 'MODELS', href: '/models', isActive: location.pathname === '/models' },
     { label: 'GROOVE', href: '/groove', isGroove: true, isActive: isGroovePath, hasSubnav: true },
   ];
 
@@ -240,6 +242,12 @@ const settingsRoute = createRoute({
   component: SettingsPage,
 })
 
+const modelsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/models',
+  component: ModelsPage,
+})
+
 // Create route tree and router
 const routeTree = rootRoute.addChildren([
   indexRoute,
@@ -248,6 +256,7 @@ const routeTree = rootRoute.addChildren([
   grooveRoute,
   streamsRoute,
   firehoseRoute,
+  modelsRoute,
   assessmentLayoutRoute.addChildren([
     assessmentIndexRoute,
     assessmentStatusRoute,
