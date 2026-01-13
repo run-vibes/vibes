@@ -5,12 +5,14 @@ import { NotificationSettings } from '../components/NotificationSettings';
 import { useTunnelStatus } from '../hooks/useTunnelStatus';
 import { useCrtEffects } from '../hooks/useCrtEffects';
 import { useGrooveSettings } from '../hooks/useGrooveSettings';
+import { useModels } from '../hooks/useModels';
 import './Settings.css';
 
 export function SettingsPage() {
   const { data: tunnel, isLoading: tunnelLoading, error: tunnelError } = useTunnelStatus();
   const { enabled: crtEffectsEnabled, setEffects: setCrtEffects } = useCrtEffects();
   const { settings: grooveSettings, updateSetting: updateGrooveSetting } = useGrooveSettings();
+  const { providers, credentials } = useModels();
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     const saved = localStorage.getItem('vibes-theme');
     return (saved === 'light' || saved === 'dark') ? saved : 'dark';
@@ -146,6 +148,32 @@ export function SettingsPage() {
         </div>
 
         <div className="settings-panel">
+          <h2 className="settings-panel-title">CREDENTIALS</h2>
+          {providers.length === 0 ? (
+            <div className="setting-row">
+              <span className="setting-description">No providers configured</span>
+            </div>
+          ) : (
+            providers.map((provider) => {
+              const cred = credentials.find((c) => c.provider === provider);
+              return (
+                <div key={provider} className="setting-row">
+                  <div className="setting-info">
+                    <div className="setting-label">{provider}</div>
+                    <span className="setting-description">
+                      {cred ? `Configured via ${cred.source}` : 'Not configured'}
+                    </span>
+                  </div>
+                  <div className="setting-control">
+                    <CredentialStatusBadge configured={!!cred} source={cred?.source} />
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        <div className="settings-panel">
           <h2 className="settings-panel-title">TUNNEL</h2>
           {tunnelLoading && <span className="setting-description">Loading...</span>}
           {tunnelError && <span className="setting-error">Error loading tunnel status</span>}
@@ -250,6 +278,35 @@ export function SettingsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function CredentialStatusBadge({ configured, source }: { configured: boolean; source?: string }) {
+  if (!configured) {
+    return (
+      <span
+        className="credential-badge"
+        style={{
+          backgroundColor: 'var(--status-disabled-subtle)',
+          color: 'var(--status-disabled)',
+        }}
+      >
+        Not configured
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className="credential-badge"
+      style={{
+        backgroundColor: 'var(--status-connected-subtle)',
+        color: 'var(--status-connected)',
+      }}
+    >
+      <span className="credential-badge-dot">●</span>
+      {source || 'configured'}
+    </span>
   );
 }
 

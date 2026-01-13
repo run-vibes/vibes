@@ -25,6 +25,18 @@ vi.mock('../hooks/useCrtEffects', () => ({
   }),
 }));
 
+// Mock the useModels hook
+vi.mock('../hooks/useModels', () => ({
+  useModels: () => ({
+    models: [],
+    providers: ['anthropic', 'openai'],
+    credentials: [{ provider: 'anthropic', source: 'keyring' }],
+    isLoading: false,
+    error: null,
+    refresh: vi.fn(),
+  }),
+}));
+
 describe('SettingsPage', () => {
   describe('Tunnel section', () => {
     test('displays tunnel status', () => {
@@ -56,6 +68,19 @@ describe('SettingsPage', () => {
 
       const issueLink = screen.getByRole('link', { name: /report issue/i });
       expect(issueLink).toHaveAttribute('href', 'https://github.com/run-vibes/vibes/issues');
+    });
+  });
+
+  describe('Credentials section', () => {
+    test('displays credentials panel with configured providers', () => {
+      render(<SettingsPage />);
+
+      // Should have a Credentials section
+      expect(screen.getByText('CREDENTIALS')).toBeInTheDocument();
+
+      // Should show anthropic as configured
+      expect(screen.getByText('anthropic')).toBeInTheDocument();
+      expect(screen.getAllByText(/keyring/i).length).toBeGreaterThanOrEqual(1);
     });
   });
 });
