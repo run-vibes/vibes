@@ -22,7 +22,6 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [feat-0076-auth-setup-wizard](stages/backlog/stories/feat-0076-auth-setup-wizard.md) | feat | medium | cli,networking |
 | [feat-0077-config-save-load](stages/backlog/stories/feat-0077-config-save-load.md) | feat | medium | cli,networking |
 | [feat-0078-connectivity-validation](stages/backlog/stories/feat-0078-connectivity-validation.md) | feat | medium | cli,networking |
-| [feat-0094-models-cli-commands](stages/backlog/stories/feat-0094-models-cli-commands.md) | feat | high | models |
 | [feat-0095-models-web-ui](stages/backlog/stories/feat-0095-models-web-ui.md) | feat | medium | models |
 
 ## Epics
@@ -188,6 +187,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 - [feat-0091-model-provider-trait](stages/done/stories/feat-0091-model-provider-trait.md)
 - [feat-0092-model-registry](stages/done/stories/feat-0092-model-registry.md)
 - [feat-0093-credential-store](stages/done/stories/feat-0093-credential-store.md)
+- [feat-0094-models-cli-commands](stages/done/stories/feat-0094-models-cli-commands.md)
 - [m14-chore-01-design](stages/done/stories/m14-chore-01-design.md)
 - [m14-chore-02-implementation](stages/done/stories/m14-chore-02-implementation.md)
 - [m26-chore-01-eventbus-cleanup](stages/done/stories/m26-chore-01-eventbus-cleanup.md)

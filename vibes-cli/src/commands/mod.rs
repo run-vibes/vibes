@@ -2,6 +2,7 @@ pub mod auth;
 pub mod claude;
 pub mod config;
 pub mod event;
+pub mod models;
 pub mod plugin;
 pub mod plugin_dispatch;
 pub mod serve;

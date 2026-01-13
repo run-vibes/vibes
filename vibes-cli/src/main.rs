@@ -75,6 +75,8 @@ enum Commands {
     Config(commands::config::ConfigArgs),
     /// Send events to the EventLog
     Event(commands::event::EventArgs),
+    /// Manage AI models and credentials
+    Models(commands::models::ModelsArgs),
     /// Manage plugins
     Plugin(commands::plugin::PluginArgs),
     /// Run the vibes server
@@ -106,6 +108,7 @@ async fn main() -> Result<()> {
         Commands::Claude(args) => commands::claude::run(args).await,
         Commands::Config(args) => commands::config::run(args),
         Commands::Event(args) => commands::event::run(args).await,
+        Commands::Models(args) => commands::models::run(args).await,
         Commands::Plugin(args) => commands::plugin::run(args),
         Commands::Serve(args) => commands::serve::run(args).await,
         Commands::Sessions(args) => commands::sessions::run(args).await,
