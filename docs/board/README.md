@@ -83,7 +83,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [34-open-world-adaptation](milestones/34-open-world-adaptation/) | done | groove |
 | [35-setup-wizards](milestones/35-setup-wizards/) | planned | cli |
 | [36-openworld-dashboard](milestones/36-openworld-dashboard/) | done | groove |
-| [37-models-registry-auth](milestones/37-models-registry-auth/) | planned | models |
+| [37-models-registry-auth](milestones/37-models-registry-auth/) | done | models |
 | [38-agent-core](milestones/38-agent-core/) | planned | agents |
 | [39-eval-core](milestones/39-eval-core/) | planned | evals |
 | [40-observability-tracing](milestones/40-observability-tracing/) | planned | observability |

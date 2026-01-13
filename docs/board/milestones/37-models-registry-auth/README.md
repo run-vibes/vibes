@@ -1,7 +1,7 @@
 ---
 id: 37-models-registry-auth
 title: Models Registry & Auth
-status: planned
+status: done
 epics: [models]
 ---
 
