@@ -2,7 +2,7 @@
 id: 34-open-world-adaptation
 title: Open World Adaptation
 status: done
-epics: [plugin-system]
+epics: [groove]
 ---
 
 # Open World Adaptation

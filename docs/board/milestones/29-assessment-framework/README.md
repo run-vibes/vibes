@@ -2,7 +2,7 @@
 id: 29-assessment-framework
 title: Assessment Framework
 status: done
-epics: [core, cli, plugin-system]
+epics: [groove]
 ---
 
 # Assessment Framework

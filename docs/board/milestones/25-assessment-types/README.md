@@ -2,7 +2,7 @@
 id: 25-assessment-types
 title: Assessment Types
 status: done
-epics: [core, cli, plugin-system]
+epics: [groove]
 ---
 
 # Assessment Types

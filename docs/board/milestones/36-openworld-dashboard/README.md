@@ -2,7 +2,7 @@
 id: 36-openworld-dashboard
 title: Open-World Dashboard
 status: done
-epics: [plugin-system]
+epics: [groove]
 ---
 
 # Open-World Dashboard

@@ -2,7 +2,7 @@
 id: 15-harness-introspection
 title: Harness Introspection
 status: done
-epics: [core]
+epics: [groove]
 ---
 
 # Harness Introspection

@@ -2,7 +2,7 @@
 id: 21-storage-foundation
 title: Storage Foundation
 status: done
-epics: [core]
+epics: [groove]
 ---
 
 # Storage Foundation

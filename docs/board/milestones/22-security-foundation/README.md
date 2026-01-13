@@ -2,7 +2,7 @@
 id: 22-security-foundation
 title: Security Foundation
 status: done
-epics: [networking]
+epics: [groove]
 ---
 
 # Security Foundation

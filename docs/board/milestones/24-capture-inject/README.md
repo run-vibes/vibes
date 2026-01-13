@@ -2,7 +2,7 @@
 id: 24-capture-inject
 title: Capture Inject
 status: done
-epics: [core]
+epics: [groove]
 ---
 
 # Capture Inject

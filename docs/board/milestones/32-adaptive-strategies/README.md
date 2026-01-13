@@ -2,7 +2,7 @@
 id: 32-adaptive-strategies
 title: Adaptive Strategies
 status: done
-epics: [plugin-system]
+epics: [groove]
 ---
 
 # Adaptive Strategies

@@ -2,7 +2,7 @@
 id: 33-groove-dashboard
 title: Groove Dashboard
 status: done
-epics: [plugin-system]
+epics: [groove]
 ---
 
 # Groove Dashboard
