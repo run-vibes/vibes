@@ -1,6 +1,7 @@
 # vibes
 
 [![CI](https://github.com/run-vibes/vibes/actions/workflows/ci.yml/badge.svg)](https://github.com/run-vibes/vibes/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/run-vibes/vibes/graph/badge.svg)](https://codecov.io/gh/run-vibes/vibes)
 [![Board](https://img.shields.io/badge/📋_board-view-blue)](docs/board/README.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 

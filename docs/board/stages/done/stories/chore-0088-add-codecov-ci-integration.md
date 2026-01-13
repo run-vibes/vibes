@@ -2,7 +2,7 @@
 id: CHORE0088
 title: Add Codecov coverage reporting to CI
 type: chore
-status: pending
+status: done
 priority: medium
 epics: [dev-environment]
 depends: []

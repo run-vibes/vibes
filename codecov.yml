@@ -1,0 +1,19 @@
+# Codecov configuration
+# https://docs.codecov.com/docs/codecov-yaml
+
+coverage:
+  status:
+    project:
+      default:
+        # Don't fail PRs for coverage changes
+        informational: true
+    patch:
+      default:
+        # Require new code to have some coverage
+        target: 50%
+
+# Ignore paths that shouldn't affect coverage metrics
+ignore:
+  - "vendor/**"
+  - "web-ui/**"
+  - "e2e-tests/**"
