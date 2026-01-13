@@ -8,6 +8,7 @@ use crate::error::{Error, Result};
 
 /// Minimum recommended locked memory limit for io_uring (64 MB).
 /// This is a conservative estimate; actual requirements depend on workload.
+#[cfg(target_os = "linux")]
 const MIN_MEMLOCK_BYTES: u64 = 64 * 1024 * 1024;
 
 /// Result of a pre-flight check.
@@ -100,6 +101,7 @@ pub fn run_preflight_checks() -> Result<()> {
 }
 
 /// Format bytes as a human-readable string.
+#[cfg(target_os = "linux")]
 fn format_bytes(bytes: u64) -> String {
     const KB: u64 = 1024;
     const MB: u64 = KB * 1024;
@@ -116,6 +118,7 @@ fn format_bytes(bytes: u64) -> String {
     }
 }
 
+#[cfg(target_os = "linux")]
 const MEMLOCK_HELP: &str = r#"Iggy requires sufficient locked memory for io_uring.
 
 To fix this, run one of the following:
@@ -144,6 +147,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(target_os = "linux")]
     fn format_bytes_formats_correctly() {
         assert_eq!(format_bytes(512), "512 bytes");
         assert_eq!(format_bytes(1024), "1 KB");

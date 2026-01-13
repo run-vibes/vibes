@@ -14,7 +14,7 @@ created: 2026-01-12
 
 ## Summary
 
-Iggy event streaming doesn't work on macOS - no events are returned. The daemon appears to start but events are never delivered.
+Iggy event streaming doesn't work on macOS ARM64 - no events are returned. The daemon appears to start but events are never delivered.
 
 ## Symptoms
 
@@ -23,9 +23,9 @@ Iggy event streaming doesn't work on macOS - no events are returned. The daemon 
 - No errors in logs
 - Works correctly on Linux
 
-## Compilation Warnings
+## Compilation Warnings (Fixed)
 
-The following warnings appear when compiling on macOS, suggesting Linux-specific code paths:
+The following warnings appeared when compiling on macOS:
 
 ```
 warning: constant `MIN_MEMLOCK_BYTES` is never used
@@ -33,37 +33,58 @@ warning: function `format_bytes` is never used
 warning: constant `MEMLOCK_HELP` is never used
 ```
 
-These constants/functions are likely related to Linux-specific memory locking (io_uring) that doesn't apply to macOS.
+**Fixed:** Added `#[cfg(target_os = "linux")]` to Linux-specific code in `vibes-iggy/src/preflight.rs`.
 
-## Investigation Tasks
+## Investigation Findings
 
-### Task 1: Diagnose the Issue
+### Ruled Out: thread_pool_limit Issue
 
-**Steps:**
-1. Check if Iggy uses io_uring on Linux (not available on macOS)
-2. Verify what async runtime/backend Iggy uses on macOS
-3. Check Iggy's platform-specific code paths
-4. Add debug logging to trace event flow on macOS
+The upstream Iggy code in `bootstrap.rs` has a known issue where `thread_pool_limit(0)` causes hangs on macOS due to compio needing a thread pool for filesystem operations. However, **this is already conditionally skipped for macOS ARM64**:
 
-### Task 2: Fix or Workaround
+```rust
+#[cfg(not(all(target_os = "macos", target_arch = "aarch64")))]
+proactor.thread_pool_limit(0);
+```
 
-**Steps:**
-1. If io_uring related: ensure fallback to kqueue/poll on macOS
-2. If configuration issue: update Iggy config for macOS compatibility
-3. If upstream bug: report to Iggy project and implement workaround
-4. Suppress or fix the unused code warnings with `#[cfg(target_os = "linux")]`
+Since the user is on ARM64 macOS, this is NOT the cause.
 
-### Task 3: Verify Fix
+### Potential Areas to Investigate
 
-**Steps:**
-1. Test event sending on macOS
-2. Test event receiving on macOS
-3. Verify no regressions on Linux
-4. Update any platform-specific documentation
+1. **File flush visibility**: The `flush_to_disk()` method is documented as critical for io_uring consistency. Test if calling this before polling helps.
+
+2. **Compio kqueue backend**: The server uses compio for networking and file I/O. On macOS, compio uses kqueue instead of io_uring. There may be differences in event notification timing.
+
+3. **SDK vs Server runtime**: The Iggy SDK uses tokio (standard async), while the server uses compio. Cross-runtime communication might have edge cases.
+
+4. **Timing/race conditions**: Integration tests include sleep delays before polling. macOS might need longer delays or explicit flushes.
+
+## Key Finding: Integration Tests Pass
+
+The `vibes-iggy` integration tests pass on macOS ARM64:
+```bash
+cargo nextest run -p vibes-iggy --test integration
+```
+
+This means basic Iggy event flow (append, poll, seek) works correctly. **The issue is specific to how the daemon uses Iggy**, not Iggy itself.
+
+## Debugging Steps
+
+1. Compare daemon Iggy usage vs integration test usage
+2. Check daemon's consumer setup (seek position, consumer group)
+3. Enable trace logging: `RUST_LOG=vibes_iggy=trace,iggy=trace`
+4. Check if `flush_to_disk()` is being called before polling in daemon
+5. Verify the daemon's event consumer is seeking to the correct position
+
+## Next Steps
+
+1. Identify where daemon's Iggy usage differs from integration tests
+2. Add detailed tracing to the daemon's event consumption path
+3. Check if the issue is in consumer initialization or polling
 
 ## Acceptance Criteria
 
+- [x] No unused code warnings on macOS (fixed in preflight.rs)
+- [ ] Root cause identified
 - [ ] Events flow correctly on macOS
-- [ ] No unused code warnings on macOS
 - [ ] Linux functionality unchanged
 - [ ] Tests pass on both platforms
