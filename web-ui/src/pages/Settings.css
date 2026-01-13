@@ -228,6 +228,20 @@
   font-size: 0.5rem;
 }
 
+.credential-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  border-radius: var(--radius-md);
+}
+
+.credential-badge-dot {
+  font-size: 0.5rem;
+}
+
 /* === Responsive === */
 @media (max-width: 640px) {
   .settings-content {

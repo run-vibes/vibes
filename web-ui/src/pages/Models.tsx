@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useModels } from '../hooks/useModels';
+import { useModels, ModelInfo } from '../hooks/useModels';
 import './Models.css';
 
 export function ModelsPage() {
@@ -8,11 +8,16 @@ export function ModelsPage() {
   // Build a map of provider -> credential source for quick lookup
   const credentialMap = new Map(credentials.map((c) => [c.provider, c.source]));
   const [providerFilter, setProviderFilter] = useState<string>('');
+  const [capabilityFilter, setCapabilityFilter] = useState<string>('');
+  const [selectedModel, setSelectedModel] = useState<ModelInfo | null>(null);
 
   const filteredModels = useMemo(() => {
-    if (!providerFilter) return models;
-    return models.filter((m) => m.provider === providerFilter);
-  }, [models, providerFilter]);
+    return models.filter((m) => {
+      if (providerFilter && m.provider !== providerFilter) return false;
+      if (capabilityFilter && !m.capabilities[capabilityFilter as keyof typeof m.capabilities]) return false;
+      return true;
+    });
+  }, [models, providerFilter, capabilityFilter]);
 
   if (isLoading) {
     return (
@@ -55,6 +60,19 @@ export function ModelsPage() {
                   </option>
                 ))}
               </select>
+
+              <label htmlFor="capability-filter">Capability</label>
+              <select
+                id="capability-filter"
+                value={capabilityFilter}
+                onChange={(e) => setCapabilityFilter(e.target.value)}
+              >
+                <option value="">All capabilities</option>
+                <option value="chat">Chat</option>
+                <option value="vision">Vision</option>
+                <option value="tools">Tools</option>
+                <option value="embeddings">Embeddings</option>
+              </select>
             </div>
 
             <div className="models-table-container">
@@ -71,7 +89,11 @@ export function ModelsPage() {
                   {filteredModels.map((model) => {
                     const credSource = credentialMap.get(model.provider);
                     return (
-                      <tr key={model.id}>
+                      <tr
+                        key={model.id}
+                        className="models-row-clickable"
+                        onClick={() => setSelectedModel(model)}
+                      >
                         <td className="provider-cell">
                           {model.provider}
                           {credSource && (
@@ -92,8 +114,73 @@ export function ModelsPage() {
                 </tbody>
               </table>
             </div>
+
+            {selectedModel && (
+              <ModelDetailsPanel
+                model={selectedModel}
+                credentialSource={credentialMap.get(selectedModel.provider)}
+                onClose={() => setSelectedModel(null)}
+              />
+            )}
           </>
         )}
+      </div>
+    </div>
+  );
+}
+
+interface ModelDetailsPanelProps {
+  model: ModelInfo;
+  credentialSource?: string;
+  onClose: () => void;
+}
+
+function ModelDetailsPanel({ model, credentialSource, onClose }: ModelDetailsPanelProps) {
+  return (
+    <div className="model-details-overlay" onClick={onClose}>
+      <div
+        className="model-details-panel"
+        role="dialog"
+        aria-labelledby="model-details-title"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="model-details-header">
+          <h2 id="model-details-title">{model.name}</h2>
+          <button className="model-details-close" onClick={onClose} aria-label="Close">
+            ×
+          </button>
+        </div>
+
+        <div className="model-details-content">
+          <dl className="model-details-list">
+            <dt>Provider</dt>
+            <dd>
+              {model.provider}
+              {credentialSource && (
+                <span className="auth-indicator" title={`Authenticated via ${credentialSource}`}>
+                  ✓
+                </span>
+              )}
+            </dd>
+
+            <dt>Context Window</dt>
+            <dd>{formatContext(model.context_window)} tokens</dd>
+
+            <dt>Capabilities</dt>
+            <dd>{formatCapabilities(model.capabilities)}</dd>
+
+            {model.pricing && (
+              <>
+                <dt>Pricing</dt>
+                <dd>
+                  ${model.pricing.input_per_million} per million input tokens
+                  <br />
+                  ${model.pricing.output_per_million} per million output tokens
+                </dd>
+              </>
+            )}
+          </dl>
+        </div>
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { ModelsPage } from './Models';
 import type { ModelInfo, CredentialInfo } from '../hooks/useModels';
 
@@ -148,5 +148,76 @@ describe('ModelsPage', () => {
 
     // Should show authenticated indicator for anthropic (has credentials)
     expect(screen.getByTitle('Authenticated via keyring')).toBeInTheDocument();
+  });
+
+  test('filters models by capability', () => {
+    mockUseModels.mockReturnValue({
+      models: [
+        {
+          id: 'anthropic:claude-sonnet-4',
+          provider: 'anthropic',
+          name: 'claude-sonnet-4',
+          context_window: 200000,
+          capabilities: { chat: true, vision: true, tools: true, embeddings: false, streaming: true },
+        },
+        {
+          id: 'openai:text-embedding-3',
+          provider: 'openai',
+          name: 'text-embedding-3',
+          context_window: 8191,
+          capabilities: { chat: false, vision: false, tools: false, embeddings: true, streaming: false },
+        },
+      ],
+      providers: ['anthropic', 'openai'],
+      credentials: [],
+      isLoading: false,
+      error: null,
+      refresh: vi.fn(),
+    });
+
+    render(<ModelsPage />);
+
+    // Both models should be visible initially
+    expect(screen.getByText('claude-sonnet-4')).toBeInTheDocument();
+    expect(screen.getByText('text-embedding-3')).toBeInTheDocument();
+
+    // Filter by embeddings capability
+    const capabilityFilter = screen.getByLabelText(/capability/i);
+    fireEvent.change(capabilityFilter, { target: { value: 'embeddings' } });
+
+    // Only embedding model should be visible
+    expect(screen.queryByText('claude-sonnet-4')).not.toBeInTheDocument();
+    expect(screen.getByText('text-embedding-3')).toBeInTheDocument();
+  });
+
+  test('shows model details panel when clicking a row', () => {
+    mockUseModels.mockReturnValue({
+      models: [
+        {
+          id: 'anthropic:claude-sonnet-4',
+          provider: 'anthropic',
+          name: 'claude-sonnet-4',
+          context_window: 200000,
+          capabilities: { chat: true, vision: true, tools: true, embeddings: false, streaming: true },
+          pricing: { input_per_million: 3, output_per_million: 15 },
+        },
+      ],
+      providers: ['anthropic'],
+      credentials: [{ provider: 'anthropic', source: 'keyring' }],
+      isLoading: false,
+      error: null,
+      refresh: vi.fn(),
+    });
+
+    render(<ModelsPage />);
+
+    // Click on the model row
+    const row = screen.getByText('claude-sonnet-4').closest('tr');
+    expect(row).toBeInTheDocument();
+    fireEvent.click(row!);
+
+    // Details panel should appear with model info
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByText(/\$3.*per million/i)).toBeInTheDocument();
   });
 });
