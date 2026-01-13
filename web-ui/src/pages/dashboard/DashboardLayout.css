@@ -75,9 +75,7 @@
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  overflow: hidden;
+  /* No border/background - cards provide their own containers */
 }
 
 /* === Responsive === */

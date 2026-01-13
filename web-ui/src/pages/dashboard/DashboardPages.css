@@ -1,5 +1,5 @@
 .dashboard-page {
-  padding: var(--space-4);
+  /* No padding - DashboardLayout provides outer padding */
   flex: 1;
   min-height: 0;
 }
