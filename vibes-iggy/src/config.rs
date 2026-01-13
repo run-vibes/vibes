@@ -61,9 +61,9 @@ fn default_data_dir() -> PathBuf {
     if let Ok(path) = std::env::var("VIBES_IGGY_DATA_DIR") {
         return PathBuf::from(path);
     }
-    dirs::data_dir()
-        .map(|d| d.join("vibes").join("iggy"))
-        .unwrap_or_else(|| PathBuf::from("/tmp/vibes/iggy"))
+
+    // Use XDG data directory helper for consistency
+    vibes_paths::data_dir().join("iggy")
 }
 
 fn default_port() -> u16 {

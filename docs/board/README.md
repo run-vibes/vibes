@@ -9,7 +9,6 @@ Auto-generated from directory structure. Run `just board generate` to update.
 
 | Story | Type | Priority | Epics |
 |-------|------|----------|-------|
-| [bug-0089-iggy-not-working-on-macos](stages/backlog/stories/bug-0089-iggy-not-working-on-macos.md) | bug | high | cross-platform |
 | [chore-0087-use-cranelift-for-builds](stages/backlog/stories/chore-0087-use-cranelift-for-builds.md) | chore | low | dev-environment |
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
@@ -31,7 +30,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [agents](epics/agents/) | planned | 0 |
 | [cli](epics/cli/) | active | 13 |
 | [core](epics/core/) | active | 22 |
-| [cross-platform](epics/cross-platform/) | active | 0 |
+| [cross-platform](epics/cross-platform/) | active | 1 |
 | [dev-environment](epics/dev-environment/) | active | 0 |
 | [evals](epics/evals/) | planned | 0 |
 | [groove](epics/groove/) | active | 0 |
@@ -104,6 +103,8 @@ Auto-generated from directory structure. Run `just board generate` to update.
 - [bug-0003-pty-created-with-hardcoded-dimensions-ignoring-client-size](stages/done/stories/bug-0003-pty-created-with-hardcoded-dimensions-ignoring-client-size.md)
 - [bug-0004-fix-flaky-pty-integration-tests](stages/done/stories/bug-0004-fix-flaky-pty-integration-tests.md)
 - [bug-0005-dashboard-trends-route-not-found](stages/done/stories/bug-0005-dashboard-trends-route-not-found.md)
+- [bug-0089-iggy-not-working-on-macos](stages/done/stories/bug-0089-iggy-not-working-on-macos.md)
+- [bug-0090-fix-inconsistent-directory-paths-on-macos](stages/done/stories/bug-0090-fix-inconsistent-directory-paths-on-macos.md)
 - [chore-0001-nav-cleanup](stages/done/stories/chore-0001-nav-cleanup.md)
 - [chore-0002-firehose-filter-cleanup](stages/done/stories/chore-0002-firehose-filter-cleanup.md)
 - [chore-0003-assessment-tier-buttons](stages/done/stories/chore-0003-assessment-tier-buttons.md)

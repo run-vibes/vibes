@@ -65,14 +65,30 @@ fn list_plugins(host: &mut PluginHost, _all: bool) -> Result<()> {
     let plugins = host.list_plugins(true);
 
     if plugins.is_empty() {
+        let config = PluginHostConfig::default();
+        let plugin_dir = config.user_plugin_dir.display();
+
+        // Platform-specific library extension
+        let lib_ext = if cfg!(target_os = "macos") {
+            "dylib"
+        } else if cfg!(target_os = "windows") {
+            "dll"
+        } else {
+            "so"
+        };
+
         println!("No plugins installed");
         println!();
-        println!("Plugin directory: ~/.config/vibes/plugins/");
+        println!("Plugin directory: {}", plugin_dir);
         println!();
         println!("To install a plugin:");
-        println!("  1. Create a plugin directory: mkdir -p ~/.config/vibes/plugins/my-plugin");
         println!(
-            "  2. Copy the plugin library: cp libmy_plugin.so ~/.config/vibes/plugins/my-plugin/my-plugin.so"
+            "  1. Create a plugin directory: mkdir -p {}/my-plugin",
+            plugin_dir
+        );
+        println!(
+            "  2. Copy the plugin library: cp libmy_plugin.{} {}/my-plugin/my-plugin.{}",
+            lib_ext, plugin_dir, lib_ext
         );
         println!("  3. Enable the plugin: vibes plugin enable my-plugin");
         return Ok(());

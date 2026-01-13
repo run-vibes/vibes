@@ -5,6 +5,7 @@ members = [
     "vibes-core",
     "vibes-iggy",
     "vibes-models",
+    "vibes-paths",
     "vibes-plugin-api",
     "vibes-server",
     "vibes-introspection",

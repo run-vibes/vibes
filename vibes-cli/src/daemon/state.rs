@@ -46,10 +46,8 @@ impl DaemonState {
 ///
 /// Returns ~/.config/vibes/daemon.json
 pub fn state_file_path() -> PathBuf {
-    let config_dir = dirs::config_dir()
-        .unwrap_or_else(|| PathBuf::from(".config"))
-        .join("vibes");
-    config_dir.join("daemon.json")
+    // Use XDG config directory helper for consistency
+    vibes_paths::config_dir().join("daemon.json")
 }
 
 /// Read the daemon state from the state file
