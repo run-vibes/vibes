@@ -4,7 +4,7 @@
  * Shows recent open-world events with auto-scroll on new events.
  */
 import { useRef, useEffect } from 'react';
-import { Panel } from '@vibes/design-system';
+import { Card } from '@vibes/design-system';
 import type { OpenWorldActivityEntry } from '../../../hooks/useDashboard';
 import { ActivityItem } from './ActivityItem';
 import './ActivityFeed.css';
@@ -31,18 +31,18 @@ export function ActivityFeed({ events, isLoading, autoScroll = true }: ActivityF
 
   if (isLoading) {
     return (
-      <Panel variant="crt" title="Event Feed" className="activity-feed">
+      <Card variant="crt" title="Event Feed" className="activity-feed">
         <div className="activity-feed__loading">
           <span>Loading events...</span>
         </div>
-      </Panel>
+      </Card>
     );
   }
 
   const isEmpty = !events?.length;
 
   return (
-    <Panel variant="crt" title="Event Feed" className="activity-feed">
+    <Card variant="crt" title="Event Feed" className="activity-feed">
       <div className="activity-feed__header">
         <span className="activity-feed__count">
           {events?.length ?? 0} events
@@ -61,6 +61,6 @@ export function ActivityFeed({ events, isLoading, autoScroll = true }: ActivityF
           ))}
         </div>
       )}
-    </Panel>
+    </Card>
   );
 }

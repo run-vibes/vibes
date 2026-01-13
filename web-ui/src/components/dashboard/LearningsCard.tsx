@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router';
+import { Card, Metric } from '@vibes/design-system';
 import type { LearningBrief, LearningSummary } from '../../hooks/useDashboard';
 import './DashboardCards.css';
 
@@ -26,18 +27,10 @@ export function LearningsCard({ data }: LearningsCardProps) {
   const recent = data?.recent ?? [];
 
   return (
-    <div className="dashboard-card">
-      <h3 className="dashboard-card__title">Learnings</h3>
-
+    <Card variant="crt" title="Learnings" className="dashboard-card">
       <div className="dashboard-card__metrics">
-        <div className="metric">
-          <span className="metric__label">Total</span>
-          <span className="metric__value">{total}</span>
-        </div>
-        <div className="metric">
-          <span className="metric__label">Active</span>
-          <span className="metric__value">{active}</span>
-        </div>
+        <Metric label="Total" value={total} />
+        <Metric label="Active" value={active} />
       </div>
 
       {recent.length > 0 && (
@@ -57,6 +50,6 @@ export function LearningsCard({ data }: LearningsCardProps) {
       <Link to="/groove/dashboard/learnings" className="dashboard-card__link">
         View →
       </Link>
-    </div>
+    </Card>
   );
 }

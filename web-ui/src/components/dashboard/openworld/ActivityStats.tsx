@@ -3,7 +3,7 @@
  *
  * Displays summary metrics: outcomes, negative rate, exploration bonus.
  */
-import { Panel, Metric } from '@vibes/design-system';
+import { Card, Metric } from '@vibes/design-system';
 import type { ActivitySummary } from '../../../hooks/useDashboard';
 import './ActivityStats.css';
 import '../DashboardCards.css';
@@ -17,14 +17,14 @@ export interface ActivityStatsProps {
 export function ActivityStats({ summary, isLoading, isLive }: ActivityStatsProps) {
   if (isLoading) {
     return (
-      <Panel variant="crt" title="Response Activity" className="dashboard-card">
+      <Card variant="crt" title="Response Activity" className="dashboard-card">
         <p className="empty-text">Loading...</p>
-      </Panel>
+      </Card>
     );
   }
 
   return (
-    <Panel variant="crt" title="Response Activity" className="dashboard-card activity-stats">
+    <Card variant="crt" title="Response Activity" className="dashboard-card activity-stats">
       {isLive && <LiveIndicator />}
       <div className="dashboard-card__metrics">
         <Metric
@@ -43,7 +43,7 @@ export function ActivityStats({ summary, isLoading, isLive }: ActivityStatsProps
           data-testid="exploration-metric"
         />
       </div>
-    </Panel>
+    </Card>
   );
 }
 

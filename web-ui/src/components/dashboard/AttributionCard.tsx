@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router';
+import { Card } from '@vibes/design-system';
 import type { AttributionSummary, ContributorBrief } from '../../hooks/useDashboard';
 import './DashboardCards.css';
 
@@ -12,8 +13,7 @@ export function AttributionCard({ data }: AttributionCardProps) {
   const negativeCount = data?.negative_count ?? 0;
 
   return (
-    <div className="dashboard-card">
-      <h3 className="dashboard-card__title">Attribution</h3>
+    <Card variant="crt" title="Attribution" className="dashboard-card">
 
       <div className="dashboard-card__list">
         <span className="list-label">Top Contributors:</span>
@@ -52,6 +52,6 @@ export function AttributionCard({ data }: AttributionCardProps) {
       <Link to="/groove/dashboard/attribution" className="dashboard-card__link">
         View →
       </Link>
-    </div>
+    </Card>
   );
 }

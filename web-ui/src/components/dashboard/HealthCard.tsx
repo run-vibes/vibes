@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { Panel, Metric, StatusIndicator } from '@vibes/design-system';
+import { Card, Metric, StatusIndicator } from '@vibes/design-system';
 import type { HealthSummary, SystemStatus } from '../../hooks/useDashboard';
 import './DashboardCards.css';
 
@@ -34,16 +34,16 @@ function formatTimeAgo(dateStr: string): string {
 export function HealthCard({ data }: HealthCardProps) {
   if (!data) {
     return (
-      <Panel variant="crt" title="Health" className="dashboard-card">
+      <Card variant="crt" title="Health" className="dashboard-card">
         <p className="empty-text">No health data</p>
-      </Panel>
+      </Card>
     );
   }
 
   const { overall_status, assessment_coverage, ablation_coverage, last_activity } = data;
 
   return (
-    <Panel variant="crt" title="Health" className="dashboard-card">
+    <Card variant="crt" title="Health" className="dashboard-card">
       <StatusIndicator
         state={toIndicatorState(overall_status)}
         label={STATUS_LABELS[overall_status]}
@@ -65,6 +65,6 @@ export function HealthCard({ data }: HealthCardProps) {
       <Link to="/groove/dashboard/health" className="dashboard-card__link">
         View →
       </Link>
-    </Panel>
+    </Card>
   );
 }

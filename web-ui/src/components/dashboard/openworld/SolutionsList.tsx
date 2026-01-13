@@ -6,7 +6,7 @@
  * - Applied
  * - Dismissed
  */
-import { Panel } from '@vibes/design-system';
+import { Card } from '@vibes/design-system';
 import type { SolutionEntry, SolutionStatus } from '../../../hooks/useDashboard';
 import { SolutionItem } from './SolutionItem';
 import './SolutionsList.css';
@@ -62,11 +62,11 @@ export function SolutionsList({
 }: SolutionsListProps) {
   if (isLoading) {
     return (
-      <Panel variant="crt" title="Suggested Solutions" className="solutions-list">
+      <Card variant="crt" title="Suggested Solutions" className="solutions-list">
         <div className="solutions-list__loading">
           <span>Loading solutions...</span>
         </div>
-      </Panel>
+      </Card>
     );
   }
 
@@ -74,7 +74,7 @@ export function SolutionsList({
   const isEmpty = !solutions?.length;
 
   return (
-    <Panel variant="crt" title="Suggested Solutions" className="solutions-list">
+    <Card variant="crt" title="Suggested Solutions" className="solutions-list">
       <div className="solutions-list__header">
         <span className="solutions-list__count">
           {total ?? solutions?.length ?? 0} solutions
@@ -119,7 +119,7 @@ export function SolutionsList({
           )}
         </div>
       )}
-    </Panel>
+    </Card>
   );
 }
 

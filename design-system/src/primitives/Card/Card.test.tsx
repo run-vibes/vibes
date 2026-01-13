@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { Panel } from './Panel';
+import { Card } from './Card';
 
 // Helper to check if element has a CSS module class (handles hashed names)
 const hasModuleClass = (element: HTMLElement, className: string): boolean => {
@@ -9,59 +9,59 @@ const hasModuleClass = (element: HTMLElement, className: string): boolean => {
   );
 };
 
-describe('Panel', () => {
+describe('Card', () => {
   it('renders children', () => {
-    render(<Panel>Content</Panel>);
+    render(<Card>Content</Card>);
     expect(screen.getByText('Content')).toBeInTheDocument();
   });
 
   it('renders title when provided', () => {
-    render(<Panel title="Settings">Content</Panel>);
+    render(<Card title="Settings">Content</Card>);
     expect(screen.getByText('Settings')).toBeInTheDocument();
   });
 
   it('applies default variant', () => {
-    const { container } = render(<Panel>Content</Panel>);
+    const { container } = render(<Card>Content</Card>);
     expect(hasModuleClass(container.firstChild as HTMLElement, 'default')).toBe(true);
   });
 
   it('applies elevated variant', () => {
-    const { container } = render(<Panel variant="elevated">Content</Panel>);
+    const { container } = render(<Card variant="elevated">Content</Card>);
     expect(hasModuleClass(container.firstChild as HTMLElement, 'elevated')).toBe(true);
   });
 
   it('applies inset variant', () => {
-    const { container } = render(<Panel variant="inset">Content</Panel>);
+    const { container } = render(<Card variant="inset">Content</Card>);
     expect(hasModuleClass(container.firstChild as HTMLElement, 'inset')).toBe(true);
   });
 
   it('applies crt variant', () => {
-    const { container } = render(<Panel variant="crt">Content</Panel>);
+    const { container } = render(<Card variant="crt">Content</Card>);
     expect(hasModuleClass(container.firstChild as HTMLElement, 'crt')).toBe(true);
   });
 
   it('renders actions when provided', () => {
     render(
-      <Panel title="Settings" actions={<button>Action</button>}>
+      <Card title="Settings" actions={<button>Action</button>}>
         Content
-      </Panel>
+      </Card>
     );
     expect(screen.getByRole('button', { name: 'Action' })).toBeInTheDocument();
   });
 
   it('applies noPadding modifier', () => {
-    const { container } = render(<Panel noPadding>Content</Panel>);
+    const { container } = render(<Card noPadding>Content</Card>);
     expect(hasModuleClass(container.firstChild as HTMLElement, 'noPadding')).toBe(true);
   });
 
   it('merges custom className', () => {
-    const { container } = render(<Panel className="custom-class">Content</Panel>);
+    const { container } = render(<Card className="custom-class">Content</Card>);
     expect(container.firstChild).toHaveClass('custom-class');
   });
 
   it('passes through additional props', () => {
-    render(<Panel data-testid="custom-panel" aria-label="Custom">Content</Panel>);
-    expect(screen.getByTestId('custom-panel')).toBeInTheDocument();
-    expect(screen.getByTestId('custom-panel')).toHaveAttribute('aria-label', 'Custom');
+    render(<Card data-testid="custom-card" aria-label="Custom">Content</Card>);
+    expect(screen.getByTestId('custom-card')).toBeInTheDocument();
+    expect(screen.getByTestId('custom-card')).toHaveAttribute('aria-label', 'Custom');
   });
 });

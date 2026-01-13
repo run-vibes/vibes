@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router';
+import { Card } from '@vibes/design-system';
 import { Sparkline } from '../charts/Sparkline';
 import './TrendCard.css';
 
@@ -35,8 +36,7 @@ export function TrendCard({
   href,
 }: TrendCardProps) {
   return (
-    <div className="trend-card">
-      <h3 className="trend-card__title">{title}</h3>
+    <Card variant="crt" title={title} className="trend-card">
 
       {sparklineData && sparklineData.length > 0 && (
         <div className="trend-card__sparkline" data-testid="sparkline-placeholder">
@@ -68,6 +68,6 @@ export function TrendCard({
           View →
         </Link>
       )}
-    </div>
+    </Card>
   );
 }

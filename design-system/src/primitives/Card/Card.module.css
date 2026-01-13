@@ -1,10 +1,10 @@
-/* design-system/src/primitives/Panel/Panel.module.css
- * CRT Essence Design System - Panel/Card Component
+/* design-system/src/primitives/Card/Card.module.css
+ * CRT Essence Design System - Card Component
  *
  * Surface containers with subtle border highlighting
  */
 
-.panel {
+.card {
   border-radius: var(--radius-lg);
   overflow: hidden;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);

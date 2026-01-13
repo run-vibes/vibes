@@ -1,6 +1,6 @@
 // web-ui/src/pages/Debug.tsx
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Panel, Badge, Button, Text } from '@vibes/design-system';
+import { Card, Badge, Button, Text } from '@vibes/design-system';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useTunnelStatus } from '../hooks/useTunnelStatus';
 import './Debug.css';
@@ -50,16 +50,16 @@ export function DebugPage() {
 
       <div className="debug-content">
         <div className="debug-status-grid">
-          <Panel title="WebSocket" className="debug-panel">
+          <Card title="WebSocket" className="debug-panel">
             <div className="status-row">
               <span>Connection</span>
               <Badge status={isConnected ? 'success' : 'error'}>
                 {connectionState}
               </Badge>
             </div>
-          </Panel>
+          </Card>
 
-          <Panel title="Tunnel" className="debug-panel">
+          <Card title="Tunnel" className="debug-panel">
             {tunnelLoading ? (
               <Text intensity="dim">Loading...</Text>
             ) : tunnel ? (
@@ -88,9 +88,9 @@ export function DebugPage() {
             ) : (
               <Text intensity="dim">Not configured</Text>
             )}
-          </Panel>
+          </Card>
 
-          <Panel title="Environment" className="debug-panel">
+          <Card title="Environment" className="debug-panel">
             <div className="status-row">
               <span>Protocol</span>
               <code>{window.location.protocol}</code>
@@ -103,10 +103,10 @@ export function DebugPage() {
               <span>User Agent</span>
               <code className="truncate">{navigator.userAgent.split(' ')[0]}</code>
             </div>
-          </Panel>
+          </Card>
         </div>
 
-        <Panel title="Activity Log" className="debug-logs-panel">
+        <Card title="Activity Log" className="debug-logs-panel">
           <div className="logs-header">
             <Text intensity="dim">{logs.length} entries</Text>
             <Button variant="ghost" onClick={clearLogs}>Clear</Button>
@@ -130,7 +130,7 @@ export function DebugPage() {
               ))
             )}
           </div>
-        </Panel>
+        </Card>
       </div>
     </div>
   );

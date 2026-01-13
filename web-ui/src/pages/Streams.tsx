@@ -1,6 +1,6 @@
 // web-ui/src/pages/Streams.tsx
 import { Link } from '@tanstack/react-router';
-import { Panel, Badge, Text } from '@vibes/design-system';
+import { Card, Badge, Text } from '@vibes/design-system';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useFirehose } from '../hooks/useFirehose';
 import { useTunnelStatus } from '../hooks/useTunnelStatus';
@@ -49,7 +49,7 @@ export function StreamsPage() {
 
         <div className="streams-grid">
           <Link to="/firehose" className="stream-card-link">
-            <Panel title="Firehose" className="stream-card">
+            <Card title="Firehose" className="stream-card">
               <div className="stream-card-content">
                 <div className="stream-icon">🔥</div>
                 <Text intensity="dim">
@@ -60,11 +60,11 @@ export function StreamsPage() {
                   <span className="stat-label">recent events</span>
                 </div>
               </div>
-            </Panel>
+            </Card>
           </Link>
 
           <Link to="/debug" className="stream-card-link">
-            <Panel title="Debug Console" className="stream-card">
+            <Card title="Debug Console" className="stream-card">
               <div className="stream-card-content">
                 <div className="stream-icon">🔧</div>
                 <Text intensity="dim">
@@ -75,11 +75,11 @@ export function StreamsPage() {
                   <span className="stat-label">{isConnected ? 'online' : 'offline'}</span>
                 </div>
               </div>
-            </Panel>
+            </Card>
           </Link>
 
           <Link to="/sessions" className="stream-card-link">
-            <Panel title="Sessions" className="stream-card">
+            <Card title="Sessions" className="stream-card">
               <div className="stream-card-content">
                 <div className="stream-icon">💬</div>
                 <Text intensity="dim">
@@ -90,12 +90,12 @@ export function StreamsPage() {
                   <span className="stat-label">view sessions</span>
                 </div>
               </div>
-            </Panel>
+            </Card>
           </Link>
         </div>
 
         {Object.keys(eventCounts).length > 0 && (
-          <Panel title="Recent Activity" className="activity-panel">
+          <Card title="Recent Activity" className="activity-panel">
             <div className="activity-summary">
               {Object.entries(eventCounts).map(([type, count]) => (
                 <div key={type} className="activity-item">
@@ -104,7 +104,7 @@ export function StreamsPage() {
                 </div>
               ))}
             </div>
-          </Panel>
+          </Card>
         )}
       </div>
     </div>
