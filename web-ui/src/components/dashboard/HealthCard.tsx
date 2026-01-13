@@ -43,14 +43,18 @@ export function HealthCard({ data }: HealthCardProps) {
   const { overall_status, assessment_coverage, ablation_coverage, last_activity } = data;
 
   return (
-    <Card variant="crt" title="Health" className="dashboard-card">
-      <StatusIndicator
-        state={toIndicatorState(overall_status)}
-        label={STATUS_LABELS[overall_status]}
-        data-testid="status-indicator"
-        className="dashboard-card__status"
-      />
-
+    <Card
+      variant="crt"
+      title="Health"
+      className="dashboard-card"
+      actions={
+        <StatusIndicator
+          state={toIndicatorState(overall_status)}
+          label={STATUS_LABELS[overall_status]}
+          data-testid="status-indicator"
+        />
+      }
+    >
       <div className="dashboard-card__metrics">
         <Metric label="Assessment" value={`${assessment_coverage}%`} />
         <Metric label="Ablation" value={`${ablation_coverage}%`} />
