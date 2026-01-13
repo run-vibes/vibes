@@ -31,4 +31,5 @@ pub mod providers;
 pub mod registry;
 
 pub use error::{Error, Result};
+pub use registry::ModelRegistry;
 pub use types::{Capabilities, ModelId, ModelInfo, Pricing};
