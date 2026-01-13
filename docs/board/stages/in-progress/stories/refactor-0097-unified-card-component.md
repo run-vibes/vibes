@@ -94,7 +94,7 @@ web-ui/e2e/visual/
 ### Visual Regression Testing
 - [x] Add Playwright visual test config (already existed in e2e-tests/)
 - [x] Create Card component visual tests (e2e-tests/tests/card.spec.ts)
-- [ ] Create baseline snapshots (run `just web visual-update`)
+- [x] Create baseline snapshots (4 Card snapshots + 2 updated page snapshots)
 - [x] Document how to update baselines (`just web visual-update`)
 - [x] Add just command for visual tests (`just web visual`)
 
