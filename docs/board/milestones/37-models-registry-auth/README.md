@@ -18,6 +18,16 @@ First milestone of the Models epic. Establishes the foundation for model managem
 - Provider trait defining the inference interface
 - CLI commands for listing models and managing credentials
 
+## Stories
+
+| ID | Title | Status |
+|----|-------|--------|
+| FEAT0090 | [vibes-models crate skeleton](../../stages/backlog/stories/feat-0090-vibes-models-crate-skeleton.md) | pending |
+| FEAT0091 | [ModelProvider trait definition](../../stages/backlog/stories/feat-0091-model-provider-trait.md) | pending |
+| FEAT0092 | [ModelRegistry for model discovery](../../stages/backlog/stories/feat-0092-model-registry.md) | pending |
+| FEAT0093 | [CredentialStore for API key management](../../stages/backlog/stories/feat-0093-credential-store.md) | pending |
+| FEAT0094 | [vibes models CLI commands](../../stages/backlog/stories/feat-0094-models-cli-commands.md) | pending |
+
 ## Key Deliverables
 
 - `vibes-models` crate skeleton

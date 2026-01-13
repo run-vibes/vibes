@@ -23,6 +23,11 @@
 | [feat-0076-auth-setup-wizard](stages/backlog/stories/feat-0076-auth-setup-wizard.md) | feat | medium | cli,networking |
 | [feat-0077-config-save-load](stages/backlog/stories/feat-0077-config-save-load.md) | feat | medium | cli,networking |
 | [feat-0078-connectivity-validation](stages/backlog/stories/feat-0078-connectivity-validation.md) | feat | medium | cli,networking |
+| [feat-0090-vibes-models-crate-skeleton](stages/backlog/stories/feat-0090-vibes-models-crate-skeleton.md) | feat | high | models |
+| [feat-0091-model-provider-trait](stages/backlog/stories/feat-0091-model-provider-trait.md) | feat | high | models |
+| [feat-0092-model-registry](stages/backlog/stories/feat-0092-model-registry.md) | feat | high | models |
+| [feat-0093-credential-store](stages/backlog/stories/feat-0093-credential-store.md) | feat | high | models |
+| [feat-0094-models-cli-commands](stages/backlog/stories/feat-0094-models-cli-commands.md) | feat | high | models |
 
 ## Epics
 
