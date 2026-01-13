@@ -10,6 +10,7 @@
 
 | Story | Type | Priority | Epics |
 |-------|------|----------|-------|
+| [bug-0089-iggy-not-working-on-macos](stages/backlog/stories/bug-0089-iggy-not-working-on-macos.md) | bug | high | cross-platform |
 | [chore-0087-use-cranelift-for-builds](stages/backlog/stories/chore-0087-use-cranelift-for-builds.md) | chore | low | dev-environment |
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
