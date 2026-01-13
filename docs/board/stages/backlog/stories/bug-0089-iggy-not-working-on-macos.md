@@ -58,20 +58,28 @@ Since the user is on ARM64 macOS, this is NOT the cause.
 
 4. **Timing/race conditions**: Integration tests include sleep delays before polling. macOS might need longer delays or explicit flushes.
 
+## Key Finding: Integration Tests Pass
+
+The `vibes-iggy` integration tests pass on macOS ARM64:
+```bash
+cargo nextest run -p vibes-iggy --test integration
+```
+
+This means basic Iggy event flow (append, poll, seek) works correctly. **The issue is specific to how the daemon uses Iggy**, not Iggy itself.
+
 ## Debugging Steps
 
-1. Enable trace logging: `RUST_LOG=vibes_iggy=trace,iggy=trace`
-2. Check if `flush_to_disk()` is being called before polling
-3. Add delays after sending events to see if timing affects results
-4. Test with the integration tests on macOS: `cargo nextest run -E 'test-group(iggy-server)'`
-5. Compare Iggy server logs between Linux and macOS
+1. Compare daemon Iggy usage vs integration test usage
+2. Check daemon's consumer setup (seek position, consumer group)
+3. Enable trace logging: `RUST_LOG=vibes_iggy=trace,iggy=trace`
+4. Check if `flush_to_disk()` is being called before polling in daemon
+5. Verify the daemon's event consumer is seeking to the correct position
 
 ## Next Steps
 
-1. Run integration tests on macOS to isolate the failure point
-2. Add detailed tracing to the event flow path
-3. Test with explicit `flush_to_disk()` calls
-4. If issue persists, report to Apache Iggy with reproduction steps
+1. Identify where daemon's Iggy usage differs from integration tests
+2. Add detailed tracing to the daemon's event consumption path
+3. Check if the issue is in consumer initialization or polling
 
 ## Acceptance Criteria
 
