@@ -50,9 +50,14 @@ design-system/src/primitives/Panel/  →  design-system/src/primitives/Card/
 | TrendCard | custom `.trend-card` div | → `<Card variant="crt">` |
 | LearningsCard | custom `.dashboard-card` div | → `<Card variant="crt">` |
 | AttributionCard | custom `.dashboard-card` div | → `<Card variant="crt">` |
-| SubsystemCard | custom div | → `<Card variant="crt">` |
-| DistributionCard | custom article | → `<Card variant="crt">` |
-| Settings panels | custom `.settings-panel` div | → `<Card>` |
+| Settings panels | custom `.settings-panel` div | → `<Card variant="crt">` |
+| Firehose panels | custom `.panel` div | → `<Card variant="crt">` |
+| AssessmentStatus | custom `.status-card` div | → `<Card variant="crt">` |
+| SubsystemCard | custom div | → skipped (status-based border variants) |
+| DistributionCard | custom article | → skipped (custom header layout) |
+| AssessmentHistory | custom `.history-card` div | → skipped (two-element header) |
+| Quarantine cards | custom divs | → skipped (custom layouts) |
+| Models panel | modal overlay | → skipped (not card pattern) |
 
 ## Visual Regression Testing
 
@@ -86,10 +91,15 @@ web-ui/e2e/visual/
 - [x] Migrate LearningsCard to use Card
 - [x] Migrate AttributionCard to use Card
 - [x] Migrate openworld components (already using Card)
+- [x] Migrate Settings panels to use Card (7 panels)
+- [x] Migrate Firehose panels to use Card (METRICS, FILTERS)
+- [x] Migrate AssessmentStatus panels to use Card (Circuit Breaker, Sampling, Activity, Tier Distribution)
 - [~] Migrate SubsystemCard to use Card (skipped: has status-based border variants Card doesn't support)
 - [~] Migrate DistributionCard to use Card (skipped: internally consistent, custom header layout)
-- [~] Migrate Settings panels to use Card (skipped: has own coherent form-based design language)
-- [x] Remove duplicate CSS (TrendCard.css card styles, DashboardCards.css base styles)
+- [~] Migrate AssessmentHistory to use Card (skipped: custom header layout with two elements)
+- [~] Migrate Quarantine stat/trust-level cards (skipped: custom layouts, not standard card pattern)
+- [~] Migrate Models details panel (skipped: modal dialog, not card pattern)
+- [x] Remove duplicate CSS (TrendCard.css, DashboardCards.css, Settings.css, Firehose.css, AssessmentStatus.css)
 
 ### Visual Regression Testing
 - [x] Add Playwright visual test config (already existed in e2e-tests/)
@@ -98,31 +108,33 @@ web-ui/e2e/visual/
 - [x] Document how to update baselines (`just web visual-update`)
 - [x] Add just command for visual tests (`just web visual`)
 
-## Files to Change
+## Files Changed
 
-**Rename:**
+**Renamed:**
 - `design-system/src/primitives/Panel/` → `Card/`
 
-**Update imports:**
+**Updated imports:**
 - `design-system/src/primitives/index.ts`
 - `web-ui/src/components/dashboard/StrategyCard.tsx`
 - `web-ui/src/components/dashboard/HealthCard.tsx`
 
-**Migrate to Card:**
+**Migrated to Card:**
 - `web-ui/src/components/dashboard/TrendCard.tsx`
 - `web-ui/src/components/dashboard/LearningsCard.tsx`
 - `web-ui/src/components/dashboard/AttributionCard.tsx`
-- `web-ui/src/components/dashboard/health/SubsystemCard.tsx`
-- `web-ui/src/components/dashboard/strategy/DistributionCard.tsx`
 - `web-ui/src/pages/Settings.tsx`
+- `web-ui/src/pages/Firehose.tsx`
+- `web-ui/src/pages/assessment/AssessmentStatus.tsx`
 
-**Remove/consolidate CSS:**
-- `web-ui/src/components/dashboard/TrendCard.css`
-- `web-ui/src/components/dashboard/DashboardCards.css`
-- `web-ui/src/pages/Settings.css`
+**Removed/consolidated CSS:**
+- `web-ui/src/components/dashboard/TrendCard.css` (removed `.trend-card` styles)
+- `web-ui/src/components/dashboard/DashboardCards.css` (removed `.dashboard-card` styles)
+- `web-ui/src/pages/Settings.css` (removed `.settings-panel` styles)
+- `web-ui/src/pages/Firehose.css` (removed `.panel` styles)
+- `web-ui/src/pages/assessment/AssessmentStatus.css` (removed `.status-card` styles)
 
 **New files:**
-- `web-ui/e2e/visual/card.spec.ts`
+- `e2e-tests/tests/card.spec.ts`
 
 ## Out of Scope
 

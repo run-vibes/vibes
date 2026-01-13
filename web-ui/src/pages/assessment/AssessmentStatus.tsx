@@ -1,6 +1,7 @@
 // web-ui/src/pages/assessment/AssessmentStatus.tsx
 import { useEffect, useState } from 'react';
 import { Link } from '@tanstack/react-router';
+import { Card } from '@vibes/design-system';
 import { Group } from '@visx/group';
 import { Pie } from '@visx/shape';
 import { scaleOrdinal } from '@visx/scale';
@@ -222,8 +223,7 @@ export function AssessmentStatus() {
 
       <div className="status-grid">
         {/* Circuit Breaker Card */}
-        <div className="status-card">
-          <h3 className="status-card-title">Circuit Breaker</h3>
+        <Card variant="crt" title="Circuit Breaker" className="status-card">
           <div className="status-card-content">
             <div className="status-row">
               <span className="status-label">Status</span>
@@ -240,11 +240,10 @@ export function AssessmentStatus() {
               <span className="status-value">{circuit_breaker.max_interventions_per_session}</span>
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* Sampling Card */}
-        <div className="status-card">
-          <h3 className="status-card-title">Sampling</h3>
+        <Card variant="crt" title="Sampling" className="status-card">
           <div className="status-card-content">
             <div className="status-row">
               <span className="status-label">Base Rate</span>
@@ -255,11 +254,10 @@ export function AssessmentStatus() {
               <span className="status-value">{sampling.burnin_sessions}</span>
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* Activity Card */}
-        <div className="status-card">
-          <h3 className="status-card-title">Activity</h3>
+        <Card variant="crt" title="Activity" className="status-card">
           <div className="status-card-content">
             <div className="status-row">
               <span className="status-label">Active Sessions</span>
@@ -293,12 +291,11 @@ export function AssessmentStatus() {
               </ul>
             </div>
           )}
-        </div>
+        </Card>
 
         {/* Tier Distribution Card (from stats) */}
         {statsState.status === 'success' && statsState.data.total_assessments > 0 && (
-          <div className="status-card tier-card">
-            <h3 className="status-card-title">Tier Distribution</h3>
+          <Card variant="crt" title="Tier Distribution" className="status-card tier-card">
             <div className="tier-content">
               <div className="tier-total">
                 <span className="total-value">{statsState.data.total_assessments}</span>
@@ -320,7 +317,7 @@ export function AssessmentStatus() {
                 </div>
               </div>
             </div>
-          </div>
+          </Card>
         )}
       </div>
     </div>
