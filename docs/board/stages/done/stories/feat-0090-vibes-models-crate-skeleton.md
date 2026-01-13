@@ -2,7 +2,7 @@
 id: FEAT0090
 title: vibes-models crate skeleton
 type: feat
-status: pending
+status: done
 priority: high
 epics: [models]
 depends: []
@@ -48,8 +48,8 @@ vibes-models/
 
 ## Acceptance Criteria
 
-- [ ] Crate compiles and is part of workspace
-- [ ] Core types defined (ModelId, ModelInfo, Capabilities, Pricing)
-- [ ] Module structure matches epic design
-- [ ] Error types with thiserror
-- [ ] Basic documentation
+- [x] Crate compiles and is part of workspace
+- [x] Core types defined (ModelId, ModelInfo, Capabilities, Pricing)
+- [x] Module structure matches epic design
+- [x] Error types with thiserror
+- [x] Basic documentation
