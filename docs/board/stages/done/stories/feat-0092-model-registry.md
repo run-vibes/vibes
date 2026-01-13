@@ -2,7 +2,7 @@
 id: FEAT0092
 title: ModelRegistry for model discovery
 type: feat
-status: pending
+status: done
 priority: high
 epics: [models]
 depends: [FEAT0091]
@@ -49,8 +49,8 @@ impl ModelRegistry {
 
 ## Acceptance Criteria
 
-- [ ] Provider registration and lookup
-- [ ] Model catalog populated from providers
-- [ ] Query by ID, provider, capabilities
-- [ ] Refresh to update from providers
-- [ ] Unit tests for all query methods
+- [x] Provider registration and lookup
+- [x] Model catalog populated from providers
+- [x] Query by ID, provider, capabilities
+- [x] Refresh to update from providers
+- [x] Unit tests for all query methods
