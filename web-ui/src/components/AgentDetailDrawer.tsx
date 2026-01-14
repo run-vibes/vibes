@@ -62,6 +62,8 @@ export function AgentDetailDrawer({
 
   const getStatusDetail = () => {
     const s = agent.status;
+    // Unit variants (like 'idle') are strings, data variants are objects
+    if (typeof s === 'string') return null;
     if ('running' in s) {
       return { label: 'Task ID', value: s.running.task.slice(0, 8) };
     }

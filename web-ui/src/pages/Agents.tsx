@@ -119,6 +119,8 @@ export function AgentsPage() {
 
   const getCurrentTask = (agent: AgentInfo): string | undefined => {
     const status = agent.status;
+    // Unit variants (like 'idle') are strings, data variants are objects
+    if (typeof status === 'string') return undefined;
     if ('running' in status) {
       return `Task ${status.running.task.slice(0, 8)}...`;
     }

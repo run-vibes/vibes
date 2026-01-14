@@ -179,8 +179,10 @@ export interface SessionInfo {
 
 export type AgentType = 'AdHoc' | 'Background' | 'Subagent' | 'Interactive';
 
+// Rust serde serializes unit variants as strings, data variants as objects
+// e.g., AgentStatus::Idle -> "idle", AgentStatus::Running{..} -> {"running":{..}}
 export type AgentStatus =
-  | { idle: true }
+  | 'idle'
   | { running: { task: string; started: string } }
   | { paused: { task: string; reason: string } }
   | { waiting_for_input: { prompt: string } }
@@ -323,10 +325,14 @@ export function isAgentAckMessage(msg: ServerMessage): msg is Extract<ServerMess
 
 // Agent status helpers
 export function getAgentStatusVariant(status: AgentStatus): 'idle' | 'running' | 'paused' | 'waiting_for_input' | 'failed' {
-  if ('idle' in status) return 'idle';
-  if ('running' in status) return 'running';
-  if ('paused' in status) return 'paused';
-  if ('waiting_for_input' in status) return 'waiting_for_input';
-  if ('failed' in status) return 'failed';
+  // Unit variants serialize as strings in Rust serde
+  if (status === 'idle') return 'idle';
+  // Data variants serialize as objects
+  if (typeof status === 'object') {
+    if ('running' in status) return 'running';
+    if ('paused' in status) return 'paused';
+    if ('waiting_for_input' in status) return 'waiting_for_input';
+    if ('failed' in status) return 'failed';
+  }
   return 'idle'; // fallback
 }
