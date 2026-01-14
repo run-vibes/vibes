@@ -17,7 +17,7 @@ use std::sync::Arc;
 use tokio::net::TcpListener;
 use vibes_core::{
     HookInstaller, HookInstallerConfig, NotificationConfig, NotificationService, SubscriptionStore,
-    VapidKeyManager,
+    TunnelConfig, TunnelEvent, VapidKeyManager,
 };
 
 use consumers::{
@@ -208,6 +208,9 @@ impl VibesServer {
         // Register model providers (Ollama, etc.)
         self.register_model_providers().await;
 
+        // Start tunnel if enabled
+        self.start_tunnel().await;
+
         // Start EventLog consumer-based event processing
         // This includes WebSocket consumer and notification consumer
         self.start_event_log_consumers(self.notification_service.clone())
@@ -373,6 +376,66 @@ impl VibesServer {
                     e
                 );
             }
+        }
+    }
+
+    /// Start the tunnel if enabled in config
+    async fn start_tunnel(&self) {
+        if !self.config.tunnel_enabled && !self.config.tunnel_quick {
+            return;
+        }
+
+        // Configure tunnel based on flags
+        let tunnel_config = if self.config.tunnel_quick {
+            TunnelConfig::quick()
+        } else {
+            // For --tunnel flag, use config from file (not yet implemented)
+            // For now, just use quick tunnel
+            TunnelConfig::quick()
+        };
+
+        // Update tunnel manager with config and start
+        {
+            let mut manager = self.state.tunnel_manager.write().await;
+            *manager = vibes_core::TunnelManager::new(tunnel_config, self.config.port);
+
+            // Subscribe to events before starting
+            let mut event_rx = manager.subscribe();
+
+            // Start the tunnel
+            if let Err(e) = manager.start().await {
+                tracing::error!("Failed to start tunnel: {}", e);
+                return;
+            }
+
+            tracing::info!("Tunnel starting...");
+
+            // Spawn task to handle tunnel events and print URL
+            tokio::spawn(async move {
+                while let Ok(event) = event_rx.recv().await {
+                    match event {
+                        TunnelEvent::Connected { url } => {
+                            // Print URL prominently
+                            println!();
+                            println!(
+                                "╔════════════════════════════════════════════════════════════╗"
+                            );
+                            println!("║  🌐 Tunnel URL: {:<43} ║", url);
+                            println!(
+                                "╚════════════════════════════════════════════════════════════╝"
+                            );
+                            println!();
+                        }
+                        TunnelEvent::Disconnected { reason } => {
+                            tracing::warn!("Tunnel disconnected: {}", reason);
+                        }
+                        TunnelEvent::Failed { error } => {
+                            tracing::error!("Tunnel failed: {}", error);
+                        }
+                        _ => {}
+                    }
+                }
+            });
         }
     }
 }

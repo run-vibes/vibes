@@ -1,9 +1,10 @@
 //! Tunnel manager for cloudflared process lifecycle
 
 use std::sync::Arc;
+use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Child;
 use tokio::sync::{RwLock, broadcast};
-use tracing::{debug, error, info};
+use tracing::{debug, error, info, warn};
 
 use super::cloudflared;
 use super::config::TunnelConfig;
@@ -86,16 +87,67 @@ impl TunnelManager {
 
     /// Spawn the cloudflared process
     async fn spawn_process(&mut self) -> Result<(), TunnelError> {
-        let child = cloudflared::spawn_tunnel(&self.config.mode, self.local_port).map_err(|e| {
-            error!("Failed to spawn cloudflared: {}", e);
-            TunnelError::SpawnFailed(e.to_string())
-        })?;
+        let mut child =
+            cloudflared::spawn_tunnel(&self.config.mode, self.local_port).map_err(|e| {
+                error!("Failed to spawn cloudflared: {}", e);
+                TunnelError::SpawnFailed(e.to_string())
+            })?;
+
+        // Take stderr for monitoring (cloudflared logs to stderr)
+        let stderr = child
+            .stderr
+            .take()
+            .ok_or_else(|| TunnelError::SpawnFailed("Failed to capture stderr".to_string()))?;
 
         self.process = Some(child);
         self.restart_policy.reset();
 
-        // FUTURE: Start output monitoring task to parse cloudflared output for URL.
-        // For now, the tunnel URL is obtained via the cloudflared API after spawn.
+        // Spawn output monitoring task
+        let state = Arc::clone(&self.state);
+        let event_tx = self.event_tx.clone();
+        let is_quick = self.config.is_quick();
+
+        tokio::spawn(async move {
+            let reader = BufReader::new(stderr);
+            let mut lines = reader.lines();
+
+            while let Ok(Some(line)) = lines.next_line().await {
+                // Log cloudflared output at debug level
+                debug!("cloudflared: {}", line);
+
+                // For quick tunnels, look for the URL
+                if is_quick && let Some(url) = cloudflared::parse_quick_tunnel_url(&line) {
+                    info!("Tunnel URL: {}", url);
+
+                    // Update state to Connected
+                    {
+                        let mut s = state.write().await;
+                        *s = TunnelState::Connected {
+                            url: url.clone(),
+                            connected_at: chrono::Utc::now(),
+                        };
+                    }
+
+                    // Emit Connected event
+                    let _ = event_tx.send(TunnelEvent::Connected { url });
+                }
+
+                // Check for connection registered (for named tunnels)
+                if cloudflared::is_connection_registered(&line) {
+                    debug!("Tunnel connection registered");
+                }
+
+                // Check for connection lost
+                if cloudflared::is_connection_lost(&line) {
+                    warn!("Tunnel connection lost");
+                    let _ = event_tx.send(TunnelEvent::Disconnected {
+                        reason: "Connection lost".to_string(),
+                    });
+                }
+            }
+
+            debug!("Cloudflared output monitoring ended");
+        });
 
         Ok(())
     }
