@@ -2,7 +2,7 @@
 id: m40-feat-02
 title: OpenTelemetry tracer setup
 type: feat
-status: backlog
+status: done
 priority: high
 epics: [observability]
 depends: [m40-feat-01]
@@ -97,9 +97,9 @@ pub fn init_tracing(config: TracerConfig) -> Result<()> {
 
 ## Acceptance Criteria
 
-- [ ] `TracerConfig` configures tracer behavior
-- [ ] `init_tracing` sets up global subscriber
-- [ ] Spans automatically get trace/span IDs
-- [ ] Console output shows spans (default)
-- [ ] Shutdown flushes pending data
-- [ ] Integration test verifies setup
+- [x] `TracerConfig` configures tracer behavior
+- [x] `init_tracing` sets up global subscriber
+- [x] Spans automatically get trace/span IDs
+- [x] Console output shows spans (default)
+- [x] Shutdown flushes pending data
+- [x] Integration test verifies setup
