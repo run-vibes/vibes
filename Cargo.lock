@@ -6598,6 +6598,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "vibes-evals"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.17",
+ "tokio",
+ "tracing",
+ "uuid",
+ "vibes-core",
+]
+
+[[package]]
 name = "vibes-groove"
 version = "0.1.0"
 dependencies = [

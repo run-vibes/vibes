@@ -1,6 +1,5 @@
-# Planning Board
-
-*Auto-generated from directory structure. Run `just board generate` to update.*
+Generated README.md
+uto-generated from directory structure. Run `just board generate` to update.*
 
 ## In Progress
 
@@ -8,6 +7,7 @@
 |-------|------|----------|-------|
 | [feat-0104-show-ollama-models-in-web-ui](stages/in-progress/stories/feat-0104-show-ollama-models-in-web-ui.md) | feat | medium | web-ui |
 | [feat-0106-add-gzip-and-brotli-compression-for-http-responses](stages/in-progress/stories/feat-0106-add-gzip-and-brotli-compression-for-http-responses.md) | feat | medium | web-ui |
+| [m39-feat-01-evals-crate-skeleton](stages/in-progress/stories/m39-feat-01-evals-crate-skeleton.md) | feat | high | evals |
 
 ## Backlog
 
@@ -32,7 +32,6 @@
 | [m38-feat-05-agent-lifecycle](stages/backlog/stories/m38-feat-05-agent-lifecycle.md) | feat | high | agents |
 | [m38-feat-06-agent-cli](stages/backlog/stories/m38-feat-06-agent-cli.md) | feat | medium | agents |
 | [m38-feat-07-agent-web-ui](stages/backlog/stories/m38-feat-07-agent-web-ui.md) | feat | medium | agents |
-| [m39-feat-01-evals-crate-skeleton](stages/backlog/stories/m39-feat-01-evals-crate-skeleton.md) | feat | high | evals |
 | [m39-feat-02-longitudinal-metrics](stages/backlog/stories/m39-feat-02-longitudinal-metrics.md) | feat | high | evals |
 | [m39-feat-03-eval-storage](stages/backlog/stories/m39-feat-03-eval-storage.md) | feat | high | evals |
 | [m39-feat-04-study-lifecycle](stages/backlog/stories/m39-feat-04-study-lifecycle.md) | feat | high | evals |
