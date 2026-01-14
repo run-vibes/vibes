@@ -14,42 +14,90 @@ milestone: 39-eval-core
 
 ## Summary
 
-Implement the storage layer for evaluation data. This includes tables for benchmark results, longitudinal studies, and checkpoints using SQLite.
+Implement the event-sourced storage layer for evaluation data. Events are stored in a separate Iggy stream, with a Turso projection for fast queries.
+
+See [milestone design](../../milestones/39-eval-core/design.md) for architecture.
 
 ## Features
 
-### EvalStorage Trait
+### Event Types
+
+```rust
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum EvalEvent {
+    // Study lifecycle
+    StudyCreated {
+        id: StudyId,
+        name: String,
+        period_type: PeriodType,
+        period_value: Option<u32>,
+        config: StudyConfig,
+    },
+    StudyStarted { id: StudyId },
+    StudyPaused { id: StudyId },
+    StudyResumed { id: StudyId },
+    StudyStopped { id: StudyId },
+
+    // Data capture
+    CheckpointRecorded {
+        id: CheckpointId,
+        study_id: StudyId,
+        timestamp: DateTime<Utc>,
+        metrics: LongitudinalMetrics,
+        events_analyzed: u64,
+        sessions_included: Vec<String>,
+    },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StoredEvalEvent {
+    pub event_id: Uuid,  // UUIDv7 for ordering
+    pub event: EvalEvent,
+}
+```
+
+### EvalStorage Trait (Read-Only Projection)
 
 ```rust
 #[async_trait]
 pub trait EvalStorage: Send + Sync {
-    // Studies
-    async fn create_study(&self, study: &LongitudinalStudy) -> Result<()>;
-    async fn get_study(&self, id: StudyId) -> Result<Option<LongitudinalStudy>>;
-    async fn list_studies(&self) -> Result<Vec<LongitudinalStudy>>;
-    async fn update_study(&self, study: &LongitudinalStudy) -> Result<()>;
+    // Studies (read from projection)
+    async fn get_study(&self, id: StudyId) -> Result<Option<Study>>;
+    async fn list_studies(&self) -> Result<Vec<Study>>;
+    async fn list_studies_by_status(&self, status: StudyStatus) -> Result<Vec<Study>>;
 
-    // Checkpoints
-    async fn save_checkpoint(&self, checkpoint: &Checkpoint) -> Result<()>;
+    // Checkpoints (read from projection)
     async fn get_checkpoints(&self, study_id: StudyId) -> Result<Vec<Checkpoint>>;
     async fn get_latest_checkpoint(&self, study_id: StudyId) -> Result<Option<Checkpoint>>;
-
-    // Benchmarks (placeholder for future)
-    async fn save_benchmark_result(&self, result: &BenchmarkResult) -> Result<()>;
-    async fn get_benchmark_results(&self, benchmark_id: BenchmarkId) -> Result<Vec<BenchmarkResult>>;
+    async fn get_checkpoints_in_range(
+        &self,
+        study_id: StudyId,
+        start: DateTime<Utc>,
+        end: DateTime<Utc>,
+    ) -> Result<Vec<Checkpoint>>;
 }
 ```
 
-### SQLite Implementation
+### EvalProjection Trait (Event Consumer)
 
 ```rust
-pub struct SqliteEvalStorage {
-    pool: SqlitePool,
+#[async_trait]
+pub trait EvalProjection: Send + Sync {
+    async fn apply(&self, event: &StoredEvalEvent) -> Result<()>;
+    async fn rebuild(&self) -> Result<()>;
+}
+```
+
+### Turso Implementation
+
+```rust
+pub struct TursoEvalStorage {
+    db: Database,
 }
 
-impl SqliteEvalStorage {
-    pub async fn new(path: &Path) -> Result<Self>;
-    pub async fn migrate(&self) -> Result<()>;
+impl TursoEvalStorage {
+    pub async fn new(url: &str, token: &str) -> Result<Self>;
+    pub async fn new_local(path: &Path) -> Result<Self>;  // Embedded replica
 }
 ```
 
@@ -59,52 +107,41 @@ impl SqliteEvalStorage {
 CREATE TABLE studies (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
-    started_at TEXT NOT NULL,
-    stopped_at TEXT,
+    status TEXT NOT NULL,
     period_type TEXT NOT NULL,
     period_value INTEGER,
-    status TEXT NOT NULL,
-    config TEXT NOT NULL
+    config TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    started_at TEXT,
+    stopped_at TEXT
 );
 
 CREATE TABLE checkpoints (
     id TEXT PRIMARY KEY,
-    study_id TEXT NOT NULL REFERENCES studies(id),
+    study_id TEXT NOT NULL,
     timestamp TEXT NOT NULL,
     metrics TEXT NOT NULL,
-    events_analyzed INTEGER NOT NULL,
-    sessions_included TEXT NOT NULL
+    events_analyzed INTEGER NOT NULL
 );
 
-CREATE TABLE benchmark_results (
-    id TEXT PRIMARY KEY,
-    benchmark_id TEXT NOT NULL,
-    timestamp TEXT NOT NULL,
-    scores TEXT NOT NULL,
-    passed INTEGER NOT NULL,
-    failed INTEGER NOT NULL,
-    duration_ms INTEGER NOT NULL,
-    config TEXT NOT NULL
-);
-
-CREATE INDEX idx_checkpoints_study ON checkpoints(study_id);
-CREATE INDEX idx_checkpoints_timestamp ON checkpoints(timestamp);
+CREATE INDEX idx_checkpoints_study_time ON checkpoints(study_id, timestamp);
 ```
 
 ## Implementation
 
-1. Create `vibes-evals/src/storage.rs`
-2. Define `EvalStorage` trait
-3. Add `sqlx` dependency with SQLite feature
-4. Implement `SqliteEvalStorage`
-5. Write migration files
-6. Write integration tests
+1. Define `EvalEvent` enum in `vibes-evals/src/events.rs`
+2. Define `StoredEvalEvent` wrapper with UUIDv7
+3. Add `libsql` dependency for Turso
+4. Implement `TursoEvalStorage` (read queries)
+5. Implement `TursoEvalProjection` (apply events)
+6. Write integration tests with in-memory Turso
 
 ## Acceptance Criteria
 
-- [ ] `EvalStorage` trait defined
-- [ ] SQLite implementation works
-- [ ] Migrations run on startup
-- [ ] CRUD operations for studies work
-- [ ] Checkpoint storage and retrieval work
+- [ ] `EvalEvent` enum covers all study lifecycle events
+- [ ] `StoredEvalEvent` uses UUIDv7 for ordering
+- [ ] `EvalStorage` trait provides read-only queries
+- [ ] `EvalProjection` trait applies events to projection
+- [ ] Turso implementation works (local embedded mode)
+- [ ] Projection can be rebuilt from events
 - [ ] Integration tests pass

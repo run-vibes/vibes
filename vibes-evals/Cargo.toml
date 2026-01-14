@@ -7,13 +7,32 @@ repository.workspace = true
 description = "Evaluation and benchmarking framework for vibes"
 
 [dependencies]
+# Workspace crates
 vibes-core = { path = "../vibes-core" }
+vibes-iggy = { path = "../vibes-iggy" }
+
+# Async runtime
+async-trait.workspace = true
+
+# Serialization
 serde.workspace = true
 serde_json.workspace = true
+
+# Time
 chrono.workspace = true
+
+# IDs
 uuid.workspace = true
+
+# Error handling
 thiserror.workspace = true
+
+# Logging
 tracing.workspace = true
 
+# Database (Turso/libSQL)
+libsql = "0.6"
+
 [dev-dependencies]
-tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+tokio = { workspace = true, features = ["test-util", "macros"] }
+tempfile.workspace = true

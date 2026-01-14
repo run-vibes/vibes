@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 /// A time period with start and end timestamps.
 ///
 /// Uses a half-open interval `[start, end)` - start is inclusive, end is exclusive.
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct TimePeriod {
     pub start: DateTime<Utc>,
     pub end: DateTime<Utc>,
@@ -33,7 +33,7 @@ pub enum MetricUnit {
 ///
 /// Captures performance measurements across sessions, tasks, agents,
 /// and learning effectiveness over a time period.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct LongitudinalMetrics {
     // Session-level metrics
     /// Number of sessions completed in this period

@@ -23,6 +23,27 @@ vibes augments *you*—the human developer—with AI-powered superpowers: remote
 
 See [docs/PRD.md](docs/PRD.md) for product requirements and [docs/board/README.md](docs/board/README.md) for project status.
 
+### Event Sourcing (CRITICAL)
+
+**vibes is a fully event-sourced system.** All state derives from events stored in Apache Iggy.
+
+| Principle | Description |
+|-----------|-------------|
+| **Events are the source of truth** | State is derived from replaying events, never stored directly |
+| **Iggy is the event store** | All domain events go through vibes-iggy |
+| **Projections for queries** | SQLite/other stores are read-optimized projections, rebuilt from events |
+
+**Before implementing any storage:**
+1. Define the events that capture state changes
+2. Store events in Iggy
+3. Build projections as needed for query performance
+
+**ASK before making architectural decisions** like:
+- Choosing to store state directly instead of as events
+- Adding a new database or storage mechanism
+- Changing how events flow through the system
+- Deviating from the event-sourced pattern
+
 ## Setup
 
 **Nix flake** with **direnv** for reproducible environments:
