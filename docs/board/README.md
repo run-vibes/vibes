@@ -8,6 +8,7 @@
 | Story | Type | Priority | Epics |
 |-------|------|----------|-------|
 | [m39-feat-05-eval-cli](stages/in-progress/stories/m39-feat-05-eval-cli.md) | feat | medium | evals |
+| [m41-feat-01-crate-theme](stages/in-progress/stories/m41-feat-01-crate-theme.md) | feat | high | tui |
 
 ## Backlog
 
@@ -24,7 +25,6 @@
 | [m40-feat-05-export-targets](stages/backlog/stories/m40-feat-05-export-targets.md) | feat | high | observability |
 | [m40-feat-06-observe-cli](stages/backlog/stories/m40-feat-06-observe-cli.md) | feat | medium | observability |
 | [m40-feat-07-observe-web-ui](stages/backlog/stories/m40-feat-07-observe-web-ui.md) | feat | medium | observability |
-| [m41-feat-01-crate-theme](stages/backlog/stories/m41-feat-01-crate-theme.md) | feat | high | tui |
 | [m41-feat-02-app-event-loop](stages/backlog/stories/m41-feat-02-app-event-loop.md) | feat | high | tui |
 | [m41-feat-03-views-viewstack](stages/backlog/stories/m41-feat-03-views-viewstack.md) | feat | high | tui |
 | [m41-feat-04-keybindings](stages/backlog/stories/m41-feat-04-keybindings.md) | feat | high | tui |
