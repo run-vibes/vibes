@@ -49,11 +49,8 @@
           CXXFLAGS = "-include cstdint";
 
           # Use sccache to cache Rust compilation artifacts
-          # Disable incremental compilation - incompatible with sccache
-          # (incremental artifacts can't be cached, resulting in 0% hit rate)
           RUSTC_WRAPPER = "sccache";
           SCCACHE_CACHE_SIZE = "24G";
-          CARGO_INCREMENTAL = "0";
 
           shellHook = ''
             # Force CC and CXX to use clang (override stdenv defaults)
@@ -66,7 +63,7 @@
               cargo install cargo-llvm-cov --quiet
             fi
 
-            echo "vibes dev shell loaded (clang, sccache, CARGO_INCREMENTAL=0)"
+            echo "vibes dev shell loaded (clang, sccache)"
             echo "  just              - list commands"
             echo "  just test         - run tests"
             echo "  just dev          - watch mode"
