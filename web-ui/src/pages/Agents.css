@@ -1,0 +1,138 @@
+/* web-ui/src/pages/Agents.css
+ * CRT-styled agents page - matches Sessions layout patterns
+ */
+
+/* === Container === */
+.agents-page {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: var(--space-2);
+  background: var(--screen);
+  font-family: var(--font-mono);
+  padding: var(--space-4);
+}
+
+/* === Header === */
+.agents-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.agents-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.agents-title {
+  font-family: var(--font-display);
+  font-size: var(--font-size-xl);
+  font-weight: 400;
+  color: var(--phosphor);
+  text-shadow: 0 0 10px var(--phosphor-glow);
+  letter-spacing: 0.1em;
+  margin: 0;
+}
+
+.agents-status {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.agents-header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.agents-count {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  color: var(--text-dim);
+}
+
+/* === Content Area === */
+.agents-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+/* === Agent Grid === */
+.agents-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+/* === Empty State === */
+.agents-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-8);
+  text-align: center;
+}
+
+.agents-empty-text {
+  font-family: var(--font-display);
+  font-size: var(--font-size-lg);
+  color: var(--text-dim);
+}
+
+.agents-empty-hint {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  color: var(--text-faint);
+}
+
+/* === Loading State === */
+.agents-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8);
+  font-family: var(--font-display);
+  font-size: var(--font-size-base);
+  color: var(--text-dim);
+}
+
+/* === Error State === */
+.agents-error {
+  padding: var(--space-4);
+  text-align: center;
+}
+
+.agents-error-text {
+  color: var(--red, #ff4444);
+  margin-bottom: var(--space-3);
+}
+
+/* === Responsive === */
+@media (max-width: 768px) {
+  .agents-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+  }
+
+  .agents-header-left,
+  .agents-header-right {
+    justify-content: space-between;
+  }
+
+  .agents-grid {
+    grid-template-columns: 1fr;
+  }
+}
