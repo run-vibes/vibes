@@ -18,6 +18,7 @@ import { StatusPage } from './pages/groove/StatusPage'
 import { LearningsPage } from './pages/groove/LearningsPage'
 import { StrategyPage } from './pages/groove/StrategyPage'
 import { OpenWorldPage } from './pages/groove/OpenWorldPage'
+import { TrendsPage } from './pages/groove/TrendsPage'
 import { DebugPage } from './pages/Debug'
 import { StreamsPage } from './pages/Streams'
 import { SettingsPage } from './pages/Settings'
@@ -172,6 +173,12 @@ const grooveHistoryRoute = createRoute({
   component: AssessmentHistory,
 })
 
+const grooveTrendsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/groove/trends',
+  component: TrendsPage,
+})
+
 const streamsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/streams',
@@ -216,6 +223,7 @@ const routeTree = rootRoute.addChildren([
   grooveStrategyRoute,
   grooveOpenWorldRoute,
   grooveHistoryRoute,
+  grooveTrendsRoute,
   streamsRoute,
   firehoseRoute,
   modelsRoute,
