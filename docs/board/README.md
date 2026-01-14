@@ -7,6 +7,7 @@
 | Story | Type | Priority | Epics |
 |-------|------|----------|-------|
 | [feat-0107-display-quick-tunnel-url-on-startup](stages/in-progress/stories/feat-0107-display-quick-tunnel-url-on-startup.md) | feat | high | networking |
+| [m38-feat-05-agent-lifecycle](stages/in-progress/stories/m38-feat-05-agent-lifecycle.md) | feat | high | agents |
 | [m40-feat-01-observe-crate-skeleton](stages/in-progress/stories/m40-feat-01-observe-crate-skeleton.md) | feat | high | observability |
 
 ## Backlog
@@ -24,7 +25,6 @@
 | [feat-0078-connectivity-validation](stages/backlog/stories/feat-0078-connectivity-validation.md) | feat | medium | cli,networking |
 | [feat-0101-header-identity-display](stages/backlog/stories/feat-0101-header-identity-display.md) | feat | low | web-ui,design-system |
 | [m38-feat-04-task-types](stages/backlog/stories/m38-feat-04-task-types.md) | feat | high | agents |
-| [m38-feat-05-agent-lifecycle](stages/backlog/stories/m38-feat-05-agent-lifecycle.md) | feat | high | agents |
 | [m38-feat-06-agent-cli](stages/backlog/stories/m38-feat-06-agent-cli.md) | feat | medium | agents |
 | [m38-feat-07-agent-web-ui](stages/backlog/stories/m38-feat-07-agent-web-ui.md) | feat | medium | agents |
 | [m39-feat-05-eval-cli](stages/backlog/stories/m39-feat-05-eval-cli.md) | feat | medium | evals |
