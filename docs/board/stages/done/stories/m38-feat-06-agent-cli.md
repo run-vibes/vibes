@@ -2,7 +2,7 @@
 id: m38-feat-06
 title: Agent CLI commands
 type: feat
-status: backlog
+status: done
 priority: medium
 epics: [agents]
 depends: [m38-feat-05]
