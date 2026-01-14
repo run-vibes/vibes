@@ -43,8 +43,11 @@
           LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
 
           # Use sccache to cache Rust compilation artifacts
+          # Disable incremental compilation - incompatible with sccache
+          # (incremental artifacts can't be cached, resulting in 0% hit rate)
           RUSTC_WRAPPER = "sccache";
           SCCACHE_CACHE_SIZE = "24G";
+          CARGO_INCREMENTAL = "0";
 
           shellHook = ''
             # Auto-install cargo-llvm-cov if missing (consistent across all platforms)
@@ -53,7 +56,7 @@
               cargo install cargo-llvm-cov --quiet
             fi
 
-            echo "vibes dev shell loaded (sccache enabled)"
+            echo "vibes dev shell loaded (sccache enabled, CARGO_INCREMENTAL=0)"
             echo "  just              - list commands"
             echo "  just test         - run tests"
             echo "  just dev          - watch mode"
