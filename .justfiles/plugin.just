@@ -22,20 +22,23 @@ install-groove:
     # Build debug (faster for dev iteration)
     just build
 
+    # Use shared target directory if set, otherwise local target
+    TARGET_DIR="${CARGO_TARGET_DIR:-target}"
+
     PLUGIN_DIR="${HOME}/.config/vibes/plugins/groove"
     mkdir -p "${PLUGIN_DIR}"
 
     # Detect platform and copy the appropriate library
     if [[ "$(uname)" == "Darwin" ]]; then
-        cp target/debug/libvibes_groove.dylib "${PLUGIN_DIR}/groove.dylib"
+        cp "${TARGET_DIR}/debug/libvibes_groove.dylib" "${PLUGIN_DIR}/groove.dylib"
         echo "✓ Installed groove.dylib to ${PLUGIN_DIR}"
     else
-        cp target/debug/libvibes_groove.so "${PLUGIN_DIR}/groove.so"
+        cp "${TARGET_DIR}/debug/libvibes_groove.so" "${PLUGIN_DIR}/groove.so"
         echo "✓ Installed groove.so to ${PLUGIN_DIR}"
     fi
 
     # Enable the plugin in the registry
-    ./target/debug/vibes plugin enable groove
+    "${TARGET_DIR}/debug/vibes" plugin enable groove
     echo "✓ Plugin enabled in registry"
 
     echo ""
@@ -48,8 +51,11 @@ uninstall-groove:
     #!/usr/bin/env bash
     set -euo pipefail
 
+    # Use shared target directory if set, otherwise local target
+    TARGET_DIR="${CARGO_TARGET_DIR:-target}"
+
     # Disable the plugin first (ignore errors if not enabled)
-    ./target/debug/vibes plugin disable groove 2>/dev/null || true
+    "${TARGET_DIR}/debug/vibes" plugin disable groove 2>/dev/null || true
 
     # Remove the plugin directory
     rm -rf "${HOME}/.config/vibes/plugins/groove"
