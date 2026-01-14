@@ -2,7 +2,7 @@
 id: FEAT0103
 title: Add Ollama as a model provider
 type: feat
-status: backlog
+status: in-progress
 priority: medium
 epics: [models]
 depends: []
@@ -21,15 +21,15 @@ Ollama provides a local REST API (default: `http://localhost:11434`) for running
 
 ## Acceptance Criteria
 
-- [ ] Create `OllamaProvider` implementing `ModelProvider` trait
-- [ ] Discover installed models via Ollama's `/api/tags` endpoint
-- [ ] Implement `chat()` using `/api/chat` endpoint
-- [ ] Implement `chat_stream()` for streaming responses
-- [ ] Handle Ollama connection errors gracefully (service not running)
-- [ ] Support configurable base URL (not just localhost)
-- [ ] Mark models as `local: true` in ModelInfo
-- [ ] Add integration test that runs if Ollama is available
-- [ ] Unit tests with mocked HTTP responses
+- [x] Create `OllamaProvider` implementing `ModelProvider` trait
+- [x] Discover installed models via Ollama's `/api/tags` endpoint
+- [x] Implement `chat()` using `/api/chat` endpoint
+- [x] Implement `chat_stream()` for streaming responses
+- [x] Handle Ollama connection errors gracefully (service not running)
+- [x] Support configurable base URL (not just localhost)
+- [x] Mark models as `local: true` in ModelInfo
+- [x] Add integration test that runs if Ollama is available
+- [x] Unit tests with mocked HTTP responses
 
 ## Implementation Notes
 
