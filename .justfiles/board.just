@@ -76,8 +76,7 @@ generate:
     {
     echo "# Planning Board"
     echo ""
-    echo "> [!NOTE]"
-    echo "> Auto-generated from directory structure. Run \`just board generate\` to update."
+    echo "*Auto-generated from directory structure. Run \`just board generate\` to update.*"
     echo ""
 
     # In Progress stories
