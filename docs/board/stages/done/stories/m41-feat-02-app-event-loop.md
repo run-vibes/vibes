@@ -2,7 +2,7 @@
 id: m41-feat-02
 title: App struct and event loop
 type: feat
-status: backlog
+status: done
 priority: high
 epics: [tui]
 depends: [m41-feat-01]
