@@ -24,7 +24,6 @@
 | [feat-0101-header-identity-display](stages/backlog/stories/feat-0101-header-identity-display.md) | feat | low | web-ui,design-system |
 | [feat-0104-show-ollama-models-in-web-ui](stages/backlog/stories/feat-0104-show-ollama-models-in-web-ui.md) | feat | medium |  |
 | [feat-0105-add-ollama-autostart-config-option](stages/backlog/stories/feat-0105-add-ollama-autostart-config-option.md) | feat | medium |  |
-| [m38-feat-01-agent-module-skeleton](stages/backlog/stories/m38-feat-01-agent-module-skeleton.md) | feat | high | agents |
 | [m38-feat-02-agent-trait](stages/backlog/stories/m38-feat-02-agent-trait.md) | feat | high | agents |
 | [m38-feat-03-agent-status](stages/backlog/stories/m38-feat-03-agent-status.md) | feat | high | agents |
 | [m38-feat-04-task-types](stages/backlog/stories/m38-feat-04-task-types.md) | feat | high | agents |
@@ -107,7 +106,7 @@
 | [35-setup-wizards](milestones/35-setup-wizards/) | planned | cli |
 | [36-openworld-dashboard](milestones/36-openworld-dashboard/) | done | groove |
 | [37-models-registry-auth](milestones/37-models-registry-auth/) | done | models |
-| [38-agent-core](milestones/38-agent-core/) | planned | agents |
+| [38-agent-core](milestones/38-agent-core/) | in-progress | agents |
 | [39-eval-core](milestones/39-eval-core/) | planned | evals |
 | [40-observability-tracing](milestones/40-observability-tracing/) | planned | observability |
 | [41-tui-core](milestones/41-tui-core/) | planned | tui |
@@ -247,6 +246,7 @@
 - [m37-feat-06-navigation](stages/done/stories/m37-feat-06-navigation.md)
 - [m37-feat-07-firehose](stages/done/stories/m37-feat-07-firehose.md)
 - [m37-feat-08-session-cards](stages/done/stories/m37-feat-08-session-cards.md)
+- [m38-feat-01-agent-module-skeleton](stages/done/stories/m38-feat-01-agent-module-skeleton.md)
 - [refactor-0008-consolidate-assessment-types-module](stages/done/stories/refactor-0008-consolidate-assessment-types-module.md)
 - [refactor-0069-dashboard-visual-consistency](stages/done/stories/refactor-0069-dashboard-visual-consistency.md)
 - [refactor-0070-design-system-extraction](stages/done/stories/refactor-0070-design-system-extraction.md)

@@ -2,7 +2,7 @@
 id: m38-feat-01
 title: Agent module skeleton in vibes-core
 type: feat
-status: backlog
+status: done
 priority: high
 epics: [agents]
 depends: []

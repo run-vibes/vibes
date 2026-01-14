@@ -42,6 +42,7 @@
 //! └─────────────────────────────────────────────────┘
 //! ```
 
+pub mod agent;
 pub mod auth;
 pub mod error;
 pub mod events;
@@ -52,6 +53,7 @@ pub mod pty;
 pub mod tunnel;
 
 // Re-export key types for convenience
+pub use agent::AgentId;
 pub use auth::{AccessConfig, AccessIdentity, AuthContext, AuthError, JwtValidator};
 pub use error::{NotificationError, VibesError};
 pub use events::{
