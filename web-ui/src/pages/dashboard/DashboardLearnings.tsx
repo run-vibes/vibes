@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { PageHeader } from '@vibes/design-system';
 import { useDashboardLearnings, useDashboardLearningDetail } from '../../hooks';
 import type { LearningsFilter } from '../../hooks/useDashboard';
 import { LearningsFilters, type SortOption } from '../../components/dashboard/learnings/LearningsFilters';
@@ -50,6 +51,7 @@ export function DashboardLearnings() {
   if (learningsError) {
     return (
       <div className="dashboard-page dashboard-learnings">
+        <PageHeader title="LEARNINGS" />
         <p className="error-text">Failed to load learnings. Please try again.</p>
       </div>
     );
@@ -57,6 +59,7 @@ export function DashboardLearnings() {
 
   return (
     <div className="dashboard-page dashboard-learnings">
+      <PageHeader title="LEARNINGS" />
       <div className="dashboard-learnings__layout">
         {/* Left Panel: Filters + List */}
         <div className="dashboard-learnings__left">

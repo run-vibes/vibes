@@ -18,7 +18,7 @@ export function AttributionCard({ data }: AttributionCardProps) {
       title="Attribution"
       className="dashboard-card"
       footer={
-        <Link to="/groove/dashboard/attribution" className="card-footer-link">
+        <Link to="/groove/learnings" className="card-footer-link">
           View →
         </Link>
       }

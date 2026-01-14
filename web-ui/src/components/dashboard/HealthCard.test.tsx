@@ -88,7 +88,7 @@ describe('HealthCard', () => {
     expect(screen.getByText('No health data')).toBeInTheDocument();
   });
 
-  it('renders link to health page in card footer', () => {
+  it('does not render a footer link (health is shown inline on status page)', () => {
     const data: HealthSummary = {
       overall_status: 'ok',
       assessment_coverage: 85,
@@ -96,13 +96,10 @@ describe('HealthCard', () => {
     };
     const { container } = render(<HealthCard data={data} />);
 
-    const link = screen.getByRole('link');
-    expect(link).toHaveTextContent('View →');
-    expect(link).toHaveAttribute('href', '/groove/dashboard/health');
-
-    // Link should be in Card's footer (full-width with top border)
+    // No link in footer - health summary is shown directly on status page
+    const link = screen.queryByRole('link');
+    expect(link).not.toBeInTheDocument();
     const footerElement = container.querySelector('[class*="footer"]');
-    expect(footerElement).toBeInTheDocument();
-    expect(footerElement).toContainElement(link);
+    expect(footerElement).not.toBeInTheDocument();
   });
 });

@@ -126,7 +126,7 @@ describe('LearningsCard', () => {
 
     const link = screen.getByRole('link');
     expect(link).toHaveTextContent('View →');
-    expect(link).toHaveAttribute('href', '/groove/dashboard/learnings');
+    expect(link).toHaveAttribute('href', '/groove/learnings');
 
     // Link should be in Card's footer
     const footerElement = container.querySelector('[class*="footer"]');

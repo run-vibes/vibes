@@ -51,7 +51,6 @@ export function DashboardOverview() {
             { label: 'Sessions', value: String(trends?.session_count ?? 0) },
             { label: 'Period', value: `${trends?.period_days ?? 7}d` },
           ]}
-          href="/groove/dashboard/trends"
         />
 
         {/* Domain-specific cards */}

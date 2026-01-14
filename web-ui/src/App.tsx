@@ -13,21 +13,11 @@ import { Sessions } from './pages/Sessions'
 import { Session } from './pages/Session'
 import { QuarantinePage } from './pages/Quarantine'
 import { FirehosePage } from './pages/Firehose'
-import {
-  AssessmentLayout,
-  AssessmentStream,
-  AssessmentStatus,
-  AssessmentHistory,
-} from './pages/assessment'
-import {
-  DashboardLayout,
-  DashboardOverview,
-  DashboardLearnings,
-  DashboardAttribution,
-  DashboardStrategy,
-  DashboardHealth,
-  DashboardOpenWorld,
-} from './pages/dashboard'
+import { AssessmentStream, AssessmentHistory } from './pages/assessment'
+import { StatusPage } from './pages/groove/StatusPage'
+import { LearningsPage } from './pages/groove/LearningsPage'
+import { StrategyPage } from './pages/groove/StrategyPage'
+import { OpenWorldPage } from './pages/groove/OpenWorldPage'
 import { DebugPage } from './pages/Debug'
 import { StreamsPage } from './pages/Streams'
 import { SettingsPage } from './pages/Settings'
@@ -57,9 +47,16 @@ function RootLayout() {
   ];
 
   const grooveSubnavItems = [
-    { label: 'Security', href: '/groove', icon: '🛡', isActive: location.pathname === '/groove' },
-    { label: 'Assessment', href: '/groove/assessment/status', icon: '◈', isActive: location.pathname.startsWith('/groove/assessment') },
-    { label: 'Dashboard', href: '/groove/dashboard/overview', icon: '📊', isActive: location.pathname.startsWith('/groove/dashboard') },
+    { label: 'Status', href: '/groove/status', isActive: location.pathname === '/groove/status' },
+    { label: 'Learnings', href: '/groove/learnings', isActive: location.pathname === '/groove/learnings' },
+    { label: 'Security', href: '/groove/security', isActive: location.pathname === '/groove/security' },
+    { label: 'Stream', href: '/groove/stream', isActive: location.pathname === '/groove/stream' },
+    { label: 'Strategy', href: '/groove/strategy', isActive: location.pathname === '/groove/strategy' },
+  ];
+
+  const grooveMoreItems = [
+    { label: 'OpenWorld', href: '/groove/openworld', isActive: location.pathname === '/groove/openworld' },
+    { label: 'History', href: '/groove/history', isActive: location.pathname === '/groove/history' },
   ];
 
   const renderLink = ({ href, className, children }: { href: string; className: string; children: React.ReactNode }) => (
@@ -80,15 +77,15 @@ function RootLayout() {
           grooveSettings.showLearningIndicator && (
             <LearningIndicator
               state="idle"
-              onClick={() => navigate({ to: '/groove/dashboard/overview' })}
+              onClick={() => navigate({ to: '/groove/status' })}
             />
           )
         }
       />
       <SubnavBar
         isOpen={isGroovePath}
-        label="GROOVE"
         items={grooveSubnavItems}
+        moreItems={grooveMoreItems}
         plugin="groove"
         renderLink={renderLink}
       />
@@ -123,10 +120,56 @@ const sessionRoute = createRoute({
   component: Session,
 })
 
-const grooveRoute = createRoute({
+// Groove index redirects to status
+const grooveIndexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/groove',
+  beforeLoad: () => {
+    throw redirect({ to: '/groove/status' });
+  },
+  component: () => null,
+})
+
+const grooveStatusRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/groove/status',
+  component: StatusPage,
+})
+
+const grooveLearningsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/groove/learnings',
+  component: LearningsPage,
+})
+
+const grooveSecurityRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/groove/security',
   component: QuarantinePage,
+})
+
+const grooveStreamRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/groove/stream',
+  component: AssessmentStream,
+})
+
+const grooveStrategyRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/groove/strategy',
+  component: StrategyPage,
+})
+
+const grooveOpenWorldRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/groove/openworld',
+  component: OpenWorldPage,
+})
+
+const grooveHistoryRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/groove/history',
+  component: AssessmentHistory,
 })
 
 const streamsRoute = createRoute({
@@ -141,95 +184,6 @@ const firehoseRoute = createRoute({
   component: FirehosePage,
 })
 
-// Assessment routes - nested under layout
-const assessmentLayoutRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/groove/assessment',
-  component: AssessmentLayout,
-  notFoundComponent: NotFound,
-})
-
-const assessmentStatusRoute = createRoute({
-  getParentRoute: () => assessmentLayoutRoute,
-  path: '/status',
-  component: AssessmentStatus,
-})
-
-const assessmentStreamRoute = createRoute({
-  getParentRoute: () => assessmentLayoutRoute,
-  path: '/stream',
-  component: AssessmentStream,
-})
-
-const assessmentHistoryRoute = createRoute({
-  getParentRoute: () => assessmentLayoutRoute,
-  path: '/history',
-  component: AssessmentHistory,
-})
-
-// Redirect index to status
-const assessmentIndexRoute = createRoute({
-  getParentRoute: () => assessmentLayoutRoute,
-  path: '/',
-  beforeLoad: () => {
-    throw redirect({ to: '/groove/assessment/status' });
-  },
-  component: () => null,
-})
-
-// Dashboard routes - nested under layout
-const dashboardLayoutRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/groove/dashboard',
-  component: DashboardLayout,
-  notFoundComponent: NotFound,
-})
-
-const dashboardOverviewRoute = createRoute({
-  getParentRoute: () => dashboardLayoutRoute,
-  path: '/overview',
-  component: DashboardOverview,
-})
-
-const dashboardLearningsRoute = createRoute({
-  getParentRoute: () => dashboardLayoutRoute,
-  path: '/learnings',
-  component: DashboardLearnings,
-})
-
-const dashboardAttributionRoute = createRoute({
-  getParentRoute: () => dashboardLayoutRoute,
-  path: '/attribution',
-  component: DashboardAttribution,
-})
-
-const dashboardStrategyRoute = createRoute({
-  getParentRoute: () => dashboardLayoutRoute,
-  path: '/strategy',
-  component: DashboardStrategy,
-})
-
-const dashboardHealthRoute = createRoute({
-  getParentRoute: () => dashboardLayoutRoute,
-  path: '/health',
-  component: DashboardHealth,
-})
-
-const dashboardOpenWorldRoute = createRoute({
-  getParentRoute: () => dashboardLayoutRoute,
-  path: '/openworld',
-  component: DashboardOpenWorld,
-})
-
-// Redirect dashboard index to overview
-const dashboardIndexRoute = createRoute({
-  getParentRoute: () => dashboardLayoutRoute,
-  path: '/',
-  beforeLoad: () => {
-    throw redirect({ to: '/groove/dashboard/overview' });
-  },
-  component: () => null,
-})
 
 const debugRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -254,25 +208,17 @@ const routeTree = rootRoute.addChildren([
   indexRoute,
   sessionsRoute,
   sessionRoute,
-  grooveRoute,
+  grooveIndexRoute,
+  grooveStatusRoute,
+  grooveLearningsRoute,
+  grooveSecurityRoute,
+  grooveStreamRoute,
+  grooveStrategyRoute,
+  grooveOpenWorldRoute,
+  grooveHistoryRoute,
   streamsRoute,
   firehoseRoute,
   modelsRoute,
-  assessmentLayoutRoute.addChildren([
-    assessmentIndexRoute,
-    assessmentStatusRoute,
-    assessmentStreamRoute,
-    assessmentHistoryRoute,
-  ]),
-  dashboardLayoutRoute.addChildren([
-    dashboardIndexRoute,
-    dashboardOverviewRoute,
-    dashboardLearningsRoute,
-    dashboardAttributionRoute,
-    dashboardStrategyRoute,
-    dashboardHealthRoute,
-    dashboardOpenWorldRoute,
-  ]),
   debugRoute,
   settingsRoute,
 ])

@@ -1,16 +1,16 @@
-Generated README.md
-Auto-generated from directory structure. Run `just board generate` to update.
+# Planning Board
+
+> Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
-| Story | Type | Priority | Epics |
-|-------|------|----------|-------|
-| [refactor-0096-groove-navigation-simplification](stages/in-progress/stories/refactor-0096-groove-navigation-simplification.md) | refactor | high | web-ui,groove |
+*No stories in progress*
 
 ## Backlog
 
 | Story | Type | Priority | Epics |
 |-------|------|----------|-------|
+| [bug-0100-flaky-iggy-client-token-tests](stages/backlog/stories/bug-0100-flaky-iggy-client-token-tests.md) | bug |  |  |
 | [chore-0087-use-cranelift-for-builds](stages/backlog/stories/chore-0087-use-cranelift-for-builds.md) | chore | low | dev-environment |
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
@@ -246,6 +246,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 - [refactor-0008-consolidate-assessment-types-module](stages/done/stories/refactor-0008-consolidate-assessment-types-module.md)
 - [refactor-0069-dashboard-visual-consistency](stages/done/stories/refactor-0069-dashboard-visual-consistency.md)
 - [refactor-0070-design-system-extraction](stages/done/stories/refactor-0070-design-system-extraction.md)
+- [refactor-0096-groove-navigation-simplification](stages/done/stories/refactor-0096-groove-navigation-simplification.md)
 - [refactor-0097-unified-card-component](stages/done/stories/refactor-0097-unified-card-component.md)
 - [refactor-0100-responsive-header-navigation](stages/done/stories/refactor-0100-responsive-header-navigation.md)
 

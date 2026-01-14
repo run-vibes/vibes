@@ -9,7 +9,7 @@ import { test, expect } from '../fixtures/vibes.js';
 test.describe('Card Component Visual Regression', () => {
   test('Card Default Variant', async ({ page, serverUrl }) => {
     // Navigate to dashboard overview which uses Card with crt variant
-    await page.goto(`${serverUrl}/groove/dashboard/overview`);
+    await page.goto(`${serverUrl}/groove/status`);
     await page.waitForTimeout(500);
 
     // Capture a card on the page (TrendCard uses Card variant="crt")
@@ -18,7 +18,7 @@ test.describe('Card Component Visual Regression', () => {
   });
 
   test('Card CRT Variant - Health', async ({ page, serverUrl }) => {
-    await page.goto(`${serverUrl}/groove/dashboard/overview`);
+    await page.goto(`${serverUrl}/groove/status`);
     await page.waitForTimeout(500);
 
     // HealthCard uses Card variant="crt"
@@ -29,7 +29,7 @@ test.describe('Card Component Visual Regression', () => {
   });
 
   test('Card CRT Variant - Learnings', async ({ page, serverUrl }) => {
-    await page.goto(`${serverUrl}/groove/dashboard/overview`);
+    await page.goto(`${serverUrl}/groove/status`);
     await page.waitForTimeout(500);
 
     // Find a card with "Learnings" title
@@ -40,7 +40,7 @@ test.describe('Card Component Visual Regression', () => {
   });
 
   test('Card Grid Layout', async ({ page, serverUrl }) => {
-    await page.goto(`${serverUrl}/groove/dashboard/overview`);
+    await page.goto(`${serverUrl}/groove/status`);
     await page.waitForTimeout(500);
 
     // Capture the full overview grid to verify cards align consistently
@@ -51,7 +51,7 @@ test.describe('Card Component Visual Regression', () => {
   });
 
   test('Dashboard OpenWorld Cards', async ({ page, serverUrl }) => {
-    await page.goto(`${serverUrl}/groove/dashboard/open-world`);
+    await page.goto(`${serverUrl}/groove/openworld`);
     await page.waitForTimeout(500);
 
     // Capture the open world dashboard which has multiple Card variants

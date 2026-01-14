@@ -14,6 +14,7 @@
 .subnavBar.open {
   height: 44px;
   padding: var(--space-2) var(--space-4);
+  overflow: visible;
 }
 
 .label {
@@ -79,4 +80,62 @@
 
 .pluginDefault .subnavItemActive {
   /* Uses default phosphor colors */
+}
+
+/* More menu */
+.moreContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.moreButton {
+  background: none;
+  cursor: pointer;
+}
+
+.moreDropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: var(--space-1);
+  min-width: 140px;
+  background: var(--surface-alt, var(--screen-lighter, #1e1a16));
+  border: 1px solid var(--border);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+}
+
+.moreItem {
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-display);
+  font-size: var(--font-size-base);
+  color: var(--text-dim);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.moreItem:hover {
+  color: var(--phosphor);
+  background: var(--phosphor-subtle);
+}
+
+.moreItemActive {
+  color: var(--phosphor-bright);
+  background: var(--phosphor-subtle);
+}
+
+.pluginGroove .moreItem:hover {
+  color: var(--cyan, #44ffff);
+  background: rgba(68, 255, 255, 0.1);
+}
+
+.pluginGroove .moreItemActive {
+  color: var(--cyan, #44ffff);
+  background: rgba(68, 255, 255, 0.1);
 }

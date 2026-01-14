@@ -7,39 +7,33 @@
 import { test, expect } from '../fixtures/vibes.js';
 
 test.describe('Visual Regression', () => {
-  test.describe('Dashboard Pages', () => {
-    test('Dashboard Overview', async ({ page, serverUrl }) => {
-      await page.goto(`${serverUrl}/groove/dashboard/overview`);
+  test.describe('Groove Pages', () => {
+    test('Status (Overview)', async ({ page, serverUrl }) => {
+      await page.goto(`${serverUrl}/groove/status`);
       // Wait for content to load
-      await page.waitForSelector('.dashboard-overview', { timeout: 10000 }).catch(() => {
+      await page.waitForSelector('.dashboard-page', { timeout: 10000 }).catch(() => {
         // Fallback if specific class doesn't exist
       });
       await page.waitForTimeout(500); // Allow animations to settle
-      await expect(page).toHaveScreenshot('dashboard-overview.png');
+      await expect(page).toHaveScreenshot('groove-status.png');
     });
 
-    test('Dashboard Strategy', async ({ page, serverUrl }) => {
-      await page.goto(`${serverUrl}/groove/dashboard/strategy`);
+    test('Strategy', async ({ page, serverUrl }) => {
+      await page.goto(`${serverUrl}/groove/strategy`);
       await page.waitForTimeout(500);
-      await expect(page).toHaveScreenshot('dashboard-strategy.png');
+      await expect(page).toHaveScreenshot('groove-strategy.png');
     });
 
-    test('Dashboard Health', async ({ page, serverUrl }) => {
-      await page.goto(`${serverUrl}/groove/dashboard/health`);
+    test('Learnings', async ({ page, serverUrl }) => {
+      await page.goto(`${serverUrl}/groove/learnings`);
       await page.waitForTimeout(500);
-      await expect(page).toHaveScreenshot('dashboard-health.png');
+      await expect(page).toHaveScreenshot('groove-learnings.png');
     });
 
-    test('Dashboard Learnings', async ({ page, serverUrl }) => {
-      await page.goto(`${serverUrl}/groove/dashboard/learnings`);
+    test('Security', async ({ page, serverUrl }) => {
+      await page.goto(`${serverUrl}/groove/security`);
       await page.waitForTimeout(500);
-      await expect(page).toHaveScreenshot('dashboard-learnings.png');
-    });
-
-    test('Dashboard Attribution', async ({ page, serverUrl }) => {
-      await page.goto(`${serverUrl}/groove/dashboard/attribution`);
-      await page.waitForTimeout(500);
-      await expect(page).toHaveScreenshot('dashboard-attribution.png');
+      await expect(page).toHaveScreenshot('groove-security.png');
     });
   });
 
@@ -63,17 +57,17 @@ test.describe('Visual Regression', () => {
     });
   });
 
-  test.describe('Assessment Pages', () => {
-    test('Assessment Status', async ({ page, serverUrl }) => {
-      await page.goto(`${serverUrl}/groove/assessment/status`);
+  test.describe('Groove Stream & History', () => {
+    test('Stream', async ({ page, serverUrl }) => {
+      await page.goto(`${serverUrl}/groove/stream`);
       await page.waitForTimeout(500);
-      await expect(page).toHaveScreenshot('assessment-status.png');
+      await expect(page).toHaveScreenshot('groove-stream.png');
     });
 
-    test('Assessment History', async ({ page, serverUrl }) => {
-      await page.goto(`${serverUrl}/groove/assessment/history`);
+    test('History', async ({ page, serverUrl }) => {
+      await page.goto(`${serverUrl}/groove/history`);
       await page.waitForTimeout(500);
-      await expect(page).toHaveScreenshot('assessment-history.png');
+      await expect(page).toHaveScreenshot('groove-history.png');
     });
   });
 });

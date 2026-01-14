@@ -2,7 +2,7 @@
 id: refactor-0096
 title: Simplify Groove Navigation Hierarchy
 type: refactor
-status: in-progress
+status: done
 priority: high
 epics: [web-ui, groove]
 ---

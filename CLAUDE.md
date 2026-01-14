@@ -114,6 +114,30 @@ All designs go in `docs/board/` following CONVENTIONS.md:
 
 Use `just board new story "name"` or `just board new milestone "name"` to create the correct structure.
 
+### Design System Workflow (IMPORTANT)
+
+**NEVER create ad-hoc CSS classes in web-ui. Build reusable components in the design system first.**
+
+When adding new UI patterns or styled elements:
+
+1. **Check design-system first:** Look in `design-system/src/` for existing components
+2. **Create in design-system:** If the pattern doesn't exist, add it:
+   - Component: `design-system/src/primitives/<Name>/<Name>.tsx`
+   - Styles: `design-system/src/primitives/<Name>/<Name>.module.css`
+   - Story: `design-system/src/primitives/<Name>/<Name>.stories.tsx`
+   - Export: Update `design-system/src/primitives/index.ts`
+3. **View in Ladle:** Run `just web ladle` to preview and iterate on the component
+4. **Use in web-ui:** Import from `@vibes/design-system` in web-ui pages
+
+**Examples of design system components:**
+- `PageHeader` — Standard page title with optional left/right content
+- `Card` — Content containers with CRT styling
+- `Badge` — Status indicators
+- `StreamView` — Event stream display
+- `SubnavBar` — Secondary navigation with overflow menu
+
+Run `just web ladle` to browse all available components.
+
 ### Bug Fixes
 
 1. Use `superpowers:systematic-debugging` to investigate

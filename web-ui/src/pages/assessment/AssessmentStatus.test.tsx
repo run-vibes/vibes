@@ -251,6 +251,6 @@ describe('AssessmentStatus', () => {
     // Should show "+3 more" link
     const moreLink = screen.getByRole('link', { name: /\+3 more/i });
     expect(moreLink).toBeInTheDocument();
-    expect(moreLink).toHaveAttribute('href', '/groove/assessment/history');
+    expect(moreLink).toHaveAttribute('href', '/groove/history');
   });
 });
