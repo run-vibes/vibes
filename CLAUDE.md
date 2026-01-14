@@ -61,7 +61,9 @@ Submodules are initialized automatically by the `post-checkout` hook when creati
 
 All worktrees share a single target directory (`~/.cargo-target/vibes/`) for faster builds. This means:
 - Fresh worktrees reuse compiled artifacts from other worktrees
-- iggy-server is built once and shared across all worktrees
+- Incremental compilation is shared across worktrees
+
+**Binary Isolation:** `just build` copies final binaries (`vibes`, `iggy-server`) to `./target/debug/` in each worktree. Tests automatically find these worktree-local binaries, preventing cross-worktree binary clobbering.
 
 **WARNING:** `cargo clean` will delete artifacts for ALL worktrees. Use with caution.
 

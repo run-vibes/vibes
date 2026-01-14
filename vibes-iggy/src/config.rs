@@ -136,10 +136,11 @@ impl IggyConfig {
     ///
     /// Resolution order:
     /// 1. Explicit path in config (if it exists)
-    /// 2. CARGO_TARGET_DIR environment variable (shared target directory)
-    /// 3. Same directory as current executable
-    /// 4. Workspace target directory (for tests running from target/debug/deps/)
-    /// 5. PATH lookup
+    /// 2. Worktree-local target (binaries copied by `just build`)
+    /// 3. CARGO_TARGET_DIR environment variable (shared target directory)
+    /// 4. Same directory as current executable
+    /// 5. Workspace target directory (for tests running from target/debug/deps/)
+    /// 6. PATH lookup
     #[must_use]
     pub fn find_binary(&self) -> Option<PathBuf> {
         // 1. Explicit path in config (if it's an absolute path that exists)
@@ -147,7 +148,20 @@ impl IggyConfig {
             return Some(self.binary_path.clone());
         }
 
-        // 2. Check CARGO_TARGET_DIR (shared target directory across worktrees)
+        // 2. Check worktree-local target (set at compile time by build.rs)
+        // This ensures each worktree uses its own binaries, not shared ones
+        let workspace_root = env!("VIBES_WORKSPACE_ROOT");
+        for profile in ["debug", "release"] {
+            let binary = PathBuf::from(workspace_root)
+                .join("target")
+                .join(profile)
+                .join("iggy-server");
+            if binary.exists() {
+                return Some(binary);
+            }
+        }
+
+        // 3. Check CARGO_TARGET_DIR (shared target directory across worktrees)
         if let Ok(target_dir) = std::env::var("CARGO_TARGET_DIR") {
             for profile in ["debug", "release"] {
                 let binary = PathBuf::from(&target_dir).join(profile).join("iggy-server");
@@ -157,7 +171,7 @@ impl IggyConfig {
             }
         }
 
-        // 3. Same directory as current executable
+        // 4. Same directory as current executable
         if let Ok(exe) = std::env::current_exe()
             && let Some(dir) = exe.parent()
         {
@@ -166,7 +180,7 @@ impl IggyConfig {
                 return Some(sibling);
             }
 
-            // 4. Workspace target directory (tests run from target/debug/deps/)
+            // 5. Workspace target directory (tests run from target/debug/deps/)
             // Walk up looking for target/debug/iggy-server or target/release/iggy-server
             let mut current = dir;
             while let Some(parent) = current.parent() {
@@ -183,7 +197,7 @@ impl IggyConfig {
             }
         }
 
-        // 5. Check PATH
+        // 6. Check PATH
         if let Ok(path) = which::which("iggy-server") {
             return Some(path);
         }

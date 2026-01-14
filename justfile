@@ -58,21 +58,23 @@ pre-commit: quality::fmt-check quality::clippy tests::run web::typecheck web::te
     @echo "✓ All pre-commit checks passed"
 
 # Build debug (vibes + iggy)
-# Both binaries go to $CARGO_TARGET_DIR (shared across worktrees)
+# Compiles to $CARGO_TARGET_DIR, copies binaries to ./target/debug/ for worktree isolation
 build: web::build builds::_check-submodules
     #!/usr/bin/env bash
     set -euo pipefail
     cargo build
     cargo build --manifest-path vendor/iggy/Cargo.toml -p server
+    just builds _copy-binaries debug
     echo "✓ Built: vibes (debug), iggy-server (debug)"
-    echo "  Location: ${CARGO_TARGET_DIR:-target}/debug/"
+    echo "  Local: ./target/debug/"
 
 # Build release (vibes + iggy)
-# Both binaries go to $CARGO_TARGET_DIR (shared across worktrees)
+# Compiles to $CARGO_TARGET_DIR, copies binaries to ./target/release/ for worktree isolation
 build-release: web::build builds::_check-submodules
     #!/usr/bin/env bash
     set -euo pipefail
     cargo build --release
     cargo build --release --manifest-path vendor/iggy/Cargo.toml -p server
+    just builds _copy-binaries release
     echo "✓ Built: vibes (release), iggy-server (release)"
-    echo "  Location: ${CARGO_TARGET_DIR:-target}/release/"
+    echo "  Local: ./target/release/"
