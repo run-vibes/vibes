@@ -21,7 +21,6 @@
 | [feat-0077-config-save-load](stages/backlog/stories/feat-0077-config-save-load.md) | feat | medium | cli,networking |
 | [feat-0078-connectivity-validation](stages/backlog/stories/feat-0078-connectivity-validation.md) | feat | medium | cli,networking |
 | [feat-0101-header-identity-display](stages/backlog/stories/feat-0101-header-identity-display.md) | feat | low | web-ui,design-system |
-| [feat-0108-improve-git-worktree-dx-for-rust](stages/backlog/stories/feat-0108-improve-git-worktree-dx-for-rust.md) | feat | medium |  |
 | [m38-feat-06-agent-cli](stages/backlog/stories/m38-feat-06-agent-cli.md) | feat | medium | agents |
 | [m38-feat-07-agent-web-ui](stages/backlog/stories/m38-feat-07-agent-web-ui.md) | feat | medium | agents |
 | [m39-feat-06-eval-web-ui](stages/backlog/stories/m39-feat-06-eval-web-ui.md) | feat | medium | evals |
@@ -216,6 +215,7 @@
 - [feat-0105-add-ollama-autostart-config-option](stages/done/stories/feat-0105-add-ollama-autostart-config-option.md)
 - [feat-0106-add-gzip-and-brotli-compression-for-http-responses](stages/done/stories/feat-0106-add-gzip-and-brotli-compression-for-http-responses.md)
 - [feat-0107-display-quick-tunnel-url-on-startup](stages/done/stories/feat-0107-display-quick-tunnel-url-on-startup.md)
+- [feat-0108-improve-git-worktree-dx-for-rust](stages/done/stories/feat-0108-improve-git-worktree-dx-for-rust.md)
 - [m14-chore-01-design](stages/done/stories/m14-chore-01-design.md)
 - [m14-chore-02-implementation](stages/done/stories/m14-chore-02-implementation.md)
 - [m26-chore-01-eventbus-cleanup](stages/done/stories/m26-chore-01-eventbus-cleanup.md)

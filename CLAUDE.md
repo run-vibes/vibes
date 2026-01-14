@@ -51,12 +51,19 @@ See [docs/PRD.md](docs/PRD.md) for product requirements and [docs/board/README.m
 ```bash
 cd vibes                                    # direnv auto-loads Nix shell
 direnv allow                                # First time only
-git submodule update --init --recursive     # Initialize Iggy submodule
-just setup-hooks                            # Enable pre-commit hooks
+just setup-hooks                            # Enable git hooks (pre-commit + post-checkout)
 just build                                  # Build vibes + iggy-server
 ```
 
-The `iggy-server` binary is copied alongside vibes in `target/`.
+Submodules are initialized automatically by the `post-checkout` hook when creating worktrees or cloning.
+
+### Shared Build Cache
+
+All worktrees share a single target directory (`~/.cargo-target/vibes/`) for faster builds. This means:
+- Fresh worktrees reuse compiled artifacts from other worktrees
+- iggy-server is built once and shared across all worktrees
+
+**WARNING:** `cargo clean` will delete artifacts for ALL worktrees. Use with caution.
 
 ## Commands
 

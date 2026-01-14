@@ -57,6 +57,10 @@
             export CC="${clangStdenv.cc}/bin/clang"
             export CXX="${clangStdenv.cc}/bin/clang++"
 
+            # Shared target directory across all worktrees for faster builds
+            # WARNING: cargo clean will affect ALL worktrees
+            export CARGO_TARGET_DIR="$HOME/.cargo-target/vibes"
+
             # Auto-install cargo-llvm-cov if missing (consistent across all platforms)
             if ! command -v cargo-llvm-cov &> /dev/null; then
               echo "Installing cargo-llvm-cov..."

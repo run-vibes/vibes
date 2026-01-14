@@ -11,20 +11,24 @@ default:
     @echo "  just builds dev      Development watch mode"
 
 # Debug build (vibes + iggy-server)
+# Both binaries go to $CARGO_TARGET_DIR (shared across worktrees)
 debug: _check-submodules
+    #!/usr/bin/env bash
+    set -euo pipefail
     cargo build
     cargo build --manifest-path vendor/iggy/Cargo.toml -p server
-    mkdir -p target/debug
-    cp vendor/iggy/target/debug/iggy-server target/debug/
-    @echo "✓ Built: vibes (debug), iggy-server (debug)"
+    echo "✓ Built: vibes (debug), iggy-server (debug)"
+    echo "  Location: ${CARGO_TARGET_DIR:-target}/debug/"
 
 # Release build (vibes + iggy-server)
+# Both binaries go to $CARGO_TARGET_DIR (shared across worktrees)
 release: _check-submodules
+    #!/usr/bin/env bash
+    set -euo pipefail
     cargo build --release
     cargo build --release --manifest-path vendor/iggy/Cargo.toml -p server
-    mkdir -p target/release
-    cp vendor/iggy/target/release/iggy-server target/release/
-    @echo "✓ Built: vibes (release), iggy-server (release)"
+    echo "✓ Built: vibes (release), iggy-server (release)"
+    echo "  Location: ${CARGO_TARGET_DIR:-target}/release/"
 
 # Development watch mode
 dev:

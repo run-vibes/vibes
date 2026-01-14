@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Post-checkout hook: runs after git checkout and git worktree add
+# Ensures submodules are initialized and direnv is allowed in new worktrees
+
+set -e
+
+# Parameters: $1=prev_head, $2=new_head, $3=is_branch_checkout
+# For worktree add, prev_head is the null SHA (all zeros)
+
+# Only run on branch checkouts, not file checkouts
+if [[ "$3" != "1" ]]; then
+    exit 0
+fi
+
+# Check if submodules need initialization (idempotent check)
+if [[ ! -f "vendor/iggy/Cargo.toml" ]]; then
+    echo "Initializing git submodules..."
+    git submodule update --init --recursive
+    echo "Submodules initialized."
+fi
+
+# Allow direnv if available and .envrc exists
+if [[ -f ".envrc" ]] && command -v direnv &> /dev/null; then
+    # Only allow if not already allowed (avoid unnecessary output)
+    if ! direnv status 2>/dev/null | grep -q "Found RC allowed true"; then
+        echo "Allowing direnv..."
+        direnv allow
+    fi
+fi

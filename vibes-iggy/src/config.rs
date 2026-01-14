@@ -136,9 +136,10 @@ impl IggyConfig {
     ///
     /// Resolution order:
     /// 1. Explicit path in config (if it exists)
-    /// 2. Same directory as current executable
-    /// 3. Workspace target directory (for tests running from target/debug/deps/)
-    /// 4. PATH lookup
+    /// 2. CARGO_TARGET_DIR environment variable (shared target directory)
+    /// 3. Same directory as current executable
+    /// 4. Workspace target directory (for tests running from target/debug/deps/)
+    /// 5. PATH lookup
     #[must_use]
     pub fn find_binary(&self) -> Option<PathBuf> {
         // 1. Explicit path in config (if it's an absolute path that exists)
@@ -146,7 +147,17 @@ impl IggyConfig {
             return Some(self.binary_path.clone());
         }
 
-        // 2. Same directory as current executable
+        // 2. Check CARGO_TARGET_DIR (shared target directory across worktrees)
+        if let Ok(target_dir) = std::env::var("CARGO_TARGET_DIR") {
+            for profile in ["debug", "release"] {
+                let binary = PathBuf::from(&target_dir).join(profile).join("iggy-server");
+                if binary.exists() {
+                    return Some(binary);
+                }
+            }
+        }
+
+        // 3. Same directory as current executable
         if let Ok(exe) = std::env::current_exe()
             && let Some(dir) = exe.parent()
         {
@@ -155,7 +166,7 @@ impl IggyConfig {
                 return Some(sibling);
             }
 
-            // 3. Workspace target directory (tests run from target/debug/deps/)
+            // 4. Workspace target directory (tests run from target/debug/deps/)
             // Walk up looking for target/debug/iggy-server or target/release/iggy-server
             let mut current = dir;
             while let Some(parent) = current.parent() {
@@ -172,7 +183,7 @@ impl IggyConfig {
             }
         }
 
-        // 4. Check PATH
+        // 5. Check PATH
         if let Ok(path) = which::which("iggy-server") {
             return Some(path);
         }
