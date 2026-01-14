@@ -19,6 +19,8 @@ pub struct IggyHttpClient {
     client: Client,
     base_url: String,
     token: Option<String>,
+    /// Override for cache directory (used for testing)
+    cache_dir: Option<PathBuf>,
 }
 
 /// Login request payload
@@ -76,6 +78,7 @@ impl IggyHttpClient {
             client: Client::new(),
             base_url: format!("http://{}:{}", host, port),
             token: None,
+            cache_dir: None,
         }
     }
 
@@ -83,6 +86,14 @@ impl IggyHttpClient {
     #[must_use]
     pub fn from_config(config: &IggyClientConfig) -> Self {
         Self::new(&config.host, config.http_port)
+    }
+
+    /// Set a custom cache directory (useful for testing).
+    #[must_use]
+    #[allow(dead_code)]
+    pub fn with_cache_dir(mut self, path: PathBuf) -> Self {
+        self.cache_dir = Some(path);
+        self
     }
 
     /// Login to Iggy and store the JWT token.
@@ -186,7 +197,7 @@ impl IggyHttpClient {
                 return Ok(());
             }
             // Token expired, clear it and login fresh
-            let _ = Self::clear_cached_token();
+            let _ = self.clear_cached_token();
         }
 
         // No valid cached token, login fresh
@@ -196,13 +207,16 @@ impl IggyHttpClient {
     }
 
     /// Get the path to the token cache file.
-    fn token_cache_path() -> Option<PathBuf> {
-        dirs::cache_dir().map(|d| d.join(TOKEN_CACHE_FILE))
+    fn token_cache_path(&self) -> Option<PathBuf> {
+        self.cache_dir
+            .clone()
+            .or_else(dirs::cache_dir)
+            .map(|d| d.join(TOKEN_CACHE_FILE))
     }
 
     /// Load a cached token from disk.
     fn load_cached_token(&self) -> Option<String> {
-        let path = Self::token_cache_path()?;
+        let path = self.token_cache_path()?;
         std::fs::read_to_string(path)
             .ok()
             .map(|s| s.trim().to_string())
@@ -215,7 +229,8 @@ impl IggyHttpClient {
             .as_ref()
             .ok_or_else(|| anyhow::anyhow!("No token to cache"))?;
 
-        let path = Self::token_cache_path()
+        let path = self
+            .token_cache_path()
             .ok_or_else(|| anyhow::anyhow!("Could not determine cache directory"))?;
 
         // Create parent directories
@@ -277,8 +292,8 @@ impl IggyHttpClient {
 
     /// Clear the cached token (useful for testing or forced re-authentication).
     #[allow(dead_code)]
-    pub fn clear_cached_token() -> Result<()> {
-        if let Some(path) = Self::token_cache_path()
+    pub fn clear_cached_token(&self) -> Result<()> {
+        if let Some(path) = self.token_cache_path()
             && path.exists()
         {
             std::fs::remove_file(&path).context("Failed to remove token cache")?;
@@ -289,7 +304,7 @@ impl IggyHttpClient {
 
 #[cfg(test)]
 mod tests {
-    use serial_test::serial;
+    use tempfile::TempDir;
 
     use super::*;
 
@@ -333,7 +348,8 @@ mod tests {
     #[test]
     fn token_cache_path_returns_some() {
         // Should return a path on most systems
-        let path = IggyHttpClient::token_cache_path();
+        let client = IggyHttpClient::new("localhost", 7431);
+        let path = client.token_cache_path();
         // This could be None in some CI environments without a home dir
         if let Some(p) = path {
             assert!(p.to_string_lossy().contains("vibes"));
@@ -342,12 +358,21 @@ mod tests {
     }
 
     #[test]
-    #[serial]
-    fn load_cached_token_returns_none_when_no_file() {
-        // Clear any existing token first
-        let _ = IggyHttpClient::clear_cached_token();
+    fn token_cache_path_uses_custom_dir() {
+        let temp_dir = TempDir::new().unwrap();
+        let client =
+            IggyHttpClient::new("localhost", 7431).with_cache_dir(temp_dir.path().to_path_buf());
+        let path = client.token_cache_path().expect("Should have path");
+        assert!(path.starts_with(temp_dir.path()));
+        assert!(path.to_string_lossy().contains("iggy-token"));
+    }
 
-        let client = IggyHttpClient::new("localhost", 7431);
+    #[test]
+    fn load_cached_token_returns_none_when_no_file() {
+        // Use isolated temp directory - no file exists
+        let temp_dir = TempDir::new().unwrap();
+        let client =
+            IggyHttpClient::new("localhost", 7431).with_cache_dir(temp_dir.path().to_path_buf());
         let token = client.load_cached_token();
         assert!(token.is_none());
     }
@@ -366,41 +391,43 @@ mod tests {
     }
 
     #[test]
-    #[serial]
     fn cache_and_load_token_roundtrip() {
-        // Clean up first
-        let _ = IggyHttpClient::clear_cached_token();
+        // Use isolated temp directory
+        let temp_dir = TempDir::new().unwrap();
 
         // Create client with a token
-        let mut client = IggyHttpClient::new("localhost", 7431);
+        let mut client =
+            IggyHttpClient::new("localhost", 7431).with_cache_dir(temp_dir.path().to_path_buf());
         client.token = Some("test-token-12345".to_string());
 
         // Cache the token
         client.cache_token().expect("Failed to cache token");
 
-        // Load it back with a new client
-        let client2 = IggyHttpClient::new("localhost", 7431);
+        // Load it back with a new client (same cache dir)
+        let client2 =
+            IggyHttpClient::new("localhost", 7431).with_cache_dir(temp_dir.path().to_path_buf());
         let loaded = client2.load_cached_token();
 
         assert_eq!(loaded, Some("test-token-12345".to_string()));
-
-        // Clean up
-        let _ = IggyHttpClient::clear_cached_token();
+        // TempDir auto-cleans on drop
     }
 
     #[test]
-    #[serial]
     fn clear_cached_token_removes_file() {
+        // Use isolated temp directory
+        let temp_dir = TempDir::new().unwrap();
+
         // Create a token file
-        let mut client = IggyHttpClient::new("localhost", 7431);
+        let mut client =
+            IggyHttpClient::new("localhost", 7431).with_cache_dir(temp_dir.path().to_path_buf());
         client.token = Some("temp-token".to_string());
-        let _ = client.cache_token();
+        client.cache_token().expect("Failed to cache token");
 
         // Verify it exists
         assert!(client.load_cached_token().is_some());
 
         // Clear it
-        IggyHttpClient::clear_cached_token().expect("Failed to clear token");
+        client.clear_cached_token().expect("Failed to clear token");
 
         // Verify it's gone
         assert!(client.load_cached_token().is_none());

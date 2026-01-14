@@ -1,17 +1,17 @@
-# Planning Board
-
-> [!NOTE]
+Generated README.md
+[!NOTE]
 > Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
-*No stories in progress*
+| Story | Type | Priority | Epics |
+|-------|------|----------|-------|
+| [bug-0100-flaky-iggy-client-token-tests](stages/in-progress/stories/bug-0100-flaky-iggy-client-token-tests.md) | bug |  |  |
 
 ## Backlog
 
 | Story | Type | Priority | Epics |
 |-------|------|----------|-------|
-| [bug-0100-flaky-iggy-client-token-tests](stages/backlog/stories/bug-0100-flaky-iggy-client-token-tests.md) | bug |  |  |
 | [chore-0087-use-cranelift-for-builds](stages/backlog/stories/chore-0087-use-cranelift-for-builds.md) | chore | low | dev-environment |
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
