@@ -1,6 +1,5 @@
-# Planning Board
-
-*Auto-generated from directory structure. Run `just board generate` to update.*
+Generated README.md
+uto-generated from directory structure. Run `just board generate` to update.*
 
 ## In Progress
 
@@ -14,7 +13,6 @@
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
 | [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli,cross-platform |
-| [feat-0073-tunnel-wizard-quick-mode](stages/backlog/stories/feat-0073-tunnel-wizard-quick-mode.md) | feat | medium | cli,networking |
 | [feat-0074-tunnel-wizard-named-mode](stages/backlog/stories/feat-0074-tunnel-wizard-named-mode.md) | feat | medium | cli,networking |
 | [feat-0075-tunnel-wizard-no-cloudflared](stages/backlog/stories/feat-0075-tunnel-wizard-no-cloudflared.md) | feat | medium | cli,networking |
 | [feat-0076-auth-setup-wizard](stages/backlog/stories/feat-0076-auth-setup-wizard.md) | feat | medium | cli,networking |
@@ -25,7 +23,6 @@
 | [m38-feat-05-agent-lifecycle](stages/backlog/stories/m38-feat-05-agent-lifecycle.md) | feat | high | agents |
 | [m38-feat-06-agent-cli](stages/backlog/stories/m38-feat-06-agent-cli.md) | feat | medium | agents |
 | [m38-feat-07-agent-web-ui](stages/backlog/stories/m38-feat-07-agent-web-ui.md) | feat | medium | agents |
-| [m39-feat-02-longitudinal-metrics](stages/backlog/stories/m39-feat-02-longitudinal-metrics.md) | feat | high | evals |
 | [m39-feat-03-eval-storage](stages/backlog/stories/m39-feat-03-eval-storage.md) | feat | high | evals |
 | [m39-feat-04-study-lifecycle](stages/backlog/stories/m39-feat-04-study-lifecycle.md) | feat | high | evals |
 | [m39-feat-05-eval-cli](stages/backlog/stories/m39-feat-05-eval-cli.md) | feat | medium | evals |
@@ -197,6 +194,7 @@
 - [feat-0066-cli-recording](stages/done/stories/feat-0066-cli-recording.md)
 - [feat-0071-setup-wizard-infrastructure](stages/done/stories/feat-0071-setup-wizard-infrastructure.md)
 - [feat-0072-cloudflared-state-detection](stages/done/stories/feat-0072-cloudflared-state-detection.md)
+- [feat-0073-tunnel-wizard-quick-mode](stages/done/stories/feat-0073-tunnel-wizard-quick-mode.md)
 - [feat-0079-openworld-page-and-routing](stages/done/stories/feat-0079-openworld-page-and-routing.md)
 - [feat-0080-openworld-backend-data-providers](stages/done/stories/feat-0080-openworld-backend-data-providers.md)
 - [feat-0081-novelty-tab-components](stages/done/stories/feat-0081-novelty-tab-components.md)
@@ -249,6 +247,7 @@
 - [m38-feat-02-agent-trait](stages/done/stories/m38-feat-02-agent-trait.md)
 - [m38-feat-03-agent-status](stages/done/stories/m38-feat-03-agent-status.md)
 - [m39-feat-01-evals-crate-skeleton](stages/done/stories/m39-feat-01-evals-crate-skeleton.md)
+- [m39-feat-02-longitudinal-metrics](stages/done/stories/m39-feat-02-longitudinal-metrics.md)
 - [refactor-0008-consolidate-assessment-types-module](stages/done/stories/refactor-0008-consolidate-assessment-types-module.md)
 - [refactor-0069-dashboard-visual-consistency](stages/done/stories/refactor-0069-dashboard-visual-consistency.md)
 - [refactor-0070-design-system-extraction](stages/done/stories/refactor-0070-design-system-extraction.md)

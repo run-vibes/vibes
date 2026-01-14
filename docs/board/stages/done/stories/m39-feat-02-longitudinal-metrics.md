@@ -2,7 +2,7 @@
 id: m39-feat-02
 title: LongitudinalMetrics types
 type: feat
-status: backlog
+status: done
 priority: high
 epics: [evals]
 depends: [m39-feat-01]
