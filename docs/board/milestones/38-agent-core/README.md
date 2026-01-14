@@ -1,7 +1,7 @@
 ---
 id: 38-agent-core
 title: Agent Core
-status: planned
+status: in-progress
 epics: [agents]
 ---
 
