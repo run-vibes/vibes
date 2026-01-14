@@ -4,6 +4,8 @@ export { useCrtEffects, CrtEffectsProvider } from './useCrtEffects';
 export type { CrtEffectsContextValue, CrtEffectsProviderProps } from './useCrtEffects';
 export { useFirehose } from './useFirehose';
 export type { FirehoseOptions, UseFirehoseReturn } from './useFirehose';
+export { useModels } from './useModels';
+export type { CredentialInfo } from './useModels';
 export { usePushSubscription } from './usePushSubscription';
 export type { PushSubscriptionState } from './usePushSubscription';
 export { useSessionList } from './useSessionList';

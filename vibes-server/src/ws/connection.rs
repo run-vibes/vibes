@@ -534,6 +534,19 @@ async fn handle_text_message(
                 warn!("PTY session not found: {}", session_id);
             }
         }
+
+        ClientMessage::ListModels { request_id } => {
+            debug!("ListModels request: {}", request_id);
+
+            // Query the model registry for available models
+            let registry = state.model_registry.read().await;
+            let models: Vec<_> = registry.list_models().into_iter().cloned().collect();
+            drop(registry); // Release lock before async send
+
+            let response = ServerMessage::ModelList { request_id, models };
+            let json = serde_json::to_string(&response)?;
+            sender.send(Message::Text(json)).await?;
+        }
     }
 
     Ok(())

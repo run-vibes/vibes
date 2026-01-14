@@ -4,7 +4,9 @@
 
 ## In Progress
 
-*No stories in progress*
+| Story | Type | Priority | Epics |
+|-------|------|----------|-------|
+| [feat-0104-show-ollama-models-in-web-ui](stages/in-progress/stories/feat-0104-show-ollama-models-in-web-ui.md) | feat | medium | web-ui |
 
 ## Backlog
 
@@ -22,7 +24,6 @@
 | [feat-0077-config-save-load](stages/backlog/stories/feat-0077-config-save-load.md) | feat | medium | cli,networking |
 | [feat-0078-connectivity-validation](stages/backlog/stories/feat-0078-connectivity-validation.md) | feat | medium | cli,networking |
 | [feat-0101-header-identity-display](stages/backlog/stories/feat-0101-header-identity-display.md) | feat | low | web-ui,design-system |
-| [feat-0104-show-ollama-models-in-web-ui](stages/backlog/stories/feat-0104-show-ollama-models-in-web-ui.md) | feat | medium |  |
 | [feat-0106-add-gzip-and-brotli-compression-for-http-responses](stages/backlog/stories/feat-0106-add-gzip-and-brotli-compression-for-http-responses.md) | feat | medium | web-ui |
 | [m38-feat-02-agent-trait](stages/backlog/stories/m38-feat-02-agent-trait.md) | feat | high | agents |
 | [m38-feat-03-agent-status](stages/backlog/stories/m38-feat-03-agent-status.md) | feat | high | agents |
@@ -63,7 +64,7 @@
 | [release](epics/release/) | active | 0 |
 | [tui](epics/tui/) | planned | 0 |
 | [verification](epics/verification/) | active | 0 |
-| [web-ui](epics/web-ui/) | active | 25 |
+| [web-ui](epics/web-ui/) | active | 26 |
 
 ## Milestones
 

@@ -1,10 +1,17 @@
 import { useState, useMemo } from 'react';
 import { PageHeader, Card, EmptyState } from '@vibes/design-system';
-import { useModels, ModelInfo } from '../hooks/useModels';
+import { useModels, useWebSocket } from '../hooks';
+import type { ModelInfo } from '../lib/types';
 import './Models.css';
 
 export function ModelsPage() {
-  const { models, providers, credentials, isLoading } = useModels();
+  const { send, addMessageHandler, isConnected } = useWebSocket();
+  const { models, providers, credentials, isLoading } = useModels({
+    send,
+    addMessageHandler,
+    isConnected,
+    autoRefresh: true,
+  });
 
   // Build a map of provider -> credential source for quick lookup
   const credentialMap = new Map(credentials.map((c) => [c.provider, c.source]));
@@ -83,7 +90,9 @@ export function ModelsPage() {
                   <tr>
                     <th>Provider</th>
                     <th>Model</th>
+                    <th>Size</th>
                     <th>Context</th>
+                    <th>Modified</th>
                     <th>Capabilities</th>
                   </tr>
                 </thead>
@@ -108,7 +117,9 @@ export function ModelsPage() {
                           )}
                         </td>
                         <td>{model.name}</td>
+                        <td className="size-cell">{formatSize(model.size_bytes)}</td>
                         <td className="context-cell">{formatContext(model.context_window)}</td>
+                        <td className="modified-cell">{formatModified(model.modified_at)}</td>
                         <td className="capabilities-cell">{formatCapabilities(model.capabilities)}</td>
                       </tr>
                     );
@@ -167,6 +178,20 @@ function ModelDetailsPanel({ model, credentialSource, onClose }: ModelDetailsPan
           <dt>Context Window</dt>
           <dd>{formatContext(model.context_window)} tokens</dd>
 
+          {model.size_bytes && (
+            <>
+              <dt>Size</dt>
+              <dd>{formatSize(model.size_bytes)}</dd>
+            </>
+          )}
+
+          {model.modified_at && (
+            <>
+              <dt>Modified</dt>
+              <dd>{formatModified(model.modified_at)}</dd>
+            </>
+          )}
+
           <dt>Capabilities</dt>
           <dd>{formatCapabilities(model.capabilities)}</dd>
 
@@ -193,6 +218,41 @@ function formatContext(tokens: number): string {
     return `${tokens / 1_000}K`;
   }
   return String(tokens);
+}
+
+function formatSize(bytes?: number): string {
+  if (bytes === undefined || bytes === null) {
+    return '-';
+  }
+  const gb = bytes / (1024 * 1024 * 1024);
+  if (gb >= 1) {
+    return `${gb.toFixed(1)} GB`;
+  }
+  const mb = bytes / (1024 * 1024);
+  return `${mb.toFixed(0)} MB`;
+}
+
+function formatModified(isoDate?: string): string {
+  if (!isoDate) {
+    return '-';
+  }
+  const date = new Date(isoDate);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) {
+    return 'Today';
+  } else if (diffDays === 1) {
+    return 'Yesterday';
+  } else if (diffDays < 7) {
+    return `${diffDays} days ago`;
+  } else if (diffDays < 30) {
+    const weeks = Math.floor(diffDays / 7);
+    return `${weeks} week${weeks > 1 ? 's' : ''} ago`;
+  } else {
+    return date.toLocaleDateString();
+  }
 }
 
 function formatCapabilities(caps: { chat: boolean; vision: boolean; tools: boolean; embeddings: boolean; streaming: boolean }): string {

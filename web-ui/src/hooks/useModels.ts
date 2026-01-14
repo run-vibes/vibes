@@ -1,27 +1,27 @@
-import { useState, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import type { ClientMessage, ServerMessage, ModelInfo } from '../lib/types';
 
-export interface ModelInfo {
-  id: string;
-  provider: string;
-  name: string;
-  context_window: number;
-  capabilities: {
-    chat: boolean;
-    vision: boolean;
-    tools: boolean;
-    embeddings: boolean;
-    streaming: boolean;
-  };
-  pricing?: {
-    input_per_million: number;
-    output_per_million: number;
-  };
-  local?: boolean;
-}
+// Re-export ModelInfo for consumers
+export type { ModelInfo } from '../lib/types';
 
 export interface CredentialInfo {
   provider: string;
   source: 'keyring' | 'environment';
+}
+
+function generateRequestId(): string {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+}
+
+interface UseModelsOptions {
+  /** Function to send WebSocket messages */
+  send: (message: ClientMessage) => void;
+  /** Function to add a message handler */
+  addMessageHandler: (handler: (message: ServerMessage) => void) => () => void;
+  /** Whether the WebSocket is connected */
+  isConnected: boolean;
+  /** Auto-refresh on connect (default: true) */
+  autoRefresh?: boolean;
 }
 
 interface UseModelsReturn {
@@ -35,18 +35,68 @@ interface UseModelsReturn {
 
 /**
  * Hook for managing models and credentials.
- * Currently returns empty data - will be connected to WebSocket API.
+ * Fetches model list from server via WebSocket.
  */
-export function useModels(): UseModelsReturn {
-  const [models] = useState<ModelInfo[]>([]);
-  const [providers] = useState<string[]>([]);
-  const [credentials] = useState<CredentialInfo[]>([]);
-  const [isLoading] = useState(false);
-  const [error] = useState<string | null>(null);
+export function useModels(options: UseModelsOptions): UseModelsReturn {
+  const { send, addMessageHandler, isConnected, autoRefresh = true } = options;
 
+  const [models, setModels] = useState<ModelInfo[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pendingRequestId, setPendingRequestId] = useState<string | null>(null);
+
+  // Derive providers from models
+  const providers = [...new Set(models.map((m) => m.provider))];
+
+  // Credentials not yet implemented - placeholder for future
+  const credentials: CredentialInfo[] = [];
+
+  // Refresh the model list
   const refresh = useCallback(() => {
-    // TODO: Send WebSocket message to refresh models/credentials
-  }, []);
+    if (!isConnected) {
+      setError('Not connected');
+      return;
+    }
+
+    const requestId = generateRequestId();
+    setPendingRequestId(requestId);
+    setIsLoading(true);
+    setError(null);
+
+    send({ type: 'list_models', request_id: requestId });
+  }, [isConnected, send]);
+
+  // Handle incoming messages
+  useEffect(() => {
+    const cleanup = addMessageHandler((message: ServerMessage) => {
+      switch (message.type) {
+        case 'model_list':
+          if (message.request_id === pendingRequestId) {
+            setModels(message.models);
+            setIsLoading(false);
+            setPendingRequestId(null);
+          }
+          break;
+
+        case 'error':
+          if (pendingRequestId) {
+            setError(message.message);
+            setIsLoading(false);
+            setPendingRequestId(null);
+          }
+          break;
+      }
+    });
+
+    return cleanup;
+  }, [addMessageHandler, pendingRequestId]);
+
+  // Auto-refresh on connect
+  useEffect(() => {
+    if (isConnected && autoRefresh) {
+      refresh();
+    }
+  }, [isConnected, autoRefresh, refresh]);
 
   return {
     models,
