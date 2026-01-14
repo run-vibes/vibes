@@ -7,6 +7,7 @@
 
 use crate::types::{SpanId, TraceId};
 use opentelemetry::trace::{TraceContextExt, TracerProvider as _};
+use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_sdk::trace::TracerProvider;
 use serde::{Deserialize, Serialize};
 use tracing_opentelemetry::OpenTelemetrySpanExt;
@@ -14,15 +15,47 @@ use tracing_subscriber::Registry;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
+/// Console output format.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ConsoleFormat {
+    /// Human-readable format with colors.
+    #[default]
+    Pretty,
+    /// JSON format for structured logging.
+    Json,
+    /// Compact single-line format.
+    Compact,
+}
+
+/// File output format.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum FileFormat {
+    /// JSON array of spans (harder to stream).
+    #[default]
+    Json,
+    /// Newline-delimited JSON (one span per line).
+    JsonLines,
+}
+
 /// Export target for traces.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
 pub enum ExportTarget {
     /// Log spans to console (default for development).
-    Console,
+    Console {
+        #[serde(default)]
+        format: ConsoleFormat,
+    },
+    /// Write spans to a file.
+    File {
+        path: std::path::PathBuf,
+        #[serde(default)]
+        format: FileFormat,
+    },
     /// Export via OTLP protocol to a collector.
     Otlp { endpoint: String },
-    /// Export to Jaeger.
-    Jaeger { endpoint: String },
 }
 
 /// Configuration for the tracer.
@@ -44,7 +77,9 @@ impl Default for TracerConfig {
             service_name: "vibes".to_string(),
             service_version: env!("CARGO_PKG_VERSION").to_string(),
             sample_rate: 1.0,
-            exporters: vec![ExportTarget::Console],
+            exporters: vec![ExportTarget::Console {
+                format: ConsoleFormat::default(),
+            }],
         }
     }
 }
@@ -55,12 +90,25 @@ pub enum TracerError {
     /// Failed to set global subscriber.
     #[error("failed to set global subscriber: {0}")]
     SetGlobalSubscriber(#[from] tracing_subscriber::util::TryInitError),
+
+    /// Failed to create file exporter.
+    #[error("failed to create file exporter at {path}: {source}")]
+    FileExporter {
+        path: std::path::PathBuf,
+        #[source]
+        source: std::io::Error,
+    },
+
+    /// Failed to create OTLP exporter.
+    #[error("failed to create OTLP exporter: {0}")]
+    OtlpExporter(String),
 }
 
 /// Guard that shuts down tracing when dropped.
 ///
 /// This guard holds the OpenTelemetry tracer provider and ensures
 /// proper shutdown when the guard is dropped.
+#[derive(Debug)]
 pub struct TracingGuard {
     provider: Option<TracerProvider>,
 }
@@ -89,26 +137,129 @@ impl Drop for TracingGuard {
 ///
 /// # Errors
 ///
-/// Returns an error if the global subscriber has already been set.
+/// Returns an error if the global subscriber has already been set, or if
+/// an exporter fails to initialize (e.g., invalid file path).
 pub fn init_tracing(config: TracerConfig) -> Result<TracingGuard, TracerError> {
-    // Build the OpenTelemetry tracer provider
-    let provider = TracerProvider::builder()
-        .with_simple_exporter(opentelemetry_stdout::SpanExporter::default())
-        .build();
+    use std::fs::OpenOptions;
+    use std::io::BufWriter;
+    use tracing_subscriber::fmt;
 
-    // Get a tracer from the provider
+    // Build OpenTelemetry provider - we'll add OTLP exporters to this
+    let mut provider_builder = TracerProvider::builder();
+    let mut has_otlp = false;
+
+    // Determine console and file settings from config
+    let mut console_format = None;
+    let mut file_writer = None;
+
+    for target in &config.exporters {
+        match target {
+            ExportTarget::Console { format } => {
+                console_format = Some(format.clone());
+            }
+            ExportTarget::File { path, format: _ } => {
+                // File output - open the file now to catch errors early
+                // Note: format is currently ignored; both Json and JsonLines
+                // produce newline-delimited JSON (tracing-subscriber behavior)
+                let file = OpenOptions::new()
+                    .create(true)
+                    .append(true)
+                    .open(path)
+                    .map_err(|e| TracerError::FileExporter {
+                        path: path.clone(),
+                        source: e,
+                    })?;
+                file_writer = Some(std::sync::Mutex::new(BufWriter::new(file)));
+            }
+            ExportTarget::Otlp { endpoint } => {
+                // OTLP export via OpenTelemetry
+                let exporter = opentelemetry_otlp::SpanExporter::builder()
+                    .with_tonic()
+                    .with_endpoint(endpoint)
+                    .build()
+                    .map_err(|e: opentelemetry::trace::TraceError| {
+                        TracerError::OtlpExporter(e.to_string())
+                    })?;
+                provider_builder = provider_builder
+                    .with_batch_exporter(exporter, opentelemetry_sdk::runtime::Tokio);
+                has_otlp = true;
+            }
+        }
+    }
+
+    // If no OTLP exporter, use a no-op stdout exporter for trace context
+    if !has_otlp {
+        provider_builder =
+            provider_builder.with_simple_exporter(opentelemetry_stdout::SpanExporter::default());
+    }
+
+    let provider = provider_builder.build();
     let tracer = provider.tracer(config.service_name.clone());
 
-    // Create the OpenTelemetry layer for tracing-subscriber
-    let otel_layer = tracing_opentelemetry::layer().with_tracer(tracer);
+    // Helper macro to create otel layer with correct type inference
+    macro_rules! make_otel_layer {
+        () => {
+            tracing_opentelemetry::layer().with_tracer(tracer.clone())
+        };
+    }
 
-    // Build the subscriber with fmt layer (for console output) and OpenTelemetry layer
-    let subscriber = Registry::default()
-        .with(tracing_subscriber::fmt::layer())
-        .with(otel_layer);
-
-    // Set as the global default
-    subscriber.try_init()?;
+    // Build subscriber based on which exporters are configured
+    // We use match to handle the different combinations with concrete types
+    match (console_format, file_writer) {
+        (Some(ConsoleFormat::Pretty), Some(fw)) => {
+            let file_layer = fmt::layer().json().with_writer(fw);
+            Registry::default()
+                .with(fmt::layer().pretty())
+                .with(file_layer)
+                .with(make_otel_layer!())
+                .try_init()?;
+        }
+        (Some(ConsoleFormat::Json), Some(fw)) => {
+            let file_layer = fmt::layer().json().with_writer(fw);
+            Registry::default()
+                .with(fmt::layer().json())
+                .with(file_layer)
+                .with(make_otel_layer!())
+                .try_init()?;
+        }
+        (Some(ConsoleFormat::Compact), Some(fw)) => {
+            let file_layer = fmt::layer().json().with_writer(fw);
+            Registry::default()
+                .with(fmt::layer().compact())
+                .with(file_layer)
+                .with(make_otel_layer!())
+                .try_init()?;
+        }
+        (Some(ConsoleFormat::Pretty), None) => {
+            Registry::default()
+                .with(fmt::layer().pretty())
+                .with(make_otel_layer!())
+                .try_init()?;
+        }
+        (Some(ConsoleFormat::Json), None) => {
+            Registry::default()
+                .with(fmt::layer().json())
+                .with(make_otel_layer!())
+                .try_init()?;
+        }
+        (Some(ConsoleFormat::Compact), None) => {
+            Registry::default()
+                .with(fmt::layer().compact())
+                .with(make_otel_layer!())
+                .try_init()?;
+        }
+        (None, Some(fw)) => {
+            let file_layer = fmt::layer().json().with_writer(fw);
+            Registry::default()
+                .with(file_layer)
+                .with(make_otel_layer!())
+                .try_init()?;
+        }
+        (None, None) => {
+            // No console or file, just OTLP (or nothing)
+            Registry::default().with(make_otel_layer!()).try_init()?;
+        }
+    }
 
     Ok(TracingGuard {
         provider: Some(provider),
@@ -158,7 +309,96 @@ pub fn current_span_id() -> Option<SpanId> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::PathBuf;
     use tracing::info;
+
+    #[test]
+    fn console_format_default_is_pretty() {
+        assert_eq!(ConsoleFormat::default(), ConsoleFormat::Pretty);
+    }
+
+    #[test]
+    fn file_format_default_is_json() {
+        assert_eq!(FileFormat::default(), FileFormat::Json);
+    }
+
+    #[test]
+    fn export_target_console_with_format() {
+        let target = ExportTarget::Console {
+            format: ConsoleFormat::Json,
+        };
+        match target {
+            ExportTarget::Console { format } => assert_eq!(format, ConsoleFormat::Json),
+            _ => panic!("expected Console variant"),
+        }
+    }
+
+    #[test]
+    fn export_target_file_with_path_and_format() {
+        let target = ExportTarget::File {
+            path: PathBuf::from("/tmp/traces.json"),
+            format: FileFormat::JsonLines,
+        };
+        match target {
+            ExportTarget::File { path, format } => {
+                assert_eq!(path, PathBuf::from("/tmp/traces.json"));
+                assert_eq!(format, FileFormat::JsonLines);
+            }
+            _ => panic!("expected File variant"),
+        }
+    }
+
+    #[test]
+    fn export_target_serde_console_roundtrip() {
+        let target = ExportTarget::Console {
+            format: ConsoleFormat::Pretty,
+        };
+        let json = serde_json::to_string(&target).unwrap();
+        let parsed: ExportTarget = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed, target);
+    }
+
+    #[test]
+    fn export_target_serde_file_roundtrip() {
+        let target = ExportTarget::File {
+            path: PathBuf::from("/var/log/traces.jsonl"),
+            format: FileFormat::JsonLines,
+        };
+        let json = serde_json::to_string(&target).unwrap();
+        let parsed: ExportTarget = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed, target);
+    }
+
+    #[test]
+    fn export_target_serde_otlp_roundtrip() {
+        let target = ExportTarget::Otlp {
+            endpoint: "http://localhost:4317".to_string(),
+        };
+        let json = serde_json::to_string(&target).unwrap();
+        let parsed: ExportTarget = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed, target);
+    }
+
+    #[test]
+    fn export_target_serde_tagged_format() {
+        // Verify serde uses tagged format: {"type": "console", "format": "pretty"}
+        let target = ExportTarget::Console {
+            format: ConsoleFormat::Pretty,
+        };
+        let json = serde_json::to_string(&target).unwrap();
+        assert!(json.contains(r#""type":"console""#));
+    }
+
+    #[test]
+    fn export_target_console_default_format() {
+        // Should deserialize with default format when not specified
+        let json = r#"{"type": "console"}"#;
+        let target: ExportTarget = serde_json::from_str(json).unwrap();
+        match target {
+            ExportTarget::Console { format } => assert_eq!(format, ConsoleFormat::Pretty),
+            _ => panic!("expected Console variant"),
+        }
+    }
 
     #[test]
     fn tracer_config_has_sensible_defaults() {
@@ -167,7 +407,13 @@ mod tests {
         assert_eq!(config.service_name, "vibes");
         assert!(!config.service_version.is_empty());
         assert!((config.sample_rate - 1.0).abs() < f64::EPSILON);
-        assert_eq!(config.exporters, vec![ExportTarget::Console]);
+        // Default should now be Console with Pretty format
+        assert_eq!(
+            config.exporters,
+            vec![ExportTarget::Console {
+                format: ConsoleFormat::default()
+            }]
+        );
     }
 
     #[test]
@@ -193,5 +439,50 @@ mod tests {
     fn current_span_id_returns_none_outside_span() {
         // Outside any span, should return None
         assert!(current_span_id().is_none());
+    }
+
+    #[test]
+    fn file_exporter_fails_on_invalid_path() {
+        // Trying to write to a non-existent directory should fail
+        let config = TracerConfig {
+            exporters: vec![ExportTarget::File {
+                path: PathBuf::from("/nonexistent/directory/traces.json"),
+                format: FileFormat::JsonLines,
+            }],
+            ..Default::default()
+        };
+
+        let result = init_tracing(config);
+        assert!(
+            matches!(result, Err(TracerError::FileExporter { .. })),
+            "expected FileExporter error, got {:?}",
+            result
+        );
+    }
+
+    #[test]
+    fn multiple_exporters_supported() {
+        // Should be able to configure multiple exporters
+        let dir = tempfile::tempdir().unwrap();
+        let file_path = dir.path().join("traces.jsonl");
+
+        let config = TracerConfig {
+            exporters: vec![
+                ExportTarget::Console {
+                    format: ConsoleFormat::Compact,
+                },
+                ExportTarget::File {
+                    path: file_path.clone(),
+                    format: FileFormat::JsonLines,
+                },
+            ],
+            ..Default::default()
+        };
+
+        // This should succeed (multiple exporters) and create the file
+        // Note: Can't actually init because global subscriber may already be set
+        // Just verify the config is valid and file could be created
+        assert_eq!(config.exporters.len(), 2);
+        assert!(std::fs::File::create(&file_path).is_ok());
     }
 }

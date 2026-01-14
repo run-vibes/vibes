@@ -9,6 +9,7 @@
 |-------|------|----------|-------|
 | [feat-0077-config-save-load](stages/in-progress/stories/feat-0077-config-save-load.md) | feat | medium | cli,networking |
 | [m39-feat-05-eval-cli](stages/in-progress/stories/m39-feat-05-eval-cli.md) | feat | medium | evals |
+| [m40-feat-05-export-targets](stages/in-progress/stories/m40-feat-05-export-targets.md) | feat | high | observability |
 | [m41-feat-01-crate-theme](stages/in-progress/stories/m41-feat-01-crate-theme.md) | feat | high | tui |
 
 ## Backlog
@@ -22,7 +23,6 @@
 | [feat-0078-connectivity-validation](stages/backlog/stories/feat-0078-connectivity-validation.md) | feat | medium | cli,networking |
 | [feat-0101-header-identity-display](stages/backlog/stories/feat-0101-header-identity-display.md) | feat | low | web-ui,design-system |
 | [m39-feat-06-eval-web-ui](stages/backlog/stories/m39-feat-06-eval-web-ui.md) | feat | medium | evals |
-| [m40-feat-05-export-targets](stages/backlog/stories/m40-feat-05-export-targets.md) | feat | high | observability |
 | [m40-feat-06-observe-cli](stages/backlog/stories/m40-feat-06-observe-cli.md) | feat | medium | observability |
 | [m40-feat-07-observe-web-ui](stages/backlog/stories/m40-feat-07-observe-web-ui.md) | feat | medium | observability |
 | [m41-feat-02-app-event-loop](stages/backlog/stories/m41-feat-02-app-event-loop.md) | feat | high | tui |
