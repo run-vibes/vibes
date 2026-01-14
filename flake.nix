@@ -16,8 +16,10 @@
           extensions = [ "rust-src" "rust-analyzer" "llvm-tools" ];
         };
         isLinux = pkgs.stdenv.isLinux;
+        # Use clang stdenv for stable C++ compilation (avoids GCC 15 edge cases)
+        clangStdenv = pkgs.clangStdenv;
       in {
-        devShells.default = pkgs.mkShell {
+        devShells.default = pkgs.mkShell.override { stdenv = clangStdenv; } {
           buildInputs = [
             rust
             pkgs.just
@@ -31,7 +33,7 @@
             pkgs.cloudflared
             # Native build deps for CozoDB/RocksDB
             pkgs.clang
-            pkgs.llvmPackages.libclang
+            pkgs.libclang
             pkgs.zstd
             pkgs.pkg-config
           ] ++ pkgs.lib.optionals isLinux [
@@ -42,6 +44,10 @@
           # Required for bindgen to find libclang
           LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
 
+          # GCC 15's libstdc++ has stricter include hierarchies - rocksdb headers
+          # don't explicitly include <cstdint> but use uint64_t/uint32_t types
+          CXXFLAGS = "-include cstdint";
+
           # Use sccache to cache Rust compilation artifacts
           # Disable incremental compilation - incompatible with sccache
           # (incremental artifacts can't be cached, resulting in 0% hit rate)
@@ -50,13 +56,17 @@
           CARGO_INCREMENTAL = "0";
 
           shellHook = ''
+            # Force CC and CXX to use clang (override stdenv defaults)
+            export CC="${clangStdenv.cc}/bin/clang"
+            export CXX="${clangStdenv.cc}/bin/clang++"
+
             # Auto-install cargo-llvm-cov if missing (consistent across all platforms)
             if ! command -v cargo-llvm-cov &> /dev/null; then
               echo "Installing cargo-llvm-cov..."
               cargo install cargo-llvm-cov --quiet
             fi
 
-            echo "vibes dev shell loaded (sccache enabled, CARGO_INCREMENTAL=0)"
+            echo "vibes dev shell loaded (clang, sccache, CARGO_INCREMENTAL=0)"
             echo "  just              - list commands"
             echo "  just test         - run tests"
             echo "  just dev          - watch mode"
