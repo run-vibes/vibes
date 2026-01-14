@@ -6,11 +6,10 @@
 //! - Local embedded SQLite file
 
 use std::path::Path;
-use std::sync::Arc;
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use libsql::{Builder, Connection, Database};
+use libsql::{Builder, Connection};
 use tracing::{debug, instrument};
 
 use super::{Error, EvalProjection, EvalStorage, Result};
@@ -57,14 +56,15 @@ ON checkpoints(study_id, timestamp)
 /// Provides read-only queries against the projection.
 #[derive(Clone)]
 pub struct TursoEvalStorage {
-    db: Arc<Database>,
+    conn: Connection,
 }
 
 impl TursoEvalStorage {
     /// Create a new storage instance with a local embedded database.
     pub async fn new_local(path: &Path) -> Result<Self> {
         let db = Builder::new_local(path).build().await?;
-        let storage = Self { db: Arc::new(db) };
+        let conn = db.connect()?;
+        let storage = Self { conn };
         storage.ensure_schema().await?;
         Ok(storage)
     }
@@ -74,7 +74,8 @@ impl TursoEvalStorage {
         let db = Builder::new_remote(url.to_string(), token.to_string())
             .build()
             .await?;
-        let storage = Self { db: Arc::new(db) };
+        let conn = db.connect()?;
+        let storage = Self { conn };
         storage.ensure_schema().await?;
         Ok(storage)
     }
@@ -82,22 +83,22 @@ impl TursoEvalStorage {
     /// Create a new in-memory storage instance (for testing).
     pub async fn new_memory() -> Result<Self> {
         let db = Builder::new_local(":memory:").build().await?;
-        let storage = Self { db: Arc::new(db) };
+        let conn = db.connect()?;
+        let storage = Self { conn };
         storage.ensure_schema().await?;
         Ok(storage)
     }
 
-    /// Get a database connection.
-    async fn conn(&self) -> Result<Connection> {
-        Ok(self.db.connect()?)
+    /// Get a reference to the database connection.
+    fn conn(&self) -> &Connection {
+        &self.conn
     }
 
     /// Ensure the database schema exists.
     async fn ensure_schema(&self) -> Result<()> {
-        let conn = self.conn().await?;
-        conn.execute(SCHEMA_STUDIES, ()).await?;
-        conn.execute(SCHEMA_CHECKPOINTS, ()).await?;
-        conn.execute(INDEX_CHECKPOINTS, ()).await?;
+        self.conn.execute(SCHEMA_STUDIES, ()).await?;
+        self.conn.execute(SCHEMA_CHECKPOINTS, ()).await?;
+        self.conn.execute(INDEX_CHECKPOINTS, ()).await?;
         Ok(())
     }
 
@@ -185,7 +186,7 @@ impl TursoEvalStorage {
 impl EvalStorage for TursoEvalStorage {
     #[instrument(skip(self), level = "debug")]
     async fn get_study(&self, id: StudyId) -> Result<Option<Study>> {
-        let conn = self.conn().await?;
+        let conn = self.conn();
         let mut rows = conn
             .query(
                 "SELECT id, name, status, period_type, period_value, config, created_at, started_at, stopped_at FROM studies WHERE id = ?",
@@ -202,7 +203,7 @@ impl EvalStorage for TursoEvalStorage {
 
     #[instrument(skip(self), level = "debug")]
     async fn list_studies(&self) -> Result<Vec<Study>> {
-        let conn = self.conn().await?;
+        let conn = self.conn();
         let mut rows = conn
             .query(
                 "SELECT id, name, status, period_type, period_value, config, created_at, started_at, stopped_at FROM studies ORDER BY created_at DESC",
@@ -219,7 +220,7 @@ impl EvalStorage for TursoEvalStorage {
 
     #[instrument(skip(self), level = "debug")]
     async fn list_studies_by_status(&self, status: StudyStatus) -> Result<Vec<Study>> {
-        let conn = self.conn().await?;
+        let conn = self.conn();
         let mut rows = conn
             .query(
                 "SELECT id, name, status, period_type, period_value, config, created_at, started_at, stopped_at FROM studies WHERE status = ? ORDER BY created_at DESC",
@@ -236,7 +237,7 @@ impl EvalStorage for TursoEvalStorage {
 
     #[instrument(skip(self), level = "debug")]
     async fn get_checkpoints(&self, study_id: StudyId) -> Result<Vec<Checkpoint>> {
-        let conn = self.conn().await?;
+        let conn = self.conn();
         let mut rows = conn
             .query(
                 "SELECT id, study_id, timestamp, metrics, events_analyzed, sessions_included FROM checkpoints WHERE study_id = ? ORDER BY timestamp ASC",
@@ -253,7 +254,7 @@ impl EvalStorage for TursoEvalStorage {
 
     #[instrument(skip(self), level = "debug")]
     async fn get_latest_checkpoint(&self, study_id: StudyId) -> Result<Option<Checkpoint>> {
-        let conn = self.conn().await?;
+        let conn = self.conn();
         let mut rows = conn
             .query(
                 "SELECT id, study_id, timestamp, metrics, events_analyzed, sessions_included FROM checkpoints WHERE study_id = ? ORDER BY timestamp DESC LIMIT 1",
@@ -275,7 +276,7 @@ impl EvalStorage for TursoEvalStorage {
         start: DateTime<Utc>,
         end: DateTime<Utc>,
     ) -> Result<Vec<Checkpoint>> {
-        let conn = self.conn().await?;
+        let conn = self.conn();
         let mut rows = conn
             .query(
                 "SELECT id, study_id, timestamp, metrics, events_analyzed, sessions_included FROM checkpoints WHERE study_id = ? AND timestamp >= ? AND timestamp < ? ORDER BY timestamp ASC",
@@ -309,7 +310,7 @@ impl TursoEvalProjection {
 impl EvalProjection for TursoEvalProjection {
     #[instrument(skip(self, event), level = "debug")]
     async fn apply(&self, event: &StoredEvalEvent) -> Result<()> {
-        let conn = self.storage.conn().await?;
+        let conn = self.storage.conn();
 
         match &event.event {
             EvalEvent::StudyCreated {
@@ -411,7 +412,7 @@ impl EvalProjection for TursoEvalProjection {
 
     #[instrument(skip(self), level = "debug")]
     async fn clear(&self) -> Result<()> {
-        let conn = self.storage.conn().await?;
+        let conn = self.storage.conn();
         conn.execute("DELETE FROM checkpoints", ()).await?;
         conn.execute("DELETE FROM studies", ()).await?;
         Ok(())
