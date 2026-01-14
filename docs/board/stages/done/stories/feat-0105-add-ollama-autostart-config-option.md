@@ -2,7 +2,7 @@
 id: FEAT0105
 title: Add Ollama autostart config option
 type: feat
-status: backlog
+status: done
 priority: medium
 epics: []
 depends: []
@@ -21,13 +21,13 @@ requiring users to manually start Ollama in a separate terminal.
 
 ## Acceptance Criteria
 
-- [ ] New `[ollama]` section in config with `enabled` and `host` fields
-- [ ] When `ollama.enabled = true`, vibes spawns `ollama serve` on startup
-- [ ] Respects `ollama.host` if set, otherwise uses default `localhost:11434`
-- [ ] Gracefully handles Ollama already running (detect and skip spawn)
-- [ ] Gracefully handles Ollama not installed (warn but don't fail)
-- [ ] Ollama process terminates when vibes exits (child process management)
-- [ ] Works with both `vibes serve` and `vibes claude` commands
+- [x] New `[ollama]` section in config with `enabled` and `host` fields
+- [x] When `ollama.enabled = true`, vibes spawns `ollama serve` on startup
+- [x] Respects `ollama.host` if set, otherwise uses default `localhost:11434`
+- [x] Gracefully handles Ollama already running (detect and skip spawn)
+- [x] Gracefully handles Ollama not installed (warn but don't fail)
+- [x] Ollama process terminates when vibes exits (child process management)
+- [x] Works with both `vibes serve` and `vibes claude` commands
 
 ## Implementation Notes
 

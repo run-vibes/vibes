@@ -23,7 +23,6 @@
 | [feat-0078-connectivity-validation](stages/backlog/stories/feat-0078-connectivity-validation.md) | feat | medium | cli,networking |
 | [feat-0101-header-identity-display](stages/backlog/stories/feat-0101-header-identity-display.md) | feat | low | web-ui,design-system |
 | [feat-0104-show-ollama-models-in-web-ui](stages/backlog/stories/feat-0104-show-ollama-models-in-web-ui.md) | feat | medium |  |
-| [feat-0105-add-ollama-autostart-config-option](stages/backlog/stories/feat-0105-add-ollama-autostart-config-option.md) | feat | medium |  |
 | [m38-feat-02-agent-trait](stages/backlog/stories/m38-feat-02-agent-trait.md) | feat | high | agents |
 | [m38-feat-03-agent-status](stages/backlog/stories/m38-feat-03-agent-status.md) | feat | high | agents |
 | [m38-feat-04-task-types](stages/backlog/stories/m38-feat-04-task-types.md) | feat | high | agents |
@@ -215,6 +214,7 @@
 - [feat-0095-models-web-ui](stages/done/stories/feat-0095-models-web-ui.md)
 - [feat-0102-dashboard-trends-page](stages/done/stories/feat-0102-dashboard-trends-page.md)
 - [feat-0103-add-ollama-as-a-model-provider](stages/done/stories/feat-0103-add-ollama-as-a-model-provider.md)
+- [feat-0105-add-ollama-autostart-config-option](stages/done/stories/feat-0105-add-ollama-autostart-config-option.md)
 - [m14-chore-01-design](stages/done/stories/m14-chore-01-design.md)
 - [m14-chore-02-implementation](stages/done/stories/m14-chore-02-implementation.md)
 - [m26-chore-01-eventbus-cleanup](stages/done/stories/m26-chore-01-eventbus-cleanup.md)
