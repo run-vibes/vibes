@@ -68,6 +68,8 @@ fn print_help_with_plugins() {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Manage agents
+    Agent(commands::agent::AgentArgs),
     /// Manage Cloudflare Access authentication
     Auth(commands::auth::AuthArgs),
     /// Proxy Claude Code with vibes enhancements
@@ -105,6 +107,7 @@ async fn main() -> Result<()> {
     tracing_subscriber::fmt().with_env_filter(filter).init();
 
     match cli.command {
+        Commands::Agent(args) => commands::agent::run(args).await,
         Commands::Auth(args) => commands::auth::run(args).await,
         Commands::Claude(args) => commands::claude::run(args).await,
         Commands::Config(args) => commands::config::run(args),

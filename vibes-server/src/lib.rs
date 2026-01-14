@@ -3,12 +3,15 @@
 //! This crate provides the server infrastructure that owns the EventLog
 //! and PluginHost. Both CLI and Web UI connect as WebSocket clients.
 
+mod agent_registry;
 pub mod consumers;
 mod error;
 pub mod http;
 pub mod middleware;
 mod state;
 pub mod ws;
+
+pub use agent_registry::ServerAgentRegistry;
 
 use std::net::SocketAddr;
 use std::path::PathBuf;

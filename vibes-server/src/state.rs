@@ -28,6 +28,7 @@ pub enum PtyEvent {
     },
 }
 
+use crate::agent_registry::ServerAgentRegistry;
 use crate::middleware::AuthLayer;
 
 /// Default capacity for the event broadcast channel
@@ -69,6 +70,8 @@ pub struct AppState {
     consumer_shutdown: CancellationToken,
     /// Model registry for AI model discovery
     pub model_registry: Arc<RwLock<ModelRegistry>>,
+    /// Agent registry for managing AI agents
+    pub agent_registry: Arc<RwLock<ServerAgentRegistry>>,
     /// Plugin host for managing plugins
     ///
     /// MUST be last - plugins are unloaded when this drops, so all plugin types
@@ -105,6 +108,7 @@ impl AppState {
             assessment_broadcaster,
             consumer_shutdown: CancellationToken::new(),
             model_registry: Arc::new(RwLock::new(ModelRegistry::new())),
+            agent_registry: Arc::new(RwLock::new(ServerAgentRegistry::new())),
             plugin_host,
         }
     }
@@ -149,6 +153,7 @@ impl AppState {
             assessment_broadcaster,
             consumer_shutdown: CancellationToken::new(),
             model_registry: Arc::new(RwLock::new(ModelRegistry::new())),
+            agent_registry: Arc::new(RwLock::new(ServerAgentRegistry::new())),
             plugin_host,
         }
     }
@@ -180,6 +185,7 @@ impl AppState {
             assessment_broadcaster,
             consumer_shutdown: CancellationToken::new(),
             model_registry: Arc::new(RwLock::new(ModelRegistry::new())),
+            agent_registry: Arc::new(RwLock::new(ServerAgentRegistry::new())),
             plugin_host,
         }
     }
@@ -222,6 +228,7 @@ impl AppState {
             assessment_broadcaster,
             consumer_shutdown: CancellationToken::new(),
             model_registry: Arc::new(RwLock::new(ModelRegistry::new())),
+            agent_registry: Arc::new(RwLock::new(ServerAgentRegistry::new())),
             plugin_host,
         })
     }
@@ -260,6 +267,7 @@ impl AppState {
             assessment_broadcaster,
             consumer_shutdown: CancellationToken::new(),
             model_registry: Arc::new(RwLock::new(ModelRegistry::new())),
+            agent_registry: Arc::new(RwLock::new(ServerAgentRegistry::new())),
             plugin_host,
         })
     }
@@ -359,6 +367,7 @@ impl AppState {
             assessment_broadcaster,
             consumer_shutdown: CancellationToken::new(),
             model_registry: Arc::new(RwLock::new(ModelRegistry::new())),
+            agent_registry: Arc::new(RwLock::new(ServerAgentRegistry::new())),
             plugin_host,
         }
     }
@@ -389,6 +398,7 @@ impl AppState {
             assessment_broadcaster,
             consumer_shutdown: CancellationToken::new(),
             model_registry: Arc::new(RwLock::new(ModelRegistry::new())),
+            agent_registry: Arc::new(RwLock::new(ServerAgentRegistry::new())),
             plugin_host,
         }
     }
