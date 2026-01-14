@@ -60,8 +60,9 @@
 }
 
 .trend-card__value {
-  font-family: var(--font-mono);
-  font-size: var(--font-size-xl);
+  font-family: var(--font-display);
+  font-size: var(--font-size-2xl);
+  font-weight: 400;
   color: var(--phosphor);
   text-shadow: 0 0 8px var(--phosphor-glow);
 }
