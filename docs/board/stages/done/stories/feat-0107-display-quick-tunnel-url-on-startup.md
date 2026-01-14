@@ -2,13 +2,13 @@
 id: FEAT0107
 title: Display quick tunnel URL on startup
 type: feat
-status: in-progress
+status: done
 priority: high
 epics: [networking]
 depends: []
 estimate: S
 created: 2026-01-13
-updated: 2026-01-13
+updated: 2026-01-14
 ---
 
 # Display quick tunnel URL on startup

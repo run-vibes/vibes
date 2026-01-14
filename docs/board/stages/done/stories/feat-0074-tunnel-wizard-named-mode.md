@@ -2,7 +2,7 @@
 id: feat-0074
 title: Tunnel Wizard - Named Mode
 type: feat
-status: in-progress
+status: done
 priority: medium
 epics: [cli, networking]
 milestone: 35-setup-wizards

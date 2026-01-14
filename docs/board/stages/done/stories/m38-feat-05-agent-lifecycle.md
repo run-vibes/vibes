@@ -2,7 +2,7 @@
 id: m38-feat-05
 title: Agent lifecycle management
 type: feat
-status: in-progress
+status: done
 priority: high
 epics: [agents]
 depends: [m38-feat-03, m38-feat-04]

@@ -1,15 +1,9 @@
-# Planning Board
-
-*Auto-generated from directory structure. Run `just board generate` to update.*
+Generated README.md
+uto-generated from directory structure. Run `just board generate` to update.*
 
 ## In Progress
 
-| Story | Type | Priority | Epics |
-|-------|------|----------|-------|
-| [feat-0074-tunnel-wizard-named-mode](stages/in-progress/stories/feat-0074-tunnel-wizard-named-mode.md) | feat | medium | cli,networking |
-| [feat-0107-display-quick-tunnel-url-on-startup](stages/in-progress/stories/feat-0107-display-quick-tunnel-url-on-startup.md) | feat | high | networking |
-| [m38-feat-05-agent-lifecycle](stages/in-progress/stories/m38-feat-05-agent-lifecycle.md) | feat | high | agents |
-| [m40-feat-01-observe-crate-skeleton](stages/in-progress/stories/m40-feat-01-observe-crate-skeleton.md) | feat | high | observability |
+*No stories in progress*
 
 ## Backlog
 
@@ -196,6 +190,7 @@
 - [feat-0071-setup-wizard-infrastructure](stages/done/stories/feat-0071-setup-wizard-infrastructure.md)
 - [feat-0072-cloudflared-state-detection](stages/done/stories/feat-0072-cloudflared-state-detection.md)
 - [feat-0073-tunnel-wizard-quick-mode](stages/done/stories/feat-0073-tunnel-wizard-quick-mode.md)
+- [feat-0074-tunnel-wizard-named-mode](stages/done/stories/feat-0074-tunnel-wizard-named-mode.md)
 - [feat-0079-openworld-page-and-routing](stages/done/stories/feat-0079-openworld-page-and-routing.md)
 - [feat-0080-openworld-backend-data-providers](stages/done/stories/feat-0080-openworld-backend-data-providers.md)
 - [feat-0081-novelty-tab-components](stages/done/stories/feat-0081-novelty-tab-components.md)
@@ -213,6 +208,7 @@
 - [feat-0104-show-ollama-models-in-web-ui](stages/done/stories/feat-0104-show-ollama-models-in-web-ui.md)
 - [feat-0105-add-ollama-autostart-config-option](stages/done/stories/feat-0105-add-ollama-autostart-config-option.md)
 - [feat-0106-add-gzip-and-brotli-compression-for-http-responses](stages/done/stories/feat-0106-add-gzip-and-brotli-compression-for-http-responses.md)
+- [feat-0107-display-quick-tunnel-url-on-startup](stages/done/stories/feat-0107-display-quick-tunnel-url-on-startup.md)
 - [m14-chore-01-design](stages/done/stories/m14-chore-01-design.md)
 - [m14-chore-02-implementation](stages/done/stories/m14-chore-02-implementation.md)
 - [m26-chore-01-eventbus-cleanup](stages/done/stories/m26-chore-01-eventbus-cleanup.md)
@@ -247,10 +243,12 @@
 - [m38-feat-01-agent-module-skeleton](stages/done/stories/m38-feat-01-agent-module-skeleton.md)
 - [m38-feat-02-agent-trait](stages/done/stories/m38-feat-02-agent-trait.md)
 - [m38-feat-03-agent-status](stages/done/stories/m38-feat-03-agent-status.md)
+- [m38-feat-05-agent-lifecycle](stages/done/stories/m38-feat-05-agent-lifecycle.md)
 - [m39-feat-01-evals-crate-skeleton](stages/done/stories/m39-feat-01-evals-crate-skeleton.md)
 - [m39-feat-02-longitudinal-metrics](stages/done/stories/m39-feat-02-longitudinal-metrics.md)
 - [m39-feat-03-eval-storage](stages/done/stories/m39-feat-03-eval-storage.md)
 - [m39-feat-04-study-lifecycle](stages/done/stories/m39-feat-04-study-lifecycle.md)
+- [m40-feat-01-observe-crate-skeleton](stages/done/stories/m40-feat-01-observe-crate-skeleton.md)
 - [m40-feat-02-opentelemetry-setup](stages/done/stories/m40-feat-02-opentelemetry-setup.md)
 - [refactor-0008-consolidate-assessment-types-module](stages/done/stories/refactor-0008-consolidate-assessment-types-module.md)
 - [refactor-0069-dashboard-visual-consistency](stages/done/stories/refactor-0069-dashboard-visual-consistency.md)
