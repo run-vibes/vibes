@@ -14,47 +14,49 @@ milestone: 39-eval-core
 
 ## Summary
 
-Implement the study lifecycle: create, checkpoint, and stop longitudinal studies. Studies track performance metrics over extended periods.
+Implement the study lifecycle using CQRS: commands emit events to Iggy, queries read from the Turso projection.
+
+See [milestone design](../../milestones/39-eval-core/design.md) for architecture.
 
 ## Features
 
-### LongitudinalStudy
+### Study Types
 
 ```rust
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct LongitudinalStudy {
+pub struct Study {
     pub id: StudyId,
     pub name: String,
-    pub started: DateTime<Utc>,
-    pub stopped: Option<DateTime<Utc>>,
-    pub period: StudyPeriod,
-    pub metrics: Vec<MetricDefinition>,
     pub status: StudyStatus,
+    pub period_type: PeriodType,
+    pub period_value: Option<u32>,
     pub config: StudyConfig,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub enum StudyPeriod {
-    Days(u32),
-    Weeks(u32),
-    Months(u32),
-    Indefinite,
+    pub created_at: DateTime<Utc>,
+    pub started_at: Option<DateTime<Utc>>,
+    pub stopped_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum StudyStatus {
-    Active,
+    Pending,
+    Running,
     Paused,
-    Completed,
-    Cancelled,
+    Stopped,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum PeriodType {
+    Hourly,
+    Daily,
+    Weekly,
+    Monthly,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct StudyConfig {
-    pub checkpoint_interval: Duration,
-    pub include_sessions: Option<Vec<SessionId>>,
-    pub exclude_sessions: Option<Vec<SessionId>>,
-    pub groove_enabled: bool,
+    pub description: Option<String>,
+    pub tags: Vec<String>,
+    pub metadata: HashMap<String, String>,
 }
 ```
 
@@ -68,56 +70,88 @@ pub struct Checkpoint {
     pub timestamp: DateTime<Utc>,
     pub metrics: LongitudinalMetrics,
     pub events_analyzed: u64,
-    pub sessions_included: Vec<SessionId>,
+    pub sessions_included: Vec<String>,
 }
 ```
 
-### StudyManager
+### StudyManager (CQRS)
 
 ```rust
 pub struct StudyManager {
-    storage: Box<dyn EvalStorage>,
+    event_log: Arc<dyn EventLog<StoredEvalEvent>>,  // Commands → Events
+    storage: Arc<dyn EvalStorage>,                   // Queries → Projection
 }
 
 impl StudyManager {
-    pub fn new(storage: Box<dyn EvalStorage>) -> Self;
+    pub fn new(
+        event_log: Arc<dyn EventLog<StoredEvalEvent>>,
+        storage: Arc<dyn EvalStorage>,
+    ) -> Self;
 
-    /// Create a new longitudinal study
-    pub async fn create_study(
-        &self,
-        name: String,
-        period: StudyPeriod,
-        config: StudyConfig,
-    ) -> Result<LongitudinalStudy>;
+    // Commands (emit events)
+    pub async fn create_study(&self, cmd: CreateStudy) -> Result<StudyId>;
+    pub async fn start_study(&self, id: StudyId) -> Result<()>;
+    pub async fn pause_study(&self, id: StudyId) -> Result<()>;
+    pub async fn resume_study(&self, id: StudyId) -> Result<()>;
+    pub async fn stop_study(&self, id: StudyId) -> Result<()>;
+    pub async fn record_checkpoint(&self, cmd: RecordCheckpoint) -> Result<CheckpointId>;
 
-    /// Record a checkpoint with current metrics
-    pub async fn checkpoint(&self, study_id: StudyId) -> Result<Checkpoint>;
+    // Queries (read from projection)
+    pub async fn get_study(&self, id: StudyId) -> Result<Option<Study>>;
+    pub async fn list_studies(&self) -> Result<Vec<Study>>;
+    pub async fn get_checkpoints(&self, study_id: StudyId) -> Result<Vec<Checkpoint>>;
+    pub async fn get_latest_checkpoint(&self, study_id: StudyId) -> Result<Option<Checkpoint>>;
+}
+```
 
-    /// Stop a running study
-    pub async fn stop_study(&self, study_id: StudyId) -> Result<()>;
+### Command Types
 
-    /// Get study status with latest metrics
-    pub async fn get_status(&self, study_id: StudyId) -> Result<StudyStatus>;
+```rust
+pub struct CreateStudy {
+    pub name: String,
+    pub period_type: PeriodType,
+    pub period_value: Option<u32>,
+    pub config: StudyConfig,
+}
 
-    /// List all studies
-    pub async fn list_studies(&self) -> Result<Vec<LongitudinalStudy>>;
+pub struct RecordCheckpoint {
+    pub study_id: StudyId,
+    pub metrics: LongitudinalMetrics,
+    pub events_analyzed: u64,
+    pub sessions_included: Vec<String>,
+}
+```
+
+### Projection Consumer
+
+```rust
+pub struct EvalProjectionConsumer {
+    event_log: Arc<dyn EventLog<StoredEvalEvent>>,
+    projection: Arc<dyn EvalProjection>,
+}
+
+impl EvalProjectionConsumer {
+    pub async fn run(&self) -> Result<()>;      // Main loop
+    pub async fn rebuild(&self) -> Result<()>;  // Replay all events
 }
 ```
 
 ## Implementation
 
-1. Create `vibes-evals/src/study.rs`
-2. Define study-related types
-3. Implement `StudyManager`
-4. Add automatic checkpoint scheduling (background task)
-5. Write unit tests for lifecycle transitions
-6. Write integration tests
+1. Define study types in `vibes-evals/src/study.rs`
+2. Define command types in `vibes-evals/src/commands.rs`
+3. Implement `StudyManager` with CQRS pattern
+4. Implement `EvalProjectionConsumer`
+5. Add consumer to server startup
+6. Write unit tests for lifecycle transitions
+7. Write integration tests
 
 ## Acceptance Criteria
 
-- [ ] `LongitudinalStudy` type with all fields
-- [ ] `StudyManager` creates and manages studies
-- [ ] Checkpoints capture metrics at intervals
-- [ ] Stop correctly finalizes studies
-- [ ] Study status reflects current state
+- [ ] `StudyManager` emits events for all commands
+- [ ] `StudyManager` queries projection for reads
+- [ ] `EvalProjectionConsumer` processes events
+- [ ] Lifecycle transitions emit correct events
+- [ ] Queries return correct projected state
+- [ ] Consumer can rebuild projection from scratch
 - [ ] Tests cover lifecycle transitions

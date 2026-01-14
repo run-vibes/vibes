@@ -89,12 +89,18 @@ Insights:
 
 ## Implementation
 
+**Note:** Commands use the event-sourced `StudyManager` from m39-feat-04.
+
 1. Add `eval` subcommand to `vibes-cli`
 2. Add `study` subcommand with operations
-3. Implement `start`, `stop`, `status` commands
-4. Implement `list`, `checkpoint`, `report` commands
-5. Add WebSocket messages for study operations
-6. Format output with consistent styling
+3. Implement commands using `StudyManager`:
+   - `start` → `StudyManager::create_study()` + `start_study()` (emits events)
+   - `stop` → `StudyManager::stop_study()` (emits event)
+   - `status`, `list` → `StudyManager::get_study()`, `list_studies()` (reads projection)
+   - `checkpoint` → `StudyManager::record_checkpoint()` (emits event)
+   - `report` → Query projection, format results
+4. Add WebSocket messages for study operations
+5. Format output with consistent styling
 
 ## Acceptance Criteria
 

@@ -62,13 +62,18 @@ Generated study reports showing:
 
 ## Implementation
 
+**Note:** Uses the event-sourced architecture from m39-feat-03/04.
+
 1. Add `/evals` route to web-ui
 2. Create `StudyList` component with status indicators
 3. Create `StudyDetail` component with charts
 4. Create `StartStudyModal` component
 5. Create `ReportView` component
-6. Add WebSocket handlers for study events
-7. Integrate charting library for visualizations
+6. Add WebSocket handlers for study events:
+   - Mutations send commands → server emits events
+   - Subscribe to eval event stream for real-time updates
+7. Queries read from Turso projection via API
+8. Integrate charting library for visualizations
 
 ## Acceptance Criteria
 

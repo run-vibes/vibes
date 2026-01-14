@@ -43,4 +43,5 @@ First milestone of the Evals epic. Establishes the foundation for evaluation: me
 
 ## Design
 
-See [../../epics/evals/README.md](../../epics/evals/README.md) for architecture.
+- [design.md](./design.md) - Event-sourced eval storage architecture
+- [../../epics/evals/README.md](../../epics/evals/README.md) - Evals epic overview
