@@ -96,18 +96,3 @@
   font-size: var(--font-size-sm);
   color: var(--text);
 }
-
-.trend-card__link {
-  margin-top: auto;
-  padding-top: var(--space-2);
-  font-family: var(--font-display);
-  font-size: var(--font-size-sm);
-  color: var(--phosphor);
-  text-decoration: none;
-  text-align: right;
-  transition: text-shadow var(--transition-fast);
-}
-
-.trend-card__link:hover {
-  text-shadow: 0 0 8px var(--phosphor-glow);
-}

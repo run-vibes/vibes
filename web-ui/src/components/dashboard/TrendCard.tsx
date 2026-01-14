@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { Card } from '@vibes/design-system';
 import { Sparkline } from '../charts/Sparkline';
 import './TrendCard.css';
+import './DashboardCards.css';
 
 export type TrendDirection = 'rising' | 'falling' | 'stable';
 
@@ -36,8 +37,18 @@ export function TrendCard({
   href,
 }: TrendCardProps) {
   return (
-    <Card variant="crt" title={title} className="trend-card">
-
+    <Card
+      variant="crt"
+      title={title}
+      className="trend-card"
+      footer={
+        href ? (
+          <Link to={href} className="card-footer-link">
+            View →
+          </Link>
+        ) : undefined
+      }
+    >
       {sparklineData && sparklineData.length > 0 && (
         <div className="trend-card__sparkline" data-testid="sparkline-placeholder">
           <Sparkline data={sparklineData} width={120} height={32} showArea />
@@ -61,12 +72,6 @@ export function TrendCard({
             </div>
           ))}
         </div>
-      )}
-
-      {href && (
-        <Link to={href} className="trend-card__link">
-          View →
-        </Link>
       )}
     </Card>
   );
