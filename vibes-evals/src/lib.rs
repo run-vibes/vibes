@@ -8,4 +8,5 @@ mod storage;
 mod study;
 mod types;
 
+pub use metrics::{AggregationType, LongitudinalMetrics, MetricDefinition, MetricUnit, TimePeriod};
 pub use types::{BenchmarkId, CheckpointId, StudyId};
