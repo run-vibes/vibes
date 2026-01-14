@@ -50,11 +50,13 @@ pub fn print_success_to<W: Write>(w: &mut W, message: &str) -> io::Result<()> {
 }
 
 /// Prints an error message with a red X.
+#[allow(dead_code)]
 pub fn print_error(message: &str) {
     print_error_to(&mut io::stdout(), message).unwrap();
 }
 
 /// Prints an error message to a writer (for testing).
+#[allow(dead_code)]
 pub fn print_error_to<W: Write>(w: &mut W, message: &str) -> io::Result<()> {
     writeln!(w, "\n{} {}", style("✗").red().bold(), style(message).red())
 }

@@ -6,7 +6,7 @@ use anyhow::{Result, bail};
 use dialoguer::{Confirm, Input, Select, theme::ColorfulTheme};
 
 use super::cloudflared::{CloudflaredState, create_tunnel, list_tunnels, route_dns, run_login};
-use super::{print_error, print_header, print_step, print_success};
+use super::{print_header, print_step, print_success};
 use crate::config::ConfigLoader;
 
 /// Mode selection options for the tunnel wizard.
@@ -22,14 +22,9 @@ pub async fn run() -> Result<()> {
     let state = CloudflaredState::detect().await;
 
     if !state.installed {
-        print_error("cloudflared is not installed");
         println!();
-        println!("Install cloudflared to use tunnels:");
-        println!(
-            "  https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/"
-        );
-        println!();
-        bail!("cloudflared not installed");
+        show_install_instructions();
+        return Ok(());
     }
 
     let version = state.version.as_deref().unwrap_or("unknown");
@@ -179,6 +174,44 @@ fn validate_tunnel_name(name: &str) -> Result<()> {
         bail!("Tunnel name must contain only alphanumeric characters and hyphens");
     }
     Ok(())
+}
+
+/// Show platform-specific installation instructions for cloudflared.
+/// Returns the instructions as a String (for testability).
+fn get_install_instructions() -> String {
+    let current_os = std::env::consts::OS;
+
+    let mut output = String::new();
+    output.push_str("cloudflared is required for tunnel functionality.\n\n");
+    output.push_str("Install it using one of these methods:\n\n");
+
+    let instructions = [
+        ("macos", "  macOS:    brew install cloudflared"),
+        (
+            "linux",
+            "  Linux:    See https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/installation",
+        ),
+        (
+            "windows",
+            "  Windows:  winget install Cloudflare.cloudflared",
+        ),
+    ];
+
+    for (os, instruction) in instructions {
+        if os == current_os {
+            output.push_str(&format!("→ {}\n", instruction));
+        } else {
+            output.push_str(&format!("{}\n", instruction));
+        }
+    }
+
+    output.push_str("\nAfter installing, run 'vibes tunnel setup' again.\n");
+    output
+}
+
+/// Show installation instructions and exit gracefully.
+fn show_install_instructions() {
+    println!("{}", get_install_instructions());
 }
 
 /// Validate hostname (must contain dot, not start with dot).
@@ -454,5 +487,28 @@ mod tests {
         assert!(content.contains(r#"mode = "named""#));
         assert!(content.contains(r#"name = "prod-tunnel""#));
         assert!(content.contains(r#"hostname = "vibes.mysite.io""#));
+    }
+
+    // === Install instructions tests ===
+
+    fn get_install_instructions_output() -> String {
+        super::get_install_instructions()
+    }
+
+    #[test]
+    fn install_instructions_contains_all_platforms() {
+        let output = get_install_instructions_output();
+        assert!(output.contains("macOS"));
+        assert!(output.contains("brew install cloudflared"));
+        assert!(output.contains("Linux"));
+        assert!(output.contains("developers.cloudflare.com"));
+        assert!(output.contains("Windows"));
+        assert!(output.contains("winget install"));
+    }
+
+    #[test]
+    fn install_instructions_includes_rerun_message() {
+        let output = get_install_instructions_output();
+        assert!(output.contains("vibes tunnel setup"));
     }
 }
