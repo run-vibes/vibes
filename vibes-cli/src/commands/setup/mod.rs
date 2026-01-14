@@ -8,4 +8,5 @@ mod prompts;
 pub mod cloudflared;
 pub mod tunnel_wizard;
 
+#[allow(unused_imports)]
 pub use prompts::{print_error, print_header, print_step, print_success};

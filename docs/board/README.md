@@ -15,7 +15,6 @@
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
 | [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli,cross-platform |
-| [feat-0075-tunnel-wizard-no-cloudflared](stages/backlog/stories/feat-0075-tunnel-wizard-no-cloudflared.md) | feat | medium | cli,networking |
 | [feat-0076-auth-setup-wizard](stages/backlog/stories/feat-0076-auth-setup-wizard.md) | feat | medium | cli,networking |
 | [feat-0077-config-save-load](stages/backlog/stories/feat-0077-config-save-load.md) | feat | medium | cli,networking |
 | [feat-0078-connectivity-validation](stages/backlog/stories/feat-0078-connectivity-validation.md) | feat | medium | cli,networking |
@@ -191,6 +190,7 @@
 - [feat-0072-cloudflared-state-detection](stages/done/stories/feat-0072-cloudflared-state-detection.md)
 - [feat-0073-tunnel-wizard-quick-mode](stages/done/stories/feat-0073-tunnel-wizard-quick-mode.md)
 - [feat-0074-tunnel-wizard-named-mode](stages/done/stories/feat-0074-tunnel-wizard-named-mode.md)
+- [feat-0075-tunnel-wizard-no-cloudflared](stages/done/stories/feat-0075-tunnel-wizard-no-cloudflared.md)
 - [feat-0079-openworld-page-and-routing](stages/done/stories/feat-0079-openworld-page-and-routing.md)
 - [feat-0080-openworld-backend-data-providers](stages/done/stories/feat-0080-openworld-backend-data-providers.md)
 - [feat-0081-novelty-tab-components](stages/done/stories/feat-0081-novelty-tab-components.md)

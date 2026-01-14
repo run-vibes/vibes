@@ -2,7 +2,7 @@
 id: feat-0075
 title: Tunnel Wizard - No Cloudflared
 type: feat
-status: pending
+status: done
 priority: medium
 epics: [cli, networking]
 milestone: 35-setup-wizards
@@ -18,14 +18,14 @@ Users who don't have cloudflared installed shouldn't see a cryptic error. The wi
 
 ## Acceptance Criteria
 
-- [ ] Detect when cloudflared is not installed
-- [ ] Show clear message explaining cloudflared is required
-- [ ] Show platform-specific install instructions:
+- [x] Detect when cloudflared is not installed
+- [x] Show clear message explaining cloudflared is required
+- [x] Show platform-specific install instructions:
   - macOS: `brew install cloudflared`
   - Linux: Link to Cloudflare docs
   - Windows: `winget install Cloudflare.cloudflared`
-- [ ] Exit gracefully (exit code 0, not an error)
-- [ ] Tell user to run `vibes tunnel setup` again after installing
+- [x] Exit gracefully (exit code 0, not an error)
+- [x] Tell user to run `vibes tunnel setup` again after installing
 
 ## Technical Notes
 
