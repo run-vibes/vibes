@@ -1,10 +1,11 @@
-# Planning Board
-
-*Auto-generated from directory structure. Run `just board generate` to update.*
+Generated README.md
+uto-generated from directory structure. Run `just board generate` to update.*
 
 ## In Progress
 
-*No stories in progress*
+| Story | Type | Priority | Epics |
+|-------|------|----------|-------|
+| [m40-feat-01-observe-crate-skeleton](stages/in-progress/stories/m40-feat-01-observe-crate-skeleton.md) | feat | high | observability |
 
 ## Backlog
 
@@ -29,7 +30,6 @@
 | [m39-feat-04-study-lifecycle](stages/backlog/stories/m39-feat-04-study-lifecycle.md) | feat | high | evals |
 | [m39-feat-05-eval-cli](stages/backlog/stories/m39-feat-05-eval-cli.md) | feat | medium | evals |
 | [m39-feat-06-eval-web-ui](stages/backlog/stories/m39-feat-06-eval-web-ui.md) | feat | medium | evals |
-| [m40-feat-01-observe-crate-skeleton](stages/backlog/stories/m40-feat-01-observe-crate-skeleton.md) | feat | high | observability |
 | [m40-feat-02-opentelemetry-setup](stages/backlog/stories/m40-feat-02-opentelemetry-setup.md) | feat | high | observability |
 | [m40-feat-03-trace-context](stages/backlog/stories/m40-feat-03-trace-context.md) | feat | high | observability |
 | [m40-feat-04-instrument-key-functions](stages/backlog/stories/m40-feat-04-instrument-key-functions.md) | feat | high | observability |
