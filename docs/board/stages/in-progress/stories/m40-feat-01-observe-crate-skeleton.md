@@ -2,7 +2,7 @@
 id: m40-feat-01
 title: vibes-observe crate skeleton
 type: feat
-status: backlog
+status: in-progress
 priority: high
 epics: [observability]
 depends: []
