@@ -132,6 +132,60 @@ pub enum RoutingRule {
 | Ollama | Chat, Embeddings, Pull models | High |
 | llama.cpp | Chat, GGUF models | Medium |
 
+## Provider Configuration
+
+### Ollama
+
+Ollama runs locally and requires no API key. The provider connects to Ollama's REST API.
+
+**Default URL:** `http://localhost:11434`
+
+**Environment Variables:**
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `OLLAMA_HOST` | Base URL for Ollama API | `http://localhost:11434` |
+
+**Usage:**
+
+```rust
+use vibes_models::providers::OllamaProvider;
+
+// Use default URL (localhost:11434)
+let provider = OllamaProvider::new();
+
+// Use custom URL (e.g., remote server)
+let provider = OllamaProvider::with_base_url("http://192.168.1.100:11434");
+
+// Discover installed models
+provider.refresh_models().await?;
+let models = provider.models();
+
+// Chat with a model
+let request = ChatRequest::new("llama3:latest", vec![
+    Message::user("Hello!")
+]);
+let response = provider.chat(request).await?;
+```
+
+**Requirements:**
+
+1. Install Ollama: https://ollama.ai
+2. Start the server: `ollama serve`
+3. Pull a model: `ollama pull llama3`
+
+**Model Discovery:**
+
+Models are discovered dynamically via the `/api/tags` endpoint. Call `refresh_models()` to update the cached list. All Ollama models are marked with `local: true` in `ModelInfo`.
+
+**Error Handling:**
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| Connection refused | Ollama not running | Start with `ollama serve` |
+| Model not found | Model not installed | Run `ollama pull <model>` |
+| Timeout | Slow inference or large model | Increase timeout or use smaller model |
+
 ## Response Caching
 
 ```rust

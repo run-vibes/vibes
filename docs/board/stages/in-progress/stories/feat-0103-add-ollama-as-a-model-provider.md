@@ -60,3 +60,21 @@ vibes-models/src/providers/
 
 - Connection refused → "Ollama not running. Start with `ollama serve`"
 - Model not found → "Model not installed. Run `ollama pull <model>`"
+
+### Configuration
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `OLLAMA_HOST` | Base URL for Ollama API | `http://localhost:11434` |
+
+**Programmatic:**
+
+```rust
+// Default (localhost:11434)
+let provider = OllamaProvider::new();
+
+// Custom URL
+let provider = OllamaProvider::with_base_url("http://192.168.1.100:11434");
+```
+
+See `docs/board/epics/models/README.md` for full configuration documentation.
