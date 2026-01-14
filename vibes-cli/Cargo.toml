@@ -14,6 +14,7 @@ path = "src/main.rs"
 vibes-core = { path = "../vibes-core" }
 vibes-groove = { path = "../plugins/vibes-groove" }
 vibes-models = { path = "../vibes-models" }
+vibes-observe = { path = "../vibes-observe" }
 vibes-paths = { path = "../vibes-paths" }
 vibes-plugin-api = { path = "../vibes-plugin-api" }
 vibes-server = { path = "../vibes-server" }
@@ -38,6 +39,7 @@ base64 = "0.22"
 comfy-table = "7"
 dialoguer = "0.11"
 thiserror = { workspace = true }
+urlencoding = "2"
 which = "7"
 
 [target.'cfg(unix)'.dependencies]

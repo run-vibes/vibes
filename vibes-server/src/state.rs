@@ -17,6 +17,8 @@ use vibes_iggy::{
 use vibes_models::ModelRegistry;
 use vibes_plugin_api::PluginAssessmentResult;
 
+use vibes_observe::TraceEvent;
+
 use crate::ws::{CheckpointInfo, StudyInfo};
 
 /// PTY output event for broadcasting to attached clients
@@ -69,6 +71,8 @@ pub struct AppState {
     iggy_manager: Option<Arc<IggyManager>>,
     /// Broadcast channel for assessment results from plugins
     assessment_broadcaster: broadcast::Sender<PluginAssessmentResult>,
+    /// Broadcast channel for trace events from tracing subscriber
+    trace_broadcaster: broadcast::Sender<TraceEvent>,
     /// Shutdown token for EventLog consumers
     consumer_shutdown: CancellationToken,
     /// Model registry for AI model discovery
@@ -97,6 +101,7 @@ impl AppState {
         let (event_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let (pty_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let (assessment_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
+        let (trace_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let pty_manager = Arc::new(RwLock::new(PtyManager::new(PtyConfig::default())));
 
         Self {
@@ -111,6 +116,7 @@ impl AppState {
             pty_manager,
             iggy_manager: None,
             assessment_broadcaster,
+            trace_broadcaster,
             consumer_shutdown: CancellationToken::new(),
             model_registry: Arc::new(RwLock::new(ModelRegistry::new())),
             agent_registry: Arc::new(RwLock::new(ServerAgentRegistry::new())),
@@ -143,6 +149,7 @@ impl AppState {
         let (event_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let (pty_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let (assessment_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
+        let (trace_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let pty_manager = Arc::new(RwLock::new(PtyManager::new(PtyConfig::default())));
 
         Self {
@@ -157,6 +164,7 @@ impl AppState {
             pty_broadcaster,
             iggy_manager: None,
             assessment_broadcaster,
+            trace_broadcaster,
             consumer_shutdown: CancellationToken::new(),
             model_registry: Arc::new(RwLock::new(ModelRegistry::new())),
             agent_registry: Arc::new(RwLock::new(ServerAgentRegistry::new())),
@@ -176,6 +184,7 @@ impl AppState {
         let (event_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let (pty_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let (assessment_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
+        let (trace_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let pty_manager = Arc::new(RwLock::new(PtyManager::new(PtyConfig::default())));
 
         Self {
@@ -190,6 +199,7 @@ impl AppState {
             pty_manager,
             iggy_manager: None,
             assessment_broadcaster,
+            trace_broadcaster,
             consumer_shutdown: CancellationToken::new(),
             model_registry: Arc::new(RwLock::new(ModelRegistry::new())),
             agent_registry: Arc::new(RwLock::new(ServerAgentRegistry::new())),
@@ -220,6 +230,7 @@ impl AppState {
         let (event_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let (pty_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let (assessment_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
+        let (trace_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let pty_manager = Arc::new(RwLock::new(PtyManager::new(PtyConfig::default())));
 
         Ok(Self {
@@ -234,6 +245,7 @@ impl AppState {
             pty_manager,
             iggy_manager,
             assessment_broadcaster,
+            trace_broadcaster,
             consumer_shutdown: CancellationToken::new(),
             model_registry: Arc::new(RwLock::new(ModelRegistry::new())),
             agent_registry: Arc::new(RwLock::new(ServerAgentRegistry::new())),
@@ -260,6 +272,7 @@ impl AppState {
         let (event_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let (pty_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let (assessment_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
+        let (trace_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let pty_manager = Arc::new(RwLock::new(PtyManager::new(PtyConfig::default())));
 
         Ok(Self {
@@ -274,6 +287,7 @@ impl AppState {
             pty_manager,
             iggy_manager,
             assessment_broadcaster,
+            trace_broadcaster,
             consumer_shutdown: CancellationToken::new(),
             model_registry: Arc::new(RwLock::new(ModelRegistry::new())),
             agent_registry: Arc::new(RwLock::new(ServerAgentRegistry::new())),
@@ -361,6 +375,7 @@ impl AppState {
         let (event_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let (pty_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let (assessment_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
+        let (trace_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let pty_manager = Arc::new(RwLock::new(PtyManager::new(PtyConfig::default())));
 
         Self {
@@ -375,6 +390,7 @@ impl AppState {
             pty_manager,
             iggy_manager: None,
             assessment_broadcaster,
+            trace_broadcaster,
             consumer_shutdown: CancellationToken::new(),
             model_registry: Arc::new(RwLock::new(ModelRegistry::new())),
             agent_registry: Arc::new(RwLock::new(ServerAgentRegistry::new())),
@@ -393,6 +409,7 @@ impl AppState {
         let (event_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let (pty_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let (assessment_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
+        let (trace_broadcaster, _) = broadcast::channel(DEFAULT_BROADCAST_CAPACITY);
         let pty_manager = Arc::new(RwLock::new(PtyManager::new(PtyConfig::default())));
 
         Self {
@@ -407,6 +424,7 @@ impl AppState {
             pty_manager,
             iggy_manager: None,
             assessment_broadcaster,
+            trace_broadcaster,
             consumer_shutdown: CancellationToken::new(),
             model_registry: Arc::new(RwLock::new(ModelRegistry::new())),
             agent_registry: Arc::new(RwLock::new(ServerAgentRegistry::new())),
@@ -542,6 +560,21 @@ impl AppState {
     /// Returns 0 if there are no active subscribers.
     pub fn broadcast_pty_event(&self, event: PtyEvent) -> usize {
         self.pty_broadcaster.send(event).unwrap_or(0)
+    }
+
+    /// Subscribe to trace events from the tracing subscriber
+    ///
+    /// Returns a receiver that will receive TraceEvents as spans complete.
+    pub fn subscribe_traces(&self) -> broadcast::Receiver<TraceEvent> {
+        self.trace_broadcaster.subscribe()
+    }
+
+    /// Get the trace broadcaster sender for TraceBroadcaster integration.
+    ///
+    /// This sender is passed to the TraceBroadcaster layer during tracing setup
+    /// so it can broadcast span completions to WebSocket clients.
+    pub fn trace_broadcaster(&self) -> broadcast::Sender<TraceEvent> {
+        self.trace_broadcaster.clone()
     }
 
     /// Returns how long the server has been running

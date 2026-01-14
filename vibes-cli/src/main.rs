@@ -82,6 +82,8 @@ enum Commands {
     Event(commands::event::EventArgs),
     /// Manage AI models and credentials
     Models(commands::models::ModelsArgs),
+    /// View and manage observability traces
+    Observe(commands::observe::ObserveArgs),
     /// Manage plugins
     Plugin(commands::plugin::PluginArgs),
     /// Run the vibes server
@@ -116,6 +118,7 @@ async fn main() -> Result<()> {
         Commands::Eval(args) => commands::eval::run(args).await,
         Commands::Event(args) => commands::event::run(args).await,
         Commands::Models(args) => commands::models::run(args).await,
+        Commands::Observe(args) => commands::observe::run(args).await,
         Commands::Plugin(args) => commands::plugin::run(args),
         Commands::Serve(args) => commands::serve::run(args).await,
         Commands::Sessions(args) => commands::sessions::run(args).await,

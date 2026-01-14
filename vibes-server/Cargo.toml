@@ -9,6 +9,7 @@ repository.workspace = true
 vibes-core = { path = "../vibes-core" }
 vibes-iggy = { path = "../vibes-iggy" }
 vibes-models = { path = "../vibes-models" }
+vibes-observe = { path = "../vibes-observe" }
 tokio-util = { version = "0.7", features = ["rt"] }
 axum = { version = "0.7", features = ["ws"] }
 tokio.workspace = true

@@ -923,6 +923,19 @@ async fn handle_text_message(
                 }
             }
         }
+
+        // Trace subscription handled by dedicated trace handler
+        ClientMessage::SubscribeTraces { .. } | ClientMessage::UnsubscribeTraces => {
+            // These messages are handled by the trace WebSocket endpoint
+            // If received here, it means the client connected to the wrong endpoint
+            let error_msg = ServerMessage::Error {
+                session_id: None,
+                message: "Trace subscription requires the /ws/traces endpoint".to_string(),
+                code: "WRONG_ENDPOINT".to_string(),
+            };
+            let json = serde_json::to_string(&error_msg)?;
+            sender.send(Message::Text(json)).await?;
+        }
     }
 
     Ok(())
