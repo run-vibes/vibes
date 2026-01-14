@@ -113,7 +113,7 @@ async fn main() -> Result<()> {
         Commands::Plugin(args) => commands::plugin::run(args),
         Commands::Serve(args) => commands::serve::run(args).await,
         Commands::Sessions(args) => commands::sessions::run(args).await,
-        Commands::Tunnel(args) => commands::tunnel::run(args),
+        Commands::Tunnel(args) => commands::tunnel::run(args).await,
         Commands::External(args) => commands::plugin_dispatch::run(args),
     }
 }

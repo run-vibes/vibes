@@ -3,6 +3,8 @@
 use anyhow::Result;
 use clap::{Args, Subcommand};
 
+use super::setup::tunnel_wizard;
+
 /// Arguments for the tunnel command
 #[derive(Debug, Args)]
 pub struct TunnelArgs {
@@ -13,7 +15,7 @@ pub struct TunnelArgs {
 /// Tunnel subcommands
 #[derive(Debug, Subcommand)]
 pub enum TunnelCommand {
-    /// Interactive setup wizard for named tunnel
+    /// Interactive setup wizard for tunnel configuration
     Setup,
     /// Start the tunnel
     Start,
@@ -26,9 +28,9 @@ pub enum TunnelCommand {
 }
 
 /// Run the tunnel command
-pub fn run(args: TunnelArgs) -> Result<()> {
+pub async fn run(args: TunnelArgs) -> Result<()> {
     match args.command {
-        TunnelCommand::Setup => run_setup(),
+        TunnelCommand::Setup => run_setup().await,
         TunnelCommand::Start => run_start(),
         TunnelCommand::Stop => run_stop(),
         TunnelCommand::Status => run_status(),
@@ -36,8 +38,8 @@ pub fn run(args: TunnelArgs) -> Result<()> {
     }
 }
 
-fn run_setup() -> Result<()> {
-    println!("Tunnel setup wizard - coming soon");
+async fn run_setup() -> Result<()> {
+    tunnel_wizard::run().await?;
     Ok(())
 }
 
