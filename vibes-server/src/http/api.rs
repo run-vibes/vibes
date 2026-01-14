@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 use axum::{Extension, Json, extract::State};
 use serde::{Deserialize, Serialize};
+use tracing::instrument;
 use vibes_core::AuthContext;
 
 use crate::AppState;
@@ -24,6 +25,7 @@ pub struct HealthResponse {
 /// Health check endpoint
 ///
 /// Returns server status, version, uptime, and active session count.
+#[instrument(name = "api::health", skip_all)]
 pub async fn health(State(state): State<Arc<AppState>>) -> Json<HealthResponse> {
     let pty_manager = state.pty_manager.read().await;
     let active_sessions = pty_manager.session_count();
@@ -57,6 +59,7 @@ pub struct SessionListResponse {
 }
 
 /// List all Claude sessions (PTY-based terminal sessions)
+#[instrument(name = "api::list_sessions", skip_all)]
 pub async fn list_sessions(State(state): State<Arc<AppState>>) -> Json<SessionListResponse> {
     use vibes_core::pty::PtyState;
 
@@ -99,6 +102,7 @@ pub struct TunnelStatusResponse {
 }
 
 /// GET /api/tunnel/status - Get tunnel status
+#[instrument(name = "api::tunnel_status", skip_all)]
 pub async fn get_tunnel_status(State(state): State<Arc<AppState>>) -> Json<TunnelStatusResponse> {
     let manager = state.tunnel_manager.read().await;
     let tunnel_state = manager.state().await;
@@ -152,6 +156,7 @@ pub struct AuthIdentityResponse {
 }
 
 /// GET /api/auth/status - Get current auth status
+#[instrument(name = "api::auth_status", skip_all)]
 pub async fn get_auth_status(
     Extension(auth_context): Extension<AuthContext>,
 ) -> Json<AuthStatusResponse> {

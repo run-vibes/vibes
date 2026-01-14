@@ -2,7 +2,7 @@
 id: m40-feat-04
 title: Instrument key functions with spans
 type: feat
-status: backlog
+status: done
 priority: high
 epics: [observability]
 depends: [m40-feat-03]
@@ -85,9 +85,9 @@ async fn fallible_operation() -> Result<()> {
 
 ## Acceptance Criteria
 
-- [ ] Server handlers instrumented
-- [ ] Session methods instrumented
-- [ ] Agent lifecycle methods instrumented
-- [ ] Span names follow conventions
-- [ ] Errors recorded on spans
-- [ ] No performance regression (benchmark)
+- [x] Server handlers instrumented
+- [x] Session methods instrumented
+- [x] Agent lifecycle methods instrumented
+- [x] Span names follow conventions
+- [x] Errors recorded on spans
+- [x] No performance regression (benchmark)

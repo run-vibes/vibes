@@ -3,6 +3,7 @@
 //! A minimal agent implementation that runs locally, useful for tests.
 
 use async_trait::async_trait;
+use tracing::instrument;
 
 use super::task::{Task, TaskResult, TaskStatus};
 use super::traits::Agent;
@@ -65,6 +66,7 @@ impl Agent for LocalAgent {
         &self.context
     }
 
+    #[instrument(name = "agent::run", skip(self, task), fields(agent_id = %self.id, task_id = %task.id))]
     async fn run(&mut self, task: Task) -> VibesResult<TaskResult> {
         use chrono::Utc;
         use std::time::Duration;
@@ -91,6 +93,7 @@ impl Agent for LocalAgent {
         })
     }
 
+    #[instrument(name = "agent::pause", skip(self), fields(agent_id = %self.id))]
     async fn pause(&mut self) -> VibesResult<()> {
         if let AgentStatus::Running { task, .. } = &self.status {
             self.status = AgentStatus::Paused {
@@ -101,6 +104,7 @@ impl Agent for LocalAgent {
         Ok(())
     }
 
+    #[instrument(name = "agent::resume", skip(self), fields(agent_id = %self.id))]
     async fn resume(&mut self) -> VibesResult<()> {
         if let AgentStatus::Paused { task, .. } = &self.status {
             self.status = AgentStatus::Running {
@@ -111,6 +115,7 @@ impl Agent for LocalAgent {
         Ok(())
     }
 
+    #[instrument(name = "agent::cancel", skip(self), fields(agent_id = %self.id))]
     async fn cancel(&mut self) -> VibesResult<()> {
         self.status = AgentStatus::Idle;
         Ok(())

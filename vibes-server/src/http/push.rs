@@ -9,6 +9,7 @@ use axum::{
     response::IntoResponse,
 };
 use serde::{Deserialize, Serialize};
+use tracing::instrument;
 use vibes_core::{PushSubscription, SubscriptionKeys};
 
 use crate::AppState;
@@ -78,6 +79,7 @@ pub struct PushErrorResponse {
 }
 
 /// GET /api/push/vapid-key - Get public VAPID key for push subscription
+#[instrument(name = "api::push::vapid_key", skip_all)]
 pub async fn get_vapid_key(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     match &state.vapid {
         Some(vapid) => {
@@ -97,6 +99,7 @@ pub async fn get_vapid_key(State(state): State<Arc<AppState>>) -> impl IntoRespo
 }
 
 /// POST /api/push/subscribe - Subscribe to push notifications
+#[instrument(name = "api::push::subscribe", skip_all)]
 pub async fn subscribe(
     State(state): State<Arc<AppState>>,
     Json(request): Json<SubscribeRequest>,
@@ -143,6 +146,7 @@ pub async fn subscribe(
 }
 
 /// DELETE /api/push/subscribe/:id - Unsubscribe from push notifications
+#[instrument(name = "api::push::unsubscribe", skip_all, fields(subscription_id = %id))]
 pub async fn unsubscribe(
     State(state): State<Arc<AppState>>,
     Path(id): Path<String>,
@@ -180,6 +184,7 @@ pub async fn unsubscribe(
 }
 
 /// GET /api/push/subscriptions - List all subscriptions
+#[instrument(name = "api::push::list_subscriptions", skip_all)]
 pub async fn list_subscriptions(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     let subscriptions = match &state.subscriptions {
         Some(s) => s,

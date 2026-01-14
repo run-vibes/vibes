@@ -9,6 +9,7 @@ use axum::{
     middleware::Next,
     response::Response,
 };
+use tracing::instrument;
 use vibes_core::{AccessConfig, AuthContext, AuthError, JwtValidator};
 
 /// Header name for Cloudflare Access JWT
@@ -76,6 +77,7 @@ fn extract_jwt(request: &Request) -> Option<String> {
 }
 
 /// Authentication middleware function
+#[instrument(name = "middleware::auth", skip_all)]
 pub async fn auth_middleware(
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     axum::Extension(auth): axum::Extension<AuthLayer>,
