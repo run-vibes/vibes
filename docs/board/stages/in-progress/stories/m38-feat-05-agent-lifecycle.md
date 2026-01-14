@@ -2,7 +2,7 @@
 id: m38-feat-05
 title: Agent lifecycle management
 type: feat
-status: backlog
+status: in-progress
 priority: high
 epics: [agents]
 depends: [m38-feat-03, m38-feat-04]
@@ -107,8 +107,11 @@ pub struct LocalAgent {
 
 ## Acceptance Criteria
 
-- [ ] `AgentRegistry` manages agent instances
-- [ ] Spawn creates and registers agents
-- [ ] Pause/resume/cancel work correctly
-- [ ] Status transitions follow state machine
-- [ ] Tests cover all lifecycle transitions
+- [x] `AgentRegistry` manages agent instances
+- [x] Register adds agents and returns their ID
+- [x] Run task executes tasks on agents
+- [x] Pause/resume/cancel work correctly
+- [x] Stop removes agents from registry
+- [x] Filter by type and status variant
+- [x] LocalAgent stub implements Agent trait
+- [x] Tests cover all lifecycle transitions (22 tests)

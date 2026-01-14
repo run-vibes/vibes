@@ -21,6 +21,9 @@ pub type VibesResult<T> = std::result::Result<T, VibesError>;
 /// Errors related to agent operations
 #[derive(Error, Debug)]
 pub enum AgentError {
+    #[error("Agent not found: {0}")]
+    NotFound(String),
+
     #[error("Operation not supported: {0}")]
     NotSupported(String),
 
