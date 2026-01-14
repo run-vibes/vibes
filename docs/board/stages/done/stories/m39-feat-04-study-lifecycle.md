@@ -2,7 +2,7 @@
 id: m39-feat-04
 title: Study lifecycle management
 type: feat
-status: backlog
+status: done
 priority: high
 epics: [evals]
 depends: [m39-feat-03]
@@ -148,10 +148,10 @@ impl EvalProjectionConsumer {
 
 ## Acceptance Criteria
 
-- [ ] `StudyManager` emits events for all commands
-- [ ] `StudyManager` queries projection for reads
-- [ ] `EvalProjectionConsumer` processes events
-- [ ] Lifecycle transitions emit correct events
-- [ ] Queries return correct projected state
-- [ ] Consumer can rebuild projection from scratch
-- [ ] Tests cover lifecycle transitions
+- [x] `StudyManager` emits events for all commands
+- [x] `StudyManager` queries projection for reads
+- [x] `EvalProjectionConsumer` processes events
+- [x] Lifecycle transitions emit correct events
+- [x] Queries return correct projected state
+- [x] Consumer can rebuild projection from scratch
+- [x] Tests cover lifecycle transitions
