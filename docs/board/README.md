@@ -3,12 +3,7 @@ uto-generated from directory structure. Run `just board generate` to update.*
 
 ## In Progress
 
-| Story | Type | Priority | Epics |
-|-------|------|----------|-------|
-| [feat-0072-cloudflared-state-detection](stages/in-progress/stories/feat-0072-cloudflared-state-detection.md) | feat | medium | cli,networking |
-| [feat-0104-show-ollama-models-in-web-ui](stages/in-progress/stories/feat-0104-show-ollama-models-in-web-ui.md) | feat | medium | web-ui |
-| [feat-0106-add-gzip-and-brotli-compression-for-http-responses](stages/in-progress/stories/feat-0106-add-gzip-and-brotli-compression-for-http-responses.md) | feat | medium | web-ui |
-| [m39-feat-01-evals-crate-skeleton](stages/in-progress/stories/m39-feat-01-evals-crate-skeleton.md) | feat | high | evals |
+*No stories in progress*
 
 ## Backlog
 
@@ -202,6 +197,7 @@ uto-generated from directory structure. Run `just board generate` to update.*
 - [feat-0065-workflow-videos](stages/done/stories/feat-0065-workflow-videos.md)
 - [feat-0066-cli-recording](stages/done/stories/feat-0066-cli-recording.md)
 - [feat-0071-setup-wizard-infrastructure](stages/done/stories/feat-0071-setup-wizard-infrastructure.md)
+- [feat-0072-cloudflared-state-detection](stages/done/stories/feat-0072-cloudflared-state-detection.md)
 - [feat-0079-openworld-page-and-routing](stages/done/stories/feat-0079-openworld-page-and-routing.md)
 - [feat-0080-openworld-backend-data-providers](stages/done/stories/feat-0080-openworld-backend-data-providers.md)
 - [feat-0081-novelty-tab-components](stages/done/stories/feat-0081-novelty-tab-components.md)
@@ -216,7 +212,9 @@ uto-generated from directory structure. Run `just board generate` to update.*
 - [feat-0095-models-web-ui](stages/done/stories/feat-0095-models-web-ui.md)
 - [feat-0102-dashboard-trends-page](stages/done/stories/feat-0102-dashboard-trends-page.md)
 - [feat-0103-add-ollama-as-a-model-provider](stages/done/stories/feat-0103-add-ollama-as-a-model-provider.md)
+- [feat-0104-show-ollama-models-in-web-ui](stages/done/stories/feat-0104-show-ollama-models-in-web-ui.md)
 - [feat-0105-add-ollama-autostart-config-option](stages/done/stories/feat-0105-add-ollama-autostart-config-option.md)
+- [feat-0106-add-gzip-and-brotli-compression-for-http-responses](stages/done/stories/feat-0106-add-gzip-and-brotli-compression-for-http-responses.md)
 - [m14-chore-01-design](stages/done/stories/m14-chore-01-design.md)
 - [m14-chore-02-implementation](stages/done/stories/m14-chore-02-implementation.md)
 - [m26-chore-01-eventbus-cleanup](stages/done/stories/m26-chore-01-eventbus-cleanup.md)
@@ -249,6 +247,7 @@ uto-generated from directory structure. Run `just board generate` to update.*
 - [m37-feat-07-firehose](stages/done/stories/m37-feat-07-firehose.md)
 - [m37-feat-08-session-cards](stages/done/stories/m37-feat-08-session-cards.md)
 - [m38-feat-01-agent-module-skeleton](stages/done/stories/m38-feat-01-agent-module-skeleton.md)
+- [m39-feat-01-evals-crate-skeleton](stages/done/stories/m39-feat-01-evals-crate-skeleton.md)
 - [refactor-0008-consolidate-assessment-types-module](stages/done/stories/refactor-0008-consolidate-assessment-types-module.md)
 - [refactor-0069-dashboard-visual-consistency](stages/done/stories/refactor-0069-dashboard-visual-consistency.md)
 - [refactor-0070-design-system-extraction](stages/done/stories/refactor-0070-design-system-extraction.md)

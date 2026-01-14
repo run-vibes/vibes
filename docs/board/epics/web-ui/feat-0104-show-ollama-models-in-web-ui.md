@@ -1,1 +1,1 @@
-../../stages/in-progress/stories/feat-0104-show-ollama-models-in-web-ui.md
+../../stages/done/stories/feat-0104-show-ollama-models-in-web-ui.md

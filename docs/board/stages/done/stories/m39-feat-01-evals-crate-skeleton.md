@@ -2,7 +2,7 @@
 id: m39-feat-01
 title: vibes-evals crate skeleton
 type: feat
-status: in-progress
+status: done
 priority: high
 epics: [evals]
 depends: []

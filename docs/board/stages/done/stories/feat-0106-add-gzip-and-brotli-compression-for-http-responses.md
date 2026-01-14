@@ -2,7 +2,7 @@
 id: FEAT0106
 title: Add gzip and brotli compression for HTTP responses
 type: feat
-status: in-progress
+status: done
 priority: medium
 epics: [web-ui]
 depends: []
