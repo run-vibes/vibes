@@ -30,6 +30,47 @@
   font-size: var(--font-size-sm);
 }
 
+/* ─── Error Card State ────────────────────────────────────────────────────── */
+
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  text-align: center;
+}
+
+.error-state__icon {
+  font-size: var(--font-size-3xl);
+  color: var(--error, #ff4444);
+  text-shadow: 0 0 12px var(--error, #ff4444);
+  animation: error-flicker 2s ease-in-out infinite;
+}
+
+.error-state__message {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--font-size-sm);
+}
+
+.error-state__hint {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: var(--font-size-xs);
+}
+
+@keyframes error-flicker {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  25%, 75% {
+    opacity: 0.9;
+  }
+}
+
 @keyframes pulse {
   0%, 100% {
     opacity: 1;

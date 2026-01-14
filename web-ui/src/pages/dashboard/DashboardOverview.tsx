@@ -1,3 +1,4 @@
+import { Card } from '@vibes/design-system';
 import { useDashboardOverview, useDashboardStrategyDistributions } from '../../hooks';
 import { TrendCard } from '../../components/dashboard/TrendCard';
 import { LearningsCard } from '../../components/dashboard/LearningsCard';
@@ -23,7 +24,13 @@ export function DashboardOverview() {
   if (overviewError) {
     return (
       <div className="dashboard-page">
-        <p className="error-text">Failed to load dashboard. Please try again.</p>
+        <Card variant="crt" title="Connection Error">
+          <div className="error-state">
+            <span className="error-state__icon">⚠</span>
+            <p className="error-state__message">Failed to load dashboard.</p>
+            <p className="error-state__hint">Check that the vibes daemon is running and try again.</p>
+          </div>
+        </Card>
       </div>
     );
   }
