@@ -9,7 +9,10 @@ pub mod task;
 pub mod traits;
 pub mod types;
 
-pub use task::{Task, TaskResult};
+pub use task::{
+    Artifact, ArtifactType, Task, TaskBuilder, TaskConstraints, TaskContext, TaskMetrics,
+    TaskResult, TaskStatus,
+};
 pub use traits::Agent;
 pub use types::{
     AgentContext, AgentId, AgentStatus, AgentType, ExecutionLocation, ModelId, Permissions,
