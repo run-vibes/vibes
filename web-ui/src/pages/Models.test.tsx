@@ -218,6 +218,6 @@ describe('ModelsPage', () => {
 
     // Details panel should appear with model info
     expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByText(/\$3.*per million/i)).toBeInTheDocument();
+    expect(screen.getByText(/\$3\/M input/i)).toBeInTheDocument();
   });
 });

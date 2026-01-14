@@ -1,3 +1,4 @@
+import { EmptyState } from '@vibes/design-system';
 import { ContributorCard } from './ContributorCard';
 import { NegativeImpact } from './NegativeImpact';
 import { AblationCoverage } from './AblationCoverage';
@@ -50,7 +51,7 @@ export function Leaderboard({
       </header>
 
       {contributors.length === 0 ? (
-        <p className="leaderboard__empty">No attribution data available yet.</p>
+        <EmptyState message="No attribution data available yet" size="sm" />
       ) : (
         <div className="leaderboard__contributors">
           {contributors.map((entry, index) => (

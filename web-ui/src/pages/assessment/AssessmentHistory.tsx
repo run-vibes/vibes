@@ -1,6 +1,6 @@
 // web-ui/src/pages/assessment/AssessmentHistory.tsx
 import { useEffect, useState } from 'react';
-import { PageHeader } from '@vibes/design-system';
+import { PageHeader, EmptyState, Card } from '@vibes/design-system';
 import './AssessmentHistory.css';
 
 interface SessionHistoryItem {
@@ -110,9 +110,13 @@ export function AssessmentHistory() {
     return (
       <div className="history-page">
         <PageHeader title="HISTORY" />
-        <div className="history-empty">
-          <p>No assessment data available yet.</p>
-        </div>
+        <Card variant="crt">
+          <EmptyState
+            icon="📊"
+            message="No assessment data available yet"
+            hint="Assessment data will appear here after sessions are evaluated."
+          />
+        </Card>
       </div>
     );
   }

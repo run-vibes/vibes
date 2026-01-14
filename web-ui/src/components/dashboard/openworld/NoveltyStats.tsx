@@ -1,4 +1,4 @@
-import { Card, Metric } from '@vibes/design-system';
+import { Card, Metric, EmptyState } from '@vibes/design-system';
 import type { OpenWorldOverviewData } from '../../../hooks/useDashboard';
 import '../DashboardCards.css';
 
@@ -19,7 +19,7 @@ export function NoveltyStats({ data, isLoading }: NoveltyStatsProps) {
   if (!data) {
     return (
       <Card variant="crt" title="Novelty Detection" className="dashboard-card">
-        <p className="empty-text">No novelty data available</p>
+        <EmptyState message="No novelty data available" size="sm" />
       </Card>
     );
   }

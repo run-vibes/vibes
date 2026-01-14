@@ -1,3 +1,4 @@
+import { EmptyState } from '@vibes/design-system';
 import { SessionTimelineItem } from './SessionTimelineItem';
 import type { SessionTimelineEntry, SessionOutcome } from '../../../hooks/useDashboard';
 import './SessionTimeline.css';
@@ -107,7 +108,7 @@ export function SessionTimeline({
       </header>
 
       {sessions.length === 0 ? (
-        <p className="session-timeline__empty">No sessions found for this period.</p>
+        <EmptyState message="No sessions found for this period" size="sm" />
       ) : (
         <ul className="session-timeline__groups" role="list">
           {groupedSessions.map((group) => (

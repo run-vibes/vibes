@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { PageHeader, Card, EmptyState } from '@vibes/design-system';
 import { useModels, ModelInfo } from '../hooks/useModels';
 import './Models.css';
 
@@ -22,31 +23,28 @@ export function ModelsPage() {
   if (isLoading) {
     return (
       <div className="models-page">
-        <div className="models-header">
-          <h1>MODELS</h1>
-        </div>
-        <div className="models-content">
-          <div className="models-loading">Loading models...</div>
-        </div>
+        <PageHeader title="MODELS" />
+        <p className="models-loading">Loading models...</p>
       </div>
     );
   }
 
   return (
     <div className="models-page">
-      <div className="models-header">
-        <h1>MODELS</h1>
-      </div>
+      <PageHeader title="MODELS" />
 
-      <div className="models-content">
-        {models.length === 0 ? (
-          <div className="models-empty-state">
-            <p>No models registered.</p>
-            <p>Register a provider to see available models.</p>
-          </div>
-        ) : (
-          <>
-            <div className="models-filters">
+      {models.length === 0 ? (
+        <Card variant="crt">
+          <EmptyState
+            icon="⚡"
+            message="No models registered"
+            hint="Register a provider to see available models."
+          />
+        </Card>
+      ) : (
+        <div className="models-content">
+          <div className="models-filters">
+            <div className="models-filter">
               <label htmlFor="provider-filter">Provider</label>
               <select
                 id="provider-filter"
@@ -60,7 +58,9 @@ export function ModelsPage() {
                   </option>
                 ))}
               </select>
+            </div>
 
+            <div className="models-filter">
               <label htmlFor="capability-filter">Capability</label>
               <select
                 id="capability-filter"
@@ -74,7 +74,9 @@ export function ModelsPage() {
                 <option value="embeddings">Embeddings</option>
               </select>
             </div>
+          </div>
 
+          <Card variant="crt" noPadding>
             <div className="models-table-container">
               <table className="models-table">
                 <thead>
@@ -91,7 +93,7 @@ export function ModelsPage() {
                     return (
                       <tr
                         key={model.id}
-                        className="models-row-clickable"
+                        className="models-row"
                         onClick={() => setSelectedModel(model)}
                       >
                         <td className="provider-cell">
@@ -106,25 +108,25 @@ export function ModelsPage() {
                           )}
                         </td>
                         <td>{model.name}</td>
-                        <td>{formatContext(model.context_window)}</td>
-                        <td>{formatCapabilities(model.capabilities)}</td>
+                        <td className="context-cell">{formatContext(model.context_window)}</td>
+                        <td className="capabilities-cell">{formatCapabilities(model.capabilities)}</td>
                       </tr>
                     );
                   })}
                 </tbody>
               </table>
             </div>
+          </Card>
 
-            {selectedModel && (
-              <ModelDetailsPanel
-                model={selectedModel}
-                credentialSource={credentialMap.get(selectedModel.provider)}
-                onClose={() => setSelectedModel(null)}
-              />
-            )}
-          </>
-        )}
-      </div>
+          {selectedModel && (
+            <ModelDetailsPanel
+              model={selectedModel}
+              credentialSource={credentialMap.get(selectedModel.provider)}
+              onClose={() => setSelectedModel(null)}
+            />
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -138,50 +140,48 @@ interface ModelDetailsPanelProps {
 function ModelDetailsPanel({ model, credentialSource, onClose }: ModelDetailsPanelProps) {
   return (
     <div className="model-details-overlay" onClick={onClose}>
-      <div
+      <Card
+        variant="crt"
+        title={model.name}
         className="model-details-panel"
-        role="dialog"
-        aria-labelledby="model-details-title"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="model-details-header">
-          <h2 id="model-details-title">{model.name}</h2>
+        actions={
           <button className="model-details-close" onClick={onClose} aria-label="Close">
             ×
           </button>
-        </div>
-
-        <div className="model-details-content">
-          <dl className="model-details-list">
-            <dt>Provider</dt>
-            <dd>
-              {model.provider}
-              {credentialSource && (
-                <span className="auth-indicator" title={`Authenticated via ${credentialSource}`}>
-                  ✓
-                </span>
-              )}
-            </dd>
-
-            <dt>Context Window</dt>
-            <dd>{formatContext(model.context_window)} tokens</dd>
-
-            <dt>Capabilities</dt>
-            <dd>{formatCapabilities(model.capabilities)}</dd>
-
-            {model.pricing && (
-              <>
-                <dt>Pricing</dt>
-                <dd>
-                  ${model.pricing.input_per_million} per million input tokens
-                  <br />
-                  ${model.pricing.output_per_million} per million output tokens
-                </dd>
-              </>
+        }
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-labelledby="model-details-title"
+      >
+        <dl className="model-details-list">
+          <dt>Provider</dt>
+          <dd>
+            {model.provider}
+            {credentialSource && (
+              <span className="auth-indicator" title={`Authenticated via ${credentialSource}`}>
+                ✓
+              </span>
             )}
-          </dl>
-        </div>
-      </div>
+          </dd>
+
+          <dt>Context Window</dt>
+          <dd>{formatContext(model.context_window)} tokens</dd>
+
+          <dt>Capabilities</dt>
+          <dd>{formatCapabilities(model.capabilities)}</dd>
+
+          {model.pricing && (
+            <>
+              <dt>Pricing</dt>
+              <dd>
+                ${model.pricing.input_per_million}/M input
+                <br />
+                ${model.pricing.output_per_million}/M output
+              </dd>
+            </>
+          )}
+        </dl>
+      </Card>
     </div>
   );
 }
