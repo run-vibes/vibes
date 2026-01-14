@@ -2,7 +2,7 @@
 id: refactor-0099
 title: Improve SubnavBar Light Theme Readability
 type: refactor
-status: in-progress
+status: done
 priority: medium
 epics: [web-ui, design-system]
 ---

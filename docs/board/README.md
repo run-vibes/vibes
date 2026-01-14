@@ -3,9 +3,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
-| Story | Type | Priority | Epics |
-|-------|------|----------|-------|
-| [refactor-0099-subnav-light-theme](stages/in-progress/stories/refactor-0099-subnav-light-theme.md) | refactor | medium | web-ui,design-system |
+*No stories in progress*
 
 ## Backlog
 
@@ -249,6 +247,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 - [refactor-0096-groove-navigation-simplification](stages/done/stories/refactor-0096-groove-navigation-simplification.md)
 - [refactor-0097-unified-card-component](stages/done/stories/refactor-0097-unified-card-component.md)
 - [refactor-0098-models-page-styling](stages/done/stories/refactor-0098-models-page-styling.md)
+- [refactor-0099-subnav-light-theme](stages/done/stories/refactor-0099-subnav-light-theme.md)
 - [refactor-0100-responsive-header-navigation](stages/done/stories/refactor-0100-responsive-header-navigation.md)
 
 </details>
