@@ -2,7 +2,7 @@
 id: m38-feat-03
 title: AgentStatus and AgentContext types
 type: feat
-status: backlog
+status: done
 priority: high
 epics: [agents]
 depends: [m38-feat-02]
@@ -93,8 +93,8 @@ pub struct ResourceLimits {
 
 ## Acceptance Criteria
 
-- [ ] `AgentStatus` enum with all variants
-- [ ] `AgentContext` struct with location, model, tools, limits
-- [ ] `ExecutionLocation` enum (Local, Remote)
-- [ ] `ResourceLimits` with sensible defaults
-- [ ] Serialization tests pass
+- [x] `AgentStatus` enum with all variants
+- [x] `AgentContext` struct with location, model, tools, limits
+- [x] `ExecutionLocation` enum (Local, Remote)
+- [x] `ResourceLimits` with sensible defaults
+- [x] Serialization tests pass

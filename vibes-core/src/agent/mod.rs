@@ -11,4 +11,7 @@ pub mod types;
 
 pub use task::{Task, TaskResult};
 pub use traits::Agent;
-pub use types::{AgentContext, AgentId, AgentStatus, AgentType};
+pub use types::{
+    AgentContext, AgentId, AgentStatus, AgentType, ExecutionLocation, ModelId, Permissions,
+    ResourceLimits, TaskId, ToolId,
+};

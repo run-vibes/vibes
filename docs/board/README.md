@@ -1,5 +1,6 @@
-Generated README.md
-uto-generated from directory structure. Run `just board generate` to update.*
+# Planning Board
+
+*Auto-generated from directory structure. Run `just board generate` to update.*
 
 ## In Progress
 
@@ -21,7 +22,6 @@ uto-generated from directory structure. Run `just board generate` to update.*
 | [feat-0077-config-save-load](stages/backlog/stories/feat-0077-config-save-load.md) | feat | medium | cli,networking |
 | [feat-0078-connectivity-validation](stages/backlog/stories/feat-0078-connectivity-validation.md) | feat | medium | cli,networking |
 | [feat-0101-header-identity-display](stages/backlog/stories/feat-0101-header-identity-display.md) | feat | low | web-ui,design-system |
-| [m38-feat-03-agent-status](stages/backlog/stories/m38-feat-03-agent-status.md) | feat | high | agents |
 | [m38-feat-04-task-types](stages/backlog/stories/m38-feat-04-task-types.md) | feat | high | agents |
 | [m38-feat-05-agent-lifecycle](stages/backlog/stories/m38-feat-05-agent-lifecycle.md) | feat | high | agents |
 | [m38-feat-06-agent-cli](stages/backlog/stories/m38-feat-06-agent-cli.md) | feat | medium | agents |
@@ -247,6 +247,7 @@ uto-generated from directory structure. Run `just board generate` to update.*
 - [m37-feat-08-session-cards](stages/done/stories/m37-feat-08-session-cards.md)
 - [m38-feat-01-agent-module-skeleton](stages/done/stories/m38-feat-01-agent-module-skeleton.md)
 - [m38-feat-02-agent-trait](stages/done/stories/m38-feat-02-agent-trait.md)
+- [m38-feat-03-agent-status](stages/done/stories/m38-feat-03-agent-status.md)
 - [m39-feat-01-evals-crate-skeleton](stages/done/stories/m39-feat-01-evals-crate-skeleton.md)
 - [refactor-0008-consolidate-assessment-types-module](stages/done/stories/refactor-0008-consolidate-assessment-types-module.md)
 - [refactor-0069-dashboard-visual-consistency](stages/done/stories/refactor-0069-dashboard-visual-consistency.md)
