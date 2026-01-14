@@ -1,14 +1,10 @@
-# Planning Board
-
-> [!NOTE]
+Generated README.md
+[!NOTE]
 > Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
-| Story | Type | Priority | Epics |
-|-------|------|----------|-------|
-| [bug-0100-flaky-iggy-client-token-tests](stages/in-progress/stories/bug-0100-flaky-iggy-client-token-tests.md) | bug |  |  |
-| [feat-0103-add-ollama-as-a-model-provider](stages/in-progress/stories/feat-0103-add-ollama-as-a-model-provider.md) | feat | medium | models |
+*No stories in progress*
 
 ## Backlog
 
@@ -132,6 +128,7 @@
 - [bug-0005-dashboard-trends-route-not-found](stages/done/stories/bug-0005-dashboard-trends-route-not-found.md)
 - [bug-0089-iggy-not-working-on-macos](stages/done/stories/bug-0089-iggy-not-working-on-macos.md)
 - [bug-0090-fix-inconsistent-directory-paths-on-macos](stages/done/stories/bug-0090-fix-inconsistent-directory-paths-on-macos.md)
+- [bug-0100-flaky-iggy-client-token-tests](stages/done/stories/bug-0100-flaky-iggy-client-token-tests.md)
 - [chore-0001-nav-cleanup](stages/done/stories/chore-0001-nav-cleanup.md)
 - [chore-0002-firehose-filter-cleanup](stages/done/stories/chore-0002-firehose-filter-cleanup.md)
 - [chore-0003-assessment-tier-buttons](stages/done/stories/chore-0003-assessment-tier-buttons.md)
@@ -218,6 +215,7 @@
 - [feat-0094-models-cli-commands](stages/done/stories/feat-0094-models-cli-commands.md)
 - [feat-0095-models-web-ui](stages/done/stories/feat-0095-models-web-ui.md)
 - [feat-0102-dashboard-trends-page](stages/done/stories/feat-0102-dashboard-trends-page.md)
+- [feat-0103-add-ollama-as-a-model-provider](stages/done/stories/feat-0103-add-ollama-as-a-model-provider.md)
 - [m14-chore-01-design](stages/done/stories/m14-chore-01-design.md)
 - [m14-chore-02-implementation](stages/done/stories/m14-chore-02-implementation.md)
 - [m26-chore-01-eventbus-cleanup](stages/done/stories/m26-chore-01-eventbus-cleanup.md)

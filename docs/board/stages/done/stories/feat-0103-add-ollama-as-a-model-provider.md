@@ -2,7 +2,7 @@
 id: FEAT0103
 title: Add Ollama as a model provider
 type: feat
-status: in-progress
+status: done
 priority: medium
 epics: [models]
 depends: []

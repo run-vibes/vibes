@@ -2,6 +2,8 @@
 
 > Updated when items move to done. Most recent first.
 
+| 2026-01-13 | Add Ollama as a model provider | Added Ollama as a local model provider with CLI integration |
+| 2026-01-13 | Fix flaky iggy_client token cache tests | Fixed flaky Iggy client token refresh tests |
 | 2026-01-12 | Fix inconsistent directory paths on macOS | Implemented XDG paths consistently across all platforms |
 | 2026-01-12 | Iggy doesn't return events on macOS | Fixed by clearing stale Iggy state data |
 | 2026-01-11 | CLI commands (gaps) | CLI commands for capability gap management and openworld status |
