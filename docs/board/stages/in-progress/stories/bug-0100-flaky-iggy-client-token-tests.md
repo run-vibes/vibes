@@ -1,7 +1,7 @@
 ---
 title: Fix flaky iggy_client token cache tests
 type: bug
-status: backlog
+status: in-progress
 created: 2026-01-13
 ---
 
