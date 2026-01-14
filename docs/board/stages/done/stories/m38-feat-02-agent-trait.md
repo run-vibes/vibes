@@ -2,7 +2,7 @@
 id: m38-feat-02
 title: Agent trait definition
 type: feat
-status: backlog
+status: done
 priority: high
 epics: [agents]
 depends: [m38-feat-01]
