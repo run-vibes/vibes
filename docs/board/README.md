@@ -255,6 +255,7 @@
 - [m39-feat-02-longitudinal-metrics](stages/done/stories/m39-feat-02-longitudinal-metrics.md)
 - [m39-feat-03-eval-storage](stages/done/stories/m39-feat-03-eval-storage.md)
 - [m39-feat-04-study-lifecycle](stages/done/stories/m39-feat-04-study-lifecycle.md)
+- [m39-feat-07-wire-study-manager](stages/done/stories/m39-feat-07-wire-study-manager.md)
 - [m40-feat-01-observe-crate-skeleton](stages/done/stories/m40-feat-01-observe-crate-skeleton.md)
 - [m40-feat-02-opentelemetry-setup](stages/done/stories/m40-feat-02-opentelemetry-setup.md)
 - [m40-feat-03-trace-context](stages/done/stories/m40-feat-03-trace-context.md)
