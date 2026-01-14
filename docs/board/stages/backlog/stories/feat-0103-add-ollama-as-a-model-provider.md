@@ -4,7 +4,7 @@ title: Add Ollama as a model provider
 type: feat
 status: backlog
 priority: medium
-epics: []
+epics: [models]
 depends: []
 estimate: M
 created: 2026-01-13

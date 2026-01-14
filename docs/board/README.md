@@ -25,7 +25,7 @@
 | [feat-0077-config-save-load](stages/backlog/stories/feat-0077-config-save-load.md) | feat | medium | cli,networking |
 | [feat-0078-connectivity-validation](stages/backlog/stories/feat-0078-connectivity-validation.md) | feat | medium | cli,networking |
 | [feat-0101-header-identity-display](stages/backlog/stories/feat-0101-header-identity-display.md) | feat | low | web-ui,design-system |
-| [feat-0103-add-ollama-as-a-model-provider](stages/backlog/stories/feat-0103-add-ollama-as-a-model-provider.md) | feat | medium |  |
+| [feat-0103-add-ollama-as-a-model-provider](stages/backlog/stories/feat-0103-add-ollama-as-a-model-provider.md) | feat | medium | models |
 | [m38-feat-01-agent-module-skeleton](stages/backlog/stories/m38-feat-01-agent-module-skeleton.md) | feat | high | agents |
 | [m38-feat-02-agent-trait](stages/backlog/stories/m38-feat-02-agent-trait.md) | feat | high | agents |
 | [m38-feat-03-agent-status](stages/backlog/stories/m38-feat-03-agent-status.md) | feat | high | agents |
@@ -59,7 +59,7 @@
 | [evals](epics/evals/) | planned | 0 |
 | [groove](epics/groove/) | active | 0 |
 | [mobile](epics/mobile/) | active | 0 |
-| [models](epics/models/) | planned | 0 |
+| [models](epics/models/) | planned | 1 |
 | [networking](epics/networking/) | active | 0 |
 | [observability](epics/observability/) | planned | 0 |
 | [plugin-system](epics/plugin-system/) | active | 23 |
