@@ -13,8 +13,16 @@ export function AttributionCard({ data }: AttributionCardProps) {
   const negativeCount = data?.negative_count ?? 0;
 
   return (
-    <Card variant="crt" title="Attribution" className="dashboard-card">
-
+    <Card
+      variant="crt"
+      title="Attribution"
+      className="dashboard-card"
+      footer={
+        <Link to="/groove/dashboard/attribution" className="card-footer-link">
+          View →
+        </Link>
+      }
+    >
       <div className="dashboard-card__list">
         <span className="list-label">Top Contributors:</span>
         {topContributors.length > 0 ? (
@@ -48,10 +56,6 @@ export function AttributionCard({ data }: AttributionCardProps) {
           )}
         </div>
       )}
-
-      <Link to="/groove/dashboard/attribution" className="dashboard-card__link">
-        View →
-      </Link>
     </Card>
   );
 }

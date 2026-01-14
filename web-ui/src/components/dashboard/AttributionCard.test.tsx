@@ -130,10 +130,16 @@ describe('AttributionCard', () => {
     expect(screen.getByText('No data yet')).toBeInTheDocument();
   });
 
-  it('renders link to attribution page', () => {
-    render(<AttributionCard />);
+  it('renders link to attribution page in card footer', () => {
+    const { container } = render(<AttributionCard />);
 
-    expect(screen.getByText('View →')).toBeInTheDocument();
-    expect(screen.getByRole('link')).toHaveAttribute('href', '/groove/dashboard/attribution');
+    const link = screen.getByRole('link');
+    expect(link).toHaveTextContent('View →');
+    expect(link).toHaveAttribute('href', '/groove/dashboard/attribution');
+
+    // Link should be in Card's footer
+    const footerElement = container.querySelector('[class*="footer"]');
+    expect(footerElement).toBeInTheDocument();
+    expect(footerElement).toContainElement(link);
   });
 });

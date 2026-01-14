@@ -213,12 +213,10 @@
   font-style: italic;
 }
 
-/* ─── Link ────────────────────────────────────────────────────────────────── */
+/* ─── Footer Link ─────────────────────────────────────────────────────────── */
 
-.dashboard-card__link {
-  margin-top: auto;
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--border);
+/* Used inside Card's footer slot for consistent "View →" navigation links */
+.card-footer-link {
   color: var(--phosphor);
   text-decoration: none;
   font-size: var(--font-size-sm);
@@ -227,6 +225,6 @@
   transition: text-shadow var(--transition-fast);
 }
 
-.dashboard-card__link:hover {
+.card-footer-link:hover {
   text-shadow: 0 0 10px var(--phosphor-glow);
 }

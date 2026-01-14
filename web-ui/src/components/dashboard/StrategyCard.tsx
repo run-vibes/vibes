@@ -13,7 +13,16 @@ export function StrategyCard({ data }: StrategyCardProps) {
   const totalLearnings = data?.total_learnings ?? 0;
 
   return (
-    <Card variant="crt" title="Strategy" className="dashboard-card">
+    <Card
+      variant="crt"
+      title="Strategy"
+      className="dashboard-card"
+      footer={
+        <Link to="/groove/dashboard/strategy" className="card-footer-link">
+          View →
+        </Link>
+      }
+    >
       <div className="dashboard-card__metrics">
         <Metric label="Distributions" value={distributions.length} />
         <Metric label="Specialized" value={`${specializedCount}/${totalLearnings}`} />
@@ -32,10 +41,6 @@ export function StrategyCard({ data }: StrategyCardProps) {
           </ul>
         </div>
       )}
-
-      <Link to="/groove/dashboard/strategy" className="dashboard-card__link">
-        View →
-      </Link>
     </Card>
   );
 }

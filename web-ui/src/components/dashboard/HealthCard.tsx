@@ -54,6 +54,11 @@ export function HealthCard({ data }: HealthCardProps) {
           data-testid="status-indicator"
         />
       }
+      footer={
+        <Link to="/groove/dashboard/health" className="card-footer-link">
+          View →
+        </Link>
+      }
     >
       <div className="dashboard-card__metrics">
         <Metric label="Assessment" value={`${assessment_coverage}%`} />
@@ -65,10 +70,6 @@ export function HealthCard({ data }: HealthCardProps) {
           Last activity: {formatTimeAgo(last_activity)}
         </p>
       )}
-
-      <Link to="/groove/dashboard/health" className="dashboard-card__link">
-        View →
-      </Link>
     </Card>
   );
 }

@@ -5,11 +5,12 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
   title?: string;
   variant?: 'default' | 'elevated' | 'inset' | 'crt';
   actions?: ReactNode;
+  footer?: ReactNode;
   noPadding?: boolean;
 }
 
 export const Card = forwardRef<HTMLDivElement, CardProps>(
-  ({ title, variant = 'default', actions, noPadding, className = '', children, ...props }, ref) => {
+  ({ title, variant = 'default', actions, footer, noPadding, className = '', children, ...props }, ref) => {
     const classes = [
       styles.card,
       styles[variant],
@@ -26,6 +27,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
           </div>
         )}
         <div className={styles.content}>{children}</div>
+        {footer && <div className={styles.footer}>{footer}</div>}
       </div>
     );
   }

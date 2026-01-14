@@ -27,7 +27,16 @@ export function LearningsCard({ data }: LearningsCardProps) {
   const recent = data?.recent ?? [];
 
   return (
-    <Card variant="crt" title="Learnings" className="dashboard-card">
+    <Card
+      variant="crt"
+      title="Learnings"
+      className="dashboard-card"
+      footer={
+        <Link to="/groove/dashboard/learnings" className="card-footer-link">
+          View →
+        </Link>
+      }
+    >
       <div className="dashboard-card__metrics">
         <Metric label="Total" value={total} />
         <Metric label="Active" value={active} />
@@ -46,10 +55,6 @@ export function LearningsCard({ data }: LearningsCardProps) {
           </ul>
         </div>
       )}
-
-      <Link to="/groove/dashboard/learnings" className="dashboard-card__link">
-        View →
-      </Link>
     </Card>
   );
 }

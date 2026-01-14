@@ -64,4 +64,23 @@ describe('Card', () => {
     expect(screen.getByTestId('custom-card')).toBeInTheDocument();
     expect(screen.getByTestId('custom-card')).toHaveAttribute('aria-label', 'Custom');
   });
+
+  it('renders footer when provided', () => {
+    const { container } = render(
+      <Card title="Health" footer={<a href="#">View →</a>}>
+        Content
+      </Card>
+    );
+    expect(screen.getByRole('link', { name: 'View →' })).toBeInTheDocument();
+    // Footer should be in a separate div with footer class, outside content
+    const footerElement = container.querySelector('[class*="footer"]');
+    expect(footerElement).toBeInTheDocument();
+    expect(footerElement).toContainElement(screen.getByRole('link'));
+  });
+
+  it('does not render footer div when footer not provided', () => {
+    const { container } = render(<Card title="Settings">Content</Card>);
+    const footerElement = container.querySelector('[class*="footer"]');
+    expect(footerElement).not.toBeInTheDocument();
+  });
 });

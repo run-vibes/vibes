@@ -86,6 +86,33 @@ export const CRTDashboard = () => (
   </div>
 );
 
+export const WithFooter = () => (
+  <div style={{ padding: '2rem', backgroundColor: 'var(--screen)' }}>
+    <Card
+      variant="crt"
+      title="Health"
+      footer={
+        <a
+          href="#"
+          style={{
+            color: 'var(--phosphor)',
+            textDecoration: 'none',
+            fontFamily: 'var(--font-display)',
+            fontSize: 'var(--font-size-sm)',
+            letterSpacing: '0.05em',
+          }}
+        >
+          View →
+        </a>
+      }
+    >
+      <p style={{ margin: 0, color: 'var(--text)' }}>
+        Card with a footer link. The footer has a full-width top border.
+      </p>
+    </Card>
+  </div>
+);
+
 export const NoPadding = () => (
   <div style={{ padding: '2rem', backgroundColor: 'var(--screen)' }}>
     <Card title="Terminal Output" noPadding>
