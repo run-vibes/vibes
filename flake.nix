@@ -44,6 +44,7 @@
 
           # Use sccache to cache Rust compilation artifacts
           RUSTC_WRAPPER = "sccache";
+          SCCACHE_CACHE_SIZE = "24G";
 
           shellHook = ''
             # Auto-install cargo-llvm-cov if missing (consistent across all platforms)
