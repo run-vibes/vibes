@@ -2,7 +2,7 @@
 id: m41-feat-03
 title: Views and ViewStack navigation
 type: feat
-status: backlog
+status: done
 priority: high
 epics: [tui]
 depends: [m41-feat-02]
@@ -120,12 +120,12 @@ impl ViewRenderer for DashboardView {
 
 ## Acceptance Criteria
 
-- [ ] View enum has all variants from epic spec
-- [ ] ViewStack starts with Dashboard as default
-- [ ] `push()` saves current to history, sets new current
-- [ ] `pop()` restores previous view from history
-- [ ] `pop()` returns false when history empty (at root)
-- [ ] `replace()` changes current without affecting history
-- [ ] `can_pop()` returns correct state
-- [ ] Dashboard placeholder renders with title and border
-- [ ] Unit tests for ViewStack operations pass
+- [x] View enum has all variants from epic spec
+- [x] ViewStack starts with Dashboard as default
+- [x] `push()` saves current to history, sets new current
+- [x] `pop()` restores previous view from history
+- [x] `pop()` returns false when history empty (at root)
+- [x] `replace()` changes current without affecting history
+- [x] `can_pop()` returns correct state
+- [x] Dashboard placeholder renders with title and border
+- [x] Unit tests for ViewStack operations pass
