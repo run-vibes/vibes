@@ -8,6 +8,8 @@
 #[allow(unused)]
 mod prompts;
 
+pub mod cloudflared;
+
 #[allow(unused_imports)]
 pub use prompts::{
     print_error, print_error_to, print_header, print_header_to, print_step, print_step_to,

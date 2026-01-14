@@ -5,6 +5,7 @@ uto-generated from directory structure. Run `just board generate` to update.*
 
 | Story | Type | Priority | Epics |
 |-------|------|----------|-------|
+| [feat-0072-cloudflared-state-detection](stages/in-progress/stories/feat-0072-cloudflared-state-detection.md) | feat | medium | cli,networking |
 | [feat-0104-show-ollama-models-in-web-ui](stages/in-progress/stories/feat-0104-show-ollama-models-in-web-ui.md) | feat | medium | web-ui |
 | [feat-0106-add-gzip-and-brotli-compression-for-http-responses](stages/in-progress/stories/feat-0106-add-gzip-and-brotli-compression-for-http-responses.md) | feat | medium | web-ui |
 | [m39-feat-01-evals-crate-skeleton](stages/in-progress/stories/m39-feat-01-evals-crate-skeleton.md) | feat | high | evals |
@@ -18,7 +19,6 @@ uto-generated from directory structure. Run `just board generate` to update.*
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
 | [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli,cross-platform |
-| [feat-0072-cloudflared-state-detection](stages/backlog/stories/feat-0072-cloudflared-state-detection.md) | feat | medium | cli,networking |
 | [feat-0073-tunnel-wizard-quick-mode](stages/backlog/stories/feat-0073-tunnel-wizard-quick-mode.md) | feat | medium | cli,networking |
 | [feat-0074-tunnel-wizard-named-mode](stages/backlog/stories/feat-0074-tunnel-wizard-named-mode.md) | feat | medium | cli,networking |
 | [feat-0075-tunnel-wizard-no-cloudflared](stages/backlog/stories/feat-0075-tunnel-wizard-no-cloudflared.md) | feat | medium | cli,networking |
