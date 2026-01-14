@@ -216,7 +216,10 @@ export function StatusPage() {
 
       {/* Dashboard Overview Section */}
       <div className="dashboard-overview-grid">
-        {/* Trend Card - spans full width on mobile, half on larger screens */}
+        {/* Health card first */}
+        <HealthCard data={overview?.health} />
+
+        {/* Trend Card */}
         <TrendCard
           title="Session Trends"
           primaryValue={`${trends?.improvement_percent ?? 0}%`}
@@ -227,10 +230,8 @@ export function StatusPage() {
             { label: 'Sessions', value: String(trends?.session_count ?? 0) },
             { label: 'Period', value: `${trends?.period_days ?? 7}d` },
           ]}
+          href="/groove/trends"
         />
-
-        {/* Health card next to trends */}
-        <HealthCard data={overview?.health} />
 
         {/* Other domain cards */}
         <LearningsCard data={overview?.learnings} />

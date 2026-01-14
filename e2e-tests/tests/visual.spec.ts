@@ -35,6 +35,12 @@ test.describe('Visual Regression', () => {
       await page.waitForTimeout(500);
       await expect(page).toHaveScreenshot('groove-security.png');
     });
+
+    test('Trends', async ({ page, serverUrl }) => {
+      await page.goto(`${serverUrl}/groove/trends`);
+      await page.waitForTimeout(500);
+      await expect(page).toHaveScreenshot('groove-trends.png');
+    });
   });
 
   test.describe('Main Pages', () => {

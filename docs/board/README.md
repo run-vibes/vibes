@@ -1,6 +1,5 @@
-# Planning Board
-
-> Auto-generated from directory structure. Run `just board generate` to update.
+Generated README.md
+Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
@@ -24,7 +23,6 @@
 | [feat-0077-config-save-load](stages/backlog/stories/feat-0077-config-save-load.md) | feat | medium | cli,networking |
 | [feat-0078-connectivity-validation](stages/backlog/stories/feat-0078-connectivity-validation.md) | feat | medium | cli,networking |
 | [feat-0101-header-identity-display](stages/backlog/stories/feat-0101-header-identity-display.md) | feat | low | web-ui,design-system |
-| [feat-0102-dashboard-trends-page](stages/backlog/stories/feat-0102-dashboard-trends-page.md) | feat | medium |  |
 | [m38-feat-01-agent-module-skeleton](stages/backlog/stories/m38-feat-01-agent-module-skeleton.md) | feat | high | agents |
 | [m38-feat-02-agent-trait](stages/backlog/stories/m38-feat-02-agent-trait.md) | feat | high | agents |
 | [m38-feat-03-agent-status](stages/backlog/stories/m38-feat-03-agent-status.md) | feat | high | agents |
@@ -212,6 +210,7 @@
 - [feat-0093-credential-store](stages/done/stories/feat-0093-credential-store.md)
 - [feat-0094-models-cli-commands](stages/done/stories/feat-0094-models-cli-commands.md)
 - [feat-0095-models-web-ui](stages/done/stories/feat-0095-models-web-ui.md)
+- [feat-0102-dashboard-trends-page](stages/done/stories/feat-0102-dashboard-trends-page.md)
 - [m14-chore-01-design](stages/done/stories/m14-chore-01-design.md)
 - [m14-chore-02-implementation](stages/done/stories/m14-chore-02-implementation.md)
 - [m26-chore-01-eventbus-cleanup](stages/done/stories/m26-chore-01-eventbus-cleanup.md)
