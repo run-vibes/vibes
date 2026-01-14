@@ -16,12 +16,14 @@ serde_json.workspace = true
 thiserror.workspace = true
 tracing.workspace = true
 getrandom = "0.3"
+tokio = { workspace = true, features = ["sync"] }
+chrono = { version = "0.4", features = ["serde"] }
 
 opentelemetry = "0.27"
 opentelemetry_sdk = { version = "0.27", features = ["rt-tokio"] }
 opentelemetry-otlp = { version = "0.27", features = ["tonic"] }
 opentelemetry-stdout = { version = "0.27", features = ["trace"] }
-tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "registry"] }
 tracing-opentelemetry = "0.28"
 
 [dev-dependencies]

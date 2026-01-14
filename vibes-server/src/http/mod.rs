@@ -15,7 +15,7 @@ use tower_http::compression::CompressionLayer;
 
 use crate::AppState;
 use crate::middleware::auth_middleware;
-use crate::ws::{assessment_ws, firehose_ws, ws_handler};
+use crate::ws::{assessment_ws, firehose_ws, traces_ws, ws_handler};
 
 pub use api::{
     AuthIdentityResponse, AuthStatusResponse, HealthResponse, SessionListResponse, SessionSummary,
@@ -43,6 +43,7 @@ pub fn create_router(state: Arc<AppState>) -> Router {
         .route("/ws", get(ws_handler))
         .route("/ws/firehose", get(firehose_ws))
         .route("/ws/assessment", get(assessment_ws))
+        .route("/ws/traces", get(traces_ws))
         .layer(middleware::from_fn(auth_middleware))
         .layer(Extension(auth_layer))
         // Plugin routes (checked before static fallback)

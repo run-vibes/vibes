@@ -5,6 +5,7 @@ pub mod config;
 pub mod eval;
 pub mod event;
 pub mod models;
+pub mod observe;
 pub mod plugin;
 pub mod plugin_dispatch;
 pub mod serve;

@@ -254,6 +254,23 @@ pub enum ClientMessage {
         /// Study ID to checkpoint
         study_id: String,
     },
+
+    // === Trace Commands ===
+    /// Subscribe to trace events
+    SubscribeTraces {
+        /// Filter by session ID (prefix match)
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        session_id: Option<String>,
+        /// Filter by agent ID
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        agent_id: Option<String>,
+        /// Minimum log level (trace, debug, info, warn, error)
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        level: Option<String>,
+    },
+
+    /// Unsubscribe from trace events
+    UnsubscribeTraces,
 }
 
 /// Messages sent from server to client
@@ -440,6 +457,16 @@ pub enum ServerMessage {
         /// Operation that was performed
         operation: String,
     },
+
+    // === Trace Responses ===
+    /// Trace event from the server
+    TraceEvent(vibes_observe::TraceEvent),
+
+    /// Confirmation that trace subscription was successful
+    TraceSubscribed,
+
+    /// Confirmation that trace subscription was cancelled
+    TraceUnsubscribed,
 }
 
 /// Convert a VibesEvent to a ServerMessage for broadcasting

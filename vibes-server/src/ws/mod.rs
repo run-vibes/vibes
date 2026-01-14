@@ -4,6 +4,7 @@ mod assessment;
 mod connection;
 mod firehose;
 pub mod protocol;
+mod traces;
 
 pub use assessment::assessment_ws;
 pub use connection::ws_handler;
@@ -12,3 +13,4 @@ pub use protocol::{
     AgentInfo, CheckpointInfo, ClientMessage, ServerMessage, StudyInfo,
     vibes_event_to_server_message,
 };
+pub use traces::traces_ws;
