@@ -27,3 +27,19 @@ if [[ -f ".envrc" ]] && command -v direnv &> /dev/null; then
         direnv allow
     fi
 fi
+
+# Restore web-ui/dist from turbo cache if missing
+if [[ ! -d "web-ui/dist" ]] && [[ -f "turbo.json" ]]; then
+    echo "Restoring web-ui from turbo cache..."
+    if command -v npx &> /dev/null; then
+        if npx turbo run build --filter=vibes-web-ui --output-logs=errors-only 2>/dev/null; then
+            if [[ -d "web-ui/dist" ]]; then
+                echo "web-ui/dist restored from cache"
+            else
+                echo "web-ui/dist not cached, run 'just build' to build"
+            fi
+        else
+            echo "web-ui/dist not cached, run 'just build' to build"
+        fi
+    fi
+fi

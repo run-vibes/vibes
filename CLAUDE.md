@@ -59,13 +59,21 @@ Submodules are initialized automatically by the `post-checkout` hook when creati
 
 ### Shared Build Cache
 
-All worktrees share a single target directory (`~/.cargo-target/vibes/`) for faster builds. This means:
+All worktrees share build caches for faster builds:
+
+| Cache | Location | Purpose |
+|-------|----------|---------|
+| Rust artifacts | `~/.cache/cargo-target/vibes/` | Cargo compilation cache |
+| Turbo cache | `~/.cache/turbo/vibes/` | npm workspace build cache |
+
+This means:
 - Fresh worktrees reuse compiled artifacts from other worktrees
 - Incremental compilation is shared across worktrees
+- Web-ui `dist/` is restored from turbo cache on checkout (~80ms)
 
 **Binary Isolation:** `just build` copies final binaries (`vibes`, `iggy-server`) to `./target/debug/` in each worktree. Tests automatically find these worktree-local binaries, preventing cross-worktree binary clobbering.
 
-**WARNING:** `cargo clean` will delete artifacts for ALL worktrees. Use with caution.
+**WARNING:** `cargo clean` will delete Rust artifacts for ALL worktrees. Use with caution.
 
 ## Commands
 

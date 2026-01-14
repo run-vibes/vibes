@@ -59,7 +59,10 @@
 
             # Shared target directory across all worktrees for faster builds
             # WARNING: cargo clean will affect ALL worktrees
-            export CARGO_TARGET_DIR="$HOME/.cargo-target/vibes"
+            export CARGO_TARGET_DIR="$HOME/.cache/cargo-target/vibes"
+
+            # Shared turbo cache directory across all worktrees
+            export TURBO_CACHE_DIR="$HOME/.cache/turbo/vibes"
 
             # Auto-install cargo-llvm-cov if missing (consistent across all platforms)
             if ! command -v cargo-llvm-cov &> /dev/null; then

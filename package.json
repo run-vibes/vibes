@@ -3,15 +3,22 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "packageManager": "npm@10.9.4",
   "workspaces": [
     "design-system",
     "web-ui",
     "e2e-tests"
   ],
   "scripts": {
-    "dev": "npm run dev --workspace=web-ui",
-    "build": "npm run build --workspace=web-ui",
-    "test:e2e": "npm run test --workspace=e2e-tests",
+    "dev": "turbo run dev --filter=web-ui",
+    "build": "turbo run build",
+    "build:web": "turbo run build --filter=web-ui",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:e2e": "turbo run test --filter=e2e-tests",
     "test:e2e:headed": "npm run test:headed --workspace=e2e-tests"
+  },
+  "devDependencies": {
+    "turbo": "^2"
   }
 }

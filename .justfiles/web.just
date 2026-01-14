@@ -6,7 +6,8 @@ set working-directory := '..'
 # Default: show available web commands
 default:
     @echo "Web UI commands:"
-    @echo "  just web build       Build web-ui (required for server)"
+    @echo "  just web build       Build all (design-system + web-ui, with turbo caching)"
+    @echo "  just web build-ds    Build design-system only"
     @echo "  just web ladle       Run Ladle (design system component explorer)"
     @echo "  just web typecheck   TypeScript type check (no emit)"
     @echo "  just web test        Run web-ui tests"
@@ -16,9 +17,13 @@ default:
     @echo "  just web e2e-debug   E2E tests in debug mode"
     @echo "  just web e2e-setup   Install Playwright browsers"
 
-# Build web-ui (required for server)
+# Build all web packages (design-system + web-ui) with turbo caching
 build:
     npm run build
+
+# Build design-system only
+build-ds:
+    npx turbo run build --filter=@vibes/design-system
 
 # Run Ladle design system component explorer
 ladle:

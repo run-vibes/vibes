@@ -22,6 +22,9 @@ target
 # Node.js
 node_modules/
 
+# Turbo local cache and logs (shared cache is in $TURBO_CACHE_DIR)
+.turbo/
+
 # Build outputs
 build/
 dist/
