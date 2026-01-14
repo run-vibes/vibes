@@ -1,0 +1,192 @@
+/* web-ui/src/components/SpawnAgentModal.css
+ * CRT-styled modal for spawning agents
+ */
+
+/* === Backdrop === */
+.spawn-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* === Modal Container === */
+.spawn-modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 0 30px rgba(255, 176, 0, 0.2);
+  animation: slideUp 0.2s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* === Header === */
+.spawn-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.spawn-modal-title {
+  font-family: var(--font-display);
+  font-size: var(--font-size-lg);
+  font-weight: 400;
+  color: var(--phosphor);
+  text-shadow: 0 0 10px var(--phosphor-glow);
+  letter-spacing: 0.1em;
+  margin: 0;
+}
+
+.spawn-modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  font-size: var(--font-size-xl);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.spawn-modal-close:hover {
+  color: var(--phosphor);
+  border-color: var(--phosphor-dim);
+}
+
+/* === Form === */
+.spawn-modal-form {
+  padding: var(--space-4);
+}
+
+.spawn-modal-field {
+  margin-bottom: var(--space-4);
+}
+
+.spawn-modal-label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  color: var(--text);
+  margin-bottom: var(--space-2);
+}
+
+.spawn-modal-optional {
+  color: var(--text-faint);
+}
+
+/* === Agent Type Selection === */
+.spawn-modal-types {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.spawn-modal-type {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  background: var(--screen);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: left;
+}
+
+.spawn-modal-type:hover {
+  border-color: var(--phosphor-dim);
+}
+
+.spawn-modal-type.selected {
+  border-color: var(--phosphor);
+  background: var(--phosphor-subtle);
+  box-shadow: inset 0 0 10px rgba(255, 176, 0, 0.1);
+}
+
+.spawn-modal-type-label {
+  font-family: var(--font-display);
+  font-size: var(--font-size-base);
+  color: var(--text);
+}
+
+.spawn-modal-type.selected .spawn-modal-type-label {
+  color: var(--phosphor);
+}
+
+.spawn-modal-type-desc {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--text-faint);
+}
+
+/* === Inputs === */
+.spawn-modal-input,
+.spawn-modal-textarea {
+  width: 100%;
+  padding: var(--space-3);
+  background: var(--screen);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  color: var(--text);
+  transition: border-color var(--transition-fast);
+}
+
+.spawn-modal-input:focus,
+.spawn-modal-textarea:focus {
+  outline: none;
+  border-color: var(--phosphor);
+  box-shadow: 0 0 0 2px rgba(255, 176, 0, 0.1);
+}
+
+.spawn-modal-input::placeholder,
+.spawn-modal-textarea::placeholder {
+  color: var(--text-faint);
+}
+
+.spawn-modal-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* === Actions === */
+.spawn-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+  margin-top: var(--space-4);
+}

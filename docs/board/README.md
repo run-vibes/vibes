@@ -20,7 +20,6 @@
 | [feat-0077-config-save-load](stages/backlog/stories/feat-0077-config-save-load.md) | feat | medium | cli,networking |
 | [feat-0078-connectivity-validation](stages/backlog/stories/feat-0078-connectivity-validation.md) | feat | medium | cli,networking |
 | [feat-0101-header-identity-display](stages/backlog/stories/feat-0101-header-identity-display.md) | feat | low | web-ui,design-system |
-| [m38-feat-07-agent-web-ui](stages/backlog/stories/m38-feat-07-agent-web-ui.md) | feat | medium | agents |
 | [m39-feat-06-eval-web-ui](stages/backlog/stories/m39-feat-06-eval-web-ui.md) | feat | medium | evals |
 | [m40-feat-04-instrument-key-functions](stages/backlog/stories/m40-feat-04-instrument-key-functions.md) | feat | high | observability |
 | [m40-feat-05-export-targets](stages/backlog/stories/m40-feat-05-export-targets.md) | feat | high | observability |
@@ -252,6 +251,7 @@
 - [m38-feat-04-task-types](stages/done/stories/m38-feat-04-task-types.md)
 - [m38-feat-05-agent-lifecycle](stages/done/stories/m38-feat-05-agent-lifecycle.md)
 - [m38-feat-06-agent-cli](stages/done/stories/m38-feat-06-agent-cli.md)
+- [m38-feat-07-agent-web-ui](stages/done/stories/m38-feat-07-agent-web-ui.md)
 - [m39-feat-01-evals-crate-skeleton](stages/done/stories/m39-feat-01-evals-crate-skeleton.md)
 - [m39-feat-02-longitudinal-metrics](stages/done/stories/m39-feat-02-longitudinal-metrics.md)
 - [m39-feat-03-eval-storage](stages/done/stories/m39-feat-03-eval-storage.md)

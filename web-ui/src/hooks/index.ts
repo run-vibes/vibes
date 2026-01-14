@@ -1,3 +1,4 @@
+export { useAgents } from './useAgents';
 export { useAuth, isAuthContextMessage } from './useAuth';
 export type { AuthState } from './useAuth';
 export { useCrtEffects, CrtEffectsProvider } from './useCrtEffects';

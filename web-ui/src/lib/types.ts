@@ -22,7 +22,15 @@ export type ClientMessage =
   | { type: 'attach'; session_id: string; name?: string; cols?: number; rows?: number }
   | { type: 'detach'; session_id: string }
   | { type: 'pty_input'; session_id: string; data: string }  // base64 encoded
-  | { type: 'pty_resize'; session_id: string; cols: number; rows: number };
+  | { type: 'pty_resize'; session_id: string; cols: number; rows: number }
+  // Agent messages
+  | { type: 'list_agents'; request_id: string }
+  | { type: 'spawn_agent'; request_id: string; agent_type: AgentType; name?: string; task?: string }
+  | { type: 'agent_status'; request_id: string; agent_id: string }
+  | { type: 'pause_agent'; request_id: string; agent_id: string }
+  | { type: 'resume_agent'; request_id: string; agent_id: string }
+  | { type: 'cancel_agent'; request_id: string; agent_id: string }
+  | { type: 'stop_agent'; request_id: string; agent_id: string };
 
 // ============================================================
 // Server -> Client Messages
@@ -47,7 +55,12 @@ export type ServerMessage =
   | { type: 'pty_output'; session_id: string; data: string }  // base64 encoded
   | { type: 'pty_exit'; session_id: string; exit_code?: number }
   | { type: 'attach_ack'; session_id: string; cols: number; rows: number }
-  | { type: 'pty_replay'; session_id: string; data: string };  // base64 encoded scrollback
+  | { type: 'pty_replay'; session_id: string; data: string }  // base64 encoded scrollback
+  // Agent messages
+  | { type: 'agent_list'; request_id: string; agents: AgentInfo[] }
+  | { type: 'agent_spawned'; request_id: string; agent: AgentInfo }
+  | { type: 'agent_status_response'; request_id: string; agent: AgentInfo }
+  | { type: 'agent_ack'; request_id: string; agent_id: string; operation: string };
 
 // ============================================================
 // Auth Context - matches vibes-core/src/auth/context.rs
@@ -160,6 +173,61 @@ export interface SessionInfo {
   last_activity_at: number;
 }
 
+// ============================================================
+// Agent Types - matches vibes-core/src/agent/types.rs
+// ============================================================
+
+export type AgentType = 'AdHoc' | 'Background' | 'Subagent' | 'Interactive';
+
+export type AgentStatus =
+  | { idle: true }
+  | { running: { task: string; started: string } }
+  | { paused: { task: string; reason: string } }
+  | { waiting_for_input: { prompt: string } }
+  | { failed: { error: string } };
+
+export interface ExecutionLocation {
+  type: 'Local' | 'Remote';
+  endpoint?: string;
+}
+
+export interface ResourceLimits {
+  max_tokens?: number;
+  max_duration?: { secs: number; nanos: number };
+  max_tool_calls?: number;
+}
+
+export interface Permissions {
+  filesystem: boolean;
+  network: boolean;
+  shell: boolean;
+}
+
+export interface AgentContext {
+  location: ExecutionLocation;
+  model: { id: string };
+  tools: { id: string }[];
+  permissions: Permissions;
+  resource_limits: ResourceLimits;
+}
+
+export interface TaskMetrics {
+  duration: { secs: number; nanos: number };
+  tokens_used: number;
+  tool_calls: number;
+  iterations: number;
+}
+
+/** Agent info returned by list_agents - matches vibes-server/src/ws/protocol.rs */
+export interface AgentInfo {
+  id: string;
+  name: string;
+  agent_type: AgentType;
+  status: AgentStatus;
+  context: AgentContext;
+  current_task_metrics?: TaskMetrics;
+}
+
 /** Model info returned by list_models - matches vibes-models/src/types.rs */
 export interface ModelInfo {
   id: string;
@@ -234,4 +302,31 @@ export function isAttachAckMessage(msg: ServerMessage): msg is Extract<ServerMes
 
 export function isPtyReplayMessage(msg: ServerMessage): msg is Extract<ServerMessage, { type: 'pty_replay' }> {
   return msg.type === 'pty_replay';
+}
+
+// Agent message type guards
+export function isAgentListMessage(msg: ServerMessage): msg is Extract<ServerMessage, { type: 'agent_list' }> {
+  return msg.type === 'agent_list';
+}
+
+export function isAgentSpawnedMessage(msg: ServerMessage): msg is Extract<ServerMessage, { type: 'agent_spawned' }> {
+  return msg.type === 'agent_spawned';
+}
+
+export function isAgentStatusResponseMessage(msg: ServerMessage): msg is Extract<ServerMessage, { type: 'agent_status_response' }> {
+  return msg.type === 'agent_status_response';
+}
+
+export function isAgentAckMessage(msg: ServerMessage): msg is Extract<ServerMessage, { type: 'agent_ack' }> {
+  return msg.type === 'agent_ack';
+}
+
+// Agent status helpers
+export function getAgentStatusVariant(status: AgentStatus): 'idle' | 'running' | 'paused' | 'waiting_for_input' | 'failed' {
+  if ('idle' in status) return 'idle';
+  if ('running' in status) return 'running';
+  if ('paused' in status) return 'paused';
+  if ('waiting_for_input' in status) return 'waiting_for_input';
+  if ('failed' in status) return 'failed';
+  return 'idle'; // fallback
 }

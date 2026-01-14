@@ -2,7 +2,7 @@
 id: m38-feat-07
 title: Agent Web UI
 type: feat
-status: backlog
+status: done
 priority: medium
 epics: [agents]
 depends: [m38-feat-06]
@@ -63,9 +63,9 @@ Modal or drawer for creating new agents:
 
 ## Acceptance Criteria
 
-- [ ] Agents page shows all session agents
-- [ ] Agent status updates in real-time
-- [ ] Spawn modal creates new agents
-- [ ] Pause/resume/cancel/stop actions work
-- [ ] Detail view shows agent metrics
-- [ ] Responsive design for mobile
+- [x] Agents page shows all session agents
+- [x] Agent status updates in real-time
+- [x] Spawn modal creates new agents
+- [x] Pause/resume/cancel/stop actions work
+- [x] Detail view shows agent metrics
+- [x] Responsive design for mobile

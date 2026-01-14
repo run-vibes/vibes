@@ -23,6 +23,7 @@ import { DebugPage } from './pages/Debug'
 import { StreamsPage } from './pages/Streams'
 import { SettingsPage } from './pages/Settings'
 import { ModelsPage } from './pages/Models'
+import { AgentsPage } from './pages/Agents'
 import { NotFound } from './pages/NotFound'
 import { useAuth, useTheme } from './hooks'
 import { useWebSocket } from './hooks/useWebSocket'
@@ -42,6 +43,7 @@ function RootLayout() {
 
   const navItems = [
     { label: 'SESSIONS', href: '/sessions', isActive: location.pathname.startsWith('/sessions') },
+    { label: 'AGENTS', href: '/agents', isActive: location.pathname === '/agents' },
     { label: 'FIREHOSE', href: '/firehose', isActive: location.pathname === '/firehose' },
     { label: 'MODELS', href: '/models', isActive: location.pathname === '/models' },
     { label: 'GROOVE', href: '/groove', isGroove: true, isActive: isGroovePath, hasSubnav: true },
@@ -210,11 +212,18 @@ const modelsRoute = createRoute({
   component: ModelsPage,
 })
 
+const agentsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/agents',
+  component: AgentsPage,
+})
+
 // Create route tree and router
 const routeTree = rootRoute.addChildren([
   indexRoute,
   sessionsRoute,
   sessionRoute,
+  agentsRoute,
   grooveIndexRoute,
   grooveStatusRoute,
   grooveLearningsRoute,

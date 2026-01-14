@@ -1,0 +1,181 @@
+/* web-ui/src/components/AgentDetailDrawer.css
+ * CRT-styled drawer for agent details
+ */
+
+/* === Backdrop === */
+.agent-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: flex-end;
+  z-index: 1000;
+  animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* === Drawer Container === */
+.agent-drawer {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 480px;
+  height: 100%;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.3);
+  animation: slideIn 0.2s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* === Header === */
+.agent-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.agent-drawer-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.agent-drawer-title {
+  font-family: var(--font-display);
+  font-size: var(--font-size-lg);
+  font-weight: 400;
+  color: var(--phosphor);
+  text-shadow: 0 0 10px var(--phosphor-glow);
+  margin: 0;
+}
+
+.agent-drawer-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  font-size: var(--font-size-xl);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.agent-drawer-close:hover {
+  color: var(--phosphor);
+  border-color: var(--phosphor-dim);
+}
+
+/* === Content === */
+.agent-drawer-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4);
+}
+
+/* === Sections === */
+.agent-drawer-section {
+  margin-bottom: var(--space-6);
+}
+
+.agent-drawer-section:last-child {
+  margin-bottom: 0;
+}
+
+.agent-drawer-section-title {
+  font-family: var(--font-display);
+  font-size: var(--font-size-xs);
+  font-weight: 400;
+  color: var(--text-faint);
+  letter-spacing: 0.15em;
+  margin: 0 0 var(--space-3) 0;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border);
+}
+
+/* === Info List === */
+.agent-drawer-info {
+  margin: 0;
+}
+
+.agent-drawer-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: var(--space-2) 0;
+  border-bottom: 1px dotted var(--border-subtle);
+}
+
+.agent-drawer-info-row:last-child {
+  border-bottom: none;
+}
+
+.agent-drawer-info-row dt {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  color: var(--text-dim);
+}
+
+.agent-drawer-info-row dd {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  color: var(--text);
+  margin: 0;
+  text-align: right;
+  max-width: 60%;
+  word-break: break-all;
+}
+
+.agent-drawer-mono {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--phosphor-dim);
+}
+
+/* === Metrics === */
+.agent-drawer-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+}
+
+/* === Actions === */
+.agent-drawer-actions {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.agent-drawer-actions > button {
+  flex: 1;
+}
+
+/* === Responsive === */
+@media (max-width: 480px) {
+  .agent-drawer {
+    max-width: 100%;
+  }
+}
