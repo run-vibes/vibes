@@ -1,12 +1,9 @@
-# Planning Board
-
-> Auto-generated from directory structure. Run `just board generate` to update.
+Generated README.md
+Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
-| Story | Type | Priority | Epics |
-|-------|------|----------|-------|
-| [refactor-0097-unified-card-component](stages/in-progress/stories/refactor-0097-unified-card-component.md) | refactor | high | web-ui,design-system |
+*No stories in progress*
 
 ## Backlog
 
@@ -248,6 +245,7 @@
 - [refactor-0008-consolidate-assessment-types-module](stages/done/stories/refactor-0008-consolidate-assessment-types-module.md)
 - [refactor-0069-dashboard-visual-consistency](stages/done/stories/refactor-0069-dashboard-visual-consistency.md)
 - [refactor-0070-design-system-extraction](stages/done/stories/refactor-0070-design-system-extraction.md)
+- [refactor-0097-unified-card-component](stages/done/stories/refactor-0097-unified-card-component.md)
 - [refactor-0100-responsive-header-navigation](stages/done/stories/refactor-0100-responsive-header-navigation.md)
 
 </details>

@@ -2,7 +2,7 @@
 id: refactor-0097
 title: Unified Card Component with Visual Regression Testing
 type: refactor
-status: in-progress
+status: done
 priority: high
 epics: [web-ui, design-system]
 ---
