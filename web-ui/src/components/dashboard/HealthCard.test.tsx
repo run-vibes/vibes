@@ -88,15 +88,21 @@ describe('HealthCard', () => {
     expect(screen.getByText('No health data')).toBeInTheDocument();
   });
 
-  it('renders link to health page', () => {
+  it('renders link to health page in card footer', () => {
     const data: HealthSummary = {
       overall_status: 'ok',
       assessment_coverage: 85,
       ablation_coverage: 70,
     };
-    render(<HealthCard data={data} />);
+    const { container } = render(<HealthCard data={data} />);
 
-    expect(screen.getByText('View →')).toBeInTheDocument();
-    expect(screen.getByRole('link')).toHaveAttribute('href', '/groove/dashboard/health');
+    const link = screen.getByRole('link');
+    expect(link).toHaveTextContent('View →');
+    expect(link).toHaveAttribute('href', '/groove/dashboard/health');
+
+    // Link should be in Card's footer (full-width with top border)
+    const footerElement = container.querySelector('[class*="footer"]');
+    expect(footerElement).toBeInTheDocument();
+    expect(footerElement).toContainElement(link);
   });
 });

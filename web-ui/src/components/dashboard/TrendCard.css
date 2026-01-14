@@ -1,25 +1,6 @@
-.trend-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  padding: var(--space-4);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  transition: border-color var(--transition-fast);
-}
-
-.trend-card:hover {
-  border-color: var(--phosphor-dim);
-}
-
-.trend-card__title {
-  font-family: var(--font-display);
-  font-size: var(--font-size-sm);
-  color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin: 0;
-}
+/* TrendCard content styles
+ * Base card container styles are provided by the Card component
+ */
 
 .trend-card__sparkline {
   height: 40px;
@@ -79,8 +60,9 @@
 }
 
 .trend-card__value {
-  font-family: var(--font-mono);
-  font-size: var(--font-size-xl);
+  font-family: var(--font-display);
+  font-size: var(--font-size-2xl);
+  font-weight: 400;
   color: var(--phosphor);
   text-shadow: 0 0 8px var(--phosphor-glow);
 }
@@ -114,19 +96,4 @@
   font-family: var(--font-mono);
   font-size: var(--font-size-sm);
   color: var(--text);
-}
-
-.trend-card__link {
-  margin-top: auto;
-  padding-top: var(--space-2);
-  font-family: var(--font-display);
-  font-size: var(--font-size-sm);
-  color: var(--phosphor);
-  text-decoration: none;
-  text-align: right;
-  transition: text-shadow var(--transition-fast);
-}
-
-.trend-card__link:hover {
-  text-shadow: 0 0 8px var(--phosphor-glow);
 }

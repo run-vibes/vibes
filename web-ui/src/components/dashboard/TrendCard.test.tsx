@@ -103,8 +103,8 @@ describe('TrendCard', () => {
     expect(screen.getByTestId('sparkline-placeholder')).toBeInTheDocument();
   });
 
-  it('renders link when href is provided', () => {
-    render(
+  it('renders link in card footer when href is provided', () => {
+    const { container } = render(
       <TrendCard
         title="Test"
         primaryValue="10"
@@ -114,8 +114,14 @@ describe('TrendCard', () => {
       />
     );
 
-    expect(screen.getByText('View →')).toBeInTheDocument();
-    expect(screen.getByRole('link')).toHaveAttribute('href', '/details');
+    const link = screen.getByRole('link');
+    expect(link).toHaveTextContent('View →');
+    expect(link).toHaveAttribute('href', '/details');
+
+    // Link should be in Card's footer
+    const footerElement = container.querySelector('[class*="footer"]');
+    expect(footerElement).toBeInTheDocument();
+    expect(footerElement).toContainElement(link);
   });
 
   it('applies correct CSS class for trend direction', () => {

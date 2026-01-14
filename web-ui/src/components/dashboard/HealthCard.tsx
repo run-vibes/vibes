@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { Panel, Metric, StatusIndicator } from '@vibes/design-system';
+import { Card, Metric, StatusIndicator } from '@vibes/design-system';
 import type { HealthSummary, SystemStatus } from '../../hooks/useDashboard';
 import './DashboardCards.css';
 
@@ -34,23 +34,32 @@ function formatTimeAgo(dateStr: string): string {
 export function HealthCard({ data }: HealthCardProps) {
   if (!data) {
     return (
-      <Panel variant="crt" title="Health" className="dashboard-card">
+      <Card variant="crt" title="Health" className="dashboard-card">
         <p className="empty-text">No health data</p>
-      </Panel>
+      </Card>
     );
   }
 
   const { overall_status, assessment_coverage, ablation_coverage, last_activity } = data;
 
   return (
-    <Panel variant="crt" title="Health" className="dashboard-card">
-      <StatusIndicator
-        state={toIndicatorState(overall_status)}
-        label={STATUS_LABELS[overall_status]}
-        data-testid="status-indicator"
-        className="dashboard-card__status"
-      />
-
+    <Card
+      variant="crt"
+      title="Health"
+      className="dashboard-card"
+      actions={
+        <StatusIndicator
+          state={toIndicatorState(overall_status)}
+          label={STATUS_LABELS[overall_status]}
+          data-testid="status-indicator"
+        />
+      }
+      footer={
+        <Link to="/groove/dashboard/health" className="card-footer-link">
+          View →
+        </Link>
+      }
+    >
       <div className="dashboard-card__metrics">
         <Metric label="Assessment" value={`${assessment_coverage}%`} />
         <Metric label="Ablation" value={`${ablation_coverage}%`} />
@@ -61,10 +70,6 @@ export function HealthCard({ data }: HealthCardProps) {
           Last activity: {formatTimeAgo(last_activity)}
         </p>
       )}
-
-      <Link to="/groove/dashboard/health" className="dashboard-card__link">
-        View →
-      </Link>
-    </Panel>
+    </Card>
   );
 }

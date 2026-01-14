@@ -4,7 +4,9 @@
 
 ## In Progress
 
-*No stories in progress*
+| Story | Type | Priority | Epics |
+|-------|------|----------|-------|
+| [refactor-0097-unified-card-component](stages/in-progress/stories/refactor-0097-unified-card-component.md) | refactor | high | web-ui,design-system |
 
 ## Backlog
 
@@ -23,6 +25,7 @@
 | [feat-0077-config-save-load](stages/backlog/stories/feat-0077-config-save-load.md) | feat | medium | cli,networking |
 | [feat-0078-connectivity-validation](stages/backlog/stories/feat-0078-connectivity-validation.md) | feat | medium | cli,networking |
 | [feat-0101-header-identity-display](stages/backlog/stories/feat-0101-header-identity-display.md) | feat | low | web-ui,design-system |
+| [feat-0102-dashboard-trends-page](stages/backlog/stories/feat-0102-dashboard-trends-page.md) | feat | medium |  |
 | [m38-feat-01-agent-module-skeleton](stages/backlog/stories/m38-feat-01-agent-module-skeleton.md) | feat | high | agents |
 | [m38-feat-02-agent-trait](stages/backlog/stories/m38-feat-02-agent-trait.md) | feat | high | agents |
 | [m38-feat-03-agent-status](stages/backlog/stories/m38-feat-03-agent-status.md) | feat | high | agents |
@@ -41,7 +44,6 @@
 | [m40-feat-05-export-targets](stages/backlog/stories/m40-feat-05-export-targets.md) | feat | high | observability |
 | [m40-feat-06-observe-cli](stages/backlog/stories/m40-feat-06-observe-cli.md) | feat | medium | observability |
 | [refactor-0096-groove-navigation-simplification](stages/backlog/stories/refactor-0096-groove-navigation-simplification.md) | refactor | high | web-ui,groove |
-| [refactor-0097-unified-card-component](stages/backlog/stories/refactor-0097-unified-card-component.md) | refactor | high | web-ui,design-system |
 | [refactor-0098-models-page-styling](stages/backlog/stories/refactor-0098-models-page-styling.md) | refactor | medium | web-ui |
 | [refactor-0099-subnav-light-theme](stages/backlog/stories/refactor-0099-subnav-light-theme.md) | refactor | medium | web-ui,design-system |
 

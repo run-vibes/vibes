@@ -1,17 +1,18 @@
 import { HTMLAttributes, ReactNode, forwardRef } from 'react';
-import styles from './Panel.module.css';
+import styles from './Card.module.css';
 
-export interface PanelProps extends HTMLAttributes<HTMLDivElement> {
+export interface CardProps extends HTMLAttributes<HTMLDivElement> {
   title?: string;
   variant?: 'default' | 'elevated' | 'inset' | 'crt';
   actions?: ReactNode;
+  footer?: ReactNode;
   noPadding?: boolean;
 }
 
-export const Panel = forwardRef<HTMLDivElement, PanelProps>(
-  ({ title, variant = 'default', actions, noPadding, className = '', children, ...props }, ref) => {
+export const Card = forwardRef<HTMLDivElement, CardProps>(
+  ({ title, variant = 'default', actions, footer, noPadding, className = '', children, ...props }, ref) => {
     const classes = [
-      styles.panel,
+      styles.card,
       styles[variant],
       noPadding && styles.noPadding,
       className,
@@ -26,9 +27,10 @@ export const Panel = forwardRef<HTMLDivElement, PanelProps>(
           </div>
         )}
         <div className={styles.content}>{children}</div>
+        {footer && <div className={styles.footer}>{footer}</div>}
       </div>
     );
   }
 );
 
-Panel.displayName = 'Panel';
+Card.displayName = 'Card';

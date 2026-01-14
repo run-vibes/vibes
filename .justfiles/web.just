@@ -58,11 +58,11 @@ e2e-setup:
 
 # Run visual regression tests only
 visual:
-    npm run test:e2e -- --grep "Visual"
+    cd e2e-tests && npx playwright test --grep "Visual"
 
 # Update visual regression baselines
 visual-update:
-    npm run test:e2e -- --grep "Visual" --update-snapshots
+    cd e2e-tests && npx playwright test --grep "Visual" --update-snapshots
 
 # Run workflow tests only (generates videos)
 workflows:

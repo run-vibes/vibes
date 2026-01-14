@@ -1,6 +1,6 @@
 // web-ui/src/pages/Firehose.tsx
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import { StreamView, EventInspector, Badge } from '@vibes/design-system';
+import { StreamView, EventInspector, Badge, Card } from '@vibes/design-system';
 import type { DisplayEvent, ContextEvent } from '@vibes/design-system';
 import { useFirehose } from '../hooks/useFirehose';
 import type { VibesEvent } from '../lib/types';
@@ -352,53 +352,47 @@ export function FirehosePage() {
         {/* Column 2: Sidebar (Metrics + Filters) */}
         <div className="firehose-sidebar">
           {/* Metrics Panel */}
-          <div className="panel">
-            <div className="panel-header">METRICS</div>
-            <div className="panel-body">
-              <div className="stat-grid">
-                <div className="stat">
-                  <div className="stat-value">{metrics.eventsPerHour}</div>
-                  <div className="stat-label">EVT/HR</div>
-                </div>
-                <div className="stat">
-                  <div className="stat-value">{metrics.activeSessions}</div>
-                  <div className="stat-label">ACTIVE</div>
-                </div>
-                <div className="stat">
-                  <div className={`stat-value ${metrics.totalErrors > 0 ? 'error' : ''}`}>
-                    {metrics.totalErrors}
-                  </div>
-                  <div className="stat-label">ERRORS</div>
-                </div>
+          <Card variant="crt" title="METRICS">
+            <div className="stat-grid">
+              <div className="stat">
+                <div className="stat-value">{metrics.eventsPerHour}</div>
+                <div className="stat-label">EVT/HR</div>
               </div>
-              <div className="sparkline">
-                {sparkline.chars.map((char, i) => (
-                  <span key={i} className={sparkline.peaks[i] ? 'peak' : ''}>
-                    {char}
-                  </span>
-                ))}
+              <div className="stat">
+                <div className="stat-value">{metrics.activeSessions}</div>
+                <div className="stat-label">ACTIVE</div>
+              </div>
+              <div className="stat">
+                <div className={`stat-value ${metrics.totalErrors > 0 ? 'error' : ''}`}>
+                  {metrics.totalErrors}
+                </div>
+                <div className="stat-label">ERRORS</div>
               </div>
             </div>
-          </div>
+            <div className="sparkline">
+              {sparkline.chars.map((char, i) => (
+                <span key={i} className={sparkline.peaks[i] ? 'peak' : ''}>
+                  {char}
+                </span>
+              ))}
+            </div>
+          </Card>
 
           {/* Filters Panel */}
-          <div className="panel">
-            <div className="panel-header">FILTERS</div>
-            <div className="panel-body">
-              <div className="filter-list">
-                {EVENT_TYPES.map((type) => (
-                  <div
-                    key={type}
-                    className={`filter-item ${selectedTypes.includes(type) ? 'active' : ''}`}
-                    onClick={() => toggleType(type)}
-                  >
-                    <span>{type}</span>
-                    <span className="filter-count">{metrics.typeCounts[type] || 0}</span>
-                  </div>
-                ))}
-              </div>
+          <Card variant="crt" title="FILTERS">
+            <div className="filter-list">
+              {EVENT_TYPES.map((type) => (
+                <div
+                  key={type}
+                  className={`filter-item ${selectedTypes.includes(type) ? 'active' : ''}`}
+                  onClick={() => toggleType(type)}
+                >
+                  <span>{type}</span>
+                  <span className="filter-count">{metrics.typeCounts[type] || 0}</span>
+                </div>
+              ))}
             </div>
-          </div>
+          </Card>
         </div>
 
         {/* Column 3: Stream */}

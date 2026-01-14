@@ -1,4 +1,4 @@
-import { Panel, Metric } from '@vibes/design-system';
+import { Card, Metric } from '@vibes/design-system';
 import type { OpenWorldGapDetailData, SolutionBrief } from '../../../hooks/useDashboard';
 import { GapSeverityBadge } from './GapSeverityBadge';
 import './GapDetail.css';
@@ -40,9 +40,9 @@ export function GapDetail({ data, isLoading }: GapDetailProps) {
   if (isLoading) {
     return (
       <div className="gap-detail">
-        <Panel variant="crt" title="Gap Detail" className="gap-detail__panel">
+        <Card variant="crt" title="Gap Detail" className="gap-detail__panel">
           <p className="gap-detail__loading">Loading...</p>
-        </Panel>
+        </Card>
       </div>
     );
   }
@@ -50,12 +50,12 @@ export function GapDetail({ data, isLoading }: GapDetailProps) {
   if (!data) {
     return (
       <div className="gap-detail">
-        <Panel variant="crt" title="Gap Detail" className="gap-detail__panel">
+        <Card variant="crt" title="Gap Detail" className="gap-detail__panel">
           <div className="gap-detail__empty">
             <span className="gap-detail__empty-icon">←</span>
             <span>Select a gap to view details</span>
           </div>
-        </Panel>
+        </Card>
       </div>
     );
   }
@@ -74,7 +74,7 @@ export function GapDetail({ data, isLoading }: GapDetailProps) {
 
   return (
     <div className="gap-detail">
-      <Panel variant="crt" title="Gap Detail" className="gap-detail__panel">
+      <Card variant="crt" title="Gap Detail" className="gap-detail__panel">
         <div className="gap-detail__header">
           <GapSeverityBadge severity={severity} />
           <span className="gap-detail__id">{id.slice(0, 8)}</span>
@@ -119,7 +119,7 @@ export function GapDetail({ data, isLoading }: GapDetailProps) {
             </ul>
           </div>
         )}
-      </Panel>
+      </Card>
     </div>
   );
 }

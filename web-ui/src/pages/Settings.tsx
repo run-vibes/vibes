@@ -1,6 +1,6 @@
 // web-ui/src/pages/Settings.tsx
 import { useState, useEffect } from 'react';
-import { Button } from '@vibes/design-system';
+import { Button, Card } from '@vibes/design-system';
 import { NotificationSettings } from '../components/NotificationSettings';
 import { useTunnelStatus } from '../hooks/useTunnelStatus';
 import { useCrtEffects } from '../hooks/useCrtEffects';
@@ -46,8 +46,7 @@ export function SettingsPage() {
       </div>
 
       <div className="settings-content">
-        <div className="settings-panel">
-          <h2 className="settings-panel-title">APPEARANCE</h2>
+        <Card variant="crt" title="APPEARANCE" className="settings-panel">
           <div className="setting-row">
             <div className="setting-info">
               <div className="setting-label">Theme</div>
@@ -92,15 +91,13 @@ export function SettingsPage() {
               </div>
             </div>
           </div>
-        </div>
+        </Card>
 
-        <div className="settings-panel">
-          <h2 className="settings-panel-title">NOTIFICATIONS</h2>
+        <Card variant="crt" title="NOTIFICATIONS" className="settings-panel">
           <NotificationSettings />
-        </div>
+        </Card>
 
-        <div className="settings-panel">
-          <h2 className="settings-panel-title">GROOVE</h2>
+        <Card variant="crt" title="GROOVE" className="settings-panel">
           <div className="setting-row">
             <div className="setting-info">
               <div className="setting-label">Learning Indicator</div>
@@ -145,10 +142,9 @@ export function SettingsPage() {
               </div>
             </div>
           </div>
-        </div>
+        </Card>
 
-        <div className="settings-panel">
-          <h2 className="settings-panel-title">CREDENTIALS</h2>
+        <Card variant="crt" title="CREDENTIALS" className="settings-panel">
           {providers.length === 0 ? (
             <div className="setting-row">
               <span className="setting-description">No providers configured</span>
@@ -171,10 +167,9 @@ export function SettingsPage() {
               );
             })
           )}
-        </div>
+        </Card>
 
-        <div className="settings-panel">
-          <h2 className="settings-panel-title">TUNNEL</h2>
+        <Card variant="crt" title="TUNNEL" className="settings-panel">
           {tunnelLoading && <span className="setting-description">Loading...</span>}
           {tunnelError && <span className="setting-error">Error loading tunnel status</span>}
           {tunnel && (
@@ -229,10 +224,9 @@ export function SettingsPage() {
               )}
             </div>
           )}
-        </div>
+        </Card>
 
-        <div className="settings-panel">
-          <h2 className="settings-panel-title">DATA & STORAGE</h2>
+        <Card variant="crt" title="DATA & STORAGE" className="settings-panel">
           <div className="setting-row">
             <div className="setting-info">
               <div className="setting-label">Clear Local Data</div>
@@ -258,10 +252,9 @@ export function SettingsPage() {
               )}
             </div>
           </div>
-        </div>
+        </Card>
 
-        <div className="settings-panel">
-          <h2 className="settings-panel-title">ABOUT</h2>
+        <Card variant="crt" title="ABOUT" className="settings-panel">
           <div className="about-content">
             <div className="about-logo">vibes</div>
             <span className="setting-description">Remote control for your Claude Code sessions</span>
@@ -275,7 +268,7 @@ export function SettingsPage() {
               </a>
             </div>
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   );

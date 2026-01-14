@@ -1,4 +1,4 @@
-import { Panel, Metric } from '@vibes/design-system';
+import { Card, Metric } from '@vibes/design-system';
 import type { OpenWorldOverviewData } from '../../../hooks/useDashboard';
 import '../DashboardCards.css';
 
@@ -10,24 +10,24 @@ export interface NoveltyStatsProps {
 export function NoveltyStats({ data, isLoading }: NoveltyStatsProps) {
   if (isLoading) {
     return (
-      <Panel variant="crt" title="Novelty Detection" className="dashboard-card">
+      <Card variant="crt" title="Novelty Detection" className="dashboard-card">
         <p className="empty-text">Loading...</p>
-      </Panel>
+      </Card>
     );
   }
 
   if (!data) {
     return (
-      <Panel variant="crt" title="Novelty Detection" className="dashboard-card">
+      <Card variant="crt" title="Novelty Detection" className="dashboard-card">
         <p className="empty-text">No novelty data available</p>
-      </Panel>
+      </Card>
     );
   }
 
   const { novelty_threshold, pending_outliers, cluster_count } = data;
 
   return (
-    <Panel variant="crt" title="Novelty Detection" className="dashboard-card">
+    <Card variant="crt" title="Novelty Detection" className="dashboard-card">
       <div className="dashboard-card__metrics">
         <Metric
           label="Threshold"
@@ -45,6 +45,6 @@ export function NoveltyStats({ data, isLoading }: NoveltyStatsProps) {
           data-testid="clusters-metric"
         />
       </div>
-    </Panel>
+    </Card>
   );
 }
