@@ -12,3 +12,4 @@ crossterm = "0.28"
 tokio = { workspace = true }
 
 [dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt"] }
