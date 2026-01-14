@@ -6,6 +6,7 @@
 
 | Story | Type | Priority | Epics |
 |-------|------|----------|-------|
+| [feat-0074-tunnel-wizard-named-mode](stages/in-progress/stories/feat-0074-tunnel-wizard-named-mode.md) | feat | medium | cli,networking |
 | [feat-0107-display-quick-tunnel-url-on-startup](stages/in-progress/stories/feat-0107-display-quick-tunnel-url-on-startup.md) | feat | high | networking |
 | [m38-feat-05-agent-lifecycle](stages/in-progress/stories/m38-feat-05-agent-lifecycle.md) | feat | high | agents |
 | [m40-feat-01-observe-crate-skeleton](stages/in-progress/stories/m40-feat-01-observe-crate-skeleton.md) | feat | high | observability |
@@ -18,7 +19,6 @@
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
 | [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli,cross-platform |
-| [feat-0074-tunnel-wizard-named-mode](stages/backlog/stories/feat-0074-tunnel-wizard-named-mode.md) | feat | medium | cli,networking |
 | [feat-0075-tunnel-wizard-no-cloudflared](stages/backlog/stories/feat-0075-tunnel-wizard-no-cloudflared.md) | feat | medium | cli,networking |
 | [feat-0076-auth-setup-wizard](stages/backlog/stories/feat-0076-auth-setup-wizard.md) | feat | medium | cli,networking |
 | [feat-0077-config-save-load](stages/backlog/stories/feat-0077-config-save-load.md) | feat | medium | cli,networking |

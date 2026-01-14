@@ -3,9 +3,9 @@
 //! Interactive wizard for configuring Cloudflare tunnel settings.
 
 use anyhow::{Result, bail};
-use dialoguer::{Select, theme::ColorfulTheme};
+use dialoguer::{Confirm, Input, Select, theme::ColorfulTheme};
 
-use super::cloudflared::CloudflaredState;
+use super::cloudflared::{CloudflaredState, create_tunnel, list_tunnels, route_dns, run_login};
 use super::{print_error, print_header, print_step, print_success};
 use crate::config::ConfigLoader;
 
@@ -57,12 +57,175 @@ pub async fn run() -> Result<()> {
         Ok(())
     } else {
         // Named tunnel mode
-        println!();
-        println!("Named tunnel setup requires additional configuration.");
-        println!("Run 'vibes tunnel setup' again when you're ready to set up named tunnels.");
-        println!();
-        bail!("Named tunnel setup not yet implemented (see feat-0074)");
+        setup_named_tunnel(state).await
     }
+}
+
+/// Run the named tunnel setup wizard.
+async fn setup_named_tunnel(state: CloudflaredState) -> Result<()> {
+    // Step 1: Check login status
+    if !state.logged_in {
+        println!();
+        println!("Named tunnel requires Cloudflare login.");
+        println!("Opening browser for authentication...\n");
+        run_login().await?;
+        println!();
+    }
+
+    // Step 2: List existing tunnels or create new one
+    print_step("Fetching existing tunnels...");
+    let tunnels = list_tunnels().await?;
+
+    let tunnel_name = if tunnels.is_empty() {
+        println!("No existing tunnels found.\n");
+        prompt_new_tunnel_name()?
+    } else {
+        println!("Found {} existing tunnel(s).\n", tunnels.len());
+        select_or_create_tunnel(&tunnels)?
+    };
+
+    // Step 3: Create tunnel if new
+    let tunnel_id = if !tunnels.iter().any(|t| t.name == tunnel_name) {
+        print_step(&format!("Creating tunnel '{}'...", tunnel_name));
+        let id = create_tunnel(&tunnel_name).await?;
+        println!("Tunnel created with ID: {}\n", id);
+        id
+    } else {
+        tunnels
+            .iter()
+            .find(|t| t.name == tunnel_name)
+            .map(|t| t.id.clone())
+            .unwrap()
+    };
+
+    // Step 4: Prompt for hostname
+    let hostname: String = Input::with_theme(&ColorfulTheme::default())
+        .with_prompt("Enter the hostname for this tunnel (e.g., vibes.yourdomain.com)")
+        .validate_with(|input: &String| validate_hostname(input).map(|_| ()))
+        .interact_text()?;
+
+    // Step 5: Prompt for DNS routing
+    println!();
+    let route_dns_enabled = Confirm::with_theme(&ColorfulTheme::default())
+        .with_prompt("Route DNS to this tunnel? (Recommended)")
+        .default(true)
+        .interact()?;
+
+    if route_dns_enabled {
+        print_step(&format!("Routing DNS {} -> {}...", hostname, tunnel_name));
+        route_dns(&tunnel_id, &hostname).await?;
+        println!("DNS routing configured.\n");
+    }
+
+    // Step 6: Save configuration
+    save_named_config(&tunnel_name, &hostname)?;
+
+    // Step 7: Success message
+    print_success("Named tunnel configured!");
+    println!();
+    println!("Configuration saved:");
+    println!("  Tunnel: {}", tunnel_name);
+    println!("  Hostname: {}", hostname);
+    if route_dns_enabled {
+        println!("  DNS routing: enabled");
+    }
+    println!();
+    println!("Next steps:");
+    println!("  Run 'vibes serve --tunnel' to start with your named tunnel");
+    println!();
+
+    Ok(())
+}
+
+/// Prompt for a new tunnel name with validation.
+fn prompt_new_tunnel_name() -> Result<String> {
+    let name: String = Input::with_theme(&ColorfulTheme::default())
+        .with_prompt("Enter a name for the new tunnel (alphanumeric and hyphens only)")
+        .validate_with(|input: &String| validate_tunnel_name(input).map(|_| ()))
+        .interact_text()?;
+    Ok(name)
+}
+
+/// Show selection of existing tunnels with option to create new.
+fn select_or_create_tunnel(tunnels: &[super::cloudflared::ExistingTunnel]) -> Result<String> {
+    const CREATE_NEW: &str = "➕ Create new tunnel";
+
+    let mut options: Vec<String> = tunnels
+        .iter()
+        .map(|t| format!("{} ({})", t.name, &t.id[..8]))
+        .collect();
+    options.push(CREATE_NEW.to_string());
+
+    let selection = Select::with_theme(&ColorfulTheme::default())
+        .with_prompt("Select a tunnel or create a new one")
+        .items(&options)
+        .default(0)
+        .interact()?;
+
+    if selection == tunnels.len() {
+        // Create new selected
+        prompt_new_tunnel_name()
+    } else {
+        Ok(tunnels[selection].name.clone())
+    }
+}
+
+/// Validate tunnel name (alphanumeric and hyphens only).
+fn validate_tunnel_name(name: &str) -> Result<()> {
+    if name.is_empty() {
+        bail!("Tunnel name cannot be empty");
+    }
+    if !name.chars().all(|c| c.is_ascii_alphanumeric() || c == '-') {
+        bail!("Tunnel name must contain only alphanumeric characters and hyphens");
+    }
+    Ok(())
+}
+
+/// Validate hostname (must contain dot, not start with dot).
+fn validate_hostname(hostname: &str) -> Result<()> {
+    if hostname.is_empty() {
+        bail!("Hostname cannot be empty");
+    }
+    if hostname.starts_with('.') {
+        bail!("Hostname cannot start with a dot");
+    }
+    if !hostname.contains('.') {
+        bail!("Hostname must contain at least one dot (e.g., vibes.example.com)");
+    }
+    Ok(())
+}
+
+/// Save named tunnel configuration to the project config file.
+fn save_named_config(name: &str, hostname: &str) -> Result<()> {
+    let config_path = ConfigLoader::project_config_path();
+
+    if let Some(parent) = config_path.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+
+    let existing_content = std::fs::read_to_string(&config_path).unwrap_or_default();
+
+    if existing_content.trim().is_empty() {
+        let config = format!(
+            "[tunnel]\nenabled = true\nmode = \"named\"\nname = \"{}\"\nhostname = \"{}\"\n",
+            name, hostname
+        );
+        std::fs::write(&config_path, config)?;
+    } else {
+        let mut doc = existing_content
+            .parse::<toml_edit::DocumentMut>()
+            .unwrap_or_default();
+
+        doc["tunnel"] = toml_edit::Item::Table(toml_edit::Table::new());
+        doc["tunnel"]["enabled"] = toml_edit::value(true);
+        doc["tunnel"]["mode"] = toml_edit::value("named");
+        doc["tunnel"]["name"] = toml_edit::value(name);
+        doc["tunnel"]["hostname"] = toml_edit::value(hostname);
+
+        std::fs::write(&config_path, doc.to_string())?;
+    }
+
+    Ok(())
 }
 
 /// Save quick tunnel configuration to the project config file.
@@ -181,5 +344,115 @@ mod tests {
         assert!(content.contains("[tunnel]"));
         assert!(content.contains("enabled = true"));
         assert!(content.contains(r#"mode = "quick""#));
+    }
+
+    // === Named tunnel tests ===
+
+    #[test]
+    fn validate_tunnel_name_accepts_alphanumeric() {
+        assert!(validate_tunnel_name("my-tunnel").is_ok());
+        assert!(validate_tunnel_name("vibes123").is_ok());
+        assert!(validate_tunnel_name("my-vibes-tunnel").is_ok());
+    }
+
+    #[test]
+    fn validate_tunnel_name_rejects_invalid_chars() {
+        assert!(validate_tunnel_name("my_tunnel").is_err()); // underscore
+        assert!(validate_tunnel_name("my tunnel").is_err()); // space
+        assert!(validate_tunnel_name("my.tunnel").is_err()); // dot
+        assert!(validate_tunnel_name("tunnel@home").is_err()); // special char
+    }
+
+    #[test]
+    fn validate_tunnel_name_rejects_empty() {
+        assert!(validate_tunnel_name("").is_err());
+    }
+
+    #[test]
+    fn validate_hostname_accepts_valid_domains() {
+        assert!(validate_hostname("vibes.example.com").is_ok());
+        assert!(validate_hostname("my-tunnel.dev").is_ok());
+        assert!(validate_hostname("sub.domain.org").is_ok());
+    }
+
+    #[test]
+    fn validate_hostname_rejects_no_dot() {
+        assert!(validate_hostname("localhost").is_err());
+        assert!(validate_hostname("vibes").is_err());
+    }
+
+    #[test]
+    fn validate_hostname_rejects_leading_dot() {
+        assert!(validate_hostname(".example.com").is_err());
+    }
+
+    #[test]
+    fn validate_hostname_rejects_empty() {
+        assert!(validate_hostname("").is_err());
+    }
+
+    #[test]
+    fn save_named_config_creates_correct_toml() {
+        let temp_dir = TempDir::new().unwrap();
+        let config_dir = temp_dir.path().join(".vibes");
+        let config_path = config_dir.join("config.toml");
+
+        // SAFETY: tests run with --test-threads=1
+        unsafe {
+            std::env::set_var(
+                "VIBES_PROJECT_CONFIG_DIR",
+                config_dir.to_string_lossy().as_ref(),
+            );
+        }
+
+        let result = save_named_config("my-tunnel", "vibes.example.com");
+
+        unsafe {
+            std::env::remove_var("VIBES_PROJECT_CONFIG_DIR");
+        }
+
+        assert!(result.is_ok());
+        assert!(config_path.exists());
+
+        let content = std::fs::read_to_string(&config_path).unwrap();
+        assert!(content.contains("[tunnel]"));
+        assert!(content.contains("enabled = true"));
+        assert!(content.contains(r#"mode = "named""#));
+        assert!(content.contains(r#"name = "my-tunnel""#));
+        assert!(content.contains(r#"hostname = "vibes.example.com""#));
+    }
+
+    #[test]
+    fn save_named_config_preserves_existing_sections() {
+        let temp_dir = TempDir::new().unwrap();
+        let config_dir = temp_dir.path().join(".vibes");
+        std::fs::create_dir_all(&config_dir).unwrap();
+        let config_path = config_dir.join("config.toml");
+
+        std::fs::write(&config_path, "[server]\nport = 9000\n").unwrap();
+
+        // SAFETY: tests run with --test-threads=1
+        unsafe {
+            std::env::set_var(
+                "VIBES_PROJECT_CONFIG_DIR",
+                config_dir.to_string_lossy().as_ref(),
+            );
+        }
+
+        let result = save_named_config("prod-tunnel", "vibes.mysite.io");
+
+        unsafe {
+            std::env::remove_var("VIBES_PROJECT_CONFIG_DIR");
+        }
+
+        assert!(result.is_ok());
+
+        let content = std::fs::read_to_string(&config_path).unwrap();
+        assert!(content.contains("[server]"));
+        assert!(content.contains("port = 9000"));
+        assert!(content.contains("[tunnel]"));
+        assert!(content.contains(r#"mode = "named""#));
+        assert!(content.contains(r#"name = "prod-tunnel""#));
+        assert!(content.contains(r#"hostname = "vibes.mysite.io""#));
     }
 }
