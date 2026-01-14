@@ -40,7 +40,6 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [m40-feat-04-instrument-key-functions](stages/backlog/stories/m40-feat-04-instrument-key-functions.md) | feat | high | observability |
 | [m40-feat-05-export-targets](stages/backlog/stories/m40-feat-05-export-targets.md) | feat | high | observability |
 | [m40-feat-06-observe-cli](stages/backlog/stories/m40-feat-06-observe-cli.md) | feat | medium | observability |
-| [refactor-0098-models-page-styling](stages/backlog/stories/refactor-0098-models-page-styling.md) | refactor | medium | web-ui |
 | [refactor-0099-subnav-light-theme](stages/backlog/stories/refactor-0099-subnav-light-theme.md) | refactor | medium | web-ui,design-system |
 
 ## Epics
@@ -247,6 +246,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 - [refactor-0070-design-system-extraction](stages/done/stories/refactor-0070-design-system-extraction.md)
 - [refactor-0096-groove-navigation-simplification](stages/done/stories/refactor-0096-groove-navigation-simplification.md)
 - [refactor-0097-unified-card-component](stages/done/stories/refactor-0097-unified-card-component.md)
+- [refactor-0098-models-page-styling](stages/done/stories/refactor-0098-models-page-styling.md)
 - [refactor-0100-responsive-header-navigation](stages/done/stories/refactor-0100-responsive-header-navigation.md)
 
 </details>

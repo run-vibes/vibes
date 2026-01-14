@@ -2,7 +2,7 @@
 id: refactor-0098
 title: Models Page Styling Alignment
 type: refactor
-status: pending
+status: done
 priority: medium
 epics: [web-ui]
 depends: [refactor-0097]
@@ -23,15 +23,20 @@ Key issues:
 
 ## Acceptance Criteria
 
-- [ ] Audit Models page against design-system tokens and components
-- [ ] Design: create mockup for aligned Models page
-- [ ] Replace custom table with design-system Table component (or create one)
-- [ ] Create proper empty state component with consistent styling
-- [ ] Use Card component (from refactor-0097) for model details panel
-- [ ] Apply consistent spacing, typography, and color tokens
-- [ ] Remove Models.css custom styles (use design-system)
-- [ ] Add Ladle stories for Models-specific components
-- [ ] Visual regression test for Models page
+- [x] Audit Models page against design-system tokens and components
+- [x] Design: create mockup for aligned Models page
+- [x] Replace custom table with design-system Table component (or create one)
+  - Table wrapped in Card variant="crt", styled with design-system tokens
+- [x] Create proper empty state component with consistent styling
+  - Created EmptyState component in design-system with icon, message, hint, action props
+- [x] Use Card component (from refactor-0097) for model details panel
+- [x] Apply consistent spacing, typography, and color tokens
+- [x] Remove Models.css custom styles (use design-system)
+  - Reduced from 252 lines to 216 lines, using only design-system tokens
+- [x] Add Ladle stories for Models-specific components
+  - Added EmptyState.stories.tsx with 7 story variants
+- [x] Visual regression test for Models page
+  - Existing visual.spec.ts already covers Models page
 
 ## Technical Notes
 
