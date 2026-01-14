@@ -7,7 +7,7 @@
 
 use anyhow::Result;
 use clap::{Args, Subcommand};
-use tracing::info;
+use tracing::{info, warn};
 use vibes_server::{ServerConfig, VibesServer};
 
 use crate::config::ConfigLoader;
@@ -15,6 +15,7 @@ use crate::daemon::{
     DaemonState, clear_daemon_state, is_process_alive, read_daemon_state, terminate_process,
     write_daemon_state,
 };
+use crate::ollama::OllamaManager;
 
 /// Arguments for the serve command
 #[derive(Debug, Args)]
@@ -91,17 +92,24 @@ pub async fn run(args: ServeArgs) -> Result<()> {
                 notify: args.notify,
             };
 
+            // Start Ollama if enabled
+            let ollama_manager = OllamaManager::new(config.ollama);
+            if let Err(e) = ollama_manager.start().await {
+                warn!("Failed to start Ollama: {}", e);
+            }
+
             if args.daemon {
                 start_daemon(&settings).await
             } else {
-                run_foreground(&settings).await
+                run_foreground(&settings, ollama_manager).await
             }
         }
     }
 }
 
 /// Run the server in the foreground
-async fn run_foreground(settings: &ResolvedSettings) -> Result<()> {
+async fn run_foreground(settings: &ResolvedSettings, _ollama: OllamaManager) -> Result<()> {
+    // Keep OllamaManager alive - it will be dropped (and stopped) when this function returns
     let config = ServerConfig {
         host: settings.host.clone(),
         port: settings.port,

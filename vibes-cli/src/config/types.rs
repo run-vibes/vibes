@@ -21,6 +21,9 @@ pub struct RawVibesConfig {
     pub tunnel: TunnelConfigSection,
 
     #[serde(default)]
+    pub ollama: OllamaConfigSection,
+
+    #[serde(default)]
     pub auth: AccessConfig,
 }
 
@@ -48,6 +51,9 @@ pub struct VibesConfig {
 
     #[serde(default)]
     pub tunnel: TunnelConfigSection,
+
+    #[serde(default)]
+    pub ollama: OllamaConfigSection,
 
     #[serde(default)]
     pub auth: AccessConfig,
@@ -117,6 +123,34 @@ pub struct TunnelConfigSection {
 
     /// Public hostname (for named mode)
     pub hostname: Option<String>,
+}
+
+/// Default Ollama host
+pub const DEFAULT_OLLAMA_HOST: &str = "localhost:11434";
+
+/// Ollama configuration for local LLM autostart
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct OllamaConfigSection {
+    /// Auto-start Ollama when vibes starts (default: false)
+    #[serde(default)]
+    pub enabled: bool,
+
+    /// Custom host for Ollama (default: localhost:11434)
+    pub host: Option<String>,
+}
+
+impl OllamaConfigSection {
+    /// Get the host, using default if not specified.
+    #[must_use]
+    pub fn host_or_default(&self) -> &str {
+        self.host.as_deref().unwrap_or(DEFAULT_OLLAMA_HOST)
+    }
+
+    /// Get the base URL for HTTP requests.
+    #[must_use]
+    pub fn base_url(&self) -> String {
+        format!("http://{}", self.host_or_default())
+    }
 }
 
 /// Default HTTP port for Iggy REST API
@@ -314,6 +348,7 @@ mod tests {
                 working_dir: Some(PathBuf::from("/tmp")),
             },
             tunnel: TunnelConfigSection::default(),
+            ollama: OllamaConfigSection::default(),
             auth: AccessConfig::default(),
         };
 
@@ -379,5 +414,58 @@ hostname = "vibes.example.com"
         assert!(config.tunnel.enabled);
         assert_eq!(config.tunnel.mode, Some("named".to_string()));
         assert_eq!(config.tunnel.name, Some("vibes-home".to_string()));
+    }
+
+    // ==================== OllamaConfigSection Tests ====================
+
+    #[test]
+    fn ollama_config_defaults() {
+        let config = OllamaConfigSection::default();
+        assert!(!config.enabled);
+        assert!(config.host.is_none());
+        assert_eq!(config.host_or_default(), DEFAULT_OLLAMA_HOST);
+    }
+
+    #[test]
+    fn ollama_config_parsing() {
+        let toml_str = r#"
+[ollama]
+enabled = true
+host = "192.168.1.100:11434"
+"#;
+        let config: RawVibesConfig = toml::from_str(toml_str).unwrap();
+        assert!(config.ollama.enabled);
+        assert_eq!(config.ollama.host, Some("192.168.1.100:11434".to_string()));
+    }
+
+    #[test]
+    fn ollama_config_empty_uses_defaults() {
+        let config: RawVibesConfig = toml::from_str("").unwrap();
+        assert!(!config.ollama.enabled);
+        assert!(config.ollama.host.is_none());
+    }
+
+    #[test]
+    fn ollama_config_host_or_default() {
+        let default_config = OllamaConfigSection::default();
+        assert_eq!(default_config.host_or_default(), "localhost:11434");
+
+        let custom_config = OllamaConfigSection {
+            enabled: true,
+            host: Some("custom:8080".to_string()),
+        };
+        assert_eq!(custom_config.host_or_default(), "custom:8080");
+    }
+
+    #[test]
+    fn ollama_config_base_url() {
+        let default_config = OllamaConfigSection::default();
+        assert_eq!(default_config.base_url(), "http://localhost:11434");
+
+        let custom_config = OllamaConfigSection {
+            enabled: true,
+            host: Some("192.168.1.100:11434".to_string()),
+        };
+        assert_eq!(custom_config.base_url(), "http://192.168.1.100:11434");
     }
 }

@@ -7,6 +7,7 @@ mod config;
 mod daemon;
 mod iggy_client;
 mod input;
+mod ollama;
 mod server;
 mod terminal;
 
