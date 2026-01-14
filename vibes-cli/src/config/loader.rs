@@ -1,6 +1,6 @@
 use super::types::{
-    DEFAULT_HOST, DEFAULT_PORT, OllamaConfigSection, RawServerConfig, RawVibesConfig, ServerConfig,
-    SessionConfig, TunnelConfigSection, VibesConfig,
+    DEFAULT_HOST, DEFAULT_PORT, ModelsConfigSection, OllamaConfigSection, RawServerConfig,
+    RawVibesConfig, ServerConfig, SessionConfig, TunnelConfigSection, VibesConfig,
 };
 use anyhow::Result;
 use directories::ProjectDirs;
@@ -72,9 +72,11 @@ impl ConfigLoader {
                 name: overlay.tunnel.name.or(base.tunnel.name),
                 hostname: overlay.tunnel.hostname.or(base.tunnel.hostname),
             },
-            ollama: OllamaConfigSection {
-                enabled: overlay.ollama.enabled || base.ollama.enabled,
-                host: overlay.ollama.host.or(base.ollama.host),
+            models: ModelsConfigSection {
+                ollama: OllamaConfigSection {
+                    enabled: overlay.models.ollama.enabled || base.models.ollama.enabled,
+                    host: overlay.models.ollama.host.or(base.models.ollama.host),
+                },
             },
             auth: AccessConfig {
                 enabled: overlay.auth.enabled || base.auth.enabled,
@@ -111,7 +113,7 @@ impl ConfigLoader {
             },
             session: raw.session,
             tunnel: raw.tunnel,
-            ollama: raw.ollama,
+            models: raw.models,
             auth: raw.auth,
         }
     }
@@ -201,7 +203,7 @@ default_model = "claude-sonnet-4"
                 working_dir: None,
             },
             tunnel: TunnelConfigSection::default(),
-            ollama: OllamaConfigSection::default(),
+            models: ModelsConfigSection::default(),
             auth: AccessConfig::default(),
         };
 
@@ -217,7 +219,7 @@ default_model = "claude-sonnet-4"
                 working_dir: Some(PathBuf::from("/custom")),
             },
             tunnel: TunnelConfigSection::default(),
-            ollama: OllamaConfigSection::default(),
+            models: ModelsConfigSection::default(),
             auth: AccessConfig::default(),
         };
 
@@ -249,7 +251,7 @@ default_model = "claude-sonnet-4"
             },
             session: SessionConfig::default(),
             tunnel: TunnelConfigSection::default(),
-            ollama: OllamaConfigSection::default(),
+            models: ModelsConfigSection::default(),
             auth: AccessConfig::default(),
         };
 
@@ -261,7 +263,7 @@ default_model = "claude-sonnet-4"
             },
             session: SessionConfig::default(),
             tunnel: TunnelConfigSection::default(),
-            ollama: OllamaConfigSection::default(),
+            models: ModelsConfigSection::default(),
             auth: AccessConfig::default(),
         };
 

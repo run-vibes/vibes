@@ -21,7 +21,7 @@ pub struct RawVibesConfig {
     pub tunnel: TunnelConfigSection,
 
     #[serde(default)]
-    pub ollama: OllamaConfigSection,
+    pub models: ModelsConfigSection,
 
     #[serde(default)]
     pub auth: AccessConfig,
@@ -53,7 +53,7 @@ pub struct VibesConfig {
     pub tunnel: TunnelConfigSection,
 
     #[serde(default)]
-    pub ollama: OllamaConfigSection,
+    pub models: ModelsConfigSection,
 
     #[serde(default)]
     pub auth: AccessConfig,
@@ -123,6 +123,14 @@ pub struct TunnelConfigSection {
 
     /// Public hostname (for named mode)
     pub hostname: Option<String>,
+}
+
+/// Models configuration - namespace for all model provider configs
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ModelsConfigSection {
+    /// Ollama local LLM configuration
+    #[serde(default)]
+    pub ollama: OllamaConfigSection,
 }
 
 /// Default Ollama host
@@ -348,7 +356,7 @@ mod tests {
                 working_dir: Some(PathBuf::from("/tmp")),
             },
             tunnel: TunnelConfigSection::default(),
-            ollama: OllamaConfigSection::default(),
+            models: ModelsConfigSection::default(),
             auth: AccessConfig::default(),
         };
 
@@ -429,20 +437,23 @@ hostname = "vibes.example.com"
     #[test]
     fn ollama_config_parsing() {
         let toml_str = r#"
-[ollama]
+[models.ollama]
 enabled = true
 host = "192.168.1.100:11434"
 "#;
         let config: RawVibesConfig = toml::from_str(toml_str).unwrap();
-        assert!(config.ollama.enabled);
-        assert_eq!(config.ollama.host, Some("192.168.1.100:11434".to_string()));
+        assert!(config.models.ollama.enabled);
+        assert_eq!(
+            config.models.ollama.host,
+            Some("192.168.1.100:11434".to_string())
+        );
     }
 
     #[test]
     fn ollama_config_empty_uses_defaults() {
         let config: RawVibesConfig = toml::from_str("").unwrap();
-        assert!(!config.ollama.enabled);
-        assert!(config.ollama.host.is_none());
+        assert!(!config.models.ollama.enabled);
+        assert!(config.models.ollama.host.is_none());
     }
 
     #[test]

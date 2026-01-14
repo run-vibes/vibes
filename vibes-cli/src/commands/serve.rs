@@ -93,7 +93,7 @@ pub async fn run(args: ServeArgs) -> Result<()> {
             };
 
             // Start Ollama if enabled
-            let ollama_manager = OllamaManager::new(config.ollama);
+            let ollama_manager = OllamaManager::new(config.models.ollama);
             if let Err(e) = ollama_manager.start().await {
                 warn!("Failed to start Ollama: {}", e);
             }
