@@ -2,7 +2,7 @@
 id: m40-feat-05
 title: Export targets configuration
 type: feat
-status: in-progress
+status: done
 priority: high
 epics: [observability]
 depends: [m40-feat-02]

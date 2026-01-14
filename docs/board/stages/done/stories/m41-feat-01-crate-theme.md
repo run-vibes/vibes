@@ -2,7 +2,7 @@
 id: m41-feat-01
 title: vibes-tui crate scaffold and theme system
 type: feat
-status: in-progress
+status: done
 priority: high
 epics: [tui]
 depends: []

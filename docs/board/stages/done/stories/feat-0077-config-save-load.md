@@ -2,7 +2,7 @@
 id: feat-0077
 title: Config Save/Load for Wizards
 type: feat
-status: in-progress
+status: done
 priority: medium
 epics: [cli, networking]
 milestone: 35-setup-wizards
