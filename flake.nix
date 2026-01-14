@@ -24,6 +24,7 @@
             pkgs.cargo-nextest
             pkgs.cargo-mutants
             pkgs.cargo-watch
+            pkgs.sccache
             # CLI recording
             pkgs.vhs
             # Native build deps for CozoDB/RocksDB
@@ -39,6 +40,9 @@
           # Required for bindgen to find libclang
           LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
 
+          # Use sccache to cache Rust compilation artifacts
+          RUSTC_WRAPPER = "sccache";
+
           shellHook = ''
             # Auto-install cargo-llvm-cov if missing (consistent across all platforms)
             if ! command -v cargo-llvm-cov &> /dev/null; then
@@ -46,11 +50,12 @@
               cargo install cargo-llvm-cov --quiet
             fi
 
-            echo "vibes dev shell loaded"
-            echo "  just          - list commands"
-            echo "  just test     - run tests"
-            echo "  just dev      - watch mode"
-            echo "  just coverage - test coverage report"
+            echo "vibes dev shell loaded (sccache enabled)"
+            echo "  just              - list commands"
+            echo "  just test         - run tests"
+            echo "  just dev          - watch mode"
+            echo "  just coverage     - test coverage report"
+            echo "  sccache --show-stats - show cache statistics"
           '' + pkgs.lib.optionalString isLinux ''
             # Use mold linker on Linux for faster linking
             export CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=clang
