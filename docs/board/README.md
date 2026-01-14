@@ -1,10 +1,11 @@
-# Planning Board
-
-> Auto-generated from directory structure. Run `just board generate` to update.
+Generated README.md
+Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
-*No stories in progress*
+| Story | Type | Priority | Epics |
+|-------|------|----------|-------|
+| [refactor-0099-subnav-light-theme](stages/in-progress/stories/refactor-0099-subnav-light-theme.md) | refactor | medium | web-ui,design-system |
 
 ## Backlog
 
@@ -42,7 +43,6 @@
 | [m40-feat-04-instrument-key-functions](stages/backlog/stories/m40-feat-04-instrument-key-functions.md) | feat | high | observability |
 | [m40-feat-05-export-targets](stages/backlog/stories/m40-feat-05-export-targets.md) | feat | high | observability |
 | [m40-feat-06-observe-cli](stages/backlog/stories/m40-feat-06-observe-cli.md) | feat | medium | observability |
-| [refactor-0099-subnav-light-theme](stages/backlog/stories/refactor-0099-subnav-light-theme.md) | refactor | medium | web-ui,design-system |
 
 ## Epics
 

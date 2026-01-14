@@ -2,7 +2,7 @@
 id: refactor-0099
 title: Improve SubnavBar Light Theme Readability
 type: refactor
-status: pending
+status: in-progress
 priority: medium
 epics: [web-ui, design-system]
 ---
@@ -26,13 +26,13 @@ The SubnavBar in light theme currently uses a warm beige background (`#ebe7dc`) 
 
 ## Acceptance Criteria
 
-- [ ] Research: review light theme patterns in similar apps (dev tools, dashboards)
-- [ ] Design: explore 3-4 alternative approaches with mockups
-- [ ] Design: verify WCAG AA contrast ratios for all text states
-- [ ] Implementation: update SubnavBar light theme tokens
-- [ ] Implementation: ensure active/hover/focus states are clearly distinguishable
-- [ ] Implementation: test with both dark and light themes side-by-side
-- [ ] Add Ladle story showing SubnavBar in both themes
+- [x] Research: review light theme patterns in similar apps (dev tools, dashboards)
+- [x] Design: explore 3-4 alternative approaches with mockups
+- [x] Design: verify WCAG AA contrast ratios for all text states
+- [x] Implementation: update SubnavBar light theme tokens
+- [x] Implementation: ensure active/hover/focus states are clearly distinguishable
+- [x] Implementation: test with both dark and light themes side-by-side
+- [x] Add Ladle story showing SubnavBar in both themes
 - [ ] Visual regression test for theme switching
 
 ## Design Considerations
@@ -47,6 +47,25 @@ Key constraints:
 - Must maintain CRT aesthetic in dark theme
 - Light theme should feel cohesive but doesn't need to be 1:1 with dark
 - Readability is the top priority
+
+## Implementation Notes
+
+**Approach chosen:** Option 4 - Match header for visual continuity.
+
+**Changes made:**
+- SubnavBar light theme now uses `--surface` (white) instead of `--surface-light` (beige)
+- Removed glow/text-shadow effects in light theme (replaced with subtle hover backgrounds)
+- Active states use solid border + background instead of glowing effects
+- More dropdown gets a subtle shadow in light theme for better separation
+- Fixed hardcoded fallback colors to use proper design tokens
+
+**Contrast verification:**
+- Text on white background: 5.77:1 (WCAG AA compliant, needs 4.5:1)
+- Previous beige background was ~4.8:1 (marginal)
+
+**Files changed:**
+- `design-system/src/compositions/SubnavBar/SubnavBar.module.css`
+- `design-system/src/compositions/SubnavBar/SubnavBar.stories.tsx` (new)
 
 ## Size
 

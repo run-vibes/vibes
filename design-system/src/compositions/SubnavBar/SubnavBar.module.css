@@ -5,10 +5,16 @@
   padding: 0 var(--space-4);
   border: 1px solid var(--border);
   border-top: none;
-  background: var(--surface-alt, var(--screen-lighter, #1e1a16));
+  background: var(--surface-light);
   height: 0;
   overflow: hidden;
   transition: height 0.2s ease-out, padding 0.2s ease-out;
+}
+
+/* Light theme: use main surface color for better contrast and visual continuity */
+:global([data-theme="light"]) .subnavBar {
+  background: var(--surface);
+  border-color: var(--border-subtle);
 }
 
 .subnavBar.open {
@@ -100,11 +106,17 @@
   right: 0;
   margin-top: var(--space-1);
   min-width: 140px;
-  background: var(--surface-alt, var(--screen-lighter, #1e1a16));
+  background: var(--surface-light);
   border: 1px solid var(--border);
   z-index: 100;
   display: flex;
   flex-direction: column;
+}
+
+:global([data-theme="light"]) .moreDropdown {
+  background: var(--surface);
+  border-color: var(--border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .moreItem {
@@ -138,4 +150,37 @@
 .pluginGroove .moreItemActive {
   color: var(--cyan, #44ffff);
   background: rgba(68, 255, 255, 0.1);
+}
+
+/* Light theme: remove glow effects, use cleaner styling */
+:global([data-theme="light"]) .subnavItem:hover {
+  text-shadow: none;
+  background: var(--color-hover);
+}
+
+:global([data-theme="light"]) .subnavItemActive {
+  text-shadow: none;
+  background: var(--phosphor-subtle);
+  border-color: var(--phosphor);
+}
+
+:global([data-theme="light"]) .moreItem:hover {
+  background: var(--color-hover);
+}
+
+:global([data-theme="light"]) .moreItemActive {
+  background: var(--phosphor-subtle);
+}
+
+:global([data-theme="light"]) .pluginGroove .subnavItemActive {
+  text-shadow: none;
+  border-color: var(--cyan);
+}
+
+:global([data-theme="light"]) .pluginGroove .moreItem:hover {
+  background: var(--cyan-subtle);
+}
+
+:global([data-theme="light"]) .pluginGroove .moreItemActive {
+  background: var(--cyan-subtle);
 }
