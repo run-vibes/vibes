@@ -11,6 +11,7 @@ use axum::{
     Extension, Router, middleware,
     routing::{delete, get, post},
 };
+use tower_http::compression::CompressionLayer;
 
 use crate::AppState;
 use crate::middleware::auth_middleware;
@@ -49,11 +50,14 @@ pub fn create_router(state: Arc<AppState>) -> Router {
         .with_state(state)
         // Fallback serves embedded web-ui for SPA routing
         .fallback(static_files::static_handler)
+        // Compression layer (gzip and brotli) applied to all responses
+        .layer(CompressionLayer::new())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use axum::http::header::{ACCEPT_ENCODING, CONTENT_ENCODING};
     use axum_test::TestServer;
     use std::net::SocketAddr;
 
@@ -89,6 +93,52 @@ mod tests {
             body.contains("error") && !body.contains("<!DOCTYPE"),
             "Plugin route should return JSON error, not HTML. Got: {}",
             body
+        );
+    }
+
+    #[tokio::test]
+    async fn test_compression_gzip_enabled() {
+        let state = Arc::new(AppState::new());
+        let router = create_router(state);
+        let server =
+            TestServer::new(router.into_make_service_with_connect_info::<SocketAddr>()).unwrap();
+
+        let response = server
+            .get("/api/health")
+            .add_header(ACCEPT_ENCODING, "gzip")
+            .await;
+
+        response.assert_status_ok();
+
+        // Should have Content-Encoding: gzip when compression is enabled
+        let content_encoding = response.header(CONTENT_ENCODING);
+        assert_eq!(
+            content_encoding.to_str().unwrap(),
+            "gzip",
+            "Response should be gzip compressed when Accept-Encoding: gzip is sent"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_compression_brotli_enabled() {
+        let state = Arc::new(AppState::new());
+        let router = create_router(state);
+        let server =
+            TestServer::new(router.into_make_service_with_connect_info::<SocketAddr>()).unwrap();
+
+        let response = server
+            .get("/api/health")
+            .add_header(ACCEPT_ENCODING, "br")
+            .await;
+
+        response.assert_status_ok();
+
+        // Should have Content-Encoding: br when compression is enabled
+        let content_encoding = response.header(CONTENT_ENCODING);
+        assert_eq!(
+            content_encoding.to_str().unwrap(),
+            "br",
+            "Response should be brotli compressed when Accept-Encoding: br is sent"
         );
     }
 
