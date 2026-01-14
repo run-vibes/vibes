@@ -1,5 +1,7 @@
-Generated README.md
-Auto-generated from directory structure. Run `just board generate` to update.
+# Planning Board
+
+> [!NOTE]
+> Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
@@ -30,17 +32,20 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [m38-feat-04-task-types](stages/backlog/stories/m38-feat-04-task-types.md) | feat | high | agents |
 | [m38-feat-05-agent-lifecycle](stages/backlog/stories/m38-feat-05-agent-lifecycle.md) | feat | high | agents |
 | [m38-feat-06-agent-cli](stages/backlog/stories/m38-feat-06-agent-cli.md) | feat | medium | agents |
+| [m38-feat-07-agent-web-ui](stages/backlog/stories/m38-feat-07-agent-web-ui.md) | feat | medium | agents |
 | [m39-feat-01-evals-crate-skeleton](stages/backlog/stories/m39-feat-01-evals-crate-skeleton.md) | feat | high | evals |
 | [m39-feat-02-longitudinal-metrics](stages/backlog/stories/m39-feat-02-longitudinal-metrics.md) | feat | high | evals |
 | [m39-feat-03-eval-storage](stages/backlog/stories/m39-feat-03-eval-storage.md) | feat | high | evals |
 | [m39-feat-04-study-lifecycle](stages/backlog/stories/m39-feat-04-study-lifecycle.md) | feat | high | evals |
 | [m39-feat-05-eval-cli](stages/backlog/stories/m39-feat-05-eval-cli.md) | feat | medium | evals |
+| [m39-feat-06-eval-web-ui](stages/backlog/stories/m39-feat-06-eval-web-ui.md) | feat | medium | evals |
 | [m40-feat-01-observe-crate-skeleton](stages/backlog/stories/m40-feat-01-observe-crate-skeleton.md) | feat | high | observability |
 | [m40-feat-02-opentelemetry-setup](stages/backlog/stories/m40-feat-02-opentelemetry-setup.md) | feat | high | observability |
 | [m40-feat-03-trace-context](stages/backlog/stories/m40-feat-03-trace-context.md) | feat | high | observability |
 | [m40-feat-04-instrument-key-functions](stages/backlog/stories/m40-feat-04-instrument-key-functions.md) | feat | high | observability |
 | [m40-feat-05-export-targets](stages/backlog/stories/m40-feat-05-export-targets.md) | feat | high | observability |
 | [m40-feat-06-observe-cli](stages/backlog/stories/m40-feat-06-observe-cli.md) | feat | medium | observability |
+| [m40-feat-07-observe-web-ui](stages/backlog/stories/m40-feat-07-observe-web-ui.md) | feat | medium | observability |
 
 ## Epics
 

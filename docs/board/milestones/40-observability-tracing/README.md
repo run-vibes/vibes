@@ -37,6 +37,7 @@ First milestone of the Observability epic. Establishes OpenTelemetry-based distr
 | m40-feat-04 | Instrument key functions with spans | high | 4h |
 | m40-feat-05 | Export targets configuration | high | 3h |
 | m40-feat-06 | vibes observe traces CLI command | medium | 3h |
+| m40-feat-07 | Observe Web UI | medium | 4h |
 
 ## Epics
 

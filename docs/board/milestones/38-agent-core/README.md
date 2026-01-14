@@ -36,6 +36,7 @@ First milestone of the Agents epic. Establishes the foundation for agent orchest
 | m38-feat-04 | Task and TaskResult types | high | 3h |
 | m38-feat-05 | Agent lifecycle management | high | 4h |
 | m38-feat-06 | Agent CLI commands | medium | 3h |
+| m38-feat-07 | Agent Web UI | medium | 4h |
 
 ## Epics
 
