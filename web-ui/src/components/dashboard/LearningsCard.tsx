@@ -32,7 +32,7 @@ export function LearningsCard({ data }: LearningsCardProps) {
       title="Learnings"
       className="dashboard-card"
       footer={
-        <Link to="/groove/dashboard/learnings" className="card-footer-link">
+        <Link to="/groove/learnings" className="card-footer-link">
           View →
         </Link>
       }

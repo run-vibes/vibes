@@ -1,4 +1,3 @@
-import { Link } from '@tanstack/react-router';
 import { Card, Metric, StatusIndicator } from '@vibes/design-system';
 import type { HealthSummary, SystemStatus } from '../../hooks/useDashboard';
 import './DashboardCards.css';
@@ -53,11 +52,6 @@ export function HealthCard({ data }: HealthCardProps) {
           label={STATUS_LABELS[overall_status]}
           data-testid="status-indicator"
         />
-      }
-      footer={
-        <Link to="/groove/dashboard/health" className="card-footer-link">
-          View →
-        </Link>
       }
     >
       <div className="dashboard-card__metrics">

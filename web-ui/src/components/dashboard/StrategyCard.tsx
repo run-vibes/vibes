@@ -18,7 +18,7 @@ export function StrategyCard({ data }: StrategyCardProps) {
       title="Strategy"
       className="dashboard-card"
       footer={
-        <Link to="/groove/dashboard/strategy" className="card-footer-link">
+        <Link to="/groove/strategy" className="card-footer-link">
           View →
         </Link>
       }

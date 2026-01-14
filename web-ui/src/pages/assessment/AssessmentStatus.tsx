@@ -285,7 +285,7 @@ export function AssessmentStatus() {
                 ))}
                 {activity.sessions.length > 5 && (
                   <li className="session-item more">
-                    <Link to="/groove/assessment/history">+{activity.sessions.length - 5} more</Link>
+                    <Link to="/groove/history">+{activity.sessions.length - 5} more</Link>
                   </li>
                 )}
               </ul>

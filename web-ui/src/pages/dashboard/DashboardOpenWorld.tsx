@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { PageHeader } from '@vibes/design-system';
 import {
   NoveltyStats,
   ClusterList,
@@ -35,6 +36,7 @@ export function DashboardOpenWorld() {
 
   return (
     <div className="dashboard-openworld">
+      <PageHeader title="OPENWORLD" />
       <nav className="dashboard-openworld__tabs">
         {OPENWORLD_TABS.map((tab) => (
           <button

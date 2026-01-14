@@ -1,4 +1,4 @@
-import { forwardRef, HTMLAttributes, ReactNode } from 'react';
+import { forwardRef, HTMLAttributes, ReactNode, useState, useRef, useEffect } from 'react';
 import styles from './SubnavBar.module.css';
 
 export interface SubnavItem {
@@ -18,6 +18,7 @@ export interface SubnavBarProps extends HTMLAttributes<HTMLDivElement> {
   isOpen?: boolean;
   label?: string;
   items?: SubnavItem[];
+  moreItems?: SubnavItem[];
   plugin?: 'groove' | 'default';
   renderLink?: (props: SubnavLinkProps) => ReactNode;
 }
@@ -27,7 +28,23 @@ const DefaultLink = ({ href, className, children }: SubnavLinkProps) => (
 );
 
 export const SubnavBar = forwardRef<HTMLDivElement, SubnavBarProps>(
-  ({ isOpen = false, label, items = [], plugin = 'default', renderLink, className = '', ...props }, ref) => {
+  ({ isOpen = false, label, items = [], moreItems = [], plugin = 'default', renderLink, className = '', ...props }, ref) => {
+    const [moreOpen, setMoreOpen] = useState(false);
+    const moreRef = useRef<HTMLDivElement>(null);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+      function handleClickOutside(event: MouseEvent) {
+        if (moreRef.current && !moreRef.current.contains(event.target as Node)) {
+          setMoreOpen(false);
+        }
+      }
+      if (moreOpen) {
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+      }
+    }, [moreOpen]);
+
     const classes = [
       styles.subnavBar,
       isOpen && styles.open,
@@ -36,6 +53,8 @@ export const SubnavBar = forwardRef<HTMLDivElement, SubnavBarProps>(
     ].filter(Boolean).join(' ');
 
     const Link = renderLink ?? DefaultLink;
+
+    const hasActiveMoreItem = moreItems.some(item => item.isActive);
 
     return (
       <div ref={ref} className={classes} {...props}>
@@ -54,6 +73,41 @@ export const SubnavBar = forwardRef<HTMLDivElement, SubnavBarProps>(
               {item.label}
             </Link>
           ))}
+          {moreItems.length > 0 && (
+            <div ref={moreRef} className={styles.moreContainer}>
+              <button
+                type="button"
+                className={[
+                  styles.subnavItem,
+                  styles.moreButton,
+                  hasActiveMoreItem && styles.subnavItemActive,
+                ].filter(Boolean).join(' ')}
+                onClick={() => setMoreOpen(!moreOpen)}
+                aria-expanded={moreOpen}
+                aria-haspopup="true"
+              >
+                <span className={styles.icon}>⋯</span>
+                More
+              </button>
+              {moreOpen && (
+                <div className={styles.moreDropdown}>
+                  {moreItems.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={[
+                        styles.moreItem,
+                        item.isActive && styles.moreItemActive,
+                      ].filter(Boolean).join(' ')}
+                    >
+                      {item.icon && <span className={styles.icon}>{item.icon}</span>}
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </nav>
       </div>
     );

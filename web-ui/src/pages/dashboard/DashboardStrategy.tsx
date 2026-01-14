@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { PageHeader } from '@vibes/design-system';
 import {
   useDashboardStrategyDistributions,
   useDashboardStrategyOverrides,
@@ -35,6 +36,7 @@ export function DashboardStrategy() {
 
   return (
     <div className="dashboard-page dashboard-strategy">
+      <PageHeader title="STRATEGY" />
       <StrategyTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
       {isLoading && <p className="dashboard-strategy__loading">Loading...</p>}

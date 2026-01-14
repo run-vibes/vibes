@@ -1,5 +1,6 @@
 // web-ui/src/pages/assessment/AssessmentHistory.tsx
 import { useEffect, useState } from 'react';
+import { PageHeader } from '@vibes/design-system';
 import './AssessmentHistory.css';
 
 interface SessionHistoryItem {
@@ -85,6 +86,7 @@ export function AssessmentHistory() {
   if (state.status === 'loading') {
     return (
       <div className="history-page">
+        <PageHeader title="HISTORY" />
         <div className="history-loading">Loading...</div>
       </div>
     );
@@ -93,6 +95,7 @@ export function AssessmentHistory() {
   if (state.status === 'error') {
     return (
       <div className="history-page">
+        <PageHeader title="HISTORY" />
         <div className="history-error">
           <h2>Error</h2>
           <p>{state.error}</p>
@@ -106,6 +109,7 @@ export function AssessmentHistory() {
   if (sessions.length === 0) {
     return (
       <div className="history-page">
+        <PageHeader title="HISTORY" />
         <div className="history-empty">
           <p>No assessment data available yet.</p>
         </div>
@@ -115,6 +119,7 @@ export function AssessmentHistory() {
 
   return (
     <div className="history-page">
+      <PageHeader title="HISTORY" />
       <div className="history-controls">
         <label htmlFor="session-selector" className="selector-label">
           Filter by session:

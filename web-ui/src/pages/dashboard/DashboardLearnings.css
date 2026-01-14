@@ -7,6 +7,8 @@
   flex-direction: column;
   height: 100%;
   overflow: hidden;
+  padding: var(--space-4);
+  gap: var(--space-2);
 }
 
 .dashboard-learnings__layout {

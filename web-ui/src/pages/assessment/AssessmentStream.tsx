@@ -1,6 +1,6 @@
 // web-ui/src/pages/assessment/AssessmentStream.tsx
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import { StreamView, EventInspector, Badge } from '@vibes/design-system';
+import { StreamView, EventInspector, Badge, PageHeader } from '@vibes/design-system';
 import type { DisplayEvent, ContextEvent } from '@vibes/design-system';
 import { useAssessment } from '../../hooks/useAssessment';
 import type { AssessmentEvent } from '../../hooks/useAssessment';
@@ -177,46 +177,50 @@ export function AssessmentStream() {
     setIsFollowing(true);
   }, [setIsFollowing]);
 
+  const statusBadges = (
+    <div className="assessment-status">
+      {isConnected ? (
+        <Badge status="success">Connected</Badge>
+      ) : (
+        <Badge status="error">Disconnected</Badge>
+      )}
+      {!isFollowing && <Badge status="warning">Paused</Badge>}
+      {isLoadingOlder && <Badge status="idle">Loading...</Badge>}
+      {error && <Badge status="error">{error.message}</Badge>}
+    </div>
+  );
+
+  const headerControls = (
+    <div className="assessment-header-controls">
+      <div className="assessment-filters">
+        {ASSESSMENT_TIERS.map((tier) => (
+          <button
+            key={tier}
+            className={`filter-chip ${selectedTypes.includes(tier) ? 'active' : ''}`}
+            onClick={() => toggleType(tier)}
+          >
+            {tier}
+          </button>
+        ))}
+      </div>
+
+      <input
+        type="text"
+        placeholder="Search events..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="search-input"
+      />
+    </div>
+  );
+
   return (
     <div className="assessment-page">
-      {/* Header */}
-      <div className="assessment-header">
-        <div className="assessment-header-left">
-          <h1 className="assessment-title">ASSESSMENT</h1>
-          <div className="assessment-status">
-            {isConnected ? (
-              <Badge status="success">Connected</Badge>
-            ) : (
-              <Badge status="error">Disconnected</Badge>
-            )}
-            {!isFollowing && <Badge status="warning">Paused</Badge>}
-            {isLoadingOlder && <Badge status="idle">Loading...</Badge>}
-            {error && <Badge status="error">{error.message}</Badge>}
-          </div>
-        </div>
-
-        <div className="assessment-header-right">
-          <div className="assessment-filters">
-            {ASSESSMENT_TIERS.map((tier) => (
-              <button
-                key={tier}
-                className={`filter-chip ${selectedTypes.includes(tier) ? 'active' : ''}`}
-                onClick={() => toggleType(tier)}
-              >
-                {tier}
-              </button>
-            ))}
-          </div>
-
-          <input
-            type="text"
-            placeholder="Search events..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="search-input"
-          />
-        </div>
-      </div>
+      <PageHeader
+        title="ASSESSMENT"
+        leftContent={statusBadges}
+        rightContent={headerControls}
+      />
 
       <div className="assessment-content">
         <div className="assessment-stream">
