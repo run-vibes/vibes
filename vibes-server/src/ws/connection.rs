@@ -547,6 +547,196 @@ async fn handle_text_message(
             let json = serde_json::to_string(&response)?;
             sender.send(Message::Text(json)).await?;
         }
+
+        // ==================== Agent Commands ====================
+        ClientMessage::ListAgents { request_id } => {
+            debug!("ListAgents request: {}", request_id);
+
+            let registry = state.agent_registry.read().await;
+            let agents = registry.list_agent_info();
+            drop(registry);
+
+            let response = ServerMessage::AgentList { request_id, agents };
+            let json = serde_json::to_string(&response)?;
+            sender.send(Message::Text(json)).await?;
+        }
+
+        ClientMessage::SpawnAgent {
+            request_id,
+            agent_type,
+            name,
+            task,
+        } => {
+            debug!(
+                "SpawnAgent request: {} type={:?} name={:?}",
+                request_id, agent_type, name
+            );
+
+            let mut registry = state.agent_registry.write().await;
+            match registry.spawn_agent(agent_type, name, task).await {
+                Ok(agent_info) => {
+                    let response = ServerMessage::AgentSpawned {
+                        request_id,
+                        agent: agent_info,
+                    };
+                    let json = serde_json::to_string(&response)?;
+                    sender.send(Message::Text(json)).await?;
+                }
+                Err(e) => {
+                    let response = ServerMessage::Error {
+                        session_id: None,
+                        message: format!("Failed to spawn agent: {}", e),
+                        code: "AGENT_SPAWN_FAILED".to_string(),
+                    };
+                    let json = serde_json::to_string(&response)?;
+                    sender.send(Message::Text(json)).await?;
+                }
+            }
+        }
+
+        ClientMessage::AgentStatus {
+            request_id,
+            agent_id,
+        } => {
+            debug!("AgentStatus request: {} agent={}", request_id, agent_id);
+
+            let registry = state.agent_registry.read().await;
+            match registry.get_agent_info(&agent_id) {
+                Some(agent_info) => {
+                    let response = ServerMessage::AgentStatusResponse {
+                        request_id,
+                        agent: agent_info,
+                    };
+                    let json = serde_json::to_string(&response)?;
+                    sender.send(Message::Text(json)).await?;
+                }
+                None => {
+                    let response = ServerMessage::Error {
+                        session_id: None,
+                        message: format!("Agent not found: {}", agent_id),
+                        code: "AGENT_NOT_FOUND".to_string(),
+                    };
+                    let json = serde_json::to_string(&response)?;
+                    sender.send(Message::Text(json)).await?;
+                }
+            }
+        }
+
+        ClientMessage::PauseAgent {
+            request_id,
+            agent_id,
+        } => {
+            debug!("PauseAgent request: {} agent={}", request_id, agent_id);
+
+            let mut registry = state.agent_registry.write().await;
+            match registry.pause_agent(&agent_id).await {
+                Ok(()) => {
+                    let response = ServerMessage::AgentAck {
+                        request_id,
+                        agent_id,
+                        operation: "pause".to_string(),
+                    };
+                    let json = serde_json::to_string(&response)?;
+                    sender.send(Message::Text(json)).await?;
+                }
+                Err(e) => {
+                    let response = ServerMessage::Error {
+                        session_id: None,
+                        message: format!("Failed to pause agent: {}", e),
+                        code: "AGENT_PAUSE_FAILED".to_string(),
+                    };
+                    let json = serde_json::to_string(&response)?;
+                    sender.send(Message::Text(json)).await?;
+                }
+            }
+        }
+
+        ClientMessage::ResumeAgent {
+            request_id,
+            agent_id,
+        } => {
+            debug!("ResumeAgent request: {} agent={}", request_id, agent_id);
+
+            let mut registry = state.agent_registry.write().await;
+            match registry.resume_agent(&agent_id).await {
+                Ok(()) => {
+                    let response = ServerMessage::AgentAck {
+                        request_id,
+                        agent_id,
+                        operation: "resume".to_string(),
+                    };
+                    let json = serde_json::to_string(&response)?;
+                    sender.send(Message::Text(json)).await?;
+                }
+                Err(e) => {
+                    let response = ServerMessage::Error {
+                        session_id: None,
+                        message: format!("Failed to resume agent: {}", e),
+                        code: "AGENT_RESUME_FAILED".to_string(),
+                    };
+                    let json = serde_json::to_string(&response)?;
+                    sender.send(Message::Text(json)).await?;
+                }
+            }
+        }
+
+        ClientMessage::CancelAgent {
+            request_id,
+            agent_id,
+        } => {
+            debug!("CancelAgent request: {} agent={}", request_id, agent_id);
+
+            let mut registry = state.agent_registry.write().await;
+            match registry.cancel_agent(&agent_id).await {
+                Ok(()) => {
+                    let response = ServerMessage::AgentAck {
+                        request_id,
+                        agent_id,
+                        operation: "cancel".to_string(),
+                    };
+                    let json = serde_json::to_string(&response)?;
+                    sender.send(Message::Text(json)).await?;
+                }
+                Err(e) => {
+                    let response = ServerMessage::Error {
+                        session_id: None,
+                        message: format!("Failed to cancel agent: {}", e),
+                        code: "AGENT_CANCEL_FAILED".to_string(),
+                    };
+                    let json = serde_json::to_string(&response)?;
+                    sender.send(Message::Text(json)).await?;
+                }
+            }
+        }
+
+        ClientMessage::StopAgent {
+            request_id,
+            agent_id,
+        } => {
+            debug!("StopAgent request: {} agent={}", request_id, agent_id);
+
+            let mut registry = state.agent_registry.write().await;
+            match registry.stop_agent(&agent_id).await {
+                Ok(()) => {
+                    let response = ServerMessage::AgentAck {
+                        request_id,
+                        agent_id,
+                        operation: "stop".to_string(),
+                    };
+                    let json = serde_json::to_string(&response)?;
+                    sender.send(Message::Text(json)).await?;
+                }
+                Err(e) => {
+                    let response = ServerMessage::Error {
+                        session_id: None,
+                        message: format!("Failed to stop agent: {}", e),
+                        code: "AGENT_STOP_FAILED".to_string(),
+                    };
+                    let json = serde_json::to_string(&response)?;
+                    sender.send(Message::Text(json)).await?;
+                }
+            }
+        }
     }
 
     Ok(())

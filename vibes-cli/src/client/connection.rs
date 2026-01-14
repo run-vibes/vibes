@@ -153,6 +153,78 @@ impl VibesClient {
         .await
     }
 
+    // === Agent Methods ===
+
+    /// Request list of agents
+    pub async fn send_list_agents(&self, request_id: &str) -> Result<()> {
+        self.send(ClientMessage::ListAgents {
+            request_id: request_id.to_string(),
+        })
+        .await
+    }
+
+    /// Spawn a new agent
+    pub async fn send_spawn_agent(
+        &self,
+        request_id: &str,
+        agent_type: vibes_core::agent::AgentType,
+        name: Option<String>,
+        task: Option<String>,
+    ) -> Result<()> {
+        self.send(ClientMessage::SpawnAgent {
+            request_id: request_id.to_string(),
+            agent_type,
+            name,
+            task,
+        })
+        .await
+    }
+
+    /// Get agent status by ID or prefix
+    pub async fn send_agent_status(&self, request_id: &str, agent_id: &str) -> Result<()> {
+        self.send(ClientMessage::AgentStatus {
+            request_id: request_id.to_string(),
+            agent_id: agent_id.to_string(),
+        })
+        .await
+    }
+
+    /// Pause an agent
+    pub async fn send_pause_agent(&self, request_id: &str, agent_id: &str) -> Result<()> {
+        self.send(ClientMessage::PauseAgent {
+            request_id: request_id.to_string(),
+            agent_id: agent_id.to_string(),
+        })
+        .await
+    }
+
+    /// Resume a paused agent
+    pub async fn send_resume_agent(&self, request_id: &str, agent_id: &str) -> Result<()> {
+        self.send(ClientMessage::ResumeAgent {
+            request_id: request_id.to_string(),
+            agent_id: agent_id.to_string(),
+        })
+        .await
+    }
+
+    /// Cancel current task on an agent
+    pub async fn send_cancel_agent(&self, request_id: &str, agent_id: &str) -> Result<()> {
+        self.send(ClientMessage::CancelAgent {
+            request_id: request_id.to_string(),
+            agent_id: agent_id.to_string(),
+        })
+        .await
+    }
+
+    /// Stop and remove an agent
+    pub async fn send_stop_agent(&self, request_id: &str, agent_id: &str) -> Result<()> {
+        self.send(ClientMessage::StopAgent {
+            request_id: request_id.to_string(),
+            agent_id: agent_id.to_string(),
+        })
+        .await
+    }
+
     /// Spawn a task that forwards outgoing messages to the WebSocket
     async fn spawn_outgoing_task<S>(mut rx: mpsc::Receiver<ClientMessage>, mut ws_sender: S)
     where

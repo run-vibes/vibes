@@ -3,6 +3,7 @@
 //! Both CLI and Web UI use the same protocol for consistent behavior.
 
 use serde::{Deserialize, Serialize};
+use vibes_core::agent::{AgentContext, AgentStatus, AgentType, TaskMetrics};
 use vibes_core::{AuthContext, VibesEvent};
 
 /// Information about an active session
@@ -16,6 +17,23 @@ pub struct SessionInfo {
     pub subscriber_count: u32,
     pub created_at: i64,
     pub last_activity_at: i64,
+}
+
+/// Information about an agent
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct AgentInfo {
+    /// Agent ID
+    pub id: String,
+    /// Agent name
+    pub name: String,
+    /// Agent type
+    pub agent_type: AgentType,
+    /// Current status
+    pub status: AgentStatus,
+    /// Execution context
+    pub context: AgentContext,
+    /// Metrics for current task (if running)
+    pub current_task_metrics: Option<TaskMetrics>,
 }
 
 /// Reason a session was removed
@@ -90,6 +108,67 @@ pub enum ClientMessage {
     ListModels {
         /// Request ID for correlation
         request_id: String,
+    },
+
+    // ==================== Agent Commands ====================
+    /// Request list of all agents
+    ListAgents {
+        /// Request ID for correlation
+        request_id: String,
+    },
+
+    /// Spawn a new agent
+    SpawnAgent {
+        /// Request ID for correlation
+        request_id: String,
+        /// Agent type to spawn
+        agent_type: AgentType,
+        /// Optional agent name
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        name: Option<String>,
+        /// Optional initial task description
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        task: Option<String>,
+    },
+
+    /// Get detailed status of an agent
+    AgentStatus {
+        /// Request ID for correlation
+        request_id: String,
+        /// Agent ID (can be prefix)
+        agent_id: String,
+    },
+
+    /// Pause an agent
+    PauseAgent {
+        /// Request ID for correlation
+        request_id: String,
+        /// Agent ID (can be prefix)
+        agent_id: String,
+    },
+
+    /// Resume a paused agent
+    ResumeAgent {
+        /// Request ID for correlation
+        request_id: String,
+        /// Agent ID (can be prefix)
+        agent_id: String,
+    },
+
+    /// Cancel current task on an agent
+    CancelAgent {
+        /// Request ID for correlation
+        request_id: String,
+        /// Agent ID (can be prefix)
+        agent_id: String,
+    },
+
+    /// Stop and remove an agent
+    StopAgent {
+        /// Request ID for correlation
+        request_id: String,
+        /// Agent ID (can be prefix)
+        agent_id: String,
     },
 }
 
@@ -190,6 +269,41 @@ pub enum ServerMessage {
         session_id: String,
         /// Scrollback data (base64 encoded)
         data: String,
+    },
+
+    // ==================== Agent Responses ====================
+    /// Full agent list response
+    AgentList {
+        /// Original request ID
+        request_id: String,
+        /// List of agent info
+        agents: Vec<AgentInfo>,
+    },
+
+    /// Agent spawned successfully
+    AgentSpawned {
+        /// Original request ID
+        request_id: String,
+        /// New agent info
+        agent: AgentInfo,
+    },
+
+    /// Agent status response
+    AgentStatusResponse {
+        /// Original request ID
+        request_id: String,
+        /// Agent info
+        agent: AgentInfo,
+    },
+
+    /// Agent operation acknowledgement (pause/resume/cancel/stop)
+    AgentAck {
+        /// Original request ID
+        request_id: String,
+        /// Agent ID
+        agent_id: String,
+        /// Operation that was performed
+        operation: String,
     },
 }
 
