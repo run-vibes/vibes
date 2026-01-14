@@ -161,6 +161,10 @@ pub struct ModelInfo {
     pub pricing: Option<Pricing>,
     /// Whether this is a local model (not cloud-hosted).
     pub local: bool,
+    /// Model file size in bytes (for local models).
+    pub size_bytes: Option<u64>,
+    /// When the model was last modified (ISO 8601 format).
+    pub modified_at: Option<String>,
 }
 
 impl ModelInfo {
@@ -180,6 +184,8 @@ pub struct ModelInfoBuilder {
     capabilities: Capabilities,
     pricing: Option<Pricing>,
     local: bool,
+    size_bytes: Option<u64>,
+    modified_at: Option<String>,
 }
 
 impl ModelInfoBuilder {
@@ -192,6 +198,8 @@ impl ModelInfoBuilder {
             capabilities: Capabilities::default(),
             pricing: None,
             local: false,
+            size_bytes: None,
+            modified_at: None,
         }
     }
 
@@ -225,6 +233,18 @@ impl ModelInfoBuilder {
         self
     }
 
+    /// Set the model file size in bytes.
+    pub fn size_bytes(mut self, size: u64) -> Self {
+        self.size_bytes = Some(size);
+        self
+    }
+
+    /// Set when the model was last modified (ISO 8601 format).
+    pub fn modified_at(mut self, timestamp: impl Into<String>) -> Self {
+        self.modified_at = Some(timestamp.into());
+        self
+    }
+
     /// Build the `ModelInfo`.
     pub fn build(self) -> ModelInfo {
         ModelInfo {
@@ -236,6 +256,8 @@ impl ModelInfoBuilder {
             capabilities: self.capabilities,
             pricing: self.pricing,
             local: self.local,
+            size_bytes: self.size_bytes,
+            modified_at: self.modified_at,
         }
     }
 }

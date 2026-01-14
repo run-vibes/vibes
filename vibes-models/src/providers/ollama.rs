@@ -35,6 +35,8 @@ pub struct OllamaTagsResponse {
 pub struct OllamaModel {
     pub name: String,
     pub size: u64,
+    /// Model digest hash (required for deserialization but not used in ModelInfo).
+    #[allow(dead_code)]
     pub digest: String,
     pub modified_at: String,
 }
@@ -46,6 +48,8 @@ impl OllamaModel {
             .context_window(8192) // Default, varies by model
             .capabilities(Capabilities::chat())
             .local()
+            .size_bytes(self.size)
+            .modified_at(&self.modified_at)
             .build()
     }
 }
@@ -359,7 +363,7 @@ impl OllamaProvider {
                         }
                         serde_json::from_str::<OllamaChatResponse>(trimmed)
                             .map(|r| r.to_stream_chunk())
-                            .map_err(|e| crate::Error::Serialization(e))
+                            .map_err(crate::Error::Serialization)
                     })
             })
             // Filter out empty chunks

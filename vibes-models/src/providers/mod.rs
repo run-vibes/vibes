@@ -183,6 +183,8 @@ mod tests {
                     capabilities: Capabilities::chat(),
                     pricing: None,
                     local: false,
+                    size_bytes: None,
+                    modified_at: None,
                 }],
             }
         }
