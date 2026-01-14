@@ -222,18 +222,13 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 
 /// Distance metric for clustering
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum DistanceMetric {
     /// Euclidean (L2) distance
+    #[default]
     Euclidean,
     /// Cosine distance (1 - similarity)
     Cosine,
-}
-
-impl Default for DistanceMetric {
-    fn default() -> Self {
-        Self::Euclidean
-    }
 }
 
 /// Configuration for DBSCAN clustering

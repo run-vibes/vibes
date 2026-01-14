@@ -388,9 +388,16 @@ impl VibesServer {
         // Configure tunnel based on flags
         let tunnel_config = if self.config.tunnel_quick {
             TunnelConfig::quick()
+        } else if let (Some(name), Some(hostname)) =
+            (&self.config.tunnel_name, &self.config.tunnel_hostname)
+        {
+            // Use named tunnel from config
+            TunnelConfig::named(name.clone(), hostname.clone())
         } else {
-            // For --tunnel flag, use config from file (not yet implemented)
-            // For now, just use quick tunnel
+            // Fallback to quick tunnel if named config is incomplete
+            tracing::warn!(
+                "Named tunnel requested but config incomplete, falling back to quick tunnel"
+            );
             TunnelConfig::quick()
         };
 
@@ -464,6 +471,10 @@ pub struct ServerConfig {
     pub tunnel_enabled: bool,
     /// Use quick tunnel mode (temporary URL)
     pub tunnel_quick: bool,
+    /// Named tunnel name (from config)
+    pub tunnel_name: Option<String>,
+    /// Named tunnel hostname (from config)
+    pub tunnel_hostname: Option<String>,
     /// Enable push notifications
     pub notify_enabled: bool,
     /// Ollama base URL (e.g., "http://localhost:11434")
@@ -477,6 +488,8 @@ impl Default for ServerConfig {
             port: 7432,
             tunnel_enabled: false,
             tunnel_quick: false,
+            tunnel_name: None,
+            tunnel_hostname: None,
             notify_enabled: false,
             ollama_base_url: None,
         }
@@ -491,6 +504,8 @@ impl ServerConfig {
             port,
             tunnel_enabled: false,
             tunnel_quick: false,
+            tunnel_name: None,
+            tunnel_hostname: None,
             notify_enabled: false,
             ollama_base_url: None,
         }

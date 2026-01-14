@@ -73,6 +73,10 @@ struct ResolvedSettings {
     port: u16,
     tunnel: bool,
     quick_tunnel: bool,
+    /// Named tunnel name (from config)
+    tunnel_name: Option<String>,
+    /// Named tunnel hostname (from config)
+    tunnel_hostname: Option<String>,
     notify: bool,
     /// Ollama base URL from config (e.g., "http://localhost:11434")
     ollama_base_url: Option<String>,
@@ -99,6 +103,8 @@ pub async fn run(args: ServeArgs) -> Result<()> {
                 port: args.port.unwrap_or(config.server.port),
                 tunnel: args.tunnel,
                 quick_tunnel: args.quick_tunnel,
+                tunnel_name: config.tunnel.name,
+                tunnel_hostname: config.tunnel.hostname,
                 notify: args.notify,
                 ollama_base_url,
             };
@@ -126,6 +132,8 @@ async fn run_foreground(settings: &ResolvedSettings, _ollama: OllamaManager) -> 
         port: settings.port,
         tunnel_enabled: settings.tunnel,
         tunnel_quick: settings.quick_tunnel,
+        tunnel_name: settings.tunnel_name.clone(),
+        tunnel_hostname: settings.tunnel_hostname.clone(),
         notify_enabled: settings.notify,
         ollama_base_url: settings.ollama_base_url.clone(),
     };

@@ -86,6 +86,14 @@ impl TunnelConfig {
             TunnelMode::Quick => None,
         }
     }
+
+    /// Get the hostname for named tunnels
+    pub fn hostname(&self) -> Option<&str> {
+        match &self.mode {
+            TunnelMode::Named { hostname, .. } => Some(hostname),
+            TunnelMode::Quick => None,
+        }
+    }
 }
 
 #[cfg(test)]
@@ -113,6 +121,13 @@ mod tests {
         assert!(config.enabled);
         assert!(!config.is_quick());
         assert_eq!(config.tunnel_name(), Some("my-tunnel"));
+        assert_eq!(config.hostname(), Some("vibes.example.com"));
+    }
+
+    #[test]
+    fn tunnel_config_quick_has_no_hostname() {
+        let config = TunnelConfig::quick();
+        assert!(config.hostname().is_none());
     }
 
     #[test]

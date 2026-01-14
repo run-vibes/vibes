@@ -102,8 +102,9 @@ pub async fn list_tunnels() -> anyhow::Result<Vec<ExistingTunnel>> {
     }
 
     let stdout = String::from_utf8_lossy(&output.stdout);
-    let tunnels: Vec<ExistingTunnel> = serde_json::from_str(&stdout)?;
-    Ok(tunnels)
+    // cloudflared returns `null` when no tunnels exist, not `[]`
+    let tunnels: Option<Vec<ExistingTunnel>> = serde_json::from_str(&stdout)?;
+    Ok(tunnels.unwrap_or_default())
 }
 
 /// Create a new tunnel.
@@ -177,6 +178,20 @@ mod tests {
         assert_eq!(tunnels[0].id, "abc123");
         assert_eq!(tunnels[0].name, "vibes-home");
         assert_eq!(tunnels[0].connections, 2);
+    }
+
+    #[test]
+    fn parse_tunnel_list_handles_null() {
+        // cloudflared returns `null` when no tunnels exist
+        let tunnels: Option<Vec<ExistingTunnel>> = serde_json::from_str("null").unwrap();
+        assert_eq!(tunnels.unwrap_or_default(), vec![]);
+    }
+
+    #[test]
+    fn parse_tunnel_list_handles_empty_array() {
+        // cloudflared could also return an empty array
+        let tunnels: Option<Vec<ExistingTunnel>> = serde_json::from_str("[]").unwrap();
+        assert_eq!(tunnels.unwrap_or_default(), vec![]);
     }
 
     #[tokio::test]

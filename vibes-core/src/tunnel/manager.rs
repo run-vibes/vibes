@@ -106,6 +106,7 @@ impl TunnelManager {
         let state = Arc::clone(&self.state);
         let event_tx = self.event_tx.clone();
         let is_quick = self.config.is_quick();
+        let named_url = self.config.hostname().map(|h| format!("https://{}", h));
 
         tokio::spawn(async move {
             let reader = BufReader::new(stderr);
@@ -135,6 +136,26 @@ impl TunnelManager {
                 // Check for connection registered (for named tunnels)
                 if cloudflared::is_connection_registered(&line) {
                     debug!("Tunnel connection registered");
+
+                    // For named tunnels, emit Connected event with the configured hostname
+                    if let Some(ref url) = named_url {
+                        info!("Named tunnel connected: {}", url);
+
+                        // Update state to Connected
+                        {
+                            let mut s = state.write().await;
+                            // Only update if this is the first connection
+                            if !matches!(*s, TunnelState::Connected { .. }) {
+                                *s = TunnelState::Connected {
+                                    url: url.clone(),
+                                    connected_at: chrono::Utc::now(),
+                                };
+                            }
+                        }
+
+                        // Emit Connected event
+                        let _ = event_tx.send(TunnelEvent::Connected { url: url.clone() });
+                    }
                 }
 
                 // Check for connection lost

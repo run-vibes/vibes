@@ -40,10 +40,11 @@ pub enum AgentType {
 /// Agent execution status
 ///
 /// Tracks the lifecycle state of an agent.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub enum AgentStatus {
     /// Ready to accept tasks
     #[serde(rename = "idle")]
+    #[default]
     Idle,
     /// Actively executing a task
     #[serde(rename = "running")]
@@ -62,25 +63,14 @@ pub enum AgentStatus {
     Failed { error: String },
 }
 
-impl Default for AgentStatus {
-    fn default() -> Self {
-        Self::Idle
-    }
-}
-
 /// Where an agent executes
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum ExecutionLocation {
     /// Same machine as vibes server
+    #[default]
     Local,
     /// Remote vibes instance
     Remote { endpoint: Url },
-}
-
-impl Default for ExecutionLocation {
-    fn default() -> Self {
-        Self::Local
-    }
 }
 
 /// Resource limits for agent execution
