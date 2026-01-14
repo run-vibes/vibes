@@ -28,7 +28,7 @@ pub use context::{
     AgentId, ModelId, SessionId, SwarmId, TraceContext, UserId, VibesSpanExt, attributes,
 };
 pub use tracer::{
-    ExportTarget, TracerConfig, TracerError, TracingGuard, current_span_id, current_trace_id,
-    init_tracing,
+    ConsoleFormat, ExportTarget, FileFormat, TracerConfig, TracerError, TracingGuard,
+    current_span_id, current_trace_id, init_tracing,
 };
 pub use types::{ParseIdError, SpanId, TraceId};

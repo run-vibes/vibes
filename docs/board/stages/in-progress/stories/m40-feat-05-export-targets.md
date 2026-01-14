@@ -2,7 +2,7 @@
 id: m40-feat-05
 title: Export targets configuration
 type: feat
-status: backlog
+status: in-progress
 priority: high
 epics: [observability]
 depends: [m40-feat-02]
@@ -116,9 +116,14 @@ endpoint = "http://localhost:4317"
 
 ## Acceptance Criteria
 
-- [ ] Console exporter works (pretty/json)
-- [ ] File exporter writes JSON lines
-- [ ] OTLP exporter connects to collector
-- [ ] Jaeger exporter sends spans
-- [ ] Configuration file parsing works
-- [ ] Multiple exporters can be active
+- [x] Console exporter works (pretty/json/compact)
+- [x] File exporter writes JSON lines
+- [x] OTLP exporter connects to collector
+- [x] ~~Jaeger exporter sends spans~~ Removed - Jaeger now supports OTLP natively
+- [ ] Configuration file parsing works (handled by vibes-core, separate story)
+- [x] Multiple exporters can be active
+
+## Design Notes
+
+- Removed `Jaeger` variant from `ExportTarget` since `opentelemetry-jaeger` is deprecated and Jaeger natively supports OTLP. Users targeting Jaeger should use `Otlp` with Jaeger's OTLP endpoint.
+- `ExporterBuilder` was not implemented as a separate struct; `TracerConfig.exporters` provides equivalent functionality via `init_tracing()`.
