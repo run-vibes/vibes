@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { Card } from '@vibes/design-system';
+import { Card, EmptyState } from '@vibes/design-system';
 import type { AttributionSummary, ContributorBrief } from '../../hooks/useDashboard';
 import './DashboardCards.css';
 
@@ -36,7 +36,7 @@ export function AttributionCard({ data }: AttributionCardProps) {
             ))}
           </ol>
         ) : (
-          <p className="empty-text">No data yet</p>
+          <EmptyState message="No data yet" size="sm" />
         )}
       </div>
 

@@ -1,3 +1,4 @@
+import { EmptyState } from '@vibes/design-system';
 import { SessionCard } from './SessionCard';
 import type { SessionInfo } from '../lib/types';
 
@@ -39,22 +40,22 @@ export function SessionList({
 
   if (sessions.length === 0) {
     return (
-      <div className="empty-state">
-        <p>No active sessions.</p>
-        {onCreateSession ? (
-          <button
-            onClick={onCreateSession}
-            className="btn btn-primary"
-            disabled={isCreating}
-          >
-            {isCreating ? 'Creating...' : 'New Session'}
-          </button>
-        ) : (
-          <p>
-            Start one with <code>vibes claude "your prompt"</code>
-          </p>
-        )}
-      </div>
+      <EmptyState
+        icon="📡"
+        message="No active sessions"
+        hint={onCreateSession ? undefined : 'Start one with vibes claude "your prompt"'}
+        action={
+          onCreateSession && (
+            <button
+              onClick={onCreateSession}
+              className="btn btn-primary"
+              disabled={isCreating}
+            >
+              {isCreating ? 'Creating...' : 'New Session'}
+            </button>
+          )
+        }
+      />
     );
   }
 

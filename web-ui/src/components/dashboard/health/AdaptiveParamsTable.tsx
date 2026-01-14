@@ -1,3 +1,4 @@
+import { EmptyState } from '@vibes/design-system';
 import type { AdaptiveParam, ParamTrend } from '../../../hooks/useDashboard';
 import { Sparkline } from '../../charts/Sparkline';
 import './AdaptiveParamsTable.css';
@@ -19,11 +20,7 @@ function getTrendIndicator(trend: ParamTrend): string {
 
 export function AdaptiveParamsTable({ params }: AdaptiveParamsTableProps) {
   if (params.length === 0) {
-    return (
-      <div className="adaptive-params-table adaptive-params-table--empty">
-        No parameters available
-      </div>
-    );
+    return <EmptyState message="No parameters available" size="sm" />;
   }
 
   const hasSparklines = params.some((p) => p.sparklineData && p.sparklineData.length > 0);

@@ -1,6 +1,6 @@
 // web-ui/src/pages/Quarantine.tsx
 import { useState } from 'react';
-import { Text, Button } from '@vibes/design-system';
+import { Text, Button, EmptyState } from '@vibes/design-system';
 import {
   useQuarantineList,
   useQuarantineStats,
@@ -223,9 +223,11 @@ export function QuarantinePage() {
               ))}
             </div>
           ) : (
-            <div className="empty-state">
-              <Text intensity="dim">No items in quarantine queue</Text>
-            </div>
+            <EmptyState
+              icon="✓"
+              message="No items in quarantine queue"
+              size="sm"
+            />
           )}
         </section>
 

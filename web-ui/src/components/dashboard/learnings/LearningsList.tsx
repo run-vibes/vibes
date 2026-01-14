@@ -1,3 +1,4 @@
+import { EmptyState } from '@vibes/design-system';
 import type { LearningBrief } from '../../../hooks/useDashboard';
 import { LearningStatusBadge } from './LearningStatusBadge';
 import { ValueBar } from './ValueBar';
@@ -27,7 +28,7 @@ export function LearningsList({
   if (learnings.length === 0) {
     return (
       <div className="learnings-list">
-        <p className="learnings-list__empty">No learnings found</p>
+        <EmptyState message="No learnings found" size="sm" />
       </div>
     );
   }

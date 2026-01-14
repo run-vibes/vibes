@@ -1,3 +1,4 @@
+import { EmptyState } from '@vibes/design-system';
 import { OverrideItem } from './OverrideItem';
 import type { LearningOverrideEntry } from '../../../hooks/useDashboard';
 import './OverridesList.css';
@@ -50,7 +51,7 @@ export function OverridesList({
       </header>
 
       {overrides.length === 0 ? (
-        <p className="overrides-list__empty">No overrides found.</p>
+        <EmptyState message="No overrides found" size="sm" />
       ) : (
         <div className="overrides-list__items">
           {overrides.map((override) => (
