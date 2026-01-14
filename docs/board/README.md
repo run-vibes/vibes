@@ -18,7 +18,6 @@ uto-generated from directory structure. Run `just board generate` to update.*
 | [feat-0077-config-save-load](stages/backlog/stories/feat-0077-config-save-load.md) | feat | medium | cli,networking |
 | [feat-0078-connectivity-validation](stages/backlog/stories/feat-0078-connectivity-validation.md) | feat | medium | cli,networking |
 | [feat-0101-header-identity-display](stages/backlog/stories/feat-0101-header-identity-display.md) | feat | low | web-ui,design-system |
-| [m38-feat-04-task-types](stages/backlog/stories/m38-feat-04-task-types.md) | feat | high | agents |
 | [m38-feat-06-agent-cli](stages/backlog/stories/m38-feat-06-agent-cli.md) | feat | medium | agents |
 | [m38-feat-07-agent-web-ui](stages/backlog/stories/m38-feat-07-agent-web-ui.md) | feat | medium | agents |
 | [m39-feat-05-eval-cli](stages/backlog/stories/m39-feat-05-eval-cli.md) | feat | medium | evals |
@@ -243,6 +242,7 @@ uto-generated from directory structure. Run `just board generate` to update.*
 - [m38-feat-01-agent-module-skeleton](stages/done/stories/m38-feat-01-agent-module-skeleton.md)
 - [m38-feat-02-agent-trait](stages/done/stories/m38-feat-02-agent-trait.md)
 - [m38-feat-03-agent-status](stages/done/stories/m38-feat-03-agent-status.md)
+- [m38-feat-04-task-types](stages/done/stories/m38-feat-04-task-types.md)
 - [m38-feat-05-agent-lifecycle](stages/done/stories/m38-feat-05-agent-lifecycle.md)
 - [m39-feat-01-evals-crate-skeleton](stages/done/stories/m39-feat-01-evals-crate-skeleton.md)
 - [m39-feat-02-longitudinal-metrics](stages/done/stories/m39-feat-02-longitudinal-metrics.md)

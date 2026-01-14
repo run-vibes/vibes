@@ -2,7 +2,7 @@
 id: m38-feat-04
 title: Task and TaskResult types
 type: feat
-status: backlog
+status: done
 priority: high
 epics: [agents]
 depends: [m38-feat-01]
