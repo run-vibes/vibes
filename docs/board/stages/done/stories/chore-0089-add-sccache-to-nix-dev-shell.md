@@ -2,7 +2,7 @@
 id: CHORE0089
 title: Add sccache to Nix dev shell
 type: chore
-status: backlog
+status: done
 priority: medium
 epics: [dev-environment]
 depends: []
