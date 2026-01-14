@@ -10,6 +10,28 @@ pub enum VibesError {
 
     #[error("PTY error: {0}")]
     Pty(#[from] crate::pty::PtyError),
+
+    #[error("Agent error: {0}")]
+    Agent(#[from] AgentError),
+}
+
+/// Result type alias for vibes-core operations
+pub type VibesResult<T> = std::result::Result<T, VibesError>;
+
+/// Errors related to agent operations
+#[derive(Error, Debug)]
+pub enum AgentError {
+    #[error("Operation not supported: {0}")]
+    NotSupported(String),
+
+    #[error("Agent is not in expected state: expected {expected}, got {actual}")]
+    InvalidState { expected: String, actual: String },
+
+    #[error("Task execution failed: {0}")]
+    TaskFailed(String),
+
+    #[error("Agent was cancelled")]
+    Cancelled,
 }
 
 /// Errors related to push notifications
