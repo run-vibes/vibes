@@ -1,10 +1,12 @@
-Generated README.md
-uto-generated from directory structure. Run `just board generate` to update.*
+# Planning Board
+
+*Auto-generated from directory structure. Run `just board generate` to update.*
 
 ## In Progress
 
 | Story | Type | Priority | Epics |
 |-------|------|----------|-------|
+| [feat-0107-display-quick-tunnel-url-on-startup](stages/in-progress/stories/feat-0107-display-quick-tunnel-url-on-startup.md) | feat | high | networking |
 | [m40-feat-01-observe-crate-skeleton](stages/in-progress/stories/m40-feat-01-observe-crate-skeleton.md) | feat | high | observability |
 
 ## Backlog
@@ -21,7 +23,6 @@ uto-generated from directory structure. Run `just board generate` to update.*
 | [feat-0077-config-save-load](stages/backlog/stories/feat-0077-config-save-load.md) | feat | medium | cli,networking |
 | [feat-0078-connectivity-validation](stages/backlog/stories/feat-0078-connectivity-validation.md) | feat | medium | cli,networking |
 | [feat-0101-header-identity-display](stages/backlog/stories/feat-0101-header-identity-display.md) | feat | low | web-ui,design-system |
-| [feat-0107-display-quick-tunnel-url-on-startup](stages/backlog/stories/feat-0107-display-quick-tunnel-url-on-startup.md) | feat | high | networking |
 | [m38-feat-04-task-types](stages/backlog/stories/m38-feat-04-task-types.md) | feat | high | agents |
 | [m38-feat-05-agent-lifecycle](stages/backlog/stories/m38-feat-05-agent-lifecycle.md) | feat | high | agents |
 | [m38-feat-06-agent-cli](stages/backlog/stories/m38-feat-06-agent-cli.md) | feat | medium | agents |

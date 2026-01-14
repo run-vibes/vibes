@@ -2,7 +2,7 @@
 id: FEAT0107
 title: Display quick tunnel URL on startup
 type: feat
-status: backlog
+status: in-progress
 priority: high
 epics: [networking]
 depends: []
