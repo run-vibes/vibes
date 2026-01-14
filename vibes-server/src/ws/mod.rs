@@ -8,4 +8,7 @@ pub mod protocol;
 pub use assessment::assessment_ws;
 pub use connection::ws_handler;
 pub use firehose::firehose_ws;
-pub use protocol::{AgentInfo, ClientMessage, ServerMessage, vibes_event_to_server_message};
+pub use protocol::{
+    AgentInfo, CheckpointInfo, ClientMessage, ServerMessage, StudyInfo,
+    vibes_event_to_server_message,
+};

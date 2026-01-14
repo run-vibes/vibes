@@ -76,6 +76,8 @@ enum Commands {
     Claude(commands::claude::ClaudeArgs),
     /// Manage configuration
     Config(commands::config::ConfigArgs),
+    /// Manage evaluation studies
+    Eval(commands::eval::EvalArgs),
     /// Send events to the EventLog
     Event(commands::event::EventArgs),
     /// Manage AI models and credentials
@@ -111,6 +113,7 @@ async fn main() -> Result<()> {
         Commands::Auth(args) => commands::auth::run(args).await,
         Commands::Claude(args) => commands::claude::run(args).await,
         Commands::Config(args) => commands::config::run(args),
+        Commands::Eval(args) => commands::eval::run(args).await,
         Commands::Event(args) => commands::event::run(args).await,
         Commands::Models(args) => commands::models::run(args).await,
         Commands::Plugin(args) => commands::plugin::run(args),

@@ -225,6 +225,62 @@ impl VibesClient {
         .await
     }
 
+    // === Study Methods ===
+
+    /// Create a new longitudinal study
+    pub async fn send_create_study(
+        &self,
+        request_id: &str,
+        name: &str,
+        period_type: &str,
+        period_value: Option<u32>,
+        description: Option<String>,
+    ) -> Result<()> {
+        self.send(ClientMessage::CreateStudy {
+            request_id: request_id.to_string(),
+            name: name.to_string(),
+            period_type: period_type.to_string(),
+            period_value,
+            description,
+        })
+        .await
+    }
+
+    /// Stop a running study
+    pub async fn send_stop_study(&self, request_id: &str, study_id: &str) -> Result<()> {
+        self.send(ClientMessage::StopStudy {
+            request_id: request_id.to_string(),
+            study_id: study_id.to_string(),
+        })
+        .await
+    }
+
+    /// List all studies
+    pub async fn send_list_studies(&self, request_id: &str) -> Result<()> {
+        self.send(ClientMessage::ListStudies {
+            request_id: request_id.to_string(),
+        })
+        .await
+    }
+
+    /// Get detailed study information
+    pub async fn send_get_study(&self, request_id: &str, study_id: &str) -> Result<()> {
+        self.send(ClientMessage::GetStudy {
+            request_id: request_id.to_string(),
+            study_id: study_id.to_string(),
+        })
+        .await
+    }
+
+    /// Force a checkpoint recording
+    pub async fn send_record_checkpoint(&self, request_id: &str, study_id: &str) -> Result<()> {
+        self.send(ClientMessage::RecordCheckpoint {
+            request_id: request_id.to_string(),
+            study_id: study_id.to_string(),
+        })
+        .await
+    }
+
     /// Spawn a task that forwards outgoing messages to the WebSocket
     async fn spawn_outgoing_task<S>(mut rx: mpsc::Receiver<ClientMessage>, mut ws_sender: S)
     where

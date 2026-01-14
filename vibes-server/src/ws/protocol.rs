@@ -6,6 +6,35 @@ use serde::{Deserialize, Serialize};
 use vibes_core::agent::{AgentContext, AgentStatus, AgentType, TaskMetrics};
 use vibes_core::{AuthContext, VibesEvent};
 
+/// Information about an evaluation study
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct StudyInfo {
+    pub id: String,
+    pub name: String,
+    pub status: String,
+    pub period_type: String,
+    pub period_value: Option<u32>,
+    pub description: Option<String>,
+    pub created_at: i64,
+    pub started_at: Option<i64>,
+    pub stopped_at: Option<i64>,
+    pub checkpoint_count: u32,
+}
+
+/// Information about a study checkpoint
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct CheckpointInfo {
+    pub id: String,
+    pub study_id: String,
+    pub timestamp: i64,
+    pub sessions_completed: u32,
+    pub success_rate: Option<f64>,
+    pub first_attempt_rate: Option<f64>,
+    pub avg_iterations: Option<f64>,
+    pub cost_per_task: Option<f64>,
+    pub events_analyzed: u64,
+}
+
 /// Information about an active session
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct SessionInfo {
@@ -170,6 +199,61 @@ pub enum ClientMessage {
         /// Agent ID (can be prefix)
         agent_id: String,
     },
+
+    // === Study Commands ===
+    /// Create a new longitudinal study
+    CreateStudy {
+        /// Request ID for correlation
+        request_id: String,
+        /// Human-readable name for the study
+        name: String,
+        /// Period type (hourly, daily, weekly, monthly)
+        period_type: String,
+        /// Number of periods (e.g., 2 for "2 weeks")
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        period_value: Option<u32>,
+        /// Optional description
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        description: Option<String>,
+    },
+
+    /// Start a pending study
+    StartStudy {
+        /// Request ID for correlation
+        request_id: String,
+        /// Study ID to start
+        study_id: String,
+    },
+
+    /// Stop a running study
+    StopStudy {
+        /// Request ID for correlation
+        request_id: String,
+        /// Study ID to stop
+        study_id: String,
+    },
+
+    /// List all studies
+    ListStudies {
+        /// Request ID for correlation
+        request_id: String,
+    },
+
+    /// Get detailed study information
+    GetStudy {
+        /// Request ID for correlation
+        request_id: String,
+        /// Study ID to get
+        study_id: String,
+    },
+
+    /// Force a checkpoint recording
+    RecordCheckpoint {
+        /// Request ID for correlation
+        request_id: String,
+        /// Study ID to checkpoint
+        study_id: String,
+    },
 }
 
 /// Messages sent from server to client
@@ -227,6 +311,57 @@ pub enum ServerMessage {
         request_id: String,
         /// List of available models
         models: Vec<vibes_models::ModelInfo>,
+    },
+
+    // === Study Responses ===
+    /// Study was created
+    StudyCreated {
+        /// Original request ID
+        request_id: String,
+        /// Created study info
+        study: StudyInfo,
+    },
+
+    /// Study was started
+    StudyStarted {
+        /// Original request ID
+        request_id: String,
+        /// Study ID that was started
+        study_id: String,
+    },
+
+    /// Study was stopped
+    StudyStopped {
+        /// Original request ID
+        request_id: String,
+        /// Study ID that was stopped
+        study_id: String,
+    },
+
+    /// Full study list response
+    StudyList {
+        /// Original request ID
+        request_id: String,
+        /// List of studies
+        studies: Vec<StudyInfo>,
+    },
+
+    /// Detailed study information
+    StudyDetails {
+        /// Original request ID
+        request_id: String,
+        /// Study info
+        study: StudyInfo,
+        /// Recent checkpoints
+        checkpoints: Vec<CheckpointInfo>,
+    },
+
+    /// Checkpoint was recorded
+    CheckpointRecorded {
+        /// Original request ID
+        request_id: String,
+        /// Checkpoint info
+        checkpoint: CheckpointInfo,
     },
 
     /// Session was removed
