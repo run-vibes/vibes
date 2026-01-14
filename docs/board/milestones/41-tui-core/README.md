@@ -32,6 +32,16 @@ First milestone of the TUI epic. Establishes the foundation for the terminal use
 
 - [tui](../../epics/tui)
 
+## Stories
+
+| ID | Title | Status |
+|----|-------|--------|
+| m41-feat-01 | vibes-tui crate scaffold and theme system | backlog |
+| m41-feat-02 | App struct and event loop | backlog |
+| m41-feat-03 | Views and ViewStack navigation | backlog |
+| m41-feat-04 | KeyBindings system | backlog |
+| m41-feat-05 | CLI command and WebSocket integration | backlog |
+
 ## Design
 
 See [../../epics/tui/README.md](../../epics/tui/README.md) for architecture.
