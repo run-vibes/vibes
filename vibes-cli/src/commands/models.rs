@@ -3,11 +3,15 @@
 //! Provides commands for listing models, viewing details, and managing
 //! API credentials.
 
+use std::sync::Arc;
+
 use anyhow::{Result, bail};
 use clap::{Args, Subcommand};
 use comfy_table::{Cell, Color, ContentArrangement, Table, presets::UTF8_FULL_CONDENSED};
 use dialoguer::{Password, theme::ColorfulTheme};
+use tracing::debug;
 use vibes_models::auth::{CredentialSource, CredentialStore};
+use vibes_models::providers::OllamaProvider;
 use vibes_models::registry::ModelRegistry;
 use vibes_models::{Capabilities, ModelId};
 
@@ -67,12 +71,37 @@ pub async fn run(args: ModelsArgs) -> Result<()> {
     }
 }
 
+/// Build a model registry with all available providers.
+///
+/// Registers local providers (Ollama) and cloud providers with configured credentials.
+async fn build_registry() -> ModelRegistry {
+    let mut registry = ModelRegistry::new();
+
+    // Register Ollama provider if available
+    let ollama_url =
+        std::env::var("OLLAMA_HOST").unwrap_or_else(|_| "http://localhost:11434".to_string());
+    let ollama = OllamaProvider::with_base_url(&ollama_url);
+
+    // Try to refresh models - silently skip if Ollama isn't running
+    if let Err(e) = ollama.refresh_models().await {
+        debug!("Ollama not available: {}", e);
+    } else {
+        let model_count = ollama.models().len();
+        debug!("Registered Ollama provider with {} models", model_count);
+        registry.register_provider(Arc::new(ollama));
+    }
+
+    // TODO: Register cloud providers (Anthropic, OpenAI) when credentials are available
+
+    registry
+}
+
 /// List available models with optional filtering.
 async fn list_models(
     provider_filter: Option<String>,
     capability_filter: Option<String>,
 ) -> Result<()> {
-    let registry = ModelRegistry::new();
+    let registry = build_registry().await;
 
     // Get models based on filters
     let models = match (&provider_filter, &capability_filter) {
@@ -132,7 +161,7 @@ async fn list_models(
 
 /// Show detailed information about a specific model.
 async fn show_model_info(model_name: &str) -> Result<()> {
-    let registry = ModelRegistry::new();
+    let registry = build_registry().await;
 
     // Try to find the model - it might be specified as "provider/model" or just "model"
     let model = if model_name.contains('/') {

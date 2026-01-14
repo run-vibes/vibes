@@ -1,17 +1,19 @@
-Generated README.md
-Auto-generated from directory structure. Run `just board generate` to update.
+# Planning Board
+
+> [!NOTE]
+> Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
 | Story | Type | Priority | Epics |
 |-------|------|----------|-------|
-| [feat-0103-add-ollama-as-a-model-provider](stages/in-progress/stories/feat-0103-add-ollama-as-a-model-provider.md) | feat | medium |  |
+| [bug-0100-flaky-iggy-client-token-tests](stages/in-progress/stories/bug-0100-flaky-iggy-client-token-tests.md) | bug |  |  |
+| [feat-0103-add-ollama-as-a-model-provider](stages/in-progress/stories/feat-0103-add-ollama-as-a-model-provider.md) | feat | medium | models |
 
 ## Backlog
 
 | Story | Type | Priority | Epics |
 |-------|------|----------|-------|
-| [bug-0100-flaky-iggy-client-token-tests](stages/backlog/stories/bug-0100-flaky-iggy-client-token-tests.md) | bug |  |  |
 | [chore-0087-use-cranelift-for-builds](stages/backlog/stories/chore-0087-use-cranelift-for-builds.md) | chore | low | dev-environment |
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
@@ -31,18 +33,20 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [m38-feat-04-task-types](stages/backlog/stories/m38-feat-04-task-types.md) | feat | high | agents |
 | [m38-feat-05-agent-lifecycle](stages/backlog/stories/m38-feat-05-agent-lifecycle.md) | feat | high | agents |
 | [m38-feat-06-agent-cli](stages/backlog/stories/m38-feat-06-agent-cli.md) | feat | medium | agents |
+| [m38-feat-07-agent-web-ui](stages/backlog/stories/m38-feat-07-agent-web-ui.md) | feat | medium | agents |
 | [m39-feat-01-evals-crate-skeleton](stages/backlog/stories/m39-feat-01-evals-crate-skeleton.md) | feat | high | evals |
 | [m39-feat-02-longitudinal-metrics](stages/backlog/stories/m39-feat-02-longitudinal-metrics.md) | feat | high | evals |
 | [m39-feat-03-eval-storage](stages/backlog/stories/m39-feat-03-eval-storage.md) | feat | high | evals |
 | [m39-feat-04-study-lifecycle](stages/backlog/stories/m39-feat-04-study-lifecycle.md) | feat | high | evals |
 | [m39-feat-05-eval-cli](stages/backlog/stories/m39-feat-05-eval-cli.md) | feat | medium | evals |
+| [m39-feat-06-eval-web-ui](stages/backlog/stories/m39-feat-06-eval-web-ui.md) | feat | medium | evals |
 | [m40-feat-01-observe-crate-skeleton](stages/backlog/stories/m40-feat-01-observe-crate-skeleton.md) | feat | high | observability |
 | [m40-feat-02-opentelemetry-setup](stages/backlog/stories/m40-feat-02-opentelemetry-setup.md) | feat | high | observability |
 | [m40-feat-03-trace-context](stages/backlog/stories/m40-feat-03-trace-context.md) | feat | high | observability |
 | [m40-feat-04-instrument-key-functions](stages/backlog/stories/m40-feat-04-instrument-key-functions.md) | feat | high | observability |
 | [m40-feat-05-export-targets](stages/backlog/stories/m40-feat-05-export-targets.md) | feat | high | observability |
 | [m40-feat-06-observe-cli](stages/backlog/stories/m40-feat-06-observe-cli.md) | feat | medium | observability |
-| [refactor-0099-subnav-light-theme](stages/backlog/stories/refactor-0099-subnav-light-theme.md) | refactor | medium | web-ui,design-system |
+| [m40-feat-07-observe-web-ui](stages/backlog/stories/m40-feat-07-observe-web-ui.md) | feat | medium | observability |
 
 ## Epics
 
@@ -56,7 +60,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [evals](epics/evals/) | planned | 0 |
 | [groove](epics/groove/) | active | 0 |
 | [mobile](epics/mobile/) | active | 0 |
-| [models](epics/models/) | planned | 0 |
+| [models](epics/models/) | planned | 1 |
 | [networking](epics/networking/) | active | 0 |
 | [observability](epics/observability/) | planned | 0 |
 | [plugin-system](epics/plugin-system/) | active | 23 |
@@ -249,6 +253,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 - [refactor-0096-groove-navigation-simplification](stages/done/stories/refactor-0096-groove-navigation-simplification.md)
 - [refactor-0097-unified-card-component](stages/done/stories/refactor-0097-unified-card-component.md)
 - [refactor-0098-models-page-styling](stages/done/stories/refactor-0098-models-page-styling.md)
+- [refactor-0099-subnav-light-theme](stages/done/stories/refactor-0099-subnav-light-theme.md)
 - [refactor-0100-responsive-header-navigation](stages/done/stories/refactor-0100-responsive-header-navigation.md)
 
 </details>
