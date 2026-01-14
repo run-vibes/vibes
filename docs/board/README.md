@@ -26,7 +26,6 @@ uto-generated from directory structure. Run `just board generate` to update.*
 | [m38-feat-05-agent-lifecycle](stages/backlog/stories/m38-feat-05-agent-lifecycle.md) | feat | high | agents |
 | [m38-feat-06-agent-cli](stages/backlog/stories/m38-feat-06-agent-cli.md) | feat | medium | agents |
 | [m38-feat-07-agent-web-ui](stages/backlog/stories/m38-feat-07-agent-web-ui.md) | feat | medium | agents |
-| [m39-feat-04-study-lifecycle](stages/backlog/stories/m39-feat-04-study-lifecycle.md) | feat | high | evals |
 | [m39-feat-05-eval-cli](stages/backlog/stories/m39-feat-05-eval-cli.md) | feat | medium | evals |
 | [m39-feat-06-eval-web-ui](stages/backlog/stories/m39-feat-06-eval-web-ui.md) | feat | medium | evals |
 | [m40-feat-02-opentelemetry-setup](stages/backlog/stories/m40-feat-02-opentelemetry-setup.md) | feat | high | observability |
@@ -251,6 +250,7 @@ uto-generated from directory structure. Run `just board generate` to update.*
 - [m39-feat-01-evals-crate-skeleton](stages/done/stories/m39-feat-01-evals-crate-skeleton.md)
 - [m39-feat-02-longitudinal-metrics](stages/done/stories/m39-feat-02-longitudinal-metrics.md)
 - [m39-feat-03-eval-storage](stages/done/stories/m39-feat-03-eval-storage.md)
+- [m39-feat-04-study-lifecycle](stages/done/stories/m39-feat-04-study-lifecycle.md)
 - [refactor-0008-consolidate-assessment-types-module](stages/done/stories/refactor-0008-consolidate-assessment-types-module.md)
 - [refactor-0069-dashboard-visual-consistency](stages/done/stories/refactor-0069-dashboard-visual-consistency.md)
 - [refactor-0070-design-system-extraction](stages/done/stories/refactor-0070-design-system-extraction.md)

@@ -23,4 +23,8 @@ pub enum Error {
     /// Study not found.
     #[error("study not found: {0}")]
     StudyNotFound(String),
+
+    /// Event log error.
+    #[error("event log error: {0}")]
+    EventLog(#[from] vibes_iggy::Error),
 }

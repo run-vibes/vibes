@@ -13,11 +13,23 @@
 //!
 //! See the milestone design doc for full architecture details.
 
+mod commands;
+mod consumer;
 mod events;
+mod manager;
 mod metrics;
 pub mod storage;
 mod study;
 mod types;
+
+// Command types
+pub use commands::{CreateStudy, RecordCheckpoint};
+
+// Consumer
+pub use consumer::EvalProjectionConsumer;
+
+// Manager
+pub use manager::StudyManager;
 
 // Event types
 pub use events::{EvalEvent, StoredEvalEvent};
