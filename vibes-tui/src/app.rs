@@ -7,16 +7,10 @@ use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
 use ratatui::{
     Frame,
     layout::{Constraint, Layout},
-    widgets::{Block, Borders, Paragraph},
 };
 
-use crate::{VibesTerminal, restore_terminal, setup_terminal};
-
-use crate::{AppState, Theme, vibes_default};
-
-/// Placeholder for view stack (implemented in Story 3).
-#[derive(Debug, Clone, Default)]
-pub struct ViewStack;
+use crate::views::{DashboardView, View, ViewRenderer, ViewStack};
+use crate::{AppState, Theme, VibesTerminal, restore_terminal, setup_terminal, vibes_default};
 
 /// Placeholder for keybindings (implemented in Story 4).
 #[derive(Debug, Clone, Default)]
@@ -42,7 +36,7 @@ impl App {
     pub fn new() -> Self {
         Self {
             state: AppState::default(),
-            views: ViewStack,
+            views: ViewStack::new(),
             keybindings: KeyBindings,
             theme: vibes_default(),
             client: None,
@@ -64,6 +58,8 @@ impl App {
     }
 
     /// Renders the application to the terminal frame.
+    ///
+    /// Delegates to the current view's renderer based on the view stack.
     pub fn render(&self, frame: &mut Frame) {
         let area = frame.area();
 
@@ -71,16 +67,17 @@ impl App {
             .constraints([Constraint::Min(0)])
             .split(area);
 
-        let block = Block::default()
-            .title(" vibes TUI ")
-            .borders(Borders::ALL)
-            .border_style(ratatui::style::Style::default().fg(self.theme.border));
+        // Delegate rendering to the current view
+        self.render_current_view(frame, chunks[0]);
+    }
 
-        let text = Paragraph::new("Press 'q' to quit")
-            .style(ratatui::style::Style::default().fg(self.theme.fg))
-            .block(block);
-
-        frame.render_widget(text, chunks[0]);
+    /// Renders the current view from the view stack.
+    fn render_current_view(&self, frame: &mut Frame, area: ratatui::layout::Rect) {
+        match &self.views.current {
+            View::Dashboard => DashboardView.render(frame, area, self),
+            // Other views will be implemented in later stories
+            _ => DashboardView.render(frame, area, self),
+        }
     }
 
     /// Processes async updates (WebSocket messages, timers, etc.).
@@ -208,5 +205,36 @@ mod tests {
         let mut app = App::new();
         app.tick().await;
         // Should complete without panicking
+    }
+
+    #[test]
+    fn app_new_has_dashboard_as_current_view() {
+        let app = App::new();
+        assert_eq!(app.views.current, View::Dashboard);
+    }
+
+    #[test]
+    fn app_new_has_empty_view_history() {
+        let app = App::new();
+        assert!(app.views.history.is_empty());
+    }
+
+    #[test]
+    fn app_viewstack_push_works() {
+        let mut app = App::new();
+        app.views.push(View::Settings);
+
+        assert_eq!(app.views.current, View::Settings);
+        assert_eq!(app.views.history.len(), 1);
+    }
+
+    #[test]
+    fn app_viewstack_pop_returns_to_dashboard() {
+        let mut app = App::new();
+        app.views.push(View::Settings);
+        app.views.pop();
+
+        assert_eq!(app.views.current, View::Dashboard);
+        assert!(app.views.history.is_empty());
     }
 }
