@@ -1,5 +1,6 @@
-Generated README.md
-Auto-generated from directory structure. Run `just board generate` to update.
+# Planning Board
+
+> Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
@@ -23,6 +24,7 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [feat-0077-config-save-load](stages/backlog/stories/feat-0077-config-save-load.md) | feat | medium | cli,networking |
 | [feat-0078-connectivity-validation](stages/backlog/stories/feat-0078-connectivity-validation.md) | feat | medium | cli,networking |
 | [feat-0101-header-identity-display](stages/backlog/stories/feat-0101-header-identity-display.md) | feat | low | web-ui,design-system |
+| [feat-0103-add-ollama-as-a-model-provider](stages/backlog/stories/feat-0103-add-ollama-as-a-model-provider.md) | feat | medium |  |
 | [m38-feat-01-agent-module-skeleton](stages/backlog/stories/m38-feat-01-agent-module-skeleton.md) | feat | high | agents |
 | [m38-feat-02-agent-trait](stages/backlog/stories/m38-feat-02-agent-trait.md) | feat | high | agents |
 | [m38-feat-03-agent-status](stages/backlog/stories/m38-feat-03-agent-status.md) | feat | high | agents |
