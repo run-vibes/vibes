@@ -2,7 +2,7 @@
 id: m39-feat-05
 title: vibes eval study CLI commands
 type: feat
-status: backlog
+status: in-progress
 priority: medium
 epics: [evals]
 depends: [m39-feat-04]

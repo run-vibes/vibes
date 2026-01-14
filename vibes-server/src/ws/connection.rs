@@ -737,6 +737,188 @@ async fn handle_text_message(
                 }
             }
         }
+
+        // === Study Commands ===
+        ClientMessage::CreateStudy {
+            request_id,
+            name,
+            period_type,
+            period_value,
+            description,
+        } => {
+            debug!(
+                "CreateStudy request: {} name={} period={}",
+                request_id, name, period_type
+            );
+
+            match state
+                .create_study(&name, &period_type, period_value, description)
+                .await
+            {
+                Ok(study_info) => {
+                    let response = ServerMessage::StudyCreated {
+                        request_id,
+                        study: study_info,
+                    };
+                    let json = serde_json::to_string(&response)?;
+                    sender.send(Message::Text(json)).await?;
+                }
+                Err(e) => {
+                    let error_msg = ServerMessage::Error {
+                        session_id: None,
+                        message: e,
+                        code: "CREATE_STUDY_FAILED".to_string(),
+                    };
+                    let json = serde_json::to_string(&error_msg)?;
+                    sender.send(Message::Text(json)).await?;
+                }
+            }
+        }
+
+        ClientMessage::StartStudy {
+            request_id,
+            study_id,
+        } => {
+            debug!("StartStudy request: {} study={}", request_id, study_id);
+
+            match state.start_study(&study_id).await {
+                Ok(()) => {
+                    let response = ServerMessage::StudyStarted {
+                        request_id,
+                        study_id,
+                    };
+                    let json = serde_json::to_string(&response)?;
+                    sender.send(Message::Text(json)).await?;
+                }
+                Err(e) => {
+                    let error_msg = ServerMessage::Error {
+                        session_id: None,
+                        message: e,
+                        code: "START_STUDY_FAILED".to_string(),
+                    };
+                    let json = serde_json::to_string(&error_msg)?;
+                    sender.send(Message::Text(json)).await?;
+                }
+            }
+        }
+
+        ClientMessage::StopStudy {
+            request_id,
+            study_id,
+        } => {
+            debug!("StopStudy request: {} study={}", request_id, study_id);
+
+            match state.stop_study(&study_id).await {
+                Ok(()) => {
+                    let response = ServerMessage::StudyStopped {
+                        request_id,
+                        study_id,
+                    };
+                    let json = serde_json::to_string(&response)?;
+                    sender.send(Message::Text(json)).await?;
+                }
+                Err(e) => {
+                    let error_msg = ServerMessage::Error {
+                        session_id: None,
+                        message: e,
+                        code: "STOP_STUDY_FAILED".to_string(),
+                    };
+                    let json = serde_json::to_string(&error_msg)?;
+                    sender.send(Message::Text(json)).await?;
+                }
+            }
+        }
+
+        ClientMessage::ListStudies { request_id } => {
+            debug!("ListStudies request: {}", request_id);
+
+            match state.list_studies().await {
+                Ok(studies) => {
+                    let response = ServerMessage::StudyList {
+                        request_id,
+                        studies,
+                    };
+                    let json = serde_json::to_string(&response)?;
+                    sender.send(Message::Text(json)).await?;
+                }
+                Err(e) => {
+                    let error_msg = ServerMessage::Error {
+                        session_id: None,
+                        message: e,
+                        code: "LIST_STUDIES_FAILED".to_string(),
+                    };
+                    let json = serde_json::to_string(&error_msg)?;
+                    sender.send(Message::Text(json)).await?;
+                }
+            }
+        }
+
+        ClientMessage::GetStudy {
+            request_id,
+            study_id,
+        } => {
+            debug!("GetStudy request: {} study={}", request_id, study_id);
+
+            match state.get_study(&study_id).await {
+                Ok(Some((study, checkpoints))) => {
+                    let response = ServerMessage::StudyDetails {
+                        request_id,
+                        study,
+                        checkpoints,
+                    };
+                    let json = serde_json::to_string(&response)?;
+                    sender.send(Message::Text(json)).await?;
+                }
+                Ok(None) => {
+                    let error_msg = ServerMessage::Error {
+                        session_id: None,
+                        message: format!("Study not found: {}", study_id),
+                        code: "STUDY_NOT_FOUND".to_string(),
+                    };
+                    let json = serde_json::to_string(&error_msg)?;
+                    sender.send(Message::Text(json)).await?;
+                }
+                Err(e) => {
+                    let error_msg = ServerMessage::Error {
+                        session_id: None,
+                        message: e,
+                        code: "GET_STUDY_FAILED".to_string(),
+                    };
+                    let json = serde_json::to_string(&error_msg)?;
+                    sender.send(Message::Text(json)).await?;
+                }
+            }
+        }
+
+        ClientMessage::RecordCheckpoint {
+            request_id,
+            study_id,
+        } => {
+            debug!(
+                "RecordCheckpoint request: {} study={}",
+                request_id, study_id
+            );
+
+            match state.record_checkpoint(&study_id).await {
+                Ok(checkpoint) => {
+                    let response = ServerMessage::CheckpointRecorded {
+                        request_id,
+                        checkpoint,
+                    };
+                    let json = serde_json::to_string(&response)?;
+                    sender.send(Message::Text(json)).await?;
+                }
+                Err(e) => {
+                    let error_msg = ServerMessage::Error {
+                        session_id: None,
+                        message: e,
+                        code: "RECORD_CHECKPOINT_FAILED".to_string(),
+                    };
+                    let json = serde_json::to_string(&error_msg)?;
+                    sender.send(Message::Text(json)).await?;
+                }
+            }
+        }
     }
 
     Ok(())

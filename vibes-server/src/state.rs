@@ -10,11 +10,14 @@ use vibes_core::{
     TunnelManager, VapidKeyManager, VibesEvent,
     pty::{PtyConfig, PtyManager},
 };
+use vibes_evals::{CreateStudy, PeriodType, Study, StudyConfig, StudyId, StudyManager};
 use vibes_iggy::{
     EventLog, IggyConfig, IggyEventLog, IggyManager, InMemoryEventLog, Offset, run_preflight_checks,
 };
 use vibes_models::ModelRegistry;
 use vibes_plugin_api::PluginAssessmentResult;
+
+use crate::ws::{CheckpointInfo, StudyInfo};
 
 /// PTY output event for broadcasting to attached clients
 #[derive(Clone, Debug)]
@@ -72,6 +75,8 @@ pub struct AppState {
     pub model_registry: Arc<RwLock<ModelRegistry>>,
     /// Agent registry for managing AI agents
     pub agent_registry: Arc<RwLock<ServerAgentRegistry>>,
+    /// Study manager for evaluation studies
+    study_manager: Option<Arc<StudyManager>>,
     /// Plugin host for managing plugins
     ///
     /// MUST be last - plugins are unloaded when this drops, so all plugin types
@@ -109,6 +114,7 @@ impl AppState {
             consumer_shutdown: CancellationToken::new(),
             model_registry: Arc::new(RwLock::new(ModelRegistry::new())),
             agent_registry: Arc::new(RwLock::new(ServerAgentRegistry::new())),
+            study_manager: None,
             plugin_host,
         }
     }
@@ -154,6 +160,7 @@ impl AppState {
             consumer_shutdown: CancellationToken::new(),
             model_registry: Arc::new(RwLock::new(ModelRegistry::new())),
             agent_registry: Arc::new(RwLock::new(ServerAgentRegistry::new())),
+            study_manager: None,
             plugin_host,
         }
     }
@@ -186,6 +193,7 @@ impl AppState {
             consumer_shutdown: CancellationToken::new(),
             model_registry: Arc::new(RwLock::new(ModelRegistry::new())),
             agent_registry: Arc::new(RwLock::new(ServerAgentRegistry::new())),
+            study_manager: None,
             plugin_host,
         }
     }
@@ -229,6 +237,7 @@ impl AppState {
             consumer_shutdown: CancellationToken::new(),
             model_registry: Arc::new(RwLock::new(ModelRegistry::new())),
             agent_registry: Arc::new(RwLock::new(ServerAgentRegistry::new())),
+            study_manager: None,
             plugin_host,
         })
     }
@@ -268,6 +277,7 @@ impl AppState {
             consumer_shutdown: CancellationToken::new(),
             model_registry: Arc::new(RwLock::new(ModelRegistry::new())),
             agent_registry: Arc::new(RwLock::new(ServerAgentRegistry::new())),
+            study_manager: None,
             plugin_host,
         })
     }
@@ -368,6 +378,7 @@ impl AppState {
             consumer_shutdown: CancellationToken::new(),
             model_registry: Arc::new(RwLock::new(ModelRegistry::new())),
             agent_registry: Arc::new(RwLock::new(ServerAgentRegistry::new())),
+            study_manager: None,
             plugin_host,
         }
     }
@@ -399,6 +410,7 @@ impl AppState {
             consumer_shutdown: CancellationToken::new(),
             model_registry: Arc::new(RwLock::new(ModelRegistry::new())),
             agent_registry: Arc::new(RwLock::new(ServerAgentRegistry::new())),
+            study_manager: None,
             plugin_host,
         }
     }
@@ -535,6 +547,203 @@ impl AppState {
     /// Returns how long the server has been running
     pub fn uptime_seconds(&self) -> i64 {
         (Utc::now() - self.started_at).num_seconds()
+    }
+
+    // === Study Management Methods ===
+
+    /// Create a new longitudinal study.
+    pub async fn create_study(
+        &self,
+        name: &str,
+        period_type: &str,
+        period_value: Option<u32>,
+        description: Option<String>,
+    ) -> Result<StudyInfo, String> {
+        let manager = self
+            .study_manager
+            .as_ref()
+            .ok_or_else(|| "Eval studies not enabled".to_string())?;
+
+        let parsed_period = PeriodType::parse(period_type)
+            .ok_or_else(|| format!("Invalid period type: {}", period_type))?;
+
+        let cmd = CreateStudy {
+            name: name.to_string(),
+            period_type: parsed_period,
+            period_value,
+            config: StudyConfig {
+                description,
+                ..Default::default()
+            },
+        };
+
+        let study_id = manager.create_study(cmd).await.map_err(|e| e.to_string())?;
+
+        // Also start the study immediately
+        manager
+            .start_study(study_id)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        // Fetch the created study to return info
+        let study = manager
+            .get_study(study_id)
+            .await
+            .map_err(|e| e.to_string())?
+            .ok_or_else(|| "Study not found after creation".to_string())?;
+
+        let checkpoints = manager
+            .get_checkpoints(study_id)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        Ok(study_to_info(&study, checkpoints.len() as u32))
+    }
+
+    /// Start a pending study.
+    pub async fn start_study(&self, study_id: &str) -> Result<(), String> {
+        let manager = self
+            .study_manager
+            .as_ref()
+            .ok_or_else(|| "Eval studies not enabled".to_string())?;
+
+        let id = parse_study_id(study_id)?;
+        manager.start_study(id).await.map_err(|e| e.to_string())
+    }
+
+    /// Stop a running study.
+    pub async fn stop_study(&self, study_id: &str) -> Result<(), String> {
+        let manager = self
+            .study_manager
+            .as_ref()
+            .ok_or_else(|| "Eval studies not enabled".to_string())?;
+
+        let id = parse_study_id(study_id)?;
+        manager.stop_study(id).await.map_err(|e| e.to_string())
+    }
+
+    /// List all studies.
+    pub async fn list_studies(&self) -> Result<Vec<StudyInfo>, String> {
+        let manager = self
+            .study_manager
+            .as_ref()
+            .ok_or_else(|| "Eval studies not enabled".to_string())?;
+
+        let studies = manager.list_studies().await.map_err(|e| e.to_string())?;
+
+        let mut result = Vec::with_capacity(studies.len());
+        for study in studies {
+            let checkpoints = manager
+                .get_checkpoints(study.id)
+                .await
+                .map_err(|e| e.to_string())?;
+            result.push(study_to_info(&study, checkpoints.len() as u32));
+        }
+
+        Ok(result)
+    }
+
+    /// Get detailed study information.
+    pub async fn get_study(
+        &self,
+        study_id: &str,
+    ) -> Result<Option<(StudyInfo, Vec<CheckpointInfo>)>, String> {
+        let manager = self
+            .study_manager
+            .as_ref()
+            .ok_or_else(|| "Eval studies not enabled".to_string())?;
+
+        let id = parse_study_id(study_id)?;
+        let study = manager.get_study(id).await.map_err(|e| e.to_string())?;
+
+        match study {
+            Some(study) => {
+                let checkpoints = manager
+                    .get_checkpoints(id)
+                    .await
+                    .map_err(|e| e.to_string())?;
+
+                let study_info = study_to_info(&study, checkpoints.len() as u32);
+                let checkpoint_infos: Vec<_> = checkpoints.iter().map(checkpoint_to_info).collect();
+
+                Ok(Some((study_info, checkpoint_infos)))
+            }
+            None => Ok(None),
+        }
+    }
+
+    /// Record a checkpoint for a study.
+    pub async fn record_checkpoint(&self, study_id: &str) -> Result<CheckpointInfo, String> {
+        let manager = self
+            .study_manager
+            .as_ref()
+            .ok_or_else(|| "Eval studies not enabled".to_string())?;
+
+        let id = parse_study_id(study_id)?;
+
+        // Create a checkpoint with default metrics
+        // In a real implementation, this would collect actual metrics
+        let cmd = vibes_evals::RecordCheckpoint {
+            study_id: id,
+            metrics: vibes_evals::LongitudinalMetrics::default(),
+            events_analyzed: 0,
+            sessions_included: vec![],
+        };
+
+        let checkpoint_id = manager
+            .record_checkpoint(cmd)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        // Fetch the created checkpoint
+        let checkpoints = manager
+            .get_checkpoints(id)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        checkpoints
+            .into_iter()
+            .find(|c| c.id == checkpoint_id)
+            .map(|c| checkpoint_to_info(&c))
+            .ok_or_else(|| "Checkpoint not found after creation".to_string())
+    }
+}
+
+/// Parse a study ID from string.
+fn parse_study_id(s: &str) -> Result<StudyId, String> {
+    uuid::Uuid::parse_str(s)
+        .map(StudyId)
+        .map_err(|_| format!("Invalid study ID: {}", s))
+}
+
+/// Convert a Study to StudyInfo for the WebSocket protocol.
+fn study_to_info(study: &Study, checkpoint_count: u32) -> StudyInfo {
+    StudyInfo {
+        id: study.id.0.to_string(),
+        name: study.name.clone(),
+        status: study.status.as_str().to_string(),
+        period_type: study.period_type.as_str().to_string(),
+        period_value: study.period_value,
+        description: study.config.description.clone(),
+        created_at: study.created_at.timestamp(),
+        started_at: study.started_at.map(|t| t.timestamp()),
+        stopped_at: study.stopped_at.map(|t| t.timestamp()),
+        checkpoint_count,
+    }
+}
+
+/// Convert a Checkpoint to CheckpointInfo for the WebSocket protocol.
+fn checkpoint_to_info(checkpoint: &vibes_evals::Checkpoint) -> CheckpointInfo {
+    CheckpointInfo {
+        id: checkpoint.id.0.to_string(),
+        study_id: checkpoint.study_id.0.to_string(),
+        timestamp: checkpoint.timestamp.timestamp(),
+        sessions_completed: checkpoint.metrics.sessions_completed as u32,
+        success_rate: Some(checkpoint.metrics.session_success_rate),
+        first_attempt_rate: Some(checkpoint.metrics.first_attempt_success_rate),
+        avg_iterations: Some(checkpoint.metrics.avg_iterations_to_success),
+        cost_per_task: Some(checkpoint.metrics.cost_per_successful_task),
+        events_analyzed: checkpoint.events_analyzed,
     }
 }
 

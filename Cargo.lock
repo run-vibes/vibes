@@ -7658,6 +7658,7 @@ dependencies = [
  "url",
  "uuid",
  "vibes-core",
+ "vibes-evals",
  "vibes-iggy",
  "vibes-models",
  "vibes-plugin-api",

@@ -2,6 +2,7 @@ pub mod agent;
 pub mod auth;
 pub mod claude;
 pub mod config;
+pub mod eval;
 pub mod event;
 pub mod models;
 pub mod plugin;
