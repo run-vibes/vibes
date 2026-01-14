@@ -2,7 +2,7 @@
 id: feat-0077
 title: Config Save/Load for Wizards
 type: feat
-status: pending
+status: in-progress
 priority: medium
 epics: [cli, networking]
 milestone: 35-setup-wizards
@@ -18,17 +18,17 @@ Wizards need to update specific sections of the config file (tunnel, auth) witho
 
 ## Acceptance Criteria
 
-- [ ] Add `ConfigLoader::save(config: &VibesConfig)` method
-- [ ] Save preserves existing config sections not being modified
-- [ ] Creates config file and parent directories if they don't exist
-- [ ] Show what was saved to user:
+- [x] Add `ConfigLoader::save(config: &VibesConfig)` method
+- [x] Save preserves existing config sections not being modified
+- [x] Creates config file and parent directories if they don't exist
+- [x] Show what was saved to user:
   ```
   Configuration saved:
     tunnel.enabled = true
     tunnel.mode = "quick"
   ```
-- [ ] Warn if overwriting existing non-default values
-- [ ] Handle TOML serialization errors gracefully
+- [x] Warn if overwriting existing non-default values
+- [x] Handle TOML serialization errors gracefully
 
 ## Technical Notes
 
