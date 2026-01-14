@@ -2,9 +2,9 @@
 id: FEAT0104
 title: Show Ollama models in web UI
 type: feat
-status: backlog
+status: in-progress
 priority: medium
-epics: []
+epics: [web-ui]
 depends: []
 estimate:
 created: 2026-01-13

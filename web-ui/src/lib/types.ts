@@ -16,6 +16,7 @@ export type ClientMessage =
   /** @deprecated With PTY mode, permissions are handled through the terminal UI */
   | { type: 'permission_response'; session_id: string; request_id: string; approved: boolean }
   | { type: 'list_sessions'; request_id: string }
+  | { type: 'list_models'; request_id: string }
   | { type: 'kill_session'; session_id: string }
   // PTY messages (preferred)
   | { type: 'attach'; session_id: string; name?: string; cols?: number; rows?: number }
@@ -36,6 +37,7 @@ export type ServerMessage =
   | { type: 'error'; session_id?: string; message: string; code: string }
   | { type: 'tunnel_state'; state: string; url?: string }
   | { type: 'session_list'; request_id: string; sessions: SessionInfo[] }
+  | { type: 'model_list'; request_id: string; models: ModelInfo[] }
   | { type: 'session_removed'; session_id: string; reason: RemovalReason }
   | { type: 'ownership_transferred'; session_id: string; new_owner_id: string; you_are_owner: boolean }
   /** @deprecated With PTY mode, user input is sent via 'pty_input' */
@@ -158,6 +160,29 @@ export interface SessionInfo {
   last_activity_at: number;
 }
 
+/** Model info returned by list_models - matches vibes-models/src/types.rs */
+export interface ModelInfo {
+  id: string;
+  provider: string;
+  name: string;
+  context_window: number;
+  max_output?: number;
+  capabilities: {
+    chat: boolean;
+    vision: boolean;
+    tools: boolean;
+    embeddings: boolean;
+    streaming: boolean;
+  };
+  pricing?: {
+    input_per_million: number;
+    output_per_million: number;
+  };
+  local: boolean;
+  size_bytes?: number;
+  modified_at?: string;
+}
+
 // ============================================================
 // Type Guards
 // ============================================================
@@ -176,6 +201,10 @@ export function isErrorMessage(msg: ServerMessage): msg is Extract<ServerMessage
 
 export function isSessionListMessage(msg: ServerMessage): msg is Extract<ServerMessage, { type: 'session_list' }> {
   return msg.type === 'session_list';
+}
+
+export function isModelListMessage(msg: ServerMessage): msg is Extract<ServerMessage, { type: 'model_list' }> {
+  return msg.type === 'model_list';
 }
 
 export function isSessionRemovedMessage(msg: ServerMessage): msg is Extract<ServerMessage, { type: 'session_removed' }> {

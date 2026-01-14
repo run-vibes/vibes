@@ -13,6 +13,7 @@ use vibes_core::{
 use vibes_iggy::{
     EventLog, IggyConfig, IggyEventLog, IggyManager, InMemoryEventLog, Offset, run_preflight_checks,
 };
+use vibes_models::ModelRegistry;
 use vibes_plugin_api::PluginAssessmentResult;
 
 /// PTY output event for broadcasting to attached clients
@@ -66,6 +67,8 @@ pub struct AppState {
     assessment_broadcaster: broadcast::Sender<PluginAssessmentResult>,
     /// Shutdown token for EventLog consumers
     consumer_shutdown: CancellationToken,
+    /// Model registry for AI model discovery
+    pub model_registry: Arc<RwLock<ModelRegistry>>,
     /// Plugin host for managing plugins
     ///
     /// MUST be last - plugins are unloaded when this drops, so all plugin types
@@ -89,7 +92,6 @@ impl AppState {
         let pty_manager = Arc::new(RwLock::new(PtyManager::new(PtyConfig::default())));
 
         Self {
-            plugin_host,
             event_log,
             tunnel_manager,
             auth_layer: AuthLayer::disabled(),
@@ -102,6 +104,8 @@ impl AppState {
             iggy_manager: None,
             assessment_broadcaster,
             consumer_shutdown: CancellationToken::new(),
+            model_registry: Arc::new(RwLock::new(ModelRegistry::new())),
+            plugin_host,
         }
     }
 
@@ -144,6 +148,7 @@ impl AppState {
             iggy_manager: None,
             assessment_broadcaster,
             consumer_shutdown: CancellationToken::new(),
+            model_registry: Arc::new(RwLock::new(ModelRegistry::new())),
             plugin_host,
         }
     }
@@ -162,7 +167,6 @@ impl AppState {
         let pty_manager = Arc::new(RwLock::new(PtyManager::new(PtyConfig::default())));
 
         Self {
-            plugin_host,
             event_log,
             tunnel_manager,
             auth_layer: AuthLayer::disabled(),
@@ -175,6 +179,8 @@ impl AppState {
             iggy_manager: None,
             assessment_broadcaster,
             consumer_shutdown: CancellationToken::new(),
+            model_registry: Arc::new(RwLock::new(ModelRegistry::new())),
+            plugin_host,
         }
     }
 
@@ -203,7 +209,6 @@ impl AppState {
         let pty_manager = Arc::new(RwLock::new(PtyManager::new(PtyConfig::default())));
 
         Ok(Self {
-            plugin_host,
             event_log,
             tunnel_manager,
             auth_layer: AuthLayer::disabled(),
@@ -216,6 +221,8 @@ impl AppState {
             iggy_manager,
             assessment_broadcaster,
             consumer_shutdown: CancellationToken::new(),
+            model_registry: Arc::new(RwLock::new(ModelRegistry::new())),
+            plugin_host,
         })
     }
 
@@ -240,7 +247,6 @@ impl AppState {
         let pty_manager = Arc::new(RwLock::new(PtyManager::new(PtyConfig::default())));
 
         Ok(Self {
-            plugin_host,
             event_log,
             tunnel_manager,
             auth_layer: AuthLayer::disabled(),
@@ -253,6 +259,8 @@ impl AppState {
             iggy_manager,
             assessment_broadcaster,
             consumer_shutdown: CancellationToken::new(),
+            model_registry: Arc::new(RwLock::new(ModelRegistry::new())),
+            plugin_host,
         })
     }
 
@@ -338,7 +346,6 @@ impl AppState {
         let pty_manager = Arc::new(RwLock::new(PtyManager::new(PtyConfig::default())));
 
         Self {
-            plugin_host,
             event_log,
             tunnel_manager,
             auth_layer: AuthLayer::disabled(),
@@ -351,6 +358,8 @@ impl AppState {
             iggy_manager: None,
             assessment_broadcaster,
             consumer_shutdown: CancellationToken::new(),
+            model_registry: Arc::new(RwLock::new(ModelRegistry::new())),
+            plugin_host,
         }
     }
 
@@ -367,7 +376,6 @@ impl AppState {
         let pty_manager = Arc::new(RwLock::new(PtyManager::new(PtyConfig::default())));
 
         Self {
-            plugin_host,
             event_log,
             tunnel_manager,
             auth_layer: AuthLayer::disabled(),
@@ -380,6 +388,8 @@ impl AppState {
             iggy_manager: None,
             assessment_broadcaster,
             consumer_shutdown: CancellationToken::new(),
+            model_registry: Arc::new(RwLock::new(ModelRegistry::new())),
+            plugin_host,
         }
     }
 
@@ -558,6 +568,15 @@ mod tests {
         let state = AppState::new();
         let tunnel = state.tunnel_manager.read().await;
         assert!(!tunnel.is_enabled());
+    }
+
+    // ==================== Model Registry Tests ====================
+
+    #[tokio::test]
+    async fn test_app_state_has_model_registry() {
+        let state = AppState::new();
+        let registry = state.model_registry.read().await;
+        assert_eq!(registry.model_count(), 0); // Empty by default
     }
 
     // ==================== Event Broadcasting Tests ====================

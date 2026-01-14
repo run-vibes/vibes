@@ -74,6 +74,8 @@ struct ResolvedSettings {
     tunnel: bool,
     quick_tunnel: bool,
     notify: bool,
+    /// Ollama base URL from config (e.g., "http://localhost:11434")
+    ollama_base_url: Option<String>,
 }
 
 /// Run the serve command
@@ -84,12 +86,21 @@ pub async fn run(args: ServeArgs) -> Result<()> {
         None => {
             // Load config and merge with CLI args
             let config = ConfigLoader::load()?;
+
+            // Get Ollama base URL from config if enabled
+            let ollama_base_url = if config.models.ollama.enabled {
+                Some(config.models.ollama.base_url())
+            } else {
+                None
+            };
+
             let settings = ResolvedSettings {
                 host: args.host.unwrap_or(config.server.host),
                 port: args.port.unwrap_or(config.server.port),
                 tunnel: args.tunnel,
                 quick_tunnel: args.quick_tunnel,
                 notify: args.notify,
+                ollama_base_url,
             };
 
             // Start Ollama if enabled
@@ -116,6 +127,7 @@ async fn run_foreground(settings: &ResolvedSettings, _ollama: OllamaManager) -> 
         tunnel_enabled: settings.tunnel,
         tunnel_quick: settings.quick_tunnel,
         notify_enabled: settings.notify,
+        ollama_base_url: settings.ollama_base_url.clone(),
     };
 
     info!("Starting vibes server on {}:{}", config.host, config.port);

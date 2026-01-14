@@ -85,6 +85,12 @@ pub enum ClientMessage {
         /// New row count
         rows: u16,
     },
+
+    /// Request list of available AI models
+    ListModels {
+        /// Request ID for correlation
+        request_id: String,
+    },
 }
 
 /// Messages sent from server to client
@@ -134,6 +140,14 @@ pub enum ServerMessage {
         request_id: String,
         /// List of session info
         sessions: Vec<SessionInfo>,
+    },
+
+    /// Full model list response
+    ModelList {
+        /// Original request ID
+        request_id: String,
+        /// List of available models
+        models: Vec<vibes_models::ModelInfo>,
     },
 
     /// Session was removed
@@ -264,6 +278,17 @@ mod tests {
     }
 
     // ==================== ClientMessage Tests ====================
+
+    #[test]
+    fn test_client_message_list_models_roundtrip() {
+        let msg = ClientMessage::ListModels {
+            request_id: "req-models-1".to_string(),
+        };
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ClientMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+        assert!(json.contains(r#""type":"list_models""#));
+    }
 
     #[test]
     fn test_client_message_list_sessions_roundtrip() {
@@ -478,6 +503,30 @@ mod tests {
         let parsed: ServerMessage = serde_json::from_str(&json).unwrap();
         assert_eq!(msg, parsed);
         assert!(json.contains(r#""type":"session_list""#));
+    }
+
+    #[test]
+    fn test_server_message_model_list_roundtrip() {
+        use vibes_models::{Capabilities, ModelInfo};
+
+        let model = ModelInfo::builder("ollama", "llama3")
+            .context_window(8192)
+            .capabilities(Capabilities::chat())
+            .local()
+            .size_bytes(4_000_000_000)
+            .modified_at("2025-01-10T12:00:00Z")
+            .build();
+
+        let msg = ServerMessage::ModelList {
+            request_id: "req-models-1".to_string(),
+            models: vec![model],
+        };
+        let json = serde_json::to_string(&msg).unwrap();
+        let parsed: ServerMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(msg, parsed);
+        assert!(json.contains(r#""type":"model_list""#));
+        assert!(json.contains(r#""size_bytes":4000000000"#));
+        assert!(json.contains(r#""modified_at":"2025-01-10T12:00:00Z""#));
     }
 
     #[test]

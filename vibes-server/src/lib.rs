@@ -205,6 +205,9 @@ impl VibesServer {
         // Load plugins
         self.load_plugins().await;
 
+        // Register model providers (Ollama, etc.)
+        self.register_model_providers().await;
+
         // Start EventLog consumer-based event processing
         // This includes WebSocket consumer and notification consumer
         self.start_event_log_consumers(self.notification_service.clone())
@@ -335,6 +338,43 @@ impl VibesServer {
             }
         }
     }
+
+    /// Register model providers (Ollama, etc.)
+    ///
+    /// Attempts to connect to configured providers and register them in the
+    /// model registry. Failures are logged but don't prevent server startup.
+    async fn register_model_providers(&self) {
+        use vibes_models::providers::OllamaProvider;
+
+        // Only try to register Ollama if a base URL is configured
+        let Some(ollama_url) = &self.config.ollama_base_url else {
+            tracing::debug!("Ollama not configured, skipping model provider registration");
+            return;
+        };
+
+        let provider = OllamaProvider::with_base_url(ollama_url);
+
+        match provider.refresh_models().await {
+            Ok(()) => {
+                let model_count = provider.models().len();
+                let mut registry = self.state.model_registry.write().await;
+                registry.register_provider(std::sync::Arc::new(provider));
+                tracing::info!(
+                    "Registered Ollama provider at {} with {} models",
+                    ollama_url,
+                    model_count
+                );
+            }
+            Err(e) => {
+                // Ollama not available - this is fine, just log it
+                tracing::debug!(
+                    "Ollama not available at {}: {} (this is OK if not using local models)",
+                    ollama_url,
+                    e
+                );
+            }
+        }
+    }
 }
 
 /// Get the vibes configuration directory
@@ -363,6 +403,8 @@ pub struct ServerConfig {
     pub tunnel_quick: bool,
     /// Enable push notifications
     pub notify_enabled: bool,
+    /// Ollama base URL (e.g., "http://localhost:11434")
+    pub ollama_base_url: Option<String>,
 }
 
 impl Default for ServerConfig {
@@ -373,6 +415,7 @@ impl Default for ServerConfig {
             tunnel_enabled: false,
             tunnel_quick: false,
             notify_enabled: false,
+            ollama_base_url: None,
         }
     }
 }
@@ -386,6 +429,7 @@ impl ServerConfig {
             tunnel_enabled: false,
             tunnel_quick: false,
             notify_enabled: false,
+            ollama_base_url: None,
         }
     }
 

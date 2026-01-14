@@ -6,13 +6,15 @@ import { useTunnelStatus } from '../hooks/useTunnelStatus';
 import { useCrtEffects } from '../hooks/useCrtEffects';
 import { useGrooveSettings } from '../hooks/useGrooveSettings';
 import { useModels } from '../hooks/useModels';
+import { useWebSocket } from '../hooks/useWebSocket';
 import './Settings.css';
 
 export function SettingsPage() {
   const { data: tunnel, isLoading: tunnelLoading, error: tunnelError } = useTunnelStatus();
   const { enabled: crtEffectsEnabled, setEffects: setCrtEffects } = useCrtEffects();
   const { settings: grooveSettings, updateSetting: updateGrooveSetting } = useGrooveSettings();
-  const { providers, credentials } = useModels();
+  const { send, addMessageHandler, isConnected } = useWebSocket();
+  const { providers, credentials } = useModels({ send, addMessageHandler, isConnected });
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     const saved = localStorage.getItem('vibes-theme');
     return (saved === 'light' || saved === 'dark') ? saved : 'dark';
