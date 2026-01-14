@@ -2,7 +2,7 @@
 id: feat-0071
 title: Setup Wizard Infrastructure
 type: feat
-status: pending
+status: done
 priority: medium
 epics: [cli, networking]
 milestone: 35-setup-wizards
@@ -18,15 +18,15 @@ Milestone 35 requires interactive CLI wizards for tunnel and auth setup. This st
 
 ## Acceptance Criteria
 
-- [ ] Add `dialoguer = "0.11"` to vibes-cli/Cargo.toml
-- [ ] Create `vibes-cli/src/commands/setup/mod.rs` with module structure
-- [ ] Create `vibes-cli/src/commands/setup/prompts.rs` with:
+- [x] Add `dialoguer = "0.11"` to vibes-cli/Cargo.toml
+- [x] Create `vibes-cli/src/commands/setup/mod.rs` with module structure
+- [x] Create `vibes-cli/src/commands/setup/prompts.rs` with:
   - `print_header(title)` - Draws boxed header
   - `print_step(message)` - Prints step with trailing space (no newline)
   - `print_success(message)` - Green checkmark + message
   - `print_error(message)` - Red X + message
-- [ ] Tests verify prompt output formatting
-- [ ] Export setup module from commands/mod.rs
+- [x] Tests verify prompt output formatting
+- [x] Export setup module from commands/mod.rs
 
 ## Technical Notes
 
