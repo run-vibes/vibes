@@ -27,6 +27,8 @@
             pkgs.sccache
             # CLI recording
             pkgs.vhs
+            # Cloudflare tunnel client
+            pkgs.cloudflared
             # Native build deps for CozoDB/RocksDB
             pkgs.clang
             pkgs.llvmPackages.libclang
