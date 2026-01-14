@@ -14,6 +14,7 @@
 | Story | Type | Priority | Epics |
 |-------|------|----------|-------|
 | [chore-0087-use-cranelift-for-builds](stages/backlog/stories/chore-0087-use-cranelift-for-builds.md) | chore | low | dev-environment |
+| [chore-0090-fix-sccache-for-worktrees-and-cross-project-use](stages/backlog/stories/chore-0090-fix-sccache-for-worktrees-and-cross-project-use.md) | chore | high | dev-environment |
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
 | [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli,cross-platform |
