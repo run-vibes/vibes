@@ -3,7 +3,9 @@ Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 
-*No stories in progress*
+| Story | Type | Priority | Epics |
+|-------|------|----------|-------|
+| [refactor-0096-groove-navigation-simplification](stages/in-progress/stories/refactor-0096-groove-navigation-simplification.md) | refactor | high | web-ui,groove |
 
 ## Backlog
 
@@ -40,7 +42,6 @@ Auto-generated from directory structure. Run `just board generate` to update.
 | [m40-feat-04-instrument-key-functions](stages/backlog/stories/m40-feat-04-instrument-key-functions.md) | feat | high | observability |
 | [m40-feat-05-export-targets](stages/backlog/stories/m40-feat-05-export-targets.md) | feat | high | observability |
 | [m40-feat-06-observe-cli](stages/backlog/stories/m40-feat-06-observe-cli.md) | feat | medium | observability |
-| [refactor-0096-groove-navigation-simplification](stages/backlog/stories/refactor-0096-groove-navigation-simplification.md) | refactor | high | web-ui,groove |
 | [refactor-0098-models-page-styling](stages/backlog/stories/refactor-0098-models-page-styling.md) | refactor | medium | web-ui |
 | [refactor-0099-subnav-light-theme](stages/backlog/stories/refactor-0099-subnav-light-theme.md) | refactor | medium | web-ui,design-system |
 
