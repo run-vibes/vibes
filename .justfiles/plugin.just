@@ -12,30 +12,30 @@ default:
 
 # List installed plugins
 list:
-    cargo run --release -p vibes-cli -- plugin list
+    cargo run -p vibes-cli -- plugin list
 
 # Install groove plugin (build, copy, and enable)
 install-groove:
     #!/usr/bin/env bash
     set -euo pipefail
 
-    # Build release first
-    just build-release
+    # Build debug (faster for dev iteration)
+    just build
 
     PLUGIN_DIR="${HOME}/.config/vibes/plugins/groove"
     mkdir -p "${PLUGIN_DIR}"
 
     # Detect platform and copy the appropriate library
     if [[ "$(uname)" == "Darwin" ]]; then
-        cp target/release/libvibes_groove.dylib "${PLUGIN_DIR}/groove.dylib"
+        cp target/debug/libvibes_groove.dylib "${PLUGIN_DIR}/groove.dylib"
         echo "✓ Installed groove.dylib to ${PLUGIN_DIR}"
     else
-        cp target/release/libvibes_groove.so "${PLUGIN_DIR}/groove.so"
+        cp target/debug/libvibes_groove.so "${PLUGIN_DIR}/groove.so"
         echo "✓ Installed groove.so to ${PLUGIN_DIR}"
     fi
 
     # Enable the plugin in the registry
-    ./target/release/vibes plugin enable groove
+    ./target/debug/vibes plugin enable groove
     echo "✓ Plugin enabled in registry"
 
     echo ""
@@ -49,7 +49,7 @@ uninstall-groove:
     set -euo pipefail
 
     # Disable the plugin first (ignore errors if not enabled)
-    ./target/release/vibes plugin disable groove 2>/dev/null || true
+    ./target/debug/vibes plugin disable groove 2>/dev/null || true
 
     # Remove the plugin directory
     rm -rf "${HOME}/.config/vibes/plugins/groove"
