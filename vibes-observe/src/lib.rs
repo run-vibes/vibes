@@ -24,6 +24,9 @@ pub mod export;
 pub mod tracer;
 pub mod types;
 
+pub use context::{
+    AgentId, ModelId, SessionId, SwarmId, TraceContext, UserId, VibesSpanExt, attributes,
+};
 pub use tracer::{
     ExportTarget, TracerConfig, TracerError, TracingGuard, current_span_id, current_trace_id,
     init_tracing,

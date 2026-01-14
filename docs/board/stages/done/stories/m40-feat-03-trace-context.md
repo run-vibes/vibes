@@ -2,7 +2,7 @@
 id: m40-feat-03
 title: TraceContext with vibes-specific attributes
 type: feat
-status: backlog
+status: done
 priority: high
 epics: [observability]
 depends: [m40-feat-02]
@@ -93,8 +93,8 @@ pub mod attributes {
 
 ## Acceptance Criteria
 
-- [ ] `TraceContext` carries vibes-specific data
-- [ ] `VibesSpanExt` records context on spans
-- [ ] Standard attribute names defined
-- [ ] Context can be created for session/agent
-- [ ] Attributes appear in exported spans
+- [x] `TraceContext` carries vibes-specific data
+- [x] `VibesSpanExt` records context on spans
+- [x] Standard attribute names defined
+- [x] Context can be created for session/agent
+- [x] Attributes appear in exported spans

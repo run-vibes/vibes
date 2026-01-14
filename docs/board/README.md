@@ -24,7 +24,6 @@
 | [m38-feat-07-agent-web-ui](stages/backlog/stories/m38-feat-07-agent-web-ui.md) | feat | medium | agents |
 | [m39-feat-05-eval-cli](stages/backlog/stories/m39-feat-05-eval-cli.md) | feat | medium | evals |
 | [m39-feat-06-eval-web-ui](stages/backlog/stories/m39-feat-06-eval-web-ui.md) | feat | medium | evals |
-| [m40-feat-03-trace-context](stages/backlog/stories/m40-feat-03-trace-context.md) | feat | high | observability |
 | [m40-feat-04-instrument-key-functions](stages/backlog/stories/m40-feat-04-instrument-key-functions.md) | feat | high | observability |
 | [m40-feat-05-export-targets](stages/backlog/stories/m40-feat-05-export-targets.md) | feat | high | observability |
 | [m40-feat-06-observe-cli](stages/backlog/stories/m40-feat-06-observe-cli.md) | feat | medium | observability |
@@ -252,6 +251,7 @@
 - [m39-feat-04-study-lifecycle](stages/done/stories/m39-feat-04-study-lifecycle.md)
 - [m40-feat-01-observe-crate-skeleton](stages/done/stories/m40-feat-01-observe-crate-skeleton.md)
 - [m40-feat-02-opentelemetry-setup](stages/done/stories/m40-feat-02-opentelemetry-setup.md)
+- [m40-feat-03-trace-context](stages/done/stories/m40-feat-03-trace-context.md)
 - [refactor-0008-consolidate-assessment-types-module](stages/done/stories/refactor-0008-consolidate-assessment-types-module.md)
 - [refactor-0069-dashboard-visual-consistency](stages/done/stories/refactor-0069-dashboard-visual-consistency.md)
 - [refactor-0070-design-system-extraction](stages/done/stories/refactor-0070-design-system-extraction.md)
