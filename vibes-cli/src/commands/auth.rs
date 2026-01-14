@@ -4,6 +4,7 @@ use anyhow::Result;
 use clap::{Args, Subcommand};
 use vibes_core::JwtValidator;
 
+use super::setup::auth_wizard;
 use crate::config::ConfigLoader;
 
 #[derive(Debug, Args)]
@@ -14,6 +15,8 @@ pub struct AuthArgs {
 
 #[derive(Debug, Subcommand)]
 pub enum AuthCommand {
+    /// Interactive setup wizard for Cloudflare Access authentication
+    Setup,
     /// Show current auth configuration and status
     Status,
     /// Test auth configuration by fetching JWKS
@@ -22,6 +25,7 @@ pub enum AuthCommand {
 
 pub async fn run(args: AuthArgs) -> Result<()> {
     match args.command {
+        AuthCommand::Setup => auth_wizard::run().await,
         AuthCommand::Status => status().await,
         AuthCommand::Test => test().await,
     }

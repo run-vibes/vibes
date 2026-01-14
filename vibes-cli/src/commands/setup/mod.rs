@@ -5,6 +5,7 @@
 
 mod prompts;
 
+pub mod auth_wizard;
 pub mod cloudflared;
 pub mod tunnel_wizard;
 

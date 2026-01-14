@@ -2,7 +2,7 @@
 id: feat-0076
 title: Auth Setup Wizard
 type: feat
-status: pending
+status: done
 priority: medium
 epics: [cli, networking]
 milestone: 35-setup-wizards
@@ -18,16 +18,16 @@ Cloudflare Access protects vibes with SSO authentication. Users need to configur
 
 ## Acceptance Criteria
 
-- [ ] Add `AuthCommand::Setup` variant to auth.rs
-- [ ] Create `vibes-cli/src/commands/setup/auth_wizard.rs`
-- [ ] `vibes auth setup` runs the wizard
-- [ ] Show header and prerequisites explanation
-- [ ] Ask if user has created Cloudflare Access application
-- [ ] If no, show step-by-step instructions for creating one
-- [ ] Prompt for team name (validate: alphanumeric + hyphens)
-- [ ] Prompt for AUD tag (validate: 32+ chars, alphanumeric)
-- [ ] Test configuration by fetching JWKS from `{team}.cloudflareaccess.com`
-- [ ] Save config:
+- [x] Add `AuthCommand::Setup` variant to auth.rs
+- [x] Create `vibes-cli/src/commands/setup/auth_wizard.rs`
+- [x] `vibes auth setup` runs the wizard
+- [x] Show header and prerequisites explanation
+- [x] Ask if user has created Cloudflare Access application
+- [x] If no, show step-by-step instructions for creating one
+- [x] Prompt for team name (validate: alphanumeric + hyphens)
+- [x] Prompt for AUD tag (validate: 32+ chars, alphanumeric)
+- [x] Test configuration by fetching JWKS from `{team}.cloudflareaccess.com`
+- [x] Save config:
   ```toml
   [auth]
   enabled = true
@@ -36,7 +36,7 @@ Cloudflare Access protects vibes with SSO authentication. Users need to configur
   bypass_localhost = true
   clock_skew_seconds = 60
   ```
-- [ ] Show success message
+- [x] Show success message
 
 ## Technical Notes
 
