@@ -9,6 +9,36 @@ use vibes_core::AccessConfig;
 
 pub struct ConfigLoader;
 
+/// Report of what was saved and any warnings
+#[derive(Debug, Default)]
+#[allow(dead_code)] // Will be used by setup wizards
+pub struct SaveReport {
+    /// Values that were saved: (key, value)
+    pub saved: Vec<(String, String)>,
+    /// Values that were overwritten from non-default: (key, old_value, new_value)
+    pub overwritten: Vec<(String, String, String)>,
+}
+
+impl std::fmt::Display for SaveReport {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if !self.saved.is_empty() {
+            writeln!(f, "Configuration saved:")?;
+            for (key, value) in &self.saved {
+                writeln!(f, "  {} = {}", key, value)?;
+            }
+        }
+
+        if !self.overwritten.is_empty() {
+            writeln!(f, "\nWarning: Overwriting existing values:")?;
+            for (key, old, new) in &self.overwritten {
+                writeln!(f, "  {} = {} -> {}", key, old, new)?;
+            }
+        }
+
+        Ok(())
+    }
+}
+
 impl ConfigLoader {
     /// Load merged configuration (user + project)
     pub fn load() -> Result<VibesConfig> {
@@ -118,6 +148,155 @@ impl ConfigLoader {
         }
     }
 
+    /// Save config to user config path (~/.config/vibes/config.toml or similar)
+    ///
+    /// Returns a `SaveReport` showing what was saved and any warnings.
+    #[allow(dead_code)] // Will be used by setup wizards
+    pub fn save_to_user_config(config: &VibesConfig) -> Result<SaveReport> {
+        let path = Self::user_config_path()
+            .ok_or_else(|| anyhow::anyhow!("Could not determine user config path"))?;
+        Self::save_with_report(config, &path)
+    }
+
+    /// Save config to a specific path
+    ///
+    /// Creates parent directories if they don't exist.
+    #[allow(dead_code)] // Will be used by setup wizards
+    pub fn save_to_path(config: &VibesConfig, path: &std::path::Path) -> Result<()> {
+        // Create parent directories
+        if let Some(parent) = path.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+
+        let toml = toml::to_string_pretty(config)?;
+        std::fs::write(path, toml)?;
+
+        Ok(())
+    }
+
+    /// Save config with a report of what was saved and any warnings
+    ///
+    /// Returns a `SaveReport` containing:
+    /// - `saved`: Non-default values that were saved
+    /// - `overwritten`: Warnings for overwriting existing non-default values
+    pub fn save_with_report(config: &VibesConfig, path: &std::path::Path) -> Result<SaveReport> {
+        let defaults = VibesConfig::default();
+        let mut report = SaveReport::default();
+
+        // Load existing config if file exists
+        let existing = if path.exists() {
+            let contents = std::fs::read_to_string(path)?;
+            Some(toml::from_str::<VibesConfig>(&contents)?)
+        } else {
+            None
+        };
+
+        // Collect non-default values that will be saved
+        Self::collect_saved_values(config, &defaults, &mut report.saved);
+
+        // Check for overwrites of non-default values
+        if let Some(ref existing) = existing {
+            Self::collect_overwritten_values(config, existing, &defaults, &mut report.overwritten);
+        }
+
+        // Save the config
+        Self::save_to_path(config, path)?;
+
+        Ok(report)
+    }
+
+    /// Collect values that differ from defaults
+    fn collect_saved_values(
+        config: &VibesConfig,
+        defaults: &VibesConfig,
+        saved: &mut Vec<(String, String)>,
+    ) {
+        // Server section
+        if config.server.host != defaults.server.host {
+            saved.push((
+                "server.host".to_string(),
+                format!("\"{}\"", config.server.host),
+            ));
+        }
+        if config.server.port != defaults.server.port {
+            saved.push(("server.port".to_string(), config.server.port.to_string()));
+        }
+        if config.server.auto_start != defaults.server.auto_start {
+            saved.push((
+                "server.auto_start".to_string(),
+                config.server.auto_start.to_string(),
+            ));
+        }
+
+        // Tunnel section
+        if config.tunnel.enabled != defaults.tunnel.enabled {
+            saved.push((
+                "tunnel.enabled".to_string(),
+                config.tunnel.enabled.to_string(),
+            ));
+        }
+        if config.tunnel.mode != defaults.tunnel.mode
+            && let Some(ref mode) = config.tunnel.mode
+        {
+            saved.push(("tunnel.mode".to_string(), format!("\"{}\"", mode)));
+        }
+        if config.tunnel.name != defaults.tunnel.name
+            && let Some(ref name) = config.tunnel.name
+        {
+            saved.push(("tunnel.name".to_string(), format!("\"{}\"", name)));
+        }
+        if config.tunnel.hostname != defaults.tunnel.hostname
+            && let Some(ref hostname) = config.tunnel.hostname
+        {
+            saved.push(("tunnel.hostname".to_string(), format!("\"{}\"", hostname)));
+        }
+
+        // Auth section
+        if config.auth.enabled != defaults.auth.enabled {
+            saved.push(("auth.enabled".to_string(), config.auth.enabled.to_string()));
+        }
+    }
+
+    /// Collect values being overwritten that were non-default in existing config
+    fn collect_overwritten_values(
+        config: &VibesConfig,
+        existing: &VibesConfig,
+        defaults: &VibesConfig,
+        overwritten: &mut Vec<(String, String, String)>,
+    ) {
+        // Only warn if: existing != default AND existing != new
+        // Server section
+        if existing.server.port != defaults.server.port
+            && existing.server.port != config.server.port
+        {
+            overwritten.push((
+                "server.port".to_string(),
+                existing.server.port.to_string(),
+                config.server.port.to_string(),
+            ));
+        }
+        if existing.server.host != defaults.server.host
+            && existing.server.host != config.server.host
+        {
+            overwritten.push((
+                "server.host".to_string(),
+                existing.server.host.clone(),
+                config.server.host.clone(),
+            ));
+        }
+
+        // Tunnel section
+        if existing.tunnel.enabled != defaults.tunnel.enabled
+            && existing.tunnel.enabled != config.tunnel.enabled
+        {
+            overwritten.push((
+                "tunnel.enabled".to_string(),
+                existing.tunnel.enabled.to_string(),
+                config.tunnel.enabled.to_string(),
+            ));
+        }
+    }
+
     /// Load config from a specific path (for testing)
     #[cfg(test)]
     pub fn load_from_path(path: &std::path::Path) -> Result<VibesConfig> {
@@ -135,6 +314,199 @@ mod tests {
     use super::*;
     use std::io::Write;
     use tempfile::TempDir;
+
+    // ==================== Save Tests ====================
+
+    #[test]
+    fn test_save_creates_new_file() {
+        let temp_dir = TempDir::new().unwrap();
+        let path = temp_dir.path().join("config.toml");
+
+        let config = VibesConfig {
+            server: ServerConfig {
+                host: "0.0.0.0".to_string(),
+                port: 8080,
+                auto_start: false,
+            },
+            ..Default::default()
+        };
+
+        ConfigLoader::save_to_path(&config, &path).unwrap();
+
+        assert!(path.exists());
+        let contents = std::fs::read_to_string(&path).unwrap();
+        assert!(contents.contains("host = \"0.0.0.0\""));
+        assert!(contents.contains("port = 8080"));
+        assert!(contents.contains("auto_start = false"));
+    }
+
+    #[test]
+    fn test_save_creates_parent_directories() {
+        let temp_dir = TempDir::new().unwrap();
+        let path = temp_dir
+            .path()
+            .join("nested")
+            .join("deep")
+            .join("config.toml");
+
+        let config = VibesConfig::default();
+
+        ConfigLoader::save_to_path(&config, &path).unwrap();
+
+        assert!(path.exists());
+    }
+
+    #[test]
+    fn test_save_overwrites_existing_file() {
+        let temp_dir = TempDir::new().unwrap();
+        let path = temp_dir.path().join("config.toml");
+
+        // Create initial file
+        std::fs::write(&path, "[server]\nport = 1234\n").unwrap();
+
+        let config = VibesConfig {
+            server: ServerConfig {
+                port: 9999,
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+
+        ConfigLoader::save_to_path(&config, &path).unwrap();
+
+        let contents = std::fs::read_to_string(&path).unwrap();
+        assert!(contents.contains("port = 9999"));
+        assert!(!contents.contains("port = 1234"));
+    }
+
+    #[test]
+    fn test_save_with_report_shows_saved_values() {
+        let temp_dir = TempDir::new().unwrap();
+        let path = temp_dir.path().join("config.toml");
+
+        let config = VibesConfig {
+            tunnel: TunnelConfigSection {
+                enabled: true,
+                mode: Some("quick".to_string()),
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+
+        let report = ConfigLoader::save_with_report(&config, &path).unwrap();
+
+        assert!(
+            report
+                .saved
+                .contains(&("tunnel.enabled".to_string(), "true".to_string()))
+        );
+        assert!(
+            report
+                .saved
+                .contains(&("tunnel.mode".to_string(), "\"quick\"".to_string()))
+        );
+    }
+
+    #[test]
+    fn test_save_with_report_detects_overwritten_values() {
+        let temp_dir = TempDir::new().unwrap();
+        let path = temp_dir.path().join("config.toml");
+
+        // Create initial config with non-default value
+        let initial = VibesConfig {
+            server: ServerConfig {
+                port: 9000, // Non-default (default is 7432)
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+        ConfigLoader::save_to_path(&initial, &path).unwrap();
+
+        // Save new config with different port
+        let new_config = VibesConfig {
+            server: ServerConfig {
+                port: 8080,
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+
+        let report = ConfigLoader::save_with_report(&new_config, &path).unwrap();
+
+        // Should warn about overwriting the non-default port
+        assert!(
+            report
+                .overwritten
+                .iter()
+                .any(|(key, old, new)| key == "server.port" && old == "9000" && new == "8080")
+        );
+    }
+
+    #[test]
+    fn test_save_with_report_no_warning_for_default_values() {
+        let temp_dir = TempDir::new().unwrap();
+        let path = temp_dir.path().join("config.toml");
+
+        // Create initial config with DEFAULT port
+        let initial = VibesConfig::default();
+        ConfigLoader::save_to_path(&initial, &path).unwrap();
+
+        // Save new config with different port
+        let new_config = VibesConfig {
+            server: ServerConfig {
+                port: 8080,
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+
+        let report = ConfigLoader::save_with_report(&new_config, &path).unwrap();
+
+        // Should NOT warn because old value was the default
+        assert!(
+            report.overwritten.is_empty(),
+            "Expected no warnings for overwriting default values"
+        );
+    }
+
+    #[test]
+    fn test_save_report_display() {
+        let report = SaveReport {
+            saved: vec![
+                ("tunnel.enabled".to_string(), "true".to_string()),
+                ("tunnel.mode".to_string(), "\"quick\"".to_string()),
+            ],
+            overwritten: vec![(
+                "server.port".to_string(),
+                "9000".to_string(),
+                "8080".to_string(),
+            )],
+        };
+
+        let display = report.to_string();
+
+        assert!(display.contains("tunnel.enabled = true"));
+        assert!(display.contains("tunnel.mode = \"quick\""));
+        assert!(display.contains("server.port"));
+        assert!(display.contains("9000"));
+        assert!(display.contains("8080"));
+    }
+
+    #[test]
+    fn test_save_to_user_config_returns_report() {
+        // This test verifies save_to_user_config exists and returns a SaveReport
+        // We can't easily test the actual user config path, so we verify the method signature
+        let config = VibesConfig::default();
+
+        // The method should exist and return Result<SaveReport>
+        // In actual use, it would write to ~/.config/vibes/config.toml or similar
+        let result = ConfigLoader::save_to_user_config(&config);
+
+        // Should succeed (creates the config directory if needed)
+        assert!(result.is_ok());
+    }
+
+    // ==================== Load Tests ====================
 
     #[test]
     fn test_load_nonexistent_returns_defaults() {
