@@ -83,4 +83,23 @@ describe('Card', () => {
     const footerElement = container.querySelector('[class*="footer"]');
     expect(footerElement).not.toBeInTheDocument();
   });
+
+  it('uses flexbox layout to push footer to bottom', () => {
+    const { container } = render(
+      <Card title="Test" footer={<span>Footer</span>}>
+        Content
+      </Card>
+    );
+    const card = container.firstChild as HTMLElement;
+    const content = container.querySelector('[class*="content"]') as HTMLElement;
+
+    // Card should use column flex layout
+    const cardStyles = window.getComputedStyle(card);
+    expect(cardStyles.display).toBe('flex');
+    expect(cardStyles.flexDirection).toBe('column');
+
+    // Content should grow to push footer down
+    const contentStyles = window.getComputedStyle(content);
+    expect(contentStyles.flexGrow).toBe('1');
+  });
 });
