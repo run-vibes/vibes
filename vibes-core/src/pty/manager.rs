@@ -2,6 +2,7 @@
 
 use chrono::{DateTime, Utc};
 use std::collections::HashMap;
+use tracing::instrument;
 use uuid::Uuid;
 
 use super::backend::{PtyBackend, create_backend};
@@ -42,6 +43,7 @@ impl PtyManager {
     }
 
     /// Create a new PTY session with auto-generated ID
+    #[instrument(name = "pty::create_session", skip(self))]
     pub fn create_session(
         &mut self,
         name: Option<String>,
@@ -54,6 +56,7 @@ impl PtyManager {
     /// Create a new PTY session with a specific ID and optional dimensions
     ///
     /// If cols/rows are provided, they override the config defaults.
+    #[instrument(name = "pty::create_session_with_id", skip(self), fields(session_id = %id))]
     pub fn create_session_with_id(
         &mut self,
         id: String,
@@ -108,6 +111,7 @@ impl PtyManager {
     }
 
     /// Kill a session (send SIGTERM and remove)
+    #[instrument(name = "pty::kill_session", skip(self), fields(session_id = %id))]
     pub async fn kill_session(&mut self, id: &str) -> Result<(), PtyError> {
         if let Some(session) = self.sessions.remove(id) {
             let mut inner = session.handle.inner.lock().await;

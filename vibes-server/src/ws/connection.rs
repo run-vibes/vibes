@@ -10,7 +10,7 @@ use axum::http::Request;
 use axum::response::IntoResponse;
 use futures::{SinkExt, StreamExt};
 use tokio::sync::broadcast;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, error, info, instrument, warn};
 use uuid::Uuid;
 use vibes_core::{AuthContext, InputSource, VibesEvent};
 
@@ -35,6 +35,7 @@ fn detect_client_type<B>(req: &Request<B>) -> InputSource {
 }
 
 /// WebSocket upgrade handler
+#[instrument(name = "ws::handler", skip_all)]
 pub async fn ws_handler(
     ws: WebSocketUpgrade,
     State(state): State<Arc<AppState>>,
@@ -114,6 +115,7 @@ impl ConnectionState {
 }
 
 /// Handle a WebSocket connection with bidirectional event streaming
+#[instrument(name = "ws::connection", skip_all, fields(client_type = ?client_type))]
 async fn handle_socket(
     socket: WebSocket,
     state: Arc<AppState>,
@@ -218,6 +220,7 @@ async fn handle_socket(
 }
 
 /// Handle a PTY event from the broadcast channel
+#[instrument(name = "ws::pty_event", skip_all, fields(session_id))]
 async fn handle_pty_event(
     event: &PtyEvent,
     sender: &mut futures::stream::SplitSink<WebSocket, Message>,
@@ -256,6 +259,7 @@ async fn handle_pty_event(
 }
 
 /// Handle a text message from the client
+#[instrument(name = "ws::message", skip_all, err)]
 async fn handle_text_message(
     text: &str,
     state: &Arc<AppState>,
@@ -925,6 +929,7 @@ async fn handle_text_message(
 }
 
 /// Background task that reads from a PTY and broadcasts output
+#[instrument(name = "pty::reader", skip(state, handle), fields(session_id = %session_id))]
 async fn pty_output_reader(
     state: Arc<AppState>,
     session_id: String,

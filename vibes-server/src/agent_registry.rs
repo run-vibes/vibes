@@ -5,6 +5,7 @@
 //! - Prefix-based ID matching for CLI convenience
 //! - Spawn with automatic LocalAgent creation
 
+use tracing::instrument;
 use uuid::Uuid;
 use vibes_core::agent::{
     Agent, AgentId, AgentRegistry, AgentStatus, AgentType, LocalAgent, Task, TaskMetrics,
@@ -50,6 +51,7 @@ impl ServerAgentRegistry {
     }
 
     /// Spawn a new agent and optionally start a task
+    #[instrument(name = "agent::spawn", skip(self), fields(agent_type = ?agent_type))]
     pub async fn spawn_agent(
         &mut self,
         agent_type: AgentType,
@@ -74,6 +76,7 @@ impl ServerAgentRegistry {
     }
 
     /// Pause an agent by ID or prefix
+    #[instrument(name = "agent::pause", skip(self), fields(agent_id = %id_or_prefix))]
     pub async fn pause_agent(&mut self, id_or_prefix: &str) -> VibesResult<()> {
         let agent_id = self
             .resolve_agent_id(id_or_prefix)
@@ -82,6 +85,7 @@ impl ServerAgentRegistry {
     }
 
     /// Resume an agent by ID or prefix
+    #[instrument(name = "agent::resume", skip(self), fields(agent_id = %id_or_prefix))]
     pub async fn resume_agent(&mut self, id_or_prefix: &str) -> VibesResult<()> {
         let agent_id = self
             .resolve_agent_id(id_or_prefix)
@@ -90,6 +94,7 @@ impl ServerAgentRegistry {
     }
 
     /// Cancel current task on an agent by ID or prefix
+    #[instrument(name = "agent::cancel", skip(self), fields(agent_id = %id_or_prefix))]
     pub async fn cancel_agent(&mut self, id_or_prefix: &str) -> VibesResult<()> {
         let agent_id = self
             .resolve_agent_id(id_or_prefix)
@@ -98,6 +103,7 @@ impl ServerAgentRegistry {
     }
 
     /// Stop and remove an agent by ID or prefix
+    #[instrument(name = "agent::stop", skip(self), fields(agent_id = %id_or_prefix))]
     pub async fn stop_agent(&mut self, id_or_prefix: &str) -> VibesResult<()> {
         let agent_id = self
             .resolve_agent_id(id_or_prefix)

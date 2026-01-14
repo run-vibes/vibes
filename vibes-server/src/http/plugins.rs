@@ -12,6 +12,7 @@ use axum::{
     routing::any,
 };
 use serde_json::json;
+use tracing::instrument;
 use vibes_plugin_api::{HttpMethod, RouteRequest};
 
 use crate::AppState;
@@ -29,6 +30,7 @@ fn to_http_method(method: &axum::http::Method) -> Option<HttpMethod> {
 }
 
 /// Plugin route handler
+#[instrument(name = "plugin::route", skip_all)]
 pub async fn handle_plugin_route(State(state): State<Arc<AppState>>, request: Request) -> Response {
     let method = match to_http_method(request.method()) {
         Some(m) => m,
