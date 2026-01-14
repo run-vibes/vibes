@@ -19,7 +19,10 @@
 //! }
 //! ```
 
+mod ollama;
 mod types;
+
+pub use ollama::OllamaProvider;
 
 use std::pin::Pin;
 

@@ -1,5 +1,6 @@
-Generated README.md
-[!NOTE]
+# Planning Board
+
+> [!NOTE]
 > Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
@@ -7,6 +8,7 @@ Generated README.md
 | Story | Type | Priority | Epics |
 |-------|------|----------|-------|
 | [bug-0100-flaky-iggy-client-token-tests](stages/in-progress/stories/bug-0100-flaky-iggy-client-token-tests.md) | bug |  |  |
+| [feat-0103-add-ollama-as-a-model-provider](stages/in-progress/stories/feat-0103-add-ollama-as-a-model-provider.md) | feat | medium | models |
 
 ## Backlog
 
@@ -25,7 +27,6 @@ Generated README.md
 | [feat-0077-config-save-load](stages/backlog/stories/feat-0077-config-save-load.md) | feat | medium | cli,networking |
 | [feat-0078-connectivity-validation](stages/backlog/stories/feat-0078-connectivity-validation.md) | feat | medium | cli,networking |
 | [feat-0101-header-identity-display](stages/backlog/stories/feat-0101-header-identity-display.md) | feat | low | web-ui,design-system |
-| [feat-0103-add-ollama-as-a-model-provider](stages/backlog/stories/feat-0103-add-ollama-as-a-model-provider.md) | feat | medium | models |
 | [m38-feat-01-agent-module-skeleton](stages/backlog/stories/m38-feat-01-agent-module-skeleton.md) | feat | high | agents |
 | [m38-feat-02-agent-trait](stages/backlog/stories/m38-feat-02-agent-trait.md) | feat | high | agents |
 | [m38-feat-03-agent-status](stages/backlog/stories/m38-feat-03-agent-status.md) | feat | high | agents |
