@@ -2,7 +2,7 @@
 id: feat-0074
 title: Tunnel Wizard - Named Mode
 type: feat
-status: pending
+status: in-progress
 priority: medium
 epics: [cli, networking]
 milestone: 35-setup-wizards
@@ -18,15 +18,15 @@ Named tunnels provide persistent hostnames (e.g., vibes.yourdomain.com). This re
 
 ## Acceptance Criteria
 
-- [ ] Detect login status, prompt login if not logged in
-- [ ] After login, list existing tunnels with "Create new tunnel" option
-- [ ] If creating new tunnel:
+- [x] Detect login status, prompt login if not logged in
+- [x] After login, list existing tunnels with "Create new tunnel" option
+- [x] If creating new tunnel:
   - Prompt for tunnel name (validate: alphanumeric + hyphens)
   - Run `cloudflared tunnel create <name>`
-- [ ] Prompt for hostname (validate: contains dot, not starting with dot)
-- [ ] Prompt: "Route DNS to this tunnel? (Recommended)" with Confirm
-- [ ] If yes, run `cloudflared tunnel route dns <tunnel> <hostname>`
-- [ ] Save config:
+- [x] Prompt for hostname (validate: contains dot, not starting with dot)
+- [x] Prompt: "Route DNS to this tunnel? (Recommended)" with Confirm
+- [x] If yes, run `cloudflared tunnel route dns <tunnel> <hostname>`
+- [x] Save config:
   ```toml
   [tunnel]
   enabled = true
@@ -34,7 +34,7 @@ Named tunnels provide persistent hostnames (e.g., vibes.yourdomain.com). This re
   name = "<tunnel-name>"
   hostname = "<hostname>"
   ```
-- [ ] Show success message with next steps
+- [x] Show success message with next steps
 
 ## Technical Notes
 
