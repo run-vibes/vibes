@@ -2,7 +2,7 @@
 id: m39-feat-03
 title: EvalStorage schema and implementation
 type: feat
-status: backlog
+status: done
 priority: high
 epics: [evals]
 depends: [m39-feat-02]
