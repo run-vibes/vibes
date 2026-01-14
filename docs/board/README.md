@@ -23,7 +23,7 @@
 | [feat-0078-connectivity-validation](stages/backlog/stories/feat-0078-connectivity-validation.md) | feat | medium | cli,networking |
 | [feat-0101-header-identity-display](stages/backlog/stories/feat-0101-header-identity-display.md) | feat | low | web-ui,design-system |
 | [feat-0104-show-ollama-models-in-web-ui](stages/backlog/stories/feat-0104-show-ollama-models-in-web-ui.md) | feat | medium |  |
-| [feat-0106-add-gzip-and-brotli-compression-for-http-responses](stages/backlog/stories/feat-0106-add-gzip-and-brotli-compression-for-http-responses.md) | feat | medium |  |
+| [feat-0106-add-gzip-and-brotli-compression-for-http-responses](stages/backlog/stories/feat-0106-add-gzip-and-brotli-compression-for-http-responses.md) | feat | medium | web-ui |
 | [m38-feat-02-agent-trait](stages/backlog/stories/m38-feat-02-agent-trait.md) | feat | high | agents |
 | [m38-feat-03-agent-status](stages/backlog/stories/m38-feat-03-agent-status.md) | feat | high | agents |
 | [m38-feat-04-task-types](stages/backlog/stories/m38-feat-04-task-types.md) | feat | high | agents |
