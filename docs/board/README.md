@@ -1,5 +1,7 @@
-Generated README.md
-uto-generated from directory structure. Run `just board generate` to update.*
+# Planning Board
+
+> [!NOTE]
+> Auto-generated from directory structure. Run `just board generate` to update.
 
 ## In Progress
 

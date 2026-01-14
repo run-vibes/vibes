@@ -76,7 +76,8 @@ generate:
     {
     echo "# Planning Board"
     echo ""
-    echo "*Auto-generated from directory structure. Run \`just board generate\` to update.*"
+    echo "> [!NOTE]"
+    echo "> Auto-generated from directory structure. Run \`just board generate\` to update."
     echo ""
 
     # In Progress stories
@@ -547,7 +548,7 @@ new TYPE NAME *ARGS:
     esac
 
     # Regenerate README
-    just board generate > "{{board_dir}}/README.md"
+    just board generate
     echo ""
     echo "Board README.md updated"
 
@@ -633,7 +634,7 @@ start ID:
     fi
 
     # Regenerate README
-    just board generate > README.md
+    just board generate
     echo "Board updated"
 
 # Complete a story (move to done)
@@ -714,7 +715,7 @@ done ID SUMMARY="__PROMPT__":
     fi
 
     # Regenerate README
-    just board generate > README.md
+    just board generate
     echo "Board updated"
 
 # Start a milestone (set status to in-progress)
@@ -767,7 +768,7 @@ start-milestone ID:
     echo "Started milestone: $ms_name"
 
     # Regenerate README
-    just board generate > README.md
+    just board generate
     echo "Board updated"
 
 # Complete a milestone (set status to done)
@@ -816,7 +817,7 @@ done-milestone ID:
     echo "Completed milestone: $ms_name"
 
     # Regenerate README
-    just board generate > README.md
+    just board generate
     echo "Board updated"
 
 # Link a story to an epic
