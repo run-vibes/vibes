@@ -1,7 +1,7 @@
 ---
 id: 42-tui-dashboard
 title: TUI Dashboard
-status: in-progress
+status: done
 epics: [tui]
 ---
 

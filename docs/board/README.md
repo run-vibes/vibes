@@ -104,7 +104,7 @@
 | [39-eval-core](milestones/39-eval-core/) | in-progress | evals |
 | [40-observability-tracing](milestones/40-observability-tracing/) | done | observability |
 | [41-tui-core](milestones/41-tui-core/) | done | tui |
-| [42-tui-dashboard](milestones/42-tui-dashboard/) | in-progress | tui |
+| [42-tui-dashboard](milestones/42-tui-dashboard/) | done | tui |
 | [43-tui-agent-control](milestones/43-tui-agent-control/) | planned | tui |
 | [44-tui-swarm-visualization](milestones/44-tui-swarm-visualization/) | planned | tui |
 | [45-tui-theme-system](milestones/45-tui-theme-system/) | planned | tui |
