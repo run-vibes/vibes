@@ -12,6 +12,7 @@ use ratatui::{
 use crate::client::TuiClient;
 use crate::keybindings::{Action, KeyBindings};
 use crate::views::{DashboardView, View, ViewRenderer, ViewStack};
+use crate::widgets::{SessionInfo, SessionListWidget, SessionStatus};
 use crate::{
     AppState, Mode, Theme, VibesTerminal, restore_terminal, setup_terminal, vibes_default,
 };
@@ -31,6 +32,8 @@ pub struct App {
     pub server_url: Option<String>,
     /// Flag indicating a retry was requested (for command to handle).
     pub retry_requested: bool,
+    /// Session list widget for the dashboard.
+    pub session_widget: SessionListWidget,
 }
 
 impl App {
@@ -46,6 +49,7 @@ impl App {
             error_message: None,
             server_url: None,
             retry_requested: false,
+            session_widget: SessionListWidget::new(),
         }
     }
 
@@ -61,6 +65,7 @@ impl App {
             error_message: None,
             server_url: None,
             retry_requested: false,
+            session_widget: SessionListWidget::new(),
         }
     }
 
@@ -76,6 +81,7 @@ impl App {
             error_message: None,
             server_url: Some(url),
             retry_requested: false,
+            session_widget: SessionListWidget::new(),
         }
     }
 
@@ -130,12 +136,29 @@ impl App {
                     self.running = false; // Exit to allow command to handle reconnection
                 }
             }
-            // Navigation and other actions will be wired up in future stories
-            Action::NavigateUp
-            | Action::NavigateDown
-            | Action::NavigateLeft
+            // Navigation actions for session list
+            Action::NavigateUp => {
+                if self.views.current == View::Dashboard {
+                    self.session_widget.select_prev();
+                }
+            }
+            Action::NavigateDown => {
+                if self.views.current == View::Dashboard {
+                    self.session_widget.select_next();
+                }
+            }
+            Action::Select => {
+                if self.views.current == View::Dashboard {
+                    // Navigate to session detail view (future story)
+                    if let Some(session) = self.session_widget.selected_session() {
+                        tracing::debug!("Selected session: {}", session.id);
+                        // TODO: Push session detail view
+                    }
+                }
+            }
+            // Other actions - will be wired up in future stories
+            Action::NavigateLeft
             | Action::NavigateRight
-            | Action::Select
             | Action::CommandMode
             | Action::SearchMode
             | Action::HelpMode
@@ -197,8 +220,24 @@ impl App {
 
         match msg {
             ServerMessage::SessionList { sessions, .. } => {
-                // Update state with session list
+                // Update session widget with session list
                 tracing::debug!("Received {} sessions", sessions.len());
+                self.session_widget.sessions = sessions
+                    .into_iter()
+                    .map(|s| SessionInfo {
+                        id: s.id,
+                        status: match s.state.as_str() {
+                            "running" | "active" => SessionStatus::Running,
+                            "paused" => SessionStatus::Paused,
+                            "completed" | "closed" => SessionStatus::Completed,
+                            "failed" | "error" => SessionStatus::Failed,
+                            _ => SessionStatus::Running,
+                        },
+                        agent_count: 0, // Will be populated when agents are fetched
+                        branch: None,   // Branch info not in current protocol
+                        name: s.name,
+                    })
+                    .collect();
             }
             ServerMessage::AgentList { agents, .. } => {
                 // Update state with agent list
