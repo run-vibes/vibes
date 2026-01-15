@@ -2,7 +2,7 @@
 id: m41-feat-04
 title: KeyBindings system
 type: feat
-status: backlog
+status: done
 priority: high
 epics: [tui]
 depends: [m41-feat-03]
@@ -132,10 +132,10 @@ fn key_code(code: KeyCode) -> KeyEvent {
 
 ## Acceptance Criteria
 
-- [ ] All global keys from epic spec mapped (j/k/h/l, Enter, Esc, :, /, ?, q, 1-9)
-- [ ] Arrow keys work as alternatives to h/j/k/l
-- [ ] `q` quits the application
-- [ ] `Esc` pops ViewStack (goes back)
-- [ ] View-specific bindings override global when defined
-- [ ] resolve() returns None for unmapped keys
-- [ ] Unit tests for resolution logic pass
+- [x] All global keys from epic spec mapped (j/k/h/l, Enter, Esc, :, /, ?, q, 1-9)
+- [x] Arrow keys work as alternatives to h/j/k/l
+- [x] `q` quits the application
+- [x] `Esc` pops ViewStack (goes back)
+- [x] View-specific bindings override global when defined
+- [x] resolve() returns None for unmapped keys
+- [x] Unit tests for resolution logic pass

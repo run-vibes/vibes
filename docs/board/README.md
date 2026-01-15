@@ -22,7 +22,6 @@
 | [m39-feat-06-eval-web-ui](stages/backlog/stories/m39-feat-06-eval-web-ui.md) | feat | medium | evals |
 | [m40-feat-06-observe-cli](stages/backlog/stories/m40-feat-06-observe-cli.md) | feat | medium | observability |
 | [m40-feat-07-observe-web-ui](stages/backlog/stories/m40-feat-07-observe-web-ui.md) | feat | medium | observability |
-| [m41-feat-04-keybindings](stages/backlog/stories/m41-feat-04-keybindings.md) | feat | high | tui |
 | [m41-feat-05-cli-integration](stages/backlog/stories/m41-feat-05-cli-integration.md) | feat | high | tui |
 
 ## Epics
@@ -260,6 +259,7 @@
 - [m41-feat-01-crate-theme](stages/done/stories/m41-feat-01-crate-theme.md)
 - [m41-feat-02-app-event-loop](stages/done/stories/m41-feat-02-app-event-loop.md)
 - [m41-feat-03-views-viewstack](stages/done/stories/m41-feat-03-views-viewstack.md)
+- [m41-feat-04-keybindings](stages/done/stories/m41-feat-04-keybindings.md)
 - [refactor-0008-consolidate-assessment-types-module](stages/done/stories/refactor-0008-consolidate-assessment-types-module.md)
 - [refactor-0069-dashboard-visual-consistency](stages/done/stories/refactor-0069-dashboard-visual-consistency.md)
 - [refactor-0070-design-system-extraction](stages/done/stories/refactor-0070-design-system-extraction.md)
