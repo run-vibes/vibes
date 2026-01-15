@@ -1,7 +1,7 @@
 ---
 id: 39-eval-core
 title: Eval Core
-status: planned
+status: in-progress
 epics: [evals]
 ---
 
