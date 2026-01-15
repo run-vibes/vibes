@@ -30,7 +30,10 @@ export type ClientMessage =
   | { type: 'pause_agent'; request_id: string; agent_id: string }
   | { type: 'resume_agent'; request_id: string; agent_id: string }
   | { type: 'cancel_agent'; request_id: string; agent_id: string }
-  | { type: 'stop_agent'; request_id: string; agent_id: string };
+  | { type: 'stop_agent'; request_id: string; agent_id: string }
+  // Trace messages
+  | { type: 'subscribe_traces'; session_id?: string; agent_id?: string; level?: string }
+  | { type: 'unsubscribe_traces' };
 
 // ============================================================
 // Server -> Client Messages
@@ -60,7 +63,11 @@ export type ServerMessage =
   | { type: 'agent_list'; request_id: string; agents: AgentInfo[] }
   | { type: 'agent_spawned'; request_id: string; agent: AgentInfo }
   | { type: 'agent_status_response'; request_id: string; agent: AgentInfo }
-  | { type: 'agent_ack'; request_id: string; agent_id: string; operation: string };
+  | { type: 'agent_ack'; request_id: string; agent_id: string; operation: string }
+  // Trace messages
+  | { type: 'trace_event' } & TraceEvent
+  | { type: 'trace_subscribed' }
+  | { type: 'trace_unsubscribed' };
 
 // ============================================================
 // Auth Context - matches vibes-core/src/auth/context.rs
@@ -254,6 +261,44 @@ export interface ModelInfo {
 }
 
 // ============================================================
+// Trace Types - matches vibes-observe/src/subscriber.rs
+// ============================================================
+
+export type SpanStatus = 'ok' | 'error';
+
+/** A trace event representing a completed span */
+export interface TraceEvent {
+  trace_id: string;
+  span_id: string;
+  parent_span_id?: string;
+  name: string;
+  level: string;  // trace, debug, info, warn, error
+  timestamp: string;  // ISO 8601
+  duration_ms?: number;
+  session_id?: string;
+  agent_id?: string;
+  attributes: Record<string, string>;
+  status: SpanStatus;
+}
+
+/** A span node in the trace tree hierarchy */
+export interface SpanNode {
+  event: TraceEvent;
+  children: SpanNode[];
+}
+
+/** Grouped trace for UI rendering */
+export interface TraceTree {
+  trace_id: string;
+  root_span: SpanNode;
+  session_id?: string;
+  agent_id?: string;
+  timestamp: string;
+  total_duration_ms?: number;
+  has_errors: boolean;
+}
+
+// ============================================================
 // Type Guards
 // ============================================================
 
@@ -335,4 +380,17 @@ export function getAgentStatusVariant(status: AgentStatus): 'idle' | 'running' |
     if ('failed' in status) return 'failed';
   }
   return 'idle'; // fallback
+}
+
+// Trace message type guards
+export function isTraceEventMessage(msg: ServerMessage): msg is { type: 'trace_event' } & TraceEvent {
+  return msg.type === 'trace_event';
+}
+
+export function isTraceSubscribedMessage(msg: ServerMessage): msg is { type: 'trace_subscribed' } {
+  return msg.type === 'trace_subscribed';
+}
+
+export function isTraceUnsubscribedMessage(msg: ServerMessage): msg is { type: 'trace_unsubscribed' } {
+  return msg.type === 'trace_unsubscribed';
 }

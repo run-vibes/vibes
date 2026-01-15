@@ -24,6 +24,7 @@ import { StreamsPage } from './pages/Streams'
 import { SettingsPage } from './pages/Settings'
 import { ModelsPage } from './pages/Models'
 import { AgentsPage } from './pages/Agents'
+import { Traces } from './pages/Traces'
 import { NotFound } from './pages/NotFound'
 import { useAuth, useTheme } from './hooks'
 import { useWebSocket } from './hooks/useWebSocket'
@@ -45,6 +46,7 @@ function RootLayout() {
     { label: 'SESSIONS', href: '/sessions', isActive: location.pathname.startsWith('/sessions') },
     { label: 'AGENTS', href: '/agents', isActive: location.pathname === '/agents' },
     { label: 'FIREHOSE', href: '/firehose', isActive: location.pathname === '/firehose' },
+    { label: 'TRACES', href: '/traces', isActive: location.pathname === '/traces' },
     { label: 'MODELS', href: '/models', isActive: location.pathname === '/models' },
     { label: 'GROOVE', href: '/groove', isGroove: true, isActive: isGroovePath, hasSubnav: true },
   ];
@@ -218,12 +220,19 @@ const agentsRoute = createRoute({
   component: AgentsPage,
 })
 
+const tracesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/traces',
+  component: Traces,
+})
+
 // Create route tree and router
 const routeTree = rootRoute.addChildren([
   indexRoute,
   sessionsRoute,
   sessionRoute,
   agentsRoute,
+  tracesRoute,
   grooveIndexRoute,
   grooveStatusRoute,
   grooveLearningsRoute,
