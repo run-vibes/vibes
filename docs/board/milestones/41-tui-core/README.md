@@ -1,7 +1,7 @@
 ---
 id: 41-tui-core
 title: TUI Core
-status: planned
+status: done
 epics: [tui]
 ---
 

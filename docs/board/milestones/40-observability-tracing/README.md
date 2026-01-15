@@ -1,7 +1,7 @@
 ---
 id: 40-observability-tracing
 title: Observability Tracing
-status: planned
+status: done
 epics: [observability]
 ---
 

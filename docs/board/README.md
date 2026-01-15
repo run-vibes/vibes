@@ -103,10 +103,10 @@
 | [35-setup-wizards](milestones/35-setup-wizards/) | done | cli |
 | [36-openworld-dashboard](milestones/36-openworld-dashboard/) | done | groove |
 | [37-models-registry-auth](milestones/37-models-registry-auth/) | done | models |
-| [38-agent-core](milestones/38-agent-core/) | in-progress | agents |
+| [38-agent-core](milestones/38-agent-core/) | done | agents |
 | [39-eval-core](milestones/39-eval-core/) | planned | evals |
-| [40-observability-tracing](milestones/40-observability-tracing/) | planned | observability |
-| [41-tui-core](milestones/41-tui-core/) | planned | tui |
+| [40-observability-tracing](milestones/40-observability-tracing/) | done | observability |
+| [41-tui-core](milestones/41-tui-core/) | done | tui |
 | [42-tui-dashboard](milestones/42-tui-dashboard/) | planned | tui |
 | [43-tui-agent-control](milestones/43-tui-agent-control/) | planned | tui |
 | [44-tui-swarm-visualization](milestones/44-tui-swarm-visualization/) | planned | tui |
