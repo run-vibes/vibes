@@ -2,7 +2,7 @@
 created: 2026-01-01
 ---
 
-# Milestone 21: Default Plugins - Design
+# Milestone 47: Default Plugins - Design
 
 > Built-in plugins for analytics, templates, and export.
 

@@ -87,9 +87,14 @@
 | [39-eval-core](milestones/39-eval-core/) | planned | evals |
 | [40-observability-tracing](milestones/40-observability-tracing/) | planned | observability |
 | [41-tui-core](milestones/41-tui-core/) | planned | tui |
-| [42-default-plugins](milestones/42-default-plugins/) | planned | plugin-system |
-| [43-cli-enhancements](milestones/43-cli-enhancements/) | planned | cli |
-| [44-ios-app](milestones/44-ios-app/) | planned | mobile |
+| [42-tui-dashboard](milestones/42-tui-dashboard/) | planned | tui |
+| [43-tui-agent-control](milestones/43-tui-agent-control/) | planned | tui |
+| [44-tui-swarm-visualization](milestones/44-tui-swarm-visualization/) | planned | tui |
+| [45-tui-theme-system](milestones/45-tui-theme-system/) | planned | tui |
+| [46-tui-pty-server](milestones/46-tui-pty-server/) | planned | tui |
+| [47-default-plugins](milestones/47-default-plugins/) | planned | plugin-system |
+| [48-cli-enhancements](milestones/48-cli-enhancements/) | planned | cli |
+| [49-ios-app](milestones/49-ios-app/) | planned | mobile |
 
 ## Done
 

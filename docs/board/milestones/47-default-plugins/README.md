@@ -1,5 +1,5 @@
 ---
-id: 42-default-plugins
+id: 47-default-plugins
 title: Default Plugins
 status: planned
 epics: [plugin-system]
