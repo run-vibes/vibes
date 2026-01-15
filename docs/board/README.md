@@ -112,6 +112,7 @@
 | [47-default-plugins](milestones/47-default-plugins/) | planned | plugin-system |
 | [48-cli-enhancements](milestones/48-cli-enhancements/) | planned | cli |
 | [49-ios-app](milestones/49-ios-app/) | planned | mobile |
+| [50-50-home-page-redesign](milestones/50-50-home-page-redesign/) | planned | web-ui,plugin-system |
 
 ## Done
 
