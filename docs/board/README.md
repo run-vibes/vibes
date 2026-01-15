@@ -32,6 +32,10 @@
 | [m44-feat-02-agent-progress-bars](stages/backlog/stories/m44-feat-02-agent-progress-bars.md) | feat | high | tui |
 | [m44-feat-03-result-merge-interface](stages/backlog/stories/m44-feat-03-result-merge-interface.md) | feat | medium | tui |
 | [m44-feat-04-swarm-coordination-status](stages/backlog/stories/m44-feat-04-swarm-coordination-status.md) | feat | medium | tui |
+| [m45-feat-01-theme-config-loader](stages/backlog/stories/m45-feat-01-theme-config-loader.md) | feat | high | tui |
+| [m45-feat-02-builtin-theme-variants](stages/backlog/stories/m45-feat-02-builtin-theme-variants.md) | feat | high | tui |
+| [m45-feat-03-runtime-theme-switching](stages/backlog/stories/m45-feat-03-runtime-theme-switching.md) | feat | medium | tui |
+| [m45-feat-04-theme-preview-settings](stages/backlog/stories/m45-feat-04-theme-preview-settings.md) | feat | medium | tui |
 
 ## Epics
 
