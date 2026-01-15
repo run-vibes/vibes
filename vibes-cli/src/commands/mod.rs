@@ -11,4 +11,5 @@ pub mod plugin_dispatch;
 pub mod serve;
 pub mod sessions;
 pub mod setup;
+pub mod tui;
 pub mod tunnel;

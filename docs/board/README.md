@@ -20,7 +20,6 @@
 | [feat-0078-connectivity-validation](stages/backlog/stories/feat-0078-connectivity-validation.md) | feat | medium | cli,networking |
 | [feat-0101-header-identity-display](stages/backlog/stories/feat-0101-header-identity-display.md) | feat | low | web-ui,design-system |
 | [m39-feat-06-eval-web-ui](stages/backlog/stories/m39-feat-06-eval-web-ui.md) | feat | medium | evals |
-| [m41-feat-05-cli-integration](stages/backlog/stories/m41-feat-05-cli-integration.md) | feat | high | tui |
 
 ## Epics
 
@@ -260,6 +259,7 @@
 - [m41-feat-02-app-event-loop](stages/done/stories/m41-feat-02-app-event-loop.md)
 - [m41-feat-03-views-viewstack](stages/done/stories/m41-feat-03-views-viewstack.md)
 - [m41-feat-04-keybindings](stages/done/stories/m41-feat-04-keybindings.md)
+- [m41-feat-05-cli-integration](stages/done/stories/m41-feat-05-cli-integration.md)
 - [refactor-0008-consolidate-assessment-types-module](stages/done/stories/refactor-0008-consolidate-assessment-types-module.md)
 - [refactor-0069-dashboard-visual-consistency](stages/done/stories/refactor-0069-dashboard-visual-consistency.md)
 - [refactor-0070-design-system-extraction](stages/done/stories/refactor-0070-design-system-extraction.md)

@@ -10,6 +10,12 @@ description = "Terminal UI for vibes"
 ratatui = "0.29"
 crossterm = "0.28"
 tokio = { workspace = true }
+tokio-tungstenite = "0.26"
+futures-util = "0.3"
+vibes-server = { path = "../vibes-server" }
+anyhow = "1"
+tracing = { workspace = true }
+serde_json = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["macros", "rt"] }

@@ -29,13 +29,20 @@ fn is_top_level_help() -> bool {
     is_top_level_help_args(&args)
 }
 
+/// Check if user provided no arguments (should launch TUI)
+fn is_no_args() -> bool {
+    let args: Vec<String> = std::env::args().collect();
+    is_no_args_check(&args)
+}
+
+/// Testable version that takes args as parameter
+fn is_no_args_check(args: &[String]) -> bool {
+    // Just the program name, no arguments - launch TUI
+    args.len() == 1
+}
+
 /// Testable version that takes args as parameter
 fn is_top_level_help_args(args: &[String]) -> bool {
-    // No arguments - show help with plugins
-    if args.len() == 1 {
-        return true;
-    }
-
     // Check for --help or -h as first argument after program name
     // e.g., "vibes --help" or "vibes -h"
     if args.len() == 2 && (args[1] == "--help" || args[1] == "-h") {
@@ -90,6 +97,8 @@ enum Commands {
     Serve(commands::serve::ServeArgs),
     /// Manage active sessions
     Sessions(commands::sessions::SessionsArgs),
+    /// Launch the terminal user interface
+    Tui(commands::tui::TuiArgs),
     /// Manage Cloudflare Tunnel
     Tunnel(commands::tunnel::TunnelArgs),
     /// Plugin commands (e.g., `vibes groove trust levels`)
@@ -99,6 +108,11 @@ enum Commands {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    // No arguments - launch TUI
+    if is_no_args() {
+        return commands::tui::run(commands::tui::TuiArgs::default()).await;
+    }
+
     // Intercept top-level help to include plugin commands
     if is_top_level_help() {
         print_help_with_plugins();
@@ -122,6 +136,7 @@ async fn main() -> Result<()> {
         Commands::Plugin(args) => commands::plugin::run(args),
         Commands::Serve(args) => commands::serve::run(args).await,
         Commands::Sessions(args) => commands::sessions::run(args).await,
+        Commands::Tui(args) => commands::tui::run(args).await,
         Commands::Tunnel(args) => commands::tunnel::run(args).await,
         Commands::External(args) => commands::plugin_dispatch::run(args),
     }
@@ -132,12 +147,16 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_no_args_shows_help() {
-        // Just the program name, no arguments - should show help
+    fn test_no_args_launches_tui() {
+        // Just the program name, no arguments - should launch TUI
         let args = vec!["vibes".to_string()];
         assert!(
-            is_top_level_help_args(&args),
-            "vibes with no args should show help"
+            is_no_args_check(&args),
+            "vibes with no args should launch TUI"
+        );
+        assert!(
+            !is_top_level_help_args(&args),
+            "vibes with no args should NOT show help"
         );
     }
 
@@ -145,9 +164,11 @@ mod tests {
     fn test_help_flag_shows_help() {
         let args = vec!["vibes".to_string(), "--help".to_string()];
         assert!(is_top_level_help_args(&args));
+        assert!(!is_no_args_check(&args));
 
         let args = vec!["vibes".to_string(), "-h".to_string()];
         assert!(is_top_level_help_args(&args));
+        assert!(!is_no_args_check(&args));
     }
 
     #[test]
@@ -157,5 +178,20 @@ mod tests {
             !is_top_level_help_args(&args),
             "vibes plugin should not show top-level help"
         );
+        assert!(!is_no_args_check(&args));
+    }
+
+    #[test]
+    fn test_tui_subcommand_does_not_trigger_no_args() {
+        let args = vec!["vibes".to_string(), "tui".to_string()];
+        assert!(!is_no_args_check(&args));
+        assert!(!is_top_level_help_args(&args));
+    }
+
+    #[test]
+    fn test_verbose_help_shows_help() {
+        let args = vec!["vibes".to_string(), "-v".to_string(), "--help".to_string()];
+        assert!(is_top_level_help_args(&args));
+        assert!(!is_no_args_check(&args));
     }
 }
