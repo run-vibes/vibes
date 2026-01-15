@@ -7520,6 +7520,7 @@ dependencies = [
  "vibes-paths",
  "vibes-plugin-api",
  "vibes-server",
+ "vibes-tui",
  "which 7.0.3",
 ]
 
@@ -7742,9 +7743,15 @@ dependencies = [
 name = "vibes-tui"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "crossterm 0.28.1",
+ "futures-util",
  "ratatui",
+ "serde_json",
  "tokio",
+ "tokio-tungstenite 0.26.2",
+ "tracing",
+ "vibes-server",
 ]
 
 [[package]]

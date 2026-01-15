@@ -36,6 +36,9 @@ pub enum Action {
     Resume,
     Cancel,
     ViewDiff,
+
+    // Connection
+    Retry,
 }
 
 /// Keybindings configuration with global and view-specific layers.
@@ -100,6 +103,9 @@ impl Default for KeyBindings {
         global.insert(key(':'), Action::CommandMode);
         global.insert(key('/'), Action::SearchMode);
         global.insert(key('?'), Action::HelpMode);
+
+        // Connection
+        global.insert(key('r'), Action::Retry);
 
         // Jump to views (1-9)
         for i in 1..=9 {

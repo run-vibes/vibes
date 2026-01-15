@@ -2,7 +2,7 @@
 id: m41-feat-05
 title: CLI command and WebSocket integration
 type: feat
-status: backlog
+status: done
 priority: high
 epics: [tui]
 depends: [m41-feat-04]
@@ -122,13 +122,13 @@ impl TuiClient {
 
 ## Acceptance Criteria
 
-- [ ] `vibes tui` launches the TUI
-- [ ] `vibes` (no args) launches the TUI
-- [ ] `vibes --help` still shows help
-- [ ] `vibes tui --help` shows TUI options
-- [ ] Auto-starts daemon if not running
-- [ ] Waits for daemon to be ready before connecting
-- [ ] Connection errors display clearly (not a crash)
-- [ ] `--session <id>` opens Session view
-- [ ] `--agent <id>` opens Agent view
-- [ ] Press 'r' to retry connection on error
+- [x] `vibes tui` launches the TUI
+- [x] `vibes` (no args) launches the TUI
+- [x] `vibes --help` still shows help
+- [x] `vibes tui --help` shows TUI options
+- [x] Auto-starts daemon if not running
+- [x] Waits for daemon to be ready before connecting
+- [x] Connection errors display clearly (not a crash)
+- [x] `--session <id>` opens Session view
+- [x] `--agent <id>` opens Agent view
+- [x] Press 'r' to retry connection on error

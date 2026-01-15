@@ -9,13 +9,12 @@ use ratatui::{
     layout::{Constraint, Layout},
 };
 
+use crate::client::TuiClient;
 use crate::keybindings::{Action, KeyBindings};
 use crate::views::{DashboardView, View, ViewRenderer, ViewStack};
-use crate::{AppState, Theme, VibesTerminal, restore_terminal, setup_terminal, vibes_default};
-
-/// Placeholder for WebSocket client (implemented in Story 5).
-#[derive(Debug)]
-pub struct VibesClient;
+use crate::{
+    AppState, Mode, Theme, VibesTerminal, restore_terminal, setup_terminal, vibes_default,
+};
 
 /// Main TUI application.
 #[derive(Debug)]
@@ -24,8 +23,14 @@ pub struct App {
     pub views: ViewStack,
     pub keybindings: KeyBindings,
     pub theme: Theme,
-    pub client: Option<VibesClient>,
+    pub client: Option<TuiClient>,
     pub running: bool,
+    /// Error message to display (e.g., connection errors).
+    pub error_message: Option<String>,
+    /// Server URL for reconnection attempts.
+    pub server_url: Option<String>,
+    /// Flag indicating a retry was requested (for command to handle).
+    pub retry_requested: bool,
 }
 
 impl App {
@@ -38,7 +43,60 @@ impl App {
             theme: vibes_default(),
             client: None,
             running: true,
+            error_message: None,
+            server_url: None,
+            retry_requested: false,
         }
+    }
+
+    /// Creates a new App with a connected client.
+    pub fn with_client(client: TuiClient) -> Self {
+        Self {
+            state: AppState::default(),
+            views: ViewStack::new(),
+            keybindings: KeyBindings::default(),
+            theme: vibes_default(),
+            client: Some(client),
+            running: true,
+            error_message: None,
+            server_url: None,
+            retry_requested: false,
+        }
+    }
+
+    /// Creates a new App with a connected client and stores the server URL.
+    pub fn with_client_url(client: TuiClient, url: String) -> Self {
+        Self {
+            state: AppState::default(),
+            views: ViewStack::new(),
+            keybindings: KeyBindings::default(),
+            theme: vibes_default(),
+            client: Some(client),
+            running: true,
+            error_message: None,
+            server_url: Some(url),
+            retry_requested: false,
+        }
+    }
+
+    /// Sets the client for this app.
+    pub fn set_client(&mut self, client: TuiClient) {
+        self.client = Some(client);
+        self.error_message = None;
+    }
+
+    /// Handles a connection error by showing an error message.
+    pub fn handle_connection_error(&mut self, error: &str) {
+        self.state.mode = Mode::Normal;
+        self.error_message = Some(format!(
+            "Connection lost: {}. Press 'r' to retry or 'q' to quit.",
+            error
+        ));
+    }
+
+    /// Clears the current error message.
+    pub fn clear_error(&mut self) {
+        self.error_message = None;
     }
 
     /// Handles a key event.
@@ -64,6 +122,13 @@ impl App {
             Action::Quit => self.running = false,
             Action::Back => {
                 self.views.pop();
+            }
+            Action::Retry => {
+                // Only retry if there's an error and we have a server URL
+                if self.error_message.is_some() && self.server_url.is_some() {
+                    self.retry_requested = true;
+                    self.running = false; // Exit to allow command to handle reconnection
+                }
             }
             // Navigation and other actions will be wired up in future stories
             Action::NavigateUp
@@ -111,9 +176,40 @@ impl App {
 
     /// Processes async updates (WebSocket messages, timers, etc.).
     ///
-    /// Currently a no-op placeholder. Expanded in Story 5.
+    /// Polls the client for incoming messages and updates state accordingly.
     pub async fn tick(&mut self) {
-        // Placeholder for async event processing
+        // Collect messages first to avoid borrow issues
+        let messages: Vec<_> = if let Some(client) = &mut self.client {
+            std::iter::from_fn(|| client.try_recv()).collect()
+        } else {
+            Vec::new()
+        };
+
+        // Then process them
+        for msg in messages {
+            self.handle_server_message(msg);
+        }
+    }
+
+    /// Handles a server message.
+    fn handle_server_message(&mut self, msg: vibes_server::ws::ServerMessage) {
+        use vibes_server::ws::ServerMessage;
+
+        match msg {
+            ServerMessage::SessionList { sessions, .. } => {
+                // Update state with session list
+                tracing::debug!("Received {} sessions", sessions.len());
+            }
+            ServerMessage::AgentList { agents, .. } => {
+                // Update state with agent list
+                tracing::debug!("Received {} agents", agents.len());
+            }
+            ServerMessage::Error { message, .. } => {
+                self.error_message = Some(message);
+            }
+            // Other messages will be handled as views are implemented
+            _ => {}
+        }
     }
 
     /// Runs the main event loop.
@@ -295,5 +391,36 @@ mod tests {
         // At root, Esc does nothing (pop returns false)
         assert_eq!(app.views.current, View::Dashboard);
         assert!(app.running);
+    }
+
+    #[test]
+    fn app_new_has_no_error_message() {
+        let app = App::new();
+        assert!(app.error_message.is_none());
+    }
+
+    #[test]
+    fn handle_connection_error_sets_message() {
+        let mut app = App::new();
+        app.handle_connection_error("Connection refused");
+
+        assert!(app.error_message.is_some());
+        assert!(
+            app.error_message
+                .as_ref()
+                .unwrap()
+                .contains("Connection refused")
+        );
+        assert!(app.error_message.as_ref().unwrap().contains("'r' to retry"));
+    }
+
+    #[test]
+    fn clear_error_removes_message() {
+        let mut app = App::new();
+        app.handle_connection_error("Test error");
+        assert!(app.error_message.is_some());
+
+        app.clear_error();
+        assert!(app.error_message.is_none());
     }
 }
