@@ -36,6 +36,10 @@
 | [m45-feat-02-builtin-theme-variants](stages/backlog/stories/m45-feat-02-builtin-theme-variants.md) | feat | high | tui |
 | [m45-feat-03-runtime-theme-switching](stages/backlog/stories/m45-feat-03-runtime-theme-switching.md) | feat | medium | tui |
 | [m45-feat-04-theme-preview-settings](stages/backlog/stories/m45-feat-04-theme-preview-settings.md) | feat | medium | tui |
+| [m46-feat-01-pty-server-core](stages/backlog/stories/m46-feat-01-pty-server-core.md) | feat | medium | tui |
+| [m46-feat-02-session-management](stages/backlog/stories/m46-feat-02-session-management.md) | feat | medium | tui |
+| [m46-feat-03-websocket-pty-endpoint](stages/backlog/stories/m46-feat-03-websocket-pty-endpoint.md) | feat | medium | tui |
+| [m46-feat-04-xtermjs-web-integration](stages/backlog/stories/m46-feat-04-xtermjs-web-integration.md) | feat | medium | tui |
 
 ## Epics
 
@@ -54,7 +58,7 @@
 | [observability](epics/observability/) | planned | 0 |
 | [plugin-system](epics/plugin-system/) | active | 23 |
 | [release](epics/release/) | active | 0 |
-| [tui](epics/tui/) | planned | 0 |
+| [tui](epics/tui/) | planned | 4 |
 | [verification](epics/verification/) | active | 0 |
 | [web-ui](epics/web-ui/) | active | 26 |
 
