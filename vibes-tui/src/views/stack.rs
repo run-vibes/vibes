@@ -6,7 +6,7 @@
 use crate::state::{AgentId, SessionId, SwarmId};
 
 /// Available views in the TUI.
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Default)]
 pub enum View {
     #[default]
     Dashboard,
