@@ -1,0 +1,324 @@
+/* web-ui/src/pages/Traces.css
+ * CRT-styled traces page for distributed tracing visualization
+ */
+
+/* === Container === */
+.traces-page {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: var(--space-2);
+  background: var(--screen);
+  font-family: var(--font-mono);
+  padding: var(--space-4);
+}
+
+/* === Header === */
+.traces-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.traces-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.traces-title {
+  font-family: var(--font-display);
+  font-size: var(--font-size-xl);
+  font-weight: 400;
+  color: var(--phosphor);
+  text-shadow: 0 0 10px var(--phosphor-glow);
+  letter-spacing: 0.1em;
+  margin: 0;
+}
+
+.traces-status {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.traces-header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.traces-count {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  color: var(--text-dim);
+}
+
+/* === Filters === */
+.traces-filters {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.filter-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.filter-input,
+.filter-select {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  color: var(--text);
+  background: var(--screen);
+  border: 1px solid var(--border);
+  padding: var(--space-2) var(--space-3);
+  min-width: 150px;
+}
+
+.filter-input:focus,
+.filter-select:focus {
+  outline: none;
+  border-color: var(--phosphor);
+  box-shadow: 0 0 5px var(--phosphor-glow);
+}
+
+.filter-input::placeholder {
+  color: var(--text-faint);
+}
+
+/* === Content Area === */
+.traces-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+/* === Empty State === */
+.traces-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-8);
+  text-align: center;
+}
+
+.traces-empty-text {
+  font-family: var(--font-display);
+  font-size: var(--font-size-lg);
+  color: var(--text-dim);
+}
+
+.traces-empty-hint {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  color: var(--text-faint);
+}
+
+/* === Trace List === */
+.traces-list {
+  padding: var(--space-2);
+}
+
+/* === Trace Row === */
+.trace-row {
+  border: 1px solid var(--border);
+  margin-bottom: var(--space-2);
+  background: var(--screen);
+}
+
+.trace-row.trace-has-errors {
+  border-color: var(--red, #ff4444);
+}
+
+.trace-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.trace-header:hover {
+  background: var(--surface);
+}
+
+.trace-toggle {
+  color: var(--text-dim);
+  font-size: var(--font-size-sm);
+  width: 1em;
+}
+
+.trace-id {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  color: var(--phosphor);
+}
+
+.trace-time {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  color: var(--text-dim);
+}
+
+.trace-duration {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  color: var(--cyan, #00d9ff);
+}
+
+.trace-session {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  color: var(--text-faint);
+}
+
+.trace-error-badge {
+  color: var(--red, #ff4444);
+  font-size: var(--font-size-sm);
+}
+
+/* === Span Tree === */
+.trace-spans {
+  border-top: 1px solid var(--border);
+  padding: var(--space-2) 0;
+}
+
+.span-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.span-row:hover {
+  background: var(--surface);
+}
+
+.span-row.span-error {
+  background: rgba(255, 68, 68, 0.1);
+}
+
+.span-prefix {
+  font-family: var(--font-mono);
+  color: var(--text-faint);
+  white-space: pre;
+}
+
+.span-name {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  color: var(--text);
+}
+
+.span-duration {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--text-dim);
+}
+
+.span-attr {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--text-faint);
+}
+
+.span-status {
+  margin-left: auto;
+  font-size: var(--font-size-sm);
+}
+
+.span-status.status-ok {
+  color: var(--phosphor);
+}
+
+.span-status.status-error {
+  color: var(--red, #ff4444);
+}
+
+/* === Span Details (Expanded) === */
+.span-details {
+  background: var(--surface);
+  border-left: 2px solid var(--border);
+  margin: var(--space-1) 0;
+  padding: var(--space-2);
+}
+
+.span-detail-row {
+  display: flex;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  padding: var(--space-1) 0;
+}
+
+.span-detail-label {
+  color: var(--text-dim);
+  min-width: 80px;
+}
+
+.span-detail-value {
+  color: var(--text);
+  word-break: break-all;
+}
+
+/* === Footer === */
+.traces-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.traces-following {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  color: var(--phosphor);
+}
+
+/* === Responsive === */
+@media (max-width: 768px) {
+  .traces-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+  }
+
+  .traces-header-left,
+  .traces-header-right {
+    justify-content: space-between;
+  }
+
+  .traces-filters {
+    flex-wrap: wrap;
+  }
+
+  .filter-group {
+    flex: 1;
+    min-width: 120px;
+  }
+}

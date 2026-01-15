@@ -8,6 +8,7 @@
 | Story | Type | Priority | Epics |
 |-------|------|----------|-------|
 | [m39-feat-05-eval-cli](stages/in-progress/stories/m39-feat-05-eval-cli.md) | feat | medium | evals |
+| [m40-feat-07-observe-web-ui](stages/in-progress/stories/m40-feat-07-observe-web-ui.md) | feat | medium | observability |
 
 ## Backlog
 
@@ -20,7 +21,6 @@
 | [feat-0078-connectivity-validation](stages/backlog/stories/feat-0078-connectivity-validation.md) | feat | medium | cli,networking |
 | [feat-0101-header-identity-display](stages/backlog/stories/feat-0101-header-identity-display.md) | feat | low | web-ui,design-system |
 | [m39-feat-06-eval-web-ui](stages/backlog/stories/m39-feat-06-eval-web-ui.md) | feat | medium | evals |
-| [m40-feat-07-observe-web-ui](stages/backlog/stories/m40-feat-07-observe-web-ui.md) | feat | medium | observability |
 | [m41-feat-05-cli-integration](stages/backlog/stories/m41-feat-05-cli-integration.md) | feat | high | tui |
 
 ## Epics
