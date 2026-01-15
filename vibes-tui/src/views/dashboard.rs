@@ -1,11 +1,6 @@
 //! Dashboard view - the default landing view.
 
-use ratatui::{
-    Frame,
-    layout::Rect,
-    style::Style,
-    widgets::{Block, Borders, Paragraph},
-};
+use ratatui::{Frame, layout::Rect};
 
 use super::traits::ViewRenderer;
 use crate::App;
@@ -16,16 +11,9 @@ pub struct DashboardView;
 
 impl ViewRenderer for DashboardView {
     fn render(&self, frame: &mut Frame, area: Rect, app: &App) {
-        let block = Block::default()
-            .title(" vibes ")
-            .borders(Borders::ALL)
-            .border_style(Style::default().fg(app.theme.border));
-
-        let text = Paragraph::new("Dashboard - Coming in Milestone 42")
-            .style(Style::default().fg(app.theme.fg))
-            .block(block);
-
-        frame.render_widget(text, area);
+        // Render the session list widget
+        let session_list = app.session_widget.to_list(&app.theme);
+        frame.render_widget(session_list, area);
     }
 
     fn title(&self) -> &str {

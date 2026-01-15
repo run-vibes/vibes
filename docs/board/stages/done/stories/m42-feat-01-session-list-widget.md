@@ -2,7 +2,7 @@
 id: m42-feat-01
 title: Session list widget
 type: feat
-status: backlog
+status: done
 priority: high
 epics: [tui]
 depends: [m41-feat-05]
@@ -76,10 +76,10 @@ pub struct SessionInfo {
 
 ## Acceptance Criteria
 
-- [ ] Widget renders session list with status indicators
-- [ ] Status colors match theme (running=green, paused=yellow, etc.)
-- [ ] j/k navigation moves selection
-- [ ] Enter key triggers navigation event
-- [ ] List scrolls when selection exceeds visible area
-- [ ] Empty state shows "No sessions" message
-- [ ] Unit tests pass
+- [x] Widget renders session list with status indicators
+- [x] Status colors match theme (running=green, paused=yellow, etc.)
+- [x] j/k navigation moves selection
+- [x] Enter key triggers navigation event
+- [x] List scrolls when selection exceeds visible area
+- [x] Empty state shows "No sessions" message
+- [x] Unit tests pass
