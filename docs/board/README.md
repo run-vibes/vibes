@@ -28,6 +28,10 @@
 | [m43-feat-02-output-stream-panel](stages/backlog/stories/m43-feat-02-output-stream-panel.md) | feat | high | tui |
 | [m43-feat-03-permission-approval-widget](stages/backlog/stories/m43-feat-03-permission-approval-widget.md) | feat | high | tui |
 | [m43-feat-04-agent-control-actions](stages/backlog/stories/m43-feat-04-agent-control-actions.md) | feat | high | tui |
+| [m44-feat-01-swarm-view-layout](stages/backlog/stories/m44-feat-01-swarm-view-layout.md) | feat | high | tui |
+| [m44-feat-02-agent-progress-bars](stages/backlog/stories/m44-feat-02-agent-progress-bars.md) | feat | high | tui |
+| [m44-feat-03-result-merge-interface](stages/backlog/stories/m44-feat-03-result-merge-interface.md) | feat | medium | tui |
+| [m44-feat-04-swarm-coordination-status](stages/backlog/stories/m44-feat-04-swarm-coordination-status.md) | feat | medium | tui |
 
 ## Epics
 
