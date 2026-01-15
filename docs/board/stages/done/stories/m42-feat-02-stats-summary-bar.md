@@ -2,7 +2,7 @@
 id: m42-feat-02
 title: Stats summary bar
 type: feat
-status: backlog
+status: done
 priority: high
 epics: [tui]
 depends: [m41-feat-05]
@@ -66,10 +66,10 @@ impl StatsBarWidget {
 
 ## Acceptance Criteria
 
-- [ ] Bar displays session count with "active" label
-- [ ] Bar displays agent count with "running" label
-- [ ] Bar displays cost formatted as "$X.XX"
-- [ ] Metrics update when AppState changes
-- [ ] Layout fits in single line with proper spacing
-- [ ] Colors match theme system
-- [ ] Unit tests pass
+- [x] Bar displays session count with "active" label
+- [x] Bar displays agent count with "running" label
+- [x] Bar displays cost formatted as "$X.XX"
+- [x] Metrics update when AppState changes
+- [x] Layout fits in single line with proper spacing
+- [x] Colors match theme system
+- [x] Unit tests pass
