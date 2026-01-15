@@ -2,7 +2,7 @@
 id: m42-feat-04
 title: WebSocket real-time updates
 type: feat
-status: in-progress
+status: done
 priority: high
 epics: [tui]
 depends: [m42-feat-01, m42-feat-02, m42-feat-03]

@@ -2,7 +2,7 @@
 id: m43-feat-01
 title: Agent detail view layout
 type: feat
-status: backlog
+status: done
 priority: high
 epics: [tui]
 depends: [m41-feat-03]

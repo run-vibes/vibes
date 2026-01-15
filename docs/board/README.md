@@ -8,7 +8,6 @@
 | Story | Type | Priority | Epics |
 |-------|------|----------|-------|
 | [m39-feat-05-eval-cli](stages/in-progress/stories/m39-feat-05-eval-cli.md) | feat | medium | evals |
-| [m42-feat-04-websocket-real-time-updates](stages/in-progress/stories/m42-feat-04-websocket-real-time-updates.md) | feat | high | tui |
 
 ## Backlog
 
@@ -21,7 +20,6 @@
 | [feat-0078-connectivity-validation](stages/backlog/stories/feat-0078-connectivity-validation.md) | feat | medium | cli,networking |
 | [feat-0101-header-identity-display](stages/backlog/stories/feat-0101-header-identity-display.md) | feat | low | web-ui,design-system |
 | [m39-feat-06-eval-web-ui](stages/backlog/stories/m39-feat-06-eval-web-ui.md) | feat | medium | evals |
-| [m43-feat-01-agent-detail-view-layout](stages/backlog/stories/m43-feat-01-agent-detail-view-layout.md) | feat | high | tui |
 | [m43-feat-02-output-stream-panel](stages/backlog/stories/m43-feat-02-output-stream-panel.md) | feat | high | tui |
 | [m43-feat-03-permission-approval-widget](stages/backlog/stories/m43-feat-03-permission-approval-widget.md) | feat | high | tui |
 | [m43-feat-04-agent-control-actions](stages/backlog/stories/m43-feat-04-agent-control-actions.md) | feat | high | tui |
@@ -291,6 +289,8 @@
 - [m42-feat-01-session-list-widget](stages/done/stories/m42-feat-01-session-list-widget.md)
 - [m42-feat-02-stats-summary-bar](stages/done/stories/m42-feat-02-stats-summary-bar.md)
 - [m42-feat-03-activity-feed-widget](stages/done/stories/m42-feat-03-activity-feed-widget.md)
+- [m42-feat-04-websocket-real-time-updates](stages/done/stories/m42-feat-04-websocket-real-time-updates.md)
+- [m43-feat-01-agent-detail-view-layout](stages/done/stories/m43-feat-01-agent-detail-view-layout.md)
 - [refactor-0008-consolidate-assessment-types-module](stages/done/stories/refactor-0008-consolidate-assessment-types-module.md)
 - [refactor-0069-dashboard-visual-consistency](stages/done/stories/refactor-0069-dashboard-visual-consistency.md)
 - [refactor-0070-design-system-extraction](stages/done/stories/refactor-0070-design-system-extraction.md)
