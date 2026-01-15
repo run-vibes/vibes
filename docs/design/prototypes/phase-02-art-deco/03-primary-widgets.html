@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Primary Widgets — Sessions & Agents</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    /* ═══════════════════════════════════════════════════════════════════════
+       PRIMARY WIDGETS — Sessions, Agents, and DashboardWidget base
+       ═══════════════════════════════════════════════════════════════════════ */
+
+    .prototype-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: var(--space-6);
+    }
+
+    .prototype-header {
+      margin-bottom: var(--space-8);
+      padding-bottom: var(--space-4);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .prototype-title {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--phosphor-green);
+      text-shadow: var(--glow-phosphor);
+      margin-bottom: var(--space-2);
+    }
+
+    .prototype-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .section {
+      margin-bottom: var(--space-8);
+    }
+
+    .section-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-bottom: var(--space-3);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .section-label::before {
+      content: '';
+      flex: 0 0 20px;
+      height: 1px;
+      background: var(--border-medium);
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border-medium);
+    }
+
+    .widget-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-4);
+    }
+
+    @media (max-width: 900px) {
+      .widget-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ─── DashboardWidget Base ─── */
+    .widget {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      display: flex;
+      flex-direction: column;
+      min-height: 320px;
+      transition: border-color 0.2s ease;
+    }
+
+    .widget:hover {
+      border-color: var(--border-medium);
+    }
+
+    .widget.loading {
+      pointer-events: none;
+    }
+
+    .widget.error {
+      border-color: rgba(255, 59, 59, 0.3);
+    }
+
+    .widget-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 1px solid var(--border-subtle);
+      background: var(--bg-surface);
+    }
+
+    .widget-title-group {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .widget-icon {
+      font-size: 14px;
+      color: var(--phosphor-green);
+    }
+
+    .widget-title {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+
+    .widget-badge {
+      font-size: 9px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 8px;
+      background: rgba(57, 255, 20, 0.15);
+      color: var(--phosphor-green);
+    }
+
+    .widget-action {
+      font-size: 11px;
+      color: var(--phosphor-blue);
+      text-decoration: none;
+      padding: var(--space-1) var(--space-2);
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .widget-action:hover {
+      border-color: var(--phosphor-blue);
+      box-shadow: 0 0 8px rgba(0, 212, 255, 0.2);
+    }
+
+    .widget-content {
+      flex: 1;
+      padding: var(--space-2);
+      overflow-y: auto;
+    }
+
+    .widget-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-2) var(--space-4);
+      border-top: 1px solid var(--border-subtle);
+      background: var(--bg-surface);
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    .widget-stats {
+      display: flex;
+      gap: var(--space-4);
+    }
+
+    .widget-stat {
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+    }
+
+    .widget-stat-value {
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .widget-footer-action {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+
+    .widget-footer-action:hover {
+      color: var(--phosphor-blue);
+    }
+
+    /* ─── Session/Agent Rows ─── */
+    .item-row {
+      display: flex;
+      align-items: flex-start;
+      padding: var(--space-3) var(--space-3);
+      margin: var(--space-1) var(--space-1);
+      border-radius: var(--radius-sm);
+      transition: background 0.15s ease;
+      cursor: pointer;
+    }
+
+    .item-row:hover {
+      background: var(--bg-surface);
+    }
+
+    .item-row.selected {
+      background: rgba(0, 212, 255, 0.08);
+      border: 1px solid rgba(0, 212, 255, 0.2);
+      margin: calc(var(--space-1) - 1px);
+    }
+
+    .item-status-col {
+      width: 24px;
+      flex-shrink: 0;
+      padding-top: 2px;
+    }
+
+    .status-indicator {
+      display: inline-block;
+      font-size: 10px;
+    }
+
+    /* Session Status Icons */
+    .status-indicator.processing {
+      color: var(--phosphor-green);
+      animation: status-pulse 2s ease-in-out infinite;
+    }
+    .status-indicator.waiting { color: var(--phosphor-amber); animation: status-pulse 1s ease-in-out infinite; }
+    .status-indicator.idle { color: var(--text-tertiary); }
+    .status-indicator.failed { color: var(--phosphor-red); }
+    .status-indicator.completed { color: var(--phosphor-green); }
+
+    /* Agent Status Icons */
+    .status-indicator.running::before { content: '▶'; color: var(--phosphor-green); }
+    .status-indicator.paused::before { content: '⏸'; color: var(--phosphor-amber); }
+    .status-indicator.queued::before { content: '⏳'; color: var(--text-tertiary); }
+    .status-indicator.error::before { content: '✕'; color: var(--phosphor-red); }
+
+    .item-main {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .item-name {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+
+    .item-desc {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding-left: 12px;
+      position: relative;
+    }
+
+    .item-desc::before {
+      content: '└';
+      position: absolute;
+      left: 0;
+      color: var(--border-medium);
+    }
+
+    .item-meta {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      margin-top: 4px;
+      padding-left: 12px;
+    }
+
+    .item-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+      margin-left: var(--space-3);
+    }
+
+    .item-time {
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    /* ─── Agent Progress ─── */
+    .agent-progress {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      margin-top: 4px;
+      padding-left: 12px;
+    }
+
+    .progress-track {
+      width: 80px;
+      height: 4px;
+      background: var(--bg-deep);
+      border-radius: 2px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--phosphor-green);
+      box-shadow: 0 0 6px var(--phosphor-green);
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+
+    .progress-text {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--phosphor-green);
+      min-width: 32px;
+    }
+
+    .agent-tokens {
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    /* ─── Loading State ─── */
+    .widget-loading {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-3);
+    }
+
+    .loading-spinner {
+      width: 32px;
+      height: 32px;
+      border: 2px solid var(--border-medium);
+      border-top-color: var(--phosphor-green);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+
+    /* ─── Error State ─── */
+    .widget-error {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-3);
+      padding: var(--space-4);
+    }
+
+    .error-icon {
+      font-size: 24px;
+      color: var(--phosphor-red);
+    }
+
+    .error-message {
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-align: center;
+    }
+
+    /* ─── Empty State ─── */
+    .widget-empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-3);
+      padding: var(--space-4);
+    }
+
+    .empty-icon {
+      font-size: 32px;
+      color: var(--text-tertiary);
+      opacity: 0.5;
+    }
+
+    .empty-message {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      text-align: center;
+    }
+
+    /* ─── Inline action buttons ─── */
+    .item-actions {
+      display: flex;
+      gap: var(--space-1);
+      margin-top: 6px;
+      padding-left: 12px;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+
+    .item-row:hover .item-actions {
+      opacity: 1;
+    }
+
+    .item-action-btn {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 3px;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-elevated);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .item-action-btn:hover {
+      border-color: var(--phosphor-blue);
+      color: var(--phosphor-blue);
+    }
+
+    .item-action-btn.danger:hover {
+      border-color: var(--phosphor-red);
+      color: var(--phosphor-red);
+    }
+  </style>
+</head>
+<body class="scanlines crt-vignette">
+
+  <div class="prototype-container">
+    <header class="prototype-header">
+      <h1 class="prototype-title">Primary Zone Widgets</h1>
+      <p class="prototype-desc">
+        DashboardWidget is the base component for all primary zone cards. SessionsWidget and AgentsWidget
+        show compact, actionable lists with status indicators, progress bars, and inline actions.
+      </p>
+    </header>
+
+    <!-- Sessions Widget - All States -->
+    <section class="section">
+      <div class="section-label">SessionsWidget — Various States</div>
+      <div class="widget-grid">
+
+        <!-- Normal State with Multiple Sessions -->
+        <div class="widget">
+          <div class="widget-header">
+            <div class="widget-title-group">
+              <span class="widget-icon">⚡</span>
+              <span class="widget-title">Sessions</span>
+              <span class="widget-badge">3 active</span>
+            </div>
+            <button class="widget-action">+ New</button>
+          </div>
+          <div class="widget-content">
+            <div class="item-row">
+              <div class="item-status-col">
+                <span class="status-indicator processing">●</span>
+              </div>
+              <div class="item-main">
+                <div class="item-name">refactor-ui</div>
+                <div class="item-desc">"Implementing the new dashboard layout..."</div>
+                <div class="item-actions">
+                  <button class="item-action-btn">View</button>
+                  <button class="item-action-btn">Pause</button>
+                  <button class="item-action-btn danger">End</button>
+                </div>
+              </div>
+              <div class="item-right">
+                <span class="badge badge-success">processing</span>
+                <span class="item-time">3m ago</span>
+              </div>
+            </div>
+
+            <div class="item-row">
+              <div class="item-status-col">
+                <span class="status-indicator waiting">◉</span>
+              </div>
+              <div class="item-main">
+                <div class="item-name">fix-auth-bug</div>
+                <div class="item-desc">"Waiting for permission to write..."</div>
+                <div class="item-actions">
+                  <button class="item-action-btn">View</button>
+                  <button class="item-action-btn">Approve</button>
+                  <button class="item-action-btn danger">End</button>
+                </div>
+              </div>
+              <div class="item-right">
+                <span class="badge badge-warning">waiting</span>
+                <span class="item-time">5m ago</span>
+              </div>
+            </div>
+
+            <div class="item-row">
+              <div class="item-status-col">
+                <span class="status-indicator idle">○</span>
+              </div>
+              <div class="item-main">
+                <div class="item-name">docs-update</div>
+                <div class="item-desc">"Documentation refresh complete"</div>
+                <div class="item-actions">
+                  <button class="item-action-btn">View</button>
+                  <button class="item-action-btn">Resume</button>
+                  <button class="item-action-btn danger">End</button>
+                </div>
+              </div>
+              <div class="item-right">
+                <span class="badge">idle</span>
+                <span class="item-time">12m ago</span>
+              </div>
+            </div>
+
+            <div class="item-row">
+              <div class="item-status-col">
+                <span class="status-indicator failed">✕</span>
+              </div>
+              <div class="item-main">
+                <div class="item-name">test-runner</div>
+                <div class="item-desc">"Agent crashed unexpectedly"</div>
+                <div class="item-actions">
+                  <button class="item-action-btn">View Logs</button>
+                  <button class="item-action-btn">Retry</button>
+                  <button class="item-action-btn danger">Dismiss</button>
+                </div>
+              </div>
+              <div class="item-right">
+                <span class="badge badge-error">failed</span>
+                <span class="item-time">18m ago</span>
+              </div>
+            </div>
+          </div>
+          <div class="widget-footer">
+            <div class="widget-stats">
+              <span class="widget-stat"><span class="widget-stat-value">3</span> active</span>
+              <span class="widget-stat"><span class="widget-stat-value">12</span> today</span>
+              <span class="widget-stat"><span class="widget-stat-value">1</span> failed</span>
+            </div>
+            <a href="#" class="widget-footer-action">View All →</a>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div class="widget">
+          <div class="widget-header">
+            <div class="widget-title-group">
+              <span class="widget-icon">⚡</span>
+              <span class="widget-title">Sessions</span>
+            </div>
+            <button class="widget-action">+ New</button>
+          </div>
+          <div class="widget-empty">
+            <span class="empty-icon">○</span>
+            <div class="empty-message">
+              No active sessions.<br>
+              <span style="color: var(--phosphor-blue);">Start a new session</span> to begin.
+            </div>
+          </div>
+          <div class="widget-footer">
+            <div class="widget-stats">
+              <span class="widget-stat"><span class="widget-stat-value">0</span> active</span>
+              <span class="widget-stat"><span class="widget-stat-value">0</span> today</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Agents Widget - All States -->
+    <section class="section">
+      <div class="section-label">AgentsWidget — Various States</div>
+      <div class="widget-grid">
+
+        <!-- Normal State with Running Agents -->
+        <div class="widget">
+          <div class="widget-header">
+            <div class="widget-title-group">
+              <span class="widget-icon">◆</span>
+              <span class="widget-title">Agents</span>
+              <span class="widget-badge">2 running</span>
+            </div>
+            <button class="widget-action">View All</button>
+          </div>
+          <div class="widget-content">
+            <div class="item-row">
+              <div class="item-status-col">
+                <span class="status-indicator running"></span>
+              </div>
+              <div class="item-main">
+                <div class="item-name">architect-3</div>
+                <div class="item-desc">Writing auth handler module</div>
+                <div class="agent-progress">
+                  <div class="progress-track">
+                    <div class="progress-fill" style="width: 67%"></div>
+                  </div>
+                  <span class="progress-text">67%</span>
+                  <span class="agent-tokens">1,247 tokens</span>
+                </div>
+                <div class="item-actions">
+                  <button class="item-action-btn">View</button>
+                  <button class="item-action-btn">Pause</button>
+                  <button class="item-action-btn danger">Stop</button>
+                </div>
+              </div>
+              <div class="item-right">
+                <span class="badge badge-success">running</span>
+                <span class="item-time">12 tool calls</span>
+              </div>
+            </div>
+
+            <div class="item-row">
+              <div class="item-status-col">
+                <span class="status-indicator running"></span>
+              </div>
+              <div class="item-main">
+                <div class="item-name">reviewer-1</div>
+                <div class="item-desc">Analyzing PR #127 for issues</div>
+                <div class="agent-progress">
+                  <div class="progress-track">
+                    <div class="progress-fill" style="width: 34%"></div>
+                  </div>
+                  <span class="progress-text">34%</span>
+                  <span class="agent-tokens">892 tokens</span>
+                </div>
+                <div class="item-actions">
+                  <button class="item-action-btn">View</button>
+                  <button class="item-action-btn">Pause</button>
+                  <button class="item-action-btn danger">Stop</button>
+                </div>
+              </div>
+              <div class="item-right">
+                <span class="badge badge-success">running</span>
+                <span class="item-time">6 tool calls</span>
+              </div>
+            </div>
+
+            <div class="item-row">
+              <div class="item-status-col">
+                <span class="status-indicator paused"></span>
+              </div>
+              <div class="item-main">
+                <div class="item-name">fixer-2</div>
+                <div class="item-desc">Awaiting permission approval</div>
+                <div class="agent-progress">
+                  <div class="progress-track">
+                    <div class="progress-fill" style="width: 45%; background: var(--phosphor-amber);"></div>
+                  </div>
+                  <span class="progress-text" style="color: var(--phosphor-amber);">45%</span>
+                  <span class="agent-tokens">1,102 tokens</span>
+                </div>
+              </div>
+              <div class="item-right">
+                <span class="badge badge-warning">paused</span>
+                <span class="item-time">8 tool calls</span>
+              </div>
+            </div>
+          </div>
+          <div class="widget-footer">
+            <div class="widget-stats">
+              <span class="widget-stat"><span class="widget-stat-value">2</span> running</span>
+              <span class="widget-stat"><span class="widget-stat-value">1</span> paused</span>
+              <span class="widget-stat"><span class="widget-stat-value">26</span> tool calls</span>
+            </div>
+            <a href="#" class="widget-footer-action">View All →</a>
+          </div>
+        </div>
+
+        <!-- Loading State -->
+        <div class="widget loading">
+          <div class="widget-header">
+            <div class="widget-title-group">
+              <span class="widget-icon">◆</span>
+              <span class="widget-title">Agents</span>
+            </div>
+            <button class="widget-action" disabled>View All</button>
+          </div>
+          <div class="widget-loading">
+            <div class="loading-spinner"></div>
+            <span class="loading-text">Loading agents...</span>
+          </div>
+          <div class="widget-footer">
+            <div class="widget-stats">
+              <span class="widget-stat" style="opacity: 0.5;">Loading...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Error and Edge States -->
+    <section class="section">
+      <div class="section-label">Edge States</div>
+      <div class="widget-grid">
+
+        <!-- Error State -->
+        <div class="widget error">
+          <div class="widget-header">
+            <div class="widget-title-group">
+              <span class="widget-icon" style="color: var(--phosphor-red);">◆</span>
+              <span class="widget-title">Agents</span>
+            </div>
+            <button class="widget-action">Retry</button>
+          </div>
+          <div class="widget-error">
+            <span class="error-icon">⚠</span>
+            <div class="error-message">
+              Failed to fetch agents.<br>
+              <span style="color: var(--text-tertiary);">Connection to server lost. Retrying in 5s...</span>
+            </div>
+            <button class="btn">Retry Now</button>
+          </div>
+          <div class="widget-footer">
+            <span style="color: var(--phosphor-red);">Connection error</span>
+          </div>
+        </div>
+
+        <!-- Selected Item State -->
+        <div class="widget">
+          <div class="widget-header">
+            <div class="widget-title-group">
+              <span class="widget-icon">⚡</span>
+              <span class="widget-title">Sessions</span>
+            </div>
+            <button class="widget-action">+ New</button>
+          </div>
+          <div class="widget-content">
+            <div class="item-row selected">
+              <div class="item-status-col">
+                <span class="status-indicator processing">●</span>
+              </div>
+              <div class="item-main">
+                <div class="item-name">refactor-ui</div>
+                <div class="item-desc">"Implementing the new dashboard..."</div>
+                <div class="item-actions" style="opacity: 1;">
+                  <button class="item-action-btn">View</button>
+                  <button class="item-action-btn">Pause</button>
+                  <button class="item-action-btn danger">End</button>
+                </div>
+              </div>
+              <div class="item-right">
+                <span class="badge badge-success">processing</span>
+                <span class="item-time">3m ago</span>
+              </div>
+            </div>
+
+            <div class="item-row">
+              <div class="item-status-col">
+                <span class="status-indicator idle">○</span>
+              </div>
+              <div class="item-main">
+                <div class="item-name">docs-update</div>
+                <div class="item-desc">"Documentation complete"</div>
+              </div>
+              <div class="item-right">
+                <span class="badge">idle</span>
+                <span class="item-time">12m ago</span>
+              </div>
+            </div>
+          </div>
+          <div class="widget-footer">
+            <div class="widget-stats">
+              <span class="widget-stat"><span class="widget-stat-value">1</span> selected</span>
+            </div>
+            <span style="color: var(--phosphor-blue);">Press Enter to open</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+</body>
+</html>

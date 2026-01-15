@@ -1,25 +1,34 @@
 ---
 created: 2026-01-14
+updated: 2026-01-14
 ---
 
 # Milestone 50: Home Page Redesign - Design
 
-> **"Phosphor Mission Control"** — A data-driven dashboard that shows what's happening now and what needs your attention next.
+> **"Phosphor Command"** — A mech suit for generals. An unlimited extension of the resources humans can control.
 
 ## Overview
 
-The current home page (`/`) is a basic navigation hub with status badges and links to Firehose, Debug, and Sessions. For a system as feature-rich as vibes—with sessions, agents, groove learning, traces, models, and event sourcing—the home page should be a **mission control dashboard** that answers: "What's happening now, and what should I do next?"
+The home page transforms from a navigation hub into a **command interface** for orchestrating AI-powered work at scale. You're not just monitoring — you're steering a force that extends your capabilities without limit.
+
+### Core Mental Model
+
+- **You are the general** — strategic decisions, course corrections, quality judgment
+- **Agents are your forces** — executing, discovering, producing
+- **The dashboard is your mech suit** — amplifying your awareness and reach
+- **Action produces information** — the swarm learns by doing, discoveries emerge from work
 
 ### Design Goals
 
-1. **Action-oriented**: "What needs my attention now?" prominently displayed
-2. **High information density**: Bloomberg terminal energy for power users
-3. **Plugin extensible**: Plugins can contribute dashboard widgets
-4. **Real-time**: Live updates via WebSocket for all metrics
+1. **Steering-focused**: "Am I on track? What needs my decision?"
+2. **Proof over promises**: Verification artifacts as first-class citizens
+3. **Discovery engine**: Surface novel concepts, patterns, and insights
+4. **Multiplayer-ready**: Single-player first, scales to teams and autonomous agents
+5. **Cost-aware**: Understand economics and optimize for scale
 
 ### Aesthetic Direction
 
-**Tone**: Industrial-utilitarian meets retro-futuristic. NASA mission control crossed with Bloomberg terminal—dense, glanceable, action-oriented.
+**Tone**: Industrial-utilitarian meets retro-futuristic. NASA mission control crossed with military command center — dense, glanceable, action-oriented.
 
 **Key visual treatments**:
 - Phosphor glow for attention states
@@ -27,38 +36,53 @@ The current home page (`/`) is a basic navigation hub with status badges and lin
 - Monospace typography for metrics
 - Terminal-inspired status indicators (●/○/◉)
 
-## Key Decisions
+---
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| Layout pattern | Zone-based grid | Separates attention/work/activity/metrics clearly |
-| Plugin extensibility | Widget registration API | Allows groove and future plugins to contribute |
-| Update strategy | WebSocket push + polling | Real-time for events, polling for aggregates |
-| Status indicators | Unicode dots | Consistent with CRT aesthetic, accessible |
+## Command Modes
+
+The interface supports three postures for different commander needs:
+
+| Mode | Posture | What you see |
+|------|---------|--------------|
+| **Survey** | Glancing check-in | Key metrics, alerts, trajectory |
+| **Command** | Active steering | Goals, progress, decisions needed |
+| **Deep Dive** | Investigating specifics | Artifacts, research, agent details |
+
+---
 
 ## Architecture
 
 ### Zone System
 
-The dashboard is organized into four vertical zones:
+The dashboard is organized into seven zones:
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────┐
-│                            ATTENTION ZONE                                     │
-│  (High-priority action items needing human response)                         │
+│                         COMMAND BAR                                           │
+│  [Survey] [Command] [Deep Dive]   Commanders: 👤 👤 🤖 🤖   🔍 ⌘K            │
 ├──────────────────────────────────────────────────────────────────────────────┤
-│                            PRIMARY ZONE                                       │
-│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐           │
-│  │  Sessions   │ │   Agents    │ │   Groove    │ │  Plugin X   │           │
-│  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘           │
+│                         ATTENTION ZONE                                        │
+│  Decisions needed • Anomalies • Verification failures • Course corrections   │
 ├──────────────────────────────────────────────────────────────────────────────┤
-│                           SECONDARY ZONE                                      │
-│  (Activity stream - full width)                                              │
+│                         TRAJECTORY ZONE                                       │
+│  Goal Progress          │  Cost Trajectory       │  Throughput Trend         │
+│  ████████░░ 73%         │  $142/day → $89/day    │  ↗ 23% vs last week       │
 ├──────────────────────────────────────────────────────────────────────────────┤
-│                            METRICS ZONE                                       │
-│  ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐        │
-│  │Metric 1│ │Metric 2│ │Metric 3│ │Metric 4│ │Plugin  │ │Plugin  │        │
-│  └────────┘ └────────┘ └────────┘ └────────┘ └────────┘ └────────┘        │
+│                         PRIMARY ZONE                                          │
+│  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐        │
+│  │  Sessions    │ │  Agents      │ │  Evaluations │ │  Research    │        │
+│  └──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘        │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                         DISCOVERY ZONE                                        │
+│  Novel Concepts                   │  Coordination Insights                   │
+│  💡 Technical discoveries         │  🔗 Emergent patterns                    │
+│  🔭 Strategic insights            │  ⚠️ Bottlenecks                          │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                         ARTIFACTS ZONE                                        │
+│  [🎬 Video] [🖼️ Screenshot] [📊 Report] [🎙️ Audio] [📦 Build]                │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                         METRICS ZONE                                          │
+│  Tokens │ Success │ Latency │ Storage │ Compute │ Savings Opportunities      │
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -66,145 +90,375 @@ The dashboard is organized into four vertical zones:
 
 | Zone | Data Hook | Update Frequency |
 |------|-----------|------------------|
-| Attention | `useAttentionItems` (new) | Real-time push |
+| Attention | `useAttentionItems` | Real-time push |
+| Trajectory | `useGoals`, `useCosts` | 30s poll |
 | Sessions | `useSessionList` | 5s poll |
 | Agents | `useAgents` | 5s poll |
-| Groove | `useDashboardOverview` | 30s poll |
-| Activity | `useFirehose` | Real-time push |
-| Metrics | `useSystemMetrics` (new) | 30s poll |
+| Evaluations | `useEvaluations` | 30s poll |
+| Research | `useResearchQueue` | 30s poll |
+| Discovery | `useDiscoveries` | Real-time push |
+| Artifacts | `useArtifactStream` | Real-time push |
+| Metrics | `useSystemMetrics` | 30s poll |
 
-### Plugin Widget API
+---
 
-Plugins can register widgets to appear on the dashboard:
+## Verification Artifacts
 
-```rust
-// In plugin on_load
-ctx.register_dashboard_widget(DashboardWidgetSpec {
-    id: "groove-pulse".to_string(),
-    name: "Groove Pulse".to_string(),
-    zone: DashboardZone::Primary,
-    priority: 80, // Higher = earlier in layout
-    size: WidgetSize::Medium,
-});
+**Core principle**: Artifacts are proof of work, not just outputs.
+
+```
+Agent work → Verification artifacts → Human inspects → Steer/correct
+                                              ↓
+                                    (if good) → Share with stakeholders
 ```
 
-Plugins can also push items to the attention zone:
+### Artifact Types
 
-```rust
-ctx.add_attention_item(AttentionItem {
-    id: Uuid::new_v7(),
-    item_type: AttentionItemType::Plugin,
-    priority: 50,
-    title: "Groove learning review needed".to_string(),
-    description: "3 new patterns extracted".to_string(),
-    actions: vec![...],
-});
+| Icon | Type | Source |
+|------|------|--------|
+| 🎬 | Video | Screen recordings, demos, walkthroughs |
+| 🖼️ | Image | Screenshots, diagrams, designs |
+| 📊 | Report | Generated docs, analyses, summaries |
+| 🎙️ | Audio | Podcast generations, voice summaries |
+| 📦 | Build | Software artifacts, deployments |
+| 📄 | Document | Presentations, specs, plans |
+
+### Artifact Properties
+
+- **Metadata**: Who created, when, which goal/session
+- **Verification status**: Passed / failed / pending
+- **Actions**: Approve, flag, share, delete
+
+### Infrastructure
+
+Artifacts stored in a **lakehouse architecture**:
+- Object storage for cost efficiency at scale
+- Apache Arrow for fast analytics
+- Multi-modal and unstructured data support
+- Queryable across time and projects
+
+---
+
+## Goal Tracking
+
+Goals evolve through maturity levels:
+
+```
+Outcome-based (fuzzy)  →  Hierarchical (structured)  →  Metrics-driven (measurable)
+"Make onboarding better"   "Reduce steps, add help"      "< 3 min to first value"
+```
+
+### Visual States
+
+- 🌱 **Emerging goal** — Outcome-based, still crystallizing
+- 🎯 **Structured goal** — Has sub-goals, timeline
+- 📊 **Metric-driven** — Clear target, tracking progress
+
+### Goal Widget
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ TRAJECTORY                                            [+ Goal]  │
+├─────────────────────────────────────────────────────────────────┤
+│  🎯 Ship auth system                              ████████░░ 73%│
+│     ├─ Outcome: "Users can log in securely"         ✓ defined  │
+│     ├─ Sub-goals: 4/6 complete                      ↗ on track │
+│     └─ Target: March 1                              12 days    │
+│                                                                 │
+│  🌱 Improve onboarding                                    ░░░░░ │
+│     └─ Outcome: "New users reach value faster"      ◎ exploring│
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Discovery Types
+
+The system surfaces discoveries generated by agent work. **"Action produces information."**
+
+| Type | Icon | Generated by |
+|------|------|--------------|
+| Technical | 💡 | Building, fixing, optimizing |
+| Strategic | 🔭 | Research, scanning, market analysis |
+| Anomaly | 🔮 | Monitoring, observing patterns |
+| Emergent | 🌱 | Agent coordination, self-organization |
+| Experimental | 🧪 | A/B tests, trials, experiments |
+| Connection | 🔗 | Linking disparate concepts |
+| Efficiency | ⚡ | Finding faster/cheaper paths |
+| User insight | 👥 | Observing user behavior |
+| Risk signal | 🛡️ | Security, reliability, edge cases |
+
+Discovery types are **extensible** — new types emerge as capabilities expand.
+
+---
+
+## Agent Coordination
+
+Three views into swarm coordination:
+
+### Emergent Patterns
+
+Coordination behaviors agents discover on their own:
+- Agents can share context via shared memory
+- Sequential handoff patterns form naturally
+- **"Promote" action**: Codify valuable patterns into explicit mechanisms
+
+### Bottlenecks & Inefficiencies
+
+Where agents are waiting, duplicating, or conflicting:
+- Model API queues
+- File lock contention
+- Resource competition
+
+### Topology Visualization
+
+Full graph view showing:
+- Agent nodes and current state
+- Communication flows
+- Resource dependencies
+- Bottleneck highlighting
+
+---
+
+## Research Layers
+
+Research operates in three layers:
+
+| Layer | Mode | Description |
+|-------|------|-------------|
+| Background | Continuous scanning | Ambient discovery across domains of interest |
+| Project | Embedded research | Contextual to active work |
+| Focus | Question-driven | Extracting your thoughts into investigations |
+
+### Research Widget
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ RESEARCH                                          [Ask Question]│
+├─────────────────────────────────────────────────────────────────┤
+│  ACTIVE INVESTIGATIONS                                          │
+│  ? "Best approach for JWT refresh tokens"           ██░░ 40%   │
+│                                                                 │
+│  RECENT FINDINGS                                                │
+│  💡 "Redis vs Valkey for session cache"            2h ago      │
+│                                                                 │
+│  BACKGROUND SCANNING                                            │
+│  👁️ Monitoring: auth patterns, rust ecosystem, AI agents       │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Cost Intelligence
+
+### Cost Widget
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ COST INTELLIGENCE                              [Full Breakdown] │
+├─────────────────────────────────────────────────────────────────┤
+│  TODAY        THIS WEEK       PROJECTED MONTH                   │
+│  $47.23       $284.12         $892 ±$45                        │
+│  ↘ -12%       ↘ -8%           ↘ trending down                  │
+│                                                                 │
+│  BY RESOURCE                    SAVINGS OPPORTUNITIES           │
+│  ████████░░ Compute  $31.40     💡 Switch to Sonnet for evals  │
+│  ███░░░░░░░ Storage  $8.20      💡 Batch research queries       │
+│  ██░░░░░░░░ Models   $5.80                                      │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Efficiency Metrics
+
+Cost-per-outcome shows **value**, not just spend:
+- $/artifact produced
+- $/goal completed
+- $/research answer
+
+### Projections
+
+- Scenario modeling for scale (2×, 10×, 100× agents)
+- Optimization roadmap with potential savings
+- Trend visualization with projections
+
+---
+
+## Command Palette (⌘K)
+
+Keyboard-first interface for search, navigation, and actions:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  ⌘K                                                       [ESC] │
+├─────────────────────────────────────────────────────────────────┤
+│  > _                                                            │
+├─────────────────────────────────────────────────────────────────┤
+│  RECENT                                                         │
+│  ◆ Goal: Ship auth system                              [g]      │
+│  ◆ Session: refactor-ui                                [s]      │
+│  ◆ Artifact: demo-video-auth.mp4                       [a]      │
+├─────────────────────────────────────────────────────────────────┤
+│  ACTIONS                                                        │
+│  + New session                                         [n]      │
+│  + Ask research question                               [r]      │
+│  + Create goal                                         [shift+g]│
+├─────────────────────────────────────────────────────────────────┤
+│  NEEDS ATTENTION (2)                                            │
+│  ◉ Permission: architect wants to write /src/auth      [1]      │
+│  ◉ Verification failed: screenshot mismatch            [2]      │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Command Prefixes
+
+| Prefix | Category | Examples |
+|--------|----------|----------|
+| `g:` | Goals | `g:auth` → jump to auth goal |
+| `s:` | Sessions | `s:refactor` → open session |
+| `a:` | Artifacts | `a:video` → browse videos |
+| `r:` | Research | `r:` → ask a question |
+| `?:` | Search all | `?:jwt` → search everything |
+| `/` | Commands | `/pause all` `/costs` `/topology` |
+
+---
+
+## Multiplayer Architecture
+
+The system scales from solo commander to distributed command without changing the mental model.
+
+### The Commander Abstraction
+
+A commander can be:
+- **Human** — you, teammates, stakeholders
+- **AI Agent** — autonomous strategist, specialized lead
+- **Robot** — physical world actor with decision authority
+- **External System** — CI/CD, monitoring, orchestrators
+
+Commander properties:
+- Identity (who/what)
+- Authority scope (what can they steer?)
+- Presence (online/offline/autonomous)
+- Accountability (audit trail of decisions)
+
+### Authority Levels
+
+| Level | Can Steer | Example |
+|-------|-----------|---------|
+| **Owner** | Everything | Full control |
+| **Domain Lead** | Specific goal/area | Sara → auth system |
+| **Autonomous Agent** | Delegated domain | Ops-AI → infrastructure |
+| **Observer** | Nothing (view only) | Stakeholders, auditors |
+
+### Handoff Modes
+
+| Direction | Description |
+|-----------|-------------|
+| You → AI | "Take over cost optimization, keep me posted" |
+| AI → You | "Hit a decision point I'm not confident about" |
+| You → Teammate | "Sara, you own auth now" |
+| Shift Change | "End of day, AI takes night shift" |
+
+### Chain of Command
+
+```
+                    ┌─────────────┐
+                    │   Owner     │
+                    └──────┬──────┘
+                           │
+          ┌────────────────┼────────────────┐
+          ▼                ▼                ▼
+    ┌───────────┐    ┌───────────┐    ┌───────────┐
+    │  Product  │    │Engineering│    │   Ops     │
+    │  Lead 👤  │    │  Lead 🤖  │    │  Lead 🤖  │
+    └─────┬─────┘    └─────┬─────┘    └─────┬─────┘
+          │                │                │
+          ▼                ▼                ▼
+       Swarms           Swarms           Swarms
 ```
 
 ---
 
 ## Component Specifications
 
-### 1. AttentionBanner
+### 1. CommandBar
 
-The most critical component. Answers "what needs me right now?"
+Top-level navigation and presence:
+- Mode switching (Survey/Command/Deep Dive)
+- Active commanders with presence indicators
+- Search and ⌘K trigger
+- Quick actions
 
-**Priority order**:
-1. Permission requests (agents/sessions awaiting approval)
-2. Errors and failures
-3. Stalled sessions (no activity > 5 minutes)
-4. Groove interventions (circuit breaker triggered)
-5. Plugin notifications
+### 2. AttentionBanner
 
-**Visual states**:
-- **Has items**: Glowing phosphor border, expanded view, pulse animation
-- **Empty**: Collapsed to single line "All clear" with green indicator
+Priority-sorted action items:
+- Permission requests
+- Errors and failures
+- Stalled sessions
+- Verification failures
+- Course corrections needed
 
-**Design**:
-```
-┌────────────────────────────────────────────────────────────────────────────┐
-│ ⚡ NEEDS ATTENTION                                                    [⌃⌄] │
-├────────────────────────────────────────────────────────────────────────────┤
-│                                                                            │
-│  ◉ PERMISSION                                                     [View →]│
-│  Agent "architect" wants to write /src/auth/handler.rs                    │
-│  ├─ [Approve] [Deny]                                                      │
-│                                                                            │
-│  ◉ STALLED                                                        [View →]│
-│  Session "refactor-ui" idle for 8 minutes                                 │
-│  ├─ [Resume] [End]                                                        │
-│                                                                            │
-└────────────────────────────────────────────────────────────────────────────┘
-```
+Visual states: warning (amber glow), critical (red glow), all clear (green)
 
-### 2. DashboardWidget (Base Component)
+### 3. TrajectoryWidget
 
-Foundation for all primary zone widgets.
+Combined view of goals, costs, and throughput trends:
+- Goal progress at different maturity levels
+- Cost trajectory with projections
+- Throughput trend vs historical
 
-**Props**: title, icon, action button, href link, loading state, error state, footer stats
+### 4. EvaluationsWidget
 
-**Design**:
-```
-┌─────────────────────────────────────────┐
-│ TITLE                            [Action]│
-│ ─────────────────────────────────────── │
-│                                         │
-│  (content area)                         │
-│                                         │
-│  ─────────────────────────────────────  │
-│  stat1: val1  │  stat2: val2  │  stat3  │
-└─────────────────────────────────────────┘
-```
+Quality signals and verification status:
+- Pass/fail status for recent evaluations
+- Links to verification artifacts
+- Trend over time
+- Flaky test detection
 
-### 3. SessionsWidget
+### 5. ResearchWidget
 
-**Row design**:
-```
-● refactor-ui          processing
-  └ "Implementing the new..."  3m ago
-```
+Active investigations across all layers:
+- Question-driven investigations in progress
+- Recent findings
+- Background scanning status
 
-**Status dots**:
-- `●` green = processing (subtle pulse animation)
-- `◉` amber = needs attention (permission/error)
-- `○` dim gray = idle
-- `✕` red = failed
+### 6. DiscoveryWidget
 
-### 4. AgentsWidget
+Novel concepts and coordination insights:
+- Discovery cards by type
+- Actions: Apply, Save as pattern, Investigate
+- Emergent patterns and bottlenecks
 
-**Row design**:
-```
-▶ architect-3                 running
-  └ Writing auth handler    ████░ 67%
-  └ 1,247 tokens  │  12 tool calls
-```
+### 7. ArtifactsStream
 
-**Icons**: `▶` running, `⏸` paused, `⏳` waiting, `✕` failed
+Horizontal scrollable artifact thumbnails:
+- Artifact type icons
+- Quick preview on hover
+- Verification status badge
+- Click to inspect
 
-### 5. ActivityFeed
+### 8. CoordinationWidget
 
-**Row design**:
-```
-14:32:15  agent   architect-3   tool_call    Write /src/auth/handler.rs
-```
+Factory floor view of agent swarm:
+- Emergent patterns (with promote action)
+- Bottlenecks and contention
+- Throughput efficiency
+- Link to full topology view
 
-**Features**:
-- Click row to navigate to source
-- Auto-scroll with new events (slide-in animation)
-- "Load More" button at bottom
+### 9. CostWidget
 
-### 6. MetricTile
+Infrastructure economics:
+- Daily/weekly/projected costs
+- Breakdown by resource type
+- Savings opportunities
+- Trend sparkline
 
-**Variants**:
-```
-┌─────────────┐  ┌─────────────┐  ┌─────────────┐
-│ TOKENS/24H  │  │ SUCCESS     │  │ MODELS      │
-│ ─────────── │  │ ─────────── │  │ ─────────── │
-│   127,432   │  │    94.7%    │  │  2 online   │
-│   ↗ +12%    │  │ ████████░░  │  │ claude-4o ● │
-└─────────────┘  └─────────────┘  └─────────────┘
-  (with trend)    (with progress)  (with status)
-```
+### 10. MetricTile
+
+Compact metric displays (see original design for variants):
+- With trend
+- With progress bar
+- With sparkline
+- With status list
 
 ---
 
@@ -212,52 +466,26 @@ Foundation for all primary zone widgets.
 
 | Key | Action |
 |-----|--------|
+| `⌘K` | Open command palette |
 | `s` | Focus sessions widget |
 | `a` | Focus agents widget |
-| `g` | Navigate to groove dashboard |
+| `g` | Focus goals/trajectory |
+| `d` | Focus discoveries |
+| `c` | Focus costs |
 | `f` | Navigate to firehose |
 | `n` | New session modal |
-| `?` | Show keyboard shortcuts modal |
+| `?` | Show keyboard shortcuts |
+
+---
 
 ## Responsive Behavior
 
 | Breakpoint | Layout |
 |------------|--------|
-| Desktop (≥1200px) | 4-column primary grid |
-| Laptop (992-1199px) | 3-column primary grid |
-| Tablet (768-991px) | 2-column, activity full width |
-| Mobile (<768px) | Single column, attention always visible |
-
-## Deliverables
-
-### Design System Components
-
-- [ ] `AttentionBanner` - Action items zone with priority sorting
-- [ ] `DashboardWidget` - Base widget component with header/content/footer
-- [ ] `ActivityFeed` - Unified event stream with source badges
-- [ ] `MetricTile` - Small metric display with sparkline/progress variants
-
-### Web UI Implementation
-
-- [ ] `HomePage` - Replace StreamsPage with zone-based layout
-- [ ] `SessionsWidget` - Compact session list widget
-- [ ] `AgentsWidget` - Compact agent list widget
-- [ ] `useAttentionItems` hook - Aggregate attention items from all sources
-- [ ] `useSystemMetrics` hook - Aggregate system-wide metrics
-
-### Plugin API
-
-- [ ] `DashboardWidgetSpec` type in plugin API
-- [ ] `register_dashboard_widget` in PluginContext
-- [ ] `add_attention_item` in PluginContext
-- [ ] `/api/dashboard/widgets` endpoint
-- [ ] Dynamic widget loading in frontend
-
-### Groove Integration
-
-- [ ] `GroovePulseWidget` - Plugin-contributed primary widget
-- [ ] Attention items for learning reviews
-- [ ] Strategy/health metrics tile
+| Desktop (≥1400px) | Full 4-column primary grid, all zones visible |
+| Laptop (1200-1399px) | 3-column primary grid |
+| Tablet (768-1199px) | 2-column, stacked zones |
+| Mobile (<768px) | Single column, attention always visible, collapsible zones |
 
 ---
 
@@ -266,33 +494,83 @@ Foundation for all primary zone widgets.
 ### Attention Banner Pulse
 ```css
 @keyframes attention-pulse {
-  0%, 100% { box-shadow: var(--glow-phosphor); }
-  50% { box-shadow: var(--glow-phosphor-bright); }
+  0%, 100% { box-shadow: var(--glow-amber); }
+  50% { box-shadow: var(--glow-amber-bright); }
 }
 ```
 
-### Activity Feed Slide-in
+### Discovery Slide-in
 ```css
-@keyframes slide-in {
-  from { transform: translateY(-100%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+@keyframes discovery-in {
+  from { transform: translateX(-20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
 }
 ```
 
-### Status Dot Pulse
+### Commander Presence Pulse
 ```css
-@keyframes status-pulse {
+@keyframes presence-pulse {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
+  50% { opacity: 0.7; }
 }
 ```
 
 ---
 
+## Deliverables
+
+### Design System Components
+
+- [ ] `CommandBar` - Mode switching, presence, search
+- [ ] `AttentionBanner` - Action items with priority sorting
+- [ ] `TrajectoryWidget` - Goals + costs + throughput
+- [ ] `DashboardWidget` - Base widget component
+- [ ] `EvaluationsWidget` - Quality signals
+- [ ] `ResearchWidget` - Investigation tracking
+- [ ] `DiscoveryWidget` - Novel concepts feed
+- [ ] `ArtifactsStream` - Horizontal artifact browser
+- [ ] `CoordinationWidget` - Agent swarm insights
+- [ ] `CostWidget` - Infrastructure economics
+- [ ] `CommandPalette` - ⌘K interface
+- [ ] `PresenceIndicator` - Commander presence
+- [ ] `MetricTile` - Compact metrics (variants)
+
+### Web UI Implementation
+
+- [ ] `HomePage` - Full zone-based layout
+- [ ] `useCommanders` hook - Multiplayer presence
+- [ ] `useDiscoveries` hook - Discovery feed
+- [ ] `useGoals` hook - Goal tracking at all maturity levels
+- [ ] `useCosts` hook - Cost tracking and projections
+- [ ] `useArtifacts` hook - Artifact stream
+- [ ] `useCoordination` hook - Agent swarm insights
+
+### Plugin API
+
+- [ ] `DashboardWidgetSpec` type
+- [ ] `register_dashboard_widget` in PluginContext
+- [ ] `add_attention_item` in PluginContext
+- [ ] `add_discovery` in PluginContext
+- [ ] `DiscoveryType` enum (extensible)
+
+### Backend
+
+- [ ] Artifact lakehouse integration
+- [ ] Commander/presence system
+- [ ] Discovery extraction pipeline
+- [ ] Cost aggregation and projection
+- [ ] Coordination pattern detection
+
+---
+
 ## Open Questions
 
-1. **Widget persistence**: Should users be able to reorder/hide widgets? If so, where is layout stored?
+1. **Discovery persistence**: How long do discoveries stay visible? Archive vs dismiss?
 
-2. **Plugin widget loading**: Dynamic imports or bundle with plugin assets?
+2. **Commander permissions**: Granular permission model for multiplayer?
 
-3. **Mobile attention**: Should attention items show as a floating notification badge on mobile?
+3. **Artifact retention**: Storage policy for lakehouse at scale?
+
+4. **Autonomous boundaries**: How do AI commanders request authority expansion?
+
+5. **Cross-commander coordination**: Conflict resolution when commanders overlap?

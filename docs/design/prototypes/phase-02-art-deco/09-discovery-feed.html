@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Art Deco Command — Discovery Feed</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: var(--space-6);
+    }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--space-6);
+      padding-bottom: var(--space-4);
+      border-bottom: 1px solid var(--deco-gold-dim);
+    }
+
+    .page-title {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 400;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--deco-gold);
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+    }
+
+    .philosophy-quote {
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-style: italic;
+      color: var(--deco-gold-muted);
+      margin-top: var(--space-2);
+      letter-spacing: 0.02em;
+    }
+
+    /* ─── Filter Bar ─── */
+    .filter-bar {
+      display: flex;
+      gap: var(--space-4);
+      flex-wrap: wrap;
+      margin-bottom: var(--space-6);
+      padding: var(--space-4);
+      background: var(--bg-panel);
+      border: 1px solid var(--deco-gold-dim);
+      position: relative;
+    }
+
+    .filter-bar::before,
+    .filter-bar::after {
+      content: '';
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border: 1px solid var(--deco-gold-muted);
+    }
+
+    .filter-bar::before {
+      top: -1px;
+      left: -1px;
+      border-right: none;
+      border-bottom: none;
+    }
+
+    .filter-bar::after {
+      bottom: -1px;
+      right: -1px;
+      border-left: none;
+      border-top: none;
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .filter-label {
+      font-family: var(--font-body-condensed);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--deco-gold-muted);
+    }
+
+    .filter-chips {
+      display: flex;
+      gap: var(--space-1);
+    }
+
+    .filter-chip {
+      font-family: var(--font-body-condensed);
+      font-size: 10px;
+      letter-spacing: 0.05em;
+      padding: var(--space-1) var(--space-3);
+      border: 1px solid var(--deco-line);
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+    }
+
+    .filter-chip:hover {
+      border-color: var(--deco-gold-muted);
+      color: var(--deco-cream);
+    }
+
+    .filter-chip.active {
+      background: linear-gradient(135deg, rgba(212, 168, 75, 0.15) 0%, rgba(201, 162, 39, 0.1) 100%);
+      border-color: var(--deco-gold);
+      color: var(--deco-gold);
+    }
+
+    /* ─── Discovery Type Colors ─── */
+    .type-technical { --type-color: var(--deco-gold); }
+    .type-strategic { --type-color: #b4a7d6; }
+    .type-anomaly { --type-color: #e06c75; }
+    .type-emergent { --type-color: #98c379; }
+    .type-experimental { --type-color: var(--deco-gold-bright); }
+    .type-connection { --type-color: var(--deco-gold); }
+    .type-efficiency { --type-color: var(--deco-gold-bright); }
+    .type-user-insight { --type-color: #d19a66; }
+    .type-risk { --type-color: #e06c75; }
+
+    /* ─── Discovery Stats Bar ─── */
+    .stats-bar {
+      display: flex;
+      gap: var(--space-6);
+      margin-bottom: var(--space-6);
+      padding: var(--space-5);
+      background: var(--bg-panel);
+      border: 1px solid var(--deco-gold-dim);
+      position: relative;
+    }
+
+    .stats-bar::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent 0%, var(--deco-gold) 20%, var(--deco-gold) 80%, transparent 100%);
+    }
+
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+    }
+
+    .stat-value {
+      font-family: var(--font-display);
+      font-size: 32px;
+      font-weight: 400;
+      letter-spacing: 0.05em;
+      color: var(--deco-gold);
+    }
+
+    .stat-value.highlight {
+      color: var(--deco-gold-bright);
+    }
+
+    .stat-label {
+      font-family: var(--font-body-condensed);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--text-tertiary);
+    }
+
+    .stat-trend {
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+    }
+
+    .trend-up { color: #98c379; }
+    .trend-down { color: #e06c75; }
+
+    /* ─── Main Layout ─── */
+    .main-layout {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: var(--space-6);
+    }
+
+    /* ─── Discovery Feed ─── */
+    .discovery-feed {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+
+    .discovery-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--deco-gold-dim);
+      overflow: hidden;
+      transition: all 0.2s ease;
+      animation: card-enter 0.3s ease-out;
+      position: relative;
+    }
+
+    .discovery-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--type-color, var(--deco-gold)) 30%, var(--type-color, var(--deco-gold)) 70%, transparent);
+    }
+
+    @keyframes card-enter {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .discovery-card:hover {
+      border-color: var(--deco-gold-muted);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .discovery-card.featured {
+      border-color: var(--deco-gold);
+      box-shadow: 0 0 30px rgba(212, 168, 75, 0.15);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: var(--space-4);
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--deco-line);
+    }
+
+    .card-type {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .type-badge {
+      font-family: var(--font-body-condensed);
+      font-size: 9px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      padding: 4px 10px;
+      background: rgba(212, 168, 75, 0.1);
+      color: var(--type-color, var(--deco-gold));
+      border: 1px solid var(--type-color, var(--deco-gold-dim));
+    }
+
+    .featured-badge {
+      font-family: var(--font-body-condensed);
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--deco-gold-bright);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      animation: glow-pulse 2s ease-in-out infinite;
+    }
+
+    .card-meta {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: var(--space-1);
+    }
+
+    .card-timestamp {
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    .card-source {
+      font-size: 10px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .card-body {
+      padding: var(--space-4);
+    }
+
+    .card-title {
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      color: var(--deco-cream);
+      margin-bottom: var(--space-3);
+    }
+
+    .card-description {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: var(--space-4);
+    }
+
+    .card-context {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+    }
+
+    .context-tag {
+      font-family: var(--font-body-condensed);
+      font-size: 10px;
+      letter-spacing: 0.05em;
+      padding: 3px 10px;
+      background: var(--bg-elevated);
+      color: var(--text-tertiary);
+      border: 1px solid var(--deco-line);
+    }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-3) var(--space-4);
+      background: var(--bg-surface);
+      border-top: 1px solid var(--deco-line);
+    }
+
+    .card-actions {
+      display: flex;
+      gap: var(--space-2);
+    }
+
+    .card-action {
+      font-family: var(--font-body-condensed);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: var(--space-2) var(--space-3);
+      border: 1px solid var(--deco-line);
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .card-action:hover {
+      border-color: var(--deco-gold);
+      color: var(--deco-gold);
+    }
+
+    .card-action.primary {
+      background: linear-gradient(135deg, rgba(212, 168, 75, 0.2) 0%, rgba(201, 162, 39, 0.1) 100%);
+      border-color: var(--deco-gold);
+      color: var(--deco-gold);
+    }
+
+    .card-action.primary:hover {
+      background: var(--deco-gold);
+      color: var(--bg-deep);
+    }
+
+    .card-confidence {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    .confidence-bar {
+      width: 60px;
+      height: 4px;
+      background: var(--bg-deep);
+      overflow: hidden;
+    }
+
+    .confidence-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--deco-gold-muted), var(--deco-gold));
+    }
+
+    /* ─── Connections Preview ─── */
+    .connections-preview {
+      padding: var(--space-4);
+    }
+
+    .connection-node {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-1);
+      font-size: 10px;
+      padding: var(--space-1) var(--space-2);
+      background: var(--bg-elevated);
+      border: 1px solid var(--deco-line);
+      margin: 2px;
+      color: var(--text-secondary);
+    }
+
+    .connection-node.highlighted {
+      border-color: var(--deco-gold);
+      color: var(--deco-gold);
+    }
+
+    .connection-arrow {
+      color: var(--deco-gold-muted);
+      font-size: 12px;
+      margin: 0 var(--space-1);
+    }
+
+    /* ─── Sidebar ─── */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+
+    .sidebar-panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--deco-gold-dim);
+      overflow: hidden;
+    }
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-3) var(--space-4);
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--deco-line);
+    }
+
+    .sidebar-title {
+      font-family: var(--font-body-condensed);
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--deco-gold-muted);
+    }
+
+    .sidebar-content {
+      padding: var(--space-3) var(--space-4);
+    }
+
+    /* ─── Philosophy Banner ─── */
+    .philosophy-banner {
+      background: linear-gradient(135deg, rgba(212, 168, 75, 0.08) 0%, rgba(201, 162, 39, 0.04) 100%);
+      border: 1px solid var(--deco-gold-dim);
+      padding: var(--space-5);
+      text-align: center;
+      position: relative;
+    }
+
+    .philosophy-banner::before,
+    .philosophy-banner::after {
+      content: '';
+      position: absolute;
+      width: 40px;
+      height: 1px;
+      background: var(--deco-gold-muted);
+      top: 50%;
+    }
+
+    .philosophy-banner::before { left: var(--space-4); }
+    .philosophy-banner::after { right: var(--space-4); }
+
+    .philosophy-text {
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-style: italic;
+      letter-spacing: 0.03em;
+      color: var(--deco-gold);
+      margin-bottom: var(--space-2);
+    }
+
+    .philosophy-subtext {
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+
+    /* ─── Discovery Types Legend ─── */
+    .types-legend {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .type-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-2);
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .type-item:hover {
+      background: var(--bg-surface);
+    }
+
+    .type-item-label {
+      flex: 1;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .type-item-count {
+      font-family: var(--font-body-condensed);
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-tertiary);
+      padding: 2px 8px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--deco-line);
+    }
+
+    /* ─── Trending Topics ─── */
+    .trending-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .trending-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-2);
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .trending-item:hover {
+      background: var(--bg-surface);
+    }
+
+    .trending-rank {
+      font-family: var(--font-display);
+      font-size: 11px;
+      color: var(--deco-gold-muted);
+      width: 24px;
+    }
+
+    .trending-topic {
+      flex: 1;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .trending-momentum {
+      font-family: var(--font-body-condensed);
+      font-size: 10px;
+      color: #98c379;
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+
+    /* ─── Research Threads ─── */
+    .thread-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    .thread-item {
+      padding: var(--space-3);
+      border: 1px solid var(--deco-line);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .thread-item:hover {
+      border-color: var(--deco-gold-dim);
+      background: var(--bg-surface);
+    }
+
+    .thread-title {
+      font-size: 12px;
+      color: var(--deco-cream);
+      margin-bottom: var(--space-2);
+    }
+
+    .thread-meta {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    .thread-status {
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+    }
+
+    .thread-status.active {
+      color: #98c379;
+    }
+
+    /* ─── Research Layers ─── */
+    .layer-status {
+      font-family: var(--font-body-condensed);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 2px 8px;
+    }
+
+    .layer-status.on {
+      background: rgba(152, 195, 121, 0.15);
+      color: #98c379;
+      border: 1px solid rgba(152, 195, 121, 0.3);
+    }
+
+    .layer-status.count {
+      background: var(--bg-elevated);
+      color: var(--text-tertiary);
+      border: 1px solid var(--deco-line);
+    }
+
+    /* ─── Featured Card ─── */
+    .featured-card {
+      background: linear-gradient(135deg, var(--bg-panel) 0%, var(--bg-surface) 100%);
+      border: 1px solid var(--deco-gold);
+      box-shadow: 0 0 40px rgba(212, 168, 75, 0.1), inset 0 1px 0 rgba(255,255,255,0.03);
+    }
+
+    .featured-card .card-header {
+      background: linear-gradient(180deg, rgba(212, 168, 75, 0.08) 0%, transparent 100%);
+    }
+  </style>
+</head>
+<body class="deco-bg">
+  <div class="container">
+
+    <!-- Page Header -->
+    <header class="page-header">
+      <div>
+        <h1 class="page-title">
+          <span class="deco-icon deco-icon-arch deco-icon-lg deco-icon-gold"></span>
+          Discovery Feed
+        </h1>
+        <p class="philosophy-quote">"Action produces information..."</p>
+      </div>
+      <div class="flex items-center gap-4">
+        <button class="btn">Configure Sources</button>
+        <button class="btn btn-primary">+ New Thread</button>
+      </div>
+    </header>
+
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+      <div class="stat-item">
+        <span class="stat-value">247</span>
+        <span class="stat-label">Discoveries Today</span>
+        <span class="stat-trend trend-up">
+          <span class="deco-icon deco-icon-chevron-up deco-icon-sm"></span>
+          23% vs yesterday
+        </span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value highlight">18</span>
+        <span class="stat-label">High Confidence</span>
+        <span class="stat-trend trend-up">
+          <span class="deco-icon deco-icon-chevron-up deco-icon-sm"></span>
+          5 new
+        </span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value">42</span>
+        <span class="stat-label">Connections Found</span>
+        <span class="stat-trend trend-up">
+          <span class="deco-icon deco-icon-chevron-up deco-icon-sm"></span>
+          12%
+        </span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value">7</span>
+        <span class="stat-label">Active Research</span>
+        <span class="stat-trend" style="color: var(--deco-gold-muted);">In Progress</span>
+      </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <div class="filter-group">
+        <span class="filter-label">Type:</span>
+        <div class="filter-chips">
+          <button class="filter-chip active">All</button>
+          <button class="filter-chip">
+            <span class="deco-icon deco-icon-sunburst deco-icon-sm"></span>
+            Technical
+          </button>
+          <button class="filter-chip">
+            <span class="deco-icon deco-icon-search deco-icon-sm"></span>
+            Strategic
+          </button>
+          <button class="filter-chip">
+            <span class="deco-icon deco-icon-growth deco-icon-sm"></span>
+            Emergent
+          </button>
+          <button class="filter-chip">
+            <span class="deco-icon deco-icon-target deco-icon-sm"></span>
+            Risk
+          </button>
+        </div>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Source:</span>
+        <div class="filter-chips">
+          <button class="filter-chip active">All</button>
+          <button class="filter-chip">Background</button>
+          <button class="filter-chip">Project</button>
+          <button class="filter-chip">Question</button>
+        </div>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Time:</span>
+        <div class="filter-chips">
+          <button class="filter-chip active">Today</button>
+          <button class="filter-chip">This Week</button>
+          <button class="filter-chip">All Time</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="main-layout">
+
+      <!-- Discovery Feed -->
+      <div class="discovery-feed">
+
+        <!-- Featured Discovery -->
+        <article class="discovery-card featured-card type-emergent" style="--type-color: #98c379;">
+          <div class="card-header">
+            <div class="card-type">
+              <span class="deco-icon deco-icon-growth deco-icon-md deco-icon-success"></span>
+              <span class="type-badge">Emergent Pattern</span>
+              <span class="featured-badge">
+                <span class="deco-icon deco-icon-star deco-icon-sm deco-icon-bright"></span>
+                Featured
+              </span>
+            </div>
+            <div class="card-meta">
+              <span class="card-timestamp">12 min ago</span>
+              <span class="card-source">
+                <span class="deco-icon deco-icon-agent deco-icon-sm deco-icon-muted"></span>
+                Agent Swarm Analysis
+              </span>
+            </div>
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">Agents Self-Organizing Around Shared Context Pools</h3>
+            <p class="card-description">
+              Detected emergent coordination behavior: agents working on related tasks are spontaneously forming
+              clusters around shared knowledge repositories. This reduces redundant API calls by ~40% and improves
+              context coherence. Consider formalizing this as an architectural pattern.
+            </p>
+            <div class="card-context">
+              <span class="context-tag">vibes-core</span>
+              <span class="context-tag">agent-coordination</span>
+              <span class="context-tag">performance</span>
+              <span class="context-tag">emergent-behavior</span>
+            </div>
+          </div>
+          <div class="card-footer">
+            <div class="card-actions">
+              <button class="card-action primary">Investigate</button>
+              <button class="card-action">Create Task</button>
+              <button class="card-action">Share</button>
+            </div>
+            <div class="card-confidence">
+              <span>Confidence</span>
+              <div class="confidence-bar">
+                <div class="confidence-fill" style="width: 92%;"></div>
+              </div>
+              <span>92%</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- Technical Discovery -->
+        <article class="discovery-card type-technical" style="--type-color: var(--deco-gold);">
+          <div class="card-header">
+            <div class="card-type">
+              <span class="deco-icon deco-icon-sunburst deco-icon-md deco-icon-gold"></span>
+              <span class="type-badge">Technical</span>
+            </div>
+            <div class="card-meta">
+              <span class="card-timestamp">34 min ago</span>
+              <span class="card-source">
+                <span class="deco-icon deco-icon-doc deco-icon-sm deco-icon-muted"></span>
+                Background Scan
+              </span>
+            </div>
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">Arrow Flight RPC Could Replace Current gRPC Layer</h3>
+            <p class="card-description">
+              Apache Arrow Flight provides a high-performance RPC framework optimized for columnar data transfer.
+              Given our lakehouse architecture plans, this could provide 10x throughput improvements for
+              artifact streaming while maintaining compatibility with existing Arrow-based tools.
+            </p>
+            <div class="card-context">
+              <span class="context-tag">apache-arrow</span>
+              <span class="context-tag">performance</span>
+              <span class="context-tag">lakehouse</span>
+            </div>
+          </div>
+          <div class="card-footer">
+            <div class="card-actions">
+              <button class="card-action">Investigate</button>
+              <button class="card-action">Bookmark</button>
+            </div>
+            <div class="card-confidence">
+              <span>Confidence</span>
+              <div class="confidence-bar">
+                <div class="confidence-fill" style="width: 78%;"></div>
+              </div>
+              <span>78%</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- Strategic Discovery -->
+        <article class="discovery-card type-strategic" style="--type-color: #b4a7d6;">
+          <div class="card-header">
+            <div class="card-type">
+              <span class="deco-icon deco-icon-search deco-icon-md" style="color: #b4a7d6;"></span>
+              <span class="type-badge">Strategic</span>
+            </div>
+            <div class="card-meta">
+              <span class="card-timestamp">1 hr ago</span>
+              <span class="card-source">
+                <span class="deco-icon deco-icon-fan deco-icon-sm deco-icon-muted"></span>
+                Market Analysis
+              </span>
+            </div>
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">Enterprise Customers Seeking "Audit Trail" Features</h3>
+            <p class="card-description">
+              Analysis of enterprise RFPs shows 73% require comprehensive audit trails for AI-assisted workflows.
+              Our verification artifacts concept aligns perfectly—positioning as "proof of work" could be
+              a key differentiator in enterprise sales.
+            </p>
+            <div class="card-context">
+              <span class="context-tag">enterprise</span>
+              <span class="context-tag">compliance</span>
+              <span class="context-tag">verification-artifacts</span>
+            </div>
+          </div>
+          <div class="card-footer">
+            <div class="card-actions">
+              <button class="card-action">Add to Roadmap</button>
+              <button class="card-action">Discuss</button>
+            </div>
+            <div class="card-confidence">
+              <span>Confidence</span>
+              <div class="confidence-bar">
+                <div class="confidence-fill" style="width: 85%;"></div>
+              </div>
+              <span>85%</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- Connection Discovery -->
+        <article class="discovery-card type-connection" style="--type-color: var(--deco-gold);">
+          <div class="card-header">
+            <div class="card-type">
+              <span class="deco-icon deco-icon-link deco-icon-md deco-icon-gold"></span>
+              <span class="type-badge">Connection</span>
+            </div>
+            <div class="card-meta">
+              <span class="card-timestamp">2 hr ago</span>
+              <span class="card-source">
+                <span class="deco-icon deco-icon-search deco-icon-sm deco-icon-muted"></span>
+                Cross-Reference
+              </span>
+            </div>
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">Goal Tracking ↔ Verification Artifacts Pattern</h3>
+            <p class="card-description">
+              Found interesting connection: verification artifacts can serve as automatic goal progress
+              indicators. When agents produce artifacts, they inherently demonstrate progress.
+              This could eliminate manual progress updates entirely.
+            </p>
+            <div class="connections-preview">
+              <span class="connection-node highlighted">Verification Artifacts</span>
+              <span class="connection-arrow">→</span>
+              <span class="connection-node">Proof of Work</span>
+              <span class="connection-arrow">→</span>
+              <span class="connection-node highlighted">Goal Progress</span>
+              <span class="connection-arrow">→</span>
+              <span class="connection-node">Metrics</span>
+            </div>
+          </div>
+          <div class="card-footer">
+            <div class="card-actions">
+              <button class="card-action primary">Explore Connection</button>
+              <button class="card-action">Save Pattern</button>
+            </div>
+            <div class="card-confidence">
+              <span>Confidence</span>
+              <div class="confidence-bar">
+                <div class="confidence-fill" style="width: 71%;"></div>
+              </div>
+              <span>71%</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- Efficiency Discovery -->
+        <article class="discovery-card type-efficiency" style="--type-color: var(--deco-gold-bright);">
+          <div class="card-header">
+            <div class="card-type">
+              <span class="deco-icon deco-icon-bolt deco-icon-md deco-icon-bright"></span>
+              <span class="type-badge">Efficiency</span>
+            </div>
+            <div class="card-meta">
+              <span class="card-timestamp">3 hr ago</span>
+              <span class="card-source">
+                <span class="deco-icon deco-icon-fan deco-icon-sm deco-icon-muted"></span>
+                Cost Analysis
+              </span>
+            </div>
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">Batch API Calls Could Reduce Costs by 35%</h3>
+            <p class="card-description">
+              Current agent patterns make many small API calls. Analysis suggests batching related
+              requests could reduce token overhead and API costs by approximately 35% while
+              maintaining response quality.
+            </p>
+            <div class="card-context">
+              <span class="context-tag">cost-optimization</span>
+              <span class="context-tag">api-usage</span>
+              <span class="context-tag">quick-win</span>
+            </div>
+          </div>
+          <div class="card-footer">
+            <div class="card-actions">
+              <button class="card-action">Create Task</button>
+              <button class="card-action">Run Experiment</button>
+            </div>
+            <div class="card-confidence">
+              <span>Confidence</span>
+              <div class="confidence-bar">
+                <div class="confidence-fill" style="width: 88%;"></div>
+              </div>
+              <span>88%</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- Risk Signal -->
+        <article class="discovery-card type-risk" style="--type-color: #e06c75;">
+          <div class="card-header">
+            <div class="card-type">
+              <span class="deco-icon deco-icon-target deco-icon-md deco-icon-danger"></span>
+              <span class="type-badge">Risk Signal</span>
+            </div>
+            <div class="card-meta">
+              <span class="card-timestamp">5 hr ago</span>
+              <span class="card-source">
+                <span class="deco-icon deco-icon-check deco-icon-sm deco-icon-muted"></span>
+                Security Scan
+              </span>
+            </div>
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">Dependency Has Known Vulnerability (CVE-2024-XXXX)</h3>
+            <p class="card-description">
+              The async-std crate version 1.12.x has a known memory safety issue under high concurrency.
+              While not directly exploitable in our use case, upgrading to 1.13.x is recommended
+              before production deployment.
+            </p>
+            <div class="card-context">
+              <span class="context-tag">security</span>
+              <span class="context-tag">dependencies</span>
+              <span class="context-tag">async-std</span>
+            </div>
+          </div>
+          <div class="card-footer">
+            <div class="card-actions">
+              <button class="card-action primary">Create Fix Task</button>
+              <button class="card-action">View Details</button>
+            </div>
+            <div class="card-confidence">
+              <span>Severity</span>
+              <div class="confidence-bar">
+                <div class="confidence-fill" style="width: 45%; background: linear-gradient(90deg, var(--deco-gold-muted), var(--deco-gold-bright));"></div>
+              </div>
+              <span>Medium</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- Anomaly Discovery -->
+        <article class="discovery-card type-anomaly" style="--type-color: #e06c75;">
+          <div class="card-header">
+            <div class="card-type">
+              <span class="deco-icon deco-icon-arch deco-icon-md" style="color: #e06c75;"></span>
+              <span class="type-badge">Anomaly</span>
+            </div>
+            <div class="card-meta">
+              <span class="card-timestamp">6 hr ago</span>
+              <span class="card-source">
+                <span class="deco-icon deco-icon-test deco-icon-sm deco-icon-muted"></span>
+                Pattern Detection
+              </span>
+            </div>
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">Unusual Spike in Agent Error Rates During Shift Changes</h3>
+            <p class="card-description">
+              Error rates increase 3x during the 15-minute windows when human commanders transition.
+              Hypothesis: context handoff is incomplete. Consider implementing "shift overlap"
+              protocol where both commanders are briefly active.
+            </p>
+            <div class="card-context">
+              <span class="context-tag">multiplayer</span>
+              <span class="context-tag">handoff</span>
+              <span class="context-tag">reliability</span>
+            </div>
+          </div>
+          <div class="card-footer">
+            <div class="card-actions">
+              <button class="card-action">Investigate</button>
+              <button class="card-action">Add Monitoring</button>
+            </div>
+            <div class="card-confidence">
+              <span>Confidence</span>
+              <div class="confidence-bar">
+                <div class="confidence-fill" style="width: 67%;"></div>
+              </div>
+              <span>67%</span>
+            </div>
+          </div>
+        </article>
+
+      </div>
+
+      <!-- Sidebar -->
+      <aside class="sidebar">
+
+        <!-- Philosophy Banner -->
+        <div class="philosophy-banner">
+          <p class="philosophy-text">"Action produces information"</p>
+          <p class="philosophy-subtext">The swarm learns by doing. Every action generates discoveries.</p>
+        </div>
+
+        <!-- Discovery Types -->
+        <div class="sidebar-panel">
+          <div class="sidebar-header">
+            <span class="sidebar-title">Discovery Types</span>
+          </div>
+          <div class="sidebar-content">
+            <div class="types-legend">
+              <div class="type-item">
+                <span class="deco-icon deco-icon-sunburst deco-icon-sm deco-icon-gold"></span>
+                <span class="type-item-label">Technical</span>
+                <span class="type-item-count">47</span>
+              </div>
+              <div class="type-item">
+                <span class="deco-icon deco-icon-search deco-icon-sm" style="color: #b4a7d6;"></span>
+                <span class="type-item-label">Strategic</span>
+                <span class="type-item-count">23</span>
+              </div>
+              <div class="type-item">
+                <span class="deco-icon deco-icon-arch deco-icon-sm" style="color: #e06c75;"></span>
+                <span class="type-item-label">Anomaly</span>
+                <span class="type-item-count">12</span>
+              </div>
+              <div class="type-item">
+                <span class="deco-icon deco-icon-growth deco-icon-sm deco-icon-success"></span>
+                <span class="type-item-label">Emergent</span>
+                <span class="type-item-count">8</span>
+              </div>
+              <div class="type-item">
+                <span class="deco-icon deco-icon-test deco-icon-sm deco-icon-bright"></span>
+                <span class="type-item-label">Experimental</span>
+                <span class="type-item-count">15</span>
+              </div>
+              <div class="type-item">
+                <span class="deco-icon deco-icon-link deco-icon-sm deco-icon-gold"></span>
+                <span class="type-item-label">Connection</span>
+                <span class="type-item-count">31</span>
+              </div>
+              <div class="type-item">
+                <span class="deco-icon deco-icon-bolt deco-icon-sm deco-icon-bright"></span>
+                <span class="type-item-label">Efficiency</span>
+                <span class="type-item-count">19</span>
+              </div>
+              <div class="type-item">
+                <span class="deco-icon deco-icon-agent deco-icon-sm" style="color: #d19a66;"></span>
+                <span class="type-item-label">User Insight</span>
+                <span class="type-item-count">7</span>
+              </div>
+              <div class="type-item">
+                <span class="deco-icon deco-icon-target deco-icon-sm deco-icon-danger"></span>
+                <span class="type-item-label">Risk Signal</span>
+                <span class="type-item-count">5</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trending Topics -->
+        <div class="sidebar-panel">
+          <div class="sidebar-header">
+            <span class="sidebar-title">Trending Topics</span>
+          </div>
+          <div class="sidebar-content">
+            <div class="trending-list">
+              <div class="trending-item">
+                <span class="trending-rank">#1</span>
+                <span class="trending-topic">Agent Coordination</span>
+                <span class="trending-momentum">
+                  <span class="deco-icon deco-icon-chevron-up deco-icon-sm"></span>
+                  45%
+                </span>
+              </div>
+              <div class="trending-item">
+                <span class="trending-rank">#2</span>
+                <span class="trending-topic">Verification Artifacts</span>
+                <span class="trending-momentum">
+                  <span class="deco-icon deco-icon-chevron-up deco-icon-sm"></span>
+                  32%
+                </span>
+              </div>
+              <div class="trending-item">
+                <span class="trending-rank">#3</span>
+                <span class="trending-topic">Cost Optimization</span>
+                <span class="trending-momentum">
+                  <span class="deco-icon deco-icon-chevron-up deco-icon-sm"></span>
+                  28%
+                </span>
+              </div>
+              <div class="trending-item">
+                <span class="trending-rank">#4</span>
+                <span class="trending-topic">Lakehouse Architecture</span>
+                <span class="trending-momentum">
+                  <span class="deco-icon deco-icon-chevron-up deco-icon-sm"></span>
+                  21%
+                </span>
+              </div>
+              <div class="trending-item">
+                <span class="trending-rank">#5</span>
+                <span class="trending-topic">Multiplayer Handoff</span>
+                <span class="trending-momentum">
+                  <span class="deco-icon deco-icon-chevron-up deco-icon-sm"></span>
+                  18%
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Active Research Threads -->
+        <div class="sidebar-panel">
+          <div class="sidebar-header">
+            <span class="sidebar-title">Research Threads</span>
+            <button class="panel-action">+ New</button>
+          </div>
+          <div class="sidebar-content">
+            <div class="thread-list">
+              <div class="thread-item">
+                <div class="thread-title">How to scale agent swarms cost-effectively?</div>
+                <div class="thread-meta">
+                  <span class="thread-status active">Active</span>
+                  <span>42 discoveries</span>
+                </div>
+              </div>
+              <div class="thread-item">
+                <div class="thread-title">Best practices for verification artifact storage</div>
+                <div class="thread-meta">
+                  <span class="thread-status active">Active</span>
+                  <span>28 discoveries</span>
+                </div>
+              </div>
+              <div class="thread-item">
+                <div class="thread-title">Commander handoff protocols</div>
+                <div class="thread-meta">
+                  <span class="thread-status active">Active</span>
+                  <span>15 discoveries</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Research Layers -->
+        <div class="sidebar-panel">
+          <div class="sidebar-header">
+            <span class="sidebar-title">Research Layers</span>
+          </div>
+          <div class="sidebar-content">
+            <div class="types-legend">
+              <div class="type-item">
+                <span class="deco-icon deco-icon-fan deco-icon-sm deco-icon-success"></span>
+                <span class="type-item-label">Background Scanning</span>
+                <span class="layer-status on">ON</span>
+              </div>
+              <div class="type-item">
+                <span class="deco-icon deco-icon-doc deco-icon-sm deco-icon-success"></span>
+                <span class="type-item-label">Project-Embedded</span>
+                <span class="layer-status on">ON</span>
+              </div>
+              <div class="type-item">
+                <span class="deco-icon deco-icon-search deco-icon-sm deco-icon-muted"></span>
+                <span class="type-item-label">Question-Driven</span>
+                <span class="layer-status count">3 active</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </aside>
+    </div>
+
+  </div>
+</body>
+</html>

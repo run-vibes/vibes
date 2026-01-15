@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Art Deco Command — Cost Intelligence</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    .container {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: var(--space-6);
+    }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--space-6);
+      padding-bottom: var(--space-4);
+      border-bottom: 1px solid var(--deco-gold-dim);
+    }
+
+    .page-title {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 400;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--deco-gold);
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+    }
+
+    .page-subtitle {
+      font-size: 13px;
+      color: var(--text-tertiary);
+      margin-top: var(--space-1);
+      font-style: italic;
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .time-selector {
+      display: flex;
+      background: var(--bg-panel);
+      border: 1px solid var(--deco-gold-dim);
+      overflow: hidden;
+    }
+
+    .time-option {
+      font-family: var(--font-body-condensed);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      padding: var(--space-2) var(--space-3);
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .time-option:hover {
+      background: var(--bg-surface);
+      color: var(--deco-cream);
+    }
+
+    .time-option.active {
+      background: linear-gradient(135deg, rgba(212, 168, 75, 0.2) 0%, rgba(201, 162, 39, 0.1) 100%);
+      color: var(--deco-gold);
+    }
+
+    /* ─── Summary Cards ─── */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-4);
+      margin-bottom: var(--space-6);
+    }
+
+    .summary-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--deco-gold-dim);
+      padding: var(--space-4);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .summary-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--card-accent, var(--deco-gold));
+    }
+
+    .summary-card.savings { --card-accent: #98c379; }
+    .summary-card.spending { --card-accent: var(--deco-gold-bright); }
+    .summary-card.efficiency { --card-accent: var(--deco-gold); }
+    .summary-card.projection { --card-accent: #b4a7d6; }
+
+    .summary-label {
+      font-family: var(--font-body-condensed);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--text-tertiary);
+      margin-bottom: var(--space-2);
+    }
+
+    .summary-value {
+      font-family: var(--font-display);
+      font-size: 36px;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      color: var(--deco-cream);
+      display: flex;
+      align-items: baseline;
+      gap: var(--space-2);
+    }
+
+    .summary-value.positive { color: #98c379; }
+    .summary-value.negative { color: #e06c75; }
+    .summary-value.neutral { color: var(--deco-gold); }
+
+    .summary-unit {
+      font-size: 16px;
+      font-weight: 400;
+      color: var(--text-tertiary);
+    }
+
+    .summary-change {
+      font-size: 11px;
+      margin-top: var(--space-2);
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+    }
+
+    .summary-change.up { color: #98c379; }
+    .summary-change.down { color: #e06c75; }
+    .summary-change.savings-up { color: #98c379; }
+
+    .summary-sparkline {
+      height: 30px;
+      margin-top: var(--space-2);
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+    }
+
+    .sparkline-bar {
+      flex: 1;
+      background: var(--deco-gold);
+      opacity: 0.4;
+      transition: opacity 0.15s ease;
+    }
+
+    .sparkline-bar:hover { opacity: 0.8; }
+    .sparkline-bar:last-child { opacity: 0.8; }
+
+    /* ─── Main Layout ─── */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: var(--space-6);
+    }
+
+    /* ─── Cost Breakdown ─── */
+    .cost-breakdown {
+      background: var(--bg-panel);
+      border: 1px solid var(--deco-gold-dim);
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-4);
+      border-bottom: 1px solid var(--deco-line);
+      background: var(--bg-surface);
+    }
+
+    .section-title {
+      font-family: var(--font-body-condensed);
+      font-size: 12px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--deco-gold-muted);
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .section-content {
+      padding: var(--space-4);
+    }
+
+    .breakdown-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    .breakdown-item {
+      display: grid;
+      grid-template-columns: 160px 1fr auto auto;
+      align-items: center;
+      gap: var(--space-4);
+      padding: var(--space-3);
+      transition: background 0.15s ease;
+    }
+
+    .breakdown-item:hover {
+      background: var(--bg-surface);
+    }
+
+    .breakdown-category {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .category-name {
+      font-size: 13px;
+      color: var(--deco-cream);
+    }
+
+    .breakdown-bar-container {
+      height: 8px;
+      background: var(--bg-deep);
+      overflow: hidden;
+    }
+
+    .breakdown-bar {
+      height: 100%;
+      transition: width 0.5s ease;
+    }
+
+    .breakdown-bar.compute { background: linear-gradient(90deg, var(--deco-gold-dim), var(--deco-gold)); }
+    .breakdown-bar.api { background: linear-gradient(90deg, #98c379, #7cb668); }
+    .breakdown-bar.storage { background: linear-gradient(90deg, var(--deco-gold-muted), var(--deco-gold-bright)); }
+    .breakdown-bar.network { background: linear-gradient(90deg, #b4a7d6, #9b8bc7); }
+    .breakdown-bar.other { background: var(--text-tertiary); }
+
+    .breakdown-amount {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--deco-cream);
+      text-align: right;
+      min-width: 80px;
+    }
+
+    .breakdown-percent {
+      font-family: var(--font-body-condensed);
+      font-size: 11px;
+      color: var(--text-tertiary);
+      text-align: right;
+      min-width: 40px;
+    }
+
+    /* ─── Efficiency Metrics ─── */
+    .efficiency-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-4);
+      margin-top: var(--space-4);
+    }
+
+    .efficiency-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--deco-line);
+      padding: var(--space-4);
+    }
+
+    .efficiency-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--space-3);
+    }
+
+    .efficiency-label {
+      font-family: var(--font-body-condensed);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--text-tertiary);
+    }
+
+    .efficiency-trend {
+      font-size: 10px;
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+    }
+
+    .efficiency-trend.improving { color: #98c379; }
+    .efficiency-trend.declining { color: #e06c75; }
+
+    .efficiency-value {
+      font-family: var(--font-display);
+      font-size: 26px;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      color: var(--deco-gold);
+    }
+
+    .efficiency-context {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-top: var(--space-1);
+    }
+
+    /* ─── Projections Panel ─── */
+    .projections-panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--deco-gold-dim);
+    }
+
+    .projection-chart {
+      padding: var(--space-4);
+      height: 200px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chart-area {
+      flex: 1;
+      position: relative;
+      border-left: 1px solid var(--deco-line);
+      border-bottom: 1px solid var(--deco-line);
+    }
+
+    .chart-line {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 60%;
+      background: linear-gradient(180deg, rgba(212, 168, 75, 0.15) 0%, transparent 100%);
+      border-top: 2px solid var(--deco-gold);
+      clip-path: polygon(0% 100%, 10% 85%, 20% 90%, 30% 75%, 40% 80%, 50% 65%, 60% 70%, 70% 55%, 80% 50%, 90% 40%, 100% 30%, 100% 100%);
+    }
+
+    .chart-projection {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 30%;
+      height: 40%;
+      border-top: 2px dashed var(--deco-gold-bright);
+      opacity: 0.7;
+    }
+
+    .chart-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--text-tertiary);
+      margin-top: var(--space-2);
+    }
+
+    .scenario-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .scenario-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-2) var(--space-3);
+      background: var(--bg-surface);
+      font-size: 12px;
+    }
+
+    .scenario-label {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      color: var(--text-secondary);
+    }
+
+    .scenario-dot {
+      width: 8px;
+      height: 8px;
+    }
+
+    .scenario-dot.optimistic { background: #98c379; }
+    .scenario-dot.baseline { background: var(--deco-gold); }
+    .scenario-dot.pessimistic { background: var(--deco-gold-bright); }
+
+    .scenario-value {
+      font-family: var(--font-display);
+      font-weight: 400;
+      color: var(--deco-cream);
+    }
+
+    /* ─── Optimization Opportunities ─── */
+    .optimizations-panel {
+      margin-top: var(--space-6);
+      background: var(--bg-panel);
+      border: 1px solid var(--deco-gold-dim);
+    }
+
+    .optimization-list {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .optimization-item {
+      display: grid;
+      grid-template-columns: 70px 1fr auto auto;
+      align-items: center;
+      gap: var(--space-4);
+      padding: var(--space-4);
+      border-bottom: 1px solid var(--deco-line);
+      transition: background 0.15s ease;
+    }
+
+    .optimization-item:last-child {
+      border-bottom: none;
+    }
+
+    .optimization-item:hover {
+      background: var(--bg-surface);
+    }
+
+    .optimization-savings {
+      text-align: center;
+    }
+
+    .savings-amount {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 400;
+      color: #98c379;
+    }
+
+    .savings-period {
+      font-family: var(--font-body-condensed);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+    }
+
+    .optimization-info {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+    }
+
+    .optimization-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--deco-cream);
+    }
+
+    .optimization-description {
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+
+    .optimization-impact {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: var(--space-1);
+    }
+
+    .impact-label {
+      font-family: var(--font-body-condensed);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+    }
+
+    .impact-bar {
+      width: 80px;
+      height: 6px;
+      background: var(--bg-deep);
+      overflow: hidden;
+    }
+
+    .impact-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--deco-gold-muted), #98c379);
+    }
+
+    .impact-fill.medium { background: linear-gradient(90deg, var(--deco-gold-muted), var(--deco-gold-bright)); }
+    .impact-fill.low { background: var(--text-tertiary); }
+
+    .optimization-action {
+      font-family: var(--font-body-condensed);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: var(--space-2) var(--space-3);
+      border: 1px solid #98c379;
+      background: rgba(152, 195, 121, 0.1);
+      color: #98c379;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .optimization-action:hover {
+      background: #98c379;
+      color: var(--bg-deep);
+    }
+
+    /* ─── Sidebar ─── */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+
+    .sidebar-panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--deco-gold-dim);
+    }
+
+    /* ─── Cost Alerts ─── */
+    .alert-list {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .alert-item {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-3);
+      padding: var(--space-3);
+      border-bottom: 1px solid var(--deco-line);
+    }
+
+    .alert-item:last-child {
+      border-bottom: none;
+    }
+
+    .alert-content {
+      flex: 1;
+    }
+
+    .alert-title {
+      font-size: 12px;
+      color: var(--deco-cream);
+      margin-bottom: var(--space-1);
+    }
+
+    .alert-detail {
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+
+    .alert-item.warning { border-left: 2px solid var(--deco-gold-bright); }
+    .alert-item.critical { border-left: 2px solid #e06c75; }
+    .alert-item.success { border-left: 2px solid #98c379; }
+
+    /* ─── Budget Progress ─── */
+    .budget-item {
+      padding: var(--space-3);
+      border-bottom: 1px solid var(--deco-line);
+    }
+
+    .budget-item:last-child {
+      border-bottom: none;
+    }
+
+    .budget-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: var(--space-2);
+    }
+
+    .budget-name {
+      font-size: 12px;
+      color: var(--deco-cream);
+    }
+
+    .budget-values {
+      font-family: var(--font-body-condensed);
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+
+    .budget-bar {
+      height: 6px;
+      background: var(--bg-deep);
+      overflow: hidden;
+    }
+
+    .budget-fill {
+      height: 100%;
+      transition: width 0.5s ease;
+    }
+
+    .budget-fill.safe { background: linear-gradient(90deg, var(--deco-gold-dim), #98c379); }
+    .budget-fill.warning { background: linear-gradient(90deg, var(--deco-gold-muted), var(--deco-gold-bright)); }
+    .budget-fill.danger { background: linear-gradient(90deg, var(--deco-gold-bright), #e06c75); }
+
+    /* ─── Quick Actions ─── */
+    .quick-actions {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      padding: var(--space-3);
+    }
+
+    .quick-action {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-2) var(--space-3);
+      background: var(--bg-surface);
+      border: 1px solid var(--deco-line);
+      font-family: var(--font-body-condensed);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .quick-action:hover {
+      border-color: var(--deco-gold);
+      color: var(--deco-gold);
+    }
+
+    /* ─── Cost Timeline ─── */
+    .timeline-container {
+      padding: var(--space-4);
+    }
+
+    .timeline-row {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      margin-bottom: var(--space-2);
+    }
+
+    .timeline-label {
+      font-family: var(--font-body-condensed);
+      font-size: 10px;
+      letter-spacing: 0.05em;
+      color: var(--text-tertiary);
+      width: 60px;
+    }
+
+    .timeline-bars {
+      flex: 1;
+      display: flex;
+      gap: 2px;
+      height: 24px;
+    }
+
+    .timeline-bar {
+      flex: 1;
+      background: var(--deco-gold);
+      opacity: 0.3;
+      transition: opacity 0.15s ease;
+    }
+
+    .timeline-bar:hover {
+      opacity: 0.8;
+    }
+
+    .timeline-bar.high { opacity: 0.6; background: var(--deco-gold-bright); }
+    .timeline-bar.spike { opacity: 0.9; background: #e06c75; }
+
+    .timeline-value {
+      font-family: var(--font-body-condensed);
+      font-size: 10px;
+      color: var(--text-tertiary);
+      width: 50px;
+      text-align: right;
+    }
+
+    /* ─── Art Deco Decorative Elements ─── */
+    .deco-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--deco-gold-dim), transparent);
+      margin: var(--space-4) 0;
+    }
+
+    .badge.badge-success {
+      font-family: var(--font-body-condensed);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: var(--space-1) var(--space-2);
+      background: rgba(152, 195, 121, 0.15);
+      border: 1px solid rgba(152, 195, 121, 0.3);
+      color: #98c379;
+    }
+  </style>
+</head>
+<body class="deco-bg">
+  <div class="container">
+
+    <!-- Page Header -->
+    <header class="page-header">
+      <div>
+        <h1 class="page-title">
+          <span class="deco-icon deco-icon-value deco-icon-lg deco-icon-gold"></span>
+          Cost Intelligence
+        </h1>
+        <p class="page-subtitle">Maximize efficiency, minimize burn. Scale unbounded.</p>
+      </div>
+      <div class="header-controls">
+        <div class="time-selector">
+          <button class="time-option">24h</button>
+          <button class="time-option active">7d</button>
+          <button class="time-option">30d</button>
+          <button class="time-option">90d</button>
+        </div>
+        <button class="btn">Export Report</button>
+        <button class="btn btn-primary">Set Budgets</button>
+      </div>
+    </header>
+
+    <!-- Summary Cards -->
+    <div class="summary-grid">
+      <div class="summary-card spending">
+        <div class="summary-label">Total Spend (7d)</div>
+        <div class="summary-value">
+          $2,847<span class="summary-unit">.32</span>
+        </div>
+        <div class="summary-change up">
+          <span class="deco-icon deco-icon-chevron-up deco-icon-sm"></span>
+          12% vs last week
+        </div>
+        <div class="summary-sparkline">
+          <div class="sparkline-bar" style="height: 40%;"></div>
+          <div class="sparkline-bar" style="height: 55%;"></div>
+          <div class="sparkline-bar" style="height: 45%;"></div>
+          <div class="sparkline-bar" style="height: 70%;"></div>
+          <div class="sparkline-bar" style="height: 65%;"></div>
+          <div class="sparkline-bar" style="height: 80%;"></div>
+          <div class="sparkline-bar" style="height: 100%;"></div>
+        </div>
+      </div>
+      <div class="summary-card savings">
+        <div class="summary-label">Savings Realized</div>
+        <div class="summary-value positive">
+          $412<span class="summary-unit">.85</span>
+        </div>
+        <div class="summary-change savings-up">
+          <span class="deco-icon deco-icon-chevron-up deco-icon-sm"></span>
+          Saved vs baseline
+        </div>
+        <div class="summary-sparkline">
+          <div class="sparkline-bar" style="height: 30%; background: #98c379;"></div>
+          <div class="sparkline-bar" style="height: 45%; background: #98c379;"></div>
+          <div class="sparkline-bar" style="height: 60%; background: #98c379;"></div>
+          <div class="sparkline-bar" style="height: 55%; background: #98c379;"></div>
+          <div class="sparkline-bar" style="height: 75%; background: #98c379;"></div>
+          <div class="sparkline-bar" style="height: 85%; background: #98c379;"></div>
+          <div class="sparkline-bar" style="height: 100%; background: #98c379;"></div>
+        </div>
+      </div>
+      <div class="summary-card efficiency">
+        <div class="summary-label">Cost per Outcome</div>
+        <div class="summary-value neutral">
+          $4.28<span class="summary-unit">/task</span>
+        </div>
+        <div class="summary-change savings-up">
+          <span class="deco-icon deco-icon-chevron-down deco-icon-sm"></span>
+          18% improvement
+        </div>
+        <div class="summary-sparkline">
+          <div class="sparkline-bar" style="height: 100%;"></div>
+          <div class="sparkline-bar" style="height: 85%;"></div>
+          <div class="sparkline-bar" style="height: 75%;"></div>
+          <div class="sparkline-bar" style="height: 60%;"></div>
+          <div class="sparkline-bar" style="height: 55%;"></div>
+          <div class="sparkline-bar" style="height: 45%;"></div>
+          <div class="sparkline-bar" style="height: 35%;"></div>
+        </div>
+      </div>
+      <div class="summary-card projection">
+        <div class="summary-label">30d Projection</div>
+        <div class="summary-value">
+          $11,420<span class="summary-unit">.00</span>
+        </div>
+        <div class="summary-change">± $850 confidence interval</div>
+        <div class="summary-sparkline">
+          <div class="sparkline-bar" style="height: 60%; background: #b4a7d6;"></div>
+          <div class="sparkline-bar" style="height: 65%; background: #b4a7d6;"></div>
+          <div class="sparkline-bar" style="height: 70%; background: #b4a7d6;"></div>
+          <div class="sparkline-bar" style="height: 75%; background: #b4a7d6;"></div>
+          <div class="sparkline-bar" style="height: 82%; background: #b4a7d6;"></div>
+          <div class="sparkline-bar" style="height: 90%; background: #b4a7d6;"></div>
+          <div class="sparkline-bar" style="height: 100%; background: #b4a7d6;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="main-grid">
+      <div class="main-content">
+
+        <!-- Cost Breakdown -->
+        <div class="cost-breakdown">
+          <div class="section-header">
+            <span class="section-title">
+              <span class="deco-icon deco-icon-fan deco-icon-md deco-icon-gold"></span>
+              Cost Breakdown by Category
+            </span>
+            <button class="panel-action">View Details</button>
+          </div>
+          <div class="section-content">
+            <div class="breakdown-list">
+              <div class="breakdown-item">
+                <div class="breakdown-category">
+                  <span class="deco-icon deco-icon-agent deco-icon-md deco-icon-success"></span>
+                  <span class="category-name">API Calls (LLM)</span>
+                </div>
+                <div class="breakdown-bar-container">
+                  <div class="breakdown-bar api" style="width: 52%;"></div>
+                </div>
+                <span class="breakdown-amount">$1,480.52</span>
+                <span class="breakdown-percent">52%</span>
+              </div>
+              <div class="breakdown-item">
+                <div class="breakdown-category">
+                  <span class="deco-icon deco-icon-bolt deco-icon-md deco-icon-gold"></span>
+                  <span class="category-name">Compute (GPU)</span>
+                </div>
+                <div class="breakdown-bar-container">
+                  <div class="breakdown-bar compute" style="width: 28%;"></div>
+                </div>
+                <span class="breakdown-amount">$797.25</span>
+                <span class="breakdown-percent">28%</span>
+              </div>
+              <div class="breakdown-item">
+                <div class="breakdown-category">
+                  <span class="deco-icon deco-icon-doc deco-icon-md deco-icon-bright"></span>
+                  <span class="category-name">Storage (Artifacts)</span>
+                </div>
+                <div class="breakdown-bar-container">
+                  <div class="breakdown-bar storage" style="width: 12%;"></div>
+                </div>
+                <span class="breakdown-amount">$341.68</span>
+                <span class="breakdown-percent">12%</span>
+              </div>
+              <div class="breakdown-item">
+                <div class="breakdown-category">
+                  <span class="deco-icon deco-icon-link deco-icon-md" style="color: #b4a7d6;"></span>
+                  <span class="category-name">Network (Egress)</span>
+                </div>
+                <div class="breakdown-bar-container">
+                  <div class="breakdown-bar network" style="width: 5%;"></div>
+                </div>
+                <span class="breakdown-amount">$142.37</span>
+                <span class="breakdown-percent">5%</span>
+              </div>
+              <div class="breakdown-item">
+                <div class="breakdown-category">
+                  <span class="deco-icon deco-icon-arch deco-icon-md deco-icon-muted"></span>
+                  <span class="category-name">Other</span>
+                </div>
+                <div class="breakdown-bar-container">
+                  <div class="breakdown-bar other" style="width: 3%;"></div>
+                </div>
+                <span class="breakdown-amount">$85.50</span>
+                <span class="breakdown-percent">3%</span>
+              </div>
+            </div>
+
+            <!-- Efficiency Metrics -->
+            <div class="deco-divider"></div>
+            <div class="efficiency-grid">
+              <div class="efficiency-card">
+                <div class="efficiency-header">
+                  <span class="efficiency-label">$/Goal Completed</span>
+                  <span class="efficiency-trend improving">
+                    <span class="deco-icon deco-icon-chevron-down deco-icon-sm"></span>
+                    22%
+                  </span>
+                </div>
+                <div class="efficiency-value">$127.40</div>
+                <div class="efficiency-context">Based on 24 goals completed this week</div>
+              </div>
+              <div class="efficiency-card">
+                <div class="efficiency-header">
+                  <span class="efficiency-label">$/Agent Hour</span>
+                  <span class="efficiency-trend improving">
+                    <span class="deco-icon deco-icon-chevron-down deco-icon-sm"></span>
+                    15%
+                  </span>
+                </div>
+                <div class="efficiency-value">$3.42</div>
+                <div class="efficiency-context">831 agent-hours this week</div>
+              </div>
+              <div class="efficiency-card">
+                <div class="efficiency-header">
+                  <span class="efficiency-label">$/Artifact Created</span>
+                  <span class="efficiency-trend improving">
+                    <span class="deco-icon deco-icon-chevron-down deco-icon-sm"></span>
+                    8%
+                  </span>
+                </div>
+                <div class="efficiency-value">$2.18</div>
+                <div class="efficiency-context">1,306 artifacts generated</div>
+              </div>
+              <div class="efficiency-card">
+                <div class="efficiency-header">
+                  <span class="efficiency-label">Token Efficiency</span>
+                  <span class="efficiency-trend improving">
+                    <span class="deco-icon deco-icon-chevron-up deco-icon-sm"></span>
+                    12%
+                  </span>
+                </div>
+                <div class="efficiency-value">89.2%</div>
+                <div class="efficiency-context">Useful tokens / total tokens</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Optimization Opportunities -->
+        <div class="optimizations-panel">
+          <div class="section-header">
+            <span class="section-title">
+              <span class="deco-icon deco-icon-target deco-icon-md deco-icon-gold"></span>
+              Optimization Opportunities
+            </span>
+            <span class="badge badge-success">$847/mo potential</span>
+          </div>
+          <div class="optimization-list">
+            <div class="optimization-item">
+              <div class="optimization-savings">
+                <div class="savings-amount">$312</div>
+                <div class="savings-period">/month</div>
+              </div>
+              <div class="optimization-info">
+                <div class="optimization-title">Batch API Calls for Related Tasks</div>
+                <div class="optimization-description">Group related queries to reduce token overhead. Discovery found 35% reduction potential.</div>
+              </div>
+              <div class="optimization-impact">
+                <span class="impact-label">Impact</span>
+                <div class="impact-bar">
+                  <div class="impact-fill" style="width: 85%;"></div>
+                </div>
+              </div>
+              <button class="optimization-action">Apply</button>
+            </div>
+            <div class="optimization-item">
+              <div class="optimization-savings">
+                <div class="savings-amount">$245</div>
+                <div class="savings-period">/month</div>
+              </div>
+              <div class="optimization-info">
+                <div class="optimization-title">Enable Context Pooling for Agent Clusters</div>
+                <div class="optimization-description">Leverage emergent context sharing pattern to reduce redundant API calls.</div>
+              </div>
+              <div class="optimization-impact">
+                <span class="impact-label">Impact</span>
+                <div class="impact-bar">
+                  <div class="impact-fill" style="width: 70%;"></div>
+                </div>
+              </div>
+              <button class="optimization-action">Apply</button>
+            </div>
+            <div class="optimization-item">
+              <div class="optimization-savings">
+                <div class="savings-amount">$180</div>
+                <div class="savings-period">/month</div>
+              </div>
+              <div class="optimization-info">
+                <div class="optimization-title">Archive Cold Artifacts to Object Storage</div>
+                <div class="optimization-description">Move artifacts older than 30d to S3-compatible storage (90% cheaper).</div>
+              </div>
+              <div class="optimization-impact">
+                <span class="impact-label">Impact</span>
+                <div class="impact-bar">
+                  <div class="impact-fill medium" style="width: 55%;"></div>
+                </div>
+              </div>
+              <button class="optimization-action">Apply</button>
+            </div>
+            <div class="optimization-item">
+              <div class="optimization-savings">
+                <div class="savings-amount">$110</div>
+                <div class="savings-period">/month</div>
+              </div>
+              <div class="optimization-info">
+                <div class="optimization-title">Use Smaller Models for Routine Tasks</div>
+                <div class="optimization-description">Route simple classification and extraction to faster, cheaper models.</div>
+              </div>
+              <div class="optimization-impact">
+                <span class="impact-label">Impact</span>
+                <div class="impact-bar">
+                  <div class="impact-fill medium" style="width: 40%;"></div>
+                </div>
+              </div>
+              <button class="optimization-action">Apply</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Sidebar -->
+      <aside class="sidebar">
+
+        <!-- Projections -->
+        <div class="sidebar-panel">
+          <div class="section-header">
+            <span class="section-title">
+              <span class="deco-icon deco-icon-fan deco-icon-sm deco-icon-gold"></span>
+              30-Day Projection
+            </span>
+          </div>
+          <div class="projection-chart">
+            <div class="chart-area">
+              <div class="chart-line"></div>
+              <div class="chart-projection"></div>
+            </div>
+            <div class="chart-labels">
+              <span>Now</span>
+              <span>+15d</span>
+              <span>+30d</span>
+            </div>
+          </div>
+          <div class="section-content">
+            <div class="scenario-list">
+              <div class="scenario-item">
+                <span class="scenario-label">
+                  <span class="scenario-dot optimistic"></span>
+                  Optimistic (with opts)
+                </span>
+                <span class="scenario-value">$9,200</span>
+              </div>
+              <div class="scenario-item">
+                <span class="scenario-label">
+                  <span class="scenario-dot baseline"></span>
+                  Baseline
+                </span>
+                <span class="scenario-value">$11,420</span>
+              </div>
+              <div class="scenario-item">
+                <span class="scenario-label">
+                  <span class="scenario-dot pessimistic"></span>
+                  High Usage
+                </span>
+                <span class="scenario-value">$14,800</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cost Alerts -->
+        <div class="sidebar-panel">
+          <div class="section-header">
+            <span class="section-title">
+              <span class="deco-icon deco-icon-target deco-icon-sm deco-icon-warning"></span>
+              Alerts
+            </span>
+          </div>
+          <div class="alert-list">
+            <div class="alert-item warning">
+              <span class="deco-icon deco-icon-target deco-icon-sm deco-icon-warning"></span>
+              <div class="alert-content">
+                <div class="alert-title">API budget at 78%</div>
+                <div class="alert-detail">$1,480 of $1,900 used (7 days left)</div>
+              </div>
+            </div>
+            <div class="alert-item success">
+              <span class="deco-icon deco-icon-check deco-icon-sm deco-icon-success"></span>
+              <div class="alert-content">
+                <div class="alert-title">Storage optimization applied</div>
+                <div class="alert-detail">Saved $42.30 via compression</div>
+              </div>
+            </div>
+            <div class="alert-item warning">
+              <span class="deco-icon deco-icon-fan deco-icon-sm deco-icon-bright"></span>
+              <div class="alert-content">
+                <div class="alert-title">Unusual spike detected</div>
+                <div class="alert-detail">GPU usage 2.3x normal at 14:00</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Budget Progress -->
+        <div class="sidebar-panel">
+          <div class="section-header">
+            <span class="section-title">
+              <span class="deco-icon deco-icon-value deco-icon-sm deco-icon-gold"></span>
+              Budget Status
+            </span>
+          </div>
+          <div class="budget-item">
+            <div class="budget-header">
+              <span class="budget-name">Monthly Total</span>
+              <span class="budget-values">$11,420 / $15,000</span>
+            </div>
+            <div class="budget-bar">
+              <div class="budget-fill safe" style="width: 76%;"></div>
+            </div>
+          </div>
+          <div class="budget-item">
+            <div class="budget-header">
+              <span class="budget-name">API Calls</span>
+              <span class="budget-values">$1,480 / $1,900</span>
+            </div>
+            <div class="budget-bar">
+              <div class="budget-fill warning" style="width: 78%;"></div>
+            </div>
+          </div>
+          <div class="budget-item">
+            <div class="budget-header">
+              <span class="budget-name">Compute</span>
+              <span class="budget-values">$797 / $2,500</span>
+            </div>
+            <div class="budget-bar">
+              <div class="budget-fill safe" style="width: 32%;"></div>
+            </div>
+          </div>
+          <div class="budget-item">
+            <div class="budget-header">
+              <span class="budget-name">Storage</span>
+              <span class="budget-values">$341 / $500</span>
+            </div>
+            <div class="budget-bar">
+              <div class="budget-fill warning" style="width: 68%;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="sidebar-panel">
+          <div class="section-header">
+            <span class="section-title">
+              <span class="deco-icon deco-icon-bolt deco-icon-sm deco-icon-bright"></span>
+              Quick Actions
+            </span>
+          </div>
+          <div class="quick-actions">
+            <button class="quick-action">
+              <span class="deco-icon deco-icon-fan deco-icon-sm deco-icon-gold"></span>
+              Generate Cost Report
+            </button>
+            <button class="quick-action">
+              <span class="deco-icon deco-icon-target deco-icon-sm deco-icon-gold"></span>
+              Configure Alerts
+            </button>
+            <button class="quick-action">
+              <span class="deco-icon deco-icon-search deco-icon-sm deco-icon-gold"></span>
+              Run Optimization Scan
+            </button>
+            <button class="quick-action">
+              <span class="deco-icon deco-icon-velocity deco-icon-sm deco-icon-gold"></span>
+              Compare to Baseline
+            </button>
+          </div>
+        </div>
+
+        <!-- Cost Timeline (Mini) -->
+        <div class="sidebar-panel">
+          <div class="section-header">
+            <span class="section-title">
+              <span class="deco-icon deco-icon-time deco-icon-sm deco-icon-gold"></span>
+              Hourly Activity
+            </span>
+          </div>
+          <div class="timeline-container">
+            <div class="timeline-row">
+              <span class="timeline-label">API</span>
+              <div class="timeline-bars">
+                <div class="timeline-bar"></div>
+                <div class="timeline-bar"></div>
+                <div class="timeline-bar high"></div>
+                <div class="timeline-bar"></div>
+                <div class="timeline-bar spike"></div>
+                <div class="timeline-bar high"></div>
+                <div class="timeline-bar"></div>
+                <div class="timeline-bar"></div>
+              </div>
+              <span class="timeline-value">$42/hr</span>
+            </div>
+            <div class="timeline-row">
+              <span class="timeline-label">Compute</span>
+              <div class="timeline-bars">
+                <div class="timeline-bar"></div>
+                <div class="timeline-bar high"></div>
+                <div class="timeline-bar high"></div>
+                <div class="timeline-bar"></div>
+                <div class="timeline-bar"></div>
+                <div class="timeline-bar high"></div>
+                <div class="timeline-bar"></div>
+                <div class="timeline-bar"></div>
+              </div>
+              <span class="timeline-value">$18/hr</span>
+            </div>
+            <div class="timeline-row">
+              <span class="timeline-label">Storage</span>
+              <div class="timeline-bars">
+                <div class="timeline-bar"></div>
+                <div class="timeline-bar"></div>
+                <div class="timeline-bar"></div>
+                <div class="timeline-bar"></div>
+                <div class="timeline-bar"></div>
+                <div class="timeline-bar"></div>
+                <div class="timeline-bar"></div>
+                <div class="timeline-bar"></div>
+              </div>
+              <span class="timeline-value">$2/hr</span>
+            </div>
+          </div>
+        </div>
+
+      </aside>
+    </div>
+
+  </div>
+</body>
+</html>

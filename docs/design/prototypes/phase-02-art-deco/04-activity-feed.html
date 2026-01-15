@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ActivityFeed — Event Stream</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    /* ═══════════════════════════════════════════════════════════════════════
+       ACTIVITY FEED — Real-time event stream with filtering and animations
+       ═══════════════════════════════════════════════════════════════════════ */
+
+    .prototype-container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: var(--space-6);
+    }
+
+    .prototype-header {
+      margin-bottom: var(--space-8);
+      padding-bottom: var(--space-4);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .prototype-title {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--phosphor-green);
+      text-shadow: var(--glow-phosphor);
+      margin-bottom: var(--space-2);
+    }
+
+    .prototype-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .section {
+      margin-bottom: var(--space-8);
+    }
+
+    .section-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-bottom: var(--space-3);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .section-label::before {
+      content: '';
+      flex: 0 0 20px;
+      height: 1px;
+      background: var(--border-medium);
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border-medium);
+    }
+
+    /* ─── Activity Feed Container ─── */
+    .activity-feed {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .activity-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 1px solid var(--border-subtle);
+      background: var(--bg-surface);
+    }
+
+    .activity-title-group {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .activity-title {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+
+    .live-indicator {
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+      font-size: 10px;
+      color: var(--phosphor-green);
+    }
+
+    .live-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--phosphor-green);
+      animation: live-pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes live-pulse {
+      0%, 100% {
+        opacity: 1;
+        box-shadow: 0 0 4px var(--phosphor-green);
+      }
+      50% {
+        opacity: 0.5;
+        box-shadow: 0 0 8px var(--phosphor-green);
+      }
+    }
+
+    .activity-controls {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    /* ─── Filter Pills ─── */
+    .filter-pills {
+      display: flex;
+      gap: var(--space-1);
+      padding: var(--space-2) var(--space-4);
+      background: var(--bg-deep);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .filter-pill {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 4px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--border-subtle);
+      background: transparent;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .filter-pill:hover {
+      border-color: var(--border-medium);
+      color: var(--text-secondary);
+    }
+
+    .filter-pill.active {
+      background: rgba(57, 255, 20, 0.1);
+      border-color: var(--phosphor-green);
+      color: var(--phosphor-green);
+    }
+
+    .filter-pill.active.agent { background: rgba(0, 212, 255, 0.1); border-color: var(--phosphor-blue); color: var(--phosphor-blue); }
+    .filter-pill.active.session { background: rgba(255, 179, 0, 0.1); border-color: var(--phosphor-amber); color: var(--phosphor-amber); }
+    .filter-pill.active.groove { background: rgba(0, 255, 247, 0.1); border-color: var(--phosphor-cyan); color: var(--phosphor-cyan); }
+    .filter-pill.active.error { background: rgba(255, 59, 59, 0.1); border-color: var(--phosphor-red); color: var(--phosphor-red); }
+
+    /* ─── Activity Stream ─── */
+    .activity-stream {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .activity-stream::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .activity-stream::-webkit-scrollbar-track {
+      background: var(--bg-deep);
+    }
+
+    .activity-stream::-webkit-scrollbar-thumb {
+      background: var(--border-medium);
+      border-radius: 4px;
+    }
+
+    .activity-stream::-webkit-scrollbar-thumb:hover {
+      background: var(--border-strong);
+    }
+
+    /* ─── Activity Row ─── */
+    .activity-row {
+      display: grid;
+      grid-template-columns: 75px 70px 110px 90px 1fr auto;
+      gap: var(--space-3);
+      padding: var(--space-2) var(--space-4);
+      font-size: 11px;
+      border-bottom: 1px solid var(--border-subtle);
+      transition: background 0.15s ease;
+      cursor: pointer;
+    }
+
+    .activity-row:hover {
+      background: var(--bg-surface);
+    }
+
+    .activity-row:last-child {
+      border-bottom: none;
+    }
+
+    /* New event animation */
+    .activity-row.new {
+      animation: slide-in 0.3s ease;
+      background: rgba(57, 255, 20, 0.03);
+    }
+
+    .activity-row.new::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--phosphor-green);
+      box-shadow: var(--glow-phosphor);
+    }
+
+    .activity-time {
+      color: var(--text-tertiary);
+      font-variant-numeric: tabular-nums;
+      font-size: 10px;
+    }
+
+    /* Source badges */
+    .activity-source {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+
+    .activity-source.agent {
+      background: rgba(0, 212, 255, 0.15);
+      color: var(--phosphor-blue);
+    }
+
+    .activity-source.session {
+      background: rgba(255, 179, 0, 0.15);
+      color: var(--phosphor-amber);
+    }
+
+    .activity-source.groove {
+      background: rgba(0, 255, 247, 0.15);
+      color: var(--phosphor-cyan);
+    }
+
+    .activity-source.system {
+      background: rgba(138, 138, 138, 0.15);
+      color: var(--text-secondary);
+    }
+
+    .activity-source.error {
+      background: rgba(255, 59, 59, 0.15);
+      color: var(--phosphor-red);
+    }
+
+    .activity-actor {
+      color: var(--text-secondary);
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Event type badges */
+    .activity-type {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 3px;
+      background: var(--bg-elevated);
+      color: var(--text-tertiary);
+    }
+
+    .activity-type.tool_call { color: var(--phosphor-amber); }
+    .activity-type.read { color: var(--phosphor-blue); }
+    .activity-type.write { color: var(--phosphor-green); }
+    .activity-type.message { color: var(--text-primary); }
+    .activity-type.thinking { color: var(--phosphor-cyan); }
+    .activity-type.pattern { color: var(--phosphor-cyan); }
+    .activity-type.error { color: var(--phosphor-red); background: rgba(255, 59, 59, 0.1); }
+    .activity-type.permission { color: var(--phosphor-amber); background: rgba(255, 179, 0, 0.1); }
+
+    .activity-detail {
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .activity-detail code {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--phosphor-green);
+    }
+
+    .activity-expand {
+      color: var(--text-tertiary);
+      font-size: 10px;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+
+    .activity-row:hover .activity-expand {
+      opacity: 1;
+    }
+
+    /* ─── Footer ─── */
+    .activity-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-3) var(--space-4);
+      border-top: 1px solid var(--border-subtle);
+      background: var(--bg-surface);
+    }
+
+    .activity-stats {
+      display: flex;
+      gap: var(--space-4);
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    .activity-stat-value {
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    /* ─── Load More ─── */
+    .load-more {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-3);
+      border-top: 1px solid var(--border-subtle);
+      background: var(--bg-deep);
+    }
+
+    .load-more-btn {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--phosphor-blue);
+      background: transparent;
+      border: 1px solid var(--phosphor-blue);
+      padding: var(--space-2) var(--space-4);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .load-more-btn:hover {
+      background: rgba(0, 212, 255, 0.1);
+      box-shadow: 0 0 10px rgba(0, 212, 255, 0.2);
+    }
+
+    /* ─── Expanded Event View ─── */
+    .expanded-event {
+      padding: var(--space-4);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      margin-top: var(--space-4);
+    }
+
+    .expanded-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--space-3);
+      padding-bottom: var(--space-3);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .expanded-meta {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-3);
+      margin-bottom: var(--space-3);
+    }
+
+    .meta-item {
+      font-size: 10px;
+    }
+
+    .meta-label {
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 2px;
+    }
+
+    .meta-value {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .expanded-content {
+      background: var(--bg-deep);
+      padding: var(--space-3);
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .expanded-content pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* ─── Auto-scroll toggle ─── */
+    .auto-scroll-toggle {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    .toggle-switch {
+      width: 28px;
+      height: 16px;
+      background: var(--bg-deep);
+      border: 1px solid var(--border-medium);
+      border-radius: 8px;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .toggle-switch.active {
+      background: rgba(57, 255, 20, 0.2);
+      border-color: var(--phosphor-green);
+    }
+
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--text-tertiary);
+      top: 2px;
+      left: 2px;
+      transition: all 0.2s ease;
+    }
+
+    .toggle-switch.active::after {
+      left: 14px;
+      background: var(--phosphor-green);
+      box-shadow: 0 0 4px var(--phosphor-green);
+    }
+  </style>
+</head>
+<body class="scanlines crt-vignette">
+
+  <div class="prototype-container">
+    <header class="prototype-header">
+      <h1 class="prototype-title">ActivityFeed</h1>
+      <p class="prototype-desc">
+        The secondary zone shows a unified event stream with source badges, type indicators,
+        and real-time updates. New events slide in from the top with subtle glow effects.
+      </p>
+    </header>
+
+    <!-- Full Activity Feed -->
+    <section class="section">
+      <div class="section-label">Full Activity Stream</div>
+      <div class="activity-feed">
+        <div class="activity-header">
+          <div class="activity-title-group">
+            <span class="activity-title">Activity Stream</span>
+            <span class="live-indicator">
+              <span class="live-dot"></span>
+              Live
+            </span>
+          </div>
+          <div class="activity-controls">
+            <div class="auto-scroll-toggle">
+              <span class="toggle-switch active"></span>
+              Auto-scroll
+            </div>
+            <button class="panel-action">Pause</button>
+            <button class="panel-action">Firehose →</button>
+          </div>
+        </div>
+
+        <div class="filter-pills">
+          <button class="filter-pill active">All</button>
+          <button class="filter-pill agent">Agent</button>
+          <button class="filter-pill session">Session</button>
+          <button class="filter-pill groove">Groove</button>
+          <button class="filter-pill error">Errors</button>
+        </div>
+
+        <div class="activity-stream" id="activity-stream">
+          <div class="activity-row new" style="position: relative;">
+            <span class="activity-time">14:32:18</span>
+            <span class="activity-source agent">agent</span>
+            <span class="activity-actor">architect-3</span>
+            <span class="activity-type write">write</span>
+            <span class="activity-detail">Created <code>/src/auth/handler.rs</code></span>
+            <span class="activity-expand">→</span>
+          </div>
+
+          <div class="activity-row">
+            <span class="activity-time">14:32:15</span>
+            <span class="activity-source agent">agent</span>
+            <span class="activity-actor">architect-3</span>
+            <span class="activity-type tool_call">tool_call</span>
+            <span class="activity-detail">Executing write_file with 847 bytes</span>
+            <span class="activity-expand">→</span>
+          </div>
+
+          <div class="activity-row">
+            <span class="activity-time">14:32:12</span>
+            <span class="activity-source agent">agent</span>
+            <span class="activity-actor">reviewer-1</span>
+            <span class="activity-type read">read</span>
+            <span class="activity-detail">Analyzing <code>/src/api/routes.rs</code></span>
+            <span class="activity-expand">→</span>
+          </div>
+
+          <div class="activity-row">
+            <span class="activity-time">14:32:08</span>
+            <span class="activity-source session">session</span>
+            <span class="activity-actor">refactor-ui</span>
+            <span class="activity-type message">message</span>
+            <span class="activity-detail">Implementing the new dashboard layout...</span>
+            <span class="activity-expand">→</span>
+          </div>
+
+          <div class="activity-row">
+            <span class="activity-time">14:32:02</span>
+            <span class="activity-source agent">agent</span>
+            <span class="activity-actor">architect-3</span>
+            <span class="activity-type permission">permission</span>
+            <span class="activity-detail">Requesting write access to <code>/src/auth/</code></span>
+            <span class="activity-expand">→</span>
+          </div>
+
+          <div class="activity-row">
+            <span class="activity-time">14:31:54</span>
+            <span class="activity-source groove">groove</span>
+            <span class="activity-actor">learner</span>
+            <span class="activity-type pattern">pattern</span>
+            <span class="activity-detail">New pattern extracted: error handling in auth module</span>
+            <span class="activity-expand">→</span>
+          </div>
+
+          <div class="activity-row">
+            <span class="activity-time">14:31:42</span>
+            <span class="activity-source agent">agent</span>
+            <span class="activity-actor">architect-3</span>
+            <span class="activity-type thinking">thinking</span>
+            <span class="activity-detail">Planning authentication handler structure...</span>
+            <span class="activity-expand">→</span>
+          </div>
+
+          <div class="activity-row">
+            <span class="activity-time">14:31:35</span>
+            <span class="activity-source session">session</span>
+            <span class="activity-actor">fix-auth-bug</span>
+            <span class="activity-type message">message</span>
+            <span class="activity-detail">Please implement the JWT validation handler</span>
+            <span class="activity-expand">→</span>
+          </div>
+
+          <div class="activity-row">
+            <span class="activity-time">14:31:28</span>
+            <span class="activity-source error">error</span>
+            <span class="activity-actor">test-runner</span>
+            <span class="activity-type error">error</span>
+            <span class="activity-detail">Agent crashed: index out of bounds at line 142</span>
+            <span class="activity-expand">→</span>
+          </div>
+
+          <div class="activity-row">
+            <span class="activity-time">14:31:15</span>
+            <span class="activity-source system">system</span>
+            <span class="activity-actor">vibes</span>
+            <span class="activity-type">config</span>
+            <span class="activity-detail">Model claude-4-opus connected</span>
+            <span class="activity-expand">→</span>
+          </div>
+        </div>
+
+        <div class="load-more">
+          <button class="load-more-btn">Load Earlier Events</button>
+        </div>
+
+        <div class="activity-footer">
+          <div class="activity-stats">
+            <span><span class="activity-stat-value">847</span> events today</span>
+            <span><span class="activity-stat-value">23</span> in last hour</span>
+            <span><span class="activity-stat-value">1</span> error</span>
+          </div>
+          <button class="panel-action">Export</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Expanded Event Detail -->
+    <section class="section">
+      <div class="section-label">Expanded Event Detail</div>
+      <div class="expanded-event">
+        <div class="expanded-header">
+          <div class="activity-title-group">
+            <span class="activity-source agent">agent</span>
+            <span style="font-size: 13px; font-weight: 500; color: var(--text-primary);">architect-3 → tool_call</span>
+          </div>
+          <span style="font-size: 11px; color: var(--text-tertiary);">14:32:15.847</span>
+        </div>
+
+        <div class="expanded-meta">
+          <div class="meta-item">
+            <div class="meta-label">Session</div>
+            <div class="meta-value">fix-auth-bug</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Duration</div>
+            <div class="meta-value">127ms</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Tokens</div>
+            <div class="meta-value">342 in / 847 out</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Tool</div>
+            <div class="meta-value">write_file</div>
+          </div>
+        </div>
+
+        <div class="expanded-content">
+          <pre>{
+  "tool": "write_file",
+  "path": "/src/auth/handler.rs",
+  "content": "use axum::{...",
+  "bytes": 847,
+  "result": "success"
+}</pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- Filtered View Example -->
+    <section class="section">
+      <div class="section-label">Filtered View — Errors Only</div>
+      <div class="activity-feed">
+        <div class="activity-header">
+          <div class="activity-title-group">
+            <span class="activity-title">Activity Stream</span>
+            <span class="badge badge-error">Filtered: Errors</span>
+          </div>
+          <button class="panel-action">Clear Filter</button>
+        </div>
+
+        <div class="filter-pills">
+          <button class="filter-pill">All</button>
+          <button class="filter-pill">Agent</button>
+          <button class="filter-pill">Session</button>
+          <button class="filter-pill">Groove</button>
+          <button class="filter-pill active error">Errors</button>
+        </div>
+
+        <div class="activity-stream" style="max-height: 200px;">
+          <div class="activity-row">
+            <span class="activity-time">14:31:28</span>
+            <span class="activity-source error">error</span>
+            <span class="activity-actor">test-runner</span>
+            <span class="activity-type error">panic</span>
+            <span class="activity-detail">index out of bounds: the len is 5 but the index is 10</span>
+            <span class="activity-expand">→</span>
+          </div>
+          <div class="activity-row">
+            <span class="activity-time">14:28:15</span>
+            <span class="activity-source error">error</span>
+            <span class="activity-actor">builder-2</span>
+            <span class="activity-type error">timeout</span>
+            <span class="activity-detail">API call timed out after 30000ms</span>
+            <span class="activity-expand">→</span>
+          </div>
+          <div class="activity-row">
+            <span class="activity-time">14:15:42</span>
+            <span class="activity-source error">error</span>
+            <span class="activity-actor">fixer-1</span>
+            <span class="activity-type error">rejected</span>
+            <span class="activity-detail">Permission denied: write to /etc/passwd</span>
+            <span class="activity-expand">→</span>
+          </div>
+        </div>
+
+        <div class="activity-footer">
+          <div class="activity-stats">
+            <span><span class="activity-stat-value" style="color: var(--phosphor-red);">3</span> errors today</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // Simulate new events arriving using safe DOM methods
+    const stream = document.getElementById('activity-stream');
+    const sampleEvents = [
+      { time: '14:32:21', source: 'agent', actor: 'reviewer-1', type: 'read', detail: 'Reading /src/models/user.rs' },
+      { time: '14:32:24', source: 'groove', actor: 'learner', type: 'pattern', detail: 'Pattern confidence increased: auth_patterns' },
+      { time: '14:32:27', source: 'session', actor: 'refactor-ui', type: 'message', detail: 'Creating the metrics zone components...' },
+    ];
+
+    let eventIndex = 0;
+
+    function createActivityRow(event) {
+      const row = document.createElement('div');
+      row.className = 'activity-row new';
+      row.style.position = 'relative';
+
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'activity-time';
+      timeSpan.textContent = event.time;
+
+      const sourceSpan = document.createElement('span');
+      sourceSpan.className = 'activity-source ' + event.source;
+      sourceSpan.textContent = event.source;
+
+      const actorSpan = document.createElement('span');
+      actorSpan.className = 'activity-actor';
+      actorSpan.textContent = event.actor;
+
+      const typeSpan = document.createElement('span');
+      typeSpan.className = 'activity-type ' + event.type;
+      typeSpan.textContent = event.type;
+
+      const detailSpan = document.createElement('span');
+      detailSpan.className = 'activity-detail';
+      detailSpan.textContent = event.detail;
+
+      const expandSpan = document.createElement('span');
+      expandSpan.className = 'activity-expand';
+      expandSpan.textContent = '→';
+
+      row.appendChild(timeSpan);
+      row.appendChild(sourceSpan);
+      row.appendChild(actorSpan);
+      row.appendChild(typeSpan);
+      row.appendChild(detailSpan);
+      row.appendChild(expandSpan);
+
+      return row;
+    }
+
+    setInterval(function() {
+      if (eventIndex >= sampleEvents.length) return;
+
+      const event = sampleEvents[eventIndex];
+      const row = createActivityRow(event);
+      stream.insertBefore(row, stream.firstChild);
+
+      // Remove 'new' class after animation
+      setTimeout(function() {
+        row.classList.remove('new');
+      }, 2000);
+
+      eventIndex++;
+    }, 3000);
+  </script>
+
+</body>
+</html>

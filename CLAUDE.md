@@ -176,6 +176,37 @@ When adding new UI patterns or styled elements:
 
 Run `just web ladle` to browse all available components.
 
+### Design Prototypes Workflow (IMPORTANT)
+
+**When exploring visual directions or UI layouts, create static HTML/CSS prototypes.**
+
+Prototypes live in `docs/design/prototypes/` organized by phase:
+
+```
+docs/design/prototypes/
+├── README.md
+├── phase-01-exploration/     # Initial style explorations
+├── phase-02-art-deco/        # Art Deco direction
+└── phase-NN-description/     # Future phases
+```
+
+**When creating prototypes:**
+
+1. **Create a new phase directory** if starting a new design direction
+2. **Include a shared.css** for design tokens and reusable styles
+3. **Number files sequentially** (01-xxx.html, 02-xxx.html)
+4. **Use iterations** for refinements (v11, v12, v13 suffixes)
+
+**Viewing prototypes:**
+```bash
+cd docs/design/prototypes/phase-NN-xxx
+python -m http.server 8765
+```
+
+**When to create prototypes vs components:**
+- **Prototypes**: Exploring layouts, visual directions, new page designs
+- **Design system**: Reusable components ready for implementation
+
 ### Bug Fixes
 
 1. Use `superpowers:systematic-debugging` to investigate

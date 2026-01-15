@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MetricTile — All Variants</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    /* ═══════════════════════════════════════════════════════════════════════
+       METRIC TILES — All variants for the metrics zone
+       ═══════════════════════════════════════════════════════════════════════ */
+
+    .prototype-container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: var(--space-6);
+    }
+
+    .prototype-header {
+      margin-bottom: var(--space-8);
+      padding-bottom: var(--space-4);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .prototype-title {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--phosphor-green);
+      text-shadow: var(--glow-phosphor);
+      margin-bottom: var(--space-2);
+    }
+
+    .prototype-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .section {
+      margin-bottom: var(--space-8);
+    }
+
+    .section-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-bottom: var(--space-3);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .section-label::before {
+      content: '';
+      flex: 0 0 20px;
+      height: 1px;
+      background: var(--border-medium);
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border-medium);
+    }
+
+    /* ─── Metrics Grid ─── */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: var(--space-3);
+    }
+
+    @media (max-width: 1200px) {
+      .metrics-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+    @media (max-width: 900px) {
+      .metrics-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 600px) {
+      .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .metrics-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-4);
+    }
+
+    @media (max-width: 768px) {
+      .metrics-grid-3 { grid-template-columns: 1fr; }
+    }
+
+    /* ─── Metric Tile Base ─── */
+    .metric-tile {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      min-height: 110px;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.2s ease;
+    }
+
+    .metric-tile:hover {
+      border-color: var(--border-medium);
+      transform: translateY(-1px);
+    }
+
+    .metric-tile.clickable {
+      cursor: pointer;
+    }
+
+    .metric-tile.clickable:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    /* States */
+    .metric-tile.success {
+      border-color: rgba(57, 255, 20, 0.2);
+    }
+
+    .metric-tile.warning {
+      border-color: rgba(255, 179, 0, 0.3);
+    }
+
+    .metric-tile.error {
+      border-color: rgba(255, 59, 59, 0.3);
+    }
+
+    .metric-tile.highlight {
+      border-color: rgba(57, 255, 20, 0.4);
+      box-shadow: var(--glow-phosphor);
+    }
+
+    /* ─── Metric Components ─── */
+    .metric-label {
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-bottom: var(--space-2);
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+    }
+
+    .metric-label-icon {
+      font-size: 10px;
+    }
+
+    .metric-value {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1;
+      margin-bottom: var(--space-2);
+    }
+
+    .metric-value.success { color: var(--phosphor-green); }
+    .metric-value.warning { color: var(--phosphor-amber); }
+    .metric-value.error { color: var(--phosphor-red); }
+    .metric-value.glow {
+      text-shadow: 0 0 10px currentColor;
+    }
+
+    .metric-unit {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-tertiary);
+      margin-left: 2px;
+    }
+
+    /* ─── Trend Indicator ─── */
+    .metric-trend {
+      font-size: 10px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: auto;
+    }
+
+    .metric-trend.up {
+      color: var(--phosphor-green);
+    }
+
+    .metric-trend.down {
+      color: var(--phosphor-red);
+    }
+
+    .metric-trend.neutral {
+      color: var(--text-tertiary);
+    }
+
+    .metric-trend.improved {
+      color: var(--phosphor-green);
+    }
+
+    .trend-arrow {
+      font-size: 12px;
+    }
+
+    /* ─── Progress Bar ─── */
+    .metric-progress {
+      margin-top: auto;
+    }
+
+    .progress-track {
+      height: 6px;
+      background: var(--bg-deep);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.5s ease;
+    }
+
+    .progress-fill.success {
+      background: var(--phosphor-green);
+      box-shadow: 0 0 8px var(--phosphor-green);
+    }
+
+    .progress-fill.warning {
+      background: var(--phosphor-amber);
+      box-shadow: 0 0 8px var(--phosphor-amber);
+    }
+
+    .progress-fill.error {
+      background: var(--phosphor-red);
+      box-shadow: 0 0 8px var(--phosphor-red);
+    }
+
+    .progress-fill.gradient {
+      background: linear-gradient(90deg, var(--phosphor-green), var(--phosphor-amber));
+    }
+
+    .progress-label {
+      font-size: 9px;
+      color: var(--text-tertiary);
+      margin-top: 4px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* ─── Status Indicator ─── */
+    .metric-status {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+      margin-top: auto;
+    }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-size: 10px;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .status-dot.online {
+      background: var(--phosphor-green);
+      box-shadow: 0 0 4px var(--phosphor-green);
+    }
+
+    .status-dot.offline {
+      background: var(--text-tertiary);
+    }
+
+    .status-dot.standby {
+      background: var(--phosphor-amber);
+    }
+
+    .status-name {
+      color: var(--text-secondary);
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ─── Sparkline ─── */
+    .metric-sparkline {
+      margin-top: auto;
+      height: 24px;
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+    }
+
+    .sparkline-bar {
+      flex: 1;
+      background: var(--phosphor-green);
+      border-radius: 1px;
+      opacity: 0.7;
+      transition: all 0.2s ease;
+    }
+
+    .sparkline-bar:last-child {
+      opacity: 1;
+      box-shadow: 0 0 4px var(--phosphor-green);
+    }
+
+    .metric-tile:hover .sparkline-bar {
+      opacity: 0.9;
+    }
+
+    /* ─── Ring/Gauge ─── */
+    .metric-gauge {
+      position: relative;
+      width: 64px;
+      height: 64px;
+      margin: 0 auto var(--space-2);
+    }
+
+    .gauge-ring {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: conic-gradient(
+        var(--phosphor-green) 0deg,
+        var(--phosphor-green) calc(var(--progress) * 3.6deg),
+        var(--bg-deep) calc(var(--progress) * 3.6deg),
+        var(--bg-deep) 360deg
+      );
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .gauge-inner {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--bg-panel);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    /* ─── Large Metric Tile ─── */
+    .metric-tile.large {
+      min-height: 180px;
+      padding: var(--space-5);
+    }
+
+    .metric-tile.large .metric-value {
+      font-size: 42px;
+    }
+
+    .metric-tile.large .metric-label {
+      font-size: 11px;
+    }
+
+    /* ─── Metric Tile with Sub-stats ─── */
+    .metric-substats {
+      display: flex;
+      gap: var(--space-4);
+      padding-top: var(--space-3);
+      margin-top: auto;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .substat {
+      flex: 1;
+    }
+
+    .substat-value {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .substat-label {
+      font-size: 8px;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    /* ─── Animated Number ─── */
+    @keyframes count-up {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .metric-value.animate {
+      animation: count-up 0.5s ease forwards;
+    }
+  </style>
+</head>
+<body class="scanlines crt-vignette">
+
+  <div class="prototype-container">
+    <header class="prototype-header">
+      <h1 class="prototype-title">MetricTile</h1>
+      <p class="prototype-desc">
+        The metrics zone uses compact tiles to display system-wide metrics. Each tile can show
+        a value with trend, progress bar, status indicators, sparklines, or gauges.
+      </p>
+    </header>
+
+    <!-- Standard 6-Column Grid -->
+    <section class="section">
+      <div class="section-label">Standard Metrics Grid (6 columns)</div>
+      <div class="metrics-grid">
+        <!-- With Trend (Up) -->
+        <div class="metric-tile">
+          <div class="metric-label">Tokens / 24h</div>
+          <div class="metric-value">127,432</div>
+          <div class="metric-trend up">
+            <span class="trend-arrow">↗</span>
+            +12% vs yesterday
+          </div>
+        </div>
+
+        <!-- With Progress Bar -->
+        <div class="metric-tile success">
+          <div class="metric-label">Success Rate</div>
+          <div class="metric-value">94.7<span class="metric-unit">%</span></div>
+          <div class="metric-progress">
+            <div class="progress-track">
+              <div class="progress-fill success" style="width: 94.7%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- With Trend (Down but improved) -->
+        <div class="metric-tile">
+          <div class="metric-label">Avg Response</div>
+          <div class="metric-value">1.2<span class="metric-unit">s</span></div>
+          <div class="metric-trend improved">
+            <span class="trend-arrow">↘</span>
+            -8% improved
+          </div>
+        </div>
+
+        <!-- With Status Indicator -->
+        <div class="metric-tile">
+          <div class="metric-label">Sessions</div>
+          <div class="metric-value">12</div>
+          <div class="metric-status">
+            <div class="status-row">
+              <span class="status-dot online"></span>
+              <span class="status-name">3 active now</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- With Trend (Up) -->
+        <div class="metric-tile">
+          <div class="metric-label">Tool Calls</div>
+          <div class="metric-value">847</div>
+          <div class="metric-trend up">
+            <span class="trend-arrow">↗</span>
+            +23%
+          </div>
+        </div>
+
+        <!-- Success State -->
+        <div class="metric-tile highlight">
+          <div class="metric-label">Errors</div>
+          <div class="metric-value success glow">0</div>
+          <div class="metric-trend neutral">
+            All systems nominal
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Variant: With Sparklines -->
+    <section class="section">
+      <div class="section-label">Variant: With Sparklines</div>
+      <div class="metrics-grid">
+        <div class="metric-tile clickable">
+          <div class="metric-label">
+            <span class="metric-label-icon">◆</span>
+            Tokens / Hour
+          </div>
+          <div class="metric-value">5,847</div>
+          <div class="metric-sparkline">
+            <div class="sparkline-bar" style="height: 40%"></div>
+            <div class="sparkline-bar" style="height: 60%"></div>
+            <div class="sparkline-bar" style="height: 45%"></div>
+            <div class="sparkline-bar" style="height: 80%"></div>
+            <div class="sparkline-bar" style="height: 65%"></div>
+            <div class="sparkline-bar" style="height: 90%"></div>
+            <div class="sparkline-bar" style="height: 75%"></div>
+            <div class="sparkline-bar" style="height: 100%"></div>
+          </div>
+        </div>
+
+        <div class="metric-tile clickable">
+          <div class="metric-label">
+            <span class="metric-label-icon">◆</span>
+            Requests
+          </div>
+          <div class="metric-value">234</div>
+          <div class="metric-sparkline">
+            <div class="sparkline-bar" style="height: 30%"></div>
+            <div class="sparkline-bar" style="height: 50%"></div>
+            <div class="sparkline-bar" style="height: 40%"></div>
+            <div class="sparkline-bar" style="height: 70%"></div>
+            <div class="sparkline-bar" style="height: 85%"></div>
+            <div class="sparkline-bar" style="height: 60%"></div>
+            <div class="sparkline-bar" style="height: 95%"></div>
+            <div class="sparkline-bar" style="height: 80%"></div>
+          </div>
+        </div>
+
+        <div class="metric-tile clickable">
+          <div class="metric-label">
+            <span class="metric-label-icon">◆</span>
+            Latency
+          </div>
+          <div class="metric-value">142<span class="metric-unit">ms</span></div>
+          <div class="metric-sparkline">
+            <div class="sparkline-bar" style="height: 60%; background: var(--phosphor-amber)"></div>
+            <div class="sparkline-bar" style="height: 40%; background: var(--phosphor-amber)"></div>
+            <div class="sparkline-bar" style="height: 50%; background: var(--phosphor-amber)"></div>
+            <div class="sparkline-bar" style="height: 30%; background: var(--phosphor-green)"></div>
+            <div class="sparkline-bar" style="height: 25%; background: var(--phosphor-green)"></div>
+            <div class="sparkline-bar" style="height: 35%; background: var(--phosphor-green)"></div>
+            <div class="sparkline-bar" style="height: 20%; background: var(--phosphor-green)"></div>
+            <div class="sparkline-bar" style="height: 15%; background: var(--phosphor-green)"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Variant: Model Status -->
+    <section class="section">
+      <div class="section-label">Variant: Status List</div>
+      <div class="metrics-grid">
+        <div class="metric-tile">
+          <div class="metric-label">Models</div>
+          <div class="metric-value">2<span class="metric-unit"> online</span></div>
+          <div class="metric-status">
+            <div class="status-row">
+              <span class="status-dot online"></span>
+              <span class="status-name">claude-4-opus</span>
+            </div>
+            <div class="status-row">
+              <span class="status-dot online"></span>
+              <span class="status-name">claude-4-sonnet</span>
+            </div>
+            <div class="status-row">
+              <span class="status-dot standby"></span>
+              <span class="status-name">gpt-4-turbo</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="metric-tile">
+          <div class="metric-label">Plugins</div>
+          <div class="metric-value">3<span class="metric-unit"> active</span></div>
+          <div class="metric-status">
+            <div class="status-row">
+              <span class="status-dot online"></span>
+              <span class="status-name">groove</span>
+            </div>
+            <div class="status-row">
+              <span class="status-dot online"></span>
+              <span class="status-name">code-review</span>
+            </div>
+            <div class="status-row">
+              <span class="status-dot online"></span>
+              <span class="status-name">test-runner</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="metric-tile warning">
+          <div class="metric-label">Connections</div>
+          <div class="metric-value">4<span class="metric-unit"> / 5</span></div>
+          <div class="metric-progress">
+            <div class="progress-track">
+              <div class="progress-fill warning" style="width: 80%"></div>
+            </div>
+            <div class="progress-label">
+              <span>WebSocket</span>
+              <span>80%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Large Tiles with Sub-stats -->
+    <section class="section">
+      <div class="section-label">Large Tiles with Sub-stats</div>
+      <div class="metrics-grid-3">
+        <div class="metric-tile large">
+          <div class="metric-label">Total Tokens Today</div>
+          <div class="metric-value animate">127,432</div>
+          <div class="metric-substats">
+            <div class="substat">
+              <div class="substat-value">89,421</div>
+              <div class="substat-label">Input</div>
+            </div>
+            <div class="substat">
+              <div class="substat-value">38,011</div>
+              <div class="substat-label">Output</div>
+            </div>
+            <div class="substat">
+              <div class="substat-value">$4.28</div>
+              <div class="substat-label">Cost</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="metric-tile large">
+          <div class="metric-label">Groove Health</div>
+          <div class="metric-gauge" style="--progress: 94.7">
+            <div class="gauge-ring">
+              <div class="gauge-inner">94.7%</div>
+            </div>
+          </div>
+          <div class="metric-substats">
+            <div class="substat">
+              <div class="substat-value">127</div>
+              <div class="substat-label">Patterns</div>
+            </div>
+            <div class="substat">
+              <div class="substat-value">3</div>
+              <div class="substat-label">Pending</div>
+            </div>
+            <div class="substat">
+              <div class="substat-value">↗</div>
+              <div class="substat-label">Trend</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="metric-tile large error">
+          <div class="metric-label">Error Rate</div>
+          <div class="metric-value error">2.3<span class="metric-unit">%</span></div>
+          <div class="metric-progress">
+            <div class="progress-track">
+              <div class="progress-fill error" style="width: 2.3%"></div>
+            </div>
+            <div class="progress-label">
+              <span>Target: &lt;1%</span>
+              <span style="color: var(--phosphor-red);">Above threshold</span>
+            </div>
+          </div>
+          <div class="metric-substats">
+            <div class="substat">
+              <div class="substat-value">12</div>
+              <div class="substat-label">Errors</div>
+            </div>
+            <div class="substat">
+              <div class="substat-value">520</div>
+              <div class="substat-label">Total</div>
+            </div>
+            <div class="substat">
+              <div class="substat-value">↗ +0.8%</div>
+              <div class="substat-label">vs Yesterday</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Edge Cases -->
+    <section class="section">
+      <div class="section-label">Edge Cases</div>
+      <div class="metrics-grid">
+        <!-- Zero Value -->
+        <div class="metric-tile highlight">
+          <div class="metric-label">Pending Tasks</div>
+          <div class="metric-value success glow">0</div>
+          <div class="metric-trend neutral">
+            Queue empty
+          </div>
+        </div>
+
+        <!-- Very Large Number -->
+        <div class="metric-tile">
+          <div class="metric-label">Events Processed</div>
+          <div class="metric-value" style="font-size: 22px;">1,247,892</div>
+          <div class="metric-trend up">
+            <span class="trend-arrow">↗</span>
+            +8.2%
+          </div>
+        </div>
+
+        <!-- Percentage at 100% -->
+        <div class="metric-tile success">
+          <div class="metric-label">Uptime</div>
+          <div class="metric-value success">100<span class="metric-unit">%</span></div>
+          <div class="metric-progress">
+            <div class="progress-track">
+              <div class="progress-fill success" style="width: 100%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading State -->
+        <div class="metric-tile" style="opacity: 0.7;">
+          <div class="metric-label">Loading...</div>
+          <div class="metric-value" style="color: var(--text-tertiary);">—</div>
+          <div class="metric-trend neutral">
+            Fetching data...
+          </div>
+        </div>
+
+        <!-- Error State -->
+        <div class="metric-tile error">
+          <div class="metric-label">API Status</div>
+          <div class="metric-value error">Error</div>
+          <div class="metric-trend" style="color: var(--phosphor-red);">
+            Connection failed
+          </div>
+        </div>
+
+        <!-- No Data -->
+        <div class="metric-tile">
+          <div class="metric-label">New Metric</div>
+          <div class="metric-value" style="color: var(--text-tertiary);">N/A</div>
+          <div class="metric-trend neutral">
+            No data yet
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+</body>
+</html>
