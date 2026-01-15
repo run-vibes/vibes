@@ -12,7 +12,7 @@ use ratatui::{
 use crate::client::TuiClient;
 use crate::keybindings::{Action, KeyBindings};
 use crate::views::{DashboardView, View, ViewRenderer, ViewStack};
-use crate::widgets::{SessionInfo, SessionListWidget, SessionStatus};
+use crate::widgets::{SessionInfo, SessionListWidget, SessionStatus, StatsBarWidget};
 use crate::{
     AppState, Mode, Theme, VibesTerminal, restore_terminal, setup_terminal, vibes_default,
 };
@@ -34,6 +34,8 @@ pub struct App {
     pub retry_requested: bool,
     /// Session list widget for the dashboard.
     pub session_widget: SessionListWidget,
+    /// Stats summary bar widget for the dashboard.
+    pub stats_widget: StatsBarWidget,
 }
 
 impl App {
@@ -50,6 +52,7 @@ impl App {
             server_url: None,
             retry_requested: false,
             session_widget: SessionListWidget::new(),
+            stats_widget: StatsBarWidget::default(),
         }
     }
 
@@ -66,6 +69,7 @@ impl App {
             server_url: None,
             retry_requested: false,
             session_widget: SessionListWidget::new(),
+            stats_widget: StatsBarWidget::default(),
         }
     }
 
@@ -82,6 +86,7 @@ impl App {
             server_url: Some(url),
             retry_requested: false,
             session_widget: SessionListWidget::new(),
+            stats_widget: StatsBarWidget::default(),
         }
     }
 
@@ -103,6 +108,29 @@ impl App {
     /// Clears the current error message.
     pub fn clear_error(&mut self) {
         self.error_message = None;
+    }
+
+    /// Updates the stats widget based on current session data.
+    fn update_stats(&mut self) {
+        // Count active sessions (Running status)
+        let active_sessions = self
+            .session_widget
+            .sessions
+            .iter()
+            .filter(|s| s.status == SessionStatus::Running)
+            .count() as u32;
+
+        // Sum agent counts from all sessions
+        let running_agents = self
+            .session_widget
+            .sessions
+            .iter()
+            .map(|s| s.agent_count as u32)
+            .sum();
+
+        self.stats_widget.session_count = active_sessions;
+        self.stats_widget.agent_count = running_agents;
+        // total_cost is updated separately when cost data arrives
     }
 
     /// Handles a key event.
@@ -238,6 +266,9 @@ impl App {
                         name: s.name,
                     })
                     .collect();
+
+                // Update stats widget based on sessions
+                self.update_stats();
             }
             ServerMessage::AgentList { agents, .. } => {
                 // Update state with agent list
