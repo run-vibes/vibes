@@ -12,7 +12,9 @@ use ratatui::{
 use crate::client::TuiClient;
 use crate::keybindings::{Action, KeyBindings};
 use crate::views::{DashboardView, View, ViewRenderer, ViewStack};
-use crate::widgets::{SessionInfo, SessionListWidget, SessionStatus, StatsBarWidget};
+use crate::widgets::{
+    ActivityFeedWidget, SessionInfo, SessionListWidget, SessionStatus, StatsBarWidget,
+};
 use crate::{
     AppState, Mode, Theme, VibesTerminal, restore_terminal, setup_terminal, vibes_default,
 };
@@ -36,6 +38,8 @@ pub struct App {
     pub session_widget: SessionListWidget,
     /// Stats summary bar widget for the dashboard.
     pub stats_widget: StatsBarWidget,
+    /// Activity feed widget for the dashboard.
+    pub activity_widget: ActivityFeedWidget,
 }
 
 impl App {
@@ -53,6 +57,7 @@ impl App {
             retry_requested: false,
             session_widget: SessionListWidget::new(),
             stats_widget: StatsBarWidget::default(),
+            activity_widget: ActivityFeedWidget::new(),
         }
     }
 
@@ -70,6 +75,7 @@ impl App {
             retry_requested: false,
             session_widget: SessionListWidget::new(),
             stats_widget: StatsBarWidget::default(),
+            activity_widget: ActivityFeedWidget::new(),
         }
     }
 
@@ -87,6 +93,7 @@ impl App {
             retry_requested: false,
             session_widget: SessionListWidget::new(),
             stats_widget: StatsBarWidget::default(),
+            activity_widget: ActivityFeedWidget::new(),
         }
     }
 

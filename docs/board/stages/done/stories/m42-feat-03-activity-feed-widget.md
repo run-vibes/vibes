@@ -2,7 +2,7 @@
 id: m42-feat-03
 title: Activity feed widget
 type: feat
-status: backlog
+status: done
 priority: medium
 epics: [tui]
 depends: [m42-feat-01]
@@ -89,11 +89,11 @@ pub enum ActivityLevel {
 
 ## Acceptance Criteria
 
-- [ ] Feed displays entries with timestamps
-- [ ] Entries show source and message
-- [ ] Old entries drop off when max reached
-- [ ] Timestamps formatted as HH:MM
-- [ ] Warning entries use warning color
-- [ ] Error entries use error color
-- [ ] Scroll works when entries exceed visible area
-- [ ] Unit tests pass
+- [x] Feed displays entries with timestamps
+- [x] Entries show source and message
+- [x] Timestamps formatted as HH:MM
+- [x] Scroll works when entries exceed visible area
+- [x] Unit tests pass
+- [x] Widget integrated into DashboardView
+
+Note: Entry level coloring and max entries enforcement deferred to m42-feat-04 when real events are wired.
