@@ -17,7 +17,9 @@ use vibes_core::{AuthContext, InputSource, VibesEvent};
 use crate::{AppState, PtyEvent};
 use base64::Engine;
 
-use super::protocol::{ClientMessage, RemovalReason, ServerMessage, SessionInfo};
+use super::protocol::{
+    ClientMessage, RemovalReason, ServerMessage, SessionInfo, vibes_event_to_server_message,
+};
 
 /// Detect client type from request headers
 ///
@@ -124,6 +126,7 @@ async fn handle_socket(
 ) {
     let (mut sender, mut receiver) = socket.split();
     let mut pty_rx = state.subscribe_pty_events();
+    let mut event_rx = state.subscribe_events();
     let mut conn_state = ConnectionState::new(client_type);
 
     info!(
@@ -202,6 +205,29 @@ async fn handle_socket(
                     }
                     Err(broadcast::error::RecvError::Lagged(count)) => {
                         warn!("Client lagged behind by {} PTY events", count);
+                    }
+                }
+            }
+
+            // Handle domain events from broadcast channel
+            domain_event = event_rx.recv() => {
+                match domain_event {
+                    Ok((_offset, stored_event)) => {
+                        // Convert to ServerMessage and send if applicable
+                        if let Some(server_msg) = vibes_event_to_server_message(&stored_event.event)
+                            && let Ok(json) = serde_json::to_string(&server_msg)
+                            && sender.send(Message::Text(json)).await.is_err()
+                        {
+                            debug!("Failed to send domain event to client");
+                            break;
+                        }
+                    }
+                    Err(broadcast::error::RecvError::Closed) => {
+                        warn!("Domain event broadcast channel closed");
+                        break;
+                    }
+                    Err(broadcast::error::RecvError::Lagged(count)) => {
+                        warn!("Client lagged behind by {} domain events", count);
                     }
                 }
             }

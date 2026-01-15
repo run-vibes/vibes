@@ -3,17 +3,19 @@
 use std::io;
 use std::time::Duration;
 
+use chrono::Local;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
 use ratatui::{
     Frame,
     layout::{Constraint, Layout},
 };
 
-use crate::client::TuiClient;
+use crate::client::{ReconnectConfig, TuiClient};
 use crate::keybindings::{Action, KeyBindings};
 use crate::views::{DashboardView, View, ViewRenderer, ViewStack};
 use crate::widgets::{
-    ActivityFeedWidget, SessionInfo, SessionListWidget, SessionStatus, StatsBarWidget,
+    ActivityEvent, ActivityFeedWidget, ConnectionStatus, SessionInfo, SessionListWidget,
+    SessionStatus, StatsBarWidget,
 };
 use crate::{
     AppState, Mode, Theme, VibesTerminal, restore_terminal, setup_terminal, vibes_default,
@@ -40,6 +42,12 @@ pub struct App {
     pub stats_widget: StatsBarWidget,
     /// Activity feed widget for the dashboard.
     pub activity_widget: ActivityFeedWidget,
+    /// Reconnection configuration.
+    pub reconnect_config: ReconnectConfig,
+    /// Current reconnection attempt number.
+    reconnect_attempt: u32,
+    /// Time of last reconnection attempt (for backoff).
+    last_reconnect_attempt: Option<std::time::Instant>,
 }
 
 impl App {
@@ -58,6 +66,9 @@ impl App {
             session_widget: SessionListWidget::new(),
             stats_widget: StatsBarWidget::default(),
             activity_widget: ActivityFeedWidget::new(),
+            reconnect_config: ReconnectConfig::default(),
+            reconnect_attempt: 0,
+            last_reconnect_attempt: None,
         }
     }
 
@@ -74,8 +85,14 @@ impl App {
             server_url: None,
             retry_requested: false,
             session_widget: SessionListWidget::new(),
-            stats_widget: StatsBarWidget::default(),
+            stats_widget: StatsBarWidget {
+                connection_status: ConnectionStatus::Connected,
+                ..Default::default()
+            },
             activity_widget: ActivityFeedWidget::new(),
+            reconnect_config: ReconnectConfig::default(),
+            reconnect_attempt: 0,
+            last_reconnect_attempt: None,
         }
     }
 
@@ -92,8 +109,14 @@ impl App {
             server_url: Some(url),
             retry_requested: false,
             session_widget: SessionListWidget::new(),
-            stats_widget: StatsBarWidget::default(),
+            stats_widget: StatsBarWidget {
+                connection_status: ConnectionStatus::Connected,
+                ..Default::default()
+            },
             activity_widget: ActivityFeedWidget::new(),
+            reconnect_config: ReconnectConfig::default(),
+            reconnect_attempt: 0,
+            last_reconnect_attempt: None,
         }
     }
 
@@ -101,11 +124,13 @@ impl App {
     pub fn set_client(&mut self, client: TuiClient) {
         self.client = Some(client);
         self.error_message = None;
+        self.stats_widget.connection_status = ConnectionStatus::Connected;
     }
 
     /// Handles a connection error by showing an error message.
     pub fn handle_connection_error(&mut self, error: &str) {
         self.state.mode = Mode::Normal;
+        self.stats_widget.connection_status = ConnectionStatus::Disconnected;
         self.error_message = Some(format!(
             "Connection lost: {}. Press 'r' to retry or 'q' to quit.",
             error
@@ -235,7 +260,11 @@ impl App {
     /// Processes async updates (WebSocket messages, timers, etc.).
     ///
     /// Polls the client for incoming messages and updates state accordingly.
+    /// Also handles auto-reconnection when the connection is lost.
     pub async fn tick(&mut self) {
+        // Check connection status and attempt reconnection if needed
+        self.check_connection().await;
+
         // Collect messages first to avoid borrow issues
         let messages: Vec<_> = if let Some(client) = &mut self.client {
             std::iter::from_fn(|| client.try_recv()).collect()
@@ -246,6 +275,85 @@ impl App {
         // Then process them
         for msg in messages {
             self.handle_server_message(msg);
+        }
+    }
+
+    /// Checks the connection status and attempts reconnection if needed.
+    async fn check_connection(&mut self) {
+        // Check if we have a client and if it's still connected
+        let is_connected = self.client.as_ref().is_some_and(|c| c.is_connected());
+
+        if !is_connected && self.server_url.is_some() {
+            // Connection lost, attempt to reconnect
+            self.stats_widget.connection_status = ConnectionStatus::Reconnecting;
+
+            // Check if enough time has passed since last attempt (exponential backoff)
+            let should_attempt = self.last_reconnect_attempt.is_none_or(|last| {
+                let required_delay = self
+                    .reconnect_config
+                    .delay_for_attempt(self.reconnect_attempt);
+                last.elapsed() >= required_delay
+            });
+
+            if should_attempt {
+                self.attempt_reconnect().await;
+            }
+        } else if is_connected {
+            // Connection is healthy, reset reconnect state
+            self.reconnect_attempt = 0;
+            self.last_reconnect_attempt = None;
+            self.stats_widget.connection_status = ConnectionStatus::Connected;
+        }
+    }
+
+    /// Attempts to reconnect to the server.
+    async fn attempt_reconnect(&mut self) {
+        let url = match &self.server_url {
+            Some(url) => url.clone(),
+            None => return,
+        };
+
+        // Check max attempts if configured
+        if let Some(max) = self.reconnect_config.max_attempts
+            && self.reconnect_attempt >= max
+        {
+            self.stats_widget.connection_status = ConnectionStatus::Disconnected;
+            self.error_message =
+                Some("Max reconnection attempts reached. Press 'r' to retry.".to_string());
+            return;
+        }
+
+        tracing::info!(
+            attempt = self.reconnect_attempt + 1,
+            "Attempting to reconnect to {}",
+            url
+        );
+
+        self.last_reconnect_attempt = Some(std::time::Instant::now());
+
+        match TuiClient::connect(&url).await {
+            Ok(client) => {
+                tracing::info!("Reconnected successfully");
+                self.client = Some(client);
+                self.stats_widget.connection_status = ConnectionStatus::Connected;
+                self.reconnect_attempt = 0;
+                self.error_message = None;
+
+                // Request fresh data after reconnect
+                if let Some(client) = &self.client {
+                    let _ = client.list_sessions("reconnect-sessions").await;
+                    let _ = client.list_agents("reconnect-agents").await;
+                }
+            }
+            Err(e) => {
+                tracing::warn!(
+                    attempt = self.reconnect_attempt + 1,
+                    error = %e,
+                    "Reconnection failed"
+                );
+                self.reconnect_attempt += 1;
+                self.client = None;
+            }
         }
     }
 
@@ -283,6 +391,81 @@ impl App {
             }
             ServerMessage::Error { message, .. } => {
                 self.error_message = Some(message);
+            }
+            // Real-time session notifications
+            ServerMessage::SessionNotification { session_id, name } => {
+                tracing::debug!("Session created: {}", session_id);
+
+                // Add new session to the list
+                let display_name = name
+                    .clone()
+                    .unwrap_or_else(|| session_id[..8.min(session_id.len())].to_string());
+                self.session_widget.sessions.push(SessionInfo {
+                    id: session_id.clone(),
+                    status: SessionStatus::Running,
+                    agent_count: 0,
+                    branch: None,
+                    name: name.clone(),
+                });
+
+                // Add to activity feed
+                self.activity_widget.push_event(ActivityEvent {
+                    time: Local::now().format("%H:%M").to_string(),
+                    source: "session".into(),
+                    description: format!("created \"{}\"", display_name),
+                });
+
+                self.update_stats();
+            }
+            ServerMessage::SessionState { session_id, state } => {
+                tracing::debug!("Session {} state changed to: {}", session_id, state);
+
+                // Update session status in the list
+                if let Some(session) = self
+                    .session_widget
+                    .sessions
+                    .iter_mut()
+                    .find(|s| s.id == session_id)
+                {
+                    session.status = match state.as_str() {
+                        "running" | "active" => SessionStatus::Running,
+                        "paused" => SessionStatus::Paused,
+                        "completed" | "closed" => SessionStatus::Completed,
+                        "failed" | "error" => SessionStatus::Failed,
+                        _ => session.status,
+                    };
+                }
+
+                // Add to activity feed
+                let display_id = &session_id[..8.min(session_id.len())];
+                self.activity_widget.push_event(ActivityEvent {
+                    time: Local::now().format("%H:%M").to_string(),
+                    source: display_id.to_string(),
+                    description: format!("state → {}", state),
+                });
+
+                self.update_stats();
+            }
+            ServerMessage::SessionRemoved { session_id, reason } => {
+                tracing::debug!("Session {} removed: {:?}", session_id, reason);
+
+                // Remove session from the list
+                self.session_widget.sessions.retain(|s| s.id != session_id);
+
+                // Add to activity feed
+                let display_id = &session_id[..8.min(session_id.len())];
+                let reason_str = match reason {
+                    vibes_server::ws::RemovalReason::OwnerDisconnected => "disconnected",
+                    vibes_server::ws::RemovalReason::Killed => "killed",
+                    vibes_server::ws::RemovalReason::SessionFinished => "finished",
+                };
+                self.activity_widget.push_event(ActivityEvent {
+                    time: Local::now().format("%H:%M").to_string(),
+                    source: display_id.to_string(),
+                    description: reason_str.to_string(),
+                });
+
+                self.update_stats();
             }
             // Other messages will be handled as views are implemented
             _ => {}

@@ -8,6 +8,7 @@
 | Story | Type | Priority | Epics |
 |-------|------|----------|-------|
 | [m39-feat-05-eval-cli](stages/in-progress/stories/m39-feat-05-eval-cli.md) | feat | medium | evals |
+| [m42-feat-04-websocket-real-time-updates](stages/in-progress/stories/m42-feat-04-websocket-real-time-updates.md) | feat | high | tui |
 
 ## Backlog
 
@@ -20,7 +21,6 @@
 | [feat-0078-connectivity-validation](stages/backlog/stories/feat-0078-connectivity-validation.md) | feat | medium | cli,networking |
 | [feat-0101-header-identity-display](stages/backlog/stories/feat-0101-header-identity-display.md) | feat | low | web-ui,design-system |
 | [m39-feat-06-eval-web-ui](stages/backlog/stories/m39-feat-06-eval-web-ui.md) | feat | medium | evals |
-| [m42-feat-04-websocket-real-time-updates](stages/backlog/stories/m42-feat-04-websocket-real-time-updates.md) | feat | high | tui |
 | [m43-feat-01-agent-detail-view-layout](stages/backlog/stories/m43-feat-01-agent-detail-view-layout.md) | feat | high | tui |
 | [m43-feat-02-output-stream-panel](stages/backlog/stories/m43-feat-02-output-stream-panel.md) | feat | high | tui |
 | [m43-feat-03-permission-approval-widget](stages/backlog/stories/m43-feat-03-permission-approval-widget.md) | feat | high | tui |
@@ -104,7 +104,7 @@
 | [39-eval-core](milestones/39-eval-core/) | in-progress | evals |
 | [40-observability-tracing](milestones/40-observability-tracing/) | done | observability |
 | [41-tui-core](milestones/41-tui-core/) | done | tui |
-| [42-tui-dashboard](milestones/42-tui-dashboard/) | planned | tui |
+| [42-tui-dashboard](milestones/42-tui-dashboard/) | in-progress | tui |
 | [43-tui-agent-control](milestones/43-tui-agent-control/) | planned | tui |
 | [44-tui-swarm-visualization](milestones/44-tui-swarm-visualization/) | planned | tui |
 | [45-tui-theme-system](milestones/45-tui-theme-system/) | planned | tui |
