@@ -4,12 +4,14 @@
 //! built on ratatui and crossterm.
 
 mod app;
+mod keybindings;
 mod state;
 mod terminal;
 mod theme;
 mod views;
 
-pub use app::{App, KeyBindings, VibesClient};
+pub use app::{App, VibesClient};
+pub use keybindings::{Action, KeyBindings};
 pub use state::{AgentId, AgentState, AppState, Mode, Selection, SessionId, SwarmId, SwarmState};
 pub use terminal::{VibesTerminal, install_panic_hook, restore_terminal, setup_terminal};
 pub use theme::{Theme, vibes_default};

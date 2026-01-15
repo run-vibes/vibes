@@ -9,12 +9,9 @@ use ratatui::{
     layout::{Constraint, Layout},
 };
 
+use crate::keybindings::{Action, KeyBindings};
 use crate::views::{DashboardView, View, ViewRenderer, ViewStack};
 use crate::{AppState, Theme, VibesTerminal, restore_terminal, setup_terminal, vibes_default};
-
-/// Placeholder for keybindings (implemented in Story 4).
-#[derive(Debug, Clone, Default)]
-pub struct KeyBindings;
 
 /// Placeholder for WebSocket client (implemented in Story 5).
 #[derive(Debug)]
@@ -37,7 +34,7 @@ impl App {
         Self {
             state: AppState::default(),
             views: ViewStack::new(),
-            keybindings: KeyBindings,
+            keybindings: KeyBindings::default(),
             theme: vibes_default(),
             client: None,
             running: true,
@@ -46,14 +43,46 @@ impl App {
 
     /// Handles a key event.
     ///
-    /// Currently only handles 'q' to quit. More keybindings in Story 4.
+    /// Resolves the key to an action using keybindings, then executes the action.
+    /// Ctrl-C is handled as a special case to always quit.
     pub fn handle_key(&mut self, key: KeyEvent) {
-        match key.code {
-            KeyCode::Char('q') => self.running = false,
-            KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                self.running = false;
+        // Ctrl-C always quits (special case, not in keybindings)
+        if key.code == KeyCode::Char('c') && key.modifiers.contains(KeyModifiers::CONTROL) {
+            self.running = false;
+            return;
+        }
+
+        // Resolve key to action using keybindings
+        if let Some(action) = self.keybindings.resolve(key, &self.views.current) {
+            self.execute_action(action);
+        }
+    }
+
+    /// Executes an action.
+    fn execute_action(&mut self, action: Action) {
+        match action {
+            Action::Quit => self.running = false,
+            Action::Back => {
+                self.views.pop();
             }
-            _ => {}
+            // Navigation and other actions will be wired up in future stories
+            Action::NavigateUp
+            | Action::NavigateDown
+            | Action::NavigateLeft
+            | Action::NavigateRight
+            | Action::Select
+            | Action::CommandMode
+            | Action::SearchMode
+            | Action::HelpMode
+            | Action::JumpToView(_)
+            | Action::Approve
+            | Action::Deny
+            | Action::Pause
+            | Action::Resume
+            | Action::Cancel
+            | Action::ViewDiff => {
+                // Placeholder - will be implemented in future stories
+            }
         }
     }
 
@@ -236,5 +265,35 @@ mod tests {
 
         assert_eq!(app.views.current, View::Dashboard);
         assert!(app.views.history.is_empty());
+    }
+
+    #[test]
+    fn handle_key_esc_pops_view_stack() {
+        let mut app = App::new();
+        app.views.push(View::Settings);
+        assert_eq!(app.views.current, View::Settings);
+
+        let key = KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE);
+        app.handle_key(key);
+
+        // Esc triggers Back action which pops the view stack
+        assert_eq!(app.views.current, View::Dashboard);
+        assert!(app.views.history.is_empty());
+        // But app should still be running
+        assert!(app.running);
+    }
+
+    #[test]
+    fn handle_key_esc_at_root_does_nothing() {
+        let mut app = App::new();
+        assert_eq!(app.views.current, View::Dashboard);
+        assert!(app.views.history.is_empty());
+
+        let key = KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE);
+        app.handle_key(key);
+
+        // At root, Esc does nothing (pop returns false)
+        assert_eq!(app.views.current, View::Dashboard);
+        assert!(app.running);
     }
 }
