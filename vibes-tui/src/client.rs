@@ -2,13 +2,15 @@
 //!
 //! Provides a TuiClient with non-blocking message receiving for the TUI event loop.
 
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
 use anyhow::{Context, Result};
 use futures_util::{SinkExt, StreamExt};
 use tokio::sync::mpsc;
 use tokio_tungstenite::{connect_async, tungstenite::Message};
-use tracing::{debug, warn};
+use tracing::{debug, info, warn};
 use vibes_server::ws::{ClientMessage, ServerMessage};
 
 /// WebSocket client for the TUI.
@@ -19,6 +21,8 @@ pub struct TuiClient {
     tx: mpsc::Sender<ClientMessage>,
     /// Receiver for incoming messages
     rx: mpsc::Receiver<ServerMessage>,
+    /// Connection status flag (true = connected)
+    connected: Arc<AtomicBool>,
 }
 
 impl std::fmt::Debug for TuiClient {
@@ -40,16 +44,30 @@ impl TuiClient {
         let (outgoing_tx, outgoing_rx) = mpsc::channel::<ClientMessage>(32);
         let (incoming_tx, incoming_rx) = mpsc::channel::<ServerMessage>(32);
 
+        // Connection status flag
+        let connected = Arc::new(AtomicBool::new(true));
+        let connected_clone = Arc::clone(&connected);
+
         // Spawn task to forward outgoing messages to WebSocket
         tokio::spawn(Self::outgoing_task(outgoing_rx, ws_sender));
 
         // Spawn task to receive incoming messages from WebSocket
-        tokio::spawn(Self::incoming_task(ws_receiver, incoming_tx));
+        tokio::spawn(Self::incoming_task(
+            ws_receiver,
+            incoming_tx,
+            connected_clone,
+        ));
 
         Ok(Self {
             tx: outgoing_tx,
             rx: incoming_rx,
+            connected,
         })
+    }
+
+    /// Returns true if the connection is still active.
+    pub fn is_connected(&self) -> bool {
+        self.connected.load(Ordering::Relaxed)
     }
 
     /// Send a message to the daemon.
@@ -121,8 +139,11 @@ impl TuiClient {
     }
 
     /// Task that receives incoming messages from the WebSocket.
-    async fn incoming_task<S>(mut ws_receiver: S, tx: mpsc::Sender<ServerMessage>)
-    where
+    async fn incoming_task<S>(
+        mut ws_receiver: S,
+        tx: mpsc::Sender<ServerMessage>,
+        connected: Arc<AtomicBool>,
+    ) where
         S: StreamExt<Item = Result<Message, tokio_tungstenite::tungstenite::Error>> + Unpin,
     {
         while let Some(result) = ws_receiver.next().await {
@@ -157,6 +178,41 @@ impl TuiClient {
                 }
             }
         }
+        // Mark connection as closed when task exits
+        connected.store(false, Ordering::Relaxed);
+        info!("WebSocket connection closed");
+    }
+}
+
+/// Exponential backoff configuration for reconnection.
+#[derive(Debug, Clone)]
+pub struct ReconnectConfig {
+    /// Initial delay between reconnection attempts.
+    pub initial_delay: Duration,
+    /// Maximum delay between attempts.
+    pub max_delay: Duration,
+    /// Multiplier for exponential backoff.
+    pub multiplier: f64,
+    /// Maximum number of attempts (None = unlimited).
+    pub max_attempts: Option<u32>,
+}
+
+impl Default for ReconnectConfig {
+    fn default() -> Self {
+        Self {
+            initial_delay: Duration::from_millis(500),
+            max_delay: Duration::from_secs(30),
+            multiplier: 2.0,
+            max_attempts: None,
+        }
+    }
+}
+
+impl ReconnectConfig {
+    /// Calculate the delay for a given attempt number (0-indexed).
+    pub fn delay_for_attempt(&self, attempt: u32) -> Duration {
+        let delay_ms = self.initial_delay.as_millis() as f64 * self.multiplier.powi(attempt as i32);
+        Duration::from_millis(delay_ms.min(self.max_delay.as_millis() as f64) as u64)
     }
 }
 
@@ -169,5 +225,48 @@ mod tests {
         // Compile-time test that TuiClient implements Debug
         fn assert_debug<T: std::fmt::Debug>() {}
         assert_debug::<TuiClient>();
+    }
+
+    // ReconnectConfig tests
+    #[test]
+    fn reconnect_config_default_values() {
+        let config = ReconnectConfig::default();
+        assert_eq!(config.initial_delay, Duration::from_millis(500));
+        assert_eq!(config.max_delay, Duration::from_secs(30));
+        assert_eq!(config.multiplier, 2.0);
+        assert!(config.max_attempts.is_none());
+    }
+
+    #[test]
+    fn reconnect_config_first_attempt_uses_initial_delay() {
+        let config = ReconnectConfig::default();
+        let delay = config.delay_for_attempt(0);
+        assert_eq!(delay, Duration::from_millis(500));
+    }
+
+    #[test]
+    fn reconnect_config_delay_increases_exponentially() {
+        let config = ReconnectConfig::default();
+        // attempt 0: 500ms
+        // attempt 1: 1000ms
+        // attempt 2: 2000ms
+        assert_eq!(config.delay_for_attempt(0), Duration::from_millis(500));
+        assert_eq!(config.delay_for_attempt(1), Duration::from_millis(1000));
+        assert_eq!(config.delay_for_attempt(2), Duration::from_millis(2000));
+        assert_eq!(config.delay_for_attempt(3), Duration::from_millis(4000));
+    }
+
+    #[test]
+    fn reconnect_config_delay_capped_at_max() {
+        let config = ReconnectConfig {
+            initial_delay: Duration::from_secs(1),
+            max_delay: Duration::from_secs(10),
+            multiplier: 10.0,
+            max_attempts: None,
+        };
+        // attempt 0: 1s, attempt 1: 10s, attempt 2: would be 100s but capped to 10s
+        assert_eq!(config.delay_for_attempt(0), Duration::from_secs(1));
+        assert_eq!(config.delay_for_attempt(1), Duration::from_secs(10));
+        assert_eq!(config.delay_for_attempt(2), Duration::from_secs(10));
     }
 }

@@ -74,6 +74,9 @@ impl WsConnection {
     }
 }
 
+/// Domain event types that should be skipped when waiting for specific responses
+const DOMAIN_EVENT_TYPES: &[&str] = &["session_notification", "session_state", "session_removed"];
+
 /// High-level test client with helper methods
 pub struct TestClient {
     pub conn: WsConnection,
@@ -93,6 +96,21 @@ impl TestClient {
         );
 
         Self { conn }
+    }
+
+    /// Receive a message, skipping over domain event broadcasts
+    /// Domain events (session_notification, session_state, session_removed) are
+    /// broadcast to all connected clients and may arrive between request/response pairs.
+    #[allow(dead_code)]
+    async fn recv_skipping_domain_events(&mut self) -> serde_json::Value {
+        loop {
+            let msg: serde_json::Value = self.conn.recv_json().await;
+            let msg_type = msg["type"].as_str().unwrap_or("");
+            if !DOMAIN_EVENT_TYPES.contains(&msg_type) {
+                return msg;
+            }
+            // Skip domain events, continue waiting for next message
+        }
     }
 
     /// Create a new session, returns session ID
@@ -122,7 +140,7 @@ impl TestClient {
         }
         self.conn.send_json(&msg).await;
 
-        let response: serde_json::Value = self.conn.recv_json().await;
+        let response = self.recv_skipping_domain_events().await;
         assert_eq!(
             response["type"], "attach_ack",
             "Expected attach_ack but got: {}",
@@ -141,13 +159,22 @@ impl TestClient {
         self.conn.recv_json().await
     }
 
-    /// Assert no message received within duration
+    /// Assert no non-domain-event message received within duration.
+    /// Domain events (session_notification, session_state, session_removed) are
+    /// ignored since they can arrive at any time as broadcasts.
     #[allow(dead_code)]
     pub async fn expect_no_message(&mut self, duration: Duration) {
-        assert!(
-            self.conn.recv_timeout(duration).await.is_none(),
-            "Expected no message but received one"
-        );
+        let start = std::time::Instant::now();
+        while start.elapsed() < duration {
+            if let Some(text) = self.conn.recv_timeout(Duration::from_millis(50)).await {
+                let msg: serde_json::Value = serde_json::from_str(&text).unwrap();
+                let msg_type = msg["type"].as_str().unwrap_or("");
+                if !DOMAIN_EVENT_TYPES.contains(&msg_type) {
+                    panic!("Expected no message but received one: {}", msg);
+                }
+                // Received domain event, continue waiting
+            }
+        }
     }
 
     // === PTY Methods ===
@@ -170,7 +197,7 @@ impl TestClient {
         }
         self.conn.send_json(&msg).await;
 
-        let response: serde_json::Value = self.conn.recv_json().await;
+        let response = self.recv_skipping_domain_events().await;
         assert_eq!(
             response["type"], "attach_ack",
             "Expected attach_ack but got: {}",
@@ -311,7 +338,7 @@ impl TestClient {
             }))
             .await;
 
-        let response: serde_json::Value = self.conn.recv_json().await;
+        let response = self.recv_skipping_domain_events().await;
         assert_eq!(
             response["type"], "session_list",
             "Expected session_list but got: {}",
