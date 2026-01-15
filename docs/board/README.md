@@ -20,6 +20,10 @@
 | [feat-0078-connectivity-validation](stages/backlog/stories/feat-0078-connectivity-validation.md) | feat | medium | cli,networking |
 | [feat-0101-header-identity-display](stages/backlog/stories/feat-0101-header-identity-display.md) | feat | low | web-ui,design-system |
 | [m39-feat-06-eval-web-ui](stages/backlog/stories/m39-feat-06-eval-web-ui.md) | feat | medium | evals |
+| [m43-feat-01-agent-detail-view-layout](stages/backlog/stories/m43-feat-01-agent-detail-view-layout.md) | feat | high | tui |
+| [m43-feat-02-output-stream-panel](stages/backlog/stories/m43-feat-02-output-stream-panel.md) | feat | high | tui |
+| [m43-feat-03-permission-approval-widget](stages/backlog/stories/m43-feat-03-permission-approval-widget.md) | feat | high | tui |
+| [m43-feat-04-agent-control-actions](stages/backlog/stories/m43-feat-04-agent-control-actions.md) | feat | high | tui |
 
 ## Epics
 
