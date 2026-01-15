@@ -1,7 +1,7 @@
 ---
 id: 32-setup-wizards
 title: Setup Wizards
-status: planned
+status: done
 epics: [cli]
 ---
 

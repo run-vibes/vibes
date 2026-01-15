@@ -20,7 +20,6 @@
 | [feat-0078-connectivity-validation](stages/backlog/stories/feat-0078-connectivity-validation.md) | feat | medium | cli,networking |
 | [feat-0101-header-identity-display](stages/backlog/stories/feat-0101-header-identity-display.md) | feat | low | web-ui,design-system |
 | [m39-feat-06-eval-web-ui](stages/backlog/stories/m39-feat-06-eval-web-ui.md) | feat | medium | evals |
-| [m40-feat-06-observe-cli](stages/backlog/stories/m40-feat-06-observe-cli.md) | feat | medium | observability |
 | [m40-feat-07-observe-web-ui](stages/backlog/stories/m40-feat-07-observe-web-ui.md) | feat | medium | observability |
 | [m41-feat-04-keybindings](stages/backlog/stories/m41-feat-04-keybindings.md) | feat | high | tui |
 | [m41-feat-05-cli-integration](stages/backlog/stories/m41-feat-05-cli-integration.md) | feat | high | tui |
@@ -84,7 +83,7 @@
 | [32-adaptive-strategies](milestones/32-adaptive-strategies/) | done | groove |
 | [33-groove-dashboard](milestones/33-groove-dashboard/) | done | groove |
 | [34-open-world-adaptation](milestones/34-open-world-adaptation/) | done | groove |
-| [35-setup-wizards](milestones/35-setup-wizards/) | planned | cli |
+| [35-setup-wizards](milestones/35-setup-wizards/) | done | cli |
 | [36-openworld-dashboard](milestones/36-openworld-dashboard/) | done | groove |
 | [37-models-registry-auth](milestones/37-models-registry-auth/) | done | models |
 | [38-agent-core](milestones/38-agent-core/) | in-progress | agents |
@@ -257,6 +256,7 @@
 - [m40-feat-03-trace-context](stages/done/stories/m40-feat-03-trace-context.md)
 - [m40-feat-04-instrument-key-functions](stages/done/stories/m40-feat-04-instrument-key-functions.md)
 - [m40-feat-05-export-targets](stages/done/stories/m40-feat-05-export-targets.md)
+- [m40-feat-06-observe-cli](stages/done/stories/m40-feat-06-observe-cli.md)
 - [m41-feat-01-crate-theme](stages/done/stories/m41-feat-01-crate-theme.md)
 - [m41-feat-02-app-event-loop](stages/done/stories/m41-feat-02-app-event-loop.md)
 - [m41-feat-03-views-viewstack](stages/done/stories/m41-feat-03-views-viewstack.md)

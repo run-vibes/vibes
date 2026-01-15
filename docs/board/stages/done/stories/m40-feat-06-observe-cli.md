@@ -2,7 +2,7 @@
 id: m40-feat-06
 title: vibes observe traces CLI command
 type: feat
-status: backlog
+status: done
 priority: medium
 epics: [observability]
 depends: [m40-feat-05]
