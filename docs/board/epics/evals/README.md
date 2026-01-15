@@ -274,10 +274,13 @@ pub struct Insight {
 
 ## Milestones
 
-| # | Milestone | Description |
-|---|-----------|-------------|
-| 1 | Eval Core | Metrics definitions, storage |
-| 2 | Benchmark Mode | SWE-Bench, Remote Labor Index |
-| 3 | Longitudinal Mode | Continuous measurement, checkpoints |
-| 4 | Trend Analysis | Pattern detection, forecasting |
-| 5 | Reports | Comprehensive reporting, export |
+| ID | Milestone | Description | Status |
+|----|-----------|-------------|--------|
+| 39 | [Eval Core](../../milestones/39-eval-core/) | Metrics definitions, study lifecycle, storage | in-progress |
+| 50 | [Longitudinal Mode](../../milestones/50-longitudinal-mode/) | Continuous measurement over real work | planned |
+| 51 | [Eval Reports](../../milestones/51-eval-reports/) | Export, visualization, summaries | planned |
+| 52 | [Trend Analysis](../../milestones/52-trend-analysis/) | Forecasting, anomaly detection, patterns | planned |
+| 53 | [Benchmark Harness](../../milestones/53-benchmark-harness/) | SWE-Bench + extensible TaskRunner infrastructure | planned |
+| 54 | [Additional Benchmarks](../../milestones/54-additional-benchmarks/) | HumanEval, Remote Labor Index, Custom | planned |
+
+**Sequencing:** M39 → M50 → M51 → M52 → M53 → M54

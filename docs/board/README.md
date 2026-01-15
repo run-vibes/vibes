@@ -113,6 +113,11 @@
 | [48-cli-enhancements](milestones/48-cli-enhancements/) | planned | cli |
 | [49-ios-app](milestones/49-ios-app/) | planned | mobile |
 | [50-50-home-page-redesign](milestones/50-50-home-page-redesign/) | planned | web-ui,plugin-system |
+| [50-longitudinal-mode](milestones/50-longitudinal-mode/) | planned | evals |
+| [51-eval-reports](milestones/51-eval-reports/) | planned | evals |
+| [52-trend-analysis](milestones/52-trend-analysis/) | planned | evals |
+| [53-benchmark-harness](milestones/53-benchmark-harness/) | planned | evals |
+| [54-additional-benchmarks](milestones/54-additional-benchmarks/) | planned | evals |
 
 ## Done
 
