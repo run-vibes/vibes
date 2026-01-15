@@ -20,6 +20,10 @@
 | [feat-0078-connectivity-validation](stages/backlog/stories/feat-0078-connectivity-validation.md) | feat | medium | cli,networking |
 | [feat-0101-header-identity-display](stages/backlog/stories/feat-0101-header-identity-display.md) | feat | low | web-ui,design-system |
 | [m39-feat-06-eval-web-ui](stages/backlog/stories/m39-feat-06-eval-web-ui.md) | feat | medium | evals |
+| [m42-feat-01-session-list-widget](stages/backlog/stories/m42-feat-01-session-list-widget.md) | feat | high | tui |
+| [m42-feat-02-stats-summary-bar](stages/backlog/stories/m42-feat-02-stats-summary-bar.md) | feat | high | tui |
+| [m42-feat-03-activity-feed-widget](stages/backlog/stories/m42-feat-03-activity-feed-widget.md) | feat | medium | tui |
+| [m42-feat-04-websocket-real-time-updates](stages/backlog/stories/m42-feat-04-websocket-real-time-updates.md) | feat | high | tui |
 | [m43-feat-01-agent-detail-view-layout](stages/backlog/stories/m43-feat-01-agent-detail-view-layout.md) | feat | high | tui |
 | [m43-feat-02-output-stream-panel](stages/backlog/stories/m43-feat-02-output-stream-panel.md) | feat | high | tui |
 | [m43-feat-03-permission-approval-widget](stages/backlog/stories/m43-feat-03-permission-approval-widget.md) | feat | high | tui |
