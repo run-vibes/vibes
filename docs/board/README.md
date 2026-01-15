@@ -8,7 +8,6 @@
 | Story | Type | Priority | Epics |
 |-------|------|----------|-------|
 | [m39-feat-05-eval-cli](stages/in-progress/stories/m39-feat-05-eval-cli.md) | feat | medium | evals |
-| [m40-feat-07-observe-web-ui](stages/in-progress/stories/m40-feat-07-observe-web-ui.md) | feat | medium | observability |
 
 ## Backlog
 
@@ -256,6 +255,7 @@
 - [m40-feat-04-instrument-key-functions](stages/done/stories/m40-feat-04-instrument-key-functions.md)
 - [m40-feat-05-export-targets](stages/done/stories/m40-feat-05-export-targets.md)
 - [m40-feat-06-observe-cli](stages/done/stories/m40-feat-06-observe-cli.md)
+- [m40-feat-07-observe-web-ui](stages/done/stories/m40-feat-07-observe-web-ui.md)
 - [m41-feat-01-crate-theme](stages/done/stories/m41-feat-01-crate-theme.md)
 - [m41-feat-02-app-event-loop](stages/done/stories/m41-feat-02-app-event-loop.md)
 - [m41-feat-03-views-viewstack](stages/done/stories/m41-feat-03-views-viewstack.md)
