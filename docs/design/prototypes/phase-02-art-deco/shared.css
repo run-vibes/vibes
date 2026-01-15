@@ -1,0 +1,1701 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   ART DECO COMMAND — Design Tokens & Shared Styles
+   Metropolis meets SpaceX. Geometric precision. Luxury command.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600;700&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&family=Karla:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* ─── Color Palette ─── */
+  /* Deep Foundations — Rich Navy-Black with Depth */
+  --bg-void: #07090d;
+  --bg-deep: #0c1018;
+  --bg-surface: #111620;
+  --bg-elevated: #171d2a;
+  --bg-card: #141a26;
+
+  /* Gradient Backgrounds for Luxury Depth */
+  --bg-gradient-radial: radial-gradient(ellipse at 30% 20%, rgba(26, 45, 65, 0.4) 0%, transparent 50%);
+  --bg-gradient-subtle: linear-gradient(135deg, rgba(201, 168, 67, 0.03) 0%, transparent 50%);
+
+  /* Gold Spectrum (Art Deco Signature) — Richer, Warmer */
+  --gold-bright: #e8c45a;
+  --gold-primary: #d4a84b;
+  --gold-warm: #c9983a;
+  --gold-muted: #b8892e;
+  --gold-dim: #8a6520;
+  --gold-deep: #5c4315;
+  --gold-subtle: rgba(212, 168, 75, 0.12);
+  --gold-glow: rgba(232, 196, 90, 0.25);
+
+  /* Accent Colors — Art Deco Palette */
+  --accent-cream: #f5efe0;
+  --accent-ivory: #ebe5d4;
+  --accent-champagne: #e6d5a8;
+  --accent-warm: #d9c9a3;
+  --accent-rose: #c98a7a;
+  --accent-navy: #1a2d45;
+  --accent-navy-light: #253d5c;
+  --accent-teal: #3d8b8b;
+  --accent-teal-muted: #2d6a6a;
+  --accent-success: #4da84d;
+  --accent-warning: #d4a84b;
+  --accent-danger: #c75555;
+
+  /* Text Hierarchy */
+  --text-bright: #ffffff;
+  --text-primary: #f5f0e1;
+  --text-secondary: #a39e8e;
+  --text-tertiary: #6b6760;
+  --text-muted: #4a4840;
+  --text-gold: var(--gold-primary);
+
+  /* Borders & Lines — Luxurious Art Deco Edges */
+  --border-subtle: rgba(212, 168, 75, 0.06);
+  --border-light: rgba(212, 168, 75, 0.12);
+  --border-medium: rgba(212, 168, 75, 0.22);
+  --border-strong: rgba(212, 168, 75, 0.35);
+  --border-gold: var(--gold-primary);
+  --border-accent: rgba(61, 139, 139, 0.25);
+
+  /* Shadows & Glows — Rich Depth and Premium Feel */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.6), 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-gold: 0 4px 25px rgba(212, 168, 75, 0.15), 0 2px 10px rgba(212, 168, 75, 0.1);
+  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.03), inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+  --glow-gold: 0 0 15px rgba(232, 196, 90, 0.35), 0 0 30px rgba(212, 168, 75, 0.15);
+  --glow-gold-bright: 0 0 20px rgba(232, 196, 90, 0.5), 0 0 40px rgba(212, 168, 75, 0.25), 0 0 60px rgba(212, 168, 75, 0.1);
+  --glow-teal: 0 0 15px rgba(61, 139, 139, 0.3), 0 0 30px rgba(61, 139, 139, 0.1);
+
+  /* Typography */
+  --font-display: 'Titillium Web', 'Eurostile', sans-serif;
+  --font-body: 'Karla', 'Helvetica Neue', sans-serif;
+  --font-body-alt: 'Barlow', 'Helvetica Neue', sans-serif;
+  --font-condensed: 'Barlow Condensed', 'Helvetica Neue', sans-serif;
+
+  /* Spacing Scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Radii */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-base: 0.25s ease;
+  --transition-slow: 0.4s ease;
+}
+
+/* ─── Base Reset ─── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--text-primary);
+  background: var(--bg-void);
+  min-height: 100vh;
+}
+
+/* ─── Art Deco Background Pattern — Atmospheric Depth ─── */
+.deco-bg {
+  position: relative;
+  background: var(--bg-void);
+}
+
+.deco-bg::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    /* Warm gold atmospheric glow from top */
+    radial-gradient(ellipse 120% 60% at 50% -10%, rgba(212, 168, 75, 0.06) 0%, transparent 60%),
+    /* Navy depth pools */
+    radial-gradient(ellipse 80% 50% at 20% 80%, rgba(26, 45, 69, 0.5) 0%, transparent 50%),
+    radial-gradient(ellipse 70% 45% at 85% 70%, rgba(26, 45, 69, 0.4) 0%, transparent 50%),
+    /* Teal accent whispers */
+    radial-gradient(ellipse 40% 30% at 90% 20%, rgba(61, 139, 139, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse 35% 25% at 5% 40%, rgba(61, 139, 139, 0.06) 0%, transparent 50%),
+    /* Deep foundation */
+    linear-gradient(180deg, var(--bg-void) 0%, #0a0e15 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Additional atmospheric overlay */
+.deco-bg::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    /* Subtle noise texture simulation via gradients */
+    repeating-linear-gradient(
+      0deg,
+      transparent 0px,
+      transparent 2px,
+      rgba(255, 255, 255, 0.003) 2px,
+      rgba(255, 255, 255, 0.003) 4px
+    );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─── Geometric Corner Decorations ─── */
+.deco-corner {
+  position: relative;
+}
+
+.deco-corner::before,
+.deco-corner::after {
+  content: '';
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-color: var(--gold-muted);
+  border-style: solid;
+  opacity: 0.4;
+}
+
+.deco-corner::before {
+  top: 0;
+  left: 0;
+  border-width: 2px 0 0 2px;
+}
+
+.deco-corner::after {
+  bottom: 0;
+  right: 0;
+  border-width: 0 2px 2px 0;
+}
+
+/* ─── Stepped Border (Art Deco Signature) ─── */
+.stepped-border {
+  position: relative;
+  border: 1px solid var(--border-light);
+}
+
+.stepped-border::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border: 1px solid var(--border-subtle);
+  pointer-events: none;
+}
+
+/* ─── Gold Accent Line ─── */
+.gold-line {
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--gold-dim) 20%,
+    var(--gold-primary) 50%,
+    var(--gold-dim) 80%,
+    transparent 100%
+  );
+}
+
+.gold-line-vertical {
+  width: 1px;
+  background: linear-gradient(180deg,
+    transparent 0%,
+    var(--gold-dim) 20%,
+    var(--gold-primary) 50%,
+    var(--gold-dim) 80%,
+    transparent 100%
+  );
+}
+
+/* ─── Section Headers ─── */
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.section-header::before,
+.section-header::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--gold-dim), transparent);
+}
+
+.section-header::after {
+  background: linear-gradient(90deg, transparent, var(--gold-dim));
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold-primary);
+}
+
+/* ─── Cards ─── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: all var(--transition-base);
+}
+
+.card:hover {
+  border-color: var(--border-medium);
+  box-shadow: var(--shadow-md), var(--shadow-gold);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-5);
+  background: linear-gradient(180deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.card-title {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+.card-content {
+  padding: var(--space-5);
+}
+
+.card-footer {
+  padding: var(--space-3) var(--space-5);
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* ─── Premium Card (Gold Accent) ─── */
+.card-premium {
+  position: relative;
+  border-color: var(--gold-dim);
+}
+
+.card-premium::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    var(--gold-dim) 0%,
+    var(--gold-bright) 50%,
+    var(--gold-dim) 100%
+  );
+}
+
+.card-premium:hover {
+  border-color: var(--gold-primary);
+  box-shadow: var(--shadow-lg), var(--glow-gold);
+}
+
+/* ─── Panel ─── */
+.panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.panel-title {
+  font-family: var(--font-condensed);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.panel-content {
+  padding: var(--space-4);
+}
+
+/* ─── Buttons ─── */
+.btn {
+  font-family: var(--font-condensed);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-medium);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn:hover {
+  border-color: var(--gold-muted);
+  color: var(--text-primary);
+  background: var(--bg-card);
+}
+
+.btn-primary {
+  background: linear-gradient(180deg, var(--gold-primary) 0%, var(--gold-muted) 100%);
+  border: none;
+  color: var(--bg-void);
+  font-weight: 700;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(180deg, var(--gold-bright) 0%, var(--gold-primary) 100%);
+  box-shadow: var(--glow-gold);
+  color: var(--bg-void);
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: var(--border-light);
+}
+
+.btn-ghost:hover {
+  background: var(--gold-subtle);
+  border-color: var(--gold-muted);
+  color: var(--gold-primary);
+}
+
+/* ─── Badges ─── */
+.badge {
+  font-family: var(--font-condensed);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 1px;
+  background: var(--bg-elevated);
+  color: var(--text-tertiary);
+  border: 1px solid var(--border-light);
+  position: relative;
+}
+
+.badge::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--text-tertiary);
+  opacity: 0.5;
+}
+
+.badge-gold {
+  background: linear-gradient(135deg, rgba(212, 168, 75, 0.1) 0%, rgba(212, 168, 75, 0.05) 100%);
+  border-color: var(--gold-dim);
+  color: var(--gold-primary);
+}
+
+.badge-gold::before {
+  background: var(--gold-primary);
+  opacity: 0.8;
+}
+
+.badge-success {
+  background: linear-gradient(135deg, rgba(77, 168, 77, 0.12) 0%, rgba(77, 168, 77, 0.05) 100%);
+  border-color: rgba(77, 168, 77, 0.4);
+  color: var(--accent-success);
+}
+
+.badge-success::before {
+  background: var(--accent-success);
+  opacity: 0.9;
+  box-shadow: 0 0 4px var(--accent-success);
+}
+
+.badge-warning {
+  background: linear-gradient(135deg, rgba(212, 168, 75, 0.12) 0%, rgba(212, 168, 75, 0.05) 100%);
+  border-color: rgba(212, 168, 75, 0.4);
+  color: var(--accent-warning);
+}
+
+.badge-warning::before {
+  background: var(--accent-warning);
+  opacity: 0.9;
+}
+
+.badge-danger {
+  background: linear-gradient(135deg, rgba(199, 85, 85, 0.12) 0%, rgba(199, 85, 85, 0.05) 100%);
+  border-color: rgba(199, 85, 85, 0.4);
+  color: var(--accent-danger);
+}
+
+.badge-danger::before {
+  background: var(--accent-danger);
+  opacity: 0.9;
+}
+
+/* ─── Status Indicators ─── */
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+.status-dot.active {
+  background: var(--accent-success);
+  box-shadow: 0 0 8px rgba(92, 184, 92, 0.5);
+}
+
+.status-dot.warning {
+  background: var(--accent-warning);
+  box-shadow: 0 0 8px rgba(212, 168, 75, 0.5);
+}
+
+.status-dot.danger {
+  background: var(--accent-danger);
+  box-shadow: 0 0 8px rgba(199, 80, 80, 0.5);
+}
+
+.status-dot.idle {
+  background: var(--text-tertiary);
+}
+
+/* ─── Progress Bars ─── */
+.progress-bar {
+  height: 4px;
+  background: var(--bg-void);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold-muted), var(--gold-primary));
+  border-radius: 2px;
+  transition: width var(--transition-base);
+}
+
+.progress-fill.success {
+  background: linear-gradient(90deg, #4a9b4a, var(--accent-success));
+}
+
+.progress-fill.warning {
+  background: linear-gradient(90deg, #c9a227, var(--accent-warning));
+}
+
+.progress-fill.danger {
+  background: linear-gradient(90deg, #a04040, var(--accent-danger));
+}
+
+/* ─── Metric Display ─── */
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.metric-value {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  color: var(--text-bright);
+  line-height: 1;
+}
+
+.metric-value.gold {
+  color: var(--gold-primary);
+  text-shadow: var(--glow-gold);
+}
+
+.metric-label {
+  font-family: var(--font-condensed);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.metric-change {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.metric-change.positive { color: var(--accent-success); }
+.metric-change.negative { color: var(--accent-danger); }
+
+/* ─── Data Table ─── */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th {
+  font-family: var(--font-condensed);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-align: left;
+  color: var(--text-tertiary);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.data-table td {
+  font-size: 13px;
+  color: var(--text-primary);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.data-table tr:hover td {
+  background: var(--bg-elevated);
+}
+
+/* ─── Form Inputs ─── */
+.input {
+  font-family: var(--font-body);
+  font-size: 14px;
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-void);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  transition: all var(--transition-fast);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--gold-primary);
+  box-shadow: 0 0 0 2px var(--gold-subtle);
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+/* ─── Animations ─── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-gold {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.4s ease-out;
+}
+
+/* ─── Utility Classes ─── */
+.text-display { font-family: var(--font-display); }
+.text-body { font-family: var(--font-body); }
+.text-condensed { font-family: var(--font-condensed); }
+
+.text-gold { color: var(--gold-primary); }
+.text-bright { color: var(--text-bright); }
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-tertiary { color: var(--text-tertiary); }
+.text-muted { color: var(--text-muted); }
+
+.text-xs { font-size: 10px; }
+.text-sm { font-size: 12px; }
+.text-base { font-size: 14px; }
+.text-lg { font-size: 16px; }
+.text-xl { font-size: 20px; }
+.text-2xl { font-size: 24px; }
+.text-3xl { font-size: 32px; }
+.text-4xl { font-size: 40px; }
+
+.font-light { font-weight: 300; }
+.font-normal { font-weight: 400; }
+.font-medium { font-weight: 500; }
+.font-semibold { font-weight: 600; }
+.font-bold { font-weight: 700; }
+
+.uppercase { text-transform: uppercase; }
+.tracking-wide { letter-spacing: 0.08em; }
+.tracking-wider { letter-spacing: 0.12em; }
+.tracking-widest { letter-spacing: 0.2em; }
+
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.flex-wrap { flex-wrap: wrap; }
+.items-center { align-items: center; }
+.items-start { align-items: flex-start; }
+.items-end { align-items: flex-end; }
+.justify-between { justify-content: space-between; }
+.justify-center { justify-content: center; }
+.justify-end { justify-content: flex-end; }
+
+.gap-1 { gap: var(--space-1); }
+.gap-2 { gap: var(--space-2); }
+.gap-3 { gap: var(--space-3); }
+.gap-4 { gap: var(--space-4); }
+.gap-5 { gap: var(--space-5); }
+.gap-6 { gap: var(--space-6); }
+.gap-8 { gap: var(--space-8); }
+
+.p-2 { padding: var(--space-2); }
+.p-3 { padding: var(--space-3); }
+.p-4 { padding: var(--space-4); }
+.p-5 { padding: var(--space-5); }
+.p-6 { padding: var(--space-6); }
+
+.mt-2 { margin-top: var(--space-2); }
+.mt-4 { margin-top: var(--space-4); }
+.mt-6 { margin-top: var(--space-6); }
+.mb-2 { margin-bottom: var(--space-2); }
+.mb-4 { margin-bottom: var(--space-4); }
+.mb-6 { margin-bottom: var(--space-6); }
+
+.w-full { width: 100%; }
+.h-full { height: 100%; }
+
+.grid { display: grid; }
+.grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+.grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+/* ─── Geometric Decorations ─── */
+.chevron-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  color: var(--gold-dim);
+  font-size: 10px;
+  margin: var(--space-4) 0;
+}
+
+.chevron-divider::before,
+.chevron-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-subtle);
+}
+
+/* ─── Sunburst Pattern (Art Deco Signature) ─── */
+.sunburst {
+  position: relative;
+  overflow: hidden;
+}
+
+.sunburst::before {
+  content: '';
+  position: absolute;
+  top: -100%;
+  left: 50%;
+  width: 300%;
+  height: 300%;
+  background: repeating-conic-gradient(
+    from 0deg,
+    transparent 0deg 4deg,
+    rgba(212, 168, 75, 0.015) 4deg 5deg,
+    transparent 5deg 8deg,
+    rgba(212, 168, 75, 0.025) 8deg 9deg
+  );
+  transform: translateX(-50%);
+  pointer-events: none;
+  animation: sunburst-rotate 120s linear infinite;
+}
+
+@keyframes sunburst-rotate {
+  from { transform: translateX(-50%) rotate(0deg); }
+  to { transform: translateX(-50%) rotate(360deg); }
+}
+
+/* ─── Dramatic Sunburst Hero (Centered) ─── */
+.sunburst-hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.sunburst-hero::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 150%;
+  height: 150%;
+  background:
+    repeating-conic-gradient(
+      from 0deg,
+      transparent 0deg 3deg,
+      rgba(212, 168, 75, 0.04) 3deg 4deg
+    ),
+    radial-gradient(circle at center, rgba(212, 168, 75, 0.1) 0%, transparent 40%);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+/* ─── Chevron Border Pattern ─── */
+.chevron-border {
+  position: relative;
+}
+
+.chevron-border::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background:
+    linear-gradient(135deg, var(--bg-void) 25%, transparent 25%) -10px 0,
+    linear-gradient(225deg, var(--bg-void) 25%, transparent 25%) -10px 0,
+    linear-gradient(315deg, var(--bg-void) 25%, transparent 25%),
+    linear-gradient(45deg, var(--bg-void) 25%, transparent 25%);
+  background-size: 20px 8px;
+  background-color: var(--gold-dim);
+  opacity: 0.5;
+}
+
+/* ─── Chevron Accent Line ─── */
+.chevron-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  height: 12px;
+  position: relative;
+}
+
+.chevron-line::before,
+.chevron-line::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold-dim));
+}
+
+.chevron-line::after {
+  background: linear-gradient(90deg, var(--gold-dim), transparent);
+}
+
+.chevron-line span {
+  display: flex;
+  gap: 2px;
+  padding: 0 var(--space-2);
+}
+
+.chevron-line span::before,
+.chevron-line span::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-top: 2px solid var(--gold-primary);
+  border-right: 2px solid var(--gold-primary);
+  transform: rotate(-45deg);
+}
+
+.chevron-line span::after {
+  transform: rotate(135deg);
+}
+
+/* ─── Fan Motif (Radiating Lines) ─── */
+.fan-motif {
+  position: relative;
+  overflow: hidden;
+}
+
+.fan-motif::before {
+  content: '';
+  position: absolute;
+  bottom: -50%;
+  left: 50%;
+  width: 200%;
+  height: 100%;
+  background: repeating-conic-gradient(
+    from 270deg at 50% 100%,
+    transparent 0deg 6deg,
+    rgba(212, 168, 75, 0.03) 6deg 8deg
+  );
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+/* ─── Stepped Geometric Header ─── */
+.stepped-header {
+  position: relative;
+  padding-left: var(--space-6);
+}
+
+.stepped-header::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 24px;
+  background:
+    linear-gradient(to right, var(--gold-primary) 2px, transparent 2px) 0 0 / 4px 100%,
+    linear-gradient(to right, var(--gold-primary) 2px, transparent 2px) 6px 4px / 4px calc(100% - 8px),
+    linear-gradient(to right, var(--gold-primary) 2px, transparent 2px) 12px 8px / 4px calc(100% - 16px);
+  background-repeat: no-repeat;
+}
+
+/* ─── Geometric Diamond Divider ─── */
+.diamond-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-4) 0;
+}
+
+.diamond-divider::before,
+.diamond-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-light), transparent);
+}
+
+.diamond-divider span {
+  width: 10px;
+  height: 10px;
+  background: var(--gold-primary);
+  transform: rotate(45deg);
+  box-shadow: var(--glow-gold);
+}
+
+/* ─── Art Deco Frame Pattern ─── */
+.deco-frame {
+  position: relative;
+  padding: var(--space-6);
+}
+
+.deco-frame::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--border-light);
+  pointer-events: none;
+}
+
+.deco-frame::after {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 1px solid var(--border-subtle);
+  pointer-events: none;
+}
+
+/* ─── Radiating Lines Background ─── */
+.radiate-bg {
+  position: relative;
+}
+
+.radiate-bg::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  background:
+    linear-gradient(90deg, transparent 49.5%, var(--border-subtle) 49.5%, var(--border-subtle) 50.5%, transparent 50.5%),
+    linear-gradient(45deg, transparent 49.5%, var(--border-subtle) 49.5%, var(--border-subtle) 50.5%, transparent 50.5%),
+    linear-gradient(-45deg, transparent 49.5%, var(--border-subtle) 49.5%, var(--border-subtle) 50.5%, transparent 50.5%),
+    linear-gradient(22.5deg, transparent 49.5%, var(--border-subtle) 49.5%, var(--border-subtle) 50.5%, transparent 50.5%),
+    linear-gradient(-22.5deg, transparent 49.5%, var(--border-subtle) 49.5%, var(--border-subtle) 50.5%, transparent 50.5%),
+    linear-gradient(67.5deg, transparent 49.5%, var(--border-subtle) 49.5%, var(--border-subtle) 50.5%, transparent 50.5%),
+    linear-gradient(-67.5deg, transparent 49.5%, var(--border-subtle) 49.5%, var(--border-subtle) 50.5%, transparent 50.5%);
+  transform: translateX(-50%);
+  opacity: 0.5;
+  pointer-events: none;
+  mask-image: radial-gradient(ellipse at center, black 0%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 0%, transparent 70%);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ART DECO ICON SYSTEM — Geometric Line-Art Icons
+   Inspired by Chrysler Building, sunbursts, chevrons, and geometric motifs
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.deco-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1em;
+  height: 1em;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.deco-icon::before,
+.deco-icon::after {
+  content: '';
+  position: absolute;
+}
+
+/* ─── Diamond / Target Icon ─── */
+.deco-icon-target {
+  width: 1.2em;
+  height: 1.2em;
+}
+
+.deco-icon-target::before {
+  width: 100%;
+  height: 100%;
+  border: 2px solid currentColor;
+  transform: rotate(45deg);
+}
+
+.deco-icon-target::after {
+  width: 40%;
+  height: 40%;
+  background: currentColor;
+  transform: rotate(45deg);
+}
+
+/* ─── Lightning / Energy Icon ─── */
+.deco-icon-bolt {
+  width: 0.9em;
+  height: 1.2em;
+}
+
+.deco-icon-bolt::before {
+  width: 0;
+  height: 0;
+  border-left: 0.45em solid transparent;
+  border-right: 0 solid transparent;
+  border-bottom: 0.7em solid currentColor;
+  top: 0;
+  left: 0.15em;
+}
+
+.deco-icon-bolt::after {
+  width: 0;
+  height: 0;
+  border-left: 0 solid transparent;
+  border-right: 0.45em solid transparent;
+  border-top: 0.7em solid currentColor;
+  bottom: 0;
+  right: 0.15em;
+}
+
+/* ─── Agent / Gear Icon ─── */
+.deco-icon-agent {
+  width: 1.1em;
+  height: 1.1em;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+}
+
+.deco-icon-agent::before {
+  width: 40%;
+  height: 40%;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.deco-icon-agent::after {
+  width: 2px;
+  height: 30%;
+  background: currentColor;
+  top: -15%;
+}
+
+/* ─── Checkmark / Complete Icon ─── */
+.deco-icon-check {
+  width: 1em;
+  height: 1em;
+}
+
+.deco-icon-check::before {
+  width: 0.4em;
+  height: 0.7em;
+  border-right: 2.5px solid currentColor;
+  border-bottom: 2.5px solid currentColor;
+  transform: rotate(40deg) translate(-10%, -10%);
+}
+
+/* ─── Currency / Value Icon ─── */
+.deco-icon-value {
+  width: 1em;
+  height: 1em;
+}
+
+.deco-icon-value::before {
+  width: 100%;
+  height: 100%;
+  border: 2px solid currentColor;
+  transform: rotate(45deg);
+}
+
+.deco-icon-value::after {
+  font-family: var(--font-display);
+  content: '$';
+  font-size: 0.6em;
+  font-weight: 700;
+  color: currentColor;
+}
+
+/* ─── Arch / Discovery Icon ─── */
+.deco-icon-arch {
+  width: 1em;
+  height: 1em;
+}
+
+.deco-icon-arch::before {
+  width: 100%;
+  height: 60%;
+  border: 2.5px solid currentColor;
+  border-bottom: none;
+  border-radius: 50% 50% 0 0;
+  top: 20%;
+}
+
+.deco-icon-arch::after {
+  width: 2.5px;
+  height: 50%;
+  background: currentColor;
+  bottom: 0;
+}
+
+/* ─── Sunburst / Insight Icon ─── */
+.deco-icon-sunburst {
+  width: 1.2em;
+  height: 1.2em;
+}
+
+.deco-icon-sunburst::before {
+  width: 40%;
+  height: 40%;
+  background: currentColor;
+  border-radius: 50%;
+}
+
+.deco-icon-sunburst::after {
+  width: 100%;
+  height: 100%;
+  background:
+    linear-gradient(0deg, currentColor 0%, currentColor 100%) center/2px 100%,
+    linear-gradient(90deg, currentColor 0%, currentColor 100%) center/100% 2px,
+    linear-gradient(45deg, currentColor 0%, currentColor 100%) center/2px 85%,
+    linear-gradient(-45deg, currentColor 0%, currentColor 100%) center/2px 85%;
+  background-repeat: no-repeat;
+  opacity: 0.8;
+}
+
+/* ─── Chevron Up Icon ─── */
+.deco-icon-chevron-up {
+  width: 1em;
+  height: 0.6em;
+}
+
+.deco-icon-chevron-up::before {
+  width: 0.5em;
+  height: 0.5em;
+  border-top: 2.5px solid currentColor;
+  border-right: 2.5px solid currentColor;
+  transform: rotate(-45deg);
+  top: 30%;
+}
+
+/* ─── Chevron Down Icon ─── */
+.deco-icon-chevron-down {
+  width: 1em;
+  height: 0.6em;
+}
+
+.deco-icon-chevron-down::before {
+  width: 0.5em;
+  height: 0.5em;
+  border-bottom: 2.5px solid currentColor;
+  border-right: 2.5px solid currentColor;
+  transform: rotate(45deg);
+  bottom: 30%;
+}
+
+/* ─── Fan / Radiate Icon ─── */
+.deco-icon-fan {
+  width: 1.2em;
+  height: 1em;
+}
+
+.deco-icon-fan::before {
+  width: 100%;
+  height: 100%;
+  background:
+    linear-gradient(80deg, transparent 45%, currentColor 45%, currentColor 47%, transparent 47%),
+    linear-gradient(100deg, transparent 45%, currentColor 45%, currentColor 47%, transparent 47%),
+    linear-gradient(60deg, transparent 45%, currentColor 45%, currentColor 47%, transparent 47%),
+    linear-gradient(120deg, transparent 45%, currentColor 45%, currentColor 47%, transparent 47%),
+    linear-gradient(90deg, transparent 48%, currentColor 48%, currentColor 52%, transparent 52%);
+}
+
+/* ─── Document / Write Icon ─── */
+.deco-icon-doc {
+  width: 0.9em;
+  height: 1.1em;
+  border: 2px solid currentColor;
+}
+
+.deco-icon-doc::before {
+  width: 50%;
+  height: 2px;
+  background: currentColor;
+  top: 30%;
+  left: 15%;
+}
+
+.deco-icon-doc::after {
+  width: 70%;
+  height: 2px;
+  background: currentColor;
+  top: 55%;
+  left: 15%;
+}
+
+/* ─── Search / Lens Icon ─── */
+.deco-icon-search {
+  width: 1em;
+  height: 1em;
+}
+
+.deco-icon-search::before {
+  width: 65%;
+  height: 65%;
+  border: 2.5px solid currentColor;
+  border-radius: 50%;
+  top: 0;
+  left: 0;
+}
+
+.deco-icon-search::after {
+  width: 30%;
+  height: 2.5px;
+  background: currentColor;
+  transform: rotate(45deg);
+  bottom: 12%;
+  right: 5%;
+}
+
+/* ─── Test / Flask Icon ─── */
+.deco-icon-test {
+  width: 0.9em;
+  height: 1.1em;
+}
+
+.deco-icon-test::before {
+  width: 60%;
+  height: 2.5px;
+  background: currentColor;
+  top: 0;
+}
+
+.deco-icon-test::after {
+  width: 40%;
+  height: 75%;
+  border: 2.5px solid currentColor;
+  border-top: none;
+  border-radius: 0 0 30% 30%;
+  bottom: 0;
+}
+
+/* ─── Deploy / Rocket Icon ─── */
+.deco-icon-rocket {
+  width: 1em;
+  height: 1.2em;
+}
+
+.deco-icon-rocket::before {
+  width: 0;
+  height: 0;
+  border-left: 0.35em solid transparent;
+  border-right: 0.35em solid transparent;
+  border-bottom: 0.6em solid currentColor;
+  top: 0;
+}
+
+.deco-icon-rocket::after {
+  width: 0.5em;
+  height: 0.6em;
+  border: 2.5px solid currentColor;
+  border-top: none;
+  border-radius: 0 0 40% 40%;
+  bottom: 0;
+}
+
+/* ─── Link / Connection Icon ─── */
+.deco-icon-link {
+  width: 1.2em;
+  height: 1em;
+}
+
+.deco-icon-link::before {
+  width: 40%;
+  height: 50%;
+  border: 2.5px solid currentColor;
+  border-radius: 3px;
+  left: 10%;
+  transform: rotate(-30deg);
+}
+
+.deco-icon-link::after {
+  width: 40%;
+  height: 50%;
+  border: 2.5px solid currentColor;
+  border-radius: 3px;
+  right: 10%;
+  transform: rotate(-30deg);
+}
+
+/* ─── Sprout / Growth Icon ─── */
+.deco-icon-growth {
+  width: 1em;
+  height: 1.1em;
+}
+
+.deco-icon-growth::before {
+  width: 2.5px;
+  height: 60%;
+  background: currentColor;
+  bottom: 0;
+}
+
+.deco-icon-growth::after {
+  width: 0.5em;
+  height: 0.5em;
+  border: 2.5px solid currentColor;
+  border-radius: 0 50% 50% 50%;
+  transform: rotate(-45deg);
+  top: 10%;
+  left: 25%;
+}
+
+/* ─── Star / Premium Icon ─── */
+.deco-icon-star {
+  width: 1.1em;
+  height: 1.1em;
+}
+
+.deco-icon-star::before {
+  width: 100%;
+  height: 100%;
+  background: currentColor;
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+
+/* ─── Session / Terminal Icon ─── */
+.deco-icon-session {
+  width: 1.1em;
+  height: 0.9em;
+  border: 2px solid currentColor;
+  border-radius: 2px;
+}
+
+.deco-icon-session::before {
+  width: 30%;
+  height: 2px;
+  background: currentColor;
+  left: 15%;
+  top: 35%;
+}
+
+.deco-icon-session::after {
+  width: 15%;
+  height: 2px;
+  background: currentColor;
+  left: 15%;
+  top: 60%;
+}
+
+/* ─── Goal / Flag Icon ─── */
+.deco-icon-goal {
+  width: 1em;
+  height: 1.1em;
+}
+
+.deco-icon-goal::before {
+  width: 2.5px;
+  height: 100%;
+  background: currentColor;
+  left: 15%;
+}
+
+.deco-icon-goal::after {
+  width: 65%;
+  height: 55%;
+  border: 2px solid currentColor;
+  border-left: none;
+  top: 5%;
+  right: 10%;
+  clip-path: polygon(0 0, 100% 25%, 75% 50%, 100% 75%, 0 100%);
+  background: currentColor;
+}
+
+/* ─── Velocity / Speed Icon ─── */
+.deco-icon-velocity {
+  width: 1.2em;
+  height: 0.8em;
+}
+
+.deco-icon-velocity::before {
+  width: 100%;
+  height: 2.5px;
+  background: currentColor;
+  transform: skewX(-20deg);
+}
+
+.deco-icon-velocity::after {
+  width: 0;
+  height: 0;
+  border-top: 0.3em solid transparent;
+  border-bottom: 0.3em solid transparent;
+  border-left: 0.5em solid currentColor;
+  right: -5%;
+}
+
+/* ─── Clock / Time Icon ─── */
+.deco-icon-time {
+  width: 1em;
+  height: 1em;
+  border: 2.5px solid currentColor;
+  border-radius: 50%;
+}
+
+.deco-icon-time::before {
+  width: 2px;
+  height: 35%;
+  background: currentColor;
+  top: 15%;
+}
+
+.deco-icon-time::after {
+  width: 30%;
+  height: 2px;
+  background: currentColor;
+  transform-origin: left center;
+  transform: rotate(90deg);
+  top: 45%;
+  left: 45%;
+}
+
+/* ─── Icon Size Variants ─── */
+.deco-icon-sm { font-size: 14px; }
+.deco-icon-md { font-size: 18px; }
+.deco-icon-lg { font-size: 24px; }
+.deco-icon-xl { font-size: 32px; }
+
+/* ─── Icon Color Variants ─── */
+.deco-icon-gold { color: var(--gold-primary); }
+.deco-icon-bright { color: var(--gold-bright); }
+.deco-icon-success { color: var(--accent-success); }
+.deco-icon-warning { color: var(--accent-warning); }
+.deco-icon-danger { color: var(--accent-danger); }
+.deco-icon-muted { color: var(--text-tertiary); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FINAL DESIGN REFINEMENTS — Art Deco Component Polish
+   Combined from v13 (nav/dots) + v15 (progress bars)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Panel Action Buttons (Ghost Art Deco Style) ─── */
+.panel-action {
+  font-family: var(--font-condensed);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.panel-action::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--gold-dim);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.panel-action:hover {
+  background: rgba(212, 168, 75, 0.08);
+  border-color: var(--gold-muted);
+  color: var(--gold-primary);
+}
+
+.panel-action:hover::before {
+  opacity: 1;
+}
+
+.panel-action:active {
+  background: rgba(212, 168, 75, 0.12);
+  transform: translateY(1px);
+}
+
+/* ─── Art Deco Nav Items ─── */
+.nav-item {
+  font-family: var(--font-condensed);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  text-decoration: none;
+  padding: var(--space-2) var(--space-3);
+  position: relative;
+  transition: all 0.2s ease;
+  background: transparent !important; /* Override any inline styles */
+  border-radius: var(--radius-sm);
+}
+
+.nav-item::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--gold-dim), var(--gold-primary), var(--gold-dim));
+  transform: translateX(-50%);
+  transition: width 0.2s ease;
+}
+
+.nav-item:hover {
+  color: var(--text-primary);
+  background: rgba(10, 25, 47, 0.8) !important; /* Darker navy on hover */
+}
+
+.nav-item:hover::after {
+  width: 60%;
+}
+
+.nav-item.active {
+  color: var(--gold-primary);
+  background: transparent !important; /* No background on active - just gold underline */
+}
+
+.nav-item.active::after {
+  width: 80%;
+  background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);
+}
+
+/* ─── Art Deco Diamond Status Dots ─── */
+.status-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 0;
+  transform: rotate(45deg);
+  background: var(--text-muted);
+  border: 1px solid transparent;
+}
+
+.status-dot.active {
+  background: var(--accent-success);
+  border-color: rgba(92, 184, 92, 0.6);
+  box-shadow: 0 0 8px rgba(92, 184, 92, 0.6), inset 0 0 2px rgba(255, 255, 255, 0.3);
+}
+
+.status-dot.warning {
+  background: var(--accent-warning);
+  border-color: rgba(212, 168, 75, 0.6);
+  box-shadow: 0 0 8px rgba(212, 168, 75, 0.6), inset 0 0 2px rgba(255, 255, 255, 0.3);
+}
+
+.status-dot.danger {
+  background: var(--accent-danger);
+  border-color: rgba(199, 85, 85, 0.6);
+  box-shadow: 0 0 8px rgba(199, 85, 85, 0.6);
+}
+
+.status-dot.idle {
+  background: var(--text-tertiary);
+  border-color: rgba(107, 103, 96, 0.4);
+}
+
+/* ─── Art Deco Progress Bars with Gold End Caps ─── */
+.progress-mini {
+  width: 60px;
+  height: 4px;
+  background: var(--bg-deep);
+  border-radius: 0;
+  overflow: visible;
+  position: relative;
+  border: 1px solid var(--border-subtle);
+}
+
+/* Gold end caps on both sides */
+.progress-mini::before,
+.progress-mini::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 3px;
+  height: 8px;
+  background: var(--gold-dim);
+  transform: translateY(-50%);
+}
+
+.progress-mini::before {
+  left: -4px;
+}
+
+.progress-mini::after {
+  right: -4px;
+}
+
+.progress-mini-fill {
+  height: 100%;
+  background: var(--accent-success);
+  box-shadow: 0 0 6px rgba(77, 168, 77, 0.4);
+  position: relative;
+}
+
+/* ─── Art Deco Metric Bars with Gold End Caps ─── */
+.metric-bar {
+  height: 6px;
+  background: var(--bg-deep);
+  border-radius: 0;
+  overflow: visible;
+  position: relative;
+  border: 1px solid var(--border-subtle);
+}
+
+/* Gold end caps on both sides */
+.metric-bar::before,
+.metric-bar::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 4px;
+  height: 10px;
+  background: var(--gold-dim);
+  transform: translateY(-50%);
+}
+
+.metric-bar::before {
+  left: -5px;
+}
+
+.metric-bar::after {
+  right: -5px;
+}
+
+.metric-bar-fill {
+  height: 100%;
+  border-radius: 0;
+  position: relative;
+}
+
+.metric-bar-fill.success {
+  background: var(--accent-success);
+  box-shadow: 0 0 8px rgba(77, 168, 77, 0.4);
+}
+
+.metric-bar-fill.warning {
+  background: var(--gold-primary);
+  box-shadow: 0 0 8px rgba(212, 168, 75, 0.4);
+}
+
+/* ─── Danger Button Enhancement ─── */
+.btn-danger {
+  background: linear-gradient(135deg, rgba(199, 85, 85, 0.15) 0%, rgba(199, 85, 85, 0.08) 100%);
+  border: 1px solid rgba(199, 85, 85, 0.4);
+  color: var(--accent-danger);
+  position: relative;
+}
+
+.btn-danger::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--accent-danger);
+  opacity: 0.7;
+}
+
+.btn-danger:hover {
+  background: linear-gradient(135deg, rgba(199, 85, 85, 0.25) 0%, rgba(199, 85, 85, 0.15) 100%);
+  border-color: var(--accent-danger);
+  box-shadow: 0 0 12px rgba(199, 85, 85, 0.3);
+  color: #e07070;
+}
+
+.btn-danger:hover::before {
+  opacity: 1;
+  box-shadow: 0 0 6px var(--accent-danger);
+}

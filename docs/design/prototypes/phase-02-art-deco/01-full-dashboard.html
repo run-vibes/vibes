@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>vibes — Phosphor Mission Control</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    /* ═══════════════════════════════════════════════════════════════════════
+       FULL DASHBOARD LAYOUT — All 4 zones demonstrated
+       ═══════════════════════════════════════════════════════════════════════ */
+
+    .dashboard {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: var(--space-4);
+      gap: var(--space-4);
+    }
+
+    /* ─── Header Bar ─── */
+    .header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-3) var(--space-4);
+      background: var(--bg-panel);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      position: relative;
+    }
+
+    .header-bar::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: var(--space-4);
+      right: var(--space-4);
+      height: 1px;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        var(--gold-dim) 20%,
+        var(--gold-primary) 50%,
+        var(--gold-dim) 80%,
+        transparent 100%
+      );
+      opacity: 0.4;
+    }
+
+    .logo {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--gold-primary);
+      text-shadow: 0 0 20px rgba(212, 168, 75, 0.4), 0 0 40px rgba(212, 168, 75, 0.2);
+      letter-spacing: 0.08em;
+      text-transform: lowercase;
+    }
+
+    .logo-tagline {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      color: var(--text-tertiary);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-left: var(--space-4);
+      padding-left: var(--space-4);
+      border-left: 1px solid var(--border-light);
+    }
+
+    .header-nav {
+      display: flex;
+      gap: var(--space-2);
+    }
+
+    .nav-item {
+      font-size: 11px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-sm);
+      transition: all 0.15s ease;
+    }
+
+    .nav-item:hover {
+      color: var(--text-primary);
+      background: var(--bg-surface);
+    }
+
+    .nav-item.active {
+      color: var(--phosphor-green);
+      background: rgba(57, 255, 20, 0.08);
+    }
+
+    /* ─── ATTENTION ZONE ─── */
+    .attention-zone {
+      background: var(--bg-panel);
+      border: 1px solid rgba(255, 179, 0, 0.3);
+      border-radius: var(--radius-md);
+      box-shadow: 0 0 30px rgba(255, 179, 0, 0.15), inset 0 0 80px rgba(255, 179, 0, 0.03);
+      animation: attention-pulse 3s ease-in-out infinite;
+      position: relative;
+    }
+
+    .attention-zone::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(255, 179, 0, 0.4) 10%,
+        rgba(255, 179, 0, 0.8) 20%,
+        rgba(255, 179, 0, 1) 50%,
+        rgba(255, 179, 0, 0.8) 80%,
+        rgba(255, 179, 0, 0.4) 90%,
+        transparent 100%
+      );
+      border-radius: var(--radius-md) var(--radius-md) 0 0;
+    }
+
+    .attention-zone::after {
+      content: '';
+      position: absolute;
+      inset: 4px;
+      border: 1px solid rgba(255, 179, 0, 0.08);
+      border-radius: calc(var(--radius-md) - 2px);
+      pointer-events: none;
+    }
+
+    .attention-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 1px solid rgba(255, 179, 0, 0.2);
+      background: rgba(255, 179, 0, 0.05);
+    }
+
+    .attention-title {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--phosphor-amber);
+    }
+
+    .attention-title::before {
+      content: '⚡';
+    }
+
+    .attention-count {
+      background: var(--phosphor-amber);
+      color: var(--bg-deep);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 10px;
+    }
+
+    .attention-items {
+      padding: var(--space-3) var(--space-4);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    .attention-item {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-3);
+      padding: var(--space-3);
+      background: var(--bg-surface);
+      border-radius: var(--radius-sm);
+      border-left: 3px solid var(--phosphor-amber);
+    }
+
+    .attention-icon {
+      font-size: 14px;
+      color: var(--phosphor-amber);
+      flex-shrink: 0;
+    }
+
+    .attention-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .attention-type {
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--phosphor-amber);
+      margin-bottom: 2px;
+    }
+
+    .attention-message {
+      font-size: 12px;
+      color: var(--text-primary);
+      margin-bottom: var(--space-2);
+    }
+
+    .attention-actions {
+      display: flex;
+      gap: var(--space-2);
+    }
+
+    /* ─── PRIMARY ZONE ─── */
+    .primary-zone {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-4);
+    }
+
+    @media (max-width: 1200px) {
+      .primary-zone { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 992px) {
+      .primary-zone { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 768px) {
+      .primary-zone { grid-template-columns: 1fr; }
+    }
+
+    /* Widget Cards */
+    .widget {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      display: flex;
+      flex-direction: column;
+      min-height: 280px;
+      position: relative;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .widget::before {
+      content: '';
+      position: absolute;
+      inset: 3px;
+      border: 1px solid var(--border-subtle);
+      border-radius: calc(var(--radius-md) - 2px);
+      pointer-events: none;
+    }
+
+    .widget::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent 0%, var(--gold-dim) 30%, var(--gold-muted) 50%, var(--gold-dim) 70%, transparent 100%);
+      opacity: 0.5;
+    }
+
+    .widget-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 1px solid var(--border-subtle);
+      position: relative;
+      background: linear-gradient(180deg, rgba(212, 168, 75, 0.04) 0%, transparent 100%);
+    }
+
+    .widget-header::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: var(--space-4);
+      right: var(--space-4);
+      height: 1px;
+      background: linear-gradient(90deg, var(--gold-dim) 0%, var(--gold-primary) 50%, var(--gold-dim) 100%);
+      opacity: 0.6;
+    }
+
+    .widget-title {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+
+    .widget-content {
+      flex: 1;
+      padding: var(--space-3);
+      overflow: hidden;
+    }
+
+    .widget-footer {
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+      padding: var(--space-2) var(--space-4);
+      border-top: 1px solid var(--border-subtle);
+      background: var(--bg-surface);
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    .widget-stat {
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+    }
+
+    .widget-stat-value {
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    /* Session/Agent Rows */
+    .item-row {
+      display: flex;
+      align-items: flex-start;
+      padding: var(--space-2) var(--space-3);
+      margin-bottom: var(--space-1);
+      border-radius: var(--radius-sm);
+      transition: background 0.15s ease;
+      cursor: pointer;
+    }
+
+    .item-row:hover {
+      background: var(--bg-surface);
+    }
+
+    .item-main {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .item-name {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .item-desc {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding-left: 16px;
+    }
+
+    .item-desc::before {
+      content: '└ ';
+      color: var(--text-tertiary);
+    }
+
+    .item-status {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      text-align: right;
+    }
+
+    .item-time {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      margin-top: 2px;
+    }
+
+    /* Agent Progress */
+    .agent-progress {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      margin-top: 4px;
+      padding-left: 16px;
+    }
+
+    .progress-mini {
+      width: 60px;
+      height: 3px;
+      background: var(--bg-deep);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-mini-fill {
+      height: 100%;
+      background: var(--phosphor-green);
+      box-shadow: 0 0 4px var(--phosphor-green);
+    }
+
+    .progress-text {
+      font-size: 10px;
+      color: var(--phosphor-green);
+      font-weight: 600;
+    }
+
+    /* ─── SECONDARY ZONE (Activity) ─── */
+    .secondary-zone {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+    }
+
+    .activity-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .activity-stream {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .activity-row {
+      display: grid;
+      grid-template-columns: 65px 55px 90px 75px 1fr;
+      gap: var(--space-2);
+      padding: 6px var(--space-4);
+      font-size: 11px;
+      border-bottom: 1px solid var(--border-subtle);
+      transition: background 0.15s ease;
+      position: relative;
+    }
+
+    .activity-row::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 4px;
+      bottom: 4px;
+      width: 2px;
+      background: var(--gold-dim);
+      opacity: 0.4;
+    }
+
+    .activity-row:hover {
+      background: var(--bg-surface);
+    }
+
+    .activity-row:hover::before {
+      opacity: 0.8;
+      background: var(--gold-primary);
+    }
+
+    .activity-time {
+      color: var(--text-tertiary);
+      font-variant-numeric: tabular-nums;
+      font-family: var(--font-condensed);
+    }
+
+    .activity-source {
+      color: var(--accent-teal);
+      font-family: var(--font-condensed);
+      text-transform: uppercase;
+      font-size: 10px;
+      letter-spacing: 0.05em;
+    }
+
+    .activity-actor {
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .activity-type {
+      color: var(--gold-primary);
+      font-family: var(--font-condensed);
+      text-transform: uppercase;
+      font-size: 10px;
+    }
+
+    .activity-detail {
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ─── METRICS ZONE ─── */
+    .metrics-zone {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: var(--space-3);
+    }
+
+    @media (max-width: 1200px) {
+      .metrics-zone { grid-template-columns: repeat(4, 1fr); }
+    }
+    @media (max-width: 768px) {
+      .metrics-zone { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .metric-tile {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      min-height: 100px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .metric-tile::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent 0%, var(--gold-dim) 50%, transparent 100%);
+      opacity: 0.5;
+    }
+
+    .metric-label {
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-bottom: var(--space-1);
+    }
+
+    .metric-value {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1;
+      margin-bottom: var(--space-2);
+      letter-spacing: -0.02em;
+    }
+
+    .metric-trend {
+      font-size: 10px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .metric-trend.up {
+      color: var(--phosphor-green);
+    }
+
+    .metric-trend.down {
+      color: var(--phosphor-red);
+    }
+
+    .metric-progress {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+
+    .metric-bar {
+      height: 6px;
+      background: var(--bg-deep);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .metric-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+    }
+
+    .metric-bar-fill.success {
+      background: var(--phosphor-green);
+      box-shadow: var(--glow-phosphor);
+    }
+
+    .metric-bar-fill.warning {
+      background: var(--phosphor-amber);
+    }
+
+    .metric-mini {
+      font-size: 10px;
+      color: var(--text-secondary);
+      margin-top: auto;
+    }
+
+    .metric-mini .dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      margin-right: 4px;
+    }
+
+    .metric-mini .dot.online {
+      background: var(--phosphor-green);
+      box-shadow: 0 0 4px var(--phosphor-green);
+    }
+
+    /* ─── New Events Animation ─── */
+    .activity-row.new {
+      animation: slide-in 0.3s ease;
+      background: rgba(57, 255, 20, 0.05);
+    }
+
+    /* ─── Groove Hero with Sunburst ─── */
+    .groove-hero {
+      text-align: center;
+      padding: var(--space-4);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .groove-hero::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 200%;
+      height: 200%;
+      transform: translate(-50%, -50%);
+      background: repeating-conic-gradient(
+        from 0deg,
+        transparent 0deg 8deg,
+        rgba(77, 168, 77, 0.03) 8deg 10deg
+      );
+      animation: sunburst-rotate 60s linear infinite;
+      pointer-events: none;
+    }
+
+    .groove-hero::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 120px;
+      height: 120px;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(77, 168, 77, 0.1) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    @keyframes sunburst-rotate {
+      from { transform: translate(-50%, -50%) rotate(0deg); }
+      to { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+    .groove-score {
+      font-family: var(--font-display);
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--accent-success);
+      margin-bottom: var(--space-2);
+      position: relative;
+      z-index: 1;
+      text-shadow: 0 0 20px rgba(77, 168, 77, 0.4);
+    }
+
+    .groove-label {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      position: relative;
+      z-index: 1;
+    }
+  </style>
+</head>
+<body class="scanlines crt-vignette">
+
+  <div class="dashboard">
+    <!-- Header Bar -->
+    <header class="header-bar">
+      <div class="flex items-center">
+        <span class="logo">vibes</span>
+        <span class="logo-tagline">Phosphor Mission Control</span>
+      </div>
+      <nav class="header-nav">
+        <a href="#" class="nav-item active">Dashboard</a>
+        <a href="#" class="nav-item">Firehose</a>
+        <a href="#" class="nav-item">Sessions</a>
+        <a href="#" class="nav-item">Groove</a>
+        <a href="#" class="nav-item">Debug</a>
+      </nav>
+    </header>
+
+    <!-- ATTENTION ZONE -->
+    <section class="attention-zone">
+      <div class="attention-header">
+        <div class="attention-title">
+          Needs Attention
+          <span class="attention-count">2</span>
+        </div>
+        <button class="panel-action">Dismiss All</button>
+      </div>
+      <div class="attention-items">
+        <div class="attention-item">
+          <span class="attention-icon">◉</span>
+          <div class="attention-content">
+            <div class="attention-type">Permission Required</div>
+            <div class="attention-message">Agent "architect" wants to write <code>/src/auth/handler.rs</code></div>
+            <div class="attention-actions">
+              <button class="btn btn-primary">Approve</button>
+              <button class="btn btn-danger">Deny</button>
+            </div>
+          </div>
+          <button class="panel-action">View →</button>
+        </div>
+        <div class="attention-item">
+          <span class="attention-icon">◉</span>
+          <div class="attention-content">
+            <div class="attention-type">Session Stalled</div>
+            <div class="attention-message">Session "refactor-ui" idle for 8 minutes</div>
+            <div class="attention-actions">
+              <button class="btn">Resume</button>
+              <button class="btn btn-danger">End</button>
+            </div>
+          </div>
+          <button class="panel-action">View →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRIMARY ZONE -->
+    <section class="primary-zone">
+      <!-- Sessions Widget -->
+      <div class="widget">
+        <div class="widget-header">
+          <span class="widget-title">Sessions</span>
+          <button class="panel-action">+ New</button>
+        </div>
+        <div class="widget-content">
+          <div class="item-row">
+            <div class="item-main">
+              <div class="item-name">
+                <span class="status-dot active"></span>
+                refactor-ui
+              </div>
+              <div class="item-desc">"Implementing the new dashboard..."</div>
+            </div>
+            <div class="item-status">
+              <span class="badge badge-success">processing</span>
+              <div class="item-time">3m ago</div>
+            </div>
+          </div>
+          <div class="item-row">
+            <div class="item-main">
+              <div class="item-name">
+                <span class="status-dot warning"></span>
+                fix-auth-bug
+              </div>
+              <div class="item-desc">"Waiting for permission..."</div>
+            </div>
+            <div class="item-status">
+              <span class="badge badge-warning">waiting</span>
+              <div class="item-time">5m ago</div>
+            </div>
+          </div>
+          <div class="item-row">
+            <div class="item-main">
+              <div class="item-name">
+                <span class="status-dot idle"></span>
+                docs-update
+              </div>
+              <div class="item-desc">"Documentation refresh complete"</div>
+            </div>
+            <div class="item-status">
+              <span class="badge">idle</span>
+              <div class="item-time">12m ago</div>
+            </div>
+          </div>
+        </div>
+        <div class="widget-footer">
+          <span class="widget-stat"><span class="widget-stat-value">3</span> active</span>
+          <span class="widget-stat"><span class="widget-stat-value">12</span> today</span>
+        </div>
+      </div>
+
+      <!-- Agents Widget -->
+      <div class="widget">
+        <div class="widget-header">
+          <span class="widget-title">Agents</span>
+          <button class="panel-action">View All</button>
+        </div>
+        <div class="widget-content">
+          <div class="item-row">
+            <div class="item-main">
+              <div class="item-name">
+                <span class="status-dot active"></span>
+                architect-3
+              </div>
+              <div class="item-desc">Writing auth handler</div>
+              <div class="agent-progress">
+                <div class="progress-mini">
+                  <div class="progress-mini-fill" style="width: 67%"></div>
+                </div>
+                <span class="progress-text">67%</span>
+              </div>
+            </div>
+            <div class="item-status">
+              <span class="badge badge-success">running</span>
+              <div class="item-time">1,247 tokens</div>
+            </div>
+          </div>
+          <div class="item-row">
+            <div class="item-main">
+              <div class="item-name">
+                <span class="status-dot active"></span>
+                reviewer-1
+              </div>
+              <div class="item-desc">Analyzing PR #127</div>
+              <div class="agent-progress">
+                <div class="progress-mini">
+                  <div class="progress-mini-fill" style="width: 34%"></div>
+                </div>
+                <span class="progress-text">34%</span>
+              </div>
+            </div>
+            <div class="item-status">
+              <span class="badge badge-success">running</span>
+              <div class="item-time">892 tokens</div>
+            </div>
+          </div>
+        </div>
+        <div class="widget-footer">
+          <span class="widget-stat"><span class="widget-stat-value">2</span> running</span>
+          <span class="widget-stat"><span class="widget-stat-value">8</span> tool calls</span>
+        </div>
+      </div>
+
+      <!-- Groove Widget -->
+      <div class="widget">
+        <div class="widget-header">
+          <span class="widget-title">Groove</span>
+          <button class="panel-action">Dashboard</button>
+        </div>
+        <div class="widget-content">
+          <div class="groove-hero">
+            <div class="groove-score">94.7%</div>
+            <div class="groove-label">Health Score</div>
+            <div class="metric-bar" style="margin-top: var(--space-4); max-width: 180px; margin-left: auto; margin-right: auto;">
+              <div class="metric-bar-fill success" style="width: 94.7%"></div>
+            </div>
+          </div>
+          <div style="display: flex; justify-content: space-around; margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--border-subtle);">
+            <div style="text-align: center;">
+              <div style="font-size: 18px; font-weight: 600; color: var(--text-primary);">127</div>
+              <div style="font-size: 9px; color: var(--text-tertiary);">PATTERNS</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 18px; font-weight: 600; color: var(--text-primary);">3</div>
+              <div style="font-size: 9px; color: var(--text-tertiary);">PENDING</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 18px; font-weight: 600; color: var(--phosphor-green);">↗</div>
+              <div style="font-size: 9px; color: var(--text-tertiary);">TREND</div>
+            </div>
+          </div>
+        </div>
+        <div class="widget-footer">
+          <span class="widget-stat">Last sync: <span class="widget-stat-value">2m ago</span></span>
+        </div>
+      </div>
+
+      <!-- Models Widget -->
+      <div class="widget">
+        <div class="widget-header">
+          <span class="widget-title">Models</span>
+          <button class="panel-action">Configure</button>
+        </div>
+        <div class="widget-content">
+          <div class="item-row">
+            <div class="item-main">
+              <div class="item-name">
+                <span class="status-dot active"></span>
+                claude-4-opus
+              </div>
+              <div class="item-desc">Primary model</div>
+            </div>
+            <div class="item-status">
+              <span class="badge badge-success">online</span>
+            </div>
+          </div>
+          <div class="item-row">
+            <div class="item-main">
+              <div class="item-name">
+                <span class="status-dot active"></span>
+                claude-4-sonnet
+              </div>
+              <div class="item-desc">Fast tasks</div>
+            </div>
+            <div class="item-status">
+              <span class="badge badge-success">online</span>
+            </div>
+          </div>
+          <div class="item-row">
+            <div class="item-main">
+              <div class="item-name">
+                <span class="status-dot idle"></span>
+                gpt-4-turbo
+              </div>
+              <div class="item-desc">Fallback</div>
+            </div>
+            <div class="item-status">
+              <span class="badge">standby</span>
+            </div>
+          </div>
+        </div>
+        <div class="widget-footer">
+          <span class="widget-stat"><span class="widget-stat-value">2</span> online</span>
+          <span class="widget-stat"><span class="widget-stat-value">1</span> standby</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- METRICS ZONE -->
+    <section class="metrics-zone">
+      <div class="metric-tile">
+        <div class="metric-label">Tokens / 24h</div>
+        <div class="metric-value">127,432</div>
+        <div class="metric-trend up">↗ +12% vs yesterday</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-label">Success Rate</div>
+        <div class="metric-value">94.7%</div>
+        <div class="metric-progress">
+          <div class="metric-bar">
+            <div class="metric-bar-fill success" style="width: 94.7%"></div>
+          </div>
+        </div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-label">Avg Response</div>
+        <div class="metric-value">1.2s</div>
+        <div class="metric-trend down">↘ -8% improved</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-label">Sessions</div>
+        <div class="metric-value">12</div>
+        <div class="metric-mini">
+          <span class="dot online"></span>3 active now
+        </div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-label">Tool Calls</div>
+        <div class="metric-value">847</div>
+        <div class="metric-trend up">↗ +23%</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-label">Errors</div>
+        <div class="metric-value" style="color: var(--phosphor-green);">0</div>
+        <div class="metric-mini">All systems nominal</div>
+      </div>
+    </section>
+  </div>
+
+</body>
+</html>

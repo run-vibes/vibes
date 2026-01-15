@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Command Palette (⌘K)</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    /* ═══════════════════════════════════════════════════════════════════════
+       COMMAND PALETTE — Keyboard-first interface for search and actions
+       ═══════════════════════════════════════════════════════════════════════ */
+
+    .prototype-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: var(--space-6);
+    }
+
+    .prototype-header {
+      margin-bottom: var(--space-8);
+      padding-bottom: var(--space-4);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .prototype-title {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: var(--gold-primary);
+      text-shadow: var(--glow-gold);
+      margin-bottom: var(--space-2);
+    }
+
+    .prototype-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .section {
+      margin-bottom: var(--space-8);
+    }
+
+    .section-label {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-bottom: var(--space-3);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .section-label::before {
+      content: '';
+      flex: 0 0 20px;
+      height: 1px;
+      background: var(--gold-dim);
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--gold-dim);
+    }
+
+    /* ─── Backdrop ─── */
+    .palette-backdrop {
+      position: relative;
+      padding: var(--space-8);
+      background: rgba(0, 0, 0, 0.6);
+      border-radius: var(--radius-lg);
+      display: flex;
+      justify-content: center;
+    }
+
+    /* ─── Command Palette ─── */
+    .command-palette {
+      width: 100%;
+      max-width: 600px;
+      background: var(--bg-card);
+      border: 1px solid var(--gold-dim);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5),
+                  0 0 0 1px rgba(201, 162, 39, 0.1),
+                  var(--glow-gold);
+      overflow: hidden;
+    }
+
+    .command-palette::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--gold-dim), var(--gold-bright), var(--gold-dim));
+    }
+
+    /* Header */
+    .palette-header {
+      display: flex;
+      align-items: center;
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 1px solid var(--border-subtle);
+      background: var(--bg-elevated);
+    }
+
+    .palette-icon {
+      font-size: 14px;
+      color: var(--gold-primary);
+      margin-right: var(--space-3);
+    }
+
+    .palette-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: var(--text-primary);
+      outline: none;
+    }
+
+    .palette-input::placeholder {
+      color: var(--text-tertiary);
+    }
+
+    .palette-shortcut {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      padding: 2px 6px;
+      background: var(--bg-deep);
+      border: 1px solid var(--border-subtle);
+      border-radius: 3px;
+      color: var(--text-tertiary);
+    }
+
+    /* Sections */
+    .palette-section {
+      padding: var(--space-2) 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .palette-section:last-child {
+      border-bottom: none;
+    }
+
+    .palette-section-title {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      padding: var(--space-1) var(--space-4);
+      margin-bottom: var(--space-1);
+    }
+
+    /* Items */
+    .palette-item {
+      display: flex;
+      align-items: center;
+      padding: var(--space-2) var(--space-4);
+      cursor: pointer;
+      transition: background 0.1s ease;
+    }
+
+    .palette-item:hover {
+      background: var(--bg-surface);
+    }
+
+    .palette-item.selected {
+      background: var(--gold-subtle);
+      border-left: 2px solid var(--gold-primary);
+    }
+
+    .palette-item-icon {
+      width: 24px;
+      font-size: 14px;
+      color: var(--text-tertiary);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .palette-item-icon.goal { color: var(--gold-primary); }
+    .palette-item-icon.session { color: var(--accent-success); }
+    .palette-item-icon.artifact { color: var(--accent-teal); }
+    .palette-item-icon.action { color: var(--text-secondary); }
+    .palette-item-icon.attention { color: var(--accent-warning); }
+    .palette-item-icon.research { color: var(--accent-teal); }
+    .palette-item-icon.command { color: var(--gold-primary); }
+
+    .palette-item-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .palette-item-title {
+      font-size: 13px;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .palette-item-desc {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .palette-item-badge {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 3px;
+      margin-left: var(--space-2);
+    }
+
+    .palette-item-badge.attention {
+      background: rgba(212, 168, 75, 0.2);
+      color: var(--gold-primary);
+    }
+
+    .palette-item-key {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      color: var(--text-tertiary);
+      padding: 2px 6px;
+      background: var(--bg-deep);
+      border: 1px solid var(--border-subtle);
+      border-radius: 3px;
+      margin-left: var(--space-2);
+    }
+
+    /* Footer */
+    .palette-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-2) var(--space-4);
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border-subtle);
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    .palette-footer-hints {
+      display: flex;
+      gap: var(--space-4);
+    }
+
+    .palette-hint kbd {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      padding: 1px 4px;
+      background: var(--bg-deep);
+      border: 1px solid var(--border-subtle);
+      border-radius: 2px;
+      margin-right: 4px;
+    }
+
+    /* ─── Prefix Mode States ─── */
+    .palette-prefix {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      background: var(--gold-subtle);
+      border: 1px solid var(--gold-dim);
+      border-radius: 3px;
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--gold-primary);
+      margin-right: var(--space-2);
+    }
+
+    .palette-prefix.research {
+      background: rgba(74, 155, 155, 0.15);
+      border-color: rgba(74, 155, 155, 0.3);
+      color: var(--accent-teal);
+    }
+
+    .palette-prefix.goals {
+      background: var(--gold-subtle);
+      border-color: var(--gold-dim);
+      color: var(--gold-primary);
+    }
+
+    /* ─── Command Prefixes Reference ─── */
+    .prefix-reference {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-3);
+      margin-top: var(--space-4);
+    }
+
+    .prefix-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: var(--space-3);
+      transition: all var(--transition-fast);
+    }
+
+    .prefix-card:hover {
+      border-color: var(--gold-dim);
+    }
+
+    .prefix-code {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--gold-primary);
+      margin-bottom: var(--space-1);
+    }
+
+    .prefix-desc {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .prefix-example {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      margin-top: var(--space-1);
+      font-style: italic;
+    }
+  </style>
+</head>
+<body class="deco-bg">
+
+  <div class="prototype-container">
+    <header class="prototype-header">
+      <h1 class="prototype-title">Command Palette (⌘K)</h1>
+      <p class="prototype-desc">
+        Keyboard-first interface for navigating, searching, and taking actions.
+        Stay in flow without hunting through zones.
+      </p>
+    </header>
+
+    <!-- Default State -->
+    <section class="section">
+      <div class="section-label">Default State — Recent & Actions</div>
+      <div class="palette-backdrop">
+        <div class="command-palette">
+          <div class="palette-header">
+            <span class="palette-icon"><span class="deco-icon deco-icon-arch deco-icon-sm deco-icon-gold"></span></span>
+            <input type="text" class="palette-input" placeholder="Search or type a command..." autofocus>
+            <span class="palette-shortcut">ESC</span>
+          </div>
+
+          <div class="palette-section">
+            <div class="palette-section-title">Recent</div>
+            <div class="palette-item selected">
+              <span class="palette-item-icon goal"><span class="deco-icon deco-icon-target deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">Ship auth system</div>
+                <div class="palette-item-desc">Goal • 73% complete</div>
+              </div>
+              <span class="palette-item-key">g</span>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon session"><span class="deco-icon deco-icon-session deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">refactor-ui</div>
+                <div class="palette-item-desc">Session • Active now</div>
+              </div>
+              <span class="palette-item-key">s</span>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon artifact"><span class="deco-icon deco-icon-fan deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">demo-video-auth.mp4</div>
+                <div class="palette-item-desc">Artifact • 2m ago</div>
+              </div>
+              <span class="palette-item-key">a</span>
+            </div>
+          </div>
+
+          <div class="palette-section">
+            <div class="palette-section-title">Actions</div>
+            <div class="palette-item">
+              <span class="palette-item-icon action">◇</span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">New session</div>
+              </div>
+              <span class="palette-item-key">n</span>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon research"><span class="deco-icon deco-icon-search deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">Ask research question</div>
+              </div>
+              <span class="palette-item-key">r</span>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon goal"><span class="deco-icon deco-icon-goal deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">Create goal</div>
+              </div>
+              <span class="palette-item-key">⇧G</span>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon action"><span class="deco-icon deco-icon-velocity deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">Run evaluation</div>
+              </div>
+              <span class="palette-item-key">e</span>
+            </div>
+          </div>
+
+          <div class="palette-section">
+            <div class="palette-section-title">Needs Attention (2)</div>
+            <div class="palette-item">
+              <span class="palette-item-icon attention"><span class="deco-icon deco-icon-bolt deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">Permission: architect wants to write /src/auth</div>
+              </div>
+              <span class="palette-item-badge attention">decide</span>
+              <span class="palette-item-key">1</span>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon attention"><span class="deco-icon deco-icon-bolt deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">Verification failed: screenshot mismatch</div>
+              </div>
+              <span class="palette-item-badge attention">review</span>
+              <span class="palette-item-key">2</span>
+            </div>
+          </div>
+
+          <div class="palette-footer">
+            <div class="palette-footer-hints">
+              <span class="palette-hint"><kbd>↑↓</kbd> Navigate</span>
+              <span class="palette-hint"><kbd>↵</kbd> Select</span>
+              <span class="palette-hint"><kbd>ESC</kbd> Close</span>
+            </div>
+            <span>Type prefix for mode: g: s: a: r: /</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Research Mode -->
+    <section class="section">
+      <div class="section-label">Research Mode — r:</div>
+      <div class="palette-backdrop">
+        <div class="command-palette">
+          <div class="palette-header">
+            <span class="palette-icon"><span class="deco-icon deco-icon-arch deco-icon-sm deco-icon-gold"></span></span>
+            <span class="palette-prefix research">r:</span>
+            <input type="text" class="palette-input" placeholder="Ask a research question..." value="best practices for JWT refresh">
+            <span class="palette-shortcut">ESC</span>
+          </div>
+
+          <div class="palette-section">
+            <div class="palette-section-title">Your Question</div>
+            <div class="palette-item selected">
+              <span class="palette-item-icon research"><span class="deco-icon deco-icon-search deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">"What are best practices for JWT refresh tokens?"</div>
+                <div class="palette-item-desc">Press Enter to start investigation</div>
+              </div>
+              <span class="palette-item-key">↵</span>
+            </div>
+          </div>
+
+          <div class="palette-section">
+            <div class="palette-section-title">Related Findings</div>
+            <div class="palette-item">
+              <span class="palette-item-icon" style="color: var(--accent-success);"><span class="deco-icon deco-icon-sunburst deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">Redis vs Valkey for session cache</div>
+                <div class="palette-item-desc">Finding • 2h ago</div>
+              </div>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon" style="color: var(--accent-success);"><span class="deco-icon deco-icon-sunburst deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">OAuth2 token rotation patterns</div>
+                <div class="palette-item-desc">Finding • 3d ago</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="palette-footer">
+            <div class="palette-footer-hints">
+              <span class="palette-hint"><kbd>↵</kbd> Ask question</span>
+              <span class="palette-hint"><kbd>⌫</kbd> Clear prefix</span>
+            </div>
+            <span>Agents will investigate and report findings</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Goals Mode -->
+    <section class="section">
+      <div class="section-label">Goals Mode — g:</div>
+      <div class="palette-backdrop">
+        <div class="command-palette">
+          <div class="palette-header">
+            <span class="palette-icon"><span class="deco-icon deco-icon-arch deco-icon-sm deco-icon-gold"></span></span>
+            <span class="palette-prefix goals">g:</span>
+            <input type="text" class="palette-input" placeholder="Search goals..." value="auth">
+            <span class="palette-shortcut">ESC</span>
+          </div>
+
+          <div class="palette-section">
+            <div class="palette-section-title">Matching Goals</div>
+            <div class="palette-item selected">
+              <span class="palette-item-icon goal"><span class="deco-icon deco-icon-target deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">Ship auth system</div>
+                <div class="palette-item-desc">73% • Target: March 1</div>
+              </div>
+              <span style="color: var(--gold-primary); font-size: 11px;">████████░░</span>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon" style="color: var(--accent-teal);"><span class="deco-icon deco-icon-growth deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">Improve auth error messages</div>
+                <div class="palette-item-desc">Exploring • No timeline</div>
+              </div>
+              <span style="color: var(--text-tertiary); font-size: 11px;">░░░░░░░░░░</span>
+            </div>
+          </div>
+
+          <div class="palette-section">
+            <div class="palette-section-title">Actions</div>
+            <div class="palette-item">
+              <span class="palette-item-icon action">◇</span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">Create new goal: "auth..."</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="palette-footer">
+            <div class="palette-footer-hints">
+              <span class="palette-hint"><kbd>↵</kbd> Open goal</span>
+              <span class="palette-hint"><kbd>⇧↵</kbd> Create new</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Command Mode -->
+    <section class="section">
+      <div class="section-label">Command Mode — /</div>
+      <div class="palette-backdrop">
+        <div class="command-palette">
+          <div class="palette-header">
+            <span class="palette-icon"><span class="deco-icon deco-icon-arch deco-icon-sm deco-icon-gold"></span></span>
+            <span class="palette-prefix">/</span>
+            <input type="text" class="palette-input" placeholder="Enter command..." value="costs">
+            <span class="palette-shortcut">ESC</span>
+          </div>
+
+          <div class="palette-section">
+            <div class="palette-section-title">Commands</div>
+            <div class="palette-item selected">
+              <span class="palette-item-icon command">◇</span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">/costs</div>
+                <div class="palette-item-desc">View cost breakdown and projections</div>
+              </div>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon command">◇</span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">/topology</div>
+                <div class="palette-item-desc">View agent coordination graph</div>
+              </div>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon command">◇</span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">/pause all</div>
+                <div class="palette-item-desc">Pause all running agents</div>
+              </div>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon command">◇</span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">/discover</div>
+                <div class="palette-item-desc">Show recent discoveries</div>
+              </div>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon command">◇</span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">/steer auth</div>
+                <div class="palette-item-desc">Quick steering actions on auth goal</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="palette-footer">
+            <div class="palette-footer-hints">
+              <span class="palette-hint"><kbd>↵</kbd> Execute</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Prefix Reference -->
+    <section class="section">
+      <div class="section-label">Command Prefixes</div>
+      <div class="prefix-reference">
+        <div class="prefix-card">
+          <div class="prefix-code">g:</div>
+          <div class="prefix-desc">Goals</div>
+          <div class="prefix-example">g:auth → jump to auth goal</div>
+        </div>
+        <div class="prefix-card">
+          <div class="prefix-code">s:</div>
+          <div class="prefix-desc">Sessions</div>
+          <div class="prefix-example">s:refactor → open session</div>
+        </div>
+        <div class="prefix-card">
+          <div class="prefix-code">a:</div>
+          <div class="prefix-desc">Artifacts</div>
+          <div class="prefix-example">a:video → browse videos</div>
+        </div>
+        <div class="prefix-card">
+          <div class="prefix-code">r:</div>
+          <div class="prefix-desc">Research</div>
+          <div class="prefix-example">r: → ask a question</div>
+        </div>
+        <div class="prefix-card">
+          <div class="prefix-code">?:</div>
+          <div class="prefix-desc">Search All</div>
+          <div class="prefix-example">?:jwt → search everything</div>
+        </div>
+        <div class="prefix-card">
+          <div class="prefix-code">/</div>
+          <div class="prefix-desc">Commands</div>
+          <div class="prefix-example">/costs /topology /pause</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phosphor Command — Dashboard</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    /* ─── Page Layout ─── */
+    .app {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ─── Command Bar ─── */
+    .command-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-4) var(--space-8);
+      background: var(--bg-deep);
+      border-bottom: 1px solid var(--border-light);
+      position: relative;
+    }
+
+    .command-bar::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: var(--space-8);
+      right: var(--space-8);
+      height: 1px;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        var(--gold-dim) 10%,
+        var(--gold-primary) 50%,
+        var(--gold-dim) 90%,
+        transparent 100%
+      );
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+    }
+
+    .brand-mark {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--gold-primary), var(--gold-dim));
+      border-radius: var(--radius-sm);
+      position: relative;
+    }
+
+    .brand-mark::before {
+      content: '◇';
+      color: var(--bg-void);
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    .brand-name {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: var(--text-primary);
+    }
+
+    .brand-status {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent-success);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .command-search {
+      flex: 1;
+      max-width: 480px;
+      margin: 0 var(--space-8);
+    }
+
+    .search-input {
+      width: 100%;
+      padding: var(--space-3) var(--space-5);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-body);
+      font-size: 13px;
+      color: var(--text-primary);
+      transition: all var(--transition-fast);
+    }
+
+    .search-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--gold-muted);
+      background: var(--bg-elevated);
+    }
+
+    .command-actions {
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+    }
+
+    .commanders {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .commander-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--bg-elevated);
+      border: 2px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      position: relative;
+    }
+
+    .commander-avatar.active {
+      border-color: var(--gold-primary);
+      box-shadow: var(--glow-gold);
+    }
+
+    .commander-avatar.active::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      right: -2px;
+      width: 10px;
+      height: 10px;
+      background: var(--accent-success);
+      border-radius: 50%;
+      border: 2px solid var(--bg-deep);
+    }
+
+    /* ─── Main Content ─── */
+    .main-content {
+      flex: 1;
+      padding: var(--space-8);
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: var(--space-8);
+      max-width: 1600px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* ─── Primary Column ─── */
+    .primary-column {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-8);
+    }
+
+    /* ─── Attention Zone ─── */
+    .attention-zone {
+      background: linear-gradient(135deg, rgba(212, 168, 75, 0.08), transparent);
+      border: 1px solid var(--gold-dim);
+      border-radius: var(--radius-md);
+      padding: var(--space-5) var(--space-6);
+      display: flex;
+      align-items: center;
+      gap: var(--space-5);
+      position: relative;
+    }
+
+    .attention-zone::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--gold-dim), var(--gold-primary), var(--gold-dim));
+    }
+
+    .attention-icon {
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--gold-subtle);
+      border-radius: var(--radius-md);
+      font-size: 24px;
+    }
+
+    .attention-content {
+      flex: 1;
+    }
+
+    .attention-title {
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-1);
+    }
+
+    .attention-detail {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .attention-actions {
+      display: flex;
+      gap: var(--space-3);
+    }
+
+    /* ─── Metrics Row ─── */
+    .metrics-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-5);
+    }
+
+    .metric-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: var(--space-5);
+      position: relative;
+      transition: all var(--transition-base);
+    }
+
+    .metric-card:hover {
+      border-color: var(--border-light);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .metric-card.featured {
+      border-color: var(--gold-dim);
+    }
+
+    .metric-card.featured::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--gold-dim), var(--gold-bright), var(--gold-dim));
+    }
+
+    .metric-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--space-4);
+    }
+
+    .metric-icon {
+      font-size: 20px;
+    }
+
+    .metric-badge {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: var(--radius-sm);
+      background: var(--gold-subtle);
+      color: var(--gold-primary);
+    }
+
+    .metric-value {
+      font-family: var(--font-display);
+      font-size: 36px;
+      font-weight: 300;
+      color: var(--text-bright);
+      line-height: 1;
+      margin-bottom: var(--space-2);
+    }
+
+    .metric-card.featured .metric-value {
+      color: var(--gold-primary);
+      text-shadow: var(--glow-gold);
+    }
+
+    .metric-label {
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-bottom: var(--space-3);
+    }
+
+    .metric-trend {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-size: 12px;
+    }
+
+    .metric-trend.up { color: var(--accent-success); }
+    .metric-trend.down { color: var(--accent-danger); }
+
+    /* ─── Sessions Section ─── */
+    .section {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-4) var(--space-5);
+      background: linear-gradient(180deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .section-title-icon {
+      color: var(--gold-primary);
+    }
+
+    .section-actions {
+      display: flex;
+      gap: var(--space-2);
+    }
+
+    .section-body {
+      padding: var(--space-4) var(--space-5);
+    }
+
+    /* ─── Session List ─── */
+    .session-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    .session-item {
+      display: grid;
+      grid-template-columns: auto 1fr auto auto;
+      align-items: center;
+      gap: var(--space-4);
+      padding: var(--space-3) var(--space-4);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      transition: all var(--transition-fast);
+      cursor: pointer;
+    }
+
+    .session-item:hover {
+      border-color: var(--border-light);
+      background: var(--bg-elevated);
+    }
+
+    .session-status {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent-success);
+      box-shadow: 0 0 8px rgba(92, 184, 92, 0.5);
+    }
+
+    .session-status.pending {
+      background: var(--accent-warning);
+      box-shadow: 0 0 8px rgba(212, 168, 75, 0.5);
+    }
+
+    .session-status.idle {
+      background: var(--text-tertiary);
+      box-shadow: none;
+    }
+
+    .session-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .session-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .session-meta {
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+
+    .session-agents {
+      display: flex;
+      gap: 4px;
+    }
+
+    .agent-pill {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      padding: 2px 8px;
+      background: var(--bg-elevated);
+      border-radius: 10px;
+      color: var(--text-secondary);
+    }
+
+    .session-time {
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      color: var(--text-tertiary);
+      text-align: right;
+    }
+
+    /* ─── Goals Grid ─── */
+    .goals-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-4);
+    }
+
+    .goal-card {
+      padding: var(--space-4);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      transition: all var(--transition-fast);
+    }
+
+    .goal-card:hover {
+      border-color: var(--border-light);
+    }
+
+    .goal-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: var(--space-3);
+    }
+
+    .goal-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      line-height: 1.4;
+    }
+
+    .goal-percent {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--gold-primary);
+    }
+
+    .goal-progress {
+      height: 4px;
+      background: var(--bg-void);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: var(--space-2);
+    }
+
+    .goal-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--gold-muted), var(--gold-primary));
+      border-radius: 2px;
+    }
+
+    .goal-meta {
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+
+    /* ─── Sidebar ─── */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-6);
+    }
+
+    /* ─── Trajectory Panel ─── */
+    .trajectory-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--gold-dim);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .trajectory-panel::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--gold-dim), var(--gold-bright), var(--gold-dim));
+    }
+
+    .trajectory-header {
+      padding: var(--space-4) var(--space-5);
+      background: linear-gradient(180deg, rgba(201, 162, 39, 0.05) 0%, transparent 100%);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .trajectory-title {
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+      margin-bottom: var(--space-1);
+    }
+
+    .trajectory-subtitle {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .trajectory-content {
+      padding: var(--space-5);
+    }
+
+    .trajectory-stat {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-3) 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .trajectory-stat:last-child {
+      border-bottom: none;
+    }
+
+    .trajectory-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .trajectory-value {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .trajectory-value.gold {
+      color: var(--gold-primary);
+    }
+
+    /* ─── Activity Feed ─── */
+    .activity-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      flex: 1;
+    }
+
+    .activity-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-4) var(--space-5);
+      background: linear-gradient(180deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .activity-title {
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-primary);
+    }
+
+    .activity-live {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent-success);
+    }
+
+    .activity-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--accent-success);
+      border-radius: 50%;
+      animation: pulse-gold 2s ease-in-out infinite;
+    }
+
+    .activity-feed {
+      padding: var(--space-4) var(--space-5);
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .activity-item {
+      display: flex;
+      gap: var(--space-3);
+      padding: var(--space-3) 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .activity-item:last-child {
+      border-bottom: none;
+    }
+
+    .activity-icon {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-surface);
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    .activity-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .activity-text {
+      font-size: 13px;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+
+    .activity-text strong {
+      font-weight: 600;
+      color: var(--text-bright);
+    }
+
+    .activity-time {
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+
+    /* ─── Discovery Panel ─── */
+    .discovery-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .discovery-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-4) var(--space-5);
+      background: linear-gradient(180deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .discovery-title {
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-primary);
+    }
+
+    .discovery-list {
+      padding: var(--space-3);
+    }
+
+    .discovery-item {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-3);
+      padding: var(--space-3);
+      border-radius: var(--radius-sm);
+      transition: background var(--transition-fast);
+      cursor: pointer;
+    }
+
+    .discovery-item:hover {
+      background: var(--bg-surface);
+    }
+
+    .discovery-type {
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .discovery-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .discovery-text {
+      font-size: 13px;
+      color: var(--text-primary);
+      line-height: 1.4;
+      margin-bottom: 2px;
+    }
+
+    .discovery-meta {
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+
+    /* ─── Footer Status ─── */
+    .footer-status {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-3) var(--space-8);
+      background: var(--bg-deep);
+      border-top: 1px solid var(--border-subtle);
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+
+    .footer-left,
+    .footer-right {
+      display: flex;
+      align-items: center;
+      gap: var(--space-6);
+    }
+
+    .footer-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .footer-item.success {
+      color: var(--accent-success);
+    }
+
+    .footer-item.warning {
+      color: var(--accent-warning);
+    }
+  </style>
+</head>
+<body class="deco-bg">
+  <div class="app">
+
+    <!-- Command Bar -->
+    <header class="command-bar">
+      <div class="brand">
+        <div class="brand-mark"></div>
+        <div>
+          <div class="brand-name">PHOSPHOR COMMAND</div>
+          <div class="brand-status">
+            <span class="status-dot active"></span>
+            Systems Operational
+          </div>
+        </div>
+      </div>
+
+      <div class="command-search">
+        <input type="text" class="search-input" placeholder="Command palette... ⌘K">
+      </div>
+
+      <div class="command-actions">
+        <div class="commanders">
+          <div class="commander-avatar active">AJ</div>
+          <div class="commander-avatar">SR</div>
+          <div class="commander-avatar" style="background: linear-gradient(135deg, var(--accent-teal), var(--accent-navy)); color: white; font-size: 10px;">AI</div>
+        </div>
+        <button class="btn">Handoff</button>
+        <button class="btn btn-primary">New Session</button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+      <!-- Primary Column -->
+      <div class="primary-column">
+
+        <!-- Attention Zone -->
+        <div class="attention-zone sunburst-hero">
+          <div class="attention-icon"><span class="deco-icon deco-icon-bolt deco-icon-xl deco-icon-gold"></span></div>
+          <div class="attention-content">
+            <div class="attention-title">3 agents awaiting review in Payment Integration</div>
+            <div class="attention-detail">Verification artifacts ready • 2 tests pending approval</div>
+          </div>
+          <div class="attention-actions">
+            <button class="btn">Dismiss</button>
+            <button class="btn btn-primary">Review Now</button>
+          </div>
+        </div>
+
+        <!-- Metrics Row -->
+        <div class="metrics-row">
+          <div class="metric-card featured">
+            <div class="metric-header">
+              <span class="metric-icon"><span class="deco-icon deco-icon-target deco-icon-lg deco-icon-gold"></span></span>
+              <span class="metric-badge">On Track</span>
+            </div>
+            <div class="metric-value">87%</div>
+            <div class="metric-label">Goal Progress</div>
+            <div class="metric-trend up"><span class="deco-icon deco-icon-chevron-up"></span> 12% this week</div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-header">
+              <span class="metric-icon"><span class="deco-icon deco-icon-agent deco-icon-lg deco-icon-muted"></span></span>
+            </div>
+            <div class="metric-value">24</div>
+            <div class="metric-label">Active Agents</div>
+            <div class="metric-trend up"><span class="deco-icon deco-icon-chevron-up"></span> 6 from yesterday</div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-header">
+              <span class="metric-icon"><span class="deco-icon deco-icon-check deco-icon-lg deco-icon-muted"></span></span>
+            </div>
+            <div class="metric-value">156</div>
+            <div class="metric-label">Tasks Completed</div>
+            <div class="metric-trend up"><span class="deco-icon deco-icon-chevron-up"></span> 23% vs avg</div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-header">
+              <span class="metric-icon"><span class="deco-icon deco-icon-value deco-icon-lg deco-icon-muted"></span></span>
+            </div>
+            <div class="metric-value">$4.28</div>
+            <div class="metric-label">Cost per Task</div>
+            <div class="metric-trend up"><span class="deco-icon deco-icon-chevron-down"></span> 18% improved</div>
+          </div>
+        </div>
+
+        <!-- Active Sessions -->
+        <section class="section">
+          <div class="section-head">
+            <h2 class="section-title">
+              <span class="section-title-icon">◇</span>
+              Active Sessions
+            </h2>
+            <div class="section-actions">
+              <button class="btn btn-ghost">View All</button>
+            </div>
+          </div>
+          <div class="section-body">
+            <div class="session-list">
+              <div class="session-item">
+                <div class="session-status"></div>
+                <div class="session-info">
+                  <div class="session-name">Payment Integration Refactor</div>
+                  <div class="session-meta">vibes-core • 4 files changed</div>
+                </div>
+                <div class="session-agents">
+                  <span class="agent-pill">Builder</span>
+                  <span class="agent-pill">Reviewer</span>
+                  <span class="agent-pill">+2</span>
+                </div>
+                <div class="session-time">Active now</div>
+              </div>
+
+              <div class="session-item">
+                <div class="session-status pending"></div>
+                <div class="session-info">
+                  <div class="session-name">Dashboard Component Tests</div>
+                  <div class="session-meta">web-ui • Awaiting review</div>
+                </div>
+                <div class="session-agents">
+                  <span class="agent-pill">Tester</span>
+                </div>
+                <div class="session-time">12m ago</div>
+              </div>
+
+              <div class="session-item">
+                <div class="session-status"></div>
+                <div class="session-info">
+                  <div class="session-name">API Documentation</div>
+                  <div class="session-meta">docs • Generating</div>
+                </div>
+                <div class="session-agents">
+                  <span class="agent-pill">Writer</span>
+                </div>
+                <div class="session-time">25m ago</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Goals -->
+        <section class="section">
+          <div class="section-head">
+            <h2 class="section-title">
+              <span class="section-title-icon">◇</span>
+              Active Goals
+            </h2>
+            <div class="section-actions">
+              <button class="btn btn-ghost">Manage</button>
+            </div>
+          </div>
+          <div class="section-body">
+            <div class="goals-grid">
+              <div class="goal-card">
+                <div class="goal-header">
+                  <div class="goal-title">Complete M50 Home Redesign</div>
+                  <div class="goal-percent">67%</div>
+                </div>
+                <div class="goal-progress">
+                  <div class="goal-fill" style="width: 67%;"></div>
+                </div>
+                <div class="goal-meta">8 of 12 tasks complete</div>
+              </div>
+
+              <div class="goal-card">
+                <div class="goal-header">
+                  <div class="goal-title">Reduce API Response Time</div>
+                  <div class="goal-percent">89%</div>
+                </div>
+                <div class="goal-progress">
+                  <div class="goal-fill" style="width: 89%;"></div>
+                </div>
+                <div class="goal-meta">Target: <200ms avg</div>
+              </div>
+
+              <div class="goal-card">
+                <div class="goal-header">
+                  <div class="goal-title">Test Coverage to 85%</div>
+                  <div class="goal-percent">78%</div>
+                </div>
+                <div class="goal-progress">
+                  <div class="goal-fill" style="width: 78%;"></div>
+                </div>
+                <div class="goal-meta">Currently at 72%</div>
+              </div>
+
+              <div class="goal-card">
+                <div class="goal-header">
+                  <div class="goal-title">Document All Public APIs</div>
+                  <div class="goal-percent">45%</div>
+                </div>
+                <div class="goal-progress">
+                  <div class="goal-fill" style="width: 45%;"></div>
+                </div>
+                <div class="goal-meta">23 of 51 endpoints</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- Sidebar -->
+      <aside class="sidebar">
+
+        <!-- Trajectory Panel -->
+        <div class="trajectory-panel fan-motif">
+          <div class="trajectory-header">
+            <div class="trajectory-title">Current Trajectory</div>
+            <div class="trajectory-subtitle">Projected completion: Jan 28</div>
+          </div>
+          <div class="trajectory-content">
+            <div class="trajectory-stat">
+              <span class="trajectory-label">Velocity</span>
+              <span class="trajectory-value gold">12.4 pts/day</span>
+            </div>
+            <div class="trajectory-stat">
+              <span class="trajectory-label">Throughput</span>
+              <span class="trajectory-value">156 tasks/wk</span>
+            </div>
+            <div class="trajectory-stat">
+              <span class="trajectory-label">Efficiency</span>
+              <span class="trajectory-value gold">92%</span>
+            </div>
+            <div class="trajectory-stat">
+              <span class="trajectory-label">Quality Score</span>
+              <span class="trajectory-value">4.7/5</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Discovery Panel -->
+        <div class="discovery-panel">
+          <div class="discovery-header">
+            <span class="discovery-title">Recent Discoveries</span>
+            <button class="btn btn-ghost">View All</button>
+          </div>
+          <div class="discovery-list">
+            <div class="discovery-item">
+              <span class="discovery-type"><span class="deco-icon deco-icon-growth deco-icon-md" style="color: var(--accent-success);"></span></span>
+              <div class="discovery-info">
+                <div class="discovery-text">Agents self-organizing around shared context pools</div>
+                <div class="discovery-meta">Emergent • 12m ago</div>
+              </div>
+            </div>
+            <div class="discovery-item">
+              <span class="discovery-type"><span class="deco-icon deco-icon-bolt deco-icon-md deco-icon-gold"></span></span>
+              <div class="discovery-info">
+                <div class="discovery-text">Batch API calls could reduce costs by 35%</div>
+                <div class="discovery-meta">Efficiency • 1h ago</div>
+              </div>
+            </div>
+            <div class="discovery-item">
+              <span class="discovery-type"><span class="deco-icon deco-icon-link deco-icon-md" style="color: var(--accent-teal);"></span></span>
+              <div class="discovery-info">
+                <div class="discovery-text">Verification artifacts can auto-track goal progress</div>
+                <div class="discovery-meta">Connection • 3h ago</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Activity Feed -->
+        <div class="activity-panel">
+          <div class="activity-header">
+            <span class="activity-title">Activity</span>
+            <span class="activity-live">
+              <span class="activity-dot"></span>
+              Live
+            </span>
+          </div>
+          <div class="activity-feed">
+            <div class="activity-item">
+              <div class="activity-icon"><span class="deco-icon deco-icon-check deco-icon-sm deco-icon-success"></span></div>
+              <div class="activity-content">
+                <div class="activity-text"><strong>Builder-7</strong> completed payment handler refactor</div>
+                <div class="activity-time">Just now</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon"><span class="deco-icon deco-icon-search deco-icon-sm deco-icon-muted"></span></div>
+              <div class="activity-content">
+                <div class="activity-text"><strong>Reviewer-3</strong> approved PR #247</div>
+                <div class="activity-time">2m ago</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon"><span class="deco-icon deco-icon-test deco-icon-sm deco-icon-muted"></span></div>
+              <div class="activity-content">
+                <div class="activity-text"><strong>Tester-1</strong> generated 12 test cases</div>
+                <div class="activity-time">5m ago</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon"><span class="deco-icon deco-icon-doc deco-icon-sm deco-icon-muted"></span></div>
+              <div class="activity-content">
+                <div class="activity-text"><strong>Writer-2</strong> updated API documentation</div>
+                <div class="activity-time">8m ago</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon"><span class="deco-icon deco-icon-rocket deco-icon-sm deco-icon-gold"></span></div>
+              <div class="activity-content">
+                <div class="activity-text"><strong>Deploy</strong> staged build v2.4.1</div>
+                <div class="activity-time">15m ago</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </aside>
+    </main>
+
+    <!-- Footer Status -->
+    <footer class="footer-status">
+      <div class="footer-left">
+        <div class="footer-item success">
+          <span class="status-dot active"></span>
+          All systems operational
+        </div>
+        <div class="footer-item">
+          <span>API: 142ms avg</span>
+        </div>
+        <div class="footer-item">
+          <span>Events: 1,247/min</span>
+        </div>
+      </div>
+      <div class="footer-right">
+        <div class="footer-item">
+          <span>Session: 2h 34m</span>
+        </div>
+        <div class="footer-item warning">
+          <span>Budget: 78% used</span>
+        </div>
+        <div class="footer-item">
+          <span>v2.4.0</span>
+        </div>
+      </div>
+    </footer>
+
+  </div>
+</body>
+</html>

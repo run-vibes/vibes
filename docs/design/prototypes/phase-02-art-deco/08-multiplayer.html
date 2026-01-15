@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multiplayer — Commanders & Presence</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    /* ═══════════════════════════════════════════════════════════════════════
+       MULTIPLAYER — Commanders, Presence, Authority, and Handoffs
+       ═══════════════════════════════════════════════════════════════════════ */
+
+    .prototype-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: var(--space-6);
+    }
+
+    .prototype-header {
+      margin-bottom: var(--space-8);
+      padding-bottom: var(--space-4);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .prototype-title {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: var(--gold-primary);
+      text-shadow: var(--glow-gold);
+      margin-bottom: var(--space-2);
+    }
+
+    .prototype-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .section {
+      margin-bottom: var(--space-8);
+    }
+
+    .section-label {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-bottom: var(--space-3);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .section-label::before {
+      content: '';
+      flex: 0 0 20px;
+      height: 1px;
+      background: var(--gold-dim);
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--gold-dim);
+    }
+
+    /* ─── Command Bar with Presence ─── */
+    .command-bar-demo {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: var(--space-3) var(--space-4);
+      margin-bottom: var(--space-4);
+    }
+
+    .presence-bar {
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+    }
+
+    .presence-label {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+    }
+
+    .commanders-row {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .commander-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+      color: var(--text-secondary);
+    }
+
+    .commander-avatar:hover {
+      transform: scale(1.1);
+    }
+
+    .commander-avatar.human {
+      background: linear-gradient(135deg, var(--bg-elevated), var(--bg-surface));
+      border: 2px solid var(--border-light);
+    }
+
+    .commander-avatar.ai {
+      background: linear-gradient(135deg, var(--accent-navy), #1a2a4a);
+      border: 2px solid var(--border-light);
+    }
+
+    .commander-avatar.you {
+      border-color: var(--gold-primary);
+      box-shadow: var(--glow-gold);
+    }
+
+    .commander-status {
+      position: absolute;
+      bottom: -2px;
+      right: -2px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 2px solid var(--bg-card);
+    }
+
+    .commander-status.active {
+      background: var(--accent-success);
+      animation: pulse-gold 2s ease-in-out infinite;
+    }
+
+    .commander-status.away {
+      background: var(--accent-warning);
+    }
+
+    .commander-status.autonomous {
+      background: var(--accent-teal);
+      animation: pulse-gold 3s ease-in-out infinite;
+    }
+
+    .commander-status.offline {
+      background: var(--text-tertiary);
+    }
+
+    /* ─── Commander Detail Card ─── */
+    .commander-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      margin-bottom: var(--space-3);
+    }
+
+    .commander-card-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      margin-bottom: var(--space-3);
+    }
+
+    .commander-card-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .commander-card-avatar.human {
+      background: linear-gradient(135deg, var(--bg-elevated), var(--bg-surface));
+      border: 2px solid var(--border-light);
+    }
+
+    .commander-card-avatar.ai {
+      background: linear-gradient(135deg, var(--accent-navy), #1a2a4a);
+      border: 2px solid var(--border-light);
+    }
+
+    .commander-card-info {
+      flex: 1;
+    }
+
+    .commander-card-name {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .commander-card-type {
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+
+    .commander-card-status {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      padding: 4px 10px;
+      border-radius: 12px;
+    }
+
+    .commander-card-status.active {
+      background: rgba(92, 184, 92, 0.15);
+      color: var(--accent-success);
+    }
+
+    .commander-card-status.autonomous {
+      background: rgba(74, 155, 155, 0.15);
+      color: var(--accent-teal);
+    }
+
+    .commander-card-body {
+      border-top: 1px solid var(--border-subtle);
+      padding-top: var(--space-3);
+    }
+
+    .commander-detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--space-1) 0;
+      font-size: 12px;
+    }
+
+    .commander-detail-label {
+      color: var(--text-tertiary);
+    }
+
+    .commander-detail-value {
+      color: var(--text-primary);
+    }
+
+    .commander-scope {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-1);
+      margin-top: var(--space-2);
+    }
+
+    .scope-tag {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      padding: 2px 8px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      color: var(--text-secondary);
+    }
+
+    .scope-tag.active {
+      border-color: var(--gold-dim);
+      color: var(--gold-primary);
+      background: var(--gold-subtle);
+    }
+
+    /* ─── Authority Levels ─── */
+    .authority-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-3);
+    }
+
+    .authority-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      text-align: center;
+      transition: all var(--transition-fast);
+    }
+
+    .authority-card:hover {
+      border-color: var(--gold-dim);
+    }
+
+    .authority-icon {
+      font-size: 20px;
+      margin-bottom: var(--space-2);
+      color: var(--gold-primary);
+    }
+
+    .authority-title {
+      font-family: var(--font-display);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: var(--text-primary);
+      margin-bottom: var(--space-1);
+    }
+
+    .authority-desc {
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    /* ─── Handoff Panel ─── */
+    .handoff-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .handoff-header {
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 1px solid var(--border-subtle);
+      background: var(--bg-surface);
+    }
+
+    .handoff-title {
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+
+    .handoff-content {
+      padding: var(--space-4);
+    }
+
+    .handoff-option {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-3);
+      padding: var(--space-3);
+      background: var(--bg-surface);
+      border-radius: var(--radius-sm);
+      margin-bottom: var(--space-2);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border: 1px solid transparent;
+    }
+
+    .handoff-option:hover {
+      border-color: var(--gold-dim);
+      background: var(--gold-subtle);
+    }
+
+    .handoff-option:last-child {
+      margin-bottom: 0;
+    }
+
+    .handoff-arrow {
+      font-size: 14px;
+      color: var(--gold-primary);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+    }
+
+    .handoff-info {
+      flex: 1;
+    }
+
+    .handoff-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+
+    .handoff-desc {
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+
+    /* ─── Chain of Command ─── */
+    .chain-diagram {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: var(--space-6);
+    }
+
+    .chain-level {
+      display: flex;
+      justify-content: center;
+      margin-bottom: var(--space-4);
+      position: relative;
+    }
+
+    .chain-level::after {
+      content: '';
+      position: absolute;
+      bottom: -16px;
+      left: 50%;
+      width: 1px;
+      height: 12px;
+      background: var(--gold-dim);
+    }
+
+    .chain-level:last-child::after {
+      display: none;
+    }
+
+    .chain-node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: var(--space-3) var(--space-5);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+    }
+
+    .chain-node.owner {
+      border-color: var(--gold-primary);
+      box-shadow: var(--glow-gold);
+    }
+
+    .chain-node-icon {
+      font-size: 18px;
+      margin-bottom: var(--space-1);
+      color: var(--gold-primary);
+    }
+
+    .chain-node-label {
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .chain-node-type {
+      font-size: 9px;
+      color: var(--text-tertiary);
+    }
+
+    .chain-branches {
+      display: flex;
+      justify-content: center;
+      gap: var(--space-6);
+      position: relative;
+    }
+
+    .chain-branches::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 25%;
+      right: 25%;
+      height: 1px;
+      background: var(--gold-dim);
+    }
+
+    .chain-branch {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .chain-branch::before {
+      content: '';
+      width: 1px;
+      height: 16px;
+      background: var(--gold-dim);
+    }
+
+    .swarm-label {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      color: var(--text-tertiary);
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+    }
+
+    .swarm-dots {
+      display: flex;
+      gap: 2px;
+    }
+
+    .swarm-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--gold-primary);
+      opacity: 0.6;
+    }
+
+    /* ─── Activity Log ─── */
+    .activity-log {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+    }
+
+    .activity-log-header {
+      padding: var(--space-2) var(--space-4);
+      border-bottom: 1px solid var(--border-subtle);
+      background: var(--bg-surface);
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+
+    .activity-log-content {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .activity-log-item {
+      display: flex;
+      gap: var(--space-3);
+      padding: var(--space-2) var(--space-4);
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 11px;
+    }
+
+    .activity-log-time {
+      font-family: var(--font-condensed);
+      color: var(--text-tertiary);
+      width: 60px;
+      flex-shrink: 0;
+    }
+
+    .activity-log-commander {
+      color: var(--gold-primary);
+      width: 80px;
+      flex-shrink: 0;
+    }
+
+    .activity-log-action {
+      color: var(--text-primary);
+      flex: 1;
+    }
+
+    @media (max-width: 800px) {
+      .authority-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body class="deco-bg">
+
+  <div class="prototype-container">
+    <header class="prototype-header">
+      <h1 class="prototype-title">Multiplayer</h1>
+      <p class="prototype-desc">
+        The system scales from solo commander to distributed command structure.
+        Humans, AI agents, and robots can all be commanders with different authority scopes.
+      </p>
+    </header>
+
+    <!-- Presence Bar -->
+    <section class="section">
+      <div class="section-label">Command Bar Presence</div>
+      <div class="command-bar-demo">
+        <div class="presence-bar">
+          <span class="presence-label">COMMANDERS</span>
+          <div class="commanders-row">
+            <div class="commander-avatar human you" title="Alex (you) — Owner">
+              <span class="deco-icon deco-icon-star deco-icon-sm deco-icon-gold"></span>
+              <span class="commander-status active"></span>
+            </div>
+            <div class="commander-avatar human" title="Sara — Domain Lead: Auth">
+              <span style="font-size: 12px; font-weight: 600;">S</span>
+              <span class="commander-status active"></span>
+            </div>
+            <div class="commander-avatar human" title="Mike — Observer">
+              <span style="font-size: 12px; font-weight: 600;">M</span>
+              <span class="commander-status away"></span>
+            </div>
+            <div class="commander-avatar ai" title="Strategy-AI — Autonomous">
+              <span class="deco-icon deco-icon-agent deco-icon-sm"></span>
+              <span class="commander-status autonomous"></span>
+            </div>
+            <div class="commander-avatar ai" title="Ops-AI — Autonomous">
+              <span class="deco-icon deco-icon-agent deco-icon-sm"></span>
+              <span class="commander-status autonomous"></span>
+            </div>
+            <div class="commander-avatar ai" title="Research-AI — Autonomous">
+              <span class="deco-icon deco-icon-search deco-icon-sm"></span>
+              <span class="commander-status autonomous"></span>
+            </div>
+          </div>
+          <span style="font-size: 10px; color: var(--text-tertiary); margin-left: auto;">
+            2 humans active • 3 AI autonomous
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Commander Cards -->
+    <section class="section">
+      <div class="section-label">Commander Details</div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
+        <div class="commander-card">
+          <div class="commander-card-header">
+            <div class="commander-card-avatar human">
+              <span style="font-size: 18px; font-weight: 600;">S</span>
+            </div>
+            <div class="commander-card-info">
+              <div class="commander-card-name">Sara</div>
+              <div class="commander-card-type">Human • Domain Lead</div>
+            </div>
+            <span class="commander-card-status active">● Active</span>
+          </div>
+          <div class="commander-card-body">
+            <div class="commander-detail-row">
+              <span class="commander-detail-label">Currently viewing</span>
+              <span class="commander-detail-value">Goal: Ship auth system</span>
+            </div>
+            <div class="commander-detail-row">
+              <span class="commander-detail-label">Last action</span>
+              <span class="commander-detail-value">Approved permission • 3m ago</span>
+            </div>
+            <div class="commander-detail-row">
+              <span class="commander-detail-label">Authority scope</span>
+            </div>
+            <div class="commander-scope">
+              <span class="scope-tag active">auth-system</span>
+              <span class="scope-tag">user-management</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="commander-card">
+          <div class="commander-card-header">
+            <div class="commander-card-avatar ai">
+              <span class="deco-icon deco-icon-agent deco-icon-md"></span>
+            </div>
+            <div class="commander-card-info">
+              <div class="commander-card-name">Ops-AI</div>
+              <div class="commander-card-type">AI Agent • Autonomous</div>
+            </div>
+            <span class="commander-card-status autonomous">◎ Autonomous</span>
+          </div>
+          <div class="commander-card-body">
+            <div class="commander-detail-row">
+              <span class="commander-detail-label">Current task</span>
+              <span class="commander-detail-value">Optimizing infrastructure costs</span>
+            </div>
+            <div class="commander-detail-row">
+              <span class="commander-detail-label">Last decision</span>
+              <span class="commander-detail-value">Scaled down idle instances • 1h ago</span>
+            </div>
+            <div class="commander-detail-row">
+              <span class="commander-detail-label">Authority scope</span>
+            </div>
+            <div class="commander-scope">
+              <span class="scope-tag active">infrastructure</span>
+              <span class="scope-tag active">cost-optimization</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Authority Levels -->
+    <section class="section">
+      <div class="section-label">Authority Levels</div>
+      <div class="authority-grid">
+        <div class="authority-card">
+          <div class="authority-icon"><span class="deco-icon deco-icon-star deco-icon-lg deco-icon-gold"></span></div>
+          <div class="authority-title">Owner</div>
+          <div class="authority-desc">Full control over everything</div>
+        </div>
+        <div class="authority-card">
+          <div class="authority-icon"><span class="deco-icon deco-icon-target deco-icon-lg deco-icon-gold"></span></div>
+          <div class="authority-title">Domain Lead</div>
+          <div class="authority-desc">Steers specific goal or area</div>
+        </div>
+        <div class="authority-card">
+          <div class="authority-icon"><span class="deco-icon deco-icon-agent deco-icon-lg deco-icon-gold"></span></div>
+          <div class="authority-title">Autonomous</div>
+          <div class="authority-desc">Operates within delegated domain</div>
+        </div>
+        <div class="authority-card">
+          <div class="authority-icon"><span class="deco-icon deco-icon-search deco-icon-lg deco-icon-gold"></span></div>
+          <div class="authority-title">Observer</div>
+          <div class="authority-desc">View only, no steering</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Handoff Panel -->
+    <section class="section">
+      <div class="section-label">Handoff Modes</div>
+      <div class="handoff-panel">
+        <div class="handoff-header">
+          <span class="handoff-title">Transfer Control</span>
+        </div>
+        <div class="handoff-content">
+          <div class="handoff-option">
+            <span class="handoff-arrow">
+              <span style="font-size: 12px;">H</span>
+              <span class="deco-icon deco-icon-velocity deco-icon-sm"></span>
+              <span class="deco-icon deco-icon-agent deco-icon-sm"></span>
+            </span>
+            <div class="handoff-info">
+              <div class="handoff-label">Delegate to AI</div>
+              <div class="handoff-desc">"Take over cost optimization, keep me posted on big changes"</div>
+            </div>
+          </div>
+          <div class="handoff-option">
+            <span class="handoff-arrow">
+              <span class="deco-icon deco-icon-agent deco-icon-sm"></span>
+              <span class="deco-icon deco-icon-velocity deco-icon-sm"></span>
+              <span style="font-size: 12px;">H</span>
+            </span>
+            <div class="handoff-info">
+              <div class="handoff-label">Escalation</div>
+              <div class="handoff-desc">"Hit a decision point I'm not confident about"</div>
+            </div>
+          </div>
+          <div class="handoff-option">
+            <span class="handoff-arrow">
+              <span style="font-size: 12px;">H</span>
+              <span class="deco-icon deco-icon-velocity deco-icon-sm"></span>
+              <span style="font-size: 12px;">H</span>
+            </span>
+            <div class="handoff-info">
+              <div class="handoff-label">Transfer to Teammate</div>
+              <div class="handoff-desc">"Sara, you own auth system now"</div>
+            </div>
+          </div>
+          <div class="handoff-option">
+            <span class="handoff-arrow">
+              <span class="deco-icon deco-icon-time deco-icon-sm"></span>
+              <span class="deco-icon deco-icon-velocity deco-icon-sm"></span>
+              <span class="deco-icon deco-icon-agent deco-icon-sm"></span>
+            </span>
+            <div class="handoff-info">
+              <div class="handoff-label">Shift Change</div>
+              <div class="handoff-desc">"End of my day, AI takes night shift with morning briefing"</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Chain of Command -->
+    <section class="section">
+      <div class="section-label">Chain of Command</div>
+      <div class="chain-diagram">
+        <div class="chain-level">
+          <div class="chain-node owner">
+            <span class="chain-node-icon"><span class="deco-icon deco-icon-star deco-icon-md"></span></span>
+            <span class="chain-node-label">Alex</span>
+            <span class="chain-node-type">Owner</span>
+          </div>
+        </div>
+
+        <div class="chain-level">
+          <div class="chain-branches">
+            <div class="chain-branch">
+              <div class="chain-node">
+                <span class="chain-node-icon"><span class="deco-icon deco-icon-target deco-icon-sm"></span></span>
+                <span class="chain-node-label">Sara</span>
+                <span class="chain-node-type">Product Lead</span>
+              </div>
+              <div class="swarm-label">
+                <span class="swarm-dots">
+                  <span class="swarm-dot"></span>
+                  <span class="swarm-dot"></span>
+                  <span class="swarm-dot"></span>
+                </span>
+                Swarms
+              </div>
+            </div>
+
+            <div class="chain-branch">
+              <div class="chain-node">
+                <span class="chain-node-icon"><span class="deco-icon deco-icon-agent deco-icon-sm"></span></span>
+                <span class="chain-node-label">Eng-AI</span>
+                <span class="chain-node-type">Engineering Lead</span>
+              </div>
+              <div class="swarm-label">
+                <span class="swarm-dots">
+                  <span class="swarm-dot"></span>
+                  <span class="swarm-dot"></span>
+                  <span class="swarm-dot"></span>
+                  <span class="swarm-dot"></span>
+                </span>
+                Swarms
+              </div>
+            </div>
+
+            <div class="chain-branch">
+              <div class="chain-node">
+                <span class="chain-node-icon"><span class="deco-icon deco-icon-agent deco-icon-sm"></span></span>
+                <span class="chain-node-label">Ops-AI</span>
+                <span class="chain-node-type">Ops Lead</span>
+              </div>
+              <div class="swarm-label">
+                <span class="swarm-dots">
+                  <span class="swarm-dot"></span>
+                  <span class="swarm-dot"></span>
+                </span>
+                Swarms
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Activity Log -->
+    <section class="section">
+      <div class="section-label">Commander Activity Log</div>
+      <div class="activity-log">
+        <div class="activity-log-header">Recent Actions</div>
+        <div class="activity-log-content">
+          <div class="activity-log-item">
+            <span class="activity-log-time">14:32</span>
+            <span class="activity-log-commander">Sara</span>
+            <span class="activity-log-action">Approved permission for architect-3 to write /src/auth</span>
+          </div>
+          <div class="activity-log-item">
+            <span class="activity-log-time">14:28</span>
+            <span class="activity-log-commander">Ops-AI</span>
+            <span class="activity-log-action">Scaled down 2 idle compute instances (autonomous)</span>
+          </div>
+          <div class="activity-log-item">
+            <span class="activity-log-time">14:15</span>
+            <span class="activity-log-commander">Alex</span>
+            <span class="activity-log-action">Created new goal: "Ship auth system"</span>
+          </div>
+          <div class="activity-log-item">
+            <span class="activity-log-time">14:10</span>
+            <span class="activity-log-commander">Strategy-AI</span>
+            <span class="activity-log-action">Escalated decision: "Research budget allocation needs human input"</span>
+          </div>
+          <div class="activity-log-item">
+            <span class="activity-log-time">14:02</span>
+            <span class="activity-log-commander">Alex</span>
+            <span class="activity-log-action">Delegated auth-system scope to Sara</span>
+          </div>
+          <div class="activity-log-item">
+            <span class="activity-log-time">13:45</span>
+            <span class="activity-log-commander">Research-AI</span>
+            <span class="activity-log-action">Started background scan: rust ecosystem updates</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+</body>
+</html>
