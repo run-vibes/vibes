@@ -35,6 +35,7 @@ pub enum Action {
     Pause,
     Resume,
     Cancel,
+    Restart,
     ViewDiff,
 
     // Connection
@@ -131,6 +132,7 @@ impl Default for KeyBindings {
         agent_bindings.insert(key('v'), Action::ViewDiff);
         agent_bindings.insert(key('p'), Action::Pause);
         agent_bindings.insert(key('c'), Action::Cancel);
+        agent_bindings.insert(key('r'), Action::Restart);
 
         Self {
             global,
@@ -393,5 +395,19 @@ mod tests {
             bindings.resolve(key('c'), &View::Agent("test".into())),
             Some(Action::Cancel)
         );
+    }
+
+    #[test]
+    fn keybindings_agent_view_r_maps_to_restart() {
+        let bindings = KeyBindings::default();
+        assert_eq!(
+            bindings.resolve(key('r'), &View::Agent("test".into())),
+            Some(Action::Restart)
+        );
+    }
+
+    #[test]
+    fn action_enum_has_restart_variant() {
+        let _restart = Action::Restart;
     }
 }

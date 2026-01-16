@@ -216,6 +216,46 @@ impl App {
                     }
                 }
             }
+            // Agent control actions
+            Action::Pause | Action::Resume => {
+                // Both Pause and Resume map to 'p' key - toggles between states
+                if let View::Agent(agent_id) = &self.views.current
+                    && let Some(agent_state) = self.state.agents.get_mut(agent_id)
+                {
+                    use crate::widgets::AgentStatus;
+                    let current = agent_state.control_bar.status();
+                    match current {
+                        AgentStatus::Running | AgentStatus::WaitingForPermission => {
+                            agent_state.control_bar.set_status(AgentStatus::Paused);
+                            // TODO: Send pause command to server
+                        }
+                        AgentStatus::Paused => {
+                            agent_state.control_bar.set_status(AgentStatus::Running);
+                            // TODO: Send resume command to server
+                        }
+                        // Completed/Failed/Cancelled states don't support pause/resume
+                        _ => {}
+                    }
+                }
+            }
+            Action::Cancel => {
+                if let View::Agent(agent_id) = &self.views.current
+                    && let Some(agent_state) = self.state.agents.get_mut(agent_id)
+                {
+                    use crate::widgets::ConfirmationType;
+                    // Show confirmation dialog for cancel
+                    agent_state.confirmation.show(ConfirmationType::Cancel);
+                }
+            }
+            Action::Restart => {
+                if let View::Agent(agent_id) = &self.views.current
+                    && let Some(agent_state) = self.state.agents.get_mut(agent_id)
+                {
+                    use crate::widgets::ConfirmationType;
+                    // Show confirmation dialog for restart
+                    agent_state.confirmation.show(ConfirmationType::Restart);
+                }
+            }
             // Other actions - will be wired up in future stories
             Action::NavigateLeft
             | Action::NavigateRight
@@ -225,9 +265,6 @@ impl App {
             | Action::JumpToView(_)
             | Action::Approve
             | Action::Deny
-            | Action::Pause
-            | Action::Resume
-            | Action::Cancel
             | Action::ViewDiff => {
                 // Placeholder - will be implemented in future stories
             }
@@ -683,5 +720,132 @@ mod tests {
 
         app.clear_error();
         assert!(app.error_message.is_none());
+    }
+
+    // ==================== Agent Control Action Tests ====================
+
+    #[test]
+    fn handle_key_p_in_agent_view_toggles_pause_when_running() {
+        use crate::widgets::AgentStatus;
+
+        let mut app = App::new();
+        // Set up agent state
+        let agent_id = "test-agent".to_string();
+        app.state
+            .agents
+            .insert(agent_id.clone(), Default::default());
+        // Navigate to agent view
+        app.views.push(View::Agent(agent_id.clone()));
+
+        // Verify initial state is Running
+        assert_eq!(
+            app.state
+                .agents
+                .get(&agent_id)
+                .unwrap()
+                .control_bar
+                .status(),
+            AgentStatus::Running
+        );
+
+        // Press 'p' to pause
+        let key = KeyEvent::new(KeyCode::Char('p'), KeyModifiers::NONE);
+        app.handle_key(key);
+
+        // Should now be Paused
+        assert_eq!(
+            app.state
+                .agents
+                .get(&agent_id)
+                .unwrap()
+                .control_bar
+                .status(),
+            AgentStatus::Paused
+        );
+    }
+
+    #[test]
+    fn handle_key_p_in_agent_view_toggles_resume_when_paused() {
+        use crate::widgets::AgentStatus;
+
+        let mut app = App::new();
+        let agent_id = "test-agent".to_string();
+        let mut agent_state = crate::state::AgentState::default();
+        agent_state.control_bar.set_status(AgentStatus::Paused);
+        app.state.agents.insert(agent_id.clone(), agent_state);
+        app.views.push(View::Agent(agent_id.clone()));
+
+        // Press 'p' to resume
+        let key = KeyEvent::new(KeyCode::Char('p'), KeyModifiers::NONE);
+        app.handle_key(key);
+
+        // Should now be Running
+        assert_eq!(
+            app.state
+                .agents
+                .get(&agent_id)
+                .unwrap()
+                .control_bar
+                .status(),
+            AgentStatus::Running
+        );
+    }
+
+    #[test]
+    fn handle_key_c_in_agent_view_shows_cancel_confirmation() {
+        use crate::widgets::ConfirmationType;
+
+        let mut app = App::new();
+        let agent_id = "test-agent".to_string();
+        app.state
+            .agents
+            .insert(agent_id.clone(), Default::default());
+        app.views.push(View::Agent(agent_id.clone()));
+
+        // Verify confirmation is not visible initially
+        assert!(
+            !app.state
+                .agents
+                .get(&agent_id)
+                .unwrap()
+                .confirmation
+                .is_visible()
+        );
+
+        // Press 'c' to show cancel confirmation
+        let key = KeyEvent::new(KeyCode::Char('c'), KeyModifiers::NONE);
+        app.handle_key(key);
+
+        // Confirmation should now be visible with Cancel type
+        let confirmation = &app.state.agents.get(&agent_id).unwrap().confirmation;
+        assert!(confirmation.is_visible());
+        assert_eq!(
+            confirmation.confirmation_type(),
+            Some(ConfirmationType::Cancel)
+        );
+    }
+
+    #[test]
+    fn handle_key_r_in_agent_view_shows_restart_confirmation() {
+        use crate::widgets::ConfirmationType;
+
+        let mut app = App::new();
+        let agent_id = "test-agent".to_string();
+        app.state
+            .agents
+            .insert(agent_id.clone(), Default::default());
+        app.views.push(View::Agent(agent_id.clone()));
+
+        // Press 'r' to show restart confirmation
+        let key = KeyEvent::new(KeyCode::Char('r'), KeyModifiers::NONE);
+        app.handle_key(key);
+
+        // Confirmation should now be visible with Restart type
+        let confirmation = &app.state.agents.get(&agent_id).unwrap().confirmation;
+        assert!(confirmation.is_visible());
+        assert_eq!(
+            confirmation.confirmation_type(),
+            Some(ConfirmationType::Restart)
+        );
     }
 }

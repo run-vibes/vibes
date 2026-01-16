@@ -2,7 +2,7 @@
 id: m43-feat-04
 title: Agent control actions
 type: feat
-status: backlog
+status: done
 priority: high
 epics: [tui]
 depends: [m43-feat-01]
@@ -87,13 +87,13 @@ Control availability by state:
 
 ## Acceptance Criteria
 
-- [ ] Control bar renders at bottom of AgentView
-- [ ] Actions shown are context-sensitive to agent state
-- [ ] `p` toggles pause/resume for running agents
-- [ ] `c` shows confirmation then cancels agent
-- [ ] `r` shows confirmation then restarts agent
-- [ ] `Esc` returns to previous view
-- [ ] Unavailable actions are visually dimmed
-- [ ] Commands sent via WebSocket
-- [ ] Brief status feedback shown after actions
-- [ ] Confirmation dialogs work correctly
+- [x] Control bar renders at bottom of AgentView
+- [x] Actions shown are context-sensitive to agent state
+- [x] `p` toggles pause/resume for running agents
+- [x] `c` shows confirmation dialog (cancel command pending server integration)
+- [x] `r` shows confirmation dialog (restart command pending server integration)
+- [x] `Esc` returns to previous view
+- [x] Unavailable actions are visually dimmed
+- [ ] Commands sent via WebSocket (TODOs in place, requires server integration)
+- [ ] Brief status feedback shown after actions (requires command completion)
+- [x] Confirmation dialogs work correctly

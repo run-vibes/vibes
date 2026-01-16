@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use crate::widgets::{DiffModal, OutputBuffer, PermissionWidget};
+use crate::widgets::{ConfirmationDialog, ControlBar, DiffModal, OutputBuffer, PermissionWidget};
 
 /// Unique identifier for a session.
 pub type SessionId = String;
@@ -22,6 +22,10 @@ pub struct AgentState {
     pub permission: PermissionWidget,
     /// Diff modal for viewing file changes.
     pub diff_modal: DiffModal,
+    /// Control bar for agent actions.
+    pub control_bar: ControlBar,
+    /// Confirmation dialog for destructive actions.
+    pub confirmation: ConfirmationDialog,
 }
 
 /// Placeholder for swarm state (expanded in later stories).
@@ -166,5 +170,34 @@ mod tests {
         let mut state = AgentState::default();
         state.diff_modal.show("test.rs", Some("old"), "new");
         assert!(state.diff_modal.is_visible());
+    }
+
+    #[test]
+    fn agent_state_has_control_bar() {
+        use crate::widgets::AgentStatus;
+        let state = AgentState::default();
+        assert_eq!(state.control_bar.status(), AgentStatus::Running);
+    }
+
+    #[test]
+    fn agent_state_control_bar_can_be_updated() {
+        use crate::widgets::AgentStatus;
+        let mut state = AgentState::default();
+        state.control_bar.set_status(AgentStatus::Paused);
+        assert_eq!(state.control_bar.status(), AgentStatus::Paused);
+    }
+
+    #[test]
+    fn agent_state_has_confirmation_dialog() {
+        let state = AgentState::default();
+        assert!(!state.confirmation.is_visible());
+    }
+
+    #[test]
+    fn agent_state_confirmation_can_be_shown() {
+        use crate::widgets::ConfirmationType;
+        let mut state = AgentState::default();
+        state.confirmation.show(ConfirmationType::Cancel);
+        assert!(state.confirmation.is_visible());
     }
 }

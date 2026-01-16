@@ -11,7 +11,7 @@ use ratatui::{
 use super::traits::ViewRenderer;
 use crate::App;
 use crate::state::AgentId;
-use crate::widgets::{OutputPanelWidget, PermissionWidget};
+use crate::widgets::{ControlBar, OutputPanelWidget, PermissionWidget};
 
 /// The agent detail view showing output, context, and controls for a single agent.
 #[derive(Debug, Clone)]
@@ -114,21 +114,17 @@ impl AgentView {
         frame.render_widget(paragraph, area);
     }
 
-    /// Renders the control bar placeholder.
+    /// Renders the control bar from agent state.
     fn render_control_bar(&self, frame: &mut Frame, area: Rect, app: &App) {
-        let controls = Line::from(vec![
-            Span::styled("[p]", Style::default().fg(app.theme.accent)),
-            Span::styled(" Pause  ", app.theme.dim),
-            Span::styled("[c]", Style::default().fg(app.theme.accent)),
-            Span::styled(" Cancel  ", app.theme.dim),
-            Span::styled("[r]", Style::default().fg(app.theme.accent)),
-            Span::styled(" Restart  ", app.theme.dim),
-            Span::styled("[Esc]", Style::default().fg(app.theme.accent)),
-            Span::styled(" Back", app.theme.dim),
-        ]);
+        // Get the control bar widget from the agent state, or use a default
+        let widget = if let Some(agent_state) = app.state.agents.get(&self.agent_id) {
+            agent_state.control_bar.clone()
+        } else {
+            ControlBar::default()
+        };
 
-        let bar = Paragraph::new(controls);
-        frame.render_widget(bar, area);
+        let paragraph = widget.to_paragraph(&app.theme);
+        frame.render_widget(paragraph, area);
     }
 }
 
@@ -176,9 +172,12 @@ impl ViewRenderer for AgentView {
         // Render control bar
         self.render_control_bar(frame, chunks[3], app);
 
-        // Render diff modal overlay if visible (renders on top of everything)
+        // Render modal overlays if visible (render on top of everything)
         if let Some(agent_state) = app.state.agents.get(&self.agent_id) {
+            // Diff modal has lower priority - render first
             agent_state.diff_modal.render(frame, &app.theme);
+            // Confirmation dialog has higher priority - render on top
+            agent_state.confirmation.render(frame, &app.theme);
         }
     }
 
@@ -339,6 +338,105 @@ mod tests {
         assert!(
             !content.contains("Diff:"),
             "Expected no diff modal in rendered view when hidden"
+        );
+    }
+
+    // ==================== Control Bar Widget Tests ====================
+
+    #[test]
+    fn agent_view_renders_control_bar_with_pause_when_running() {
+        use crate::widgets::AgentStatus;
+
+        let mut app = App::default();
+        let mut agent_state = crate::state::AgentState::default();
+        agent_state.control_bar.set_status(AgentStatus::Running);
+        app.state.agents.insert("agent-1".to_string(), agent_state);
+
+        let view = AgentView::new("agent-1".into());
+        let backend = TestBackend::new(80, 24);
+        let mut terminal = Terminal::new(backend).unwrap();
+
+        terminal
+            .draw(|f| {
+                view.render(f, f.area(), &app);
+            })
+            .unwrap();
+
+        let buffer = terminal.backend().buffer();
+        let content: String = buffer.content().iter().map(|cell| cell.symbol()).collect();
+
+        // Should show Pause action when running
+        assert!(
+            content.contains("Pause"),
+            "Expected 'Pause' in control bar when running"
+        );
+        // Should NOT show Resume
+        assert!(
+            !content.contains("Resume"),
+            "Expected no 'Resume' in control bar when running"
+        );
+    }
+
+    #[test]
+    fn agent_view_renders_control_bar_with_resume_when_paused() {
+        use crate::widgets::AgentStatus;
+
+        let mut app = App::default();
+        let mut agent_state = crate::state::AgentState::default();
+        agent_state.control_bar.set_status(AgentStatus::Paused);
+        app.state.agents.insert("agent-1".to_string(), agent_state);
+
+        let view = AgentView::new("agent-1".into());
+        let backend = TestBackend::new(80, 24);
+        let mut terminal = Terminal::new(backend).unwrap();
+
+        terminal
+            .draw(|f| {
+                view.render(f, f.area(), &app);
+            })
+            .unwrap();
+
+        let buffer = terminal.backend().buffer();
+        let content: String = buffer.content().iter().map(|cell| cell.symbol()).collect();
+
+        // Should show Resume action when paused
+        assert!(
+            content.contains("Resume"),
+            "Expected 'Resume' in control bar when paused"
+        );
+        // Should NOT show Pause
+        assert!(
+            !content.contains("Pause"),
+            "Expected no 'Pause' in control bar when paused"
+        );
+    }
+
+    #[test]
+    fn agent_view_renders_confirmation_dialog_when_visible() {
+        use crate::widgets::ConfirmationType;
+
+        let mut app = App::default();
+        let mut agent_state = crate::state::AgentState::default();
+        agent_state.confirmation.show(ConfirmationType::Cancel);
+        app.state.agents.insert("agent-1".to_string(), agent_state);
+
+        let view = AgentView::new("agent-1".into());
+        let backend = TestBackend::new(80, 24);
+        let mut terminal = Terminal::new(backend).unwrap();
+
+        terminal
+            .draw(|f| {
+                view.render(f, f.area(), &app);
+            })
+            .unwrap();
+
+        let buffer = terminal.backend().buffer();
+        let content: String = buffer.content().iter().map(|cell| cell.symbol()).collect();
+
+        // Should show the confirmation dialog
+        assert!(
+            content.contains("Cancel Agent"),
+            "Expected 'Cancel Agent' in confirmation dialog"
         );
     }
 }
