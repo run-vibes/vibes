@@ -19,7 +19,6 @@
 | [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli,cross-platform |
 | [feat-0101-header-identity-display](stages/backlog/stories/feat-0101-header-identity-display.md) | feat | low | web-ui,design-system |
 | [m39-feat-06-eval-web-ui](stages/backlog/stories/m39-feat-06-eval-web-ui.md) | feat | medium | evals |
-| [m44-feat-03-result-merge-interface](stages/backlog/stories/m44-feat-03-result-merge-interface.md) | feat | medium | tui |
 | [m44-feat-04-swarm-coordination-status](stages/backlog/stories/m44-feat-04-swarm-coordination-status.md) | feat | medium | tui |
 | [m45-feat-01-theme-config-loader](stages/backlog/stories/m45-feat-01-theme-config-loader.md) | feat | high | tui |
 | [m45-feat-02-builtin-theme-variants](stages/backlog/stories/m45-feat-02-builtin-theme-variants.md) | feat | high | tui |
@@ -291,6 +290,7 @@
 - [m43-feat-04-agent-control-actions](stages/done/stories/m43-feat-04-agent-control-actions.md)
 - [m44-feat-01-swarm-view-layout](stages/done/stories/m44-feat-01-swarm-view-layout.md)
 - [m44-feat-02-agent-progress-bars](stages/done/stories/m44-feat-02-agent-progress-bars.md)
+- [m44-feat-03-result-merge-interface](stages/done/stories/m44-feat-03-result-merge-interface.md)
 - [refactor-0008-consolidate-assessment-types-module](stages/done/stories/refactor-0008-consolidate-assessment-types-module.md)
 - [refactor-0069-dashboard-visual-consistency](stages/done/stories/refactor-0069-dashboard-visual-consistency.md)
 - [refactor-0070-design-system-extraction](stages/done/stories/refactor-0070-design-system-extraction.md)

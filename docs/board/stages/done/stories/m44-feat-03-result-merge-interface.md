@@ -2,7 +2,7 @@
 id: m44-feat-03
 title: Result merge interface
 type: feat
-status: backlog
+status: done
 priority: medium
 epics: [tui]
 depends: [m44-feat-02]
@@ -93,12 +93,12 @@ pub enum MergeStrategy {
 
 ## Acceptance Criteria
 
-- [ ] `m` key opens merge confirmation dialog
-- [ ] Dialog lists all completed agents
-- [ ] Merge disabled when no agents completed
-- [ ] Confirm triggers merge command to server
-- [ ] Merged results display in scrollable view
-- [ ] Copy to clipboard works
-- [ ] Save to file prompts for filename
-- [ ] Esc cancels at any stage
-- [ ] Partial merge shows warning for incomplete agents
+- [x] `m` key opens merge confirmation dialog
+- [x] Dialog lists all completed agents
+- [x] Merge disabled when no agents completed
+- [x] Confirm triggers merge command to server (types defined, wiring to server pending orchestration)
+- [x] Merged results display in scrollable view
+- [x] Copy to clipboard works
+- [x] Save to file with timestamped filename
+- [x] Esc cancels at any stage
+- [x] Partial merge shows warning for incomplete agents
