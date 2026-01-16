@@ -2,7 +2,7 @@
 id: m43-feat-03
 title: Permission approval widget
 type: feat
-status: backlog
+status: done
 priority: high
 epics: [tui]
 depends: [m43-feat-01]
