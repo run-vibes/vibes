@@ -7,6 +7,7 @@ mod prompts;
 
 pub mod auth_wizard;
 pub mod cloudflared;
+pub mod connectivity;
 pub mod tunnel_wizard;
 
 #[allow(unused_imports)]

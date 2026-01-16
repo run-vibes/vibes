@@ -6,6 +6,7 @@ use anyhow::{Result, bail};
 use dialoguer::{Confirm, Input, Select, theme::ColorfulTheme};
 
 use super::cloudflared::{CloudflaredState, create_tunnel, list_tunnels, route_dns, run_login};
+use super::connectivity::{test_named_tunnel, test_quick_tunnel};
 use super::{print_header, print_step, print_success};
 use crate::config::ConfigLoader;
 
@@ -46,6 +47,10 @@ pub async fn run() -> Result<()> {
         save_quick_config()?;
         print_success("Tunnel configured for quick mode!");
         println!();
+
+        // Offer connectivity test
+        offer_quick_tunnel_test().await?;
+
         println!("Next steps:");
         println!("  Run 'vibes serve --tunnel' to start with tunnel");
         println!();
@@ -125,9 +130,47 @@ async fn setup_named_tunnel(state: CloudflaredState) -> Result<()> {
         println!("  DNS routing: enabled");
     }
     println!();
+
+    // Offer connectivity test
+    offer_named_tunnel_test(&hostname).await?;
+
     println!("Next steps:");
     println!("  Run 'vibes serve --tunnel' to start with your named tunnel");
     println!();
+
+    Ok(())
+}
+
+/// Offer to test quick tunnel connectivity.
+async fn offer_quick_tunnel_test() -> Result<()> {
+    let test_now = Confirm::with_theme(&ColorfulTheme::default())
+        .with_prompt("Test tunnel connectivity now?")
+        .default(true)
+        .interact()?;
+
+    if test_now {
+        println!();
+        let result = test_quick_tunnel().await;
+        result.print();
+        println!();
+    }
+
+    Ok(())
+}
+
+/// Offer to test named tunnel connectivity.
+async fn offer_named_tunnel_test(hostname: &str) -> Result<()> {
+    let test_now = Confirm::with_theme(&ColorfulTheme::default())
+        .with_prompt("Test tunnel connectivity now?")
+        .default(true)
+        .interact()?;
+
+    if test_now {
+        println!();
+        let result = test_named_tunnel(hostname).await;
+        result.print();
+        println!();
+    }
 
     Ok(())
 }
