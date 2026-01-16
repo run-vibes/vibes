@@ -7,7 +7,6 @@
 
 | Story | Type | Priority | Epics |
 |-------|------|----------|-------|
-| [feat-0078-connectivity-validation](stages/in-progress/stories/feat-0078-connectivity-validation.md) | feat | medium | cli,networking |
 | [m39-feat-05-eval-cli](stages/in-progress/stories/m39-feat-05-eval-cli.md) | feat | medium | evals |
 
 ## Backlog
@@ -210,6 +209,7 @@
 - [feat-0075-tunnel-wizard-no-cloudflared](stages/done/stories/feat-0075-tunnel-wizard-no-cloudflared.md)
 - [feat-0076-auth-setup-wizard](stages/done/stories/feat-0076-auth-setup-wizard.md)
 - [feat-0077-config-save-load](stages/done/stories/feat-0077-config-save-load.md)
+- [feat-0078-connectivity-validation](stages/done/stories/feat-0078-connectivity-validation.md)
 - [feat-0079-openworld-page-and-routing](stages/done/stories/feat-0079-openworld-page-and-routing.md)
 - [feat-0080-openworld-backend-data-providers](stages/done/stories/feat-0080-openworld-backend-data-providers.md)
 - [feat-0081-novelty-tab-components](stages/done/stories/feat-0081-novelty-tab-components.md)

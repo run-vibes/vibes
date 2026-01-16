@@ -2,7 +2,7 @@
 id: feat-0078
 title: Connectivity Validation
 type: feat
-status: in-progress
+status: done
 priority: medium
 epics: [cli, networking]
 milestone: 35-setup-wizards
@@ -18,13 +18,13 @@ After saving config, users want confidence that everything works. This story add
 
 ## Acceptance Criteria
 
-- [ ] After tunnel setup, offer to test connectivity
-- [ ] Start actual `vibes serve --tunnel` binary as subprocess
-- [ ] For quick tunnel: parse URL from output, HTTP GET to verify web UI
-- [ ] For named tunnel: wait for connection, HTTP GET to configured hostname, verify DNS resolves
-- [ ] Verify response contains vibes web UI (not Cloudflare error page)
-- [ ] Show clear success/failure message with URL
-- [ ] Clear error messages for common failures with troubleshooting suggestions
+- [x] After tunnel setup, offer to test connectivity
+- [x] Start actual `vibes serve --tunnel` binary as subprocess
+- [x] For quick tunnel: parse URL from output, HTTP GET to verify web UI
+- [x] For named tunnel: wait for connection, HTTP GET to configured hostname, verify DNS resolves
+- [x] Verify response contains vibes web UI (not Cloudflare error page)
+- [x] Show clear success/failure message with URL
+- [x] Clear error messages for common failures with troubleshooting suggestions
 
 ## Design
 
