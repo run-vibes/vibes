@@ -4,9 +4,12 @@
 //! UI elements in the terminal.
 
 mod activity_feed;
+mod output_panel;
 mod session_list;
 mod stats_bar;
 
 pub use activity_feed::{ActivityEvent, ActivityFeedWidget};
+#[allow(unused_imports)] // Public API for creating output lines
+pub use output_panel::{OutputBuffer, OutputLine, OutputLineType, OutputPanelWidget};
 pub use session_list::{SessionInfo, SessionListWidget, SessionStatus};
 pub use stats_bar::{ConnectionStatus, StatsBarWidget};
