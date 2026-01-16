@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use crate::widgets::OutputBuffer;
+use crate::widgets::{DiffModal, OutputBuffer, PermissionWidget};
 
 /// Unique identifier for a session.
 pub type SessionId = String;
@@ -13,11 +13,15 @@ pub type AgentId = String;
 /// Unique identifier for a swarm.
 pub type SwarmId = String;
 
-/// State for a single agent including output buffer.
+/// State for a single agent including output buffer, permission widget, and diff modal.
 #[derive(Debug, Clone, Default)]
 pub struct AgentState {
     /// Output buffer for the agent's output stream.
     pub output: OutputBuffer,
+    /// Permission widget for handling permission requests.
+    pub permission: PermissionWidget,
+    /// Diff modal for viewing file changes.
+    pub diff_modal: DiffModal,
 }
 
 /// Placeholder for swarm state (expanded in later stories).
@@ -121,5 +125,46 @@ mod tests {
     fn agent_state_has_output_buffer() {
         let state = AgentState::default();
         assert!(state.output.is_empty());
+    }
+
+    #[test]
+    fn agent_state_has_permission_widget() {
+        let state = AgentState::default();
+        assert!(!state.permission.has_pending());
+    }
+
+    #[test]
+    fn agent_state_permission_can_store_request() {
+        use crate::widgets::{PermissionDetails, PermissionRequest, PermissionType};
+        use chrono::Utc;
+        use std::path::PathBuf;
+
+        let mut state = AgentState::default();
+        state.permission.set_pending(PermissionRequest {
+            id: "req-1".to_string(),
+            request_type: PermissionType::FileWrite,
+            description: "Write to file".to_string(),
+            details: PermissionDetails::FileWrite {
+                path: PathBuf::from("test.rs"),
+                content: "test".to_string(),
+                original: None,
+            },
+            timestamp: Utc::now(),
+        });
+
+        assert!(state.permission.has_pending());
+    }
+
+    #[test]
+    fn agent_state_has_diff_modal() {
+        let state = AgentState::default();
+        assert!(!state.diff_modal.is_visible());
+    }
+
+    #[test]
+    fn agent_state_diff_modal_can_be_shown() {
+        let mut state = AgentState::default();
+        state.diff_modal.show("test.rs", Some("old"), "new");
+        assert!(state.diff_modal.is_visible());
     }
 }

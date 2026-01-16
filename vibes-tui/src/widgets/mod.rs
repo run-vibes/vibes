@@ -4,12 +4,19 @@
 //! UI elements in the terminal.
 
 mod activity_feed;
+mod diff_modal;
 mod output_panel;
+mod permission;
 mod session_list;
 mod stats_bar;
 
 pub use activity_feed::{ActivityEvent, ActivityFeedWidget};
+pub use diff_modal::DiffModal;
 #[allow(unused_imports)] // Public API for creating output lines
 pub use output_panel::{OutputBuffer, OutputLine, OutputLineType, OutputPanelWidget};
+#[allow(unused_imports)] // Public API for permission request IDs
+pub use permission::{
+    PermissionDetails, PermissionId, PermissionRequest, PermissionType, PermissionWidget,
+};
 pub use session_list::{SessionInfo, SessionListWidget, SessionStatus};
 pub use stats_bar::{ConnectionStatus, StatsBarWidget};

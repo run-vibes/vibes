@@ -11,7 +11,7 @@ use ratatui::{
 use super::traits::ViewRenderer;
 use crate::App;
 use crate::state::AgentId;
-use crate::widgets::OutputPanelWidget;
+use crate::widgets::{OutputPanelWidget, PermissionWidget};
 
 /// The agent detail view showing output, context, and controls for a single agent.
 #[derive(Debug, Clone)]
@@ -101,20 +101,17 @@ impl AgentView {
         frame.render_widget(content, area);
     }
 
-    /// Renders the permission request area placeholder.
+    /// Renders the permission request area.
     fn render_permission_area(&self, frame: &mut Frame, area: Rect, app: &App) {
-        let block = Block::default()
-            .borders(Borders::ALL)
-            .border_style(Style::default().fg(app.theme.border));
+        // Get the permission widget from the agent state, or use an empty one
+        let widget = if let Some(agent_state) = app.state.agents.get(&self.agent_id) {
+            agent_state.permission.clone()
+        } else {
+            PermissionWidget::new()
+        };
 
-        let content = Paragraph::new(Line::from(vec![
-            Span::styled("⚠ ", Style::default().fg(app.theme.warning)),
-            Span::styled("Permission area", app.theme.dim),
-            Span::styled(" (coming in m43-feat-03)", app.theme.dim),
-        ]))
-        .block(block);
-
-        frame.render_widget(content, area);
+        let paragraph = widget.to_paragraph(&app.theme);
+        frame.render_widget(paragraph, area);
     }
 
     /// Renders the control bar placeholder.
@@ -147,13 +144,13 @@ impl ViewRenderer for AgentView {
         let inner = block.inner(area);
         frame.render_widget(block, area);
 
-        // Split into: header (2 lines), main content (flex), permission (3 lines), control bar (1 line)
+        // Split into: header (2 lines), main content (flex), permission (4 lines), control bar (1 line)
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
                 Constraint::Length(2), // Header
                 Constraint::Min(4),    // Main content area
-                Constraint::Length(3), // Permission area
+                Constraint::Length(4), // Permission area (2 lines content + 2 lines borders)
                 Constraint::Length(1), // Control bar
             ])
             .split(inner);
@@ -178,6 +175,11 @@ impl ViewRenderer for AgentView {
 
         // Render control bar
         self.render_control_bar(frame, chunks[3], app);
+
+        // Render diff modal overlay if visible (renders on top of everything)
+        if let Some(agent_state) = app.state.agents.get(&self.agent_id) {
+            agent_state.diff_modal.render(frame, &app.theme);
+        }
     }
 
     fn title(&self) -> &str {
@@ -188,6 +190,10 @@ impl ViewRenderer for AgentView {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::widgets::{PermissionDetails, PermissionRequest, PermissionType};
+    use chrono::Utc;
+    use ratatui::{Terminal, backend::TestBackend};
+    use std::path::PathBuf;
 
     #[test]
     fn agent_view_stores_agent_id() {
@@ -206,5 +212,133 @@ mod tests {
         let view = AgentView::new("agent-clone-test".into());
         let cloned = view.clone();
         assert_eq!(view.agent_id(), cloned.agent_id());
+    }
+
+    #[test]
+    fn agent_view_renders_permission_widget_no_pending() {
+        let mut app = App::default();
+        app.state
+            .agents
+            .insert("agent-1".to_string(), Default::default());
+
+        let view = AgentView::new("agent-1".into());
+        let backend = TestBackend::new(80, 24);
+        let mut terminal = Terminal::new(backend).unwrap();
+
+        terminal
+            .draw(|f| {
+                view.render(f, f.area(), &app);
+            })
+            .unwrap();
+
+        let buffer = terminal.backend().buffer();
+        let content: String = buffer.content().iter().map(|cell| cell.symbol()).collect();
+
+        // Should show "No pending permissions" when no permission request
+        assert!(
+            content.contains("No pending permissions"),
+            "Expected 'No pending permissions' in rendered view"
+        );
+    }
+
+    #[test]
+    fn agent_view_renders_permission_widget_with_request() {
+        let mut app = App::default();
+        let mut agent_state = crate::state::AgentState::default();
+        agent_state.permission.set_pending(PermissionRequest {
+            id: "req-test".to_string(),
+            request_type: PermissionType::FileWrite,
+            description: "Write to src/test.rs".to_string(),
+            details: PermissionDetails::FileWrite {
+                path: PathBuf::from("src/test.rs"),
+                content: "fn test() {}".to_string(),
+                original: None,
+            },
+            timestamp: Utc::now(),
+        });
+        app.state.agents.insert("agent-1".to_string(), agent_state);
+
+        let view = AgentView::new("agent-1".into());
+        let backend = TestBackend::new(80, 24);
+        let mut terminal = Terminal::new(backend).unwrap();
+
+        terminal
+            .draw(|f| {
+                view.render(f, f.area(), &app);
+            })
+            .unwrap();
+
+        let buffer = terminal.backend().buffer();
+        let content: String = buffer.content().iter().map(|cell| cell.symbol()).collect();
+
+        // Should show the permission description
+        assert!(
+            content.contains("Write to src/test.rs"),
+            "Expected permission description in rendered view"
+        );
+
+        // Should show control hints
+        assert!(content.contains("[y]"), "Expected [y] control hint");
+        assert!(content.contains("[n]"), "Expected [n] control hint");
+    }
+
+    #[test]
+    fn agent_view_renders_diff_modal_when_visible() {
+        let mut app = App::default();
+        let mut agent_state = crate::state::AgentState::default();
+        agent_state
+            .diff_modal
+            .show("src/main.rs", Some("fn old() {}"), "fn new() {}");
+        app.state.agents.insert("agent-1".to_string(), agent_state);
+
+        let view = AgentView::new("agent-1".into());
+        let backend = TestBackend::new(100, 30);
+        let mut terminal = Terminal::new(backend).unwrap();
+
+        terminal
+            .draw(|f| {
+                view.render(f, f.area(), &app);
+            })
+            .unwrap();
+
+        let buffer = terminal.backend().buffer();
+        let content: String = buffer.content().iter().map(|cell| cell.symbol()).collect();
+
+        // Should show the diff modal title
+        assert!(
+            content.contains("Diff: src/main.rs"),
+            "Expected diff modal title in rendered view"
+        );
+
+        // Should show Original and Proposed labels
+        assert!(content.contains("Original"), "Expected 'Original' label");
+        assert!(content.contains("Proposed"), "Expected 'Proposed' label");
+    }
+
+    #[test]
+    fn agent_view_does_not_render_diff_modal_when_hidden() {
+        let mut app = App::default();
+        let agent_state = crate::state::AgentState::default();
+        // diff_modal is hidden by default
+        app.state.agents.insert("agent-1".to_string(), agent_state);
+
+        let view = AgentView::new("agent-1".into());
+        let backend = TestBackend::new(100, 30);
+        let mut terminal = Terminal::new(backend).unwrap();
+
+        terminal
+            .draw(|f| {
+                view.render(f, f.area(), &app);
+            })
+            .unwrap();
+
+        let buffer = terminal.backend().buffer();
+        let content: String = buffer.content().iter().map(|cell| cell.symbol()).collect();
+
+        // Should NOT show the diff modal
+        assert!(
+            !content.contains("Diff:"),
+            "Expected no diff modal in rendered view when hidden"
+        );
     }
 }
