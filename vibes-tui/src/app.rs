@@ -12,7 +12,7 @@ use ratatui::{
 
 use crate::client::{ReconnectConfig, TuiClient};
 use crate::keybindings::{Action, KeyBindings};
-use crate::views::{AgentView, DashboardView, View, ViewRenderer, ViewStack};
+use crate::views::{AgentView, DashboardView, SwarmView, View, ViewRenderer, ViewStack};
 use crate::widgets::{
     ActivityEvent, ActivityFeedWidget, ConnectionStatus, SessionInfo, SessionListWidget,
     SessionStatus, StatsBarWidget,
@@ -290,6 +290,7 @@ impl App {
         match &self.views.current {
             View::Dashboard => DashboardView.render(frame, area, self),
             View::Agent(agent_id) => AgentView::new(agent_id.clone()).render(frame, area, self),
+            View::Swarm(swarm_id) => SwarmView::new(swarm_id.clone()).render(frame, area, self),
             // Other views will be implemented in later stories
             _ => DashboardView.render(frame, area, self),
         }

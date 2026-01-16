@@ -8,6 +8,7 @@
 | Story | Type | Priority | Epics |
 |-------|------|----------|-------|
 | [m39-feat-05-eval-cli](stages/in-progress/stories/m39-feat-05-eval-cli.md) | feat | medium | evals |
+| [m44-feat-01-swarm-view-layout](stages/in-progress/stories/m44-feat-01-swarm-view-layout.md) | feat | high | tui |
 
 ## Backlog
 
@@ -19,7 +20,6 @@
 | [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli,cross-platform |
 | [feat-0101-header-identity-display](stages/backlog/stories/feat-0101-header-identity-display.md) | feat | low | web-ui,design-system |
 | [m39-feat-06-eval-web-ui](stages/backlog/stories/m39-feat-06-eval-web-ui.md) | feat | medium | evals |
-| [m44-feat-01-swarm-view-layout](stages/backlog/stories/m44-feat-01-swarm-view-layout.md) | feat | high | tui |
 | [m44-feat-02-agent-progress-bars](stages/backlog/stories/m44-feat-02-agent-progress-bars.md) | feat | high | tui |
 | [m44-feat-03-result-merge-interface](stages/backlog/stories/m44-feat-03-result-merge-interface.md) | feat | medium | tui |
 | [m44-feat-04-swarm-coordination-status](stages/backlog/stories/m44-feat-04-swarm-coordination-status.md) | feat | medium | tui |
