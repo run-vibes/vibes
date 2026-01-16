@@ -2,7 +2,7 @@
 id: m44-feat-01
 title: Swarm view layout
 type: feat
-status: in-progress
+status: done
 priority: high
 epics: [tui]
 depends: [m41-feat-03]

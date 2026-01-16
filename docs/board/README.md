@@ -8,7 +8,6 @@
 | Story | Type | Priority | Epics |
 |-------|------|----------|-------|
 | [m39-feat-05-eval-cli](stages/in-progress/stories/m39-feat-05-eval-cli.md) | feat | medium | evals |
-| [m44-feat-01-swarm-view-layout](stages/in-progress/stories/m44-feat-01-swarm-view-layout.md) | feat | high | tui |
 
 ## Backlog
 
@@ -291,6 +290,7 @@
 - [m43-feat-02-output-stream-panel](stages/done/stories/m43-feat-02-output-stream-panel.md)
 - [m43-feat-03-permission-approval-widget](stages/done/stories/m43-feat-03-permission-approval-widget.md)
 - [m43-feat-04-agent-control-actions](stages/done/stories/m43-feat-04-agent-control-actions.md)
+- [m44-feat-01-swarm-view-layout](stages/done/stories/m44-feat-01-swarm-view-layout.md)
 - [refactor-0008-consolidate-assessment-types-module](stages/done/stories/refactor-0008-consolidate-assessment-types-module.md)
 - [refactor-0069-dashboard-visual-consistency](stages/done/stories/refactor-0069-dashboard-visual-consistency.md)
 - [refactor-0070-design-system-extraction](stages/done/stories/refactor-0070-design-system-extraction.md)
