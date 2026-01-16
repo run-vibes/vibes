@@ -107,15 +107,15 @@
 | [44-tui-swarm-visualization](milestones/44-tui-swarm-visualization/) | planned | tui |
 | [45-tui-theme-system](milestones/45-tui-theme-system/) | planned | tui |
 | [46-tui-pty-server](milestones/46-tui-pty-server/) | planned | tui |
-| [47-default-plugins](milestones/47-default-plugins/) | planned | plugin-system |
-| [48-cli-enhancements](milestones/48-cli-enhancements/) | planned | cli |
-| [49-ios-app](milestones/49-ios-app/) | planned | mobile |
-| [50-50-home-page-redesign](milestones/50-50-home-page-redesign/) | planned | web-ui,plugin-system |
-| [50-longitudinal-mode](milestones/50-longitudinal-mode/) | planned | evals |
-| [51-eval-reports](milestones/51-eval-reports/) | planned | evals |
-| [52-trend-analysis](milestones/52-trend-analysis/) | planned | evals |
-| [53-benchmark-harness](milestones/53-benchmark-harness/) | planned | evals |
-| [54-additional-benchmarks](milestones/54-additional-benchmarks/) | planned | evals |
+| [47-home-page-redesign](milestones/47-home-page-redesign/) | done | web-ui,plugin-system |
+| [48-longitudinal-mode](milestones/48-longitudinal-mode/) | planned | evals |
+| [49-eval-reports](milestones/49-eval-reports/) | planned | evals |
+| [50-trend-analysis](milestones/50-trend-analysis/) | planned | evals |
+| [51-benchmark-harness](milestones/51-benchmark-harness/) | planned | evals |
+| [52-additional-benchmarks](milestones/52-additional-benchmarks/) | planned | evals |
+| [53-default-plugins](milestones/53-default-plugins/) | planned | plugin-system |
+| [54-cli-enhancements](milestones/54-cli-enhancements/) | planned | cli |
+| [55-ios-app](milestones/55-ios-app/) | planned | mobile |
 
 ## Done
 

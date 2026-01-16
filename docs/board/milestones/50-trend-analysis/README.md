@@ -1,5 +1,5 @@
 ---
-id: 52-trend-analysis
+id: 50-trend-analysis
 title: Trend Analysis
 status: planned
 epics: [evals]
@@ -72,17 +72,17 @@ pub enum InsightCategory {
 
 | ID | Title | Priority | Estimate |
 |----|-------|----------|----------|
-| m52-feat-01 | TrendDetector algorithm | high | 4h |
-| m52-feat-02 | Forecaster with confidence intervals | high | 4h |
-| m52-feat-03 | Anomaly detector | medium | 3h |
-| m52-feat-04 | Insight generator | medium | 4h |
-| m52-feat-05 | Groove correlation analysis | high | 4h |
-| m52-feat-06 | CLI trends commands | medium | 2h |
-| m52-feat-07 | Web UI trends page | medium | 4h |
+| m50-feat-01 | TrendDetector algorithm | high | 4h |
+| m50-feat-02 | Forecaster with confidence intervals | high | 4h |
+| m50-feat-03 | Anomaly detector | medium | 3h |
+| m50-feat-04 | Insight generator | medium | 4h |
+| m50-feat-05 | Groove correlation analysis | high | 4h |
+| m50-feat-06 | CLI trends commands | medium | 2h |
+| m50-feat-07 | Web UI trends page | medium | 4h |
 
 ## Dependencies
 
-- M51 (Eval Reports) — Report infrastructure and summary statistics
+- M49 (Eval Reports) — Report infrastructure and summary statistics
 
 ## Epics
 

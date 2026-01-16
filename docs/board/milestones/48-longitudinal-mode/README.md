@@ -1,5 +1,5 @@
 ---
-id: 50-longitudinal-mode
+id: 48-longitudinal-mode
 title: Longitudinal Mode
 status: planned
 epics: [evals]
@@ -40,12 +40,12 @@ groove ───────┘            study window                 event �
 
 | ID | Title | Priority | Estimate |
 |----|-------|----------|----------|
-| m50-feat-01 | MetricsCollector consumer | high | 4h |
-| m50-feat-02 | Session event aggregation | high | 3h |
-| m50-feat-03 | Agent event aggregation | high | 3h |
-| m50-feat-04 | Groove event correlation | high | 4h |
-| m50-feat-05 | Checkpoint scheduler | medium | 3h |
-| m50-feat-06 | CLI checkpoint commands | medium | 2h |
+| m48-feat-01 | MetricsCollector consumer | high | 4h |
+| m48-feat-02 | Session event aggregation | high | 3h |
+| m48-feat-03 | Agent event aggregation | high | 3h |
+| m48-feat-04 | Groove event correlation | high | 4h |
+| m48-feat-05 | Checkpoint scheduler | medium | 3h |
+| m48-feat-06 | CLI checkpoint commands | medium | 2h |
 
 ## Dependencies
 

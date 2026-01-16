@@ -1,5 +1,5 @@
 ---
-id: 54-additional-benchmarks
+id: 52-additional-benchmarks
 title: Additional Benchmarks
 status: planned
 epics: [evals]
@@ -73,20 +73,20 @@ config:
 
 | ID | Title | Priority | Estimate |
 |----|-------|----------|----------|
-| m54-feat-01 | HumanEval dataset loader | high | 3h |
-| m54-feat-02 | HumanEval executor + evaluator | high | 4h |
-| m54-feat-03 | Remote Labor Index dataset loader | high | 3h |
-| m54-feat-04 | Remote Labor Index executor + evaluator | high | 4h |
-| m54-feat-05 | Custom benchmark spec format | medium | 3h |
-| m54-feat-06 | Custom benchmark loader | medium | 3h |
-| m54-feat-07 | Benchmark registry | medium | 2h |
-| m54-feat-08 | Parallel task execution | medium | 3h |
-| m54-feat-09 | Cross-benchmark comparison CLI | low | 2h |
-| m54-feat-10 | Web UI benchmark comparison | low | 4h |
+| m52-feat-01 | HumanEval dataset loader | high | 3h |
+| m52-feat-02 | HumanEval executor + evaluator | high | 4h |
+| m52-feat-03 | Remote Labor Index dataset loader | high | 3h |
+| m52-feat-04 | Remote Labor Index executor + evaluator | high | 4h |
+| m52-feat-05 | Custom benchmark spec format | medium | 3h |
+| m52-feat-06 | Custom benchmark loader | medium | 3h |
+| m52-feat-07 | Benchmark registry | medium | 2h |
+| m52-feat-08 | Parallel task execution | medium | 3h |
+| m52-feat-09 | Cross-benchmark comparison CLI | low | 2h |
+| m52-feat-10 | Web UI benchmark comparison | low | 4h |
 
 ## Dependencies
 
-- M53 (Benchmark Harness) — TaskRunner infrastructure, Benchmark trait
+- M51 (Benchmark Harness) — TaskRunner infrastructure, Benchmark trait
 
 ## Epics
 

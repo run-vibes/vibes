@@ -1,7 +1,7 @@
 ---
-id: 50-home-page-redesign
+id: 47-home-page-redesign
 title: Home Page Redesign
-status: planned
+status: done
 epics: [web-ui, plugin-system]
 ---
 

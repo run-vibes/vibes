@@ -1,5 +1,5 @@
 ---
-id: 53-benchmark-harness
+id: 51-benchmark-harness
 title: Benchmark Harness
 status: planned
 epics: [evals]
@@ -127,19 +127,19 @@ pub trait Benchmark: Send + Sync {
 
 | ID | Title | Priority | Estimate |
 |----|-------|----------|----------|
-| m53-feat-01 | Benchmark trait and types | high | 3h |
-| m53-feat-02 | TaskRunner trait | high | 3h |
-| m53-feat-03 | DockerRunner implementation | high | 4h |
-| m53-feat-04 | SandboxRunner (macOS Seatbelt) | high | 4h |
-| m53-feat-05 | SandboxRunner (Linux Landlock+seccomp) | high | 4h |
-| m53-feat-06 | SWE-Bench dataset loader | high | 3h |
-| m53-feat-07 | SWE-Bench task executor | high | 4h |
-| m53-feat-08 | Patch evaluation harness | high | 4h |
-| m53-feat-09 | BenchmarkResult storage | medium | 3h |
-| m53-feat-10 | CLI run commands | medium | 2h |
-| m53-feat-11 | CLI results/compare commands | medium | 2h |
-| m53-feat-12 | NixRunner implementation | low | 3h |
-| m53-feat-13 | Web UI benchmark results page | low | 4h |
+| m51-feat-01 | Benchmark trait and types | high | 3h |
+| m51-feat-02 | TaskRunner trait | high | 3h |
+| m51-feat-03 | DockerRunner implementation | high | 4h |
+| m51-feat-04 | SandboxRunner (macOS Seatbelt) | high | 4h |
+| m51-feat-05 | SandboxRunner (Linux Landlock+seccomp) | high | 4h |
+| m51-feat-06 | SWE-Bench dataset loader | high | 3h |
+| m51-feat-07 | SWE-Bench task executor | high | 4h |
+| m51-feat-08 | Patch evaluation harness | high | 4h |
+| m51-feat-09 | BenchmarkResult storage | medium | 3h |
+| m51-feat-10 | CLI run commands | medium | 2h |
+| m51-feat-11 | CLI results/compare commands | medium | 2h |
+| m51-feat-12 | NixRunner implementation | low | 3h |
+| m51-feat-13 | Web UI benchmark results page | low | 4h |
 
 ## Dependencies
 

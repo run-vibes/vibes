@@ -1,5 +1,5 @@
 ---
-id: 51-eval-reports
+id: 49-eval-reports
 title: Eval Reports
 status: planned
 epics: [evals]
@@ -57,18 +57,18 @@ pub struct MetricStats {
 
 | ID | Title | Priority | Estimate |
 |----|-------|----------|----------|
-| m51-feat-01 | ReportGenerator core | high | 4h |
-| m51-feat-02 | JSON/CSV export | high | 2h |
-| m51-feat-03 | Markdown report format | medium | 2h |
-| m51-feat-04 | Summary statistics | high | 3h |
-| m51-feat-05 | Period comparison | medium | 3h |
-| m51-feat-06 | CLI report commands | medium | 2h |
-| m51-feat-07 | Web UI eval dashboard | medium | 4h |
-| m51-feat-08 | Checkpoint timeline chart | low | 3h |
+| m49-feat-01 | ReportGenerator core | high | 4h |
+| m49-feat-02 | JSON/CSV export | high | 2h |
+| m49-feat-03 | Markdown report format | medium | 2h |
+| m49-feat-04 | Summary statistics | high | 3h |
+| m49-feat-05 | Period comparison | medium | 3h |
+| m49-feat-06 | CLI report commands | medium | 2h |
+| m49-feat-07 | Web UI eval dashboard | medium | 4h |
+| m49-feat-08 | Checkpoint timeline chart | low | 3h |
 
 ## Dependencies
 
-- M50 (Longitudinal Mode) — Checkpoint data to report on
+- M48 (Longitudinal Mode) — Checkpoint data to report on
 
 ## Epics
 
