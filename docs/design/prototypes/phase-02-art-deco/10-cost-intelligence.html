@@ -6,19 +6,99 @@
   <title>Art Deco Command — Cost Intelligence</title>
   <link rel="stylesheet" href="shared.css">
   <style>
-    .container {
-      max-width: 1600px;
-      margin: 0 auto;
-      padding: var(--space-6);
+    /* ─── Variable Aliases (map to shared.css) ─── */
+    :root {
+      --deco-gold: var(--gold-primary);
+      --deco-gold-bright: var(--gold-bright);
+      --deco-gold-dim: var(--gold-dim);
+      --deco-gold-muted: var(--gold-muted);
+      --deco-cream: var(--accent-cream);
+      --deco-line: var(--border-light);
+      --bg-panel: var(--bg-card);
+      --font-body-condensed: var(--font-condensed);
     }
 
-    .page-header {
+    /* ─── Dashboard Layout ─── */
+    .dashboard {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      z-index: 1;
+    }
+
+    .header-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: var(--space-6);
-      padding-bottom: var(--space-4);
+      padding: var(--space-3) var(--space-6);
+      background: var(--bg-panel);
       border-bottom: 1px solid var(--deco-gold-dim);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 400;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--deco-gold);
+    }
+
+    .logo-tagline {
+      font-family: var(--font-body-condensed);
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--deco-gold-muted);
+      margin-left: var(--space-4);
+      padding-left: var(--space-4);
+      border-left: 1px solid var(--deco-gold-dim);
+    }
+
+    .header-nav {
+      display: flex;
+      gap: var(--space-1);
+    }
+
+    .nav-item {
+      font-family: var(--font-body-condensed);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: var(--space-2) var(--space-3);
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: all 0.15s ease;
+      border: 1px solid transparent;
+    }
+
+    .nav-item:hover {
+      color: var(--deco-gold);
+      border-color: var(--deco-gold-dim);
+    }
+
+    .nav-item.active {
+      color: var(--deco-gold);
+      background: linear-gradient(135deg, rgba(212, 168, 75, 0.15) 0%, rgba(201, 162, 39, 0.08) 100%);
+      border-color: var(--deco-gold-dim);
+    }
+
+    .page-header {
+      padding: var(--space-6);
+      border-bottom: 1px solid var(--deco-gold-dim);
+      background: linear-gradient(180deg, var(--bg-panel) 0%, var(--bg-surface) 100%);
+    }
+
+    .page-header-content {
+      max-width: 1600px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
 
     .page-title {
@@ -73,6 +153,13 @@
     .time-option.active {
       background: linear-gradient(135deg, rgba(212, 168, 75, 0.2) 0%, rgba(201, 162, 39, 0.1) 100%);
       color: var(--deco-gold);
+    }
+
+    .container {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: var(--space-6);
+      flex: 1;
     }
 
     /* ─── Summary Cards ─── */
@@ -657,7 +744,8 @@
       font-size: 10px;
       letter-spacing: 0.05em;
       color: var(--text-tertiary);
-      width: 60px;
+      width: 80px;
+      white-space: nowrap;
     }
 
     .timeline-bars {
@@ -709,525 +797,622 @@
   </style>
 </head>
 <body class="deco-bg">
-  <div class="container">
+  <div class="dashboard">
 
-    <!-- Page Header -->
-    <header class="page-header">
-      <div>
-        <h1 class="page-title">
-          <span class="deco-icon deco-icon-value deco-icon-lg deco-icon-gold"></span>
-          Cost Intelligence
-        </h1>
-        <p class="page-subtitle">Maximize efficiency, minimize burn. Scale unbounded.</p>
+    <!-- Header Bar -->
+    <header class="header-bar">
+      <div class="flex items-center">
+        <span class="logo">vibes</span>
+        <span class="logo-tagline">Phosphor Mission Control</span>
       </div>
-      <div class="header-controls">
-        <div class="time-selector">
-          <button class="time-option">24h</button>
-          <button class="time-option active">7d</button>
-          <button class="time-option">30d</button>
-          <button class="time-option">90d</button>
-        </div>
-        <button class="btn">Export Report</button>
-        <button class="btn btn-primary">Set Budgets</button>
-      </div>
+      <nav class="header-nav">
+        <a href="01-full-dashboard.html" class="nav-item">Dashboard</a>
+        <a href="04-activity-feed.html" class="nav-item">Firehose</a>
+        <a href="06-expanded-dashboard.html" class="nav-item">Sessions</a>
+        <a href="09-discovery-feed.html" class="nav-item">Groove</a>
+        <a href="10-cost-intelligence.html" class="nav-item active">Costs</a>
+        <a href="07-command-palette.html" class="nav-item">Debug</a>
+      </nav>
     </header>
 
-    <!-- Summary Cards -->
-    <div class="summary-grid">
-      <div class="summary-card spending">
-        <div class="summary-label">Total Spend (7d)</div>
-        <div class="summary-value">
-          $2,847<span class="summary-unit">.32</span>
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="page-header-content">
+        <div>
+          <h1 class="page-title">
+            <span class="deco-icon deco-icon-value deco-icon-lg deco-icon-gold"></span>
+            Cost Intelligence
+          </h1>
+          <p class="page-subtitle">Cross-domain cost visibility. Healthcare to Hollywood, Finance to Manufacturing.</p>
         </div>
-        <div class="summary-change up">
-          <span class="deco-icon deco-icon-chevron-up deco-icon-sm"></span>
-          12% vs last week
-        </div>
-        <div class="summary-sparkline">
-          <div class="sparkline-bar" style="height: 40%;"></div>
-          <div class="sparkline-bar" style="height: 55%;"></div>
-          <div class="sparkline-bar" style="height: 45%;"></div>
-          <div class="sparkline-bar" style="height: 70%;"></div>
-          <div class="sparkline-bar" style="height: 65%;"></div>
-          <div class="sparkline-bar" style="height: 80%;"></div>
-          <div class="sparkline-bar" style="height: 100%;"></div>
-        </div>
-      </div>
-      <div class="summary-card savings">
-        <div class="summary-label">Savings Realized</div>
-        <div class="summary-value positive">
-          $412<span class="summary-unit">.85</span>
-        </div>
-        <div class="summary-change savings-up">
-          <span class="deco-icon deco-icon-chevron-up deco-icon-sm"></span>
-          Saved vs baseline
-        </div>
-        <div class="summary-sparkline">
-          <div class="sparkline-bar" style="height: 30%; background: #98c379;"></div>
-          <div class="sparkline-bar" style="height: 45%; background: #98c379;"></div>
-          <div class="sparkline-bar" style="height: 60%; background: #98c379;"></div>
-          <div class="sparkline-bar" style="height: 55%; background: #98c379;"></div>
-          <div class="sparkline-bar" style="height: 75%; background: #98c379;"></div>
-          <div class="sparkline-bar" style="height: 85%; background: #98c379;"></div>
-          <div class="sparkline-bar" style="height: 100%; background: #98c379;"></div>
-        </div>
-      </div>
-      <div class="summary-card efficiency">
-        <div class="summary-label">Cost per Outcome</div>
-        <div class="summary-value neutral">
-          $4.28<span class="summary-unit">/task</span>
-        </div>
-        <div class="summary-change savings-up">
-          <span class="deco-icon deco-icon-chevron-down deco-icon-sm"></span>
-          18% improvement
-        </div>
-        <div class="summary-sparkline">
-          <div class="sparkline-bar" style="height: 100%;"></div>
-          <div class="sparkline-bar" style="height: 85%;"></div>
-          <div class="sparkline-bar" style="height: 75%;"></div>
-          <div class="sparkline-bar" style="height: 60%;"></div>
-          <div class="sparkline-bar" style="height: 55%;"></div>
-          <div class="sparkline-bar" style="height: 45%;"></div>
-          <div class="sparkline-bar" style="height: 35%;"></div>
-        </div>
-      </div>
-      <div class="summary-card projection">
-        <div class="summary-label">30d Projection</div>
-        <div class="summary-value">
-          $11,420<span class="summary-unit">.00</span>
-        </div>
-        <div class="summary-change">± $850 confidence interval</div>
-        <div class="summary-sparkline">
-          <div class="sparkline-bar" style="height: 60%; background: #b4a7d6;"></div>
-          <div class="sparkline-bar" style="height: 65%; background: #b4a7d6;"></div>
-          <div class="sparkline-bar" style="height: 70%; background: #b4a7d6;"></div>
-          <div class="sparkline-bar" style="height: 75%; background: #b4a7d6;"></div>
-          <div class="sparkline-bar" style="height: 82%; background: #b4a7d6;"></div>
-          <div class="sparkline-bar" style="height: 90%; background: #b4a7d6;"></div>
-          <div class="sparkline-bar" style="height: 100%; background: #b4a7d6;"></div>
+        <div class="header-controls">
+          <div class="time-selector">
+            <button class="time-option">24h</button>
+            <button class="time-option active">7d</button>
+            <button class="time-option">30d</button>
+            <button class="time-option">90d</button>
+          </div>
+          <button class="btn">Export Report</button>
+          <button class="btn btn-primary">Set Budgets</button>
         </div>
       </div>
     </div>
 
-    <!-- Main Grid -->
-    <div class="main-grid">
-      <div class="main-content">
+    <div class="container">
 
-        <!-- Cost Breakdown -->
-        <div class="cost-breakdown">
-          <div class="section-header">
-            <span class="section-title">
-              <span class="deco-icon deco-icon-fan deco-icon-md deco-icon-gold"></span>
-              Cost Breakdown by Category
-            </span>
-            <button class="panel-action">View Details</button>
+      <!-- Summary Cards -->
+      <div class="summary-grid">
+        <div class="summary-card spending">
+          <div class="summary-label">Total Operations (7d)</div>
+          <div class="summary-value">
+            $847K<span class="summary-unit">.32</span>
           </div>
-          <div class="section-content">
-            <div class="breakdown-list">
-              <div class="breakdown-item">
-                <div class="breakdown-category">
-                  <span class="deco-icon deco-icon-agent deco-icon-md deco-icon-success"></span>
-                  <span class="category-name">API Calls (LLM)</span>
-                </div>
-                <div class="breakdown-bar-container">
-                  <div class="breakdown-bar api" style="width: 52%;"></div>
-                </div>
-                <span class="breakdown-amount">$1,480.52</span>
-                <span class="breakdown-percent">52%</span>
-              </div>
-              <div class="breakdown-item">
-                <div class="breakdown-category">
-                  <span class="deco-icon deco-icon-bolt deco-icon-md deco-icon-gold"></span>
-                  <span class="category-name">Compute (GPU)</span>
-                </div>
-                <div class="breakdown-bar-container">
-                  <div class="breakdown-bar compute" style="width: 28%;"></div>
-                </div>
-                <span class="breakdown-amount">$797.25</span>
-                <span class="breakdown-percent">28%</span>
-              </div>
-              <div class="breakdown-item">
-                <div class="breakdown-category">
-                  <span class="deco-icon deco-icon-doc deco-icon-md deco-icon-bright"></span>
-                  <span class="category-name">Storage (Artifacts)</span>
-                </div>
-                <div class="breakdown-bar-container">
-                  <div class="breakdown-bar storage" style="width: 12%;"></div>
-                </div>
-                <span class="breakdown-amount">$341.68</span>
-                <span class="breakdown-percent">12%</span>
-              </div>
-              <div class="breakdown-item">
-                <div class="breakdown-category">
-                  <span class="deco-icon deco-icon-link deco-icon-md" style="color: #b4a7d6;"></span>
-                  <span class="category-name">Network (Egress)</span>
-                </div>
-                <div class="breakdown-bar-container">
-                  <div class="breakdown-bar network" style="width: 5%;"></div>
-                </div>
-                <span class="breakdown-amount">$142.37</span>
-                <span class="breakdown-percent">5%</span>
-              </div>
-              <div class="breakdown-item">
-                <div class="breakdown-category">
-                  <span class="deco-icon deco-icon-arch deco-icon-md deco-icon-muted"></span>
-                  <span class="category-name">Other</span>
-                </div>
-                <div class="breakdown-bar-container">
-                  <div class="breakdown-bar other" style="width: 3%;"></div>
-                </div>
-                <span class="breakdown-amount">$85.50</span>
-                <span class="breakdown-percent">3%</span>
-              </div>
-            </div>
-
-            <!-- Efficiency Metrics -->
-            <div class="deco-divider"></div>
-            <div class="efficiency-grid">
-              <div class="efficiency-card">
-                <div class="efficiency-header">
-                  <span class="efficiency-label">$/Goal Completed</span>
-                  <span class="efficiency-trend improving">
-                    <span class="deco-icon deco-icon-chevron-down deco-icon-sm"></span>
-                    22%
-                  </span>
-                </div>
-                <div class="efficiency-value">$127.40</div>
-                <div class="efficiency-context">Based on 24 goals completed this week</div>
-              </div>
-              <div class="efficiency-card">
-                <div class="efficiency-header">
-                  <span class="efficiency-label">$/Agent Hour</span>
-                  <span class="efficiency-trend improving">
-                    <span class="deco-icon deco-icon-chevron-down deco-icon-sm"></span>
-                    15%
-                  </span>
-                </div>
-                <div class="efficiency-value">$3.42</div>
-                <div class="efficiency-context">831 agent-hours this week</div>
-              </div>
-              <div class="efficiency-card">
-                <div class="efficiency-header">
-                  <span class="efficiency-label">$/Artifact Created</span>
-                  <span class="efficiency-trend improving">
-                    <span class="deco-icon deco-icon-chevron-down deco-icon-sm"></span>
-                    8%
-                  </span>
-                </div>
-                <div class="efficiency-value">$2.18</div>
-                <div class="efficiency-context">1,306 artifacts generated</div>
-              </div>
-              <div class="efficiency-card">
-                <div class="efficiency-header">
-                  <span class="efficiency-label">Token Efficiency</span>
-                  <span class="efficiency-trend improving">
-                    <span class="deco-icon deco-icon-chevron-up deco-icon-sm"></span>
-                    12%
-                  </span>
-                </div>
-                <div class="efficiency-value">89.2%</div>
-                <div class="efficiency-context">Useful tokens / total tokens</div>
-              </div>
-            </div>
+          <div class="summary-change up">
+            <span class="deco-icon deco-icon-chevron-up deco-icon-sm"></span>
+            12% vs last week — 847 agents active
+          </div>
+          <div class="summary-sparkline">
+            <div class="sparkline-bar" style="height: 40%;"></div>
+            <div class="sparkline-bar" style="height: 55%;"></div>
+            <div class="sparkline-bar" style="height: 45%;"></div>
+            <div class="sparkline-bar" style="height: 70%;"></div>
+            <div class="sparkline-bar" style="height: 65%;"></div>
+            <div class="sparkline-bar" style="height: 80%;"></div>
+            <div class="sparkline-bar" style="height: 100%;"></div>
           </div>
         </div>
-
-        <!-- Optimization Opportunities -->
-        <div class="optimizations-panel">
-          <div class="section-header">
-            <span class="section-title">
-              <span class="deco-icon deco-icon-target deco-icon-md deco-icon-gold"></span>
-              Optimization Opportunities
-            </span>
-            <span class="badge badge-success">$847/mo potential</span>
+        <div class="summary-card savings">
+          <div class="summary-label">Value Generated</div>
+          <div class="summary-value positive">
+            $2.4M<span class="summary-unit"></span>
           </div>
-          <div class="optimization-list">
-            <div class="optimization-item">
-              <div class="optimization-savings">
-                <div class="savings-amount">$312</div>
-                <div class="savings-period">/month</div>
-              </div>
-              <div class="optimization-info">
-                <div class="optimization-title">Batch API Calls for Related Tasks</div>
-                <div class="optimization-description">Group related queries to reduce token overhead. Discovery found 35% reduction potential.</div>
-              </div>
-              <div class="optimization-impact">
-                <span class="impact-label">Impact</span>
-                <div class="impact-bar">
-                  <div class="impact-fill" style="width: 85%;"></div>
-                </div>
-              </div>
-              <button class="optimization-action">Apply</button>
-            </div>
-            <div class="optimization-item">
-              <div class="optimization-savings">
-                <div class="savings-amount">$245</div>
-                <div class="savings-period">/month</div>
-              </div>
-              <div class="optimization-info">
-                <div class="optimization-title">Enable Context Pooling for Agent Clusters</div>
-                <div class="optimization-description">Leverage emergent context sharing pattern to reduce redundant API calls.</div>
-              </div>
-              <div class="optimization-impact">
-                <span class="impact-label">Impact</span>
-                <div class="impact-bar">
-                  <div class="impact-fill" style="width: 70%;"></div>
-                </div>
-              </div>
-              <button class="optimization-action">Apply</button>
-            </div>
-            <div class="optimization-item">
-              <div class="optimization-savings">
-                <div class="savings-amount">$180</div>
-                <div class="savings-period">/month</div>
-              </div>
-              <div class="optimization-info">
-                <div class="optimization-title">Archive Cold Artifacts to Object Storage</div>
-                <div class="optimization-description">Move artifacts older than 30d to S3-compatible storage (90% cheaper).</div>
-              </div>
-              <div class="optimization-impact">
-                <span class="impact-label">Impact</span>
-                <div class="impact-bar">
-                  <div class="impact-fill medium" style="width: 55%;"></div>
-                </div>
-              </div>
-              <button class="optimization-action">Apply</button>
-            </div>
-            <div class="optimization-item">
-              <div class="optimization-savings">
-                <div class="savings-amount">$110</div>
-                <div class="savings-period">/month</div>
-              </div>
-              <div class="optimization-info">
-                <div class="optimization-title">Use Smaller Models for Routine Tasks</div>
-                <div class="optimization-description">Route simple classification and extraction to faster, cheaper models.</div>
-              </div>
-              <div class="optimization-impact">
-                <span class="impact-label">Impact</span>
-                <div class="impact-bar">
-                  <div class="impact-fill medium" style="width: 40%;"></div>
-                </div>
-              </div>
-              <button class="optimization-action">Apply</button>
-            </div>
+          <div class="summary-change savings-up">
+            <span class="deco-icon deco-icon-chevron-up deco-icon-sm"></span>
+            2.8x ROI across all domains
+          </div>
+          <div class="summary-sparkline">
+            <div class="sparkline-bar" style="height: 30%; background: #98c379;"></div>
+            <div class="sparkline-bar" style="height: 45%; background: #98c379;"></div>
+            <div class="sparkline-bar" style="height: 60%; background: #98c379;"></div>
+            <div class="sparkline-bar" style="height: 55%; background: #98c379;"></div>
+            <div class="sparkline-bar" style="height: 75%; background: #98c379;"></div>
+            <div class="sparkline-bar" style="height: 85%; background: #98c379;"></div>
+            <div class="sparkline-bar" style="height: 100%; background: #98c379;"></div>
           </div>
         </div>
-
+        <div class="summary-card efficiency">
+          <div class="summary-label">Cost per Outcome</div>
+          <div class="summary-value neutral">
+            $127<span class="summary-unit">/goal</span>
+          </div>
+          <div class="summary-change savings-up">
+            <span class="deco-icon deco-icon-chevron-down deco-icon-sm"></span>
+            22% improvement — 6,700 goals achieved
+          </div>
+          <div class="summary-sparkline">
+            <div class="sparkline-bar" style="height: 100%;"></div>
+            <div class="sparkline-bar" style="height: 85%;"></div>
+            <div class="sparkline-bar" style="height: 75%;"></div>
+            <div class="sparkline-bar" style="height: 60%;"></div>
+            <div class="sparkline-bar" style="height: 55%;"></div>
+            <div class="sparkline-bar" style="height: 45%;"></div>
+            <div class="sparkline-bar" style="height: 35%;"></div>
+          </div>
+        </div>
+        <div class="summary-card projection">
+          <div class="summary-label">30d Projection</div>
+          <div class="summary-value">
+            $3.6M<span class="summary-unit"></span>
+          </div>
+          <div class="summary-change">± $180K confidence interval</div>
+          <div class="summary-sparkline">
+            <div class="sparkline-bar" style="height: 60%; background: #b4a7d6;"></div>
+            <div class="sparkline-bar" style="height: 65%; background: #b4a7d6;"></div>
+            <div class="sparkline-bar" style="height: 70%; background: #b4a7d6;"></div>
+            <div class="sparkline-bar" style="height: 75%; background: #b4a7d6;"></div>
+            <div class="sparkline-bar" style="height: 82%; background: #b4a7d6;"></div>
+            <div class="sparkline-bar" style="height: 90%; background: #b4a7d6;"></div>
+            <div class="sparkline-bar" style="height: 100%; background: #b4a7d6;"></div>
+          </div>
+        </div>
       </div>
 
-      <!-- Sidebar -->
-      <aside class="sidebar">
+      <!-- Main Grid -->
+      <div class="main-grid">
+        <div class="main-content">
 
-        <!-- Projections -->
-        <div class="sidebar-panel">
-          <div class="section-header">
-            <span class="section-title">
-              <span class="deco-icon deco-icon-fan deco-icon-sm deco-icon-gold"></span>
-              30-Day Projection
-            </span>
-          </div>
-          <div class="projection-chart">
-            <div class="chart-area">
-              <div class="chart-line"></div>
-              <div class="chart-projection"></div>
+          <!-- Cost Breakdown -->
+          <div class="cost-breakdown">
+            <div class="section-header">
+              <span class="section-title">
+                <span class="deco-icon deco-icon-fan deco-icon-md deco-icon-gold"></span>
+                Cost Breakdown by Domain
+              </span>
+              <button class="panel-action">View Details</button>
             </div>
-            <div class="chart-labels">
-              <span>Now</span>
-              <span>+15d</span>
-              <span>+30d</span>
+            <div class="section-content">
+              <div class="breakdown-list">
+                <div class="breakdown-item">
+                  <div class="breakdown-category">
+                    <span class="deco-icon deco-icon-arch deco-icon-md deco-icon-gold"></span>
+                    <span class="category-name">Healthcare & Medical</span>
+                  </div>
+                  <div class="breakdown-bar-container">
+                    <div class="breakdown-bar api" style="width: 28%;"></div>
+                  </div>
+                  <span class="breakdown-amount">$237,252</span>
+                  <span class="breakdown-percent">28%</span>
+                </div>
+                <div class="breakdown-item">
+                  <div class="breakdown-category">
+                    <span class="deco-icon deco-icon-star deco-icon-md deco-icon-gold"></span>
+                    <span class="category-name">Film & Entertainment</span>
+                  </div>
+                  <div class="breakdown-bar-container">
+                    <div class="breakdown-bar compute" style="width: 22%;"></div>
+                  </div>
+                  <span class="breakdown-amount">$186,410</span>
+                  <span class="breakdown-percent">22%</span>
+                </div>
+                <div class="breakdown-item">
+                  <div class="breakdown-category">
+                    <span class="deco-icon deco-icon-value deco-icon-md deco-icon-gold"></span>
+                    <span class="category-name">Finance & Trading</span>
+                  </div>
+                  <div class="breakdown-bar-container">
+                    <div class="breakdown-bar storage" style="width: 18%;"></div>
+                  </div>
+                  <span class="breakdown-amount">$152,518</span>
+                  <span class="breakdown-percent">18%</span>
+                </div>
+                <div class="breakdown-item">
+                  <div class="breakdown-category">
+                    <span class="deco-icon deco-icon-agent deco-icon-md deco-icon-gold"></span>
+                    <span class="category-name">Manufacturing & Supply Chain</span>
+                  </div>
+                  <div class="breakdown-bar-container">
+                    <div class="breakdown-bar network" style="width: 14%;"></div>
+                  </div>
+                  <span class="breakdown-amount">$118,626</span>
+                  <span class="breakdown-percent">14%</span>
+                </div>
+                <div class="breakdown-item">
+                  <div class="breakdown-category">
+                    <span class="deco-icon deco-icon-rocket deco-icon-md deco-icon-gold"></span>
+                    <span class="category-name">Aerospace & Defense</span>
+                  </div>
+                  <div class="breakdown-bar-container">
+                    <div class="breakdown-bar api" style="width: 10%;"></div>
+                  </div>
+                  <span class="breakdown-amount">$84,732</span>
+                  <span class="breakdown-percent">10%</span>
+                </div>
+                <div class="breakdown-item">
+                  <div class="breakdown-category">
+                    <span class="deco-icon deco-icon-target deco-icon-md deco-icon-gold"></span>
+                    <span class="category-name">Gaming & Sports</span>
+                  </div>
+                  <div class="breakdown-bar-container">
+                    <div class="breakdown-bar other" style="width: 5%;"></div>
+                  </div>
+                  <span class="breakdown-amount">$42,366</span>
+                  <span class="breakdown-percent">5%</span>
+                </div>
+                <div class="breakdown-item">
+                  <div class="breakdown-category">
+                    <span class="deco-icon deco-icon-sunburst deco-icon-md deco-icon-gold"></span>
+                    <span class="category-name">Family & Consumer</span>
+                  </div>
+                  <div class="breakdown-bar-container">
+                    <div class="breakdown-bar compute" style="width: 3%;"></div>
+                  </div>
+                  <span class="breakdown-amount">$25,419</span>
+                  <span class="breakdown-percent">3%</span>
+                </div>
+              </div>
+
+              <!-- Efficiency Metrics -->
+              <div class="deco-divider"></div>
+              <div class="efficiency-grid">
+                <div class="efficiency-card">
+                  <div class="efficiency-header">
+                    <span class="efficiency-label">🏥 Medical $/Diagnosis</span>
+                    <span class="efficiency-trend improving">
+                      <span class="deco-icon deco-icon-chevron-down deco-icon-sm"></span>
+                      34%
+                    </span>
+                  </div>
+                  <div class="efficiency-value">$18.40</div>
+                  <div class="efficiency-context">12,892 diagnoses assisted this week</div>
+                </div>
+                <div class="efficiency-card">
+                  <div class="efficiency-header">
+                    <span class="efficiency-label">🎬 Film $/Render Hour</span>
+                    <span class="efficiency-trend improving">
+                      <span class="deco-icon deco-icon-chevron-down deco-icon-sm"></span>
+                      28%
+                    </span>
+                  </div>
+                  <div class="efficiency-value">$42.80</div>
+                  <div class="efficiency-context">4,352 render hours completed</div>
+                </div>
+                <div class="efficiency-card">
+                  <div class="efficiency-header">
+                    <span class="efficiency-label">📊 Finance $/Trade Signal</span>
+                    <span class="efficiency-trend improving">
+                      <span class="deco-icon deco-icon-chevron-down deco-icon-sm"></span>
+                      19%
+                    </span>
+                  </div>
+                  <div class="efficiency-value">$0.84</div>
+                  <div class="efficiency-context">181,571 signals generated</div>
+                </div>
+                <div class="efficiency-card">
+                  <div class="efficiency-header">
+                    <span class="efficiency-label">🏭 Mfg $/Unit Optimized</span>
+                    <span class="efficiency-trend improving">
+                      <span class="deco-icon deco-icon-chevron-up deco-icon-sm"></span>
+                      41%
+                    </span>
+                  </div>
+                  <div class="efficiency-value">$2.14</div>
+                  <div class="efficiency-context">55,432 units through optimization</div>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="section-content">
-            <div class="scenario-list">
-              <div class="scenario-item">
-                <span class="scenario-label">
-                  <span class="scenario-dot optimistic"></span>
-                  Optimistic (with opts)
-                </span>
-                <span class="scenario-value">$9,200</span>
+
+          <!-- Optimization Opportunities -->
+          <div class="optimizations-panel">
+            <div class="section-header">
+              <span class="section-title">
+                <span class="deco-icon deco-icon-target deco-icon-md deco-icon-gold"></span>
+                Optimization Opportunities
+              </span>
+              <span class="badge badge-success">$127K/mo potential</span>
+            </div>
+            <div class="optimization-list">
+              <div class="optimization-item">
+                <div class="optimization-savings">
+                  <div class="savings-amount">$42K</div>
+                  <div class="savings-period">/month</div>
+                </div>
+                <div class="optimization-info">
+                  <div class="optimization-title">🏥 Batch Medical Imaging Analysis</div>
+                  <div class="optimization-description">Group CT/MRI scans for bulk processing during off-peak hours. Discovery found 38% cost reduction potential across radiology departments.</div>
+                </div>
+                <div class="optimization-impact">
+                  <span class="impact-label">Impact</span>
+                  <div class="impact-bar">
+                    <div class="impact-fill" style="width: 92%;"></div>
+                  </div>
+                </div>
+                <button class="optimization-action">Apply</button>
               </div>
-              <div class="scenario-item">
-                <span class="scenario-label">
-                  <span class="scenario-dot baseline"></span>
-                  Baseline
-                </span>
-                <span class="scenario-value">$11,420</span>
+              <div class="optimization-item">
+                <div class="optimization-savings">
+                  <div class="savings-amount">$31K</div>
+                  <div class="savings-period">/month</div>
+                </div>
+                <div class="optimization-info">
+                  <div class="optimization-title">🎬 Shared Render Farm Scheduling</div>
+                  <div class="optimization-description">Coordinate VFX render jobs across productions to maximize GPU utilization. Currently 34% idle capacity during handoffs.</div>
+                </div>
+                <div class="optimization-impact">
+                  <span class="impact-label">Impact</span>
+                  <div class="impact-bar">
+                    <div class="impact-fill" style="width: 78%;"></div>
+                  </div>
+                </div>
+                <button class="optimization-action">Apply</button>
               </div>
-              <div class="scenario-item">
-                <span class="scenario-label">
-                  <span class="scenario-dot pessimistic"></span>
-                  High Usage
-                </span>
-                <span class="scenario-value">$14,800</span>
+              <div class="optimization-item">
+                <div class="optimization-savings">
+                  <div class="savings-amount">$24K</div>
+                  <div class="savings-period">/month</div>
+                </div>
+                <div class="optimization-info">
+                  <div class="optimization-title">📊 Cross-Portfolio Signal Sharing</div>
+                  <div class="optimization-description">Enable pattern recognition sharing between trading desks. Same market signals being computed 4x independently.</div>
+                </div>
+                <div class="optimization-impact">
+                  <span class="impact-label">Impact</span>
+                  <div class="impact-bar">
+                    <div class="impact-fill" style="width: 65%;"></div>
+                  </div>
+                </div>
+                <button class="optimization-action">Apply</button>
+              </div>
+              <div class="optimization-item">
+                <div class="optimization-savings">
+                  <div class="savings-amount">$18K</div>
+                  <div class="savings-period">/month</div>
+                </div>
+                <div class="optimization-info">
+                  <div class="optimization-title">🏭 Predictive Maintenance Consolidation</div>
+                  <div class="optimization-description">Merge sensor analysis across 12 manufacturing lines into unified model. Reduce redundant anomaly detection by 67%.</div>
+                </div>
+                <div class="optimization-impact">
+                  <span class="impact-label">Impact</span>
+                  <div class="impact-bar">
+                    <div class="impact-fill medium" style="width: 52%;"></div>
+                  </div>
+                </div>
+                <button class="optimization-action">Apply</button>
+              </div>
+              <div class="optimization-item">
+                <div class="optimization-savings">
+                  <div class="savings-amount">$12K</div>
+                  <div class="savings-period">/month</div>
+                </div>
+                <div class="optimization-info">
+                  <div class="optimization-title">🚀 Aerospace Simulation Caching</div>
+                  <div class="optimization-description">Cache CFD simulation results for similar airframe configurations. 23% of simulations are near-duplicates.</div>
+                </div>
+                <div class="optimization-impact">
+                  <span class="impact-label">Impact</span>
+                  <div class="impact-bar">
+                    <div class="impact-fill medium" style="width: 38%;"></div>
+                  </div>
+                </div>
+                <button class="optimization-action">Apply</button>
               </div>
             </div>
           </div>
+
         </div>
 
-        <!-- Cost Alerts -->
-        <div class="sidebar-panel">
-          <div class="section-header">
-            <span class="section-title">
-              <span class="deco-icon deco-icon-target deco-icon-sm deco-icon-warning"></span>
-              Alerts
-            </span>
-          </div>
-          <div class="alert-list">
-            <div class="alert-item warning">
-              <span class="deco-icon deco-icon-target deco-icon-sm deco-icon-warning"></span>
-              <div class="alert-content">
-                <div class="alert-title">API budget at 78%</div>
-                <div class="alert-detail">$1,480 of $1,900 used (7 days left)</div>
-              </div>
-            </div>
-            <div class="alert-item success">
-              <span class="deco-icon deco-icon-check deco-icon-sm deco-icon-success"></span>
-              <div class="alert-content">
-                <div class="alert-title">Storage optimization applied</div>
-                <div class="alert-detail">Saved $42.30 via compression</div>
-              </div>
-            </div>
-            <div class="alert-item warning">
-              <span class="deco-icon deco-icon-fan deco-icon-sm deco-icon-bright"></span>
-              <div class="alert-content">
-                <div class="alert-title">Unusual spike detected</div>
-                <div class="alert-detail">GPU usage 2.3x normal at 14:00</div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <!-- Sidebar -->
+        <aside class="sidebar">
 
-        <!-- Budget Progress -->
-        <div class="sidebar-panel">
-          <div class="section-header">
-            <span class="section-title">
-              <span class="deco-icon deco-icon-value deco-icon-sm deco-icon-gold"></span>
-              Budget Status
-            </span>
-          </div>
-          <div class="budget-item">
-            <div class="budget-header">
-              <span class="budget-name">Monthly Total</span>
-              <span class="budget-values">$11,420 / $15,000</span>
+          <!-- Projections -->
+          <div class="sidebar-panel">
+            <div class="section-header">
+              <span class="section-title">
+                <span class="deco-icon deco-icon-fan deco-icon-sm deco-icon-gold"></span>
+                30-Day Projection
+              </span>
             </div>
-            <div class="budget-bar">
-              <div class="budget-fill safe" style="width: 76%;"></div>
-            </div>
-          </div>
-          <div class="budget-item">
-            <div class="budget-header">
-              <span class="budget-name">API Calls</span>
-              <span class="budget-values">$1,480 / $1,900</span>
-            </div>
-            <div class="budget-bar">
-              <div class="budget-fill warning" style="width: 78%;"></div>
-            </div>
-          </div>
-          <div class="budget-item">
-            <div class="budget-header">
-              <span class="budget-name">Compute</span>
-              <span class="budget-values">$797 / $2,500</span>
-            </div>
-            <div class="budget-bar">
-              <div class="budget-fill safe" style="width: 32%;"></div>
-            </div>
-          </div>
-          <div class="budget-item">
-            <div class="budget-header">
-              <span class="budget-name">Storage</span>
-              <span class="budget-values">$341 / $500</span>
-            </div>
-            <div class="budget-bar">
-              <div class="budget-fill warning" style="width: 68%;"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Quick Actions -->
-        <div class="sidebar-panel">
-          <div class="section-header">
-            <span class="section-title">
-              <span class="deco-icon deco-icon-bolt deco-icon-sm deco-icon-bright"></span>
-              Quick Actions
-            </span>
-          </div>
-          <div class="quick-actions">
-            <button class="quick-action">
-              <span class="deco-icon deco-icon-fan deco-icon-sm deco-icon-gold"></span>
-              Generate Cost Report
-            </button>
-            <button class="quick-action">
-              <span class="deco-icon deco-icon-target deco-icon-sm deco-icon-gold"></span>
-              Configure Alerts
-            </button>
-            <button class="quick-action">
-              <span class="deco-icon deco-icon-search deco-icon-sm deco-icon-gold"></span>
-              Run Optimization Scan
-            </button>
-            <button class="quick-action">
-              <span class="deco-icon deco-icon-velocity deco-icon-sm deco-icon-gold"></span>
-              Compare to Baseline
-            </button>
-          </div>
-        </div>
-
-        <!-- Cost Timeline (Mini) -->
-        <div class="sidebar-panel">
-          <div class="section-header">
-            <span class="section-title">
-              <span class="deco-icon deco-icon-time deco-icon-sm deco-icon-gold"></span>
-              Hourly Activity
-            </span>
-          </div>
-          <div class="timeline-container">
-            <div class="timeline-row">
-              <span class="timeline-label">API</span>
-              <div class="timeline-bars">
-                <div class="timeline-bar"></div>
-                <div class="timeline-bar"></div>
-                <div class="timeline-bar high"></div>
-                <div class="timeline-bar"></div>
-                <div class="timeline-bar spike"></div>
-                <div class="timeline-bar high"></div>
-                <div class="timeline-bar"></div>
-                <div class="timeline-bar"></div>
+            <div class="projection-chart">
+              <div class="chart-area">
+                <div class="chart-line"></div>
+                <div class="chart-projection"></div>
               </div>
-              <span class="timeline-value">$42/hr</span>
-            </div>
-            <div class="timeline-row">
-              <span class="timeline-label">Compute</span>
-              <div class="timeline-bars">
-                <div class="timeline-bar"></div>
-                <div class="timeline-bar high"></div>
-                <div class="timeline-bar high"></div>
-                <div class="timeline-bar"></div>
-                <div class="timeline-bar"></div>
-                <div class="timeline-bar high"></div>
-                <div class="timeline-bar"></div>
-                <div class="timeline-bar"></div>
+              <div class="chart-labels">
+                <span>Now</span>
+                <span>+15d</span>
+                <span>+30d</span>
               </div>
-              <span class="timeline-value">$18/hr</span>
             </div>
-            <div class="timeline-row">
-              <span class="timeline-label">Storage</span>
-              <div class="timeline-bars">
-                <div class="timeline-bar"></div>
-                <div class="timeline-bar"></div>
-                <div class="timeline-bar"></div>
-                <div class="timeline-bar"></div>
-                <div class="timeline-bar"></div>
-                <div class="timeline-bar"></div>
-                <div class="timeline-bar"></div>
-                <div class="timeline-bar"></div>
+            <div class="section-content">
+              <div class="scenario-list">
+                <div class="scenario-item">
+                  <span class="scenario-label">
+                    <span class="scenario-dot optimistic"></span>
+                    Optimistic (with opts)
+                  </span>
+                  <span class="scenario-value">$9,200</span>
+                </div>
+                <div class="scenario-item">
+                  <span class="scenario-label">
+                    <span class="scenario-dot baseline"></span>
+                    Baseline
+                  </span>
+                  <span class="scenario-value">$11,420</span>
+                </div>
+                <div class="scenario-item">
+                  <span class="scenario-label">
+                    <span class="scenario-dot pessimistic"></span>
+                    High Usage
+                  </span>
+                  <span class="scenario-value">$14,800</span>
+                </div>
               </div>
-              <span class="timeline-value">$2/hr</span>
             </div>
           </div>
-        </div>
 
-      </aside>
+          <!-- Cost Alerts -->
+          <div class="sidebar-panel">
+            <div class="section-header">
+              <span class="section-title">
+                <span class="deco-icon deco-icon-target deco-icon-sm deco-icon-warning"></span>
+                Domain Alerts
+              </span>
+            </div>
+            <div class="alert-list">
+              <div class="alert-item warning">
+                <span class="deco-icon deco-icon-arch deco-icon-sm deco-icon-warning"></span>
+                <div class="alert-content">
+                  <div class="alert-title">Radiology budget at 82%</div>
+                  <div class="alert-detail">$194K of $237K used — MRI analysis surge</div>
+                </div>
+              </div>
+              <div class="alert-item success">
+                <span class="deco-icon deco-icon-star deco-icon-sm deco-icon-success"></span>
+                <div class="alert-content">
+                  <div class="alert-title">VFX render costs down 28%</div>
+                  <div class="alert-detail">Shared scheduling saved $52K this week</div>
+                </div>
+              </div>
+              <div class="alert-item critical">
+                <span class="deco-icon deco-icon-value deco-icon-sm deco-icon-danger"></span>
+                <div class="alert-content">
+                  <div class="alert-title">Trading desk anomaly</div>
+                  <div class="alert-detail">Quant desk 3x normal — investigating</div>
+                </div>
+              </div>
+              <div class="alert-item success">
+                <span class="deco-icon deco-icon-agent deco-icon-sm deco-icon-success"></span>
+                <div class="alert-content">
+                  <div class="alert-title">Supply chain efficiency record</div>
+                  <div class="alert-detail">$2.14/unit — best in 6 months</div>
+                </div>
+              </div>
+              <div class="alert-item warning">
+                <span class="deco-icon deco-icon-rocket deco-icon-sm deco-icon-warning"></span>
+                <div class="alert-content">
+                  <div class="alert-title">Aerospace simulation queue</div>
+                  <div class="alert-detail">47 jobs pending — consider scaling</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Budget Progress -->
+          <div class="sidebar-panel">
+            <div class="section-header">
+              <span class="section-title">
+                <span class="deco-icon deco-icon-value deco-icon-sm deco-icon-gold"></span>
+                Domain Budgets
+              </span>
+            </div>
+            <div class="budget-item">
+              <div class="budget-header">
+                <span class="budget-name">🏥 Healthcare</span>
+                <span class="budget-values">$237K / $300K</span>
+              </div>
+              <div class="budget-bar">
+                <div class="budget-fill warning" style="width: 79%;"></div>
+              </div>
+            </div>
+            <div class="budget-item">
+              <div class="budget-header">
+                <span class="budget-name">🎬 Film & Entertainment</span>
+                <span class="budget-values">$186K / $250K</span>
+              </div>
+              <div class="budget-bar">
+                <div class="budget-fill safe" style="width: 74%;"></div>
+              </div>
+            </div>
+            <div class="budget-item">
+              <div class="budget-header">
+                <span class="budget-name">📊 Finance & Trading</span>
+                <span class="budget-values">$152K / $200K</span>
+              </div>
+              <div class="budget-bar">
+                <div class="budget-fill safe" style="width: 76%;"></div>
+              </div>
+            </div>
+            <div class="budget-item">
+              <div class="budget-header">
+                <span class="budget-name">🏭 Manufacturing</span>
+                <span class="budget-values">$118K / $175K</span>
+              </div>
+              <div class="budget-bar">
+                <div class="budget-fill safe" style="width: 67%;"></div>
+              </div>
+            </div>
+            <div class="budget-item">
+              <div class="budget-header">
+                <span class="budget-name">🚀 Aerospace</span>
+                <span class="budget-values">$84K / $90K</span>
+              </div>
+              <div class="budget-bar">
+                <div class="budget-fill danger" style="width: 93%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="sidebar-panel">
+            <div class="section-header">
+              <span class="section-title">
+                <span class="deco-icon deco-icon-bolt deco-icon-sm deco-icon-bright"></span>
+                Quick Actions
+              </span>
+            </div>
+            <div class="quick-actions">
+              <button class="quick-action">
+                <span class="deco-icon deco-icon-fan deco-icon-sm deco-icon-gold"></span>
+                Executive Cost Summary
+              </button>
+              <button class="quick-action">
+                <span class="deco-icon deco-icon-target deco-icon-sm deco-icon-gold"></span>
+                Domain Alert Thresholds
+              </button>
+              <button class="quick-action">
+                <span class="deco-icon deco-icon-search deco-icon-sm deco-icon-gold"></span>
+                Cross-Domain Optimization
+              </button>
+              <button class="quick-action">
+                <span class="deco-icon deco-icon-velocity deco-icon-sm deco-icon-gold"></span>
+                ROI by Department
+              </button>
+            </div>
+          </div>
+
+          <!-- Cost Timeline (Mini) -->
+          <div class="sidebar-panel">
+            <div class="section-header">
+              <span class="section-title">
+                <span class="deco-icon deco-icon-time deco-icon-sm deco-icon-gold"></span>
+                Domain Activity (Today)
+              </span>
+            </div>
+            <div class="timeline-container">
+              <div class="timeline-row">
+                <span class="timeline-label">🏥 Medical</span>
+                <div class="timeline-bars">
+                  <div class="timeline-bar"></div>
+                  <div class="timeline-bar high"></div>
+                  <div class="timeline-bar high"></div>
+                  <div class="timeline-bar spike"></div>
+                  <div class="timeline-bar high"></div>
+                  <div class="timeline-bar"></div>
+                  <div class="timeline-bar"></div>
+                  <div class="timeline-bar"></div>
+                </div>
+                <span class="timeline-value">$8.2K</span>
+              </div>
+              <div class="timeline-row">
+                <span class="timeline-label">🎬 Film</span>
+                <div class="timeline-bars">
+                  <div class="timeline-bar"></div>
+                  <div class="timeline-bar"></div>
+                  <div class="timeline-bar"></div>
+                  <div class="timeline-bar high"></div>
+                  <div class="timeline-bar high"></div>
+                  <div class="timeline-bar high"></div>
+                  <div class="timeline-bar spike"></div>
+                  <div class="timeline-bar high"></div>
+                </div>
+                <span class="timeline-value">$6.4K</span>
+              </div>
+              <div class="timeline-row">
+                <span class="timeline-label">📊 Finance</span>
+                <div class="timeline-bars">
+                  <div class="timeline-bar high"></div>
+                  <div class="timeline-bar spike"></div>
+                  <div class="timeline-bar high"></div>
+                  <div class="timeline-bar"></div>
+                  <div class="timeline-bar"></div>
+                  <div class="timeline-bar"></div>
+                  <div class="timeline-bar"></div>
+                  <div class="timeline-bar high"></div>
+                </div>
+                <span class="timeline-value">$5.1K</span>
+              </div>
+              <div class="timeline-row">
+                <span class="timeline-label">🏭 Mfg</span>
+                <div class="timeline-bars">
+                  <div class="timeline-bar high"></div>
+                  <div class="timeline-bar high"></div>
+                  <div class="timeline-bar high"></div>
+                  <div class="timeline-bar high"></div>
+                  <div class="timeline-bar high"></div>
+                  <div class="timeline-bar high"></div>
+                  <div class="timeline-bar high"></div>
+                  <div class="timeline-bar high"></div>
+                </div>
+                <span class="timeline-value">$4.0K</span>
+              </div>
+            </div>
+          </div>
+
+        </aside>
+      </div>
+
     </div>
-
   </div>
 </body>
 </html>

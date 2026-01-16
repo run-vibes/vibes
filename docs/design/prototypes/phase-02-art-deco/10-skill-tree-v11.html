@@ -1,0 +1,2217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Knowledge Universe — V11 Skill Network</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    /* ═══════════════════════════════════════════════════════════════════════════
+       V11 — SKILL NETWORK (No Locks, Investment Model)
+
+       Philosophy: MechWarrior-style customization, not linear unlocking.
+       Everything is accessible. Investment shows where you've focused.
+
+       Visual: V6 aesthetic — octagonal nodes, golden connections, clean layout.
+       ═══════════════════════════════════════════════════════════════════════════ */
+
+    :root {
+      /* Investment levels (brightness, not locked/unlocked) */
+      --invest-high: 1;
+      --invest-medium: 0.7;
+      --invest-low: 0.4;
+      --invest-none: 0.2;
+
+      /* Current view */
+      --current-view: 'domain'; /* 'domain' or 'periodic' */
+    }
+
+    body {
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       ZOOM VIEWPORT — Same as V6
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .zoom-viewport {
+      position: fixed;
+      inset: 0;
+      background: var(--bg-void);
+      overflow: hidden;
+    }
+
+    /* Atmospheric depth */
+    .atmosphere {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .atmosphere::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 30% 40%, rgba(212, 168, 75, 0.03) 0%, transparent 50%),
+        radial-gradient(ellipse 50% 40% at 70% 60%, rgba(61, 139, 139, 0.02) 0%, transparent 50%);
+    }
+
+    /* Sunburst pattern */
+    .atmosphere::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 200%;
+      height: 200%;
+      background: repeating-conic-gradient(
+        from 0deg,
+        transparent 0deg 4deg,
+        rgba(212, 168, 75, 0.006) 4deg 5deg
+      );
+      transform: translate(-50%, -50%);
+      opacity: 0.5;
+    }
+
+    .zoom-container {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      transform-origin: center center;
+      cursor: grab;
+      z-index: 2;
+    }
+
+    .zoom-container.dragging {
+      cursor: grabbing;
+    }
+
+    .zoom-container.animating {
+      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       DOMAIN VIEW — Skill Network (V6 Aesthetic)
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .domain-view {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 2000px;
+      height: 2000px;
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+
+    .domain-view.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, -50%) scale(0.9);
+    }
+
+    /* Connection lines (SVG) */
+    .connections-svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .connection-line {
+      stroke: var(--gold-dim);
+      stroke-width: 1.5;
+      fill: none;
+      opacity: 0.25;
+      transition: all 0.4s ease;
+    }
+
+    .connection-line.primary {
+      stroke: url(#gold-gradient);
+      stroke-width: 2.5;
+      opacity: 0.4;
+    }
+
+    /* Suggested path highlight */
+    .connection-line.path-highlight {
+      stroke: var(--accent-teal);
+      stroke-width: 3;
+      opacity: 0.6;
+      stroke-dasharray: 8 4;
+      animation: path-flow 1s linear infinite;
+    }
+
+    @keyframes path-flow {
+      from { stroke-dashoffset: 0; }
+      to { stroke-dashoffset: -12; }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       CENTER HUB — Domain Title (V6 Style)
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .center-hub {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 200px;
+      height: 200px;
+      z-index: 20;
+    }
+
+    .center-core {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
+      border: 3px solid var(--gold-primary);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--glow-gold-bright), inset 0 0 50px rgba(212, 168, 75, 0.05);
+      cursor: pointer;
+      transition: all 0.4s ease;
+      animation: center-pulse 4s ease-in-out infinite;
+    }
+
+    @keyframes center-pulse {
+      0%, 100% {
+        box-shadow: var(--glow-gold-bright), inset 0 0 50px rgba(212, 168, 75, 0.05);
+      }
+      50% {
+        box-shadow: 0 0 50px rgba(232, 196, 90, 0.4), 0 0 100px rgba(212, 168, 75, 0.2), inset 0 0 50px rgba(212, 168, 75, 0.08);
+      }
+    }
+
+    .center-icon {
+      font-size: 32px;
+      color: var(--gold-primary);
+      margin-bottom: var(--space-2);
+    }
+
+    .center-label {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+      text-align: center;
+    }
+
+    .center-stats {
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-top: 4px;
+    }
+
+    /* Orbiting knowledge particles */
+    .knowledge-orbit {
+      position: absolute;
+      inset: -40px;
+      border-radius: 50%;
+      animation: orbit-spin 20s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes orbit-spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .orbit-particle {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: var(--gold-muted);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--gold-muted);
+    }
+
+    .orbit-particle:nth-child(1) { top: -4px; left: calc(50% - 4px); }
+    .orbit-particle:nth-child(2) { bottom: 15%; right: 5%; background: var(--accent-teal); box-shadow: 0 0 10px var(--accent-teal); }
+    .orbit-particle:nth-child(3) { bottom: 25%; left: 8%; }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       SKILL NODES — V6 Octagonal Style (No Locks!)
+       Investment shown by opacity/brightness, not locked state
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .skill-node {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 10;
+    }
+
+    .skill-node:hover {
+      z-index: 100;
+    }
+
+    .skill-node:hover .skill-frame {
+      border-color: var(--gold-primary);
+      box-shadow: var(--glow-gold);
+      transform: scale(1.1);
+    }
+
+    .skill-frame {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-5);
+      background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
+      border: 2px solid var(--border-medium);
+      transition: all 0.3s ease;
+      /* Octagonal clip — V6 signature */
+      clip-path: polygon(
+        25% 0%, 75% 0%,
+        100% 25%, 100% 75%,
+        75% 100%, 25% 100%,
+        0% 75%, 0% 25%
+      );
+    }
+
+    .skill-frame::before {
+      content: '';
+      position: absolute;
+      inset: 6px;
+      background: radial-gradient(circle at center, rgba(212, 168, 75, 0.04) 0%, transparent 70%);
+      clip-path: inherit;
+      pointer-events: none;
+    }
+
+    .skill-icon {
+      font-size: 24px;
+      margin-bottom: var(--space-2);
+    }
+
+    .skill-label {
+      font-family: var(--font-display);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-primary);
+      text-align: center;
+    }
+
+    .skill-meta {
+      display: flex;
+      gap: var(--space-2);
+      margin-top: var(--space-2);
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    /* Investment levels (NOT locked/unlocked) */
+    .skill-node.invest-high .skill-frame {
+      border-color: var(--gold-primary);
+      box-shadow: 0 0 20px rgba(212, 168, 75, 0.2);
+    }
+    .skill-node.invest-high .skill-icon { color: var(--gold-primary); }
+
+    .skill-node.invest-medium .skill-frame {
+      border-color: var(--accent-teal);
+      opacity: 0.85;
+    }
+    .skill-node.invest-medium .skill-icon { color: var(--accent-teal); }
+
+    .skill-node.invest-low .skill-frame {
+      border-color: var(--border-medium);
+      opacity: 0.6;
+    }
+    .skill-node.invest-low .skill-icon { color: var(--text-muted); }
+
+    .skill-node.invest-none .skill-frame {
+      border-color: var(--border-subtle);
+      opacity: 0.35;
+    }
+    .skill-node.invest-none .skill-icon { color: var(--text-muted); opacity: 0.5; }
+
+    /* AI Discovered — sparkle effect */
+    .skill-node.ai-discovered .skill-frame {
+      border-color: #c86dd7;
+      box-shadow: 0 0 25px rgba(200, 109, 215, 0.3);
+    }
+    .skill-node.ai-discovered .skill-frame::after {
+      content: '✨';
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      font-size: 16px;
+      animation: sparkle 1.5s ease-in-out infinite;
+    }
+
+    @keyframes sparkle {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(1.2); }
+    }
+
+    /* Size variants */
+    .skill-node.size-lg .skill-frame { width: 140px; height: 140px; }
+    .skill-node.size-md .skill-frame { width: 120px; height: 120px; }
+    .skill-node.size-sm .skill-frame { width: 100px; height: 100px; }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       PERIODIC TABLE VIEW — Elements of Knowledge
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .periodic-view {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 2000px;
+      height: 1400px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+
+    .periodic-view.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .periodic-header {
+      position: absolute;
+      top: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+    }
+
+    .periodic-title {
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+    }
+
+    .periodic-subtitle {
+      font-family: var(--font-condensed);
+      font-size: 14px;
+      color: var(--text-tertiary);
+      margin-top: var(--space-2);
+    }
+
+    .periodic-back {
+      font-family: var(--font-condensed);
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      margin-top: var(--space-3);
+      transition: color 0.2s ease;
+    }
+
+    .periodic-back:hover {
+      color: var(--gold-primary);
+    }
+
+    /* Element grid */
+    .element-grid {
+      position: absolute;
+      top: 180px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 12px;
+      padding: var(--space-6);
+    }
+
+    .element-cell {
+      width: 100px;
+      height: 100px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .element-cell:hover {
+      border-color: var(--gold-primary);
+      box-shadow: var(--glow-gold);
+      transform: scale(1.05);
+    }
+
+    .element-symbol {
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: var(--gold-primary);
+    }
+
+    .element-name {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-top: var(--space-1);
+    }
+
+    .element-number {
+      position: absolute;
+      top: 6px;
+      left: 8px;
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      color: var(--text-muted);
+    }
+
+    /* Element proficiency (fill level) */
+    .element-cell::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(to top, rgba(212, 168, 75, 0.15) 0%, transparent 100%);
+      transition: height 0.3s ease;
+    }
+
+    .element-cell.prof-high::before { height: 80%; background: linear-gradient(to top, rgba(212, 168, 75, 0.25) 0%, transparent 100%); }
+    .element-cell.prof-medium::before { height: 50%; }
+    .element-cell.prof-low::before { height: 25%; }
+    .element-cell.prof-none::before { height: 0; }
+
+    /* Category colors */
+    .element-cell.cat-core { border-left: 3px solid var(--gold-primary); }
+    .element-cell.cat-advanced { border-left: 3px solid var(--accent-teal); }
+    .element-cell.cat-specialized { border-left: 3px solid #c86dd7; }
+
+    /* Category legend */
+    .category-legend {
+      position: absolute;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: var(--space-6);
+    }
+
+    .category-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .category-dot {
+      width: 12px;
+      height: 4px;
+      border-radius: 2px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       SUBATOMIC VIEW — Application & Impact (NOT memories!)
+
+       The deepest level answers: "Where can this be applied?
+       How will it be useful? What impact/outcome do I predict?"
+
+       Metaphor: A radiant element projecting light into application domains.
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .subatomic-view {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 2000px;
+      height: 1600px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+
+    .subatomic-view.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .subatomic-header {
+      position: absolute;
+      top: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+    }
+
+    .subatomic-title {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+    }
+
+    .subatomic-question {
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-style: italic;
+      color: var(--text-secondary);
+      margin-top: var(--space-2);
+    }
+
+    .subatomic-back {
+      font-family: var(--font-condensed);
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      margin-top: var(--space-3);
+      transition: color 0.2s ease;
+    }
+
+    .subatomic-back:hover {
+      color: var(--gold-primary);
+    }
+
+    /* Central element (the nucleus of application) */
+    .element-nucleus {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 180px;
+      height: 180px;
+      z-index: 50;
+    }
+
+    .nucleus-core {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
+      border: 3px solid var(--gold-primary);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow:
+        0 0 60px rgba(212, 168, 75, 0.4),
+        0 0 120px rgba(212, 168, 75, 0.2),
+        inset 0 0 40px rgba(212, 168, 75, 0.1);
+      animation: nucleus-glow 3s ease-in-out infinite;
+    }
+
+    @keyframes nucleus-glow {
+      0%, 100% {
+        box-shadow:
+          0 0 60px rgba(212, 168, 75, 0.4),
+          0 0 120px rgba(212, 168, 75, 0.2),
+          inset 0 0 40px rgba(212, 168, 75, 0.1);
+      }
+      50% {
+        box-shadow:
+          0 0 80px rgba(232, 196, 90, 0.5),
+          0 0 160px rgba(212, 168, 75, 0.3),
+          inset 0 0 60px rgba(212, 168, 75, 0.15);
+      }
+    }
+
+    .nucleus-symbol {
+      font-family: var(--font-display);
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: var(--gold-primary);
+    }
+
+    .nucleus-name {
+      font-family: var(--font-condensed);
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-top: var(--space-1);
+    }
+
+    /* Radiance beams connecting to applications */
+    .radiance-svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .radiance-beam {
+      stroke: var(--gold-primary);
+      stroke-width: 2;
+      fill: none;
+      opacity: 0.4;
+      stroke-dasharray: 6 3;
+      animation: beam-flow 2s linear infinite;
+    }
+
+    @keyframes beam-flow {
+      from { stroke-dashoffset: 0; }
+      to { stroke-dashoffset: -18; }
+    }
+
+    .radiance-beam.high-impact {
+      stroke-width: 3;
+      opacity: 0.6;
+    }
+
+    .radiance-beam.medium-impact {
+      stroke-width: 2;
+      opacity: 0.4;
+    }
+
+    .radiance-beam.low-impact {
+      stroke-width: 1.5;
+      opacity: 0.25;
+    }
+
+    /* Application bubbles — where knowledge applies */
+    .application-bubble {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      z-index: 20;
+    }
+
+    .application-bubble:hover {
+      z-index: 100;
+    }
+
+    .application-bubble:hover .bubble-frame {
+      border-color: var(--gold-primary);
+      box-shadow: var(--glow-gold);
+      transform: scale(1.1);
+    }
+
+    .bubble-frame {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-4) var(--space-5);
+      background: var(--bg-card);
+      border: 2px solid var(--border-medium);
+      border-radius: 24px;
+      transition: all 0.3s ease;
+      min-width: 120px;
+    }
+
+    .bubble-icon {
+      font-size: 24px;
+      margin-bottom: var(--space-2);
+    }
+
+    .bubble-label {
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-primary);
+      text-align: center;
+    }
+
+    .bubble-meta {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      color: var(--text-tertiary);
+      margin-top: var(--space-1);
+    }
+
+    /* Impact levels */
+    .application-bubble.impact-high .bubble-frame {
+      border-color: var(--gold-primary);
+      box-shadow: 0 0 20px rgba(212, 168, 75, 0.15);
+    }
+
+    .application-bubble.impact-high .bubble-icon {
+      color: var(--gold-primary);
+    }
+
+    .application-bubble.impact-medium .bubble-frame {
+      border-color: var(--accent-teal);
+    }
+
+    .application-bubble.impact-medium .bubble-icon {
+      color: var(--accent-teal);
+    }
+
+    .application-bubble.impact-low .bubble-frame {
+      opacity: 0.7;
+    }
+
+    .application-bubble.impact-low .bubble-icon {
+      color: var(--text-muted);
+    }
+
+    /* Size variants */
+    .application-bubble.size-lg .bubble-frame {
+      padding: var(--space-5) var(--space-6);
+      min-width: 150px;
+    }
+    .application-bubble.size-lg .bubble-icon { font-size: 28px; }
+    .application-bubble.size-lg .bubble-label { font-size: 12px; }
+
+    .application-bubble.size-sm .bubble-frame {
+      padding: var(--space-3) var(--space-4);
+      min-width: 100px;
+    }
+    .application-bubble.size-sm .bubble-icon { font-size: 20px; }
+    .application-bubble.size-sm .bubble-label { font-size: 10px; }
+
+    /* Utility card — explaining HOW it's useful */
+    .utility-card {
+      position: absolute;
+      padding: var(--space-4) var(--space-5);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-left: 3px solid var(--accent-teal);
+      max-width: 240px;
+      transition: all 0.3s ease;
+    }
+
+    .utility-card:hover {
+      border-left-color: var(--gold-primary);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .utility-header {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent-teal);
+      margin-bottom: var(--space-2);
+    }
+
+    .utility-text {
+      font-family: var(--font-body);
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Impact prediction card */
+    .impact-card {
+      position: absolute;
+      padding: var(--space-4) var(--space-5);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-left: 3px solid var(--gold-primary);
+      max-width: 260px;
+    }
+
+    .impact-card:hover {
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .impact-header {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold-muted);
+      margin-bottom: var(--space-2);
+    }
+
+    .impact-prediction {
+      font-family: var(--font-display);
+      font-size: 14px;
+      color: var(--gold-primary);
+      margin-bottom: var(--space-2);
+    }
+
+    .impact-rationale {
+      font-family: var(--font-body);
+      font-size: 12px;
+      color: var(--text-tertiary);
+      line-height: 1.4;
+    }
+
+    /* Rings of application zones */
+    .application-ring {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border: 1px dashed var(--border-subtle);
+      border-radius: 50%;
+      pointer-events: none;
+      opacity: 0.3;
+    }
+
+    .application-ring.ring-inner {
+      width: 500px;
+      height: 500px;
+    }
+
+    .application-ring.ring-outer {
+      width: 800px;
+      height: 800px;
+    }
+
+    .ring-label {
+      position: absolute;
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      opacity: 0.5;
+    }
+
+    .ring-label.label-inner {
+      top: 50%;
+      left: calc(50% + 250px);
+      transform: translateY(-50%);
+    }
+
+    .ring-label.label-outer {
+      top: 50%;
+      left: calc(50% + 400px);
+      transform: translateY(-50%);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       INSIGHT PANEL — Evidence is backstage, Insights are the star
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .insight-panel {
+      position: fixed;
+      top: 0;
+      right: -420px;
+      width: 400px;
+      height: 100vh;
+      background: var(--bg-card);
+      border-left: 1px solid var(--border-medium);
+      z-index: 2000;
+      transition: right 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .insight-panel.visible {
+      right: 0;
+    }
+
+    .insight-panel-header {
+      padding: var(--space-5);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .insight-panel-title {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+    }
+
+    .insight-panel-subtitle {
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-top: var(--space-1);
+    }
+
+    .insight-panel-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 20px;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+      transition: color 0.2s ease;
+    }
+
+    .insight-panel-close:hover {
+      color: var(--gold-primary);
+    }
+
+    .insight-panel-content {
+      flex: 1;
+      padding: var(--space-5);
+    }
+
+    /* Insight Card */
+    .insight-card {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-left: 3px solid var(--gold-primary);
+      padding: var(--space-4);
+      margin-bottom: var(--space-4);
+    }
+
+    .insight-card.confidence-high {
+      border-left-color: var(--gold-primary);
+    }
+
+    .insight-card.confidence-medium {
+      border-left-color: var(--accent-teal);
+      opacity: 0.9;
+    }
+
+    .insight-card.confidence-low {
+      border-left-color: #c86dd7;
+      border-left-style: dashed;
+      opacity: 0.8;
+    }
+
+    .insight-label {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold-muted);
+      margin-bottom: var(--space-2);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .insight-text {
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: var(--text-primary);
+      line-height: 1.5;
+      margin-bottom: var(--space-3);
+    }
+
+    .insight-trends {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      padding: var(--space-3);
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 4px;
+      margin-bottom: var(--space-3);
+    }
+
+    .trend-item {
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .trend-up { color: var(--accent-teal); }
+    .trend-down { color: var(--text-muted); }
+
+    /* Evidence Section (collapsed by default) */
+    .evidence-section {
+      border-top: 1px solid var(--border-subtle);
+      margin-top: var(--space-4);
+      padding-top: var(--space-4);
+    }
+
+    .evidence-toggle {
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      transition: color 0.2s ease;
+    }
+
+    .evidence-toggle:hover {
+      color: var(--gold-primary);
+    }
+
+    .evidence-toggle-icon {
+      transition: transform 0.2s ease;
+    }
+
+    .evidence-toggle.expanded .evidence-toggle-icon {
+      transform: rotate(90deg);
+    }
+
+    .evidence-content {
+      display: none;
+      margin-top: var(--space-3);
+    }
+
+    .evidence-content.visible {
+      display: block;
+    }
+
+    .evidence-sources {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .evidence-source {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .evidence-bar {
+      flex: 1;
+      height: 6px;
+      background: var(--bg-void);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .evidence-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.4s ease;
+    }
+
+    .evidence-bar-fill.github { background: #238636; }
+    .evidence-bar-fill.jupyter { background: #f57c00; }
+    .evidence-bar-fill.docs { background: #4285f4; }
+    .evidence-bar-fill.email { background: #ea4335; }
+    .evidence-bar-fill.notion { background: #ffffff; }
+
+    .evidence-count {
+      min-width: 30px;
+      text-align: right;
+      color: var(--text-tertiary);
+    }
+
+    .evidence-recent {
+      margin-top: var(--space-3);
+      padding: var(--space-3);
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 4px;
+    }
+
+    .evidence-recent-label {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: var(--space-2);
+    }
+
+    .evidence-recent-item {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    /* Conversational Question */
+    .insight-question {
+      background: linear-gradient(135deg, rgba(200, 109, 215, 0.1) 0%, rgba(61, 139, 139, 0.1) 100%);
+      border: 1px dashed var(--border-medium);
+      padding: var(--space-4);
+      margin-top: var(--space-4);
+    }
+
+    .question-label {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #c86dd7;
+      margin-bottom: var(--space-2);
+    }
+
+    .question-text {
+      font-family: var(--font-body);
+      font-size: 13px;
+      color: var(--text-primary);
+      line-height: 1.5;
+      margin-bottom: var(--space-3);
+    }
+
+    .question-actions {
+      display: flex;
+      gap: var(--space-2);
+    }
+
+    .question-btn {
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      padding: var(--space-2) var(--space-3);
+      border: 1px solid var(--border-medium);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .question-btn:hover {
+      border-color: var(--gold-muted);
+      color: var(--gold-primary);
+    }
+
+    .question-btn.primary {
+      background: var(--gold-primary);
+      border-color: var(--gold-primary);
+      color: var(--bg-void);
+    }
+
+    .question-btn.primary:hover {
+      background: var(--gold-bright);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       LEGEND & CONTROLS
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .legend {
+      position: fixed;
+      top: var(--space-4);
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: var(--space-5);
+      padding: var(--space-3) var(--space-5);
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      border-radius: 8px;
+      z-index: 1000;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+    }
+
+    .breadcrumb {
+      position: fixed;
+      bottom: var(--space-6);
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-3) var(--space-5);
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      border-radius: 8px;
+      z-index: 1000;
+    }
+
+    .breadcrumb-item {
+      font-family: var(--font-condensed);
+      font-size: 12px;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: color 0.2s ease;
+    }
+
+    .breadcrumb-item:hover {
+      color: var(--gold-primary);
+    }
+
+    .breadcrumb-item.active {
+      color: var(--gold-primary);
+    }
+
+    .breadcrumb-sep {
+      color: var(--border-medium);
+    }
+
+    .controls {
+      position: fixed;
+      top: 50%;
+      right: var(--space-4);
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      z-index: 1000;
+    }
+
+    .control-btn {
+      width: 40px;
+      height: 40px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      border-radius: 4px;
+      color: var(--text-secondary);
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .control-btn:hover {
+      border-color: var(--gold-muted);
+      color: var(--gold-primary);
+    }
+
+    .zoom-display {
+      text-align: center;
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      color: var(--text-tertiary);
+      padding: var(--space-2) 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="zoom-viewport">
+    <div class="atmosphere"></div>
+
+    <div class="zoom-container" id="zoom-container">
+
+      <!-- ════════════════════════════════════════════════════════════════════
+           DOMAIN VIEW — Skill Network (Technology Domain)
+           ════════════════════════════════════════════════════════════════════ -->
+      <div class="domain-view" id="domain-view">
+
+        <!-- Connection lines -->
+        <svg class="connections-svg" viewBox="0 0 2000 2000">
+          <defs>
+            <linearGradient id="gold-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="rgba(212, 168, 75, 0.6)"/>
+              <stop offset="100%" stop-color="rgba(212, 168, 75, 0.1)"/>
+            </linearGradient>
+          </defs>
+
+          <!-- Primary connections from center -->
+          <line class="connection-line primary" x1="1000" y1="1000" x2="1000" y2="700"/>
+          <line class="connection-line primary" x1="1000" y1="1000" x2="700" y2="850"/>
+          <line class="connection-line primary" x1="1000" y1="1000" x2="1300" y2="850"/>
+          <line class="connection-line primary" x1="1000" y1="1000" x2="700" y2="1150"/>
+          <line class="connection-line primary" x1="1000" y1="1000" x2="1300" y2="1150"/>
+          <line class="connection-line primary" x1="1000" y1="1000" x2="1000" y2="1300"/>
+
+          <!-- Secondary connections (skill relationships) -->
+          <line class="connection-line" x1="1000" y1="700" x2="700" y2="850"/>
+          <line class="connection-line" x1="1000" y1="700" x2="1300" y2="850"/>
+          <line class="connection-line" x1="700" y1="850" x2="700" y2="1150"/>
+          <line class="connection-line" x1="1300" y1="850" x2="1300" y2="1150"/>
+          <line class="connection-line" x1="700" y1="1150" x2="1000" y2="1300"/>
+          <line class="connection-line" x1="1300" y1="1150" x2="1000" y2="1300"/>
+
+          <!-- Suggested path (AI recommended route) -->
+          <path class="connection-line path-highlight" d="M1000,700 Q1150,775 1300,850" fill="none"/>
+          <path class="connection-line path-highlight" d="M1300,850 Q1350,1000 1300,1150" fill="none"/>
+
+          <!-- Outer skill connections -->
+          <line class="connection-line" x1="1000" y1="700" x2="850" y2="550"/>
+          <line class="connection-line" x1="1000" y1="700" x2="1150" y2="550"/>
+          <line class="connection-line" x1="1300" y1="850" x2="1500" y2="750"/>
+          <line class="connection-line" x1="1300" y1="1150" x2="1500" y2="1250"/>
+          <line class="connection-line" x1="700" y1="850" x2="500" y2="750"/>
+          <line class="connection-line" x1="700" y1="1150" x2="500" y2="1250"/>
+        </svg>
+
+        <!-- Center hub — Domain title -->
+        <div class="center-hub">
+          <div class="knowledge-orbit">
+            <div class="orbit-particle"></div>
+            <div class="orbit-particle"></div>
+            <div class="orbit-particle"></div>
+          </div>
+          <div class="center-core" id="center-core">
+            <div class="center-icon">⚙</div>
+            <div class="center-label">Technology</div>
+            <div class="center-stats">52 skills · 31 invested</div>
+          </div>
+        </div>
+
+        <!-- SKILL NODES — Arranged in constellation (V6 style) -->
+
+        <!-- Tier 1: Core skills (high investment) -->
+        <div class="skill-node invest-high size-lg" style="top: 700px; left: 1000px;" data-skill="python">
+          <div class="skill-frame">
+            <div class="skill-icon">🐍</div>
+            <div class="skill-label">Python</div>
+            <div class="skill-meta">
+              <span style="color: var(--gold-muted);">Expert</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="skill-node invest-high size-lg" style="top: 850px; left: 700px;" data-skill="javascript">
+          <div class="skill-frame">
+            <div class="skill-icon">🌐</div>
+            <div class="skill-label">JavaScript</div>
+            <div class="skill-meta">
+              <span style="color: var(--gold-muted);">Expert</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="skill-node invest-medium size-lg" style="top: 850px; left: 1300px;" data-skill="data-science">
+          <div class="skill-frame">
+            <div class="skill-icon">📊</div>
+            <div class="skill-label">Data Science</div>
+            <div class="skill-meta">
+              <span style="color: var(--accent-teal);">Growing</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tier 2: Intermediate investment -->
+        <div class="skill-node invest-medium size-md" style="top: 1150px; left: 700px;" data-skill="react">
+          <div class="skill-frame">
+            <div class="skill-icon">⚛️</div>
+            <div class="skill-label">React</div>
+            <div class="skill-meta">
+              <span style="color: var(--accent-teal);">Growing</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="skill-node invest-medium size-md" style="top: 1150px; left: 1300px;" data-skill="ml">
+          <div class="skill-frame">
+            <div class="skill-icon">🤖</div>
+            <div class="skill-label">Machine Learning</div>
+            <div class="skill-meta">
+              <span style="color: var(--accent-teal);">Growing</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="skill-node invest-high size-md" style="top: 1300px; left: 1000px;" data-skill="sql">
+          <div class="skill-frame">
+            <div class="skill-icon">🗃</div>
+            <div class="skill-label">SQL</div>
+            <div class="skill-meta">
+              <span style="color: var(--gold-muted);">Expert</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tier 3: Low/no investment (still accessible!) -->
+        <div class="skill-node invest-low size-sm" style="top: 550px; left: 850px;" data-skill="rust">
+          <div class="skill-frame">
+            <div class="skill-icon">🦀</div>
+            <div class="skill-label">Rust</div>
+            <div class="skill-meta">
+              <span>Beginner</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="skill-node invest-low size-sm" style="top: 550px; left: 1150px;" data-skill="go">
+          <div class="skill-frame">
+            <div class="skill-icon">🐹</div>
+            <div class="skill-label">Go</div>
+            <div class="skill-meta">
+              <span>Beginner</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="skill-node invest-none size-sm" style="top: 750px; left: 500px;" data-skill="devops">
+          <div class="skill-frame">
+            <div class="skill-icon">🔧</div>
+            <div class="skill-label">DevOps</div>
+            <div class="skill-meta">
+              <span>Not started</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="skill-node invest-none size-sm" style="top: 750px; left: 1500px;" data-skill="security">
+          <div class="skill-frame">
+            <div class="skill-icon">🔐</div>
+            <div class="skill-label">Security</div>
+            <div class="skill-meta">
+              <span>Not started</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="skill-node invest-none size-sm" style="top: 1250px; left: 500px;" data-skill="mobile">
+          <div class="skill-frame">
+            <div class="skill-icon">📱</div>
+            <div class="skill-label">Mobile Dev</div>
+            <div class="skill-meta">
+              <span>Not started</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="skill-node invest-low size-sm" style="top: 1250px; left: 1500px;" data-skill="cloud">
+          <div class="skill-frame">
+            <div class="skill-icon">☁️</div>
+            <div class="skill-label">Cloud</div>
+            <div class="skill-meta">
+              <span>Beginner</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Discovered skill -->
+        <div class="skill-node ai-discovered invest-medium size-md" style="top: 450px; left: 1000px;" data-skill="llm-eng">
+          <div class="skill-frame">
+            <div class="skill-icon">🧠</div>
+            <div class="skill-label">LLM Engineering</div>
+            <div class="skill-meta">
+              <span style="color: #c86dd7;">AI Discovered</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════════════════
+           PERIODIC TABLE VIEW — Elements of Python
+           ════════════════════════════════════════════════════════════════════ -->
+      <div class="periodic-view" id="periodic-view">
+
+        <div class="periodic-header">
+          <div class="periodic-title">🐍 Python — Elements</div>
+          <div class="periodic-subtitle">The fundamental concepts that make up this skill</div>
+          <div class="periodic-back" id="back-to-domain">← Back to Skill Network</div>
+        </div>
+
+        <div class="element-grid">
+          <!-- Row 1: Core fundamentals -->
+          <div class="element-cell cat-core prof-high">
+            <span class="element-number">1</span>
+            <span class="element-symbol">Va</span>
+            <span class="element-name">Variables</span>
+          </div>
+          <div class="element-cell cat-core prof-high">
+            <span class="element-number">2</span>
+            <span class="element-symbol">Ty</span>
+            <span class="element-name">Types</span>
+          </div>
+          <div class="element-cell cat-core prof-high">
+            <span class="element-number">3</span>
+            <span class="element-symbol">Op</span>
+            <span class="element-name">Operators</span>
+          </div>
+          <div class="element-cell cat-core prof-high">
+            <span class="element-number">4</span>
+            <span class="element-symbol">Cn</span>
+            <span class="element-name">Conditionals</span>
+          </div>
+          <div class="element-cell cat-core prof-high">
+            <span class="element-number">5</span>
+            <span class="element-symbol">Lp</span>
+            <span class="element-name">Loops</span>
+          </div>
+          <div class="element-cell cat-core prof-high">
+            <span class="element-number">6</span>
+            <span class="element-symbol">Fn</span>
+            <span class="element-name">Functions</span>
+          </div>
+          <div class="element-cell cat-core prof-high">
+            <span class="element-number">7</span>
+            <span class="element-symbol">Ls</span>
+            <span class="element-name">Lists</span>
+          </div>
+          <div class="element-cell cat-core prof-high">
+            <span class="element-number">8</span>
+            <span class="element-symbol">Dc</span>
+            <span class="element-name">Dicts</span>
+          </div>
+
+          <!-- Row 2: Intermediate -->
+          <div class="element-cell cat-core prof-high">
+            <span class="element-number">9</span>
+            <span class="element-symbol">Cl</span>
+            <span class="element-name">Classes</span>
+          </div>
+          <div class="element-cell cat-core prof-high">
+            <span class="element-number">10</span>
+            <span class="element-symbol">Ex</span>
+            <span class="element-name">Exceptions</span>
+          </div>
+          <div class="element-cell cat-core prof-medium">
+            <span class="element-number">11</span>
+            <span class="element-symbol">Md</span>
+            <span class="element-name">Modules</span>
+          </div>
+          <div class="element-cell cat-core prof-medium">
+            <span class="element-number">12</span>
+            <span class="element-symbol">Io</span>
+            <span class="element-name">File I/O</span>
+          </div>
+          <div class="element-cell cat-advanced prof-medium">
+            <span class="element-number">13</span>
+            <span class="element-symbol">Lc</span>
+            <span class="element-name">List Comp</span>
+          </div>
+          <div class="element-cell cat-advanced prof-medium">
+            <span class="element-number">14</span>
+            <span class="element-symbol">Gn</span>
+            <span class="element-name">Generators</span>
+          </div>
+          <div class="element-cell cat-advanced prof-low">
+            <span class="element-number">15</span>
+            <span class="element-symbol">Dc</span>
+            <span class="element-name">Decorators</span>
+          </div>
+          <div class="element-cell cat-advanced prof-low">
+            <span class="element-number">16</span>
+            <span class="element-symbol">Cm</span>
+            <span class="element-name">Context Mgr</span>
+          </div>
+
+          <!-- Row 3: Advanced -->
+          <div class="element-cell cat-advanced prof-medium">
+            <span class="element-number">17</span>
+            <span class="element-symbol">As</span>
+            <span class="element-name">Async/Await</span>
+          </div>
+          <div class="element-cell cat-advanced prof-low">
+            <span class="element-number">18</span>
+            <span class="element-symbol">Th</span>
+            <span class="element-name">Threading</span>
+          </div>
+          <div class="element-cell cat-advanced prof-none">
+            <span class="element-number">19</span>
+            <span class="element-symbol">Mp</span>
+            <span class="element-name">Multiprocess</span>
+          </div>
+          <div class="element-cell cat-specialized prof-medium">
+            <span class="element-number">20</span>
+            <span class="element-symbol">Np</span>
+            <span class="element-name">NumPy</span>
+          </div>
+          <div class="element-cell cat-specialized prof-medium">
+            <span class="element-number">21</span>
+            <span class="element-symbol">Pd</span>
+            <span class="element-name">Pandas</span>
+          </div>
+          <div class="element-cell cat-specialized prof-low">
+            <span class="element-number">22</span>
+            <span class="element-symbol">Tf</span>
+            <span class="element-name">TensorFlow</span>
+          </div>
+          <div class="element-cell cat-specialized prof-low">
+            <span class="element-number">23</span>
+            <span class="element-symbol">Pt</span>
+            <span class="element-name">PyTorch</span>
+          </div>
+          <div class="element-cell cat-specialized prof-none">
+            <span class="element-number">24</span>
+            <span class="element-symbol">Fk</span>
+            <span class="element-name">Flask</span>
+          </div>
+        </div>
+
+        <div class="category-legend">
+          <div class="category-item">
+            <div class="category-dot" style="background: var(--gold-primary);"></div>
+            <span>Core</span>
+          </div>
+          <div class="category-item">
+            <div class="category-dot" style="background: var(--accent-teal);"></div>
+            <span>Advanced</span>
+          </div>
+          <div class="category-item">
+            <div class="category-dot" style="background: #c86dd7;"></div>
+            <span>Specialized</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════════════════
+           SUBATOMIC VIEW — Application & Impact
+           "Where can this be applied? How will it be useful? What impact?"
+           ════════════════════════════════════════════════════════════════════ -->
+      <div class="subatomic-view" id="subatomic-view">
+
+        <div class="subatomic-header">
+          <div class="subatomic-title" id="subatomic-title">Dc — Decorators</div>
+          <div class="subatomic-question">"Where can this be applied? What impact will it have?"</div>
+          <div class="subatomic-back" id="back-to-periodic">← Back to Elements</div>
+        </div>
+
+        <!-- Application rings (visual guides) -->
+        <div class="application-ring ring-inner"></div>
+        <div class="application-ring ring-outer"></div>
+        <span class="ring-label label-inner">Direct Applications</span>
+        <span class="ring-label label-outer">Extended Applications</span>
+
+        <!-- Radiance beams (SVG) -->
+        <svg class="radiance-svg" viewBox="0 0 2000 1600">
+          <!-- High impact beams -->
+          <line class="radiance-beam high-impact" x1="1000" y1="800" x2="700" y2="550"/>
+          <line class="radiance-beam high-impact" x1="1000" y1="800" x2="1300" y2="550"/>
+          <line class="radiance-beam high-impact" x1="1000" y1="800" x2="600" y2="800"/>
+
+          <!-- Medium impact beams -->
+          <line class="radiance-beam medium-impact" x1="1000" y1="800" x2="1400" y2="800"/>
+          <line class="radiance-beam medium-impact" x1="1000" y1="800" x2="750" y2="1050"/>
+          <line class="radiance-beam medium-impact" x1="1000" y1="800" x2="1250" y2="1050"/>
+
+          <!-- Low impact beams -->
+          <line class="radiance-beam low-impact" x1="1000" y1="800" x2="450" y2="600"/>
+          <line class="radiance-beam low-impact" x1="1000" y1="800" x2="1550" y2="600"/>
+          <line class="radiance-beam low-impact" x1="1000" y1="800" x2="400" y2="1000"/>
+          <line class="radiance-beam low-impact" x1="1000" y1="800" x2="1600" y2="1000"/>
+        </svg>
+
+        <!-- Central element nucleus -->
+        <div class="element-nucleus">
+          <div class="nucleus-core">
+            <span class="nucleus-symbol" id="nucleus-symbol">Dc</span>
+            <span class="nucleus-name" id="nucleus-name">Decorators</span>
+          </div>
+        </div>
+
+        <!-- Application bubbles — WHERE this applies -->
+
+        <!-- Inner ring: Direct applications (high impact) -->
+        <div class="application-bubble impact-high size-lg" style="top: 550px; left: 700px;">
+          <div class="bubble-frame">
+            <div class="bubble-icon">📊</div>
+            <div class="bubble-label">Logging</div>
+            <div class="bubble-meta">High impact</div>
+          </div>
+        </div>
+
+        <div class="application-bubble impact-high size-lg" style="top: 550px; left: 1300px;">
+          <div class="bubble-frame">
+            <div class="bubble-icon">⚡</div>
+            <div class="bubble-label">Caching</div>
+            <div class="bubble-meta">High impact</div>
+          </div>
+        </div>
+
+        <div class="application-bubble impact-high size-lg" style="top: 800px; left: 600px;">
+          <div class="bubble-frame">
+            <div class="bubble-icon">🔐</div>
+            <div class="bubble-label">Auth</div>
+            <div class="bubble-meta">High impact</div>
+          </div>
+        </div>
+
+        <!-- Inner ring: Medium impact -->
+        <div class="application-bubble impact-medium" style="top: 800px; left: 1400px;">
+          <div class="bubble-frame">
+            <div class="bubble-icon">⏱</div>
+            <div class="bubble-label">Rate Limiting</div>
+            <div class="bubble-meta">Medium impact</div>
+          </div>
+        </div>
+
+        <div class="application-bubble impact-medium" style="top: 1050px; left: 750px;">
+          <div class="bubble-frame">
+            <div class="bubble-icon">✓</div>
+            <div class="bubble-label">Validation</div>
+            <div class="bubble-meta">Medium impact</div>
+          </div>
+        </div>
+
+        <div class="application-bubble impact-medium" style="top: 1050px; left: 1250px;">
+          <div class="bubble-frame">
+            <div class="bubble-icon">🔄</div>
+            <div class="bubble-label">Retry Logic</div>
+            <div class="bubble-meta">Medium impact</div>
+          </div>
+        </div>
+
+        <!-- Outer ring: Extended applications (lower impact / more speculative) -->
+        <div class="application-bubble impact-low size-sm" style="top: 600px; left: 450px;">
+          <div class="bubble-frame">
+            <div class="bubble-icon">📈</div>
+            <div class="bubble-label">Metrics</div>
+            <div class="bubble-meta">Exploratory</div>
+          </div>
+        </div>
+
+        <div class="application-bubble impact-low size-sm" style="top: 600px; left: 1550px;">
+          <div class="bubble-frame">
+            <div class="bubble-icon">🔔</div>
+            <div class="bubble-label">Notifications</div>
+            <div class="bubble-meta">Exploratory</div>
+          </div>
+        </div>
+
+        <div class="application-bubble impact-low size-sm" style="top: 1000px; left: 400px;">
+          <div class="bubble-frame">
+            <div class="bubble-icon">🧪</div>
+            <div class="bubble-label">Testing</div>
+            <div class="bubble-meta">Exploratory</div>
+          </div>
+        </div>
+
+        <div class="application-bubble impact-low size-sm" style="top: 1000px; left: 1600px;">
+          <div class="bubble-frame">
+            <div class="bubble-icon">📝</div>
+            <div class="bubble-label">Deprecation</div>
+            <div class="bubble-meta">Exploratory</div>
+          </div>
+        </div>
+
+        <!-- Utility cards — HOW it's useful -->
+        <div class="utility-card" style="top: 300px; left: 200px;">
+          <div class="utility-header">How It's Useful</div>
+          <div class="utility-text">Wrap functions without modifying their source code. Add cross-cutting concerns that apply to many functions at once.</div>
+        </div>
+
+        <div class="utility-card" style="top: 350px; right: 200px; left: auto;">
+          <div class="utility-header">Pattern Recognition</div>
+          <div class="utility-text">When you see repeated boilerplate at the start/end of functions, decorators can extract it into reusable wrappers.</div>
+        </div>
+
+        <!-- Impact prediction cards — WHAT outcome to expect -->
+        <div class="impact-card" style="bottom: 200px; left: 200px;">
+          <div class="impact-header">Predicted Impact</div>
+          <div class="impact-prediction">↓ 40% code duplication</div>
+          <div class="impact-rationale">Based on typical codebases, decorators eliminate repeated try/catch, timing, and logging code.</div>
+        </div>
+
+        <div class="impact-card" style="bottom: 250px; right: 200px; left: auto;">
+          <div class="impact-header">Predicted Impact</div>
+          <div class="impact-prediction">↑ Maintainability</div>
+          <div class="impact-rationale">Changes to cross-cutting concerns happen in one place, not scattered across dozens of functions.</div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="legend-item">
+      <div class="legend-dot" style="background: var(--gold-primary); opacity: 1;"></div>
+      Expert
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background: var(--accent-teal); opacity: 0.85;"></div>
+      Growing
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background: var(--text-muted); opacity: 0.6;"></div>
+      Beginner
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background: var(--text-muted); opacity: 0.35;"></div>
+      Not Started
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background: #c86dd7;"></div>
+      AI Discovered
+    </div>
+  </div>
+
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <span class="breadcrumb-item" id="bc-domains">Domains</span>
+    <span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-item active" id="bc-tech">Technology</span>
+    <span class="breadcrumb-sep" id="bc-sep-skill" style="display: none;">›</span>
+    <span class="breadcrumb-item" id="bc-skill" style="display: none;">Python</span>
+    <span class="breadcrumb-sep" id="bc-sep-element" style="display: none;">›</span>
+    <span class="breadcrumb-item" id="bc-element" style="display: none;">Decorators</span>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <button class="control-btn" id="zoom-in">+</button>
+    <button class="control-btn" id="zoom-out">−</button>
+    <div class="zoom-display" id="zoom-display">100%</div>
+    <button class="control-btn" id="reset-view">⌂</button>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       INSIGHT PANEL — Slides in from right
+       Evidence is backstage. Insights are the star.
+       ════════════════════════════════════════════════════════════════════════ -->
+  <div class="insight-panel" id="insight-panel">
+    <div class="insight-panel-header">
+      <div>
+        <div class="insight-panel-title" id="insight-panel-title">🐍 Python</div>
+        <div class="insight-panel-subtitle">Expert · 62 artifacts</div>
+      </div>
+      <button class="insight-panel-close" id="close-insight-panel">×</button>
+    </div>
+
+    <div class="insight-panel-content">
+      <!-- High confidence insight -->
+      <div class="insight-card confidence-high">
+        <div class="insight-label">💡 Insight</div>
+        <div class="insight-text">
+          Your Python usage has shifted from data analysis to web development over the past 6 months.
+        </div>
+        <div class="insight-trends">
+          <div class="trend-item trend-up">📈 +340% web framework usage (FastAPI, Flask)</div>
+          <div class="trend-item trend-down">📉 -60% pandas/numpy usage</div>
+        </div>
+      </div>
+
+      <!-- Medium confidence insight -->
+      <div class="insight-card confidence-medium">
+        <div class="insight-label">💡 Observation</div>
+        <div class="insight-text">
+          Async patterns appear to be a growing strength — you've used asyncio consistently across your last 12 projects.
+        </div>
+      </div>
+
+      <!-- Evidence section (collapsed by default) -->
+      <div class="evidence-section">
+        <div class="evidence-toggle" id="evidence-toggle">
+          <span class="evidence-toggle-icon">›</span>
+          <span>How do you know this?</span>
+        </div>
+        <div class="evidence-content" id="evidence-content">
+          <div class="evidence-sources">
+            <div class="evidence-source">
+              <span style="min-width: 70px;">GitHub</span>
+              <div class="evidence-bar">
+                <div class="evidence-bar-fill github" style="width: 76%;"></div>
+              </div>
+              <span class="evidence-count">47</span>
+            </div>
+            <div class="evidence-source">
+              <span style="min-width: 70px;">Jupyter</span>
+              <div class="evidence-bar">
+                <div class="evidence-bar-fill jupyter" style="width: 19%;"></div>
+              </div>
+              <span class="evidence-count">12</span>
+            </div>
+            <div class="evidence-source">
+              <span style="min-width: 70px;">Docs</span>
+              <div class="evidence-bar">
+                <div class="evidence-bar-fill docs" style="width: 5%;"></div>
+              </div>
+              <span class="evidence-count">3</span>
+            </div>
+          </div>
+          <div class="evidence-recent">
+            <div class="evidence-recent-label">Most Recent</div>
+            <div class="evidence-recent-item">async_handler.py — 2 days ago</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Low confidence / conversational question -->
+      <div class="insight-question">
+        <div class="question-label">🤔 Quick Question</div>
+        <div class="question-text">
+          We noticed you used asyncio heavily in your last 3 projects — would you say async programming is becoming a focus area for you?
+        </div>
+        <div class="question-actions">
+          <button class="question-btn primary">Yes, it's a focus</button>
+          <button class="question-btn">Not really</button>
+          <button class="question-btn">Tell me more</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ═══════════════════════════════════════════════════════════════════════════
+       V11 — Skill Network + Periodic Table + Subatomic Transitions
+       ═══════════════════════════════════════════════════════════════════════════ */
+
+    const viewport = document.querySelector('.zoom-viewport');
+    const container = document.getElementById('zoom-container');
+    const domainView = document.getElementById('domain-view');
+    const periodicView = document.getElementById('periodic-view');
+    const subatomicView = document.getElementById('subatomic-view');
+    const zoomDisplay = document.getElementById('zoom-display');
+
+    // Breadcrumb elements
+    const bcSepSkill = document.getElementById('bc-sep-skill');
+    const bcSkill = document.getElementById('bc-skill');
+    const bcTech = document.getElementById('bc-tech');
+    const bcSepElement = document.getElementById('bc-sep-element');
+    const bcElement = document.getElementById('bc-element');
+
+    // Subatomic view elements
+    const subatomicTitle = document.getElementById('subatomic-title');
+    const nucleusSymbol = document.getElementById('nucleus-symbol');
+    const nucleusName = document.getElementById('nucleus-name');
+
+    // State
+    let zoom = 1;
+    let panX = 0;
+    let panY = 0;
+    let isPanning = false;
+    let startX, startY;
+    let currentView = 'domain'; // 'domain', 'periodic', or 'subatomic'
+    let currentSkill = 'Python';
+    let currentElement = null;
+
+    function updateTransform() {
+      container.style.transform = `scale(${zoom}) translate(${panX}px, ${panY}px)`;
+      zoomDisplay.textContent = Math.round(zoom * 100) + '%';
+    }
+
+    // Zoom controls
+    document.getElementById('zoom-in').addEventListener('click', () => {
+      zoom = Math.min(3, zoom + 0.2);
+      updateTransform();
+    });
+
+    document.getElementById('zoom-out').addEventListener('click', () => {
+      zoom = Math.max(0.4, zoom - 0.2);
+      updateTransform();
+    });
+
+    document.getElementById('reset-view').addEventListener('click', () => {
+      zoom = 1;
+      panX = 0;
+      panY = 0;
+      updateTransform();
+    });
+
+    // Mouse wheel zoom
+    viewport.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const delta = -e.deltaY * 0.001;
+      zoom = Math.max(0.4, Math.min(3, zoom + delta));
+      updateTransform();
+    }, { passive: false });
+
+    // Panning
+    viewport.addEventListener('mousedown', (e) => {
+      if (e.target.closest('.skill-node') || e.target.closest('.element-cell')) return;
+      isPanning = true;
+      startX = e.clientX - panX * zoom;
+      startY = e.clientY - panY * zoom;
+      container.classList.add('dragging');
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isPanning) return;
+      panX = (e.clientX - startX) / zoom;
+      panY = (e.clientY - startY) / zoom;
+      updateTransform();
+    });
+
+    window.addEventListener('mouseup', () => {
+      isPanning = false;
+      container.classList.remove('dragging');
+    });
+
+    // Transition to Periodic Table view
+    function showPeriodicView(skillName) {
+      currentView = 'periodic';
+      currentSkill = skillName;
+      domainView.classList.add('hidden');
+      periodicView.classList.add('visible');
+      subatomicView.classList.remove('visible');
+
+      // Update breadcrumb
+      bcSepSkill.style.display = 'inline';
+      bcSkill.style.display = 'inline';
+      bcSkill.textContent = skillName;
+      bcSkill.classList.add('active');
+      bcTech.classList.remove('active');
+      bcSepElement.style.display = 'none';
+      bcElement.style.display = 'none';
+
+      // Reset zoom/pan for new view
+      zoom = 1;
+      panX = 0;
+      panY = 0;
+      updateTransform();
+    }
+
+    // Transition to Subatomic view (Application & Impact)
+    function showSubatomicView(symbol, name) {
+      currentView = 'subatomic';
+      currentElement = { symbol, name };
+      domainView.classList.add('hidden');
+      periodicView.classList.remove('visible');
+      subatomicView.classList.add('visible');
+
+      // Update subatomic view content
+      subatomicTitle.textContent = `${symbol} — ${name}`;
+      nucleusSymbol.textContent = symbol;
+      nucleusName.textContent = name;
+
+      // Update breadcrumb
+      bcSepElement.style.display = 'inline';
+      bcElement.style.display = 'inline';
+      bcElement.textContent = name;
+      bcElement.classList.add('active');
+      bcSkill.classList.remove('active');
+
+      // Reset zoom/pan for new view
+      zoom = 1;
+      panX = 0;
+      panY = 0;
+      updateTransform();
+    }
+
+    function showDomainView() {
+      currentView = 'domain';
+      domainView.classList.remove('hidden');
+      periodicView.classList.remove('visible');
+      subatomicView.classList.remove('visible');
+
+      // Update breadcrumb
+      bcSepSkill.style.display = 'none';
+      bcSkill.style.display = 'none';
+      bcSepElement.style.display = 'none';
+      bcElement.style.display = 'none';
+      bcTech.classList.add('active');
+
+      // Reset zoom/pan
+      zoom = 1;
+      panX = 0;
+      panY = 0;
+      updateTransform();
+    }
+
+    // Click skill nodes to drill down
+    document.querySelectorAll('.skill-node').forEach(node => {
+      node.addEventListener('click', (e) => {
+        const skillLabel = node.querySelector('.skill-label').textContent;
+        showPeriodicView(skillLabel);
+      });
+    });
+
+    // Back buttons
+    document.getElementById('back-to-domain').addEventListener('click', showDomainView);
+    document.getElementById('back-to-periodic').addEventListener('click', () => {
+      showPeriodicView(currentSkill);
+    });
+
+    // Breadcrumb navigation
+    bcTech.addEventListener('click', showDomainView);
+    bcSkill.addEventListener('click', () => {
+      if (currentView === 'subatomic') {
+        showPeriodicView(currentSkill);
+      }
+    });
+
+    // Element cells — drill to subatomic view
+    document.querySelectorAll('.element-cell').forEach(cell => {
+      cell.addEventListener('click', () => {
+        const symbol = cell.querySelector('.element-symbol').textContent;
+        const name = cell.querySelector('.element-name').textContent;
+        showSubatomicView(symbol, name);
+      });
+    });
+
+    // Application bubbles — could drill deeper or show detail panel
+    document.querySelectorAll('.application-bubble').forEach(bubble => {
+      bubble.addEventListener('click', () => {
+        const label = bubble.querySelector('.bubble-label').textContent;
+        const impact = bubble.querySelector('.bubble-meta').textContent;
+        console.log(`Application: ${label} (${impact})`);
+        // Could show a detail panel or drill deeper in future
+      });
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // INSIGHT PANEL — Evidence is backstage, Insights are the star
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    const insightPanel = document.getElementById('insight-panel');
+    const insightPanelTitle = document.getElementById('insight-panel-title');
+    const closeInsightPanel = document.getElementById('close-insight-panel');
+    const evidenceToggle = document.getElementById('evidence-toggle');
+    const evidenceContent = document.getElementById('evidence-content');
+
+    function showInsightPanel(title) {
+      insightPanelTitle.textContent = title;
+      insightPanel.classList.add('visible');
+    }
+
+    function hideInsightPanel() {
+      insightPanel.classList.remove('visible');
+    }
+
+    // Close panel
+    closeInsightPanel.addEventListener('click', hideInsightPanel);
+
+    // Toggle evidence section
+    evidenceToggle.addEventListener('click', () => {
+      evidenceToggle.classList.toggle('expanded');
+      evidenceContent.classList.toggle('visible');
+    });
+
+    // Double-click skill nodes to show insight panel (single click still navigates)
+    document.querySelectorAll('.skill-node').forEach(node => {
+      node.addEventListener('dblclick', (e) => {
+        e.stopPropagation();
+        const icon = node.querySelector('.skill-icon').textContent;
+        const label = node.querySelector('.skill-label').textContent;
+        showInsightPanel(`${icon} ${label}`);
+      });
+    });
+
+    // Add info button behavior for element cells
+    document.querySelectorAll('.element-cell').forEach(cell => {
+      cell.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        const symbol = cell.querySelector('.element-symbol').textContent;
+        const name = cell.querySelector('.element-name').textContent;
+        showInsightPanel(`${symbol} — ${name}`);
+      });
+    });
+
+    // Question button handlers (demo)
+    document.querySelectorAll('.question-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const action = btn.textContent;
+        console.log(`User response: ${action}`);
+        // In real implementation, this would update the knowledge graph
+        btn.closest('.insight-question').style.opacity = '0.5';
+        btn.closest('.insight-question').style.pointerEvents = 'none';
+      });
+    });
+
+    // Close panel when clicking outside
+    document.addEventListener('click', (e) => {
+      if (insightPanel.classList.contains('visible') &&
+          !insightPanel.contains(e.target) &&
+          !e.target.closest('.skill-node') &&
+          !e.target.closest('.element-cell')) {
+        hideInsightPanel();
+      }
+    });
+
+    // Initialize
+    updateTransform();
+    console.log('V11 loaded. Full zoom hierarchy + Insight Panel. Double-click skills or right-click elements for insights.');
+  </script>
+</body>
+</html>

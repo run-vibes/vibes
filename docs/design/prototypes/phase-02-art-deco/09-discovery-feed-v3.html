@@ -1,0 +1,1920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Art Deco Command — Discovery Feed v3</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    .container {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: var(--space-6);
+    }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--space-6);
+      padding-bottom: var(--space-4);
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .page-title {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 400;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       KNOWLEDGE LANDSCAPE — Interactive RTS Fog-of-War Territory Map
+       Tufte: "Graphical excellence is that which gives the viewer the greatest
+       number of ideas in the shortest time with the least ink in the smallest space"
+       ═══════════════════════════════════════════════════════════════════════════ */
+
+    .knowledge-landscape {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      margin-bottom: var(--space-6);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .knowledge-landscape::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);
+    }
+
+    .landscape-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-4) var(--space-5);
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .landscape-title {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+    }
+
+    .landscape-legend {
+      display: flex;
+      gap: var(--space-5);
+      font-size: 10px;
+      font-family: var(--font-condensed);
+      letter-spacing: 0.05em;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      color: var(--text-tertiary);
+      cursor: pointer;
+      padding: var(--space-1) var(--space-2);
+      border-radius: 2px;
+      transition: all 0.2s ease;
+    }
+
+    .legend-item:hover {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+    }
+
+    .legend-item.active {
+      background: var(--gold-subtle);
+      color: var(--gold-primary);
+    }
+
+    .legend-swatch {
+      width: 16px;
+      height: 16px;
+      border: 1px solid var(--border-medium);
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    }
+
+    .legend-swatch.unexplored { background: rgba(7, 9, 13, 0.8); }
+    .legend-swatch.discovered { background: rgba(212, 168, 75, 0.25); border-color: var(--gold-dim); }
+    .legend-swatch.understood { background: rgba(212, 168, 75, 0.55); border-color: var(--gold-muted); }
+    .legend-swatch.acted { background: rgba(77, 168, 77, 0.7); border-color: var(--accent-success); }
+    .legend-swatch.pending { background: rgba(232, 196, 90, 0.6); border-color: var(--gold-bright); }
+
+    /* Territory Grid Container */
+    .territory-grid-container {
+      position: relative;
+      padding: var(--space-6);
+      background: var(--bg-deep);
+      min-height: 380px;
+    }
+
+    /* Fog of War Overlay */
+    .fog-overlay {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 300px 250px at 40% 35%, transparent 0%, rgba(7, 9, 13, 0.85) 100%),
+        radial-gradient(ellipse 250px 200px at 65% 55%, transparent 0%, rgba(7, 9, 13, 0.8) 100%);
+      pointer-events: none;
+      z-index: 5;
+      transition: opacity 0.8s ease;
+      mix-blend-mode: multiply;
+    }
+
+    .territory-grid-container:hover .fog-overlay {
+      opacity: 0.2;
+    }
+
+    /* Hexagonal Territory Grid */
+    .territory-grid {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      max-width: 780px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 2;
+    }
+
+    .hex-row {
+      display: flex;
+      gap: 4px;
+    }
+
+    .hex-row:nth-child(even) {
+      margin-left: 28px;
+    }
+
+    .territory-cell {
+      width: 52px;
+      height: 60px;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .territory-hex {
+      position: absolute;
+      inset: 0;
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    /* Territory States — opacity on background only, text/icons stay readable */
+    .territory-cell.unexplored .territory-hex {
+      background: linear-gradient(135deg, rgba(7, 9, 13, 0.7) 0%, rgba(12, 16, 24, 0.6) 100%);
+      border: 1px solid rgba(107, 103, 96, 0.2);
+    }
+    .territory-cell.unexplored .territory-icon,
+    .territory-cell.unexplored .territory-label {
+      opacity: 0.4;
+    }
+
+    .territory-cell.discovered .territory-hex {
+      background: linear-gradient(135deg, rgba(212, 168, 75, 0.25) 0%, rgba(212, 168, 75, 0.12) 100%);
+      border: 1px solid var(--gold-dim);
+    }
+
+    .territory-cell.understood .territory-hex {
+      background: linear-gradient(135deg, rgba(212, 168, 75, 0.45) 0%, rgba(212, 168, 75, 0.3) 100%);
+      border: 1px solid var(--gold-muted);
+      box-shadow: inset 0 0 20px rgba(212, 168, 75, 0.15);
+    }
+
+    .territory-cell.acted .territory-hex {
+      background: linear-gradient(135deg, rgba(77, 168, 77, 0.5) 0%, rgba(77, 168, 77, 0.3) 100%);
+      border: 1px solid var(--accent-success);
+      box-shadow: 0 0 15px rgba(77, 168, 77, 0.25), inset 0 0 15px rgba(77, 168, 77, 0.1);
+    }
+
+    .territory-cell.pending .territory-hex {
+      background: linear-gradient(135deg, rgba(232, 196, 90, 0.55) 0%, rgba(212, 168, 75, 0.4) 100%);
+      border: 2px solid var(--gold-bright);
+      box-shadow: 0 0 20px rgba(232, 196, 90, 0.4);
+      animation: pending-pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pending-pulse {
+      0%, 100% { box-shadow: 0 0 20px rgba(232, 196, 90, 0.4); }
+      50% { box-shadow: 0 0 30px rgba(232, 196, 90, 0.6), 0 0 40px rgba(232, 196, 90, 0.2); }
+    }
+
+    /* Hover effects */
+    .territory-cell:hover {
+      z-index: 10;
+      transform: scale(1.2);
+    }
+
+    .territory-cell:hover .territory-hex {
+      box-shadow: 0 0 25px rgba(212, 168, 75, 0.5), 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Territory content */
+    .territory-icon {
+      font-size: 14px;
+      color: var(--gold-muted);
+      transition: all 0.2s ease;
+    }
+
+    .territory-cell.understood .territory-icon { color: var(--gold-primary); opacity: 0.9; }
+    .territory-cell.acted .territory-icon { color: var(--accent-success); opacity: 1; }
+    .territory-cell.pending .territory-icon { color: var(--gold-bright); opacity: 1; }
+
+    .territory-label {
+      font-family: var(--font-condensed);
+      font-size: 7px;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      text-align: center;
+      opacity: 0;
+      transform: translateY(2px);
+      transition: all 0.2s ease;
+    }
+
+    .territory-cell:hover .territory-label {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .territory-cell.acted .territory-label,
+    .territory-cell.pending .territory-label {
+      opacity: 0.8;
+    }
+
+    /* Territory Tooltip */
+    .territory-tooltip {
+      position: absolute;
+      bottom: calc(100% + 10px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg-elevated);
+      border: 1px solid var(--gold-dim);
+      padding: var(--space-3);
+      min-width: 180px;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.2s ease;
+      z-index: 100;
+    }
+
+    .territory-cell:hover .territory-tooltip {
+      opacity: 1;
+    }
+
+    .tooltip-title {
+      font-family: var(--font-display);
+      font-size: 12px;
+      color: var(--gold-primary);
+      margin-bottom: var(--space-2);
+    }
+
+    .tooltip-status {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      color: var(--text-tertiary);
+      margin-bottom: var(--space-2);
+    }
+
+    .tooltip-meta {
+      font-size: 10px;
+      color: var(--text-secondary);
+    }
+
+    /* Landscape Statistics */
+    .landscape-stats {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: var(--space-4);
+      padding: var(--space-4) var(--space-5);
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .landscape-stat {
+      text-align: center;
+      padding: var(--space-2);
+    }
+
+    .stat-value-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-2);
+    }
+
+    .landscape-stat-value {
+      font-family: var(--font-display);
+      font-size: 28px;
+      color: var(--gold-primary);
+      line-height: 1;
+    }
+
+    .landscape-stat-label {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-top: var(--space-1);
+    }
+
+    /* Sparklines */
+    .sparkline {
+      display: inline-flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 20px;
+    }
+
+    .sparkline-bar {
+      width: 4px;
+      background: var(--gold-dim);
+      border-radius: 1px 1px 0 0;
+      transition: all 0.2s ease;
+    }
+
+    .sparkline-bar.current {
+      background: var(--gold-primary);
+      box-shadow: 0 0 4px rgba(212, 168, 75, 0.5);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       INSIGHT FLOW — Sankey-Style Flow Diagram with SVG Connections
+       Tufte: "Show causality, mechanism, explanation, systematic structure"
+       ═══════════════════════════════════════════════════════════════════════════ */
+
+    .insight-flow-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      margin-bottom: var(--space-6);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .flow-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-4) var(--space-5);
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .flow-title {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+    }
+
+    .flow-subtitle {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .flow-legend {
+      display: flex;
+      gap: var(--space-4);
+    }
+
+    .flow-legend-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .flow-legend-bar {
+      width: 24px;
+      height: 4px;
+      border-radius: 2px;
+    }
+
+    .flow-legend-bar.high { background: var(--gold-primary); opacity: 1; }
+    .flow-legend-bar.medium { background: var(--gold-muted); opacity: 0.6; }
+    .flow-legend-bar.low { background: var(--gold-dim); opacity: 0.3; }
+
+    .flow-container {
+      position: relative;
+      padding: var(--space-6);
+      min-height: 320px;
+    }
+
+    /* SVG Flow Lines */
+    .flow-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .flow-path {
+      fill: none;
+      stroke-linecap: round;
+      transition: all 0.3s ease;
+    }
+
+    .flow-path.high {
+      stroke: var(--gold-primary);
+      stroke-width: 3;
+      opacity: 0.6;
+    }
+
+    .flow-path.medium {
+      stroke: var(--gold-muted);
+      stroke-width: 2;
+      opacity: 0.4;
+    }
+
+    .flow-path.low {
+      stroke: var(--gold-dim);
+      stroke-width: 1.5;
+      opacity: 0.25;
+    }
+
+    .flow-path:hover,
+    .flow-path.active {
+      opacity: 1 !important;
+      stroke-width: 4;
+      filter: drop-shadow(0 0 4px rgba(212, 168, 75, 0.5));
+    }
+
+    /* Flow percentage labels on paths */
+    .flow-percent {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      fill: var(--gold-muted);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .flow-path:hover + .flow-percent,
+    .flow-path.active + .flow-percent {
+      opacity: 1;
+    }
+
+    /* Flow Columns */
+    .flow-columns {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-8);
+      position: relative;
+      z-index: 2;
+    }
+
+    .flow-column {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    .flow-column-header {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      padding-bottom: var(--space-2);
+      border-bottom: 1px solid var(--border-subtle);
+      text-align: center;
+    }
+
+    /* Flow Nodes */
+    .flow-node {
+      padding: var(--space-3) var(--space-4);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-light);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    /* Impact-based opacity */
+    .flow-node[data-impact="high"] {
+      opacity: 1;
+      border-left: 3px solid var(--gold-primary);
+      background: linear-gradient(90deg, rgba(212, 168, 75, 0.08) 0%, var(--bg-surface) 30%);
+    }
+
+    .flow-node[data-impact="medium"] {
+      opacity: 0.65;
+      border-left: 2px solid var(--gold-muted);
+    }
+
+    .flow-node[data-impact="low"] {
+      opacity: 0.35;
+      border-left: 1px solid var(--gold-dim);
+    }
+
+    .flow-node:hover {
+      opacity: 1 !important;
+      transform: scale(1.08) translateX(4px);
+      background: var(--bg-elevated);
+      border-color: var(--gold-muted);
+      box-shadow: var(--shadow-md), 0 0 15px rgba(212, 168, 75, 0.2);
+      z-index: 10;
+    }
+
+    .flow-node-title {
+      font-family: var(--font-body);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-primary);
+      line-height: 1.3;
+      transition: all 0.3s ease;
+    }
+
+    .flow-node:hover .flow-node-title {
+      color: var(--gold-primary);
+    }
+
+    .flow-node-meta {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      margin-top: var(--space-2);
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      color: var(--text-tertiary);
+      height: 16px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .flow-node:hover .flow-node-meta {
+      opacity: 1;
+    }
+
+    /* Connection percentage badge */
+    .flow-badge {
+      position: absolute;
+      right: -8px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      font-weight: 600;
+      color: var(--bg-void);
+      background: var(--gold-primary);
+      padding: 2px 6px;
+      border-radius: 2px;
+      opacity: 0;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .flow-node:hover .flow-badge {
+      opacity: 1;
+      right: -12px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       IMPACT DIMENSIONS — Multi-Dimensional Human Flourishing Metrics
+       "What gets measured gets managed" — but measure what matters
+       ═══════════════════════════════════════════════════════════════════════════ */
+
+    .impact-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      margin-bottom: var(--space-6);
+      position: relative;
+    }
+
+    .impact-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-4) var(--space-5);
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .impact-title-group {
+      display: flex;
+      align-items: baseline;
+      gap: var(--space-3);
+    }
+
+    .impact-title {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+    }
+
+    .impact-subtitle {
+      font-family: var(--font-body);
+      font-size: 11px;
+      font-style: italic;
+      color: var(--text-tertiary);
+    }
+
+    .impact-content {
+      padding: var(--space-5);
+    }
+
+    /* Three-column dimension layout */
+    .dimension-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-5);
+    }
+
+    .dimension-category {
+      padding: var(--space-4);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      position: relative;
+    }
+
+    .dimension-category::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+    }
+
+    .dimension-category.capital::before { background: var(--gold-primary); }
+    .dimension-category.growth::before { background: var(--accent-success); }
+    .dimension-category.human::before { background: var(--accent-teal); }
+
+    .category-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      margin-bottom: var(--space-4);
+    }
+
+    .category-icon {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    }
+
+    .dimension-category.capital .category-icon {
+      background: linear-gradient(135deg, rgba(212, 168, 75, 0.3) 0%, rgba(212, 168, 75, 0.15) 100%);
+    }
+
+    .dimension-category.growth .category-icon {
+      background: linear-gradient(135deg, rgba(77, 168, 77, 0.3) 0%, rgba(77, 168, 77, 0.15) 100%);
+    }
+
+    .dimension-category.human .category-icon {
+      background: linear-gradient(135deg, rgba(61, 139, 139, 0.3) 0%, rgba(61, 139, 139, 0.15) 100%);
+    }
+
+    .category-title {
+      font-family: var(--font-condensed);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+
+    /* Dimension Items */
+    .dimension-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    .dimension-item {
+      display: grid;
+      grid-template-columns: 90px 1fr 40px 20px;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .dimension-label {
+      font-family: var(--font-body);
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .dimension-bar-track {
+      height: 8px;
+      background: var(--bg-deep);
+      border: 1px solid var(--border-subtle);
+      position: relative;
+      overflow: visible;
+    }
+
+    /* Art Deco end caps */
+    .dimension-bar-track::before,
+    .dimension-bar-track::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      width: 4px;
+      height: 12px;
+      transform: translateY(-50%);
+    }
+
+    .dimension-category.capital .dimension-bar-track::before,
+    .dimension-category.capital .dimension-bar-track::after { background: var(--gold-dim); }
+
+    .dimension-category.growth .dimension-bar-track::before,
+    .dimension-category.growth .dimension-bar-track::after { background: rgba(77, 168, 77, 0.5); }
+
+    .dimension-category.human .dimension-bar-track::before,
+    .dimension-category.human .dimension-bar-track::after { background: rgba(61, 139, 139, 0.5); }
+
+    .dimension-bar-track::before { left: -5px; }
+    .dimension-bar-track::after { right: -5px; }
+
+    .dimension-bar-fill {
+      height: 100%;
+      transition: width 0.5s ease;
+    }
+
+    .dimension-category.capital .dimension-bar-fill {
+      background: var(--gold-primary);
+      box-shadow: 0 0 8px rgba(212, 168, 75, 0.4);
+    }
+
+    .dimension-category.growth .dimension-bar-fill {
+      background: var(--accent-success);
+      box-shadow: 0 0 8px rgba(77, 168, 77, 0.4);
+    }
+
+    .dimension-category.human .dimension-bar-fill {
+      background: var(--accent-teal);
+      box-shadow: 0 0 8px rgba(61, 139, 139, 0.4);
+    }
+
+    .dimension-value {
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-align: right;
+    }
+
+    .dimension-trend {
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .dimension-trend.up { color: var(--accent-success); }
+    .dimension-trend.down { color: var(--accent-danger); }
+    .dimension-trend.stable { color: var(--text-muted); }
+
+    /* Learned Dimensions */
+    .learned-section {
+      margin-top: var(--space-4);
+      padding-top: var(--space-4);
+      border-top: 1px dashed var(--border-light);
+    }
+
+    .learned-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      margin-bottom: var(--space-3);
+    }
+
+    .learned-badge {
+      font-family: var(--font-condensed);
+      font-size: 8px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      background: rgba(61, 139, 139, 0.15);
+      border: 1px solid var(--accent-teal-muted);
+      color: var(--accent-teal);
+    }
+
+    .learned-title {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      color: var(--text-tertiary);
+    }
+
+    .learned-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-2) var(--space-3);
+      background: rgba(61, 139, 139, 0.05);
+      border: 1px solid rgba(61, 139, 139, 0.2);
+      margin-bottom: var(--space-2);
+      transition: all 0.2s ease;
+    }
+
+    .learned-item:hover {
+      background: rgba(61, 139, 139, 0.1);
+      border-color: var(--accent-teal);
+    }
+
+    .learned-name {
+      font-size: 11px;
+      color: var(--accent-teal);
+    }
+
+    .learned-confidence {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      color: var(--text-tertiary);
+    }
+
+    /* Capital category learned styling */
+    .dimension-category.capital .learned-badge {
+      background: rgba(212, 168, 75, 0.15);
+      border-color: var(--gold-dim);
+      color: var(--gold-primary);
+    }
+    .dimension-category.capital .learned-item {
+      background: rgba(212, 168, 75, 0.05);
+      border-color: var(--gold-dim);
+    }
+    .dimension-category.capital .learned-item:hover {
+      background: rgba(212, 168, 75, 0.1);
+      border-color: var(--gold-primary);
+    }
+    .dimension-category.capital .learned-name {
+      color: var(--gold-primary);
+    }
+
+    /* Growth category learned styling */
+    .dimension-category.growth .learned-badge {
+      background: rgba(77, 168, 77, 0.15);
+      border-color: rgba(77, 168, 77, 0.4);
+      color: var(--accent-success);
+    }
+    .dimension-category.growth .learned-item {
+      background: rgba(77, 168, 77, 0.05);
+      border-color: rgba(77, 168, 77, 0.2);
+    }
+    .dimension-category.growth .learned-item:hover {
+      background: rgba(77, 168, 77, 0.1);
+      border-color: var(--accent-success);
+    }
+    .dimension-category.growth .learned-name {
+      color: var(--accent-success);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       MAIN LAYOUT — Feed + Sidebar
+       ═══════════════════════════════════════════════════════════════════════════ */
+
+    .main-layout {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: var(--space-6);
+    }
+
+    /* Discovery Feed Cards */
+    .discovery-feed {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+
+    .discovery-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      overflow: hidden;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .discovery-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--type-color, var(--gold-primary)) 30%, var(--type-color, var(--gold-primary)) 70%, transparent);
+    }
+
+    .discovery-card:hover {
+      border-color: var(--border-medium);
+      box-shadow: var(--shadow-md);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: var(--space-4);
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .card-type {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .type-badge {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      padding: 4px 10px;
+      background: rgba(212, 168, 75, 0.1);
+      color: var(--type-color, var(--gold-primary));
+      border: 1px solid var(--type-color, var(--gold-dim));
+    }
+
+    .card-meta {
+      text-align: right;
+    }
+
+    .card-timestamp {
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    .card-source {
+      font-size: 10px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .card-body {
+      padding: var(--space-4);
+    }
+
+    .card-title {
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      color: var(--text-primary);
+      margin-bottom: var(--space-3);
+    }
+
+    .card-description {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: var(--space-4);
+    }
+
+    .card-context {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+    }
+
+    .context-tag {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      letter-spacing: 0.05em;
+      padding: 3px 10px;
+      background: var(--bg-elevated);
+      color: var(--text-tertiary);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-3) var(--space-4);
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .card-actions {
+      display: flex;
+      gap: var(--space-2);
+    }
+
+    .card-action {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: var(--space-2) var(--space-3);
+      border: 1px solid var(--border-light);
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .card-action:hover {
+      border-color: var(--gold-muted);
+      color: var(--gold-primary);
+    }
+
+    .card-action.primary {
+      background: linear-gradient(135deg, rgba(212, 168, 75, 0.2) 0%, rgba(212, 168, 75, 0.1) 100%);
+      border-color: var(--gold-muted);
+      color: var(--gold-primary);
+    }
+
+    .card-action.primary:hover {
+      background: var(--gold-primary);
+      color: var(--bg-void);
+    }
+
+    .card-confidence {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    .confidence-bar {
+      width: 60px;
+      height: 4px;
+      background: var(--bg-deep);
+    }
+
+    .confidence-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--gold-muted), var(--gold-primary));
+    }
+
+    /* Type colors */
+    .type-emergent { --type-color: var(--accent-success); }
+    .type-technical { --type-color: var(--gold-primary); }
+    .type-risk { --type-color: var(--accent-danger); }
+
+    /* Sidebar */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+      position: relative;
+      z-index: 10;
+    }
+
+    .sidebar-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+    }
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-3) var(--space-4);
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .sidebar-title {
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--gold-muted);
+    }
+
+    .panel-action {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      padding: var(--space-1) var(--space-3);
+      background: transparent;
+      border: 1px solid var(--gold-dim);
+      color: var(--gold-muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .panel-action:hover {
+      border-color: var(--gold-primary);
+      color: var(--gold-primary);
+      background: rgba(212, 168, 75, 0.1);
+    }
+
+    .sidebar-content {
+      padding: var(--space-3) var(--space-4);
+    }
+
+    .trending-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-2);
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .trending-item:hover {
+      background: var(--bg-surface);
+    }
+
+    .trending-rank {
+      font-family: var(--font-display);
+      font-size: 11px;
+      color: var(--gold-muted);
+      width: 24px;
+    }
+
+    .trending-topic {
+      flex: 1;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .trending-momentum {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      color: var(--accent-success);
+    }
+
+    .thread-item {
+      padding: var(--space-3);
+      border: 1px solid var(--border-subtle);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      margin-bottom: var(--space-2);
+    }
+
+    .thread-item:hover {
+      border-color: var(--gold-dim);
+      background: var(--bg-surface);
+    }
+
+    .thread-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .thread-title {
+      font-size: 12px;
+      color: var(--text-primary);
+      margin-bottom: var(--space-2);
+    }
+
+    .thread-meta {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    .thread-status.active {
+      color: var(--accent-success);
+    }
+  </style>
+</head>
+<body class="deco-bg">
+  <div class="container">
+
+    <!-- Page Header -->
+    <header class="page-header">
+      <h1 class="page-title">
+        <span class="deco-icon deco-icon-arch deco-icon-lg deco-icon-gold"></span>
+        Discovery Feed
+      </h1>
+      <div class="flex items-center gap-4">
+        <button class="btn">Configure</button>
+        <button class="btn btn-primary">+ New Thread</button>
+      </div>
+    </header>
+
+    <!-- Knowledge Landscape -->
+    <section class="knowledge-landscape">
+      <div class="landscape-header">
+        <h2 class="landscape-title">Knowledge Landscape</h2>
+        <div class="landscape-legend">
+          <div class="legend-item" data-filter="unexplored">
+            <div class="legend-swatch unexplored"></div>
+            <span>Unexplored</span>
+          </div>
+          <div class="legend-item" data-filter="discovered">
+            <div class="legend-swatch discovered"></div>
+            <span>Discovered</span>
+          </div>
+          <div class="legend-item" data-filter="understood">
+            <div class="legend-swatch understood"></div>
+            <span>Understood</span>
+          </div>
+          <div class="legend-item" data-filter="pending">
+            <div class="legend-swatch pending"></div>
+            <span>Awaiting Action</span>
+          </div>
+          <div class="legend-item" data-filter="acted">
+            <div class="legend-swatch acted"></div>
+            <span>Acted Upon</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="territory-grid-container">
+        <div class="fog-overlay"></div>
+        <div class="territory-grid">
+          <!-- Row 1 -->
+          <div class="hex-row">
+            <div class="territory-cell unexplored">
+              <div class="territory-hex">
+                <span class="territory-icon deco-icon deco-icon-sm deco-icon-search"></span>
+                <span class="territory-label">???</span>
+              </div>
+            </div>
+            <div class="territory-cell discovered">
+              <div class="territory-hex">
+                <span class="territory-icon deco-icon deco-icon-sm deco-icon-doc"></span>
+                <span class="territory-label">REST</span>
+              </div>
+            </div>
+            <div class="territory-cell understood">
+              <div class="territory-hex">
+                <span class="territory-icon deco-icon deco-icon-sm deco-icon-sunburst"></span>
+                <span class="territory-label">Events</span>
+              </div>
+            </div>
+            <div class="territory-cell acted">
+              <div class="territory-hex">
+                <span class="territory-icon deco-icon deco-icon-sm deco-icon-check"></span>
+                <span class="territory-label">Auth</span>
+              </div>
+            </div>
+            <div class="territory-cell pending">
+              <div class="territory-hex">
+                <span class="territory-icon deco-icon deco-icon-sm deco-icon-bolt"></span>
+                <span class="territory-label">Cache</span>
+              </div>
+            </div>
+            <div class="territory-cell discovered">
+              <div class="territory-hex">
+                <span class="territory-icon deco-icon deco-icon-sm deco-icon-agent"></span>
+                <span class="territory-label">Agents</span>
+              </div>
+            </div>
+            <div class="territory-cell understood">
+              <div class="territory-hex">
+                <span class="territory-icon deco-icon deco-icon-sm deco-icon-link"></span>
+                <span class="territory-label">Sync</span>
+              </div>
+            </div>
+            <div class="territory-cell unexplored">
+              <div class="territory-hex">
+                <span class="territory-icon deco-icon deco-icon-sm deco-icon-search"></span>
+                <span class="territory-label">???</span>
+              </div>
+            </div>
+            <div class="territory-cell discovered">
+              <div class="territory-hex">
+                <span class="territory-icon deco-icon deco-icon-sm deco-icon-fan"></span>
+                <span class="territory-label">Stream</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 2 (offset) -->
+          <div class="hex-row">
+            <div class="territory-cell discovered">
+              <div class="territory-hex">
+                <span class="territory-icon deco-icon deco-icon-sm deco-icon-target"></span>
+                <span class="territory-label">Security</span>
+              </div>
+            </div>
+            <div class="territory-cell acted">
+              <div class="territory-hex">
+                <span class="territory-icon deco-icon deco-icon-sm deco-icon-check"></span>
+                <span class="territory-label">Storage</span>
+              </div>
+            </div>
+            <div class="territory-cell acted">
+              <div class="territory-hex">
+                <span class="territory-icon deco-icon deco-icon-sm deco-icon-check"></span>
+                <span class="territory-label">Session</span>
+              </div>
+            </div>
+            <div class="territory-cell understood">
+              <div class="territory-hex">
+                <span class="territory-icon deco-icon deco-icon-sm deco-icon-sunburst"></span>
+                <span class="territory-label">Plugin</span>
+              </div>
+            </div>
+            <div class="territory-cell pending">
+              <div class="territory-hex">
+                <span class="territory-icon deco-icon deco-icon-sm deco-icon-bolt"></span>
+                <span class="territory-label">Scale</span>
+              </div>
+            </div>
+            <div class="territory-cell understood">
+              <div class="territory-hex">
+                <span class="territory-icon deco-icon deco-icon-sm deco-icon-test"></span>
+                <span class="territory-label">Test</span>
+              </div>
+            </div>
+            <div class="territory-cell acted">
+              <div class="territory-hex">
+                <span class="territory-icon deco-icon deco-icon-sm deco-icon-check"></span>
+                <span class="territory-label">CLI</span>
+              </div>
+            </div>
+            <div class="territory-cell discovered">
+              <div class="territory-hex">
+                <span class="territory-icon deco-icon deco-icon-sm deco-icon-rocket"></span>
+                <span class="territory-label">Deploy</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 3 -->
+          <div class="hex-row">
+            <div class="territory-cell unexplored">
+              <div class="territory-hex">
+                <span class="territory-icon deco-icon deco-icon-sm deco-icon-search"></span>
+                <span class="territory-label">???</span>
+              </div>
+            </div>
+            <div class="territory-cell pending">
+              <div class="territory-hex">
+                <span class="territory-icon deco-icon deco-icon-sm deco-icon-bolt"></span>
+                <span class="territory-label">Perf</span>
+              </div>
+            </div>
+            <div class="territory-cell understood">
+              <div class="territory-hex">
+                <span class="territory-icon deco-icon deco-icon-sm deco-icon-session"></span>
+                <span class="territory-label">Terminal</span>
+              </div>
+            </div>
+            <div class="territory-cell acted">
+              <div class="territory-hex">
+                <span class="territory-icon deco-icon deco-icon-sm deco-icon-check"></span>
+                <span class="territory-label">WebUI</span>
+              </div>
+            </div>
+            <div class="territory-cell discovered">
+              <div class="territory-hex">
+                <span class="territory-icon deco-icon deco-icon-sm deco-icon-goal"></span>
+                <span class="territory-label">Goals</span>
+              </div>
+            </div>
+            <div class="territory-cell understood">
+              <div class="territory-hex">
+                <span class="territory-icon deco-icon deco-icon-sm deco-icon-growth"></span>
+                <span class="territory-label">Log</span>
+              </div>
+            </div>
+            <div class="territory-cell discovered">
+              <div class="territory-hex">
+                <span class="territory-icon deco-icon deco-icon-sm deco-icon-value"></span>
+                <span class="territory-label">Billing</span>
+              </div>
+            </div>
+            <div class="territory-cell unexplored">
+              <div class="territory-hex">
+                <span class="territory-icon deco-icon deco-icon-sm deco-icon-search"></span>
+                <span class="territory-label">???</span>
+              </div>
+            </div>
+            <div class="territory-cell unexplored">
+              <div class="territory-hex">
+                <span class="territory-icon deco-icon deco-icon-sm deco-icon-search"></span>
+                <span class="territory-label">???</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="landscape-stats">
+        <div class="landscape-stat">
+          <div class="stat-value-row">
+            <span class="landscape-stat-value">27</span>
+            <span class="sparkline">
+              <span class="sparkline-bar" style="height: 35%;"></span>
+              <span class="sparkline-bar" style="height: 50%;"></span>
+              <span class="sparkline-bar" style="height: 45%;"></span>
+              <span class="sparkline-bar" style="height: 65%;"></span>
+              <span class="sparkline-bar" style="height: 60%;"></span>
+              <span class="sparkline-bar" style="height: 80%;"></span>
+              <span class="sparkline-bar current" style="height: 100%;"></span>
+            </span>
+          </div>
+          <div class="landscape-stat-label">Territories</div>
+        </div>
+        <div class="landscape-stat">
+          <div class="stat-value-row">
+            <span class="landscape-stat-value">18</span>
+            <span class="sparkline">
+              <span class="sparkline-bar" style="height: 30%;"></span>
+              <span class="sparkline-bar" style="height: 40%;"></span>
+              <span class="sparkline-bar" style="height: 55%;"></span>
+              <span class="sparkline-bar" style="height: 60%;"></span>
+              <span class="sparkline-bar" style="height: 75%;"></span>
+              <span class="sparkline-bar" style="height: 85%;"></span>
+              <span class="sparkline-bar current" style="height: 95%;"></span>
+            </span>
+          </div>
+          <div class="landscape-stat-label">Explored</div>
+        </div>
+        <div class="landscape-stat">
+          <div class="stat-value-row">
+            <span class="landscape-stat-value">11</span>
+          </div>
+          <div class="landscape-stat-label">Understood</div>
+        </div>
+        <div class="landscape-stat">
+          <div class="stat-value-row">
+            <span class="landscape-stat-value" style="color: var(--accent-success);">6</span>
+          </div>
+          <div class="landscape-stat-label">Acted Upon</div>
+        </div>
+        <div class="landscape-stat">
+          <div class="stat-value-row">
+            <span class="landscape-stat-value" style="color: var(--gold-bright);">3</span>
+          </div>
+          <div class="landscape-stat-label">Awaiting</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Insight Flow -->
+    <section class="insight-flow-panel">
+      <div class="flow-header">
+        <h2 class="flow-title">Insight Flow</h2>
+        <div class="flow-subtitle">
+          <div class="flow-legend">
+            <div class="flow-legend-item">
+              <div class="flow-legend-bar high"></div>
+              <span>High Impact</span>
+            </div>
+            <div class="flow-legend-item">
+              <div class="flow-legend-bar medium"></div>
+              <span>Medium</span>
+            </div>
+            <div class="flow-legend-item">
+              <div class="flow-legend-bar low"></div>
+              <span>Low</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="flow-container">
+        <!-- Flow visualization relies on opacity-based encoding (Tufte: minimize non-data ink) -->
+
+        <div class="flow-columns">
+          <div class="flow-column">
+            <div class="flow-column-header">Sources</div>
+            <div class="flow-node" data-impact="high">
+              <div class="flow-node-title">Background Scan</div>
+              <div class="flow-node-meta">42 insights · +12 today</div>
+              <div class="flow-badge">68%</div>
+            </div>
+            <div class="flow-node" data-impact="medium">
+              <div class="flow-node-title">Project Analysis</div>
+              <div class="flow-node-meta">23 insights · +5 today</div>
+              <div class="flow-badge">45%</div>
+            </div>
+            <div class="flow-node" data-impact="low">
+              <div class="flow-node-title">Manual Research</div>
+              <div class="flow-node-meta">8 insights · +2 today</div>
+              <div class="flow-badge">22%</div>
+            </div>
+          </div>
+
+          <div class="flow-column">
+            <div class="flow-column-header">Classification</div>
+            <div class="flow-node" data-impact="high">
+              <div class="flow-node-title">Technical Discovery</div>
+              <div class="flow-node-meta">High actionability</div>
+              <div class="flow-badge">85%</div>
+            </div>
+            <div class="flow-node" data-impact="high">
+              <div class="flow-node-title">Emergent Pattern</div>
+              <div class="flow-node-meta">Cross-domain signal</div>
+              <div class="flow-badge">72%</div>
+            </div>
+            <div class="flow-node" data-impact="medium">
+              <div class="flow-node-title">Strategic Signal</div>
+              <div class="flow-node-meta">Market relevance</div>
+              <div class="flow-badge">56%</div>
+            </div>
+            <div class="flow-node" data-impact="low">
+              <div class="flow-node-title">Risk Indicator</div>
+              <div class="flow-node-meta">Preventive value</div>
+              <div class="flow-badge">34%</div>
+            </div>
+          </div>
+
+          <div class="flow-column">
+            <div class="flow-column-header">Validation</div>
+            <div class="flow-node" data-impact="high">
+              <div class="flow-node-title">High Confidence</div>
+              <div class="flow-node-meta">&gt;85% · 18 insights</div>
+              <div class="flow-badge">92%</div>
+            </div>
+            <div class="flow-node" data-impact="medium">
+              <div class="flow-node-title">Needs Verification</div>
+              <div class="flow-node-meta">60-85% · 31 insights</div>
+              <div class="flow-badge">48%</div>
+            </div>
+            <div class="flow-node" data-impact="low">
+              <div class="flow-node-title">Speculative</div>
+              <div class="flow-node-meta">&lt;60% · 24 insights</div>
+              <div class="flow-badge">15%</div>
+            </div>
+          </div>
+
+          <div class="flow-column">
+            <div class="flow-column-header">Outcomes</div>
+            <div class="flow-node" data-impact="high">
+              <div class="flow-node-title">Implemented</div>
+              <div class="flow-node-meta">12 shipped</div>
+            </div>
+            <div class="flow-node" data-impact="medium">
+              <div class="flow-node-title">Scheduled</div>
+              <div class="flow-node-meta">8 in backlog</div>
+            </div>
+            <div class="flow-node" data-impact="medium">
+              <div class="flow-node-title">Under Review</div>
+              <div class="flow-node-meta">15 evaluating</div>
+            </div>
+            <div class="flow-node" data-impact="low">
+              <div class="flow-node-title">Archived</div>
+              <div class="flow-node-meta">38 stored</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Impact Dimensions -->
+    <section class="impact-panel">
+      <div class="impact-header">
+        <div class="impact-title-group">
+          <h2 class="impact-title">Impact Dimensions</h2>
+          <span class="impact-subtitle">"Grounded in value, measured in flourishing"</span>
+        </div>
+      </div>
+      <div class="impact-content">
+        <div class="dimension-grid">
+
+          <!-- Capital -->
+          <div class="dimension-category capital">
+            <div class="category-header">
+              <div class="category-icon">
+                <span class="deco-icon deco-icon-value deco-icon-sm deco-icon-gold"></span>
+              </div>
+              <span class="category-title">Capital</span>
+            </div>
+            <div class="dimension-list">
+              <div class="dimension-item">
+                <span class="dimension-label">Revenue</span>
+                <div class="dimension-bar-track">
+                  <div class="dimension-bar-fill" style="width: 68%;"></div>
+                </div>
+                <span class="dimension-value">$12k</span>
+                <span class="dimension-trend up">↑</span>
+              </div>
+              <div class="dimension-item">
+                <span class="dimension-label">Profit</span>
+                <div class="dimension-bar-track">
+                  <div class="dimension-bar-fill" style="width: 54%;"></div>
+                </div>
+                <span class="dimension-value">$4.2k</span>
+                <span class="dimension-trend up">↑</span>
+              </div>
+              <div class="dimension-item">
+                <span class="dimension-label">Leverage</span>
+                <div class="dimension-bar-track">
+                  <div class="dimension-bar-fill" style="width: 72%;"></div>
+                </div>
+                <span class="dimension-value">3.2x</span>
+                <span class="dimension-trend up">↑</span>
+              </div>
+              <div class="dimension-item">
+                <span class="dimension-label">Cost Savings</span>
+                <div class="dimension-bar-track">
+                  <div class="dimension-bar-fill" style="width: 85%;"></div>
+                </div>
+                <span class="dimension-value">$2.4k</span>
+                <span class="dimension-trend up">↑</span>
+              </div>
+            </div>
+
+            <div class="learned-section">
+              <div class="learned-header">
+                <span class="learned-badge">AI Discovered</span>
+                <span class="learned-title">Emergent Metrics</span>
+              </div>
+              <div class="learned-item">
+                <span class="learned-name">"Compounding Value"</span>
+                <span class="learned-confidence">81%</span>
+              </div>
+              <div class="learned-item">
+                <span class="learned-name">"Efficiency Ceiling"</span>
+                <span class="learned-confidence">68%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Growth -->
+          <div class="dimension-category growth">
+            <div class="category-header">
+              <div class="category-icon">
+                <span class="deco-icon deco-icon-growth deco-icon-sm deco-icon-success"></span>
+              </div>
+              <span class="category-title">Growth</span>
+            </div>
+            <div class="dimension-list">
+              <div class="dimension-item">
+                <span class="dimension-label">Speed</span>
+                <div class="dimension-bar-track">
+                  <div class="dimension-bar-fill" style="width: 82%;"></div>
+                </div>
+                <span class="dimension-value">+45%</span>
+                <span class="dimension-trend up">↑</span>
+              </div>
+              <div class="dimension-item">
+                <span class="dimension-label">Frontier</span>
+                <div class="dimension-bar-track">
+                  <div class="dimension-bar-fill" style="width: 67%;"></div>
+                </div>
+                <span class="dimension-value">67%</span>
+                <span class="dimension-trend up">↑</span>
+              </div>
+              <div class="dimension-item">
+                <span class="dimension-label">Capabilities</span>
+                <div class="dimension-bar-track">
+                  <div class="dimension-bar-fill" style="width: 78%;"></div>
+                </div>
+                <span class="dimension-value">+12</span>
+                <span class="dimension-trend up">↑</span>
+              </div>
+              <div class="dimension-item">
+                <span class="dimension-label">Reach</span>
+                <div class="dimension-bar-track">
+                  <div class="dimension-bar-fill" style="width: 45%;"></div>
+                </div>
+                <span class="dimension-value">3.2k</span>
+                <span class="dimension-trend up">↑</span>
+              </div>
+            </div>
+
+            <div class="learned-section">
+              <div class="learned-header">
+                <span class="learned-badge">AI Discovered</span>
+                <span class="learned-title">Emergent Metrics</span>
+              </div>
+              <div class="learned-item">
+                <span class="learned-name">"Velocity Sustain"</span>
+                <span class="learned-confidence">79%</span>
+              </div>
+              <div class="learned-item">
+                <span class="learned-name">"Network Effect"</span>
+                <span class="learned-confidence">74%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Human -->
+          <div class="dimension-category human">
+            <div class="category-header">
+              <div class="category-icon">
+                <span class="deco-icon deco-icon-star deco-icon-sm" style="color: var(--accent-teal);"></span>
+              </div>
+              <span class="category-title">Human</span>
+            </div>
+            <div class="dimension-list">
+              <div class="dimension-item">
+                <span class="dimension-label">Creativity</span>
+                <div class="dimension-bar-track">
+                  <div class="dimension-bar-fill" style="width: 88%;"></div>
+                </div>
+                <span class="dimension-value">High</span>
+                <span class="dimension-trend up">↑</span>
+              </div>
+              <div class="dimension-item">
+                <span class="dimension-label">Curiosity</span>
+                <div class="dimension-bar-track">
+                  <div class="dimension-bar-fill" style="width: 91%;"></div>
+                </div>
+                <span class="dimension-value">Peak</span>
+                <span class="dimension-trend up">↑</span>
+              </div>
+              <div class="dimension-item">
+                <span class="dimension-label">Flow State</span>
+                <div class="dimension-bar-track">
+                  <div class="dimension-bar-fill" style="width: 68%;"></div>
+                </div>
+                <span class="dimension-value">3.2h</span>
+                <span class="dimension-trend up">↑</span>
+              </div>
+              <div class="dimension-item">
+                <span class="dimension-label">Enjoyment</span>
+                <div class="dimension-bar-track">
+                  <div class="dimension-bar-fill" style="width: 74%;"></div>
+                </div>
+                <span class="dimension-value">Good</span>
+                <span class="dimension-trend stable">→</span>
+              </div>
+            </div>
+
+            <div class="learned-section">
+              <div class="learned-header">
+                <span class="learned-badge">AI Discovered</span>
+                <span class="learned-title">Emergent Metrics</span>
+              </div>
+              <div class="learned-item">
+                <span class="learned-name">"Creative Momentum"</span>
+                <span class="learned-confidence">87%</span>
+              </div>
+              <div class="learned-item">
+                <span class="learned-name">"Serendipity Index"</span>
+                <span class="learned-confidence">72%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Layout -->
+    <div class="main-layout">
+      <div class="discovery-feed">
+        <article class="discovery-card type-emergent">
+          <div class="card-header">
+            <div class="card-type">
+              <span class="deco-icon deco-icon-growth deco-icon-md deco-icon-success"></span>
+              <span class="type-badge">Emergent Pattern</span>
+            </div>
+            <div class="card-meta">
+              <div class="card-timestamp">12 min ago</div>
+              <div class="card-source">Agent Swarm Analysis</div>
+            </div>
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">Agents Self-Organizing Around Shared Context Pools</h3>
+            <p class="card-description">
+              Detected emergent coordination behavior: agents working on related tasks are spontaneously
+              forming clusters around shared knowledge repositories. Reduces redundant API calls by ~40%.
+            </p>
+            <div class="card-context">
+              <span class="context-tag">vibes-core</span>
+              <span class="context-tag">agent-coordination</span>
+              <span class="context-tag">performance</span>
+            </div>
+          </div>
+          <div class="card-footer">
+            <div class="card-actions">
+              <button class="card-action primary">Investigate</button>
+              <button class="card-action">Create Task</button>
+            </div>
+            <div class="card-confidence">
+              Confidence
+              <div class="confidence-bar"><div class="confidence-fill" style="width: 92%;"></div></div>
+              92%
+            </div>
+          </div>
+        </article>
+
+        <article class="discovery-card type-technical">
+          <div class="card-header">
+            <div class="card-type">
+              <span class="deco-icon deco-icon-sunburst deco-icon-md deco-icon-gold"></span>
+              <span class="type-badge">Technical</span>
+            </div>
+            <div class="card-meta">
+              <div class="card-timestamp">34 min ago</div>
+              <div class="card-source">Background Scan</div>
+            </div>
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">Arrow Flight RPC Could Replace Current gRPC Layer</h3>
+            <p class="card-description">
+              Apache Arrow Flight provides high-performance RPC optimized for columnar data transfer.
+              Could provide 10x throughput improvements for lakehouse architecture.
+            </p>
+            <div class="card-context">
+              <span class="context-tag">apache-arrow</span>
+              <span class="context-tag">performance</span>
+            </div>
+          </div>
+          <div class="card-footer">
+            <div class="card-actions">
+              <button class="card-action">Investigate</button>
+              <button class="card-action">Bookmark</button>
+            </div>
+            <div class="card-confidence">
+              Confidence
+              <div class="confidence-bar"><div class="confidence-fill" style="width: 78%;"></div></div>
+              78%
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <aside class="sidebar">
+        <div class="sidebar-panel">
+          <div class="sidebar-header">
+            <span class="sidebar-title">Trending</span>
+          </div>
+          <div class="sidebar-content">
+            <div class="trending-item">
+              <span class="trending-rank">#1</span>
+              <span class="trending-topic">Agent Coordination</span>
+              <span class="trending-momentum">↑ 45%</span>
+            </div>
+            <div class="trending-item">
+              <span class="trending-rank">#2</span>
+              <span class="trending-topic">Verification Artifacts</span>
+              <span class="trending-momentum">↑ 32%</span>
+            </div>
+            <div class="trending-item">
+              <span class="trending-rank">#3</span>
+              <span class="trending-topic">Cost Optimization</span>
+              <span class="trending-momentum">↑ 28%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-panel">
+          <div class="sidebar-header">
+            <span class="sidebar-title">Research Threads</span>
+            <button class="panel-action">+ New</button>
+          </div>
+          <div class="sidebar-content">
+            <div class="thread-item">
+              <div class="thread-title">How to scale agent swarms cost-effectively?</div>
+              <div class="thread-meta">
+                <span class="thread-status active">Active</span>
+                <span>42 discoveries</span>
+              </div>
+            </div>
+            <div class="thread-item">
+              <div class="thread-title">Best practices for verification artifact storage</div>
+              <div class="thread-meta">
+                <span class="thread-status active">Active</span>
+                <span>28 discoveries</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+  </div>
+
+  <script>
+    // Highlight connected flow paths on node hover
+    document.querySelectorAll('.flow-node').forEach(node => {
+      node.addEventListener('mouseenter', function() {
+        // In a real implementation, this would highlight connected SVG paths
+        document.querySelectorAll('.flow-path').forEach(path => {
+          path.classList.remove('active');
+        });
+      });
+    });
+
+    // Legend filtering for territory grid
+    document.querySelectorAll('.legend-item').forEach(item => {
+      item.addEventListener('click', function() {
+        const filter = this.dataset.filter;
+        this.classList.toggle('active');
+        // In a real implementation, this would filter the territory grid
+      });
+    });
+  </script>
+</body>
+</html>

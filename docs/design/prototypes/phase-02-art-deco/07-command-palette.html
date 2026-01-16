@@ -3,71 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Command Palette (⌘K)</title>
+  <title>Command Palette | Phosphor Command</title>
   <link rel="stylesheet" href="shared.css">
   <style>
     /* ═══════════════════════════════════════════════════════════════════════
        COMMAND PALETTE — Keyboard-first interface for search and actions
        ═══════════════════════════════════════════════════════════════════════ */
-
-    .prototype-container {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: var(--space-6);
-    }
-
-    .prototype-header {
-      margin-bottom: var(--space-8);
-      padding-bottom: var(--space-4);
-      border-bottom: 1px solid var(--border-subtle);
-    }
-
-    .prototype-title {
-      font-family: var(--font-display);
-      font-size: 28px;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      color: var(--gold-primary);
-      text-shadow: var(--glow-gold);
-      margin-bottom: var(--space-2);
-    }
-
-    .prototype-desc {
-      font-size: 13px;
-      color: var(--text-secondary);
-      line-height: 1.6;
-    }
-
-    .section {
-      margin-bottom: var(--space-8);
-    }
-
-    .section-label {
-      font-family: var(--font-condensed);
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      color: var(--text-tertiary);
-      margin-bottom: var(--space-3);
-      display: flex;
-      align-items: center;
-      gap: var(--space-2);
-    }
-
-    .section-label::before {
-      content: '';
-      flex: 0 0 20px;
-      height: 1px;
-      background: var(--gold-dim);
-    }
-
-    .section-label::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--gold-dim);
-    }
 
     /* ─── Backdrop ─── */
     .palette-backdrop {
@@ -342,15 +283,30 @@
   </style>
 </head>
 <body class="deco-bg">
+  <div class="dashboard">
 
-  <div class="prototype-container">
-    <header class="prototype-header">
-      <h1 class="prototype-title">Command Palette (⌘K)</h1>
-      <p class="prototype-desc">
-        Keyboard-first interface for navigating, searching, and taking actions.
-        Stay in flow without hunting through zones.
-      </p>
+    <!-- Header Bar -->
+    <header class="header-bar">
+      <div class="flex items-center">
+        <span class="logo">vibes</span>
+        <span class="logo-tagline">Phosphor Mission Control</span>
+      </div>
+      <nav class="header-nav">
+        <a href="01-full-dashboard.html" class="nav-item">Dashboard</a>
+        <a href="04-activity-feed.html" class="nav-item">Firehose</a>
+        <a href="06-expanded-dashboard.html" class="nav-item">Sessions</a>
+        <a href="09-discovery-feed.html" class="nav-item">Groove</a>
+        <a href="07-command-palette.html" class="nav-item active">Debug</a>
+      </nav>
     </header>
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="page-header-content">
+        <h1 class="page-title">Command Palette (⌘K)</h1>
+        <p class="page-description">Keyboard-first interface for navigating, searching, and taking actions. Stay in flow without hunting through zones.</p>
+      </div>
+    </div>
 
     <!-- Default State -->
     <section class="section">
@@ -656,7 +612,7 @@
         </div>
       </div>
     </section>
-  </div>
 
+  </div>
 </body>
 </html>

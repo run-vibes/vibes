@@ -1,0 +1,2936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Knowledge Landscape — Art Deco Command</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    /* ═══════════════════════════════════════════════════════════════════════════
+       PAGE LAYOUT
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .container {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: var(--space-6);
+      position: relative;
+      z-index: 1;
+    }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--space-6);
+      padding-bottom: var(--space-4);
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .page-title {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 400;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       MINIMAP WIDGET — Luxury Art Deco Card
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .knowledge-minimap {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      position: relative;
+      cursor: pointer;
+      transition: all var(--transition-base);
+      overflow: hidden;
+    }
+
+    /* Double border frame - Art Deco signature */
+    .knowledge-minimap::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        var(--gold-dim) 10%,
+        var(--gold-primary) 50%,
+        var(--gold-dim) 90%,
+        transparent 100%
+      );
+      z-index: 2;
+    }
+
+    .knowledge-minimap::after {
+      content: '';
+      position: absolute;
+      inset: 6px;
+      border: 1px solid var(--border-subtle);
+      pointer-events: none;
+    }
+
+    .knowledge-minimap:hover {
+      border-color: var(--gold-muted);
+      box-shadow: var(--shadow-lg), var(--glow-gold);
+      transform: translateY(-2px);
+    }
+
+    .minimap-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-4) var(--space-5);
+      background: linear-gradient(180deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
+      border-bottom: 1px solid var(--border-subtle);
+      position: relative;
+    }
+
+    .minimap-title {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .minimap-action {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      transition: color 0.2s ease;
+    }
+
+    .knowledge-minimap:hover .minimap-action {
+      color: var(--gold-primary);
+    }
+
+    .minimap-content {
+      position: relative;
+      height: 300px;
+      background: var(--bg-deep);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* Subtle sunburst in minimap */
+    .minimap-content::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 200%;
+      height: 200%;
+      background: repeating-conic-gradient(
+        from 0deg,
+        transparent 0deg 8deg,
+        rgba(212, 168, 75, 0.015) 8deg 10deg
+      );
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    /* Radial glow in center */
+    .minimap-content::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 160px;
+      height: 160px;
+      background: radial-gradient(circle, rgba(212, 168, 75, 0.08) 0%, transparent 70%);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    /* Mini radial tree preview */
+    .minimap-tree {
+      position: relative;
+      width: 260px;
+      height: 260px;
+      z-index: 1;
+    }
+
+    .minimap-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
+      border: 2px solid var(--gold-primary);
+      border-radius: 50%;
+      box-shadow: var(--glow-gold-bright);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: pulse-center 4s ease-in-out infinite;
+    }
+
+    @keyframes pulse-center {
+      0%, 100% { box-shadow: var(--glow-gold); }
+      50% { box-shadow: var(--glow-gold-bright); }
+    }
+
+    .minimap-cluster {
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
+      border: 1px solid var(--border-medium);
+      transform: translate(-50%, -50%) rotate(45deg);
+      transition: all 0.3s ease;
+    }
+
+    .minimap-cluster.active {
+      border-color: var(--gold-primary);
+      box-shadow: var(--glow-gold);
+    }
+
+    .minimap-cluster.frontier {
+      border-color: var(--accent-teal);
+      box-shadow: var(--glow-teal);
+      border-style: dashed;
+    }
+
+    /* Cluster positions - radial layout (offset by 2 for SVG and minimap-center) */
+    .minimap-cluster:nth-child(3) { top: 15%; left: 50%; }
+    .minimap-cluster:nth-child(4) { top: 30%; left: 80%; }
+    .minimap-cluster:nth-child(5) { top: 70%; left: 80%; }
+    .minimap-cluster:nth-child(6) { top: 85%; left: 50%; }
+    .minimap-cluster:nth-child(7) { top: 70%; left: 20%; }
+    .minimap-cluster:nth-child(8) { top: 30%; left: 20%; }
+
+    /* Connection lines */
+    .minimap-tree svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .minimap-line {
+      stroke: var(--gold-dim);
+      stroke-width: 1;
+      opacity: 0.4;
+    }
+
+    .minimap-stats {
+      position: absolute;
+      bottom: var(--space-4);
+      left: var(--space-5);
+      right: var(--space-5);
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      color: var(--text-tertiary);
+      z-index: 2;
+    }
+
+    .minimap-stat-value {
+      color: var(--gold-primary);
+      font-weight: 600;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       MODAL — Full Knowledge Landscape with Atmospheric Depth
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(7, 9, 13, 0.98);
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.5s ease;
+    }
+
+    .modal-backdrop.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-container {
+      position: fixed;
+      inset: var(--space-4);
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      z-index: 1001;
+      display: flex;
+      flex-direction: column;
+      transform: scale(0.92) translateY(20px);
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow: hidden;
+    }
+
+    .modal-container.visible {
+      transform: scale(1) translateY(0);
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* Triple-line Art Deco header accent */
+    .modal-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background:
+        linear-gradient(90deg, transparent 0%, var(--gold-dim) 5%, var(--gold-primary) 50%, var(--gold-dim) 95%, transparent 100%);
+      z-index: 10;
+    }
+
+    /* Inner frame line */
+    .modal-container::after {
+      content: '';
+      position: absolute;
+      inset: 8px;
+      border: 1px solid var(--border-subtle);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Corner decorations */
+    .modal-corner {
+      position: absolute;
+      width: 32px;
+      height: 32px;
+      z-index: 5;
+      pointer-events: none;
+    }
+
+    .modal-corner::before,
+    .modal-corner::after {
+      content: '';
+      position: absolute;
+      background: var(--gold-dim);
+    }
+
+    .modal-corner.top-left { top: 12px; left: 12px; }
+    .modal-corner.top-left::before { top: 0; left: 0; width: 100%; height: 2px; }
+    .modal-corner.top-left::after { top: 0; left: 0; width: 2px; height: 100%; }
+
+    .modal-corner.top-right { top: 12px; right: 12px; }
+    .modal-corner.top-right::before { top: 0; right: 0; width: 100%; height: 2px; }
+    .modal-corner.top-right::after { top: 0; right: 0; width: 2px; height: 100%; }
+
+    .modal-corner.bottom-left { bottom: 12px; left: 12px; }
+    .modal-corner.bottom-left::before { bottom: 0; left: 0; width: 100%; height: 2px; }
+    .modal-corner.bottom-left::after { bottom: 0; left: 0; width: 2px; height: 100%; }
+
+    .modal-corner.bottom-right { bottom: 12px; right: 12px; }
+    .modal-corner.bottom-right::before { bottom: 0; right: 0; width: 100%; height: 2px; }
+    .modal-corner.bottom-right::after { bottom: 0; right: 0; width: 2px; height: 100%; }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-4) var(--space-6);
+      background: linear-gradient(180deg, var(--bg-surface) 0%, var(--bg-card) 100%);
+      border-bottom: 1px solid var(--border-subtle);
+      position: relative;
+      z-index: 5;
+    }
+
+    .modal-title {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .modal-breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-family: var(--font-body);
+      font-size: 13px;
+      color: var(--text-tertiary);
+    }
+
+    .breadcrumb-item {
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: color 0.2s ease;
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+    }
+
+    .breadcrumb-item:hover {
+      color: var(--gold-primary);
+      background: var(--gold-subtle);
+    }
+
+    .breadcrumb-item.active {
+      color: var(--gold-primary);
+      cursor: default;
+      background: transparent;
+    }
+
+    .breadcrumb-sep {
+      color: var(--gold-dim);
+    }
+
+    .modal-controls {
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+    }
+
+    .zoom-controls {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: 4px;
+      background: var(--bg-deep);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .zoom-btn {
+      width: 32px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-light);
+      color: var(--gold-primary);
+      font-size: 18px;
+      font-weight: 300;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .zoom-btn:hover {
+      background: var(--gold-subtle);
+      border-color: var(--gold-muted);
+    }
+
+    .zoom-level {
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      color: var(--text-tertiary);
+      min-width: 48px;
+      text-align: center;
+      letter-spacing: 0.05em;
+    }
+
+    .close-btn {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 8px 16px;
+      background: transparent;
+      border: 1px solid var(--border-light);
+      color: var(--text-tertiary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .close-btn::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--accent-danger);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .close-btn:hover {
+      background: rgba(199, 85, 85, 0.1);
+      border-color: var(--accent-danger);
+      color: var(--accent-danger);
+    }
+
+    .close-btn:hover::before {
+      opacity: 1;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       VIEWPORT — Tree Container with Atmospheric Depth
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .viewport {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      background: var(--bg-deep);
+    }
+
+    /* Layered atmospheric background */
+    .viewport::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        /* Central gold glow */
+        radial-gradient(ellipse 50% 40% at 50% 50%, rgba(212, 168, 75, 0.04) 0%, transparent 60%),
+        /* Navy depth pools */
+        radial-gradient(ellipse 80% 60% at 20% 80%, rgba(26, 45, 69, 0.4) 0%, transparent 50%),
+        radial-gradient(ellipse 70% 50% at 85% 75%, rgba(26, 45, 69, 0.35) 0%, transparent 50%),
+        /* Teal whispers */
+        radial-gradient(ellipse 40% 35% at 90% 15%, rgba(61, 139, 139, 0.06) 0%, transparent 50%),
+        radial-gradient(ellipse 35% 30% at 10% 25%, rgba(61, 139, 139, 0.05) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Sunburst radiating pattern */
+    .viewport::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 180%;
+      height: 180%;
+      background: repeating-conic-gradient(
+        from 0deg,
+        transparent 0deg 5deg,
+        rgba(212, 168, 75, 0.008) 5deg 6deg
+      );
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0;
+      transition: opacity 0.8s ease;
+    }
+
+    .modal-container.visible .viewport::after {
+      opacity: 1;
+    }
+
+    /* Subtle scan lines for texture */
+    .viewport-texture {
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent 0px,
+        transparent 2px,
+        rgba(0, 0, 0, 0.03) 2px,
+        rgba(0, 0, 0, 0.03) 4px
+      );
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .tree-container {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform-origin: center center;
+      cursor: grab;
+      z-index: 3;
+    }
+
+    .tree-container.dragging {
+      cursor: grabbing;
+    }
+
+    .tree-container.animating {
+      transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       RADIAL TREE
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .tree-root {
+      position: relative;
+      width: 1000px;
+      height: 1000px;
+    }
+
+    /* Connection Lines - Enhanced Art Deco Style */
+    .connections {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .connections svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .connection-line {
+      stroke: var(--gold-dim);
+      stroke-width: 1;
+      fill: none;
+      opacity: 0.3;
+    }
+
+    .connection-line.strong {
+      stroke: url(#gold-gradient);
+      stroke-width: 2;
+      opacity: 0.5;
+    }
+
+    /* Center Node - Floating animation */
+    .center-node {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 160px;
+      height: 160px;
+      background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
+      border: 3px solid var(--gold-primary);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow:
+        var(--glow-gold-bright),
+        inset 0 0 40px rgba(212, 168, 75, 0.05);
+      z-index: 10;
+      cursor: pointer;
+      transition: all 0.4s ease;
+      animation: float-gentle 6s ease-in-out infinite;
+    }
+
+    @keyframes float-gentle {
+      0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+      50% { transform: translate(-50%, -50%) translateY(-6px); }
+    }
+
+    .center-node:hover {
+      animation-play-state: paused;
+      transform: translate(-50%, -50%) scale(1.08);
+      box-shadow:
+        0 0 30px rgba(232, 196, 90, 0.5),
+        0 0 60px rgba(212, 168, 75, 0.3),
+        inset 0 0 40px rgba(212, 168, 75, 0.1);
+    }
+
+    .center-node-icon {
+      margin-bottom: var(--space-2);
+    }
+
+    .center-node-label {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+      text-align: center;
+    }
+
+    .center-node-count {
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-top: 4px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       CLUSTER NODES — Enhanced with Inner Glow
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .cluster {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .cluster-frame {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-5);
+      background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
+      border: 2px solid var(--border-medium);
+      transition: all 0.3s ease;
+      clip-path: polygon(
+        25% 0%, 75% 0%,
+        100% 25%, 100% 75%,
+        75% 100%, 25% 100%,
+        0% 75%, 0% 25%
+      );
+    }
+
+    /* Inner glow effect */
+    .cluster-frame::before {
+      content: '';
+      position: absolute;
+      inset: 4px;
+      background: radial-gradient(circle at center, rgba(212, 168, 75, 0.03) 0%, transparent 70%);
+      clip-path: inherit;
+      pointer-events: none;
+    }
+
+    .cluster:hover .cluster-frame {
+      border-color: var(--gold-primary);
+      background: linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-elevated) 100%);
+      box-shadow: var(--glow-gold);
+    }
+
+    .cluster:hover .cluster-frame::before {
+      background: radial-gradient(circle at center, rgba(212, 168, 75, 0.08) 0%, transparent 70%);
+    }
+
+    .cluster-icon {
+      margin-bottom: var(--space-2);
+    }
+
+    .cluster-label {
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-primary);
+      text-align: center;
+    }
+
+    .cluster-stats {
+      display: flex;
+      gap: var(--space-3);
+      margin-top: var(--space-2);
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    .cluster-stat-value {
+      color: var(--gold-muted);
+      font-weight: 600;
+    }
+
+    /* Cluster sizes */
+    .cluster.size-lg .cluster-frame { width: 160px; height: 160px; }
+    .cluster.size-md .cluster-frame { width: 140px; height: 140px; }
+    .cluster.size-sm .cluster-frame { width: 120px; height: 120px; }
+
+    /* Cluster states */
+    .cluster.active .cluster-frame {
+      border-color: var(--gold-muted);
+      box-shadow: var(--glow-gold);
+    }
+
+    .cluster.frontier .cluster-frame {
+      border-color: var(--accent-teal-muted);
+      border-style: dashed;
+      box-shadow: var(--glow-teal);
+    }
+
+    .cluster.frontier .cluster-label {
+      color: var(--accent-teal);
+    }
+
+    .cluster.frontier .cluster-frame::before {
+      background: radial-gradient(circle at center, rgba(61, 139, 139, 0.05) 0%, transparent 70%);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       SKILL NODES
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .skills-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+    }
+
+    .skills-layer.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .skill-node {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .skill-dot {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
+      border: 2px solid var(--border-medium);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    /* Subtle pulse ring on hover */
+    .skill-dot::after {
+      content: '';
+      position: absolute;
+      inset: -6px;
+      border: 1px solid transparent;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+    }
+
+    .skill-node:hover .skill-dot {
+      border-color: var(--gold-primary);
+      box-shadow: var(--glow-gold);
+      transform: scale(1.1);
+    }
+
+    .skill-node:hover .skill-dot::after {
+      border-color: var(--gold-dim);
+    }
+
+    .skill-label {
+      margin-top: var(--space-2);
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      text-align: center;
+      max-width: 85px;
+      text-transform: uppercase;
+      transition: color 0.3s ease;
+    }
+
+    .skill-node:hover .skill-label {
+      color: var(--gold-primary);
+    }
+
+    /* Skill states */
+    .skill-node.mastered .skill-dot {
+      border-color: var(--gold-primary);
+      background: linear-gradient(135deg, var(--gold-subtle) 0%, var(--bg-elevated) 100%);
+    }
+
+    .skill-node.learning .skill-dot {
+      border-color: var(--accent-teal);
+      box-shadow: var(--glow-teal);
+    }
+
+    .skill-node.frontier .skill-dot {
+      border-style: dashed;
+      border-color: var(--accent-teal-muted);
+      opacity: 0.7;
+    }
+
+    .skill-node.frontier .skill-label {
+      color: var(--text-tertiary);
+    }
+
+    .skill-node.discovered .skill-dot {
+      border-color: var(--accent-success);
+      box-shadow: 0 0 18px rgba(77, 168, 77, 0.4);
+    }
+
+    .skill-node.discovered::after {
+      content: 'AI';
+      position: absolute;
+      top: 0px;
+      right: 6px;
+      font-family: var(--font-condensed);
+      font-size: 8px;
+      font-weight: 700;
+      padding: 2px 5px;
+      background: var(--accent-success);
+      color: var(--bg-void);
+      letter-spacing: 0.05em;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       LEGEND — Art Deco Framed
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .legend {
+      position: absolute;
+      top: var(--space-4);
+      right: var(--space-4);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      padding: var(--space-4);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-light);
+      z-index: 50;
+    }
+
+    .legend::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+    }
+
+    .legend-title {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold-muted);
+      margin-bottom: var(--space-2);
+      padding-bottom: var(--space-2);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      letter-spacing: 0.05em;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+    }
+
+    .legend-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid;
+      background: var(--bg-elevated);
+    }
+
+    .legend-dot.mastered {
+      border-color: var(--gold-primary);
+      background: var(--gold-subtle);
+    }
+
+    .legend-dot.learning {
+      border-color: var(--accent-teal);
+    }
+
+    .legend-dot.frontier {
+      border-style: dashed;
+      border-color: var(--accent-teal-muted);
+    }
+
+    .legend-dot.discovered {
+      border-color: var(--accent-success);
+    }
+
+    /* Detail Panel */
+    .detail-panel {
+      position: absolute;
+      bottom: var(--space-4);
+      left: var(--space-4);
+      width: 320px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      padding: var(--space-5);
+      opacity: 0;
+      transform: translateY(12px);
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: none;
+      z-index: 50;
+    }
+
+    .detail-panel::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--gold-primary), var(--gold-dim), transparent);
+    }
+
+    .detail-panel.visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .detail-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      margin-bottom: var(--space-4);
+      padding-bottom: var(--space-3);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .detail-icon {
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-surface) 100%);
+      border: 1px solid var(--border-medium);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .detail-title {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+    }
+
+    .detail-subtitle {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      color: var(--text-tertiary);
+      letter-spacing: 0.08em;
+      margin-top: 2px;
+    }
+
+    .detail-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-3);
+      margin-bottom: var(--space-4);
+    }
+
+    .detail-stat {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .detail-stat-label {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-tertiary);
+    }
+
+    .detail-stat-value {
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    .detail-connections {
+      font-family: var(--font-body);
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .detail-connections-label {
+      color: var(--gold-muted);
+      font-weight: 500;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       ANIMATIONS — Dramatic Entrance Sequence
+       ═══════════════════════════════════════════════════════════════════════════ */
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: var(--glow-gold); }
+      50% { box-shadow: var(--glow-gold-bright); }
+    }
+
+    .cluster.active .cluster-frame {
+      animation: pulse-glow 4s ease-in-out infinite;
+    }
+
+    @keyframes pulse-teal {
+      0%, 100% { opacity: 0.85; }
+      50% { opacity: 1; }
+    }
+
+    .cluster.frontier .cluster-frame {
+      animation: pulse-teal 3s ease-in-out infinite;
+    }
+
+    /* Staggered entrance for clusters */
+    .cluster {
+      opacity: 0;
+      animation: cluster-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .cluster:nth-child(1) { animation-delay: 0.15s; }
+    .cluster:nth-child(2) { animation-delay: 0.22s; }
+    .cluster:nth-child(3) { animation-delay: 0.29s; }
+    .cluster:nth-child(4) { animation-delay: 0.36s; }
+    .cluster:nth-child(5) { animation-delay: 0.43s; }
+    .cluster:nth-child(6) { animation-delay: 0.5s; }
+
+    @keyframes cluster-enter {
+      from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.7);
+      }
+      to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+
+    /* Connection lines fade in */
+    .connections svg {
+      opacity: 0;
+      animation: lines-fade 0.8s ease forwards 0.4s;
+    }
+
+    @keyframes lines-fade {
+      to { opacity: 1; }
+    }
+
+    /* Center node entrance */
+    .center-node {
+      opacity: 0;
+      animation: center-enter 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.1s;
+    }
+
+    @keyframes center-enter {
+      from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.5);
+      }
+      to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+
+    /* Zoom state visibility */
+    .tree-container[data-zoom="cluster"] .cluster,
+    .tree-container[data-zoom="skill"] .cluster {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .tree-container[data-zoom="cluster"] .skills-layer,
+    .tree-container[data-zoom="skill"] .skills-layer {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       INSIGHT FLOW PANEL
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .insight-flow-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      margin-top: var(--space-6);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .insight-flow-panel::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);
+    }
+
+    .flow-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-4) var(--space-5);
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .flow-title {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+    }
+
+    .flow-legend {
+      display: flex;
+      gap: var(--space-4);
+    }
+
+    .flow-legend-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    .flow-legend-bar {
+      width: 24px;
+      height: 4px;
+      border-radius: 2px;
+    }
+
+    .flow-legend-bar.high { background: var(--gold-primary); }
+    .flow-legend-bar.medium { background: var(--gold-muted); opacity: 0.6; }
+    .flow-legend-bar.low { background: var(--gold-dim); opacity: 0.3; }
+
+    .flow-container {
+      padding: var(--space-6);
+    }
+
+    .flow-columns {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-6);
+    }
+
+    .flow-column-header {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      padding-bottom: var(--space-2);
+      border-bottom: 1px solid var(--border-subtle);
+      text-align: center;
+      margin-bottom: var(--space-3);
+    }
+
+    .flow-node {
+      padding: var(--space-3) var(--space-4);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-light);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      margin-bottom: var(--space-3);
+    }
+
+    .flow-node[data-impact="high"] {
+      opacity: 1;
+      border-left: 3px solid var(--gold-primary);
+      background: linear-gradient(90deg, rgba(212, 168, 75, 0.08) 0%, var(--bg-surface) 30%);
+    }
+
+    .flow-node[data-impact="medium"] {
+      opacity: 0.65;
+      border-left: 2px solid var(--gold-muted);
+    }
+
+    .flow-node[data-impact="low"] {
+      opacity: 0.35;
+      border-left: 1px solid var(--gold-dim);
+    }
+
+    .flow-node:hover {
+      opacity: 1 !important;
+      transform: translateX(4px);
+      background: var(--bg-elevated);
+      border-color: var(--gold-muted);
+      box-shadow: var(--shadow-md);
+    }
+
+    .flow-node-title {
+      font-family: var(--font-body);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .flow-node:hover .flow-node-title {
+      color: var(--gold-primary);
+    }
+
+    .flow-node-meta {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      color: var(--text-tertiary);
+      margin-top: var(--space-2);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       IMPACT DIMENSIONS
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .impact-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      margin-top: var(--space-6);
+      position: relative;
+    }
+
+    .impact-panel::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);
+    }
+
+    .impact-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-4) var(--space-5);
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .impact-title {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+    }
+
+    .impact-content {
+      padding: var(--space-5);
+    }
+
+    .dimension-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-5);
+    }
+
+    .dimension-category {
+      padding: var(--space-4);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      position: relative;
+    }
+
+    .dimension-category::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+    }
+
+    .dimension-category.capital::before { background: var(--gold-primary); }
+    .dimension-category.growth::before { background: var(--accent-success); }
+    .dimension-category.human::before { background: var(--accent-teal); }
+
+    .category-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      margin-bottom: var(--space-4);
+    }
+
+    .category-icon {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    }
+
+    .dimension-category.capital .category-icon {
+      background: linear-gradient(135deg, rgba(212, 168, 75, 0.3) 0%, rgba(212, 168, 75, 0.15) 100%);
+    }
+
+    .dimension-category.growth .category-icon {
+      background: linear-gradient(135deg, rgba(77, 168, 77, 0.3) 0%, rgba(77, 168, 77, 0.15) 100%);
+    }
+
+    .dimension-category.human .category-icon {
+      background: linear-gradient(135deg, rgba(61, 139, 139, 0.3) 0%, rgba(61, 139, 139, 0.15) 100%);
+    }
+
+    .category-title {
+      font-family: var(--font-condensed);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+
+    .dimension-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    .dimension-item {
+      display: grid;
+      grid-template-columns: 80px 1fr 36px 16px;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .dimension-label {
+      font-family: var(--font-body);
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .dimension-bar-track {
+      height: 8px;
+      background: var(--bg-deep);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .dimension-bar-fill {
+      height: 100%;
+      transition: width 0.5s ease;
+    }
+
+    .dimension-category.capital .dimension-bar-fill {
+      background: var(--gold-primary);
+      box-shadow: 0 0 8px rgba(212, 168, 75, 0.4);
+    }
+
+    .dimension-category.growth .dimension-bar-fill {
+      background: var(--accent-success);
+      box-shadow: 0 0 8px rgba(77, 168, 77, 0.4);
+    }
+
+    .dimension-category.human .dimension-bar-fill {
+      background: var(--accent-teal);
+      box-shadow: 0 0 8px rgba(61, 139, 139, 0.4);
+    }
+
+    .dimension-value {
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-align: right;
+    }
+
+    .dimension-trend {
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .dimension-trend.up { color: var(--accent-success); }
+    .dimension-trend.down { color: var(--accent-danger); }
+    .dimension-trend.stable { color: var(--text-muted); }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       MAIN LAYOUT — Feed + Sidebar
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .main-layout {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: var(--space-6);
+      margin-top: var(--space-6);
+    }
+
+    /* Discovery Feed Cards */
+    .discovery-feed {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+
+    .discovery-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      overflow: hidden;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .discovery-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--type-color, var(--gold-primary)) 30%, var(--type-color, var(--gold-primary)) 70%, transparent);
+    }
+
+    .discovery-card:hover {
+      border-color: var(--border-medium);
+      box-shadow: var(--shadow-md);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: var(--space-4);
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .card-type {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .type-badge {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      padding: 4px 10px;
+      background: rgba(212, 168, 75, 0.1);
+      color: var(--type-color, var(--gold-primary));
+      border: 1px solid var(--type-color, var(--gold-dim));
+    }
+
+    .card-meta {
+      text-align: right;
+    }
+
+    .card-timestamp {
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    .card-source {
+      font-size: 10px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .card-body {
+      padding: var(--space-4);
+    }
+
+    .card-title {
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      color: var(--text-primary);
+      margin-bottom: var(--space-3);
+    }
+
+    .card-description {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: var(--space-4);
+    }
+
+    .card-context {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+    }
+
+    .context-tag {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      letter-spacing: 0.05em;
+      padding: 3px 10px;
+      background: var(--bg-elevated);
+      color: var(--text-tertiary);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-3) var(--space-4);
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .card-actions {
+      display: flex;
+      gap: var(--space-2);
+    }
+
+    .card-action {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: var(--space-2) var(--space-3);
+      border: 1px solid var(--border-light);
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .card-action:hover {
+      border-color: var(--gold-muted);
+      color: var(--gold-primary);
+    }
+
+    .card-action.primary {
+      background: linear-gradient(135deg, rgba(212, 168, 75, 0.2) 0%, rgba(212, 168, 75, 0.1) 100%);
+      border-color: var(--gold-muted);
+      color: var(--gold-primary);
+    }
+
+    .card-action.primary:hover {
+      background: var(--gold-primary);
+      color: var(--bg-void);
+    }
+
+    .card-confidence {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    .confidence-bar {
+      width: 60px;
+      height: 4px;
+      background: var(--bg-deep);
+    }
+
+    .confidence-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--gold-muted), var(--gold-primary));
+    }
+
+    /* Type colors */
+    .type-emergent { --type-color: var(--accent-success); }
+    .type-technical { --type-color: var(--gold-primary); }
+    .type-risk { --type-color: var(--accent-danger); }
+    .type-medical { --type-color: var(--accent-teal); }
+    .type-business { --type-color: var(--gold-bright); }
+
+    /* Sidebar */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+
+    .sidebar-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+    }
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-3) var(--space-4);
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .sidebar-title {
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--gold-muted);
+    }
+
+    .sidebar-content {
+      padding: var(--space-3) var(--space-4);
+    }
+
+    .trending-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-2);
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .trending-item:hover {
+      background: var(--bg-surface);
+    }
+
+    .trending-rank {
+      font-family: var(--font-display);
+      font-size: 11px;
+      color: var(--gold-muted);
+      width: 24px;
+    }
+
+    .trending-topic {
+      flex: 1;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .trending-momentum {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      color: var(--accent-success);
+    }
+
+    .thread-item {
+      padding: var(--space-3);
+      border: 1px solid var(--border-subtle);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      margin-bottom: var(--space-2);
+    }
+
+    .thread-item:hover {
+      border-color: var(--gold-dim);
+      background: var(--bg-surface);
+    }
+
+    .thread-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .thread-title {
+      font-size: 12px;
+      color: var(--text-primary);
+      margin-bottom: var(--space-2);
+    }
+
+    .thread-meta {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    .thread-status.active {
+      color: var(--accent-success);
+    }
+
+    /* Active Domains */
+    .domain-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-2);
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .domain-item:hover {
+      background: var(--bg-surface);
+    }
+
+    .domain-icon {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    }
+
+    .domain-name {
+      flex: 1;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .domain-count {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      color: var(--gold-muted);
+    }
+  </style>
+</head>
+<body class="deco-bg">
+  <main class="container">
+    <header class="page-header">
+      <h1 class="page-title">
+        <span class="deco-icon deco-icon-sunburst deco-icon-lg deco-icon-gold"></span>
+        Discovery Feed
+      </h1>
+    </header>
+
+    <!-- Minimap Widget -->
+    <section class="knowledge-minimap" id="minimap-widget">
+      <header class="minimap-header">
+        <h2 class="minimap-title">
+          <span class="deco-icon deco-icon-fan deco-icon-md deco-icon-gold"></span>
+          Knowledge Landscape
+        </h2>
+        <span class="minimap-action">
+          Click to explore
+          <span class="deco-icon deco-icon-chevron-up deco-icon-sm"></span>
+        </span>
+      </header>
+      <div class="minimap-content">
+        <div class="minimap-tree">
+          <svg viewBox="0 0 260 260">
+            <line class="minimap-line" x1="130" y1="130" x2="130" y2="39"/>
+            <line class="minimap-line" x1="130" y1="130" x2="208" y2="78"/>
+            <line class="minimap-line" x1="130" y1="130" x2="208" y2="182"/>
+            <line class="minimap-line" x1="130" y1="130" x2="130" y2="221"/>
+            <line class="minimap-line" x1="130" y1="130" x2="52" y2="182"/>
+            <line class="minimap-line" x1="130" y1="130" x2="52" y2="78"/>
+          </svg>
+          <div class="minimap-center">
+            <span class="deco-icon deco-icon-target deco-icon-sm deco-icon-gold"></span>
+          </div>
+          <div class="minimap-cluster active"></div>
+          <div class="minimap-cluster"></div>
+          <div class="minimap-cluster frontier"></div>
+          <div class="minimap-cluster"></div>
+          <div class="minimap-cluster"></div>
+          <div class="minimap-cluster frontier"></div>
+        </div>
+        <div class="minimap-stats">
+          <span><span class="minimap-stat-value">247</span> discoveries</span>
+          <span><span class="minimap-stat-value">6</span> domains</span>
+          <span><span class="minimap-stat-value">+23</span> this week</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Insight Flow Panel -->
+    <section class="insight-flow-panel">
+      <div class="flow-header">
+        <h2 class="flow-title">Insight Flow</h2>
+        <div class="flow-legend">
+          <div class="flow-legend-item">
+            <div class="flow-legend-bar high"></div>
+            <span>High Impact</span>
+          </div>
+          <div class="flow-legend-item">
+            <div class="flow-legend-bar medium"></div>
+            <span>Medium</span>
+          </div>
+          <div class="flow-legend-item">
+            <div class="flow-legend-bar low"></div>
+            <span>Low</span>
+          </div>
+        </div>
+      </div>
+      <div class="flow-container">
+        <div class="flow-columns">
+          <div class="flow-column">
+            <div class="flow-column-header">Sources</div>
+            <div class="flow-node" data-impact="high">
+              <div class="flow-node-title">Background Scan</div>
+              <div class="flow-node-meta">42 insights · +12 today</div>
+            </div>
+            <div class="flow-node" data-impact="medium">
+              <div class="flow-node-title">Project Analysis</div>
+              <div class="flow-node-meta">23 insights · +5 today</div>
+            </div>
+            <div class="flow-node" data-impact="low">
+              <div class="flow-node-title">Manual Research</div>
+              <div class="flow-node-meta">8 insights · +2 today</div>
+            </div>
+          </div>
+
+          <div class="flow-column">
+            <div class="flow-column-header">Classification</div>
+            <div class="flow-node" data-impact="high">
+              <div class="flow-node-title">Technical Discovery</div>
+              <div class="flow-node-meta">High actionability</div>
+            </div>
+            <div class="flow-node" data-impact="high">
+              <div class="flow-node-title">Emergent Pattern</div>
+              <div class="flow-node-meta">Cross-domain signal</div>
+            </div>
+            <div class="flow-node" data-impact="medium">
+              <div class="flow-node-title">Strategic Signal</div>
+              <div class="flow-node-meta">Market relevance</div>
+            </div>
+            <div class="flow-node" data-impact="low">
+              <div class="flow-node-title">Risk Indicator</div>
+              <div class="flow-node-meta">Preventive value</div>
+            </div>
+          </div>
+
+          <div class="flow-column">
+            <div class="flow-column-header">Validation</div>
+            <div class="flow-node" data-impact="high">
+              <div class="flow-node-title">High Confidence</div>
+              <div class="flow-node-meta">&gt;85% · 18 insights</div>
+            </div>
+            <div class="flow-node" data-impact="medium">
+              <div class="flow-node-title">Needs Verification</div>
+              <div class="flow-node-meta">60-85% · 31 insights</div>
+            </div>
+            <div class="flow-node" data-impact="low">
+              <div class="flow-node-title">Speculative</div>
+              <div class="flow-node-meta">&lt;60% · 24 insights</div>
+            </div>
+          </div>
+
+          <div class="flow-column">
+            <div class="flow-column-header">Outcomes</div>
+            <div class="flow-node" data-impact="high">
+              <div class="flow-node-title">Implemented</div>
+              <div class="flow-node-meta">12 shipped</div>
+            </div>
+            <div class="flow-node" data-impact="medium">
+              <div class="flow-node-title">Scheduled</div>
+              <div class="flow-node-meta">8 in backlog</div>
+            </div>
+            <div class="flow-node" data-impact="medium">
+              <div class="flow-node-title">Under Review</div>
+              <div class="flow-node-meta">15 evaluating</div>
+            </div>
+            <div class="flow-node" data-impact="low">
+              <div class="flow-node-title">Archived</div>
+              <div class="flow-node-meta">38 stored</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Impact Dimensions Panel -->
+    <section class="impact-panel">
+      <div class="impact-header">
+        <h2 class="impact-title">Impact Dimensions</h2>
+      </div>
+      <div class="impact-content">
+        <div class="dimension-grid">
+          <!-- Capital -->
+          <div class="dimension-category capital">
+            <div class="category-header">
+              <div class="category-icon">
+                <span class="deco-icon deco-icon-value deco-icon-sm deco-icon-gold"></span>
+              </div>
+              <span class="category-title">Capital</span>
+            </div>
+            <div class="dimension-list">
+              <div class="dimension-item">
+                <span class="dimension-label">Revenue</span>
+                <div class="dimension-bar-track">
+                  <div class="dimension-bar-fill" style="width: 68%;"></div>
+                </div>
+                <span class="dimension-value">$12k</span>
+                <span class="dimension-trend up">↑</span>
+              </div>
+              <div class="dimension-item">
+                <span class="dimension-label">Profit</span>
+                <div class="dimension-bar-track">
+                  <div class="dimension-bar-fill" style="width: 54%;"></div>
+                </div>
+                <span class="dimension-value">$4.2k</span>
+                <span class="dimension-trend up">↑</span>
+              </div>
+              <div class="dimension-item">
+                <span class="dimension-label">Leverage</span>
+                <div class="dimension-bar-track">
+                  <div class="dimension-bar-fill" style="width: 72%;"></div>
+                </div>
+                <span class="dimension-value">3.2x</span>
+                <span class="dimension-trend up">↑</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Growth -->
+          <div class="dimension-category growth">
+            <div class="category-header">
+              <div class="category-icon">
+                <span class="deco-icon deco-icon-growth deco-icon-sm deco-icon-success"></span>
+              </div>
+              <span class="category-title">Growth</span>
+            </div>
+            <div class="dimension-list">
+              <div class="dimension-item">
+                <span class="dimension-label">Speed</span>
+                <div class="dimension-bar-track">
+                  <div class="dimension-bar-fill" style="width: 82%;"></div>
+                </div>
+                <span class="dimension-value">+45%</span>
+                <span class="dimension-trend up">↑</span>
+              </div>
+              <div class="dimension-item">
+                <span class="dimension-label">Frontier</span>
+                <div class="dimension-bar-track">
+                  <div class="dimension-bar-fill" style="width: 67%;"></div>
+                </div>
+                <span class="dimension-value">67%</span>
+                <span class="dimension-trend up">↑</span>
+              </div>
+              <div class="dimension-item">
+                <span class="dimension-label">Capabilities</span>
+                <div class="dimension-bar-track">
+                  <div class="dimension-bar-fill" style="width: 78%;"></div>
+                </div>
+                <span class="dimension-value">+12</span>
+                <span class="dimension-trend up">↑</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Human -->
+          <div class="dimension-category human">
+            <div class="category-header">
+              <div class="category-icon">
+                <span class="deco-icon deco-icon-star deco-icon-sm" style="color: var(--accent-teal);"></span>
+              </div>
+              <span class="category-title">Human</span>
+            </div>
+            <div class="dimension-list">
+              <div class="dimension-item">
+                <span class="dimension-label">Creativity</span>
+                <div class="dimension-bar-track">
+                  <div class="dimension-bar-fill" style="width: 88%;"></div>
+                </div>
+                <span class="dimension-value">High</span>
+                <span class="dimension-trend up">↑</span>
+              </div>
+              <div class="dimension-item">
+                <span class="dimension-label">Curiosity</span>
+                <div class="dimension-bar-track">
+                  <div class="dimension-bar-fill" style="width: 91%;"></div>
+                </div>
+                <span class="dimension-value">Peak</span>
+                <span class="dimension-trend up">↑</span>
+              </div>
+              <div class="dimension-item">
+                <span class="dimension-label">Flow State</span>
+                <div class="dimension-bar-track">
+                  <div class="dimension-bar-fill" style="width: 68%;"></div>
+                </div>
+                <span class="dimension-value">3.2h</span>
+                <span class="dimension-trend stable">→</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Layout: Content Stream + Sidebar -->
+    <div class="main-layout">
+      <!-- Discovery Feed / Content Stream -->
+      <div class="discovery-feed">
+        <article class="discovery-card type-emergent">
+          <div class="card-header">
+            <div class="card-type">
+              <span class="deco-icon deco-icon-growth deco-icon-md deco-icon-success"></span>
+              <span class="type-badge">Emergent Pattern</span>
+            </div>
+            <div class="card-meta">
+              <div class="card-timestamp">12 min ago</div>
+              <div class="card-source">Agent Swarm Analysis</div>
+            </div>
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">Agents Self-Organizing Around Shared Context Pools</h3>
+            <p class="card-description">
+              Detected emergent coordination behavior: agents working on related tasks are spontaneously
+              forming clusters around shared knowledge repositories. Reduces redundant API calls by ~40%.
+            </p>
+            <div class="card-context">
+              <span class="context-tag">vibes-core</span>
+              <span class="context-tag">agent-coordination</span>
+              <span class="context-tag">performance</span>
+            </div>
+          </div>
+          <div class="card-footer">
+            <div class="card-actions">
+              <button class="card-action primary">Investigate</button>
+              <button class="card-action">Create Task</button>
+            </div>
+            <div class="card-confidence">
+              Confidence
+              <div class="confidence-bar"><div class="confidence-fill" style="width: 92%;"></div></div>
+              92%
+            </div>
+          </div>
+        </article>
+
+        <article class="discovery-card type-technical">
+          <div class="card-header">
+            <div class="card-type">
+              <span class="deco-icon deco-icon-sunburst deco-icon-md deco-icon-gold"></span>
+              <span class="type-badge">Technical</span>
+            </div>
+            <div class="card-meta">
+              <div class="card-timestamp">34 min ago</div>
+              <div class="card-source">Background Scan</div>
+            </div>
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">Arrow Flight RPC Could Replace Current gRPC Layer</h3>
+            <p class="card-description">
+              Apache Arrow Flight provides high-performance RPC optimized for columnar data transfer.
+              Could provide 10x throughput improvements for lakehouse architecture.
+            </p>
+            <div class="card-context">
+              <span class="context-tag">apache-arrow</span>
+              <span class="context-tag">performance</span>
+            </div>
+          </div>
+          <div class="card-footer">
+            <div class="card-actions">
+              <button class="card-action">Investigate</button>
+              <button class="card-action">Bookmark</button>
+            </div>
+            <div class="card-confidence">
+              Confidence
+              <div class="confidence-bar"><div class="confidence-fill" style="width: 78%;"></div></div>
+              78%
+            </div>
+          </div>
+        </article>
+
+        <article class="discovery-card type-medical">
+          <div class="card-header">
+            <div class="card-type">
+              <span class="deco-icon deco-icon-test deco-icon-md" style="color: var(--accent-teal);"></span>
+              <span class="type-badge">Discovery</span>
+            </div>
+            <div class="card-meta">
+              <div class="card-timestamp">1 hr ago</div>
+              <div class="card-source">Research Analysis</div>
+            </div>
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">Drug Interaction Pattern Discovered Across 10K Patient Records</h3>
+            <p class="card-description">
+              Cross-referencing patient data revealed previously unidentified interaction pattern between
+              common medications. Potential safety implications require clinical validation.
+            </p>
+            <div class="card-context">
+              <span class="context-tag">pharmacology</span>
+              <span class="context-tag">patient-safety</span>
+              <span class="context-tag">clinical-review</span>
+            </div>
+          </div>
+          <div class="card-footer">
+            <div class="card-actions">
+              <button class="card-action primary">Review</button>
+              <button class="card-action">Flag for Expert</button>
+            </div>
+            <div class="card-confidence">
+              Confidence
+              <div class="confidence-bar"><div class="confidence-fill" style="width: 85%;"></div></div>
+              85%
+            </div>
+          </div>
+        </article>
+
+        <article class="discovery-card type-business">
+          <div class="card-header">
+            <div class="card-type">
+              <span class="deco-icon deco-icon-value deco-icon-md deco-icon-gold"></span>
+              <span class="type-badge">Business Signal</span>
+            </div>
+            <div class="card-meta">
+              <div class="card-timestamp">2 hrs ago</div>
+              <div class="card-source">Market Analysis</div>
+            </div>
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">Sales Conversion Up 34% After AI-Suggested Pricing Change</h3>
+            <p class="card-description">
+              A/B testing confirms that the AI-recommended pricing tier restructure significantly improved
+              conversion rates without impacting average deal size. Revenue growth projected at +$120k/quarter.
+            </p>
+            <div class="card-context">
+              <span class="context-tag">pricing-strategy</span>
+              <span class="context-tag">conversion</span>
+              <span class="context-tag">revenue</span>
+            </div>
+          </div>
+          <div class="card-footer">
+            <div class="card-actions">
+              <button class="card-action primary">Apply Broadly</button>
+              <button class="card-action">Details</button>
+            </div>
+            <div class="card-confidence">
+              Confidence
+              <div class="confidence-bar"><div class="confidence-fill" style="width: 94%;"></div></div>
+              94%
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <!-- Trending -->
+        <div class="sidebar-panel">
+          <div class="sidebar-header">
+            <span class="sidebar-title">Trending</span>
+          </div>
+          <div class="sidebar-content">
+            <div class="trending-item">
+              <span class="trending-rank">#1</span>
+              <span class="trending-topic">Agent Coordination</span>
+              <span class="trending-momentum">↑ 45%</span>
+            </div>
+            <div class="trending-item">
+              <span class="trending-rank">#2</span>
+              <span class="trending-topic">Verification Artifacts</span>
+              <span class="trending-momentum">↑ 32%</span>
+            </div>
+            <div class="trending-item">
+              <span class="trending-rank">#3</span>
+              <span class="trending-topic">Cost Optimization</span>
+              <span class="trending-momentum">↑ 28%</span>
+            </div>
+            <div class="trending-item">
+              <span class="trending-rank">#4</span>
+              <span class="trending-topic">Real-time Sync</span>
+              <span class="trending-momentum">↑ 24%</span>
+            </div>
+            <div class="trending-item">
+              <span class="trending-rank">#5</span>
+              <span class="trending-topic">Event Sourcing</span>
+              <span class="trending-momentum">↑ 18%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Research Threads -->
+        <div class="sidebar-panel">
+          <div class="sidebar-header">
+            <span class="sidebar-title">Research Threads</span>
+          </div>
+          <div class="sidebar-content">
+            <div class="thread-item">
+              <div class="thread-title">How to scale agent swarms cost-effectively?</div>
+              <div class="thread-meta">
+                <span class="thread-status active">Active</span>
+                <span>42 discoveries</span>
+              </div>
+            </div>
+            <div class="thread-item">
+              <div class="thread-title">Best practices for verification artifact storage</div>
+              <div class="thread-meta">
+                <span class="thread-status active">Active</span>
+                <span>28 discoveries</span>
+              </div>
+            </div>
+            <div class="thread-item">
+              <div class="thread-title">Optimizing LLM inference latency</div>
+              <div class="thread-meta">
+                <span class="thread-status">Paused</span>
+                <span>15 discoveries</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Active Domains -->
+        <div class="sidebar-panel">
+          <div class="sidebar-header">
+            <span class="sidebar-title">Active Domains</span>
+          </div>
+          <div class="sidebar-content">
+            <div class="domain-item">
+              <div class="domain-icon">
+                <span class="deco-icon deco-icon-agent deco-icon-xs deco-icon-gold"></span>
+              </div>
+              <span class="domain-name">Technology</span>
+              <span class="domain-count">52 skills</span>
+            </div>
+            <div class="domain-item">
+              <div class="domain-icon">
+                <span class="deco-icon deco-icon-value deco-icon-xs deco-icon-gold"></span>
+              </div>
+              <span class="domain-name">Finance</span>
+              <span class="domain-count">38 skills</span>
+            </div>
+            <div class="domain-item">
+              <div class="domain-icon">
+                <span class="deco-icon deco-icon-test deco-icon-xs" style="color: var(--accent-teal);"></span>
+              </div>
+              <span class="domain-name">Science</span>
+              <span class="domain-count">43 skills</span>
+            </div>
+            <div class="domain-item">
+              <div class="domain-icon">
+                <span class="deco-icon deco-icon-growth deco-icon-xs deco-icon-success"></span>
+              </div>
+              <span class="domain-name">Health</span>
+              <span class="domain-count">31 skills</span>
+            </div>
+            <div class="domain-item">
+              <div class="domain-icon">
+                <span class="deco-icon deco-icon-goal deco-icon-xs deco-icon-gold"></span>
+              </div>
+              <span class="domain-name">Business</span>
+              <span class="domain-count">29 skills</span>
+            </div>
+            <div class="domain-item">
+              <div class="domain-icon">
+                <span class="deco-icon deco-icon-star deco-icon-xs" style="color: var(--accent-teal);"></span>
+              </div>
+              <span class="domain-name">Creative</span>
+              <span class="domain-count">24 skills</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <!-- Modal Backdrop -->
+  <div class="modal-backdrop" id="modal-backdrop"></div>
+
+  <!-- Modal Container -->
+  <div class="modal-container" id="modal-container">
+    <!-- Corner decorations -->
+    <div class="modal-corner top-left"></div>
+    <div class="modal-corner top-right"></div>
+    <div class="modal-corner bottom-left"></div>
+    <div class="modal-corner bottom-right"></div>
+
+    <header class="modal-header">
+      <h2 class="modal-title">
+        <span class="deco-icon deco-icon-fan deco-icon-md deco-icon-gold"></span>
+        Knowledge Landscape
+      </h2>
+
+      <nav class="modal-breadcrumb" id="breadcrumb">
+        <span class="breadcrumb-item active" data-level="root">All Knowledge</span>
+      </nav>
+
+      <div class="modal-controls">
+        <div class="zoom-controls">
+          <button class="zoom-btn" id="zoom-out">−</button>
+          <span class="zoom-level" id="zoom-level">80%</span>
+          <button class="zoom-btn" id="zoom-in">+</button>
+        </div>
+        <button class="close-btn" id="close-modal">Close</button>
+      </div>
+    </header>
+
+    <div class="viewport">
+      <!-- Texture overlay -->
+      <div class="viewport-texture"></div>
+
+      <div class="tree-container" data-zoom="overview" id="tree-container">
+        <div class="tree-root">
+
+          <!-- Connection Lines with Gradient -->
+          <div class="connections">
+            <svg viewBox="0 0 1000 1000">
+              <defs>
+                <linearGradient id="gold-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#8a6520" stop-opacity="0.3"/>
+                  <stop offset="50%" stop-color="#d4a84b" stop-opacity="0.6"/>
+                  <stop offset="100%" stop-color="#8a6520" stop-opacity="0.3"/>
+                </linearGradient>
+              </defs>
+              <!-- Main connections -->
+              <line class="connection-line strong" x1="500" y1="500" x2="500" y2="180"/>
+              <line class="connection-line strong" x1="500" y1="500" x2="740" y2="310"/>
+              <line class="connection-line strong" x1="500" y1="500" x2="740" y2="690"/>
+              <line class="connection-line strong" x1="500" y1="500" x2="500" y2="820"/>
+              <line class="connection-line strong" x1="500" y1="500" x2="260" y2="690"/>
+              <line class="connection-line strong" x1="500" y1="500" x2="260" y2="310"/>
+              <!-- Inter-cluster connections -->
+              <line class="connection-line" x1="500" y1="180" x2="740" y2="310"/>
+              <line class="connection-line" x1="740" y1="310" x2="740" y2="690"/>
+              <line class="connection-line" x1="260" y1="310" x2="260" y2="690"/>
+              <line class="connection-line" x1="260" y1="690" x2="500" y2="820"/>
+              <line class="connection-line" x1="500" y1="820" x2="740" y2="690"/>
+            </svg>
+          </div>
+
+          <!-- Center Node -->
+          <div class="center-node" id="center-node">
+            <span class="center-node-icon">
+              <span class="deco-icon deco-icon-target deco-icon-xl deco-icon-gold"></span>
+            </span>
+            <span class="center-node-label">Your Knowledge</span>
+            <span class="center-node-count">247 discoveries</span>
+          </div>
+
+          <!-- Cluster: Finance -->
+          <div class="cluster size-lg active" style="top: 18%; left: 50%;" data-cluster="finance">
+            <div class="cluster-frame">
+              <span class="cluster-icon">
+                <span class="deco-icon deco-icon-value deco-icon-lg deco-icon-gold"></span>
+              </span>
+              <span class="cluster-label">Finance</span>
+              <div class="cluster-stats">
+                <span><span class="cluster-stat-value">38</span> skills</span>
+                <span><span class="cluster-stat-value">+5</span> new</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cluster: Health -->
+          <div class="cluster size-md" style="top: 31%; left: 74%;" data-cluster="health">
+            <div class="cluster-frame">
+              <span class="cluster-icon">
+                <span class="deco-icon deco-icon-growth deco-icon-lg deco-icon-gold"></span>
+              </span>
+              <span class="cluster-label">Health</span>
+              <div class="cluster-stats">
+                <span><span class="cluster-stat-value">31</span> skills</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cluster: Creative -->
+          <div class="cluster size-sm frontier" style="top: 69%; left: 74%;" data-cluster="creative">
+            <div class="cluster-frame">
+              <span class="cluster-icon">
+                <span class="deco-icon deco-icon-star deco-icon-lg" style="color: var(--accent-teal);"></span>
+              </span>
+              <span class="cluster-label">Creative</span>
+              <div class="cluster-stats">
+                <span><span class="cluster-stat-value">24</span> skills</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cluster: Technology -->
+          <div class="cluster size-lg" style="top: 82%; left: 50%;" data-cluster="technology">
+            <div class="cluster-frame">
+              <span class="cluster-icon">
+                <span class="deco-icon deco-icon-agent deco-icon-lg deco-icon-gold"></span>
+              </span>
+              <span class="cluster-label">Technology</span>
+              <div class="cluster-stats">
+                <span><span class="cluster-stat-value">52</span> skills</span>
+                <span><span class="cluster-stat-value">+8</span> new</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cluster: Business -->
+          <div class="cluster size-sm" style="top: 69%; left: 26%;" data-cluster="business">
+            <div class="cluster-frame">
+              <span class="cluster-icon">
+                <span class="deco-icon deco-icon-goal deco-icon-lg deco-icon-gold"></span>
+              </span>
+              <span class="cluster-label">Business</span>
+              <div class="cluster-stats">
+                <span><span class="cluster-stat-value">29</span> skills</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cluster: Science -->
+          <div class="cluster size-md frontier" style="top: 31%; left: 26%;" data-cluster="science">
+            <div class="cluster-frame">
+              <span class="cluster-icon">
+                <span class="deco-icon deco-icon-test deco-icon-lg" style="color: var(--accent-teal);"></span>
+              </span>
+              <span class="cluster-label">Science</span>
+              <div class="cluster-stats">
+                <span><span class="cluster-stat-value">43</span> skills</span>
+                <span><span class="cluster-stat-value">+12</span> new</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Skills Layer -->
+          <div class="skills-layer" id="skills-layer">
+            <!-- Finance skills -->
+            <div class="skill-node mastered" style="top: 14%; left: 44%;" data-cluster="finance" data-skill="options">
+              <div class="skill-dot">
+                <span class="deco-icon deco-icon-value deco-icon-md deco-icon-gold"></span>
+              </div>
+              <span class="skill-label">Options Trading</span>
+            </div>
+            <div class="skill-node mastered" style="top: 10%; left: 54%;" data-cluster="finance" data-skill="dcf">
+              <div class="skill-dot">
+                <span class="deco-icon deco-icon-doc deco-icon-md deco-icon-gold"></span>
+              </div>
+              <span class="skill-label">DCF Analysis</span>
+            </div>
+            <div class="skill-node learning" style="top: 20%; left: 60%;" data-cluster="finance" data-skill="fixed-income">
+              <div class="skill-dot">
+                <span class="deco-icon deco-icon-arch deco-icon-md" style="color: var(--accent-teal);"></span>
+              </div>
+              <span class="skill-label">Fixed Income</span>
+            </div>
+            <div class="skill-node discovered" style="top: 16%; left: 36%;" data-cluster="finance" data-skill="factor">
+              <div class="skill-dot">
+                <span class="deco-icon deco-icon-bolt deco-icon-md deco-icon-success"></span>
+              </div>
+              <span class="skill-label">Factor Investing</span>
+            </div>
+
+            <!-- Health skills -->
+            <div class="skill-node mastered" style="top: 28%; left: 70%;" data-cluster="health" data-skill="neuro">
+              <div class="skill-dot">
+                <span class="deco-icon deco-icon-sunburst deco-icon-md deco-icon-gold"></span>
+              </div>
+              <span class="skill-label">Neuroscience</span>
+            </div>
+            <div class="skill-node learning" style="top: 34%; left: 80%;" data-cluster="health" data-skill="pharma">
+              <div class="skill-dot">
+                <span class="deco-icon deco-icon-test deco-icon-md" style="color: var(--accent-teal);"></span>
+              </div>
+              <span class="skill-label">Pharmacology</span>
+            </div>
+            <div class="skill-node discovered" style="top: 36%; left: 72%;" data-cluster="health" data-skill="circadian">
+              <div class="skill-dot">
+                <span class="deco-icon deco-icon-time deco-icon-md deco-icon-success"></span>
+              </div>
+              <span class="skill-label">Circadian Biology</span>
+            </div>
+
+            <!-- Technology skills -->
+            <div class="skill-node mastered" style="top: 79%; left: 44%;" data-cluster="technology" data-skill="rust">
+              <div class="skill-dot">
+                <span class="deco-icon deco-icon-session deco-icon-md deco-icon-gold"></span>
+              </div>
+              <span class="skill-label">Rust</span>
+            </div>
+            <div class="skill-node mastered" style="top: 86%; left: 54%;" data-cluster="technology" data-skill="python">
+              <div class="skill-dot">
+                <span class="deco-icon deco-icon-doc deco-icon-md deco-icon-gold"></span>
+              </div>
+              <span class="skill-label">Python</span>
+            </div>
+            <div class="skill-node learning" style="top: 82%; left: 60%;" data-cluster="technology" data-skill="llm">
+              <div class="skill-dot">
+                <span class="deco-icon deco-icon-agent deco-icon-md" style="color: var(--accent-teal);"></span>
+              </div>
+              <span class="skill-label">LLM Fine-tuning</span>
+            </div>
+            <div class="skill-node discovered" style="top: 84%; left: 38%;" data-cluster="technology" data-skill="agents">
+              <div class="skill-dot">
+                <span class="deco-icon deco-icon-link deco-icon-md deco-icon-success"></span>
+              </div>
+              <span class="skill-label">Agent Patterns</span>
+            </div>
+
+            <!-- Science skills -->
+            <div class="skill-node mastered" style="top: 28%; left: 30%;" data-cluster="science" data-skill="biochem">
+              <div class="skill-dot">
+                <span class="deco-icon deco-icon-test deco-icon-md deco-icon-gold"></span>
+              </div>
+              <span class="skill-label">Biochemistry</span>
+            </div>
+            <div class="skill-node learning" style="top: 34%; left: 20%;" data-cluster="science" data-skill="physics">
+              <div class="skill-dot">
+                <span class="deco-icon deco-icon-target deco-icon-md" style="color: var(--accent-teal);"></span>
+              </div>
+              <span class="skill-label">Particle Physics</span>
+            </div>
+            <div class="skill-node discovered" style="top: 36%; left: 28%;" data-cluster="science" data-skill="complexity">
+              <div class="skill-dot">
+                <span class="deco-icon deco-icon-fan deco-icon-md deco-icon-success"></span>
+              </div>
+              <span class="skill-label">Complexity Theory</span>
+            </div>
+
+            <!-- Business skills -->
+            <div class="skill-node mastered" style="top: 66%; left: 30%;" data-cluster="business" data-skill="growth">
+              <div class="skill-dot">
+                <span class="deco-icon deco-icon-velocity deco-icon-md deco-icon-gold"></span>
+              </div>
+              <span class="skill-label">Growth Strategy</span>
+            </div>
+            <div class="skill-node learning" style="top: 72%; left: 20%;" data-cluster="business" data-skill="gtm">
+              <div class="skill-dot">
+                <span class="deco-icon deco-icon-goal deco-icon-md" style="color: var(--accent-teal);"></span>
+              </div>
+              <span class="skill-label">GTM Planning</span>
+            </div>
+
+            <!-- Creative skills -->
+            <div class="skill-node mastered" style="top: 66%; left: 70%;" data-cluster="creative" data-skill="music">
+              <div class="skill-dot">
+                <span class="deco-icon deco-icon-star deco-icon-md deco-icon-gold"></span>
+              </div>
+              <span class="skill-label">Music Theory</span>
+            </div>
+            <div class="skill-node frontier" style="top: 72%; left: 80%;" data-cluster="creative" data-skill="screenplay">
+              <div class="skill-dot">
+                <span class="deco-icon deco-icon-doc deco-icon-md deco-icon-muted"></span>
+              </div>
+              <span class="skill-label">Screenwriting</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Legend -->
+      <div class="legend">
+        <div class="legend-title">Status</div>
+        <div class="legend-item">
+          <span class="legend-dot mastered"></span>
+          <span>Mastered</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot learning"></span>
+          <span>Learning</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot frontier"></span>
+          <span>Frontier</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot discovered"></span>
+          <span>AI Discovered</span>
+        </div>
+      </div>
+
+      <!-- Detail Panel -->
+      <div class="detail-panel" id="detail-panel">
+        <div class="detail-header">
+          <div class="detail-icon">
+            <span class="deco-icon deco-icon-value deco-icon-md deco-icon-gold" id="detail-deco-icon"></span>
+          </div>
+          <div>
+            <div class="detail-title" id="detail-title">OPTIONS TRADING</div>
+            <div class="detail-subtitle" id="detail-subtitle">Finance / Derivatives</div>
+          </div>
+        </div>
+        <div class="detail-stats">
+          <div class="detail-stat">
+            <span class="detail-stat-label">Mastery</span>
+            <span class="detail-stat-value" id="detail-mastery">Advanced</span>
+          </div>
+          <div class="detail-stat">
+            <span class="detail-stat-label">Time Invested</span>
+            <span class="detail-stat-value" id="detail-time">280h</span>
+          </div>
+          <div class="detail-stat">
+            <span class="detail-stat-label">Last Active</span>
+            <span class="detail-stat-value" id="detail-active">Yesterday</span>
+          </div>
+          <div class="detail-stat">
+            <span class="detail-stat-label">Applications</span>
+            <span class="detail-stat-value" id="detail-apps">12</span>
+          </div>
+        </div>
+        <div class="detail-connections" id="detail-connections">
+          <span class="detail-connections-label">Connects to:</span> DCF Analysis, Fixed Income, Factor Investing
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ═══════════════════════════════════════════════════════════════════════════
+    // MODAL CONTROL
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    var minimapWidget = document.getElementById('minimap-widget');
+    var modalBackdrop = document.getElementById('modal-backdrop');
+    var modalContainer = document.getElementById('modal-container');
+    var closeModalBtn = document.getElementById('close-modal');
+
+    function openModal() {
+      modalBackdrop.classList.add('visible');
+      // Slight delay for backdrop to appear first
+      setTimeout(function() {
+        modalContainer.classList.add('visible');
+      }, 50);
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      modalContainer.classList.remove('visible');
+      setTimeout(function() {
+        modalBackdrop.classList.remove('visible');
+      }, 200);
+      document.body.style.overflow = '';
+    }
+
+    minimapWidget.addEventListener('click', openModal);
+    modalBackdrop.addEventListener('click', closeModal);
+    closeModalBtn.addEventListener('click', closeModal);
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeModal();
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // TREE INTERACTION
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    var treeContainer = document.getElementById('tree-container');
+    var breadcrumb = document.getElementById('breadcrumb');
+    var zoomLevelEl = document.getElementById('zoom-level');
+    var detailPanel = document.getElementById('detail-panel');
+    var skillsLayer = document.getElementById('skills-layer');
+    var viewport = document.querySelector('.viewport');
+
+    var scale = 0.8;
+    var panX = 0;
+    var panY = 0;
+    var isPanning = false;
+    var startX = 0;
+    var startY = 0;
+    var startPanX = 0;
+    var startPanY = 0;
+    var currentCluster = null;
+
+    var MIN_SCALE = 0.4;
+    var MAX_SCALE = 3.0;
+    var ZOOM_SENSITIVITY = 0.002;
+
+    function applyTransform() {
+      treeContainer.style.transform = 'translate(' + panX + 'px, ' + panY + 'px) scale(' + scale + ')';
+    }
+
+    function updateZoomDisplay() {
+      zoomLevelEl.textContent = Math.round(scale * 100) + '%';
+    }
+
+    function updateBreadcrumb(path) {
+      while (breadcrumb.firstChild) {
+        breadcrumb.removeChild(breadcrumb.firstChild);
+      }
+
+      path.forEach(function(item, i) {
+        if (i > 0) {
+          var sep = document.createElement('span');
+          sep.className = 'breadcrumb-sep';
+          sep.textContent = '›';
+          breadcrumb.appendChild(sep);
+        }
+
+        var crumb = document.createElement('span');
+        crumb.className = 'breadcrumb-item' + (i === path.length - 1 ? ' active' : '');
+        crumb.dataset.level = item.level;
+        crumb.textContent = item.label;
+
+        if (i < path.length - 1) {
+          crumb.addEventListener('click', function() {
+            if (this.dataset.level === 'root') zoomToOverview();
+          });
+        }
+
+        breadcrumb.appendChild(crumb);
+      });
+    }
+
+    function zoomToOverview() {
+      currentCluster = null;
+      treeContainer.classList.add('animating');
+      scale = 0.8;
+      panX = 0;
+      panY = 0;
+      applyTransform();
+      updateZoomDisplay();
+      updateBreadcrumb([{ level: 'root', label: 'All Knowledge' }]);
+      skillsLayer.classList.remove('visible');
+      treeContainer.dataset.zoom = 'overview';
+      setTimeout(function() { treeContainer.classList.remove('animating'); }, 500);
+    }
+
+    function zoomToCluster(clusterName, clusterEl) {
+      currentCluster = clusterName;
+      treeContainer.classList.add('animating');
+
+      var rect = clusterEl.getBoundingClientRect();
+      var viewportRect = viewport.getBoundingClientRect();
+
+      scale = 1.6;
+      panX = viewportRect.width / 2 - (rect.left + rect.width / 2 - viewportRect.left);
+      panY = viewportRect.height / 2 - (rect.top + rect.height / 2 - viewportRect.top);
+
+      applyTransform();
+      updateZoomDisplay();
+
+      var label = clusterName.charAt(0).toUpperCase() + clusterName.slice(1);
+      updateBreadcrumb([
+        { level: 'root', label: 'All Knowledge' },
+        { level: 'cluster', label: label }
+      ]);
+
+      skillsLayer.classList.add('visible');
+      treeContainer.dataset.zoom = 'cluster';
+      setTimeout(function() { treeContainer.classList.remove('animating'); }, 500);
+    }
+
+    function zoomAtPoint(mouseX, mouseY, delta) {
+      var viewportRect = viewport.getBoundingClientRect();
+      var mx = mouseX - viewportRect.left;
+      var my = mouseY - viewportRect.top;
+
+      var zoomFactor = 1 - delta * ZOOM_SENSITIVITY;
+      var newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale * zoomFactor));
+
+      if (newScale === scale) return;
+
+      var contentX = (mx - viewportRect.width / 2 - panX) / scale;
+      var contentY = (my - viewportRect.height / 2 - panY) / scale;
+
+      scale = newScale;
+      panX = mx - viewportRect.width / 2 - contentX * scale;
+      panY = my - viewportRect.height / 2 - contentY * scale;
+
+      applyTransform();
+      updateZoomDisplay();
+
+      if (scale > 1.0) {
+        skillsLayer.classList.add('visible');
+        treeContainer.dataset.zoom = 'cluster';
+      } else {
+        skillsLayer.classList.remove('visible');
+        treeContainer.dataset.zoom = 'overview';
+      }
+    }
+
+    // Pan events
+    viewport.addEventListener('mousedown', function(e) {
+      if (e.target.closest('.cluster') || e.target.closest('.skill-node') || e.target.closest('.center-node')) return;
+      isPanning = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      startPanX = panX;
+      startPanY = panY;
+      treeContainer.classList.add('dragging');
+    });
+
+    document.addEventListener('mousemove', function(e) {
+      if (!isPanning) return;
+      panX = startPanX + (e.clientX - startX);
+      panY = startPanY + (e.clientY - startY);
+      applyTransform();
+    });
+
+    document.addEventListener('mouseup', function() {
+      isPanning = false;
+      treeContainer.classList.remove('dragging');
+    });
+
+    viewport.addEventListener('wheel', function(e) {
+      e.preventDefault();
+      zoomAtPoint(e.clientX, e.clientY, e.deltaY);
+    }, { passive: false });
+
+    // Cluster clicks
+    document.querySelectorAll('.cluster').forEach(function(cluster) {
+      cluster.addEventListener('click', function(e) {
+        e.stopPropagation();
+        zoomToCluster(this.dataset.cluster, this);
+      });
+    });
+
+    document.getElementById('center-node').addEventListener('click', function(e) {
+      e.stopPropagation();
+      zoomToOverview();
+    });
+
+    // Zoom buttons
+    document.getElementById('zoom-in').addEventListener('click', function() {
+      var viewportRect = viewport.getBoundingClientRect();
+      zoomAtPoint(viewportRect.left + viewportRect.width / 2, viewportRect.top + viewportRect.height / 2, -100);
+    });
+
+    document.getElementById('zoom-out').addEventListener('click', function() {
+      var viewportRect = viewport.getBoundingClientRect();
+      zoomAtPoint(viewportRect.left + viewportRect.width / 2, viewportRect.top + viewportRect.height / 2, 100);
+    });
+
+    // Skill hover with detail panel - using safe DOM methods
+    var skillData = {
+      options: { title: 'Options Trading', subtitle: 'Finance / Derivatives', mastery: 'Advanced', time: '280h', active: 'Yesterday', apps: '12', connections: 'DCF Analysis, Fixed Income, Factor Investing' },
+      dcf: { title: 'DCF Analysis', subtitle: 'Finance / Valuation', mastery: 'Expert', time: '340h', active: '3 days ago', apps: '18', connections: 'Options Trading, Fixed Income' },
+      'fixed-income': { title: 'Fixed Income', subtitle: 'Finance / Bonds', mastery: 'Intermediate', time: '120h', active: 'Today', apps: '5', connections: 'Options Trading, DCF Analysis' },
+      factor: { title: 'Factor Investing', subtitle: 'Finance / Quant', mastery: 'Beginner', time: '40h', active: '1 week ago', apps: '3', connections: 'Options Trading, Machine Learning' },
+      neuro: { title: 'Neuroscience', subtitle: 'Health / Brain', mastery: 'Advanced', time: '220h', active: '2 days ago', apps: '8', connections: 'Pharmacology, Circadian Biology' },
+      pharma: { title: 'Pharmacology', subtitle: 'Health / Medicine', mastery: 'Intermediate', time: '90h', active: 'Today', apps: '4', connections: 'Neuroscience, Biochemistry' },
+      circadian: { title: 'Circadian Biology', subtitle: 'Health / Chronobiology', mastery: 'Beginner', time: '25h', active: '5 days ago', apps: '2', connections: 'Neuroscience, Sleep Science' },
+      rust: { title: 'Rust', subtitle: 'Technology / Systems', mastery: 'Expert', time: '480h', active: 'Today', apps: '24', connections: 'Python, Agent Patterns, WASM' },
+      python: { title: 'Python', subtitle: 'Technology / General', mastery: 'Expert', time: '520h', active: 'Today', apps: '32', connections: 'Rust, LLM Fine-tuning, Data Science' },
+      llm: { title: 'LLM Fine-tuning', subtitle: 'Technology / AI', mastery: 'Intermediate', time: '85h', active: 'Yesterday', apps: '6', connections: 'Python, Agent Patterns' },
+      agents: { title: 'Agent Patterns', subtitle: 'Technology / AI', mastery: 'Beginner', time: '35h', active: '1 week ago', apps: '3', connections: 'Rust, LLM Fine-tuning' },
+      biochem: { title: 'Biochemistry', subtitle: 'Science / Chemistry', mastery: 'Advanced', time: '260h', active: '4 days ago', apps: '10', connections: 'Pharmacology, Complexity Theory' },
+      physics: { title: 'Particle Physics', subtitle: 'Science / Physics', mastery: 'Intermediate', time: '110h', active: '1 week ago', apps: '4', connections: 'Complexity Theory, Quantum Mechanics' },
+      complexity: { title: 'Complexity Theory', subtitle: 'Science / Systems', mastery: 'Beginner', time: '30h', active: '2 weeks ago', apps: '2', connections: 'Biochemistry, Agent Patterns' },
+      growth: { title: 'Growth Strategy', subtitle: 'Business / Strategy', mastery: 'Advanced', time: '180h', active: '3 days ago', apps: '14', connections: 'GTM Planning, Product Management' },
+      gtm: { title: 'GTM Planning', subtitle: 'Business / Marketing', mastery: 'Intermediate', time: '75h', active: 'Today', apps: '5', connections: 'Growth Strategy, Sales' },
+      music: { title: 'Music Theory', subtitle: 'Creative / Audio', mastery: 'Advanced', time: '320h', active: '1 week ago', apps: '8', connections: 'Composition, Sound Design' },
+      screenplay: { title: 'Screenwriting', subtitle: 'Creative / Writing', mastery: 'Frontier', time: '0h', active: 'Never', apps: '0', connections: 'Narrative Structure, Film Analysis' }
+    };
+
+    function updateDetailPanel(data) {
+      document.getElementById('detail-title').textContent = data.title;
+      document.getElementById('detail-subtitle').textContent = data.subtitle;
+      document.getElementById('detail-mastery').textContent = data.mastery;
+      document.getElementById('detail-time').textContent = data.time;
+      document.getElementById('detail-active').textContent = data.active;
+      document.getElementById('detail-apps').textContent = data.apps;
+
+      // Safe DOM manipulation for connections
+      var connectionsEl = document.getElementById('detail-connections');
+      while (connectionsEl.firstChild) {
+        connectionsEl.removeChild(connectionsEl.firstChild);
+      }
+      var label = document.createElement('span');
+      label.className = 'detail-connections-label';
+      label.textContent = 'Connects to: ';
+      connectionsEl.appendChild(label);
+      connectionsEl.appendChild(document.createTextNode(data.connections));
+    }
+
+    document.querySelectorAll('.skill-node').forEach(function(node) {
+      node.addEventListener('mouseenter', function() {
+        var skill = this.dataset.skill;
+        var data = skillData[skill];
+        if (data) {
+          updateDetailPanel(data);
+        }
+        detailPanel.classList.add('visible');
+      });
+      node.addEventListener('mouseleave', function() {
+        detailPanel.classList.remove('visible');
+      });
+    });
+
+    // Initial state
+    applyTransform();
+    updateZoomDisplay();
+    updateBreadcrumb([{ level: 'root', label: 'All Knowledge' }]);
+  </script>
+</body>
+</html>

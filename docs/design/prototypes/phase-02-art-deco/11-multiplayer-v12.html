@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Knowledge Universe — V12 Multiplayer</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    /* ═══════════════════════════════════════════════════════════════════════════
+       V12 — MULTIPLAYER KNOWLEDGE SHARING
+
+       Philosophy: Knowledge is social. Learning happens between people.
+       The skill tree isn't just YOUR map — it's a shared territory.
+
+       This prototype demonstrates:
+       - Remote cursors with identity
+       - Presence indicators on skills
+       - Team capability overlay
+       - Follow/jump mechanism
+       - Contextual chat
+       - Action menu for knowledge primitives
+       ═══════════════════════════════════════════════════════════════════════════ */
+
+    :root {
+      /* Participant colors */
+      --p1-color: #e8c872; /* You - gold */
+      --p2-color: #64d8cb; /* Alice - teal */
+      --p3-color: #c892e8; /* Bob - purple */
+      --p4-color: #e89272; /* Carol - coral */
+      --p5-color: #72a8e8; /* Team AI - blue */
+
+      /* Team overlay */
+      --coverage-high: rgba(212, 168, 75, 0.4);
+      --coverage-medium: rgba(61, 139, 139, 0.3);
+      --coverage-low: rgba(100, 100, 100, 0.2);
+      --coverage-gap: rgba(200, 60, 60, 0.15);
+    }
+
+    body {
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       ZOOM VIEWPORT
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .zoom-viewport {
+      position: fixed;
+      inset: 0;
+      background: var(--bg-void);
+      overflow: hidden;
+    }
+
+    .atmosphere {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .atmosphere::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 30% 40%, rgba(212, 168, 75, 0.03) 0%, transparent 50%),
+        radial-gradient(ellipse 50% 40% at 70% 60%, rgba(61, 139, 139, 0.02) 0%, transparent 50%);
+    }
+
+    .zoom-container {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      transform-origin: center center;
+      cursor: grab;
+      z-index: 2;
+    }
+
+    .zoom-container.dragging {
+      cursor: grabbing;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       SKILL NETWORK (Domain View)
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .skill-network {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 1400px;
+      height: 1000px;
+    }
+
+    /* Connection lines */
+    .connections-svg {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .connection-line {
+      stroke: url(#goldGradient);
+      stroke-width: 2;
+      fill: none;
+      opacity: 0.6;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       SKILL NODES
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .skill-node {
+      position: absolute;
+      width: 140px;
+      height: 140px;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+
+    .skill-node:hover {
+      transform: translate(-50%, -50%) scale(1.08);
+      z-index: 100;
+    }
+
+    .skill-frame {
+      width: 100%;
+      height: 100%;
+      background: var(--bg-card);
+      border: 2px solid var(--border-medium);
+      clip-path: polygon(
+        15% 0%, 85% 0%, 100% 15%, 100% 85%,
+        85% 100%, 15% 100%, 0% 85%, 0% 15%
+      );
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      transition: all 0.3s ease;
+    }
+
+    .skill-node:hover .skill-frame {
+      border-color: var(--gold-primary);
+      box-shadow: 0 0 20px rgba(212, 168, 75, 0.3);
+    }
+
+    /* Investment levels */
+    .skill-node.invested-high .skill-frame {
+      border-color: var(--gold-primary);
+      background: linear-gradient(135deg, rgba(212, 168, 75, 0.15), var(--bg-card));
+    }
+
+    .skill-node.invested-medium .skill-frame {
+      border-color: var(--accent-teal);
+      opacity: 0.85;
+    }
+
+    .skill-node.invested-low .skill-frame {
+      border-color: var(--border-light);
+      opacity: 0.6;
+    }
+
+    .skill-node.gap .skill-frame {
+      border-style: dashed;
+      border-color: rgba(200, 80, 80, 0.5);
+      opacity: 0.5;
+    }
+
+    .skill-icon {
+      font-size: 2rem;
+      margin-bottom: 6px;
+    }
+
+    .skill-name {
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      color: var(--text-primary);
+      text-align: center;
+      letter-spacing: 0.05em;
+    }
+
+    .skill-meta {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       PRESENCE INDICATORS (Who's viewing this skill)
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .presence-stack {
+      position: absolute;
+      bottom: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: -6px;
+    }
+
+    .presence-avatar {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid var(--bg-void);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.6rem;
+      font-weight: 600;
+      color: var(--bg-void);
+      margin-left: -6px;
+      transition: transform 0.2s ease;
+    }
+
+    .presence-avatar:first-child {
+      margin-left: 0;
+    }
+
+    .presence-avatar:hover {
+      transform: scale(1.3);
+      z-index: 10;
+    }
+
+    .presence-avatar.p1 { background: var(--p1-color); }
+    .presence-avatar.p2 { background: var(--p2-color); }
+    .presence-avatar.p3 { background: var(--p3-color); }
+    .presence-avatar.p4 { background: var(--p4-color); }
+    .presence-avatar.p5 { background: var(--p5-color); }
+
+    /* Expertise badge */
+    .expertise-badge {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      width: 20px;
+      height: 20px;
+      background: var(--gold-primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.6rem;
+      color: var(--bg-void);
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       REMOTE CURSORS
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .remote-cursor {
+      position: absolute;
+      pointer-events: none;
+      z-index: 1000;
+      transition: all 0.1s linear;
+    }
+
+    .cursor-pointer {
+      width: 0;
+      height: 0;
+      border-left: 8px solid transparent;
+      border-right: 8px solid transparent;
+      border-bottom: 16px solid currentColor;
+      transform: rotate(-45deg);
+      transform-origin: top left;
+    }
+
+    .cursor-label {
+      position: absolute;
+      top: 14px;
+      left: 10px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--bg-void);
+      white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    .remote-cursor.p2 { color: var(--p2-color); }
+    .remote-cursor.p2 .cursor-label { background: var(--p2-color); }
+
+    .remote-cursor.p3 { color: var(--p3-color); }
+    .remote-cursor.p3 .cursor-label { background: var(--p3-color); }
+
+    .remote-cursor.p4 { color: var(--p4-color); }
+    .remote-cursor.p4 .cursor-label { background: var(--p4-color); }
+
+    /* Cursor trail */
+    .cursor-trail {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      opacity: 0;
+      pointer-events: none;
+      animation: trailFade 1s ease-out forwards;
+    }
+
+    @keyframes trailFade {
+      0% { opacity: 0.6; transform: scale(1); }
+      100% { opacity: 0; transform: scale(0.3); }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       PARTICIPANTS SIDEBAR
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .participants-panel {
+      position: fixed;
+      top: 80px;
+      right: 20px;
+      width: 220px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      border-radius: 8px;
+      padding: 16px;
+      z-index: 500;
+    }
+
+    .panel-header {
+      font-family: var(--font-display);
+      font-size: 0.8rem;
+      color: var(--gold-primary);
+      letter-spacing: 0.1em;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .participant {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .participant:hover {
+      opacity: 0.8;
+    }
+
+    .participant-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      color: var(--bg-void);
+      font-size: 0.8rem;
+    }
+
+    .participant-info {
+      flex: 1;
+    }
+
+    .participant-name {
+      font-size: 0.85rem;
+      color: var(--text-primary);
+    }
+
+    .participant-status {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    .participant-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .action-btn {
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      border: 1px solid var(--border-light);
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      transition: all 0.2s;
+    }
+
+    .action-btn:hover {
+      border-color: var(--gold-primary);
+      color: var(--gold-primary);
+    }
+
+    .action-btn.active {
+      background: var(--gold-primary);
+      border-color: var(--gold-primary);
+      color: var(--bg-void);
+    }
+
+    /* Online indicator */
+    .online-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4ade80;
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      border: 2px solid var(--bg-card);
+    }
+
+    .participant-avatar {
+      position: relative;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       TEAM OVERLAY TOGGLE
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .overlay-controls {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      z-index: 500;
+    }
+
+    .overlay-btn {
+      padding: 8px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      border-radius: 6px;
+      color: var(--text-secondary);
+      font-family: var(--font-display);
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .overlay-btn:hover {
+      border-color: var(--gold-primary);
+      color: var(--text-primary);
+    }
+
+    .overlay-btn.active {
+      background: var(--gold-primary);
+      border-color: var(--gold-primary);
+      color: var(--bg-void);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       TEAM CAPABILITY OVERLAY
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .team-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .team-overlay.visible {
+      opacity: 1;
+    }
+
+    .coverage-glow {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(40px);
+    }
+
+    .coverage-glow.high {
+      background: var(--coverage-high);
+    }
+
+    .coverage-glow.medium {
+      background: var(--coverage-medium);
+    }
+
+    .coverage-glow.gap {
+      background: var(--coverage-gap);
+      border: 2px dashed rgba(200, 80, 80, 0.4);
+    }
+
+    /* Coverage label */
+    .coverage-label {
+      position: absolute;
+      padding: 4px 10px;
+      background: rgba(0,0,0,0.7);
+      border-radius: 4px;
+      font-size: 0.7rem;
+      color: var(--text-primary);
+      white-space: nowrap;
+      pointer-events: auto;
+    }
+
+    .coverage-label.gap {
+      border: 1px dashed rgba(200, 80, 80, 0.6);
+      color: #e88888;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       CONTEXTUAL CHAT
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .chat-bubble {
+      position: absolute;
+      max-width: 200px;
+      padding: 10px 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      border-radius: 12px;
+      border-bottom-left-radius: 4px;
+      font-size: 0.8rem;
+      color: var(--text-primary);
+      z-index: 200;
+      animation: bubbleIn 0.3s ease;
+    }
+
+    @keyframes bubbleIn {
+      from { opacity: 0; transform: translateY(10px) scale(0.9); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .chat-bubble::before {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 10px;
+      width: 12px;
+      height: 12px;
+      background: var(--bg-card);
+      border-right: 1px solid var(--border-medium);
+      border-bottom: 1px solid var(--border-medium);
+      transform: rotate(45deg);
+    }
+
+    .chat-bubble .sender {
+      font-size: 0.7rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .chat-bubble.p2 .sender { color: var(--p2-color); }
+    .chat-bubble.p3 .sender { color: var(--p3-color); }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       ACTION MENU (Right-click on skills)
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .action-menu {
+      position: fixed;
+      min-width: 180px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      border-radius: 8px;
+      padding: 6px 0;
+      z-index: 1000;
+      display: none;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    .action-menu.visible {
+      display: block;
+      animation: menuIn 0.15s ease;
+    }
+
+    @keyframes menuIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .menu-section {
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .menu-section:last-child {
+      border-bottom: none;
+    }
+
+    .menu-section-title {
+      padding: 4px 14px;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .menu-item {
+      padding: 8px 14px;
+      font-size: 0.8rem;
+      color: var(--text-primary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: background 0.15s;
+    }
+
+    .menu-item:hover {
+      background: rgba(212, 168, 75, 0.1);
+    }
+
+    .menu-item .icon {
+      width: 16px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+
+    .menu-item.destructive {
+      color: #e88888;
+    }
+
+    .menu-item.destructive .icon {
+      color: #e88888;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       FOLLOW MODE INDICATOR
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .follow-indicator {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px 20px;
+      background: var(--bg-card);
+      border: 2px solid var(--p2-color);
+      border-radius: 24px;
+      display: none;
+      align-items: center;
+      gap: 12px;
+      z-index: 500;
+    }
+
+    .follow-indicator.visible {
+      display: flex;
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+
+    .follow-indicator .avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      color: var(--bg-void);
+    }
+
+    .follow-indicator .text {
+      font-size: 0.85rem;
+      color: var(--text-primary);
+    }
+
+    .follow-indicator .stop-btn {
+      padding: 4px 12px;
+      background: transparent;
+      border: 1px solid var(--border-light);
+      border-radius: 4px;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .follow-indicator .stop-btn:hover {
+      border-color: #e88888;
+      color: #e88888;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       LEGEND
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .legend {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      border-radius: 8px;
+      padding: 14px;
+      z-index: 500;
+    }
+
+    .legend-title {
+      font-family: var(--font-display);
+      font-size: 0.7rem;
+      color: var(--gold-primary);
+      letter-spacing: 0.1em;
+      margin-bottom: 10px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .legend-swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .legend-swatch.high { background: var(--gold-primary); }
+    .legend-swatch.medium { background: var(--accent-teal); }
+    .legend-swatch.low { background: var(--text-muted); opacity: 0.5; }
+    .legend-swatch.gap {
+      background: transparent;
+      border: 2px dashed rgba(200, 80, 80, 0.6);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       COMPARISON MODE (Side-by-side)
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .comparison-panel {
+      position: fixed;
+      top: 80px;
+      left: 20px;
+      width: 280px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      border-radius: 8px;
+      padding: 16px;
+      z-index: 500;
+      display: none;
+    }
+
+    .comparison-panel.visible {
+      display: block;
+    }
+
+    .comparison-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .comparison-title {
+      font-family: var(--font-display);
+      font-size: 0.8rem;
+      color: var(--gold-primary);
+      letter-spacing: 0.1em;
+    }
+
+    .close-btn {
+      width: 24px;
+      height: 24px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1.2rem;
+    }
+
+    .comparison-users {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 16px;
+    }
+
+    .comparison-user {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .comparison-user .avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      color: var(--bg-void);
+      font-size: 0.75rem;
+    }
+
+    .comparison-user .name {
+      font-size: 0.8rem;
+      color: var(--text-primary);
+    }
+
+    .comparison-skill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .comparison-skill:last-child {
+      border-bottom: none;
+    }
+
+    .skill-label {
+      flex: 1;
+      font-size: 0.8rem;
+      color: var(--text-primary);
+    }
+
+    .skill-bars {
+      display: flex;
+      gap: 4px;
+    }
+
+    .skill-bar {
+      width: 60px;
+      height: 8px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .skill-bar .fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.4s ease;
+    }
+
+    .skill-bar.p1 .fill { background: var(--p1-color); }
+    .skill-bar.p2 .fill { background: var(--p2-color); }
+  </style>
+</head>
+<body>
+  <!-- ═══════════════════════════════════════════════════════════════════════════
+       OVERLAY CONTROLS
+       ═══════════════════════════════════════════════════════════════════════════ -->
+  <div class="overlay-controls">
+    <button class="overlay-btn active" data-view="personal">MY VIEW</button>
+    <button class="overlay-btn" data-view="team">TEAM OVERLAY</button>
+    <button class="overlay-btn" data-view="compare">COMPARE</button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════
+       MAIN VIEWPORT
+       ═══════════════════════════════════════════════════════════════════════════ -->
+  <div class="zoom-viewport">
+    <div class="atmosphere"></div>
+
+    <div class="zoom-container" id="zoomContainer">
+      <div class="skill-network">
+        <!-- Connection lines -->
+        <svg class="connections-svg" viewBox="0 0 1400 1000">
+          <defs>
+            <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="rgba(212, 168, 75, 0.8)" />
+              <stop offset="100%" stop-color="rgba(212, 168, 75, 0.2)" />
+            </linearGradient>
+          </defs>
+          <!-- Center to nodes -->
+          <line class="connection-line" x1="700" y1="500" x2="400" y2="200" />
+          <line class="connection-line" x1="700" y1="500" x2="1000" y2="200" />
+          <line class="connection-line" x1="700" y1="500" x2="250" y2="500" />
+          <line class="connection-line" x1="700" y1="500" x2="1150" y2="500" />
+          <line class="connection-line" x1="700" y1="500" x2="400" y2="800" />
+          <line class="connection-line" x1="700" y1="500" x2="1000" y2="800" />
+          <!-- Cross connections -->
+          <line class="connection-line" x1="400" y1="200" x2="250" y2="500" style="opacity: 0.3" />
+          <line class="connection-line" x1="1000" y1="200" x2="1150" y2="500" style="opacity: 0.3" />
+        </svg>
+
+        <!-- Team Overlay (hidden by default) -->
+        <div class="team-overlay" id="teamOverlay">
+          <!-- Coverage glows -->
+          <div class="coverage-glow high" style="top: 120px; left: 320px; width: 200px; height: 200px;"></div>
+          <div class="coverage-glow high" style="top: 380px; left: 80px; width: 180px; height: 180px;"></div>
+          <div class="coverage-glow medium" style="top: 100px; left: 900px; width: 160px; height: 160px;"></div>
+          <div class="coverage-glow medium" style="top: 700px; left: 900px; width: 150px; height: 150px;"></div>
+          <div class="coverage-glow gap" style="top: 680px; left: 300px; width: 180px; height: 180px;"></div>
+
+          <!-- Coverage labels -->
+          <div class="coverage-label" style="top: 80px; left: 350px;">4 experts</div>
+          <div class="coverage-label" style="top: 340px; left: 120px;">3 experts</div>
+          <div class="coverage-label" style="top: 70px; left: 950px;">2 learning</div>
+          <div class="coverage-label gap" style="top: 650px; left: 340px;">⚠ TEAM GAP</div>
+        </div>
+
+        <!-- Center hub -->
+        <div class="skill-node invested-high" style="left: 700px; top: 500px;">
+          <div class="skill-frame">
+            <div class="skill-icon">☀</div>
+            <div class="skill-name">Technology</div>
+            <div class="skill-meta">Hub • 12 skills</div>
+          </div>
+          <div class="presence-stack">
+            <div class="presence-avatar p1" title="You">Y</div>
+            <div class="presence-avatar p2" title="Alice">A</div>
+          </div>
+        </div>
+
+        <!-- Python -->
+        <div class="skill-node invested-high" style="left: 400px; top: 200px;" data-skill="python">
+          <div class="skill-frame">
+            <div class="skill-icon">🐍</div>
+            <div class="skill-name">Python</div>
+            <div class="skill-meta">Expert • 47 concepts</div>
+          </div>
+          <div class="expertise-badge">★</div>
+          <div class="presence-stack">
+            <div class="presence-avatar p1" title="You">Y</div>
+            <div class="presence-avatar p2" title="Alice">A</div>
+            <div class="presence-avatar p3" title="Bob">B</div>
+            <div class="presence-avatar p5" title="Claude">C</div>
+          </div>
+        </div>
+
+        <!-- React -->
+        <div class="skill-node invested-high" style="left: 1000px; top: 200px;" data-skill="react">
+          <div class="skill-frame">
+            <div class="skill-icon">⚛</div>
+            <div class="skill-name">React</div>
+            <div class="skill-meta">Expert • 38 concepts</div>
+          </div>
+          <div class="expertise-badge">★</div>
+          <div class="presence-stack">
+            <div class="presence-avatar p1" title="You">Y</div>
+            <div class="presence-avatar p4" title="Carol">C</div>
+          </div>
+        </div>
+
+        <!-- Rust -->
+        <div class="skill-node invested-medium" style="left: 250px; top: 500px;" data-skill="rust">
+          <div class="skill-frame">
+            <div class="skill-icon">🦀</div>
+            <div class="skill-name">Rust</div>
+            <div class="skill-meta">Learning • 24 concepts</div>
+          </div>
+          <div class="presence-stack">
+            <div class="presence-avatar p1" title="You">Y</div>
+            <div class="presence-avatar p2" title="Alice">A</div>
+          </div>
+        </div>
+
+        <!-- TypeScript -->
+        <div class="skill-node invested-medium" style="left: 1150px; top: 500px;" data-skill="typescript">
+          <div class="skill-frame">
+            <div class="skill-icon">TS</div>
+            <div class="skill-name">TypeScript</div>
+            <div class="skill-meta">Learning • 31 concepts</div>
+          </div>
+          <div class="presence-stack">
+            <div class="presence-avatar p3" title="Bob">B</div>
+            <div class="presence-avatar p4" title="Carol">C</div>
+          </div>
+        </div>
+
+        <!-- Security (GAP) -->
+        <div class="skill-node gap" style="left: 400px; top: 800px;" data-skill="security">
+          <div class="skill-frame">
+            <div class="skill-icon">🔒</div>
+            <div class="skill-name">Security</div>
+            <div class="skill-meta">Team Gap • 0 experts</div>
+          </div>
+        </div>
+
+        <!-- Machine Learning -->
+        <div class="skill-node invested-low" style="left: 1000px; top: 800px;" data-skill="ml">
+          <div class="skill-frame">
+            <div class="skill-icon">🧠</div>
+            <div class="skill-name">ML</div>
+            <div class="skill-meta">Frontier • 15 concepts</div>
+          </div>
+          <div class="presence-stack">
+            <div class="presence-avatar p5" title="Claude">C</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Remote Cursors -->
+    <div class="remote-cursor p2" id="cursor-alice" style="left: 450px; top: 220px;">
+      <div class="cursor-pointer"></div>
+      <div class="cursor-label">Alice</div>
+    </div>
+
+    <div class="remote-cursor p3" id="cursor-bob" style="left: 1050px; top: 250px;">
+      <div class="cursor-pointer"></div>
+      <div class="cursor-label">Bob</div>
+    </div>
+
+    <!-- Chat Bubbles -->
+    <div class="chat-bubble p2" style="left: 480px; top: 140px;">
+      <div class="sender">Alice</div>
+      This pattern is really elegant!
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════
+       PARTICIPANTS PANEL
+       ═══════════════════════════════════════════════════════════════════════════ -->
+  <div class="participants-panel">
+    <div class="panel-header">PARTICIPANTS</div>
+
+    <div class="participant" data-user="you">
+      <div class="participant-avatar" style="background: var(--p1-color);">
+        Y
+        <div class="online-dot"></div>
+      </div>
+      <div class="participant-info">
+        <div class="participant-name">You</div>
+        <div class="participant-status">Viewing Python</div>
+      </div>
+    </div>
+
+    <div class="participant" data-user="alice">
+      <div class="participant-avatar" style="background: var(--p2-color);">
+        A
+        <div class="online-dot"></div>
+      </div>
+      <div class="participant-info">
+        <div class="participant-name">Alice</div>
+        <div class="participant-status">Viewing Python</div>
+      </div>
+      <div class="participant-actions">
+        <button class="action-btn" title="Follow" data-action="follow">👁</button>
+        <button class="action-btn" title="Jump" data-action="jump">↗</button>
+      </div>
+    </div>
+
+    <div class="participant" data-user="bob">
+      <div class="participant-avatar" style="background: var(--p3-color);">
+        B
+        <div class="online-dot"></div>
+      </div>
+      <div class="participant-info">
+        <div class="participant-name">Bob</div>
+        <div class="participant-status">Viewing React</div>
+      </div>
+      <div class="participant-actions">
+        <button class="action-btn" title="Follow" data-action="follow">👁</button>
+        <button class="action-btn" title="Jump" data-action="jump">↗</button>
+      </div>
+    </div>
+
+    <div class="participant" data-user="carol">
+      <div class="participant-avatar" style="background: var(--p4-color);">
+        C
+        <div class="online-dot"></div>
+      </div>
+      <div class="participant-info">
+        <div class="participant-name">Carol</div>
+        <div class="participant-status">Viewing TypeScript</div>
+      </div>
+      <div class="participant-actions">
+        <button class="action-btn" title="Follow" data-action="follow">👁</button>
+        <button class="action-btn" title="Jump" data-action="jump">↗</button>
+      </div>
+    </div>
+
+    <div class="participant" data-user="claude">
+      <div class="participant-avatar" style="background: var(--p5-color);">
+        🤖
+      </div>
+      <div class="participant-info">
+        <div class="participant-name">Claude (AI)</div>
+        <div class="participant-status">Team Assistant</div>
+      </div>
+      <div class="participant-actions">
+        <button class="action-btn" title="Ask" data-action="ask">?</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════
+       COMPARISON PANEL
+       ═══════════════════════════════════════════════════════════════════════════ -->
+  <div class="comparison-panel" id="comparisonPanel">
+    <div class="comparison-header">
+      <div class="comparison-title">SKILL COMPARISON</div>
+      <button class="close-btn" id="closeComparison">×</button>
+    </div>
+
+    <div class="comparison-users">
+      <div class="comparison-user">
+        <div class="avatar" style="background: var(--p1-color);">Y</div>
+        <div class="name">You</div>
+      </div>
+      <div style="color: var(--text-muted);">vs</div>
+      <div class="comparison-user">
+        <div class="avatar" style="background: var(--p2-color);">A</div>
+        <div class="name">Alice</div>
+      </div>
+    </div>
+
+    <div class="comparison-skill">
+      <div class="skill-label">Python</div>
+      <div class="skill-bars">
+        <div class="skill-bar p1"><div class="fill" style="width: 85%;"></div></div>
+        <div class="skill-bar p2"><div class="fill" style="width: 90%;"></div></div>
+      </div>
+    </div>
+
+    <div class="comparison-skill">
+      <div class="skill-label">React</div>
+      <div class="skill-bars">
+        <div class="skill-bar p1"><div class="fill" style="width: 75%;"></div></div>
+        <div class="skill-bar p2"><div class="fill" style="width: 40%;"></div></div>
+      </div>
+    </div>
+
+    <div class="comparison-skill">
+      <div class="skill-label">Rust</div>
+      <div class="skill-bars">
+        <div class="skill-bar p1"><div class="fill" style="width: 45%;"></div></div>
+        <div class="skill-bar p2"><div class="fill" style="width: 60%;"></div></div>
+      </div>
+    </div>
+
+    <div class="comparison-skill">
+      <div class="skill-label">TypeScript</div>
+      <div class="skill-bars">
+        <div class="skill-bar p1"><div class="fill" style="width: 55%;"></div></div>
+        <div class="skill-bar p2"><div class="fill" style="width: 30%;"></div></div>
+      </div>
+    </div>
+
+    <div class="comparison-skill">
+      <div class="skill-label">Security</div>
+      <div class="skill-bars">
+        <div class="skill-bar p1"><div class="fill" style="width: 15%;"></div></div>
+        <div class="skill-bar p2"><div class="fill" style="width: 20%;"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════
+       FOLLOW MODE INDICATOR
+       ═══════════════════════════════════════════════════════════════════════════ -->
+  <div class="follow-indicator" id="followIndicator">
+    <div class="avatar" style="background: var(--p2-color);">A</div>
+    <div class="text">Following <strong>Alice</strong></div>
+    <button class="stop-btn" id="stopFollow">Stop</button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════
+       ACTION MENU
+       ═══════════════════════════════════════════════════════════════════════════ -->
+  <div class="action-menu" id="actionMenu">
+    <div class="menu-section">
+      <div class="menu-section-title">Learn</div>
+      <div class="menu-item" data-action="request-teaching">
+        <span class="icon">🎓</span>
+        Request Teaching
+      </div>
+      <div class="menu-item" data-action="mark-goal">
+        <span class="icon">🎯</span>
+        Mark as Goal
+      </div>
+    </div>
+    <div class="menu-section">
+      <div class="menu-section-title">Share</div>
+      <div class="menu-item" data-action="share-path">
+        <span class="icon">🛤</span>
+        Share My Path
+      </div>
+      <div class="menu-item" data-action="recommend">
+        <span class="icon">💡</span>
+        Recommend to Team
+      </div>
+    </div>
+    <div class="menu-section">
+      <div class="menu-section-title">Team</div>
+      <div class="menu-item" data-action="mark-gap">
+        <span class="icon">⚠</span>
+        Mark as Team Gap
+      </div>
+      <div class="menu-item" data-action="propose-group">
+        <span class="icon">👥</span>
+        Propose Study Group
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════
+       LEGEND
+       ═══════════════════════════════════════════════════════════════════════════ -->
+  <div class="legend">
+    <div class="legend-title">INVESTMENT LEVEL</div>
+    <div class="legend-item">
+      <div class="legend-swatch high"></div>
+      Expert
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch medium"></div>
+      Learning
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch low"></div>
+      Frontier
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch gap"></div>
+      Team Gap
+    </div>
+  </div>
+
+  <script>
+    // ═══════════════════════════════════════════════════════════════════════════
+    // REMOTE CURSOR SIMULATION
+    // ═══════════════════════════════════════════════════════════════════════════
+    const cursorAlice = document.getElementById('cursor-alice');
+    const cursorBob = document.getElementById('cursor-bob');
+
+    // Simulate cursor movements
+    function animateCursor(cursor, paths) {
+      let pathIndex = 0;
+
+      function moveToNext() {
+        const path = paths[pathIndex];
+        cursor.style.left = path.x + 'px';
+        cursor.style.top = path.y + 'px';
+
+        pathIndex = (pathIndex + 1) % paths.length;
+        setTimeout(moveToNext, 2000 + Math.random() * 2000);
+      }
+
+      moveToNext();
+    }
+
+    // Alice explores Python area
+    animateCursor(cursorAlice, [
+      { x: 450, y: 220 },
+      { x: 380, y: 180 },
+      { x: 420, y: 250 },
+      { x: 350, y: 200 },
+      { x: 290, y: 480 },
+      { x: 320, y: 520 },
+    ]);
+
+    // Bob explores React area
+    animateCursor(cursorBob, [
+      { x: 1050, y: 250 },
+      { x: 980, y: 180 },
+      { x: 1100, y: 220 },
+      { x: 1150, y: 480 },
+      { x: 1100, y: 520 },
+    ]);
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // OVERLAY CONTROLS
+    // ═══════════════════════════════════════════════════════════════════════════
+    const overlayBtns = document.querySelectorAll('.overlay-btn');
+    const teamOverlay = document.getElementById('teamOverlay');
+    const comparisonPanel = document.getElementById('comparisonPanel');
+
+    overlayBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        overlayBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        const view = btn.dataset.view;
+
+        if (view === 'team') {
+          teamOverlay.classList.add('visible');
+          comparisonPanel.classList.remove('visible');
+        } else if (view === 'compare') {
+          teamOverlay.classList.remove('visible');
+          comparisonPanel.classList.add('visible');
+        } else {
+          teamOverlay.classList.remove('visible');
+          comparisonPanel.classList.remove('visible');
+        }
+      });
+    });
+
+    document.getElementById('closeComparison').addEventListener('click', () => {
+      comparisonPanel.classList.remove('visible');
+      overlayBtns.forEach(b => b.classList.remove('active'));
+      document.querySelector('[data-view="personal"]').classList.add('active');
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // FOLLOW MODE
+    // ═══════════════════════════════════════════════════════════════════════════
+    const followIndicator = document.getElementById('followIndicator');
+    let isFollowing = false;
+
+    document.querySelectorAll('[data-action="follow"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        btn.classList.toggle('active');
+        isFollowing = btn.classList.contains('active');
+        followIndicator.classList.toggle('visible', isFollowing);
+      });
+    });
+
+    document.getElementById('stopFollow').addEventListener('click', () => {
+      isFollowing = false;
+      followIndicator.classList.remove('visible');
+      document.querySelectorAll('[data-action="follow"]').forEach(b => b.classList.remove('active'));
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // ACTION MENU (Right-click on skills)
+    // ═══════════════════════════════════════════════════════════════════════════
+    const actionMenu = document.getElementById('actionMenu');
+    let selectedSkill = null;
+
+    document.querySelectorAll('.skill-node').forEach(node => {
+      node.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        selectedSkill = node.dataset.skill;
+
+        actionMenu.style.left = e.clientX + 'px';
+        actionMenu.style.top = e.clientY + 'px';
+        actionMenu.classList.add('visible');
+      });
+    });
+
+    document.addEventListener('click', () => {
+      actionMenu.classList.remove('visible');
+    });
+
+    actionMenu.querySelectorAll('.menu-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const action = item.dataset.action;
+        console.log(`Action: ${action} on skill: ${selectedSkill}`);
+        actionMenu.classList.remove('visible');
+
+        // Could show toasts or trigger further UI here
+      });
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // BASIC PAN (for exploration)
+    // ═══════════════════════════════════════════════════════════════════════════
+    const container = document.getElementById('zoomContainer');
+    let isPanning = false;
+    let startX, startY, scrollLeft, scrollTop;
+    let panX = 0, panY = 0;
+
+    container.addEventListener('mousedown', (e) => {
+      if (e.target.closest('.skill-node')) return;
+      isPanning = true;
+      container.classList.add('dragging');
+      startX = e.clientX;
+      startY = e.clientY;
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isPanning) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      panX += dx;
+      panY += dy;
+      container.style.transform = `translate(${panX}px, ${panY}px)`;
+      startX = e.clientX;
+      startY = e.clientY;
+    });
+
+    document.addEventListener('mouseup', () => {
+      isPanning = false;
+      container.classList.remove('dragging');
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // PRESENCE HOVER DETAILS
+    // ═══════════════════════════════════════════════════════════════════════════
+    document.querySelectorAll('.presence-avatar').forEach(avatar => {
+      avatar.addEventListener('mouseenter', () => {
+        avatar.style.transform = 'scale(1.4)';
+        avatar.style.zIndex = '100';
+      });
+
+      avatar.addEventListener('mouseleave', () => {
+        avatar.style.transform = '';
+        avatar.style.zIndex = '';
+      });
+    });
+  </script>
+</body>
+</html>

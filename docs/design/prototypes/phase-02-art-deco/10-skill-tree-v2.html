@@ -1,0 +1,1451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Knowledge Landscape — Art Deco Command</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    /* ═══════════════════════════════════════════════════════════════════════════
+       PAGE LAYOUT
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .container {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: var(--space-6);
+    }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--space-6);
+      padding-bottom: var(--space-4);
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .page-title {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 400;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       MINIMAP WIDGET — Collapsed View on Main Page
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .knowledge-minimap {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      position: relative;
+      cursor: pointer;
+      transition: all var(--transition-base);
+      overflow: hidden;
+    }
+
+    .knowledge-minimap::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);
+    }
+
+    .knowledge-minimap:hover {
+      border-color: var(--gold-muted);
+      box-shadow: var(--shadow-md), var(--glow-gold);
+    }
+
+    .minimap-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-4) var(--space-5);
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .minimap-title {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .minimap-action {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .minimap-content {
+      position: relative;
+      height: 280px;
+      background: var(--bg-deep);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Mini radial tree preview */
+    .minimap-tree {
+      position: relative;
+      width: 240px;
+      height: 240px;
+    }
+
+    .minimap-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 32px;
+      height: 32px;
+      background: var(--bg-elevated);
+      border: 2px solid var(--gold-primary);
+      border-radius: 50%;
+      box-shadow: var(--glow-gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .minimap-cluster {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-medium);
+      transform: translate(-50%, -50%) rotate(45deg);
+      transition: all 0.3s ease;
+    }
+
+    .minimap-cluster.active {
+      border-color: var(--gold-primary);
+      box-shadow: var(--glow-gold);
+    }
+
+    .minimap-cluster.frontier {
+      border-color: var(--accent-teal);
+      box-shadow: var(--glow-teal);
+    }
+
+    /* Cluster positions */
+    .minimap-cluster:nth-child(2) { top: 18%; left: 50%; }
+    .minimap-cluster:nth-child(3) { top: 35%; left: 78%; }
+    .minimap-cluster:nth-child(4) { top: 65%; left: 78%; }
+    .minimap-cluster:nth-child(5) { top: 82%; left: 50%; }
+    .minimap-cluster:nth-child(6) { top: 65%; left: 22%; }
+    .minimap-cluster:nth-child(7) { top: 35%; left: 22%; }
+
+    /* Connection lines */
+    .minimap-tree svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .minimap-line {
+      stroke: var(--gold-dim);
+      stroke-width: 1;
+      opacity: 0.5;
+    }
+
+    .minimap-stats {
+      position: absolute;
+      bottom: var(--space-4);
+      left: var(--space-5);
+      right: var(--space-5);
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      color: var(--text-tertiary);
+    }
+
+    .minimap-stat-value {
+      color: var(--gold-primary);
+      font-weight: 600;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       MODAL — Full Knowledge Landscape
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(7, 9, 13, 0.95);
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.4s ease;
+    }
+
+    .modal-backdrop.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-container {
+      position: fixed;
+      inset: var(--space-6);
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      z-index: 1001;
+      display: flex;
+      flex-direction: column;
+      transform: scale(0.95);
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .modal-container.visible {
+      transform: scale(1);
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-4) var(--space-6);
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .modal-title {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .modal-breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-family: var(--font-body);
+      font-size: 13px;
+      color: var(--text-tertiary);
+    }
+
+    .breadcrumb-item {
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: color 0.2s ease;
+    }
+
+    .breadcrumb-item:hover {
+      color: var(--gold-primary);
+    }
+
+    .breadcrumb-item.active {
+      color: var(--gold-primary);
+      cursor: default;
+    }
+
+    .breadcrumb-sep {
+      color: var(--gold-dim);
+    }
+
+    .modal-controls {
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+    }
+
+    .zoom-controls {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .zoom-btn {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-light);
+      color: var(--gold-primary);
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .zoom-btn:hover {
+      background: var(--gold-subtle);
+      border-color: var(--gold-muted);
+    }
+
+    .zoom-level {
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      color: var(--text-tertiary);
+      min-width: 45px;
+      text-align: center;
+    }
+
+    .close-btn {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 6px 12px;
+      background: transparent;
+      border: 1px solid var(--border-light);
+      color: var(--text-tertiary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .close-btn:hover {
+      background: rgba(199, 85, 85, 0.1);
+      border-color: var(--accent-danger);
+      color: var(--accent-danger);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       VIEWPORT — Tree Container
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .viewport {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      background: var(--bg-deep);
+    }
+
+    .tree-container {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform-origin: center center;
+      cursor: grab;
+    }
+
+    .tree-container.dragging {
+      cursor: grabbing;
+    }
+
+    .tree-container.animating {
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       RADIAL TREE
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .tree-root {
+      position: relative;
+      width: 900px;
+      height: 900px;
+    }
+
+    /* Connection Lines */
+    .connections {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .connections svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .connection-line {
+      stroke: var(--gold-dim);
+      stroke-width: 1;
+      fill: none;
+      opacity: 0.4;
+    }
+
+    .connection-line.strong {
+      stroke: var(--gold-muted);
+      stroke-width: 2;
+      opacity: 0.6;
+    }
+
+    /* Center Node */
+    .center-node {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 140px;
+      height: 140px;
+      background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
+      border: 2px solid var(--gold-primary);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--glow-gold-bright);
+      z-index: 10;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .center-node:hover {
+      transform: translate(-50%, -50%) scale(1.05);
+    }
+
+    .center-node-icon {
+      margin-bottom: var(--space-2);
+    }
+
+    .center-node-label {
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+      text-align: center;
+    }
+
+    .center-node-count {
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-top: 2px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       CLUSTER NODES
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .cluster {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .cluster-frame {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-5);
+      background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
+      border: 1px solid var(--border-medium);
+      transition: all 0.3s ease;
+      clip-path: polygon(
+        25% 0%, 75% 0%,
+        100% 25%, 100% 75%,
+        75% 100%, 25% 100%,
+        0% 75%, 0% 25%
+      );
+    }
+
+    .cluster:hover .cluster-frame {
+      border-color: var(--gold-primary);
+      background: var(--bg-surface);
+      box-shadow: var(--glow-gold);
+    }
+
+    .cluster-icon {
+      margin-bottom: var(--space-2);
+    }
+
+    .cluster-label {
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-primary);
+      text-align: center;
+    }
+
+    .cluster-stats {
+      display: flex;
+      gap: var(--space-3);
+      margin-top: var(--space-2);
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    .cluster-stat-value {
+      color: var(--gold-muted);
+      font-weight: 600;
+    }
+
+    /* Cluster sizes */
+    .cluster.size-lg .cluster-frame { width: 150px; height: 150px; }
+    .cluster.size-md .cluster-frame { width: 130px; height: 130px; }
+    .cluster.size-sm .cluster-frame { width: 110px; height: 110px; }
+
+    /* Cluster states */
+    .cluster.active .cluster-frame {
+      border-color: var(--gold-muted);
+      box-shadow: var(--glow-gold);
+    }
+
+    .cluster.frontier .cluster-frame {
+      border-color: var(--accent-teal-muted);
+      box-shadow: var(--glow-teal);
+    }
+
+    .cluster.frontier .cluster-label {
+      color: var(--accent-teal);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       SKILL NODES
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .skills-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+
+    .skills-layer.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .skill-node {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .skill-dot {
+      width: 52px;
+      height: 52px;
+      background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
+      border: 2px solid var(--border-medium);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+
+    .skill-node:hover .skill-dot {
+      border-color: var(--gold-primary);
+      box-shadow: var(--glow-gold);
+      transform: scale(1.1);
+    }
+
+    .skill-label {
+      margin-top: var(--space-2);
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      text-align: center;
+      max-width: 80px;
+      text-transform: uppercase;
+      transition: color 0.3s ease;
+    }
+
+    .skill-node:hover .skill-label {
+      color: var(--gold-primary);
+    }
+
+    /* Skill states */
+    .skill-node.mastered .skill-dot {
+      border-color: var(--gold-primary);
+      background: linear-gradient(135deg, var(--gold-subtle) 0%, var(--bg-elevated) 100%);
+    }
+
+    .skill-node.learning .skill-dot {
+      border-color: var(--accent-teal);
+      box-shadow: var(--glow-teal);
+    }
+
+    .skill-node.frontier .skill-dot {
+      border-style: dashed;
+      border-color: var(--accent-teal-muted);
+      opacity: 0.7;
+    }
+
+    .skill-node.frontier .skill-label {
+      color: var(--text-tertiary);
+    }
+
+    .skill-node.discovered .skill-dot {
+      border-color: var(--accent-success);
+      box-shadow: 0 0 15px rgba(77, 168, 77, 0.4);
+    }
+
+    .skill-node.discovered::after {
+      content: 'AI';
+      position: absolute;
+      top: -4px;
+      right: 8px;
+      font-family: var(--font-condensed);
+      font-size: 8px;
+      font-weight: 700;
+      padding: 2px 4px;
+      background: var(--accent-success);
+      color: var(--bg-void);
+      letter-spacing: 0.05em;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       LEGEND & DETAIL PANEL
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .legend {
+      position: absolute;
+      top: var(--space-4);
+      right: var(--space-4);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      padding: var(--space-3);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      z-index: 50;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      letter-spacing: 0.05em;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+    }
+
+    .legend-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid;
+      background: var(--bg-elevated);
+    }
+
+    .legend-dot.mastered {
+      border-color: var(--gold-primary);
+      background: var(--gold-subtle);
+    }
+
+    .legend-dot.learning {
+      border-color: var(--accent-teal);
+    }
+
+    .legend-dot.frontier {
+      border-style: dashed;
+      border-color: var(--accent-teal-muted);
+    }
+
+    .legend-dot.discovered {
+      border-color: var(--accent-success);
+    }
+
+    /* Detail Panel */
+    .detail-panel {
+      position: absolute;
+      bottom: var(--space-4);
+      left: var(--space-4);
+      width: 300px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      padding: var(--space-4);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.3s ease;
+      pointer-events: none;
+      z-index: 50;
+    }
+
+    .detail-panel.visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .detail-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      margin-bottom: var(--space-3);
+      padding-bottom: var(--space-3);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .detail-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-medium);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .detail-title {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+    }
+
+    .detail-subtitle {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      color: var(--text-tertiary);
+      letter-spacing: 0.08em;
+    }
+
+    .detail-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-2);
+      margin-bottom: var(--space-3);
+    }
+
+    .detail-stat {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .detail-stat-label {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-tertiary);
+    }
+
+    .detail-stat-value {
+      font-family: var(--font-body);
+      font-size: 13px;
+      color: var(--text-primary);
+    }
+
+    .detail-connections {
+      font-family: var(--font-body);
+      font-size: 11px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .detail-connections strong {
+      color: var(--gold-muted);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       ANIMATIONS
+       ═══════════════════════════════════════════════════════════════════════════ */
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: var(--glow-gold); }
+      50% { box-shadow: var(--glow-gold-bright); }
+    }
+
+    .cluster.active .cluster-frame {
+      animation: pulse-glow 3s ease-in-out infinite;
+    }
+
+    @keyframes pulse-teal {
+      0%, 100% { opacity: 0.7; }
+      50% { opacity: 1; }
+    }
+
+    .cluster.frontier .cluster-frame {
+      animation: pulse-teal 3s ease-in-out infinite;
+    }
+
+    /* Staggered entrance */
+    .cluster {
+      opacity: 0;
+      animation: fadeInScale 0.5s ease forwards;
+    }
+
+    .cluster:nth-child(1) { animation-delay: 0.1s; }
+    .cluster:nth-child(2) { animation-delay: 0.15s; }
+    .cluster:nth-child(3) { animation-delay: 0.2s; }
+    .cluster:nth-child(4) { animation-delay: 0.25s; }
+    .cluster:nth-child(5) { animation-delay: 0.3s; }
+    .cluster:nth-child(6) { animation-delay: 0.35s; }
+
+    @keyframes fadeInScale {
+      from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+      }
+      to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+
+    /* Zoom state visibility */
+    .tree-container[data-zoom="cluster"] .cluster,
+    .tree-container[data-zoom="skill"] .cluster {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .tree-container[data-zoom="cluster"] .skills-layer,
+    .tree-container[data-zoom="skill"] .skills-layer {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  </style>
+</head>
+<body class="deco-bg">
+  <main class="container">
+    <header class="page-header">
+      <h1 class="page-title">
+        <span class="deco-icon deco-icon-sunburst deco-icon-lg deco-icon-gold"></span>
+        Discovery Feed
+      </h1>
+    </header>
+
+    <!-- Minimap Widget -->
+    <section class="knowledge-minimap" id="minimap-widget">
+      <header class="minimap-header">
+        <h2 class="minimap-title">
+          <span class="deco-icon deco-icon-fan deco-icon-md deco-icon-gold"></span>
+          Knowledge Landscape
+        </h2>
+        <span class="minimap-action">
+          Click to explore
+          <span class="deco-icon deco-icon-chevron-up deco-icon-sm"></span>
+        </span>
+      </header>
+      <div class="minimap-content">
+        <div class="minimap-tree">
+          <svg viewBox="0 0 240 240">
+            <line class="minimap-line" x1="120" y1="120" x2="120" y2="43"/>
+            <line class="minimap-line" x1="120" y1="120" x2="187" y2="84"/>
+            <line class="minimap-line" x1="120" y1="120" x2="187" y2="156"/>
+            <line class="minimap-line" x1="120" y1="120" x2="120" y2="197"/>
+            <line class="minimap-line" x1="120" y1="120" x2="53" y2="156"/>
+            <line class="minimap-line" x1="120" y1="120" x2="53" y2="84"/>
+          </svg>
+          <div class="minimap-center">
+            <span class="deco-icon deco-icon-target deco-icon-sm deco-icon-gold"></span>
+          </div>
+          <div class="minimap-cluster active"></div>
+          <div class="minimap-cluster"></div>
+          <div class="minimap-cluster frontier"></div>
+          <div class="minimap-cluster"></div>
+          <div class="minimap-cluster"></div>
+          <div class="minimap-cluster frontier"></div>
+        </div>
+        <div class="minimap-stats">
+          <span><span class="minimap-stat-value">247</span> discoveries</span>
+          <span><span class="minimap-stat-value">6</span> domains</span>
+          <span><span class="minimap-stat-value">+23</span> this week</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal Backdrop -->
+  <div class="modal-backdrop" id="modal-backdrop"></div>
+
+  <!-- Modal Container -->
+  <div class="modal-container" id="modal-container">
+    <header class="modal-header">
+      <h2 class="modal-title">
+        <span class="deco-icon deco-icon-fan deco-icon-md deco-icon-gold"></span>
+        Knowledge Landscape
+      </h2>
+
+      <nav class="modal-breadcrumb" id="breadcrumb">
+        <span class="breadcrumb-item active" data-level="root">All Knowledge</span>
+      </nav>
+
+      <div class="modal-controls">
+        <div class="zoom-controls">
+          <button class="zoom-btn" id="zoom-out">−</button>
+          <span class="zoom-level" id="zoom-level">80%</span>
+          <button class="zoom-btn" id="zoom-in">+</button>
+        </div>
+        <button class="close-btn" id="close-modal">Close</button>
+      </div>
+    </header>
+
+    <div class="viewport">
+      <div class="tree-container" data-zoom="overview" id="tree-container">
+        <div class="tree-root">
+
+          <!-- Connection Lines -->
+          <div class="connections">
+            <svg viewBox="0 0 900 900">
+              <line class="connection-line strong" x1="450" y1="450" x2="450" y2="180"/>
+              <line class="connection-line strong" x1="450" y1="450" x2="680" y2="300"/>
+              <line class="connection-line strong" x1="450" y1="450" x2="680" y2="600"/>
+              <line class="connection-line strong" x1="450" y1="450" x2="450" y2="720"/>
+              <line class="connection-line strong" x1="450" y1="450" x2="220" y2="600"/>
+              <line class="connection-line strong" x1="450" y1="450" x2="220" y2="300"/>
+              <!-- Inter-cluster -->
+              <line class="connection-line" x1="450" y1="180" x2="680" y2="300"/>
+              <line class="connection-line" x1="680" y1="300" x2="680" y2="600"/>
+              <line class="connection-line" x1="220" y1="300" x2="220" y2="600"/>
+              <line class="connection-line" x1="220" y1="600" x2="450" y2="720"/>
+              <line class="connection-line" x1="450" y1="720" x2="680" y2="600"/>
+            </svg>
+          </div>
+
+          <!-- Center Node -->
+          <div class="center-node" id="center-node">
+            <span class="center-node-icon">
+              <span class="deco-icon deco-icon-target deco-icon-lg deco-icon-gold"></span>
+            </span>
+            <span class="center-node-label">Your Knowledge</span>
+            <span class="center-node-count">247 discoveries</span>
+          </div>
+
+          <!-- Cluster: Finance -->
+          <div class="cluster size-lg active" style="top: 20%; left: 50%;" data-cluster="finance">
+            <div class="cluster-frame">
+              <span class="cluster-icon">
+                <span class="deco-icon deco-icon-value deco-icon-lg deco-icon-gold"></span>
+              </span>
+              <span class="cluster-label">Finance</span>
+              <div class="cluster-stats">
+                <span><span class="cluster-stat-value">38</span> skills</span>
+                <span><span class="cluster-stat-value">+5</span> new</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cluster: Health -->
+          <div class="cluster size-md" style="top: 33%; left: 76%;" data-cluster="health">
+            <div class="cluster-frame">
+              <span class="cluster-icon">
+                <span class="deco-icon deco-icon-growth deco-icon-lg deco-icon-gold"></span>
+              </span>
+              <span class="cluster-label">Health</span>
+              <div class="cluster-stats">
+                <span><span class="cluster-stat-value">31</span> skills</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cluster: Creative -->
+          <div class="cluster size-sm frontier" style="top: 67%; left: 76%;" data-cluster="creative">
+            <div class="cluster-frame">
+              <span class="cluster-icon">
+                <span class="deco-icon deco-icon-star deco-icon-lg" style="color: var(--accent-teal);"></span>
+              </span>
+              <span class="cluster-label">Creative</span>
+              <div class="cluster-stats">
+                <span><span class="cluster-stat-value">24</span> skills</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cluster: Technology -->
+          <div class="cluster size-md" style="top: 80%; left: 50%;" data-cluster="technology">
+            <div class="cluster-frame">
+              <span class="cluster-icon">
+                <span class="deco-icon deco-icon-agent deco-icon-lg deco-icon-gold"></span>
+              </span>
+              <span class="cluster-label">Technology</span>
+              <div class="cluster-stats">
+                <span><span class="cluster-stat-value">52</span> skills</span>
+                <span><span class="cluster-stat-value">+8</span> new</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cluster: Business -->
+          <div class="cluster size-sm" style="top: 67%; left: 24%;" data-cluster="business">
+            <div class="cluster-frame">
+              <span class="cluster-icon">
+                <span class="deco-icon deco-icon-goal deco-icon-lg deco-icon-gold"></span>
+              </span>
+              <span class="cluster-label">Business</span>
+              <div class="cluster-stats">
+                <span><span class="cluster-stat-value">29</span> skills</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cluster: Science -->
+          <div class="cluster size-md frontier" style="top: 33%; left: 24%;" data-cluster="science">
+            <div class="cluster-frame">
+              <span class="cluster-icon">
+                <span class="deco-icon deco-icon-test deco-icon-lg" style="color: var(--accent-teal);"></span>
+              </span>
+              <span class="cluster-label">Science</span>
+              <div class="cluster-stats">
+                <span><span class="cluster-stat-value">43</span> skills</span>
+                <span><span class="cluster-stat-value">+12</span> new</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Skills Layer -->
+          <div class="skills-layer" id="skills-layer">
+            <!-- Finance skills -->
+            <div class="skill-node mastered" style="top: 16%; left: 44%;" data-cluster="finance">
+              <div class="skill-dot">
+                <span class="deco-icon deco-icon-value deco-icon-md deco-icon-gold"></span>
+              </div>
+              <span class="skill-label">Options Trading</span>
+            </div>
+            <div class="skill-node mastered" style="top: 12%; left: 54%;" data-cluster="finance">
+              <div class="skill-dot">
+                <span class="deco-icon deco-icon-doc deco-icon-md deco-icon-gold"></span>
+              </div>
+              <span class="skill-label">DCF Analysis</span>
+            </div>
+            <div class="skill-node learning" style="top: 22%; left: 58%;" data-cluster="finance">
+              <div class="skill-dot">
+                <span class="deco-icon deco-icon-arch deco-icon-md" style="color: var(--accent-teal);"></span>
+              </div>
+              <span class="skill-label">Fixed Income</span>
+            </div>
+            <div class="skill-node discovered" style="top: 18%; left: 38%;" data-cluster="finance">
+              <div class="skill-dot">
+                <span class="deco-icon deco-icon-bolt deco-icon-md deco-icon-success"></span>
+              </div>
+              <span class="skill-label">Factor Investing</span>
+            </div>
+
+            <!-- Health skills -->
+            <div class="skill-node mastered" style="top: 30%; left: 72%;" data-cluster="health">
+              <div class="skill-dot">
+                <span class="deco-icon deco-icon-sunburst deco-icon-md deco-icon-gold"></span>
+              </div>
+              <span class="skill-label">Neuroscience</span>
+            </div>
+            <div class="skill-node learning" style="top: 36%; left: 80%;" data-cluster="health">
+              <div class="skill-dot">
+                <span class="deco-icon deco-icon-test deco-icon-md" style="color: var(--accent-teal);"></span>
+              </div>
+              <span class="skill-label">Pharmacology</span>
+            </div>
+            <div class="skill-node discovered" style="top: 38%; left: 74%;" data-cluster="health">
+              <div class="skill-dot">
+                <span class="deco-icon deco-icon-time deco-icon-md deco-icon-success"></span>
+              </div>
+              <span class="skill-label">Circadian Biology</span>
+            </div>
+
+            <!-- Technology skills -->
+            <div class="skill-node mastered" style="top: 77%; left: 44%;" data-cluster="technology">
+              <div class="skill-dot">
+                <span class="deco-icon deco-icon-session deco-icon-md deco-icon-gold"></span>
+              </div>
+              <span class="skill-label">Rust</span>
+            </div>
+            <div class="skill-node mastered" style="top: 84%; left: 52%;" data-cluster="technology">
+              <div class="skill-dot">
+                <span class="deco-icon deco-icon-doc deco-icon-md deco-icon-gold"></span>
+              </div>
+              <span class="skill-label">Python</span>
+            </div>
+            <div class="skill-node learning" style="top: 80%; left: 58%;" data-cluster="technology">
+              <div class="skill-dot">
+                <span class="deco-icon deco-icon-agent deco-icon-md" style="color: var(--accent-teal);"></span>
+              </div>
+              <span class="skill-label">LLM Fine-tuning</span>
+            </div>
+            <div class="skill-node discovered" style="top: 82%; left: 40%;" data-cluster="technology">
+              <div class="skill-dot">
+                <span class="deco-icon deco-icon-link deco-icon-md deco-icon-success"></span>
+              </div>
+              <span class="skill-label">Agent Patterns</span>
+            </div>
+
+            <!-- Science skills -->
+            <div class="skill-node mastered" style="top: 30%; left: 28%;" data-cluster="science">
+              <div class="skill-dot">
+                <span class="deco-icon deco-icon-test deco-icon-md deco-icon-gold"></span>
+              </div>
+              <span class="skill-label">Biochemistry</span>
+            </div>
+            <div class="skill-node learning" style="top: 36%; left: 20%;" data-cluster="science">
+              <div class="skill-dot">
+                <span class="deco-icon deco-icon-target deco-icon-md" style="color: var(--accent-teal);"></span>
+              </div>
+              <span class="skill-label">Particle Physics</span>
+            </div>
+            <div class="skill-node discovered" style="top: 38%; left: 26%;" data-cluster="science">
+              <div class="skill-dot">
+                <span class="deco-icon deco-icon-fan deco-icon-md deco-icon-success"></span>
+              </div>
+              <span class="skill-label">Complexity Theory</span>
+            </div>
+
+            <!-- Business skills -->
+            <div class="skill-node mastered" style="top: 64%; left: 28%;" data-cluster="business">
+              <div class="skill-dot">
+                <span class="deco-icon deco-icon-velocity deco-icon-md deco-icon-gold"></span>
+              </div>
+              <span class="skill-label">Growth Strategy</span>
+            </div>
+            <div class="skill-node learning" style="top: 70%; left: 20%;" data-cluster="business">
+              <div class="skill-dot">
+                <span class="deco-icon deco-icon-goal deco-icon-md" style="color: var(--accent-teal);"></span>
+              </div>
+              <span class="skill-label">GTM Planning</span>
+            </div>
+
+            <!-- Creative skills -->
+            <div class="skill-node mastered" style="top: 64%; left: 72%;" data-cluster="creative">
+              <div class="skill-dot">
+                <span class="deco-icon deco-icon-star deco-icon-md deco-icon-gold"></span>
+              </div>
+              <span class="skill-label">Music Theory</span>
+            </div>
+            <div class="skill-node frontier" style="top: 70%; left: 80%;" data-cluster="creative">
+              <div class="skill-dot">
+                <span class="deco-icon deco-icon-doc deco-icon-md deco-icon-muted"></span>
+              </div>
+              <span class="skill-label">Screenwriting</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Legend -->
+      <div class="legend">
+        <div class="legend-item">
+          <span class="legend-dot mastered"></span>
+          <span>Mastered</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot learning"></span>
+          <span>Learning</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot frontier"></span>
+          <span>Frontier</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot discovered"></span>
+          <span>AI Discovered</span>
+        </div>
+      </div>
+
+      <!-- Detail Panel -->
+      <div class="detail-panel" id="detail-panel">
+        <div class="detail-header">
+          <div class="detail-icon">
+            <span class="deco-icon deco-icon-value deco-icon-md deco-icon-gold" id="detail-deco-icon"></span>
+          </div>
+          <div>
+            <div class="detail-title" id="detail-title">OPTIONS TRADING</div>
+            <div class="detail-subtitle" id="detail-subtitle">Finance / Derivatives</div>
+          </div>
+        </div>
+        <div class="detail-stats">
+          <div class="detail-stat">
+            <span class="detail-stat-label">Mastery</span>
+            <span class="detail-stat-value" id="detail-mastery">Advanced</span>
+          </div>
+          <div class="detail-stat">
+            <span class="detail-stat-label">Time Invested</span>
+            <span class="detail-stat-value" id="detail-time">280h</span>
+          </div>
+          <div class="detail-stat">
+            <span class="detail-stat-label">Last Active</span>
+            <span class="detail-stat-value" id="detail-active">Yesterday</span>
+          </div>
+          <div class="detail-stat">
+            <span class="detail-stat-label">Applications</span>
+            <span class="detail-stat-value" id="detail-apps">12</span>
+          </div>
+        </div>
+        <div class="detail-connections" id="detail-connections">
+          <strong>Connects to:</strong> DCF Analysis, Fixed Income, Factor Investing
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ═══════════════════════════════════════════════════════════════════════════
+    // MODAL CONTROL
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    var minimapWidget = document.getElementById('minimap-widget');
+    var modalBackdrop = document.getElementById('modal-backdrop');
+    var modalContainer = document.getElementById('modal-container');
+    var closeModalBtn = document.getElementById('close-modal');
+
+    function openModal() {
+      modalBackdrop.classList.add('visible');
+      modalContainer.classList.add('visible');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      modalBackdrop.classList.remove('visible');
+      modalContainer.classList.remove('visible');
+      document.body.style.overflow = '';
+    }
+
+    minimapWidget.addEventListener('click', openModal);
+    modalBackdrop.addEventListener('click', closeModal);
+    closeModalBtn.addEventListener('click', closeModal);
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeModal();
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // TREE INTERACTION
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    var treeContainer = document.getElementById('tree-container');
+    var breadcrumb = document.getElementById('breadcrumb');
+    var zoomLevelEl = document.getElementById('zoom-level');
+    var detailPanel = document.getElementById('detail-panel');
+    var skillsLayer = document.getElementById('skills-layer');
+    var viewport = document.querySelector('.viewport');
+
+    var scale = 0.8;
+    var panX = 0;
+    var panY = 0;
+    var isPanning = false;
+    var startX = 0;
+    var startY = 0;
+    var startPanX = 0;
+    var startPanY = 0;
+    var currentCluster = null;
+
+    var MIN_SCALE = 0.4;
+    var MAX_SCALE = 3.0;
+    var ZOOM_SENSITIVITY = 0.002;
+
+    function applyTransform() {
+      treeContainer.style.transform = 'translate(' + panX + 'px, ' + panY + 'px) scale(' + scale + ')';
+    }
+
+    function updateZoomDisplay() {
+      zoomLevelEl.textContent = Math.round(scale * 100) + '%';
+    }
+
+    function updateBreadcrumb(path) {
+      while (breadcrumb.firstChild) {
+        breadcrumb.removeChild(breadcrumb.firstChild);
+      }
+
+      path.forEach(function(item, i) {
+        if (i > 0) {
+          var sep = document.createElement('span');
+          sep.className = 'breadcrumb-sep';
+          sep.textContent = '›';
+          breadcrumb.appendChild(sep);
+        }
+
+        var crumb = document.createElement('span');
+        crumb.className = 'breadcrumb-item' + (i === path.length - 1 ? ' active' : '');
+        crumb.dataset.level = item.level;
+        crumb.textContent = item.label;
+
+        if (i < path.length - 1) {
+          crumb.addEventListener('click', function() {
+            if (this.dataset.level === 'root') zoomToOverview();
+          });
+        }
+
+        breadcrumb.appendChild(crumb);
+      });
+    }
+
+    function zoomToOverview() {
+      currentCluster = null;
+      treeContainer.classList.add('animating');
+      scale = 0.8;
+      panX = 0;
+      panY = 0;
+      applyTransform();
+      updateZoomDisplay();
+      updateBreadcrumb([{ level: 'root', label: 'All Knowledge' }]);
+      skillsLayer.classList.remove('visible');
+      treeContainer.dataset.zoom = 'overview';
+      setTimeout(function() { treeContainer.classList.remove('animating'); }, 400);
+    }
+
+    function zoomToCluster(clusterName, clusterEl) {
+      currentCluster = clusterName;
+      treeContainer.classList.add('animating');
+
+      var rect = clusterEl.getBoundingClientRect();
+      var viewportRect = viewport.getBoundingClientRect();
+
+      scale = 1.5;
+      panX = viewportRect.width / 2 - (rect.left + rect.width / 2 - viewportRect.left);
+      panY = viewportRect.height / 2 - (rect.top + rect.height / 2 - viewportRect.top);
+
+      applyTransform();
+      updateZoomDisplay();
+
+      var label = clusterName.charAt(0).toUpperCase() + clusterName.slice(1);
+      updateBreadcrumb([
+        { level: 'root', label: 'All Knowledge' },
+        { level: 'cluster', label: label }
+      ]);
+
+      skillsLayer.classList.add('visible');
+      treeContainer.dataset.zoom = 'cluster';
+      setTimeout(function() { treeContainer.classList.remove('animating'); }, 400);
+    }
+
+    function zoomAtPoint(mouseX, mouseY, delta) {
+      var viewportRect = viewport.getBoundingClientRect();
+      var mx = mouseX - viewportRect.left;
+      var my = mouseY - viewportRect.top;
+
+      var zoomFactor = 1 - delta * ZOOM_SENSITIVITY;
+      var newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale * zoomFactor));
+
+      if (newScale === scale) return;
+
+      var contentX = (mx - viewportRect.width / 2 - panX) / scale;
+      var contentY = (my - viewportRect.height / 2 - panY) / scale;
+
+      scale = newScale;
+      panX = mx - viewportRect.width / 2 - contentX * scale;
+      panY = my - viewportRect.height / 2 - contentY * scale;
+
+      applyTransform();
+      updateZoomDisplay();
+
+      if (scale > 1.0) {
+        skillsLayer.classList.add('visible');
+        treeContainer.dataset.zoom = 'cluster';
+      } else {
+        skillsLayer.classList.remove('visible');
+        treeContainer.dataset.zoom = 'overview';
+      }
+    }
+
+    // Pan events
+    viewport.addEventListener('mousedown', function(e) {
+      if (e.target.closest('.cluster') || e.target.closest('.skill-node') || e.target.closest('.center-node')) return;
+      isPanning = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      startPanX = panX;
+      startPanY = panY;
+      treeContainer.classList.add('dragging');
+    });
+
+    document.addEventListener('mousemove', function(e) {
+      if (!isPanning) return;
+      panX = startPanX + (e.clientX - startX);
+      panY = startPanY + (e.clientY - startY);
+      applyTransform();
+    });
+
+    document.addEventListener('mouseup', function() {
+      isPanning = false;
+      treeContainer.classList.remove('dragging');
+    });
+
+    viewport.addEventListener('wheel', function(e) {
+      e.preventDefault();
+      zoomAtPoint(e.clientX, e.clientY, e.deltaY);
+    }, { passive: false });
+
+    // Cluster clicks
+    document.querySelectorAll('.cluster').forEach(function(cluster) {
+      cluster.addEventListener('click', function(e) {
+        e.stopPropagation();
+        zoomToCluster(this.dataset.cluster, this);
+      });
+    });
+
+    document.getElementById('center-node').addEventListener('click', function(e) {
+      e.stopPropagation();
+      zoomToOverview();
+    });
+
+    // Zoom buttons
+    document.getElementById('zoom-in').addEventListener('click', function() {
+      var viewportRect = viewport.getBoundingClientRect();
+      zoomAtPoint(viewportRect.left + viewportRect.width / 2, viewportRect.top + viewportRect.height / 2, -100);
+    });
+
+    document.getElementById('zoom-out').addEventListener('click', function() {
+      var viewportRect = viewport.getBoundingClientRect();
+      zoomAtPoint(viewportRect.left + viewportRect.width / 2, viewportRect.top + viewportRect.height / 2, 100);
+    });
+
+    // Skill hover
+    document.querySelectorAll('.skill-node').forEach(function(node) {
+      node.addEventListener('mouseenter', function() {
+        detailPanel.classList.add('visible');
+      });
+      node.addEventListener('mouseleave', function() {
+        detailPanel.classList.remove('visible');
+      });
+    });
+
+    // Initial state
+    applyTransform();
+    updateZoomDisplay();
+    updateBreadcrumb([{ level: 'root', label: 'All Knowledge' }]);
+  </script>
+</body>
+</html>

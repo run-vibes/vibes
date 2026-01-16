@@ -5,42 +5,274 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Art Deco Command — Discovery Feed</title>
   <link rel="stylesheet" href="shared.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.2/anime.min.js"></script>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <style>
-    .container {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: var(--space-6);
+    /* ═══════════════════════════════════════════════════════════════════════
+       ART DECO DISCOVERY FEED — Geometric Elegance, Universal Insights
+       ═══════════════════════════════════════════════════════════════════════ */
+
+    /* ─── Dashboard Layout ─── */
+    .dashboard {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
 
-    .page-header {
+    .header-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: var(--space-6);
-      padding-bottom: var(--space-4);
-      border-bottom: 1px solid var(--deco-gold-dim);
+      padding: var(--space-3) var(--space-6);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      position: sticky;
+      top: var(--space-4);
+      z-index: 100;
+      margin: var(--space-4) var(--space-4) 0;
+    }
+
+    .header-bar::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: var(--space-4);
+      right: var(--space-4);
+      height: 2px;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        var(--gold-dim) 20%,
+        var(--gold-primary) 50%,
+        var(--gold-dim) 80%,
+        transparent 100%
+      );
+    }
+
+    .logo {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 400;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+    }
+
+    .logo-tagline {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-left: var(--space-4);
+      padding-left: var(--space-4);
+      border-left: 1px solid var(--gold-dim);
+    }
+
+    .header-nav {
+      display: flex;
+      gap: var(--space-1);
+    }
+
+    .page-header {
+      padding: var(--space-8) var(--space-6);
+      border-bottom: 3px solid transparent;
+      border-image: linear-gradient(90deg, transparent 0%, var(--gold-dim) 20%, var(--gold-primary) 50%, var(--gold-dim) 80%, transparent 100%) 1;
+      background: linear-gradient(180deg, var(--bg-surface) 0%, var(--bg-card) 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Art Deco sunburst behind header */
+    .page-header::before {
+      content: '';
+      position: absolute;
+      top: -100%;
+      left: 50%;
+      width: 300%;
+      height: 300%;
+      background: repeating-conic-gradient(
+        from 0deg,
+        transparent 0deg 3deg,
+        rgba(212, 168, 75, 0.03) 3deg 4deg,
+        transparent 4deg 6deg
+      );
+      transform: translateX(-50%);
+      pointer-events: none;
+      animation: slow-rotate 120s linear infinite;
+    }
+
+    @keyframes slow-rotate {
+      from { transform: translateX(-50%) rotate(0deg); }
+      to { transform: translateX(-50%) rotate(360deg); }
+    }
+
+    /* Art Deco corner decorations */
+    .page-header::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        var(--gold-dim) 10%,
+        var(--gold-primary) 25%,
+        var(--gold-bright) 50%,
+        var(--gold-primary) 75%,
+        var(--gold-dim) 90%,
+        transparent 100%
+      );
+    }
+
+    /* Decorative fan rays */
+    .page-header-deco {
+      position: absolute;
+      top: 50%;
+      right: 5%;
+      width: 200px;
+      height: 200px;
+      opacity: 0.08;
+      pointer-events: none;
+    }
+
+    .page-header-deco::before {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: repeating-conic-gradient(
+        from 0deg at 50% 100%,
+        var(--gold-primary) 0deg 2deg,
+        transparent 2deg 10deg
+      );
+      transform: translateY(-50%);
+    }
+
+    .page-header-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
     }
 
     .page-title {
       font-family: var(--font-display);
-      font-size: 28px;
-      font-weight: 400;
-      letter-spacing: 0.08em;
+      font-size: 32px;
+      font-weight: 300;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: var(--deco-gold);
+      color: var(--gold-bright);
+      text-shadow: var(--glow-gold);
       display: flex;
       align-items: center;
       gap: var(--space-4);
+      margin-bottom: var(--space-2);
+    }
+
+    .page-title .deco-icon {
+      font-size: 28px;
+      color: var(--gold-primary);
+    }
+
+    .page-description {
+      font-size: 14px;
+      color: var(--text-secondary);
+      max-width: 600px;
     }
 
     .philosophy-quote {
       font-family: var(--font-body);
       font-size: 13px;
       font-style: italic;
-      color: var(--deco-gold-muted);
+      color: var(--gold-muted);
       margin-top: var(--space-2);
       letter-spacing: 0.02em;
     }
+
+    .container {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: var(--space-6);
+      flex: 1;
+    }
+
+    /* ─── Stats Bar ─── */
+    .stats-bar {
+      display: flex;
+      gap: var(--space-6);
+      margin-bottom: var(--space-6);
+      padding: var(--space-5);
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      position: relative;
+    }
+
+    .stats-bar::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent 0%, var(--gold-primary) 20%, var(--gold-primary) 80%, transparent 100%);
+    }
+
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+      animation: stat-fade-in 0.6s ease-out both;
+    }
+
+    .stat-item:nth-child(1) { animation-delay: 0.1s; }
+    .stat-item:nth-child(2) { animation-delay: 0.2s; }
+    .stat-item:nth-child(3) { animation-delay: 0.3s; }
+    .stat-item:nth-child(4) { animation-delay: 0.4s; }
+
+    @keyframes stat-fade-in {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .stat-value {
+      font-family: var(--font-display);
+      font-size: 36px;
+      font-weight: 300;
+      letter-spacing: 0.05em;
+      color: var(--gold-bright);
+      text-shadow: var(--glow-gold);
+    }
+
+    .stat-value.highlight {
+      color: var(--accent-success);
+    }
+
+    .stat-label {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--text-tertiary);
+    }
+
+    .stat-trend {
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+    }
+
+    .trend-up { color: var(--accent-success); }
+    .trend-down { color: var(--accent-danger); }
 
     /* ─── Filter Bar ─── */
     .filter-bar {
@@ -49,8 +281,8 @@
       flex-wrap: wrap;
       margin-bottom: var(--space-6);
       padding: var(--space-4);
-      background: var(--bg-panel);
-      border: 1px solid var(--deco-gold-dim);
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
       position: relative;
     }
 
@@ -58,9 +290,9 @@
     .filter-bar::after {
       content: '';
       position: absolute;
-      width: 8px;
-      height: 8px;
-      border: 1px solid var(--deco-gold-muted);
+      width: 12px;
+      height: 12px;
+      border: 1px solid var(--gold-muted);
     }
 
     .filter-bar::before {
@@ -84,11 +316,11 @@
     }
 
     .filter-label {
-      font-family: var(--font-body-condensed);
+      font-family: var(--font-condensed);
       font-size: 10px;
       text-transform: uppercase;
       letter-spacing: 0.15em;
-      color: var(--deco-gold-muted);
+      color: var(--gold-muted);
     }
 
     .filter-chips {
@@ -97,104 +329,121 @@
     }
 
     .filter-chip {
-      font-family: var(--font-body-condensed);
+      font-family: var(--font-condensed);
       font-size: 10px;
       letter-spacing: 0.05em;
       padding: var(--space-1) var(--space-3);
-      border: 1px solid var(--deco-line);
+      border: 1px solid var(--border-light);
       background: transparent;
       color: var(--text-secondary);
       cursor: pointer;
       transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      gap: var(--space-1);
     }
 
     .filter-chip:hover {
-      border-color: var(--deco-gold-muted);
-      color: var(--deco-cream);
+      border-color: var(--gold-muted);
+      color: var(--accent-cream);
     }
 
     .filter-chip.active {
       background: linear-gradient(135deg, rgba(212, 168, 75, 0.15) 0%, rgba(201, 162, 39, 0.1) 100%);
-      border-color: var(--deco-gold);
-      color: var(--deco-gold);
+      border-color: var(--gold-primary);
+      color: var(--gold-primary);
     }
 
-    /* ─── Discovery Type Colors ─── */
-    .type-technical { --type-color: var(--deco-gold); }
-    .type-strategic { --type-color: #b4a7d6; }
-    .type-anomaly { --type-color: #e06c75; }
-    .type-emergent { --type-color: #98c379; }
-    .type-experimental { --type-color: var(--deco-gold-bright); }
-    .type-connection { --type-color: var(--deco-gold); }
-    .type-efficiency { --type-color: var(--deco-gold-bright); }
-    .type-user-insight { --type-color: #d19a66; }
-    .type-risk { --type-color: #e06c75; }
+    /* ─── Domain Colors ─── */
+    .domain-finance { --domain-color: var(--gold-bright); }
+    .domain-analytics { --domain-color: var(--accent-teal); }
+    .domain-manufacturing { --domain-color: #d19a66; }
+    .domain-hollywood { --domain-color: #c9a227; }
+    .domain-fashion { --domain-color: var(--accent-rose); }
+    .domain-gaming { --domain-color: #98c379; }
+    .domain-medicine { --domain-color: #e06c75; }
+    .domain-aerospace { --domain-color: #61afef; }
+    .domain-environment { --domain-color: #98c379; }
+    .domain-family { --domain-color: var(--gold-primary); }
+    .domain-fishing { --domain-color: var(--accent-teal); }
+    .domain-sports { --domain-color: #56b6c2; }
+    .domain-government { --domain-color: var(--accent-navy-light); }
+    .domain-urban { --domain-color: #d19a66; }
 
-    /* ─── Discovery Stats Bar ─── */
-    .stats-bar {
-      display: flex;
+    /* ─── Main Layout ─── */
+    .main-layout {
+      display: grid;
+      grid-template-columns: 1fr 360px;
       gap: var(--space-6);
-      margin-bottom: var(--space-6);
-      padding: var(--space-5);
-      background: var(--bg-panel);
-      border: 1px solid var(--deco-gold-dim);
-      position: relative;
     }
 
-    .stats-bar::before {
+    /* ─── Visualization Grid ─── */
+    .viz-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-4);
+      margin-bottom: var(--space-6);
+    }
+
+    .viz-subtitle {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-left: var(--space-2);
+    }
+
+    #sankey-container {
+      width: 100%;
+      height: 300px;
+    }
+
+    .viz-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .viz-container::before {
       content: '';
       position: absolute;
       top: 0;
       left: 0;
       right: 0;
       height: 2px;
-      background: linear-gradient(90deg, transparent 0%, var(--deco-gold) 20%, var(--deco-gold) 80%, transparent 100%);
+      background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);
     }
 
-    .stat-item {
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-1);
-    }
-
-    .stat-value {
-      font-family: var(--font-display);
-      font-size: 32px;
-      font-weight: 400;
-      letter-spacing: 0.05em;
-      color: var(--deco-gold);
-    }
-
-    .stat-value.highlight {
-      color: var(--deco-gold-bright);
-    }
-
-    .stat-label {
-      font-family: var(--font-body-condensed);
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.15em;
-      color: var(--text-tertiary);
-    }
-
-    .stat-trend {
-      font-size: 11px;
+    .viz-header {
       display: flex;
       align-items: center;
-      gap: var(--space-1);
+      justify-content: space-between;
+      padding: var(--space-3) var(--space-4);
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
     }
 
-    .trend-up { color: #98c379; }
-    .trend-down { color: #e06c75; }
+    .viz-title {
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+    }
 
-    /* ─── Main Layout ─── */
-    .main-layout {
-      display: grid;
-      grid-template-columns: 1fr 340px;
-      gap: var(--space-6);
+    .viz-canvas {
+      height: 300px;
+      position: relative;
+    }
+
+    #three-container {
+      width: 100%;
+      height: 300px;
+    }
+
+    #force-graph, #sankey-chart, #treemap-chart {
+      width: 100%;
+      height: 100%;
     }
 
     /* ─── Discovery Feed ─── */
@@ -205,11 +454,11 @@
     }
 
     .discovery-card {
-      background: var(--bg-panel);
-      border: 1px solid var(--deco-gold-dim);
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
       overflow: hidden;
-      transition: all 0.2s ease;
-      animation: card-enter 0.3s ease-out;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      animation: card-enter 0.4s ease-out;
       position: relative;
     }
 
@@ -219,14 +468,25 @@
       top: 0;
       left: 0;
       right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, var(--type-color, var(--deco-gold)) 30%, var(--type-color, var(--deco-gold)) 70%, transparent);
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--domain-color, var(--gold-primary)) 30%, var(--domain-color, var(--gold-primary)) 70%, transparent);
+      transition: height 0.3s ease;
+    }
+
+    .discovery-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, transparent 60%, rgba(212, 168, 75, 0.03) 100%);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
     }
 
     @keyframes card-enter {
       from {
         opacity: 0;
-        transform: translateY(10px);
+        transform: translateY(15px);
       }
       to {
         opacity: 1;
@@ -235,13 +495,28 @@
     }
 
     .discovery-card:hover {
-      border-color: var(--deco-gold-muted);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      border-color: var(--gold-muted);
+      box-shadow: var(--shadow-md), var(--shadow-gold);
+      transform: translateY(-2px);
+    }
+
+    .discovery-card:hover::before {
+      height: 3px;
+    }
+
+    .discovery-card:hover::after {
+      opacity: 1;
     }
 
     .discovery-card.featured {
-      border-color: var(--deco-gold);
-      box-shadow: 0 0 30px rgba(212, 168, 75, 0.15);
+      border-color: var(--gold-primary);
+      box-shadow: var(--glow-gold);
+      animation: featured-glow 3s ease-in-out infinite;
+    }
+
+    @keyframes featured-glow {
+      0%, 100% { box-shadow: 0 0 15px rgba(212, 168, 75, 0.3); }
+      50% { box-shadow: 0 0 25px rgba(212, 168, 75, 0.5); }
     }
 
     .card-header {
@@ -250,7 +525,7 @@
       justify-content: space-between;
       padding: var(--space-4);
       background: var(--bg-surface);
-      border-bottom: 1px solid var(--deco-line);
+      border-bottom: 1px solid var(--border-subtle);
     }
 
     .card-type {
@@ -259,29 +534,41 @@
       gap: var(--space-3);
     }
 
-    .type-badge {
-      font-family: var(--font-body-condensed);
+    .domain-badge {
+      font-family: var(--font-condensed);
       font-size: 9px;
-      font-weight: 500;
+      font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.15em;
-      padding: 4px 10px;
+      padding: 4px 12px;
       background: rgba(212, 168, 75, 0.1);
-      color: var(--type-color, var(--deco-gold));
-      border: 1px solid var(--type-color, var(--deco-gold-dim));
+      color: var(--domain-color, var(--gold-primary));
+      border: 1px solid var(--domain-color, var(--gold-dim));
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .domain-icon {
+      font-size: 12px;
     }
 
     .featured-badge {
-      font-family: var(--font-body-condensed);
+      font-family: var(--font-condensed);
       font-size: 9px;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.2em;
-      color: var(--deco-gold-bright);
+      color: var(--gold-bright);
       display: flex;
       align-items: center;
       gap: var(--space-2);
       animation: glow-pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes glow-pulse {
+      0%, 100% { text-shadow: 0 0 10px rgba(232, 196, 90, 0.3); }
+      50% { text-shadow: 0 0 20px rgba(232, 196, 90, 0.6); }
     }
 
     .card-meta {
@@ -299,9 +586,6 @@
     .card-source {
       font-size: 10px;
       color: var(--text-secondary);
-      display: flex;
-      align-items: center;
-      gap: var(--space-2);
     }
 
     .card-body {
@@ -313,7 +597,7 @@
       font-size: 17px;
       font-weight: 400;
       letter-spacing: 0.02em;
-      color: var(--deco-cream);
+      color: var(--accent-cream);
       margin-bottom: var(--space-3);
     }
 
@@ -324,20 +608,20 @@
       margin-bottom: var(--space-4);
     }
 
-    .card-context {
+    .card-tags {
       display: flex;
       flex-wrap: wrap;
       gap: var(--space-2);
     }
 
-    .context-tag {
-      font-family: var(--font-body-condensed);
+    .tag {
+      font-family: var(--font-condensed);
       font-size: 10px;
       letter-spacing: 0.05em;
       padding: 3px 10px;
       background: var(--bg-elevated);
       color: var(--text-tertiary);
-      border: 1px solid var(--deco-line);
+      border: 1px solid var(--border-subtle);
     }
 
     .card-footer {
@@ -346,7 +630,7 @@
       justify-content: space-between;
       padding: var(--space-3) var(--space-4);
       background: var(--bg-surface);
-      border-top: 1px solid var(--deco-line);
+      border-top: 1px solid var(--border-subtle);
     }
 
     .card-actions {
@@ -355,35 +639,56 @@
     }
 
     .card-action {
-      font-family: var(--font-body-condensed);
+      font-family: var(--font-condensed);
       font-size: 10px;
       letter-spacing: 0.1em;
       text-transform: uppercase;
       padding: var(--space-2) var(--space-3);
-      border: 1px solid var(--deco-line);
+      border: 1px solid var(--border-light);
       background: transparent;
       color: var(--text-secondary);
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-action::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(212, 168, 75, 0.1) 0%, transparent 100%);
+      opacity: 0;
+      transition: opacity 0.25s ease;
     }
 
     .card-action:hover {
-      border-color: var(--deco-gold);
-      color: var(--deco-gold);
+      border-color: var(--gold-primary);
+      color: var(--gold-primary);
+      transform: translateY(-1px);
+    }
+
+    .card-action:hover::before {
+      opacity: 1;
+    }
+
+    .card-action:active {
+      transform: translateY(0);
     }
 
     .card-action.primary {
       background: linear-gradient(135deg, rgba(212, 168, 75, 0.2) 0%, rgba(201, 162, 39, 0.1) 100%);
-      border-color: var(--deco-gold);
-      color: var(--deco-gold);
+      border-color: var(--gold-primary);
+      color: var(--gold-primary);
     }
 
     .card-action.primary:hover {
-      background: var(--deco-gold);
-      color: var(--bg-deep);
+      background: var(--gold-primary);
+      color: var(--bg-void);
+      box-shadow: 0 4px 12px rgba(212, 168, 75, 0.3);
     }
 
-    .card-confidence {
+    .confidence-indicator {
       display: flex;
       align-items: center;
       gap: var(--space-2);
@@ -395,40 +700,127 @@
       width: 60px;
       height: 4px;
       background: var(--bg-deep);
-      overflow: hidden;
+      position: relative;
+      border: 1px solid var(--border-subtle);
     }
+
+    .confidence-bar::before,
+    .confidence-bar::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      width: 3px;
+      height: 8px;
+      background: var(--gold-dim);
+      transform: translateY(-50%);
+    }
+
+    .confidence-bar::before { left: -4px; }
+    .confidence-bar::after { right: -4px; }
 
     .confidence-fill {
       height: 100%;
-      background: linear-gradient(90deg, var(--deco-gold-muted), var(--deco-gold));
+      background: linear-gradient(90deg, var(--gold-muted), var(--gold-primary));
     }
 
-    /* ─── Connections Preview ─── */
-    .connections-preview {
+    /* ─── Impact Visual ─── */
+    .impact-visual {
       padding: var(--space-4);
-    }
-
-    .connection-node {
-      display: inline-flex;
+      background: var(--bg-deep);
+      display: flex;
       align-items: center;
-      gap: var(--space-1);
+      gap: var(--space-4);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .impact-circle {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: conic-gradient(
+        var(--gold-primary) 0deg,
+        var(--gold-primary) var(--progress, 270deg),
+        var(--bg-elevated) var(--progress, 270deg),
+        var(--bg-elevated) 360deg
+      );
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      flex-shrink: 0;
+      box-shadow: var(--shadow-gold);
+    }
+
+    .impact-circle::before {
+      content: '';
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      background: var(--bg-deep);
+      border-radius: 50%;
+    }
+
+    .impact-value {
+      position: relative;
+      z-index: 1;
+      font-family: var(--font-display);
+      font-size: 18px;
+      color: var(--gold-bright);
+      text-shadow: var(--glow-gold);
+    }
+
+    .impact-details {
+      flex: 1;
+    }
+
+    .impact-title {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: var(--space-1);
+    }
+
+    .impact-metric {
+      font-family: var(--font-display);
+      font-size: 22px;
+      color: var(--accent-cream);
+    }
+
+    .impact-metric.positive { color: var(--accent-success); }
+    .impact-metric.negative { color: var(--accent-danger); }
+
+    .impact-context {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-top: var(--space-1);
+    }
+
+    /* ─── Live Indicator ─── */
+    .live-indicator {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-family: var(--font-condensed);
       font-size: 10px;
-      padding: var(--space-1) var(--space-2);
-      background: var(--bg-elevated);
-      border: 1px solid var(--deco-line);
-      margin: 2px;
-      color: var(--text-secondary);
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent-success);
     }
 
-    .connection-node.highlighted {
-      border-color: var(--deco-gold);
-      color: var(--deco-gold);
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--accent-success);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--accent-success);
+      animation: live-pulse 1.5s ease-in-out infinite;
     }
 
-    .connection-arrow {
-      color: var(--deco-gold-muted);
-      font-size: 12px;
-      margin: 0 var(--space-1);
+    @keyframes live-pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(1.2); }
     }
 
     /* ─── Sidebar ─── */
@@ -439,8 +831,9 @@
     }
 
     .sidebar-panel {
-      background: var(--bg-panel);
-      border: 1px solid var(--deco-gold-dim);
+      position: relative;
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
       overflow: hidden;
     }
 
@@ -450,16 +843,16 @@
       justify-content: space-between;
       padding: var(--space-3) var(--space-4);
       background: var(--bg-surface);
-      border-bottom: 1px solid var(--deco-line);
+      border-bottom: 1px solid var(--border-subtle);
     }
 
     .sidebar-title {
-      font-family: var(--font-body-condensed);
+      font-family: var(--font-condensed);
       font-size: 11px;
-      font-weight: 500;
+      font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.15em;
-      color: var(--deco-gold-muted);
+      color: var(--gold-primary);
     }
 
     .sidebar-content {
@@ -468,32 +861,29 @@
 
     /* ─── Philosophy Banner ─── */
     .philosophy-banner {
-      background: linear-gradient(135deg, rgba(212, 168, 75, 0.08) 0%, rgba(201, 162, 39, 0.04) 100%);
-      border: 1px solid var(--deco-gold-dim);
+      background: linear-gradient(135deg, rgba(212, 168, 75, 0.08) 0%, rgba(61, 139, 139, 0.04) 100%);
+      border: 1px solid var(--gold-dim);
       padding: var(--space-5);
       text-align: center;
       position: relative;
     }
 
-    .philosophy-banner::before,
-    .philosophy-banner::after {
+    .philosophy-banner::before {
       content: '';
       position: absolute;
-      width: 40px;
-      height: 1px;
-      background: var(--deco-gold-muted);
-      top: 50%;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);
     }
-
-    .philosophy-banner::before { left: var(--space-4); }
-    .philosophy-banner::after { right: var(--space-4); }
 
     .philosophy-text {
       font-family: var(--font-display);
       font-size: 15px;
       font-style: italic;
       letter-spacing: 0.03em;
-      color: var(--deco-gold);
+      color: var(--gold-primary);
       margin-bottom: var(--space-2);
     }
 
@@ -502,14 +892,14 @@
       color: var(--text-tertiary);
     }
 
-    /* ─── Discovery Types Legend ─── */
-    .types-legend {
+    /* ─── Domain Legend ─── */
+    .domain-legend {
       display: flex;
       flex-direction: column;
       gap: var(--space-2);
     }
 
-    .type-item {
+    .domain-item {
       display: flex;
       align-items: center;
       gap: var(--space-3);
@@ -518,24 +908,34 @@
       transition: background 0.15s ease;
     }
 
-    .type-item:hover {
+    .domain-item:hover {
       background: var(--bg-surface);
     }
 
-    .type-item-label {
+    .domain-dot {
+      width: 8px;
+      height: 8px;
+      flex-shrink: 0;
+      border-radius: 2px;
+      /* Using border-radius instead of transform: rotate(45deg) to create diamond shape */
+    }
+
+    .domain-label {
       flex: 1;
+      min-width: 0;
       font-size: 12px;
       color: var(--text-secondary);
     }
 
-    .type-item-count {
-      font-family: var(--font-body-condensed);
+    .domain-count {
+      flex-shrink: 0;
+      font-family: var(--font-condensed);
       font-size: 10px;
       font-weight: 500;
       color: var(--text-tertiary);
       padding: 2px 8px;
       background: var(--bg-elevated);
-      border: 1px solid var(--deco-line);
+      border: 1px solid var(--border-subtle);
     }
 
     /* ─── Trending Topics ─── */
@@ -561,7 +961,7 @@
     .trending-rank {
       font-family: var(--font-display);
       font-size: 11px;
-      color: var(--deco-gold-muted);
+      color: var(--gold-muted);
       width: 24px;
     }
 
@@ -572,60 +972,44 @@
     }
 
     .trending-momentum {
-      font-family: var(--font-body-condensed);
+      font-family: var(--font-condensed);
       font-size: 10px;
-      color: #98c379;
-      display: flex;
-      align-items: center;
-      gap: 2px;
+      color: var(--accent-success);
     }
 
-    /* ─── Research Threads ─── */
-    .thread-list {
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-3);
+    .mini-sparkline {
+      width: 50px;
+      height: 20px;
+      margin-left: auto;
+      margin-right: var(--space-2);
     }
 
-    .thread-item {
-      padding: var(--space-3);
-      border: 1px solid var(--deco-line);
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-
-    .thread-item:hover {
-      border-color: var(--deco-gold-dim);
-      background: var(--bg-surface);
-    }
-
-    .thread-title {
-      font-size: 12px;
-      color: var(--deco-cream);
-      margin-bottom: var(--space-2);
-    }
-
-    .thread-meta {
-      display: flex;
-      align-items: center;
-      gap: var(--space-3);
-      font-size: 10px;
-      color: var(--text-tertiary);
-    }
-
-    .thread-status {
-      display: flex;
-      align-items: center;
-      gap: var(--space-1);
-    }
-
-    .thread-status.active {
-      color: #98c379;
+    .mini-sparkline svg {
+      width: 100%;
+      height: 100%;
     }
 
     /* ─── Research Layers ─── */
+    .layer-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-2);
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .layer-item:hover {
+      background: var(--bg-surface);
+    }
+
+    .layer-name {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
     .layer-status {
-      font-family: var(--font-body-condensed);
+      font-family: var(--font-condensed);
       font-size: 9px;
       letter-spacing: 0.1em;
       text-transform: uppercase;
@@ -633,620 +1017,1514 @@
     }
 
     .layer-status.on {
-      background: rgba(152, 195, 121, 0.15);
-      color: #98c379;
-      border: 1px solid rgba(152, 195, 121, 0.3);
+      background: rgba(77, 168, 77, 0.15);
+      color: var(--accent-success);
+      border: 1px solid rgba(77, 168, 77, 0.3);
     }
 
     .layer-status.count {
       background: var(--bg-elevated);
       color: var(--text-tertiary);
-      border: 1px solid var(--deco-line);
+      border: 1px solid var(--border-subtle);
     }
 
-    /* ─── Featured Card ─── */
-    .featured-card {
-      background: linear-gradient(135deg, var(--bg-panel) 0%, var(--bg-surface) 100%);
-      border: 1px solid var(--deco-gold);
-      box-shadow: 0 0 40px rgba(212, 168, 75, 0.1), inset 0 1px 0 rgba(255,255,255,0.03);
+    /* ─── Impact Summary ─── */
+    .impact-summary {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
     }
 
-    .featured-card .card-header {
-      background: linear-gradient(180deg, rgba(212, 168, 75, 0.08) 0%, transparent 100%);
+    .impact-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--space-2) 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .impact-row:last-child {
+      border-bottom: none;
+    }
+
+    .impact-label {
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .impact-value {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 400;
+      color: var(--text-primary);
+    }
+
+    .impact-value.positive {
+      color: var(--accent-success);
+    }
+
+    .impact-value.warning {
+      color: var(--accent-warning);
+    }
+
+    /* ─── Cross-Domain Links ─── */
+    .link-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    .link-item {
+      padding: var(--space-3);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-left: 2px solid var(--gold-primary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .link-item:hover {
+      border-left-color: var(--gold-bright);
+      background: var(--bg-card);
+    }
+
+    .link-domains {
+      display: block;
+      font-family: var(--font-condensed);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gold-primary);
+      letter-spacing: 0.05em;
+      margin-bottom: var(--space-1);
+    }
+
+    .link-insight {
+      display: block;
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-bottom: var(--space-1);
+    }
+
+    .link-strength {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       D3 VISUALIZATION STYLES
+       ═══════════════════════════════════════════════════════════════════════ */
+
+    .force-node {
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .force-node:hover {
+      filter: brightness(1.3);
+    }
+
+    .force-link {
+      stroke: var(--gold-dim);
+      stroke-opacity: 0.6;
+    }
+
+    .force-label {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      fill: var(--text-secondary);
+      pointer-events: none;
+    }
+
+    .sankey-node rect {
+      fill: var(--gold-primary);
+      stroke: var(--gold-bright);
+      stroke-width: 2;
+    }
+
+    .sankey-link {
+      fill: none;
+      stroke-opacity: 0.5;
+      stroke-linecap: round;
+    }
+
+    .sankey-link:hover {
+      stroke-opacity: 0.85;
+      filter: drop-shadow(0 0 4px currentColor);
+    }
+
+    /* Art Deco stage header styling */
+    .sankey-stage-header {
+      fill: var(--gold-primary);
+      font-weight: 600;
+      text-shadow: 0 0 6px rgba(212, 168, 75, 0.4);
+    }
+
+    .sankey-node-circle {
+      filter: drop-shadow(0 0 8px rgba(212, 168, 75, 0.3));
+    }
+
+    .treemap-cell {
+      stroke: var(--bg-void);
+      stroke-width: 1;
+    }
+
+    .treemap-label {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      fill: var(--bg-void);
+      pointer-events: none;
     }
   </style>
 </head>
 <body class="deco-bg">
-  <div class="container">
-
-    <!-- Page Header -->
-    <header class="page-header">
-      <div>
-        <h1 class="page-title">
-          <span class="deco-icon deco-icon-arch deco-icon-lg deco-icon-gold"></span>
-          Discovery Feed
-        </h1>
-        <p class="philosophy-quote">"Action produces information..."</p>
+  <div class="dashboard">
+    <!-- Header Bar -->
+    <header class="header-bar">
+      <div class="flex items-center">
+        <span class="logo">vibes</span>
+        <span class="logo-tagline">Universal Discovery Engine</span>
       </div>
-      <div class="flex items-center gap-4">
-        <button class="btn">Configure Sources</button>
-        <button class="btn btn-primary">+ New Thread</button>
-      </div>
+      <nav class="header-nav">
+        <a href="01-full-dashboard.html" class="nav-item">Dashboard</a>
+        <a href="04-activity-feed.html" class="nav-item">Firehose</a>
+        <a href="06-expanded-dashboard.html" class="nav-item">Sessions</a>
+        <a href="09-discovery-feed.html" class="nav-item active">Discoveries</a>
+        <a href="10-cost-intelligence.html" class="nav-item">Intelligence</a>
+      </nav>
     </header>
 
-    <!-- Stats Bar -->
-    <div class="stats-bar">
-      <div class="stat-item">
-        <span class="stat-value">247</span>
-        <span class="stat-label">Discoveries Today</span>
-        <span class="stat-trend trend-up">
-          <span class="deco-icon deco-icon-chevron-up deco-icon-sm"></span>
-          23% vs yesterday
-        </span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-value highlight">18</span>
-        <span class="stat-label">High Confidence</span>
-        <span class="stat-trend trend-up">
-          <span class="deco-icon deco-icon-chevron-up deco-icon-sm"></span>
-          5 new
-        </span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-value">42</span>
-        <span class="stat-label">Connections Found</span>
-        <span class="stat-trend trend-up">
-          <span class="deco-icon deco-icon-chevron-up deco-icon-sm"></span>
-          12%
-        </span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-value">7</span>
-        <span class="stat-label">Active Research</span>
-        <span class="stat-trend" style="color: var(--deco-gold-muted);">In Progress</span>
+    <!-- Page Header -->
+    <div class="page-header sunburst">
+      <div class="page-header-deco"></div>
+      <div class="page-header-content">
+        <h1 class="page-title">
+          <span class="deco-icon deco-icon-sunburst deco-icon-gold"></span>
+          Universal Discovery Feed
+        </h1>
+        <p class="page-description">
+          AI-powered insights across every domain. From boardrooms to operating rooms, trading floors to film sets.
+        </p>
       </div>
     </div>
 
-    <!-- Filter Bar -->
-    <div class="filter-bar">
-      <div class="filter-group">
-        <span class="filter-label">Type:</span>
-        <div class="filter-chips">
-          <button class="filter-chip active">All</button>
-          <button class="filter-chip">
-            <span class="deco-icon deco-icon-sunburst deco-icon-sm"></span>
-            Technical
-          </button>
-          <button class="filter-chip">
-            <span class="deco-icon deco-icon-search deco-icon-sm"></span>
-            Strategic
-          </button>
-          <button class="filter-chip">
-            <span class="deco-icon deco-icon-growth deco-icon-sm"></span>
-            Emergent
-          </button>
-          <button class="filter-chip">
-            <span class="deco-icon deco-icon-target deco-icon-sm"></span>
-            Risk
-          </button>
+    <!-- Main Content -->
+    <div class="container">
+      <!-- Stats Bar -->
+      <div class="stats-bar">
+        <div class="stat-item">
+          <span class="stat-value">1,247</span>
+          <span class="stat-label">Discoveries Today</span>
+          <span class="stat-trend trend-up">+23% vs yesterday</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value highlight">89</span>
+          <span class="stat-label">High Confidence</span>
+          <span class="stat-trend trend-up">+12 new</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">342</span>
+          <span class="stat-label">Cross-Domain Links</span>
+          <span class="stat-trend trend-up">+18%</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">14</span>
+          <span class="stat-label">Active Domains</span>
+          <div class="live-indicator">
+            <span class="live-dot"></span>
+            Live
+          </div>
         </div>
       </div>
-      <div class="filter-group">
-        <span class="filter-label">Source:</span>
-        <div class="filter-chips">
-          <button class="filter-chip active">All</button>
-          <button class="filter-chip">Background</button>
-          <button class="filter-chip">Project</button>
-          <button class="filter-chip">Question</button>
+
+      <!-- Filter Bar -->
+      <div class="filter-bar">
+        <div class="filter-group">
+          <span class="filter-label">Domain:</span>
+          <div class="filter-chips">
+            <button class="filter-chip active">All</button>
+            <button class="filter-chip">Finance</button>
+            <button class="filter-chip">Medicine</button>
+            <button class="filter-chip">Entertainment</button>
+            <button class="filter-chip">Science</button>
+            <button class="filter-chip">Lifestyle</button>
+          </div>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Confidence:</span>
+          <div class="filter-chips">
+            <button class="filter-chip active">All</button>
+            <button class="filter-chip">High (90%+)</button>
+            <button class="filter-chip">Medium</button>
+          </div>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Time:</span>
+          <div class="filter-chips">
+            <button class="filter-chip active">Today</button>
+            <button class="filter-chip">This Week</button>
+            <button class="filter-chip">All Time</button>
+          </div>
         </div>
       </div>
-      <div class="filter-group">
-        <span class="filter-label">Time:</span>
-        <div class="filter-chips">
-          <button class="filter-chip active">Today</button>
-          <button class="filter-chip">This Week</button>
-          <button class="filter-chip">All Time</button>
+
+      <!-- Visualization Grid -->
+      <div class="viz-grid">
+        <!-- Knowledge Landscape Visualization -->
+        <div class="viz-container">
+          <div class="viz-header">
+            <span class="viz-title">Knowledge Landscape</span>
+            <div class="live-indicator">
+              <span class="live-dot"></span>
+              Live
+            </div>
+          </div>
+          <div class="viz-canvas" id="landscape-container"></div>
+        </div>
+
+        <!-- Sankey Diagram -->
+        <div class="viz-container">
+          <div class="viz-header">
+            <span class="viz-title">Insight Flow</span>
+            <span class="viz-subtitle">Cross-Domain Sankey</span>
+          </div>
+          <div class="viz-canvas" id="sankey-container"></div>
         </div>
       </div>
-    </div>
 
-    <!-- Main Layout -->
-    <div class="main-layout">
+      <!-- Main Layout -->
+      <div class="main-layout">
+        <!-- Discovery Feed -->
+        <div class="discovery-feed">
 
-      <!-- Discovery Feed -->
-      <div class="discovery-feed">
-
-        <!-- Featured Discovery -->
-        <article class="discovery-card featured-card type-emergent" style="--type-color: #98c379;">
-          <div class="card-header">
-            <div class="card-type">
-              <span class="deco-icon deco-icon-growth deco-icon-md deco-icon-success"></span>
-              <span class="type-badge">Emergent Pattern</span>
-              <span class="featured-badge">
-                <span class="deco-icon deco-icon-star deco-icon-sm deco-icon-bright"></span>
-                Featured
-              </span>
-            </div>
-            <div class="card-meta">
-              <span class="card-timestamp">12 min ago</span>
-              <span class="card-source">
-                <span class="deco-icon deco-icon-agent deco-icon-sm deco-icon-muted"></span>
-                Agent Swarm Analysis
-              </span>
-            </div>
-          </div>
-          <div class="card-body">
-            <h3 class="card-title">Agents Self-Organizing Around Shared Context Pools</h3>
-            <p class="card-description">
-              Detected emergent coordination behavior: agents working on related tasks are spontaneously forming
-              clusters around shared knowledge repositories. This reduces redundant API calls by ~40% and improves
-              context coherence. Consider formalizing this as an architectural pattern.
-            </p>
-            <div class="card-context">
-              <span class="context-tag">vibes-core</span>
-              <span class="context-tag">agent-coordination</span>
-              <span class="context-tag">performance</span>
-              <span class="context-tag">emergent-behavior</span>
-            </div>
-          </div>
-          <div class="card-footer">
-            <div class="card-actions">
-              <button class="card-action primary">Investigate</button>
-              <button class="card-action">Create Task</button>
-              <button class="card-action">Share</button>
-            </div>
-            <div class="card-confidence">
-              <span>Confidence</span>
-              <div class="confidence-bar">
-                <div class="confidence-fill" style="width: 92%;"></div>
+          <!-- Featured: Finance Discovery -->
+          <article class="discovery-card featured domain-finance">
+            <div class="card-header">
+              <div class="card-type">
+                <span class="domain-badge domain-finance">
+                  <span class="domain-icon">$</span>
+                  Finance
+                </span>
+                <span class="featured-badge">Featured</span>
               </div>
-              <span>92%</span>
-            </div>
-          </div>
-        </article>
-
-        <!-- Technical Discovery -->
-        <article class="discovery-card type-technical" style="--type-color: var(--deco-gold);">
-          <div class="card-header">
-            <div class="card-type">
-              <span class="deco-icon deco-icon-sunburst deco-icon-md deco-icon-gold"></span>
-              <span class="type-badge">Technical</span>
-            </div>
-            <div class="card-meta">
-              <span class="card-timestamp">34 min ago</span>
-              <span class="card-source">
-                <span class="deco-icon deco-icon-doc deco-icon-sm deco-icon-muted"></span>
-                Background Scan
-              </span>
-            </div>
-          </div>
-          <div class="card-body">
-            <h3 class="card-title">Arrow Flight RPC Could Replace Current gRPC Layer</h3>
-            <p class="card-description">
-              Apache Arrow Flight provides a high-performance RPC framework optimized for columnar data transfer.
-              Given our lakehouse architecture plans, this could provide 10x throughput improvements for
-              artifact streaming while maintaining compatibility with existing Arrow-based tools.
-            </p>
-            <div class="card-context">
-              <span class="context-tag">apache-arrow</span>
-              <span class="context-tag">performance</span>
-              <span class="context-tag">lakehouse</span>
-            </div>
-          </div>
-          <div class="card-footer">
-            <div class="card-actions">
-              <button class="card-action">Investigate</button>
-              <button class="card-action">Bookmark</button>
-            </div>
-            <div class="card-confidence">
-              <span>Confidence</span>
-              <div class="confidence-bar">
-                <div class="confidence-fill" style="width: 78%;"></div>
+              <div class="card-meta">
+                <div class="live-indicator">
+                  <span class="live-dot"></span>
+                  Live
+                </div>
+                <span class="card-source">Market Analysis Engine</span>
               </div>
-              <span>78%</span>
             </div>
-          </div>
-        </article>
-
-        <!-- Strategic Discovery -->
-        <article class="discovery-card type-strategic" style="--type-color: #b4a7d6;">
-          <div class="card-header">
-            <div class="card-type">
-              <span class="deco-icon deco-icon-search deco-icon-md" style="color: #b4a7d6;"></span>
-              <span class="type-badge">Strategic</span>
-            </div>
-            <div class="card-meta">
-              <span class="card-timestamp">1 hr ago</span>
-              <span class="card-source">
-                <span class="deco-icon deco-icon-fan deco-icon-sm deco-icon-muted"></span>
-                Market Analysis
-              </span>
-            </div>
-          </div>
-          <div class="card-body">
-            <h3 class="card-title">Enterprise Customers Seeking "Audit Trail" Features</h3>
-            <p class="card-description">
-              Analysis of enterprise RFPs shows 73% require comprehensive audit trails for AI-assisted workflows.
-              Our verification artifacts concept aligns perfectly—positioning as "proof of work" could be
-              a key differentiator in enterprise sales.
-            </p>
-            <div class="card-context">
-              <span class="context-tag">enterprise</span>
-              <span class="context-tag">compliance</span>
-              <span class="context-tag">verification-artifacts</span>
-            </div>
-          </div>
-          <div class="card-footer">
-            <div class="card-actions">
-              <button class="card-action">Add to Roadmap</button>
-              <button class="card-action">Discuss</button>
-            </div>
-            <div class="card-confidence">
-              <span>Confidence</span>
-              <div class="confidence-bar">
-                <div class="confidence-fill" style="width: 85%;"></div>
+            <div class="impact-visual">
+              <div class="impact-circle" style="--progress: 324deg;">
+                <span class="impact-value">+34%</span>
               </div>
-              <span>85%</span>
-            </div>
-          </div>
-        </article>
-
-        <!-- Connection Discovery -->
-        <article class="discovery-card type-connection" style="--type-color: var(--deco-gold);">
-          <div class="card-header">
-            <div class="card-type">
-              <span class="deco-icon deco-icon-link deco-icon-md deco-icon-gold"></span>
-              <span class="type-badge">Connection</span>
-            </div>
-            <div class="card-meta">
-              <span class="card-timestamp">2 hr ago</span>
-              <span class="card-source">
-                <span class="deco-icon deco-icon-search deco-icon-sm deco-icon-muted"></span>
-                Cross-Reference
-              </span>
-            </div>
-          </div>
-          <div class="card-body">
-            <h3 class="card-title">Goal Tracking ↔ Verification Artifacts Pattern</h3>
-            <p class="card-description">
-              Found interesting connection: verification artifacts can serve as automatic goal progress
-              indicators. When agents produce artifacts, they inherently demonstrate progress.
-              This could eliminate manual progress updates entirely.
-            </p>
-            <div class="connections-preview">
-              <span class="connection-node highlighted">Verification Artifacts</span>
-              <span class="connection-arrow">→</span>
-              <span class="connection-node">Proof of Work</span>
-              <span class="connection-arrow">→</span>
-              <span class="connection-node highlighted">Goal Progress</span>
-              <span class="connection-arrow">→</span>
-              <span class="connection-node">Metrics</span>
-            </div>
-          </div>
-          <div class="card-footer">
-            <div class="card-actions">
-              <button class="card-action primary">Explore Connection</button>
-              <button class="card-action">Save Pattern</button>
-            </div>
-            <div class="card-confidence">
-              <span>Confidence</span>
-              <div class="confidence-bar">
-                <div class="confidence-fill" style="width: 71%;"></div>
+              <div class="impact-details">
+                <div class="impact-title">Revenue Impact</div>
+                <div class="impact-metric positive">+$2.4M / Quarter</div>
+                <div class="impact-context">Projected increase from AI-suggested pricing optimization</div>
               </div>
-              <span>71%</span>
             </div>
-          </div>
-        </article>
-
-        <!-- Efficiency Discovery -->
-        <article class="discovery-card type-efficiency" style="--type-color: var(--deco-gold-bright);">
-          <div class="card-header">
-            <div class="card-type">
-              <span class="deco-icon deco-icon-bolt deco-icon-md deco-icon-bright"></span>
-              <span class="type-badge">Efficiency</span>
-            </div>
-            <div class="card-meta">
-              <span class="card-timestamp">3 hr ago</span>
-              <span class="card-source">
-                <span class="deco-icon deco-icon-fan deco-icon-sm deco-icon-muted"></span>
-                Cost Analysis
-              </span>
-            </div>
-          </div>
-          <div class="card-body">
-            <h3 class="card-title">Batch API Calls Could Reduce Costs by 35%</h3>
-            <p class="card-description">
-              Current agent patterns make many small API calls. Analysis suggests batching related
-              requests could reduce token overhead and API costs by approximately 35% while
-              maintaining response quality.
-            </p>
-            <div class="card-context">
-              <span class="context-tag">cost-optimization</span>
-              <span class="context-tag">api-usage</span>
-              <span class="context-tag">quick-win</span>
-            </div>
-          </div>
-          <div class="card-footer">
-            <div class="card-actions">
-              <button class="card-action">Create Task</button>
-              <button class="card-action">Run Experiment</button>
-            </div>
-            <div class="card-confidence">
-              <span>Confidence</span>
-              <div class="confidence-bar">
-                <div class="confidence-fill" style="width: 88%;"></div>
+            <div class="card-body">
+              <h3 class="card-title">Sales Conversion Up 34% After AI-Suggested Pricing Change</h3>
+              <p class="card-description">
+                Analysis of 50,000 transactions revealed optimal price points for premium tier products.
+                Dynamic pricing algorithm increased conversion while maintaining margin. Pattern suggests
+                similar opportunities in adjacent product categories worth $8M annually.
+              </p>
+              <div class="card-tags">
+                <span class="tag">pricing-optimization</span>
+                <span class="tag">revenue-growth</span>
+                <span class="tag">machine-learning</span>
               </div>
-              <span>88%</span>
             </div>
-          </div>
-        </article>
-
-        <!-- Risk Signal -->
-        <article class="discovery-card type-risk" style="--type-color: #e06c75;">
-          <div class="card-header">
-            <div class="card-type">
-              <span class="deco-icon deco-icon-target deco-icon-md deco-icon-danger"></span>
-              <span class="type-badge">Risk Signal</span>
-            </div>
-            <div class="card-meta">
-              <span class="card-timestamp">5 hr ago</span>
-              <span class="card-source">
-                <span class="deco-icon deco-icon-check deco-icon-sm deco-icon-muted"></span>
-                Security Scan
-              </span>
-            </div>
-          </div>
-          <div class="card-body">
-            <h3 class="card-title">Dependency Has Known Vulnerability (CVE-2024-XXXX)</h3>
-            <p class="card-description">
-              The async-std crate version 1.12.x has a known memory safety issue under high concurrency.
-              While not directly exploitable in our use case, upgrading to 1.13.x is recommended
-              before production deployment.
-            </p>
-            <div class="card-context">
-              <span class="context-tag">security</span>
-              <span class="context-tag">dependencies</span>
-              <span class="context-tag">async-std</span>
-            </div>
-          </div>
-          <div class="card-footer">
-            <div class="card-actions">
-              <button class="card-action primary">Create Fix Task</button>
-              <button class="card-action">View Details</button>
-            </div>
-            <div class="card-confidence">
-              <span>Severity</span>
-              <div class="confidence-bar">
-                <div class="confidence-fill" style="width: 45%; background: linear-gradient(90deg, var(--deco-gold-muted), var(--deco-gold-bright));"></div>
+            <div class="card-footer">
+              <div class="card-actions">
+                <button class="card-action primary">Apply Insights</button>
+                <button class="card-action">View Analysis</button>
+                <button class="card-action">Share</button>
               </div>
-              <span>Medium</span>
-            </div>
-          </div>
-        </article>
-
-        <!-- Anomaly Discovery -->
-        <article class="discovery-card type-anomaly" style="--type-color: #e06c75;">
-          <div class="card-header">
-            <div class="card-type">
-              <span class="deco-icon deco-icon-arch deco-icon-md" style="color: #e06c75;"></span>
-              <span class="type-badge">Anomaly</span>
-            </div>
-            <div class="card-meta">
-              <span class="card-timestamp">6 hr ago</span>
-              <span class="card-source">
-                <span class="deco-icon deco-icon-test deco-icon-sm deco-icon-muted"></span>
-                Pattern Detection
-              </span>
-            </div>
-          </div>
-          <div class="card-body">
-            <h3 class="card-title">Unusual Spike in Agent Error Rates During Shift Changes</h3>
-            <p class="card-description">
-              Error rates increase 3x during the 15-minute windows when human commanders transition.
-              Hypothesis: context handoff is incomplete. Consider implementing "shift overlap"
-              protocol where both commanders are briefly active.
-            </p>
-            <div class="card-context">
-              <span class="context-tag">multiplayer</span>
-              <span class="context-tag">handoff</span>
-              <span class="context-tag">reliability</span>
-            </div>
-          </div>
-          <div class="card-footer">
-            <div class="card-actions">
-              <button class="card-action">Investigate</button>
-              <button class="card-action">Add Monitoring</button>
-            </div>
-            <div class="card-confidence">
-              <span>Confidence</span>
-              <div class="confidence-bar">
-                <div class="confidence-fill" style="width: 67%;"></div>
+              <div class="confidence-indicator">
+                <span>Confidence</span>
+                <div class="confidence-bar">
+                  <div class="confidence-fill" style="width: 94%;"></div>
+                </div>
+                <span>94%</span>
               </div>
-              <span>67%</span>
             </div>
-          </div>
-        </article>
+          </article>
 
-      </div>
+          <!-- Medicine Discovery -->
+          <article class="discovery-card domain-medicine">
+            <div class="card-header">
+              <div class="card-type">
+                <span class="domain-badge domain-medicine">
+                  <span class="domain-icon">+</span>
+                  Medicine
+                </span>
+              </div>
+              <div class="card-meta">
+                <span class="card-timestamp">2 hr ago</span>
+                <span class="card-source">Clinical Data Analysis</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <h3 class="card-title">Drug Interaction Pattern Discovered Across 10K Patient Records</h3>
+              <p class="card-description">
+                Cross-referencing prescription data with outcomes revealed previously unknown interaction
+                between common blood pressure medication and diabetes treatment. Affects estimated 3% of
+                dual-diagnosis patients. Recommended for immediate clinical review.
+              </p>
+              <div class="card-tags">
+                <span class="tag">drug-interactions</span>
+                <span class="tag">patient-safety</span>
+                <span class="tag">clinical-alert</span>
+              </div>
+            </div>
+            <div class="card-footer">
+              <div class="card-actions">
+                <button class="card-action primary">Flag for Review</button>
+                <button class="card-action">View Evidence</button>
+              </div>
+              <div class="confidence-indicator">
+                <span>Confidence</span>
+                <div class="confidence-bar">
+                  <div class="confidence-fill" style="width: 91%;"></div>
+                </div>
+                <span>91%</span>
+              </div>
+            </div>
+          </article>
 
-      <!-- Sidebar -->
-      <aside class="sidebar">
+          <!-- Hollywood Discovery -->
+          <article class="discovery-card domain-hollywood">
+            <div class="card-header">
+              <div class="card-type">
+                <span class="domain-badge domain-hollywood">
+                  <span class="domain-icon">*</span>
+                  Hollywood
+                </span>
+              </div>
+              <div class="card-meta">
+                <span class="card-timestamp">4 hr ago</span>
+                <span class="card-source">Cinematography AI</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <h3 class="card-title">Scene Lighting Algorithm Matches Spielberg's Cinematography</h3>
+              <p class="card-description">
+                Analyzed 200+ hours of Spielberg films to extract lighting signatures. New algorithm
+                can automatically suggest camera and lighting setups that evoke similar emotional
+                responses. Tested on indie productions with 89% positive audience reaction improvement.
+              </p>
+              <div class="card-tags">
+                <span class="tag">cinematography</span>
+                <span class="tag">lighting-design</span>
+                <span class="tag">film-production</span>
+              </div>
+            </div>
+            <div class="card-footer">
+              <div class="card-actions">
+                <button class="card-action primary">Try Algorithm</button>
+                <button class="card-action">View Demo</button>
+              </div>
+              <div class="confidence-indicator">
+                <span>Confidence</span>
+                <div class="confidence-bar">
+                  <div class="confidence-fill" style="width: 89%;"></div>
+                </div>
+                <span>89%</span>
+              </div>
+            </div>
+          </article>
 
-        <!-- Philosophy Banner -->
-        <div class="philosophy-banner">
-          <p class="philosophy-text">"Action produces information"</p>
-          <p class="philosophy-subtext">The swarm learns by doing. Every action generates discoveries.</p>
+          <!-- Analytics Discovery -->
+          <article class="discovery-card domain-analytics">
+            <div class="card-header">
+              <div class="card-type">
+                <span class="domain-badge domain-analytics">
+                  <span class="domain-icon">#</span>
+                  Analytics
+                </span>
+              </div>
+              <div class="card-meta">
+                <span class="card-timestamp">5 hr ago</span>
+                <span class="card-source">Predictive Models</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <h3 class="card-title">Customer Churn Prediction Accuracy Hit 92%</h3>
+              <p class="card-description">
+                New ensemble model combining behavioral signals, support ticket sentiment, and usage
+                patterns now predicts churn 30 days in advance with 92% accuracy. Early intervention
+                on flagged accounts could save $1.2M in annual recurring revenue.
+              </p>
+              <div class="card-tags">
+                <span class="tag">churn-prediction</span>
+                <span class="tag">customer-success</span>
+                <span class="tag">retention</span>
+              </div>
+            </div>
+            <div class="card-footer">
+              <div class="card-actions">
+                <button class="card-action primary">Deploy Model</button>
+                <button class="card-action">View At-Risk List</button>
+              </div>
+              <div class="confidence-indicator">
+                <span>Confidence</span>
+                <div class="confidence-bar">
+                  <div class="confidence-fill" style="width: 92%;"></div>
+                </div>
+                <span>92%</span>
+              </div>
+            </div>
+          </article>
+
+          <!-- Manufacturing Discovery -->
+          <article class="discovery-card domain-manufacturing">
+            <div class="card-header">
+              <div class="card-type">
+                <span class="domain-badge domain-manufacturing">
+                  <span class="domain-icon">!</span>
+                  Manufacturing
+                </span>
+              </div>
+              <div class="card-meta">
+                <span class="card-timestamp">6 hr ago</span>
+                <span class="card-source">Supply Chain Monitor</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <h3 class="card-title">Supply Chain Bottleneck Identified in Shenzhen Warehouse</h3>
+              <p class="card-description">
+                Real-time shipping data analysis detected 40% throughput reduction at key distribution
+                hub. Root cause: new customs documentation requirements. Alternative routing through
+                Hong Kong adds 2 days but maintains 95% on-time delivery. Recommend immediate switch.
+              </p>
+              <div class="card-tags">
+                <span class="tag">supply-chain</span>
+                <span class="tag">logistics</span>
+                <span class="tag">urgent</span>
+              </div>
+            </div>
+            <div class="card-footer">
+              <div class="card-actions">
+                <button class="card-action primary">Reroute Shipments</button>
+                <button class="card-action">View Impact</button>
+              </div>
+              <div class="confidence-indicator">
+                <span>Confidence</span>
+                <div class="confidence-bar">
+                  <div class="confidence-fill" style="width: 96%;"></div>
+                </div>
+                <span>96%</span>
+              </div>
+            </div>
+          </article>
+
+          <!-- Aerospace Discovery -->
+          <article class="discovery-card domain-aerospace">
+            <div class="card-header">
+              <div class="card-type">
+                <span class="domain-badge domain-aerospace">
+                  <span class="domain-icon">^</span>
+                  Aerospace
+                </span>
+              </div>
+              <div class="card-meta">
+                <span class="card-timestamp">8 hr ago</span>
+                <span class="card-source">Orbital Mechanics AI</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <h3 class="card-title">Satellite Trajectory Optimization Saves 12% Fuel</h3>
+              <p class="card-description">
+                Novel approach to orbital maneuver planning using gravitational assist windows
+                reduces station-keeping fuel consumption by 12%. Applied to constellation of 40
+                satellites, extends operational lifespan by average 18 months. Worth $340M in
+                replacement cost avoidance.
+              </p>
+              <div class="card-tags">
+                <span class="tag">orbital-mechanics</span>
+                <span class="tag">fuel-optimization</span>
+                <span class="tag">satellite-ops</span>
+              </div>
+            </div>
+            <div class="card-footer">
+              <div class="card-actions">
+                <button class="card-action primary">Update Trajectories</button>
+                <button class="card-action">Simulate</button>
+              </div>
+              <div class="confidence-indicator">
+                <span>Confidence</span>
+                <div class="confidence-bar">
+                  <div class="confidence-fill" style="width: 88%;"></div>
+                </div>
+                <span>88%</span>
+              </div>
+            </div>
+          </article>
+
+          <!-- Fashion Discovery -->
+          <article class="discovery-card domain-fashion">
+            <div class="card-header">
+              <div class="card-type">
+                <span class="domain-badge domain-fashion">
+                  <span class="domain-icon">~</span>
+                  Fashion
+                </span>
+              </div>
+              <div class="card-meta">
+                <span class="card-timestamp">12 hr ago</span>
+                <span class="card-source">Trend Forecaster</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <h3 class="card-title">Fashion Trend Forecast: Oversized Silhouettes Peaking Q3</h3>
+              <p class="card-description">
+                Social media sentiment analysis across 5M posts combined with runway data predicts
+                oversized silhouettes reaching market saturation by September. Early movers to
+                structured fits will capture Q4 demand. Recommend 60/40 inventory split.
+              </p>
+              <div class="card-tags">
+                <span class="tag">trend-forecasting</span>
+                <span class="tag">inventory-planning</span>
+                <span class="tag">retail</span>
+              </div>
+            </div>
+            <div class="card-footer">
+              <div class="card-actions">
+                <button class="card-action primary">Adjust Orders</button>
+                <button class="card-action">View Trends</button>
+              </div>
+              <div class="confidence-indicator">
+                <span>Confidence</span>
+                <div class="confidence-bar">
+                  <div class="confidence-fill" style="width: 78%;"></div>
+                </div>
+                <span>78%</span>
+              </div>
+            </div>
+          </article>
+
+          <!-- Gaming Discovery -->
+          <article class="discovery-card domain-gaming">
+            <div class="card-header">
+              <div class="card-type">
+                <span class="domain-badge domain-gaming">
+                  <span class="domain-icon">@</span>
+                  Video Games
+                </span>
+              </div>
+              <div class="card-meta">
+                <span class="card-timestamp">1 day ago</span>
+                <span class="card-source">Balance Simulator</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <h3 class="card-title">Game Balance Simulation Found OP Weapon Combo</h3>
+              <p class="card-description">
+                Monte Carlo simulation of 10M matches discovered exploit: combining Frost Shield
+                with Rapid Fire perk creates 73% win rate in ranked play. Currently used by only
+                0.3% of players. Recommend hotfix before wider discovery ruins competitive integrity.
+              </p>
+              <div class="card-tags">
+                <span class="tag">game-balance</span>
+                <span class="tag">exploit-detection</span>
+                <span class="tag">competitive</span>
+              </div>
+            </div>
+            <div class="card-footer">
+              <div class="card-actions">
+                <button class="card-action primary">Draft Patch Notes</button>
+                <button class="card-action">View Data</button>
+              </div>
+              <div class="confidence-indicator">
+                <span>Confidence</span>
+                <div class="confidence-bar">
+                  <div class="confidence-fill" style="width: 97%;"></div>
+                </div>
+                <span>97%</span>
+              </div>
+            </div>
+          </article>
+
+          <!-- Environment Discovery -->
+          <article class="discovery-card domain-environment">
+            <div class="card-header">
+              <div class="card-type">
+                <span class="domain-badge domain-environment">
+                  <span class="domain-icon">*</span>
+                  Environment
+                </span>
+              </div>
+              <div class="card-meta">
+                <span class="card-timestamp">1 day ago</span>
+                <span class="card-source">Climate Modeler</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <h3 class="card-title">Climate Model Correlation Found: Ocean Temps and Crop Yields</h3>
+              <p class="card-description">
+                30-year dataset analysis reveals 0.87 correlation between Pacific Ocean surface
+                temperatures in February and Midwest corn yields in August. Enables 6-month
+                advance planning for commodity traders and agricultural insurers. Pattern holds
+                across multiple crop types.
+              </p>
+              <div class="card-tags">
+                <span class="tag">climate-science</span>
+                <span class="tag">agriculture</span>
+                <span class="tag">predictive-modeling</span>
+              </div>
+            </div>
+            <div class="card-footer">
+              <div class="card-actions">
+                <button class="card-action primary">Add to Models</button>
+                <button class="card-action">Research Paper</button>
+              </div>
+              <div class="confidence-indicator">
+                <span>Confidence</span>
+                <div class="confidence-bar">
+                  <div class="confidence-fill" style="width: 87%;"></div>
+                </div>
+                <span>87%</span>
+              </div>
+            </div>
+          </article>
+
+          <!-- Family Discovery -->
+          <article class="discovery-card domain-family">
+            <div class="card-header">
+              <div class="card-type">
+                <span class="domain-badge domain-family">
+                  <span class="domain-icon">*</span>
+                  Families
+                </span>
+              </div>
+              <div class="card-meta">
+                <span class="card-timestamp">2 days ago</span>
+                <span class="card-source">Travel Optimizer</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <h3 class="card-title">Family Vacation Itinerary Optimized for Kid Energy Levels</h3>
+              <p class="card-description">
+                ML model trained on 50K family trip reviews now predicts optimal activity sequencing
+                based on children's ages and energy patterns. Morning museum visits, afternoon pool
+                time, early dinners. Families using optimized schedules report 40% fewer meltdowns.
+              </p>
+              <div class="card-tags">
+                <span class="tag">family-travel</span>
+                <span class="tag">itinerary-planning</span>
+                <span class="tag">parenting</span>
+              </div>
+            </div>
+            <div class="card-footer">
+              <div class="card-actions">
+                <button class="card-action primary">Generate Itinerary</button>
+                <button class="card-action">Customize</button>
+              </div>
+              <div class="confidence-indicator">
+                <span>Confidence</span>
+                <div class="confidence-bar">
+                  <div class="confidence-fill" style="width: 82%;"></div>
+                </div>
+                <span>82%</span>
+              </div>
+            </div>
+          </article>
+
+          <!-- Fishing Discovery -->
+          <article class="discovery-card domain-fishing">
+            <div class="card-header">
+              <div class="card-type">
+                <span class="domain-badge domain-fishing">
+                  <span class="domain-icon">~</span>
+                  Fishing
+                </span>
+              </div>
+              <div class="card-meta">
+                <span class="card-timestamp">3 days ago</span>
+                <span class="card-source">Wildlife Patterns</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <h3 class="card-title">Fish Migration Pattern Predicted for Lake Superior</h3>
+              <p class="card-description">
+                Combining water temperature sensors, lunar cycles, and historical catch data
+                predicts walleye migration to shallow waters 3 days earlier than typical this
+                season. Peak fishing window: October 12-18 near Apostle Islands. 85% catch rate
+                improvement for anglers who adjust timing.
+              </p>
+              <div class="card-tags">
+                <span class="tag">fishing-forecast</span>
+                <span class="tag">wildlife-patterns</span>
+                <span class="tag">recreation</span>
+              </div>
+            </div>
+            <div class="card-footer">
+              <div class="card-actions">
+                <button class="card-action primary">Set Reminder</button>
+                <button class="card-action">View Map</button>
+              </div>
+              <div class="confidence-indicator">
+                <span>Confidence</span>
+                <div class="confidence-bar">
+                  <div class="confidence-fill" style="width: 85%;"></div>
+                </div>
+                <span>85%</span>
+              </div>
+            </div>
+          </article>
+
+          <!-- Sports Discovery -->
+          <article class="discovery-card domain-sports">
+            <div class="card-header">
+              <div class="card-type">
+                <span class="domain-badge domain-sports">
+                  <span class="domain-icon">*</span>
+                  Sports
+                </span>
+              </div>
+              <div class="card-meta">
+                <span class="card-timestamp">3 days ago</span>
+                <span class="card-source">Tactical Analyzer</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <h3 class="card-title">Game Strategy: Defensive Formation Weakness in Opponent</h3>
+              <p class="card-description">
+                Video analysis of last 20 matches reveals opponent's 4-3-3 formation vulnerable
+                to quick switches of play. Left-back commits forward 78% of possessions, leaving
+                channel exposed. Recommend targeting right wing attacks in first 30 minutes before
+                tactical adjustment.
+              </p>
+              <div class="card-tags">
+                <span class="tag">match-analysis</span>
+                <span class="tag">tactical-insight</span>
+                <span class="tag">coaching</span>
+              </div>
+            </div>
+            <div class="card-footer">
+              <div class="card-actions">
+                <button class="card-action primary">Add to Game Plan</button>
+                <button class="card-action">Watch Clips</button>
+              </div>
+              <div class="confidence-indicator">
+                <span>Confidence</span>
+                <div class="confidence-bar">
+                  <div class="confidence-fill" style="width: 91%;"></div>
+                </div>
+                <span>91%</span>
+              </div>
+            </div>
+          </article>
+
+          <!-- Government Discovery -->
+          <article class="discovery-card domain-government">
+            <div class="card-header">
+              <div class="card-type">
+                <span class="domain-badge domain-government">
+                  <span class="domain-icon">!</span>
+                  Government
+                </span>
+              </div>
+              <div class="card-meta">
+                <span class="card-timestamp">4 days ago</span>
+                <span class="card-source">Infrastructure AI</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <h3 class="card-title">Infrastructure Maintenance Priority Ranking Generated</h3>
+              <p class="card-description">
+                Combined analysis of bridge sensor data, traffic patterns, and weather exposure
+                generates risk-weighted maintenance priority list. 47 structures require attention
+                within 12 months. Optimized scheduling reduces emergency repairs by estimated 60%
+                while staying within annual budget.
+              </p>
+              <div class="card-tags">
+                <span class="tag">infrastructure</span>
+                <span class="tag">public-safety</span>
+                <span class="tag">budget-optimization</span>
+              </div>
+            </div>
+            <div class="card-footer">
+              <div class="card-actions">
+                <button class="card-action primary">View Rankings</button>
+                <button class="card-action">Export Report</button>
+              </div>
+              <div class="confidence-indicator">
+                <span>Confidence</span>
+                <div class="confidence-bar">
+                  <div class="confidence-fill" style="width: 93%;"></div>
+                </div>
+                <span>93%</span>
+              </div>
+            </div>
+          </article>
+
+          <!-- Urban Planning Discovery -->
+          <article class="discovery-card domain-urban">
+            <div class="card-header">
+              <div class="card-type">
+                <span class="domain-badge domain-urban">
+                  <span class="domain-icon">#</span>
+                  Urban Planning
+                </span>
+              </div>
+              <div class="card-meta">
+                <span class="card-timestamp">5 days ago</span>
+                <span class="card-source">Traffic Modeler</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <h3 class="card-title">Traffic Flow Optimization Reduces Congestion 28%</h3>
+              <p class="card-description">
+                Simulation of signal timing changes across 340 intersections in downtown corridor
+                shows 28% reduction in average commute time. Implementation requires only software
+                updates to existing smart signals. Saves residents estimated 4.2M hours annually
+                in commute time.
+              </p>
+              <div class="card-tags">
+                <span class="tag">traffic-optimization</span>
+                <span class="tag">smart-city</span>
+                <span class="tag">quality-of-life</span>
+              </div>
+            </div>
+            <div class="card-footer">
+              <div class="card-actions">
+                <button class="card-action primary">Schedule Rollout</button>
+                <button class="card-action">View Simulation</button>
+              </div>
+              <div class="confidence-indicator">
+                <span>Confidence</span>
+                <div class="confidence-bar">
+                  <div class="confidence-fill" style="width: 94%;"></div>
+                </div>
+                <span>94%</span>
+              </div>
+            </div>
+          </article>
+
         </div>
 
-        <!-- Discovery Types -->
-        <div class="sidebar-panel">
-          <div class="sidebar-header">
-            <span class="sidebar-title">Discovery Types</span>
-          </div>
-          <div class="sidebar-content">
-            <div class="types-legend">
-              <div class="type-item">
-                <span class="deco-icon deco-icon-sunburst deco-icon-sm deco-icon-gold"></span>
-                <span class="type-item-label">Technical</span>
-                <span class="type-item-count">47</span>
-              </div>
-              <div class="type-item">
-                <span class="deco-icon deco-icon-search deco-icon-sm" style="color: #b4a7d6;"></span>
-                <span class="type-item-label">Strategic</span>
-                <span class="type-item-count">23</span>
-              </div>
-              <div class="type-item">
-                <span class="deco-icon deco-icon-arch deco-icon-sm" style="color: #e06c75;"></span>
-                <span class="type-item-label">Anomaly</span>
-                <span class="type-item-count">12</span>
-              </div>
-              <div class="type-item">
-                <span class="deco-icon deco-icon-growth deco-icon-sm deco-icon-success"></span>
-                <span class="type-item-label">Emergent</span>
-                <span class="type-item-count">8</span>
-              </div>
-              <div class="type-item">
-                <span class="deco-icon deco-icon-test deco-icon-sm deco-icon-bright"></span>
-                <span class="type-item-label">Experimental</span>
-                <span class="type-item-count">15</span>
-              </div>
-              <div class="type-item">
-                <span class="deco-icon deco-icon-link deco-icon-sm deco-icon-gold"></span>
-                <span class="type-item-label">Connection</span>
-                <span class="type-item-count">31</span>
-              </div>
-              <div class="type-item">
-                <span class="deco-icon deco-icon-bolt deco-icon-sm deco-icon-bright"></span>
-                <span class="type-item-label">Efficiency</span>
-                <span class="type-item-count">19</span>
-              </div>
-              <div class="type-item">
-                <span class="deco-icon deco-icon-agent deco-icon-sm" style="color: #d19a66;"></span>
-                <span class="type-item-label">User Insight</span>
-                <span class="type-item-count">7</span>
-              </div>
-              <div class="type-item">
-                <span class="deco-icon deco-icon-target deco-icon-sm deco-icon-danger"></span>
-                <span class="type-item-label">Risk Signal</span>
-                <span class="type-item-count">5</span>
-              </div>
+        <!-- Sidebar -->
+        <aside class="sidebar">
+          <!-- Domain Distribution -->
+          <div class="sidebar-panel">
+            <div class="sidebar-header">
+              <span class="sidebar-title">Active Domains</span>
             </div>
-          </div>
-        </div>
-
-        <!-- Trending Topics -->
-        <div class="sidebar-panel">
-          <div class="sidebar-header">
-            <span class="sidebar-title">Trending Topics</span>
-          </div>
-          <div class="sidebar-content">
-            <div class="trending-list">
-              <div class="trending-item">
-                <span class="trending-rank">#1</span>
-                <span class="trending-topic">Agent Coordination</span>
-                <span class="trending-momentum">
-                  <span class="deco-icon deco-icon-chevron-up deco-icon-sm"></span>
-                  45%
-                </span>
-              </div>
-              <div class="trending-item">
-                <span class="trending-rank">#2</span>
-                <span class="trending-topic">Verification Artifacts</span>
-                <span class="trending-momentum">
-                  <span class="deco-icon deco-icon-chevron-up deco-icon-sm"></span>
-                  32%
-                </span>
-              </div>
-              <div class="trending-item">
-                <span class="trending-rank">#3</span>
-                <span class="trending-topic">Cost Optimization</span>
-                <span class="trending-momentum">
-                  <span class="deco-icon deco-icon-chevron-up deco-icon-sm"></span>
-                  28%
-                </span>
-              </div>
-              <div class="trending-item">
-                <span class="trending-rank">#4</span>
-                <span class="trending-topic">Lakehouse Architecture</span>
-                <span class="trending-momentum">
-                  <span class="deco-icon deco-icon-chevron-up deco-icon-sm"></span>
-                  21%
-                </span>
-              </div>
-              <div class="trending-item">
-                <span class="trending-rank">#5</span>
-                <span class="trending-topic">Multiplayer Handoff</span>
-                <span class="trending-momentum">
-                  <span class="deco-icon deco-icon-chevron-up deco-icon-sm"></span>
-                  18%
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Active Research Threads -->
-        <div class="sidebar-panel">
-          <div class="sidebar-header">
-            <span class="sidebar-title">Research Threads</span>
-            <button class="panel-action">+ New</button>
-          </div>
-          <div class="sidebar-content">
-            <div class="thread-list">
-              <div class="thread-item">
-                <div class="thread-title">How to scale agent swarms cost-effectively?</div>
-                <div class="thread-meta">
-                  <span class="thread-status active">Active</span>
-                  <span>42 discoveries</span>
+            <div class="sidebar-content">
+              <div class="domain-legend">
+                <div class="domain-item">
+                  <div class="domain-dot" style="background: var(--gold-bright);"></div>
+                  <span class="domain-label">Finance & Commerce</span>
+                  <span class="domain-count">247</span>
+                </div>
+                <div class="domain-item">
+                  <div class="domain-dot" style="background: #e06c75;"></div>
+                  <span class="domain-label">Medicine & Health</span>
+                  <span class="domain-count">189</span>
+                </div>
+                <div class="domain-item">
+                  <div class="domain-dot" style="background: #c9a227;"></div>
+                  <span class="domain-label">Entertainment</span>
+                  <span class="domain-count">156</span>
+                </div>
+                <div class="domain-item">
+                  <div class="domain-dot" style="background: #61afef;"></div>
+                  <span class="domain-label">Science & Research</span>
+                  <span class="domain-count">142</span>
+                </div>
+                <div class="domain-item">
+                  <div class="domain-dot" style="background: var(--accent-teal);"></div>
+                  <span class="domain-label">Analytics</span>
+                  <span class="domain-count">134</span>
+                </div>
+                <div class="domain-item">
+                  <div class="domain-dot" style="background: #d19a66;"></div>
+                  <span class="domain-label">Manufacturing</span>
+                  <span class="domain-count">98</span>
+                </div>
+                <div class="domain-item">
+                  <div class="domain-dot" style="background: #98c379;"></div>
+                  <span class="domain-label">Environment</span>
+                  <span class="domain-count">87</span>
+                </div>
+                <div class="domain-item">
+                  <div class="domain-dot" style="background: var(--accent-navy-light);"></div>
+                  <span class="domain-label">Government</span>
+                  <span class="domain-count">76</span>
+                </div>
+                <div class="domain-item">
+                  <div class="domain-dot" style="background: var(--gold-primary);"></div>
+                  <span class="domain-label">Lifestyle</span>
+                  <span class="domain-count">68</span>
                 </div>
               </div>
-              <div class="thread-item">
-                <div class="thread-title">Best practices for verification artifact storage</div>
-                <div class="thread-meta">
-                  <span class="thread-status active">Active</span>
-                  <span>28 discoveries</span>
+            </div>
+          </div>
+
+          <!-- Impact Summary -->
+          <div class="sidebar-panel">
+            <div class="sidebar-header">
+              <span class="sidebar-title">Impact Summary</span>
+            </div>
+            <div class="sidebar-content">
+              <div class="impact-summary">
+                <div class="impact-row">
+                  <span class="impact-label">Revenue Impact</span>
+                  <span class="impact-value positive">+$4.2M</span>
                 </div>
-              </div>
-              <div class="thread-item">
-                <div class="thread-title">Commander handoff protocols</div>
-                <div class="thread-meta">
-                  <span class="thread-status active">Active</span>
-                  <span>15 discoveries</span>
+                <div class="impact-row">
+                  <span class="impact-label">Cost Savings</span>
+                  <span class="impact-value positive">+$1.8M</span>
+                </div>
+                <div class="impact-row">
+                  <span class="impact-label">Risk Mitigated</span>
+                  <span class="impact-value warning">23 alerts</span>
+                </div>
+                <div class="impact-row">
+                  <span class="impact-label">Avg Confidence</span>
+                  <span class="impact-value">89.4%</span>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Research Layers -->
-        <div class="sidebar-panel">
-          <div class="sidebar-header">
-            <span class="sidebar-title">Research Layers</span>
+          <!-- Top Cross-Domain Links -->
+          <div class="sidebar-panel">
+            <div class="sidebar-header">
+              <span class="sidebar-title">Top Cross-Domain Links</span>
+            </div>
+            <div class="sidebar-content">
+              <div class="link-list">
+                <div class="link-item">
+                  <span class="link-domains">Finance → Medicine</span>
+                  <span class="link-insight">Insurance risk models</span>
+                  <span class="link-strength">47 connections</span>
+                </div>
+                <div class="link-item">
+                  <span class="link-domains">Science → Manufacturing</span>
+                  <span class="link-insight">Material optimization</span>
+                  <span class="link-strength">38 connections</span>
+                </div>
+                <div class="link-item">
+                  <span class="link-domains">Analytics → Finance</span>
+                  <span class="link-insight">Predictive pricing</span>
+                  <span class="link-strength">34 connections</span>
+                </div>
+                <div class="link-item">
+                  <span class="link-domains">Environment → Government</span>
+                  <span class="link-insight">Policy impact models</span>
+                  <span class="link-strength">29 connections</span>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="sidebar-content">
-            <div class="types-legend">
-              <div class="type-item">
-                <span class="deco-icon deco-icon-fan deco-icon-sm deco-icon-success"></span>
-                <span class="type-item-label">Background Scanning</span>
+
+          <!-- Trending Topics -->
+          <div class="sidebar-panel">
+            <div class="sidebar-header">
+              <span class="sidebar-title">Trending Topics</span>
+            </div>
+            <div class="sidebar-content">
+              <div class="trending-list">
+                <div class="trending-item">
+                  <span class="trending-rank">#1</span>
+                  <span class="trending-topic">AI-Driven Pricing</span>
+                  <div class="mini-sparkline" id="sparkline-1"></div>
+                  <span class="trending-momentum">+67%</span>
+                </div>
+                <div class="trending-item">
+                  <span class="trending-rank">#2</span>
+                  <span class="trending-topic">Supply Chain AI</span>
+                  <div class="mini-sparkline" id="sparkline-2"></div>
+                  <span class="trending-momentum">+54%</span>
+                </div>
+                <div class="trending-item">
+                  <span class="trending-rank">#3</span>
+                  <span class="trending-topic">Predictive Health</span>
+                  <div class="mini-sparkline" id="sparkline-3"></div>
+                  <span class="trending-momentum">+48%</span>
+                </div>
+                <div class="trending-item">
+                  <span class="trending-rank">#4</span>
+                  <span class="trending-topic">Climate Modeling</span>
+                  <div class="mini-sparkline" id="sparkline-4"></div>
+                  <span class="trending-momentum">+41%</span>
+                </div>
+                <div class="trending-item">
+                  <span class="trending-rank">#5</span>
+                  <span class="trending-topic">Smart Cities</span>
+                  <div class="mini-sparkline" id="sparkline-5"></div>
+                  <span class="trending-momentum">+38%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Research Layers -->
+          <div class="sidebar-panel">
+            <div class="sidebar-header">
+              <span class="sidebar-title">Research Layers</span>
+            </div>
+            <div class="sidebar-content">
+              <div class="layer-item">
+                <span class="layer-name">Real-time Monitoring</span>
                 <span class="layer-status on">ON</span>
               </div>
-              <div class="type-item">
-                <span class="deco-icon deco-icon-doc deco-icon-sm deco-icon-success"></span>
-                <span class="type-item-label">Project-Embedded</span>
+              <div class="layer-item">
+                <span class="layer-name">Historical Analysis</span>
                 <span class="layer-status on">ON</span>
               </div>
-              <div class="type-item">
-                <span class="deco-icon deco-icon-search deco-icon-sm deco-icon-muted"></span>
-                <span class="type-item-label">Question-Driven</span>
-                <span class="layer-status count">3 active</span>
+              <div class="layer-item">
+                <span class="layer-name">Cross-Domain Links</span>
+                <span class="layer-status on">ON</span>
+              </div>
+              <div class="layer-item">
+                <span class="layer-name">Anomaly Detection</span>
+                <span class="layer-status count">12 active</span>
               </div>
             </div>
           </div>
-        </div>
-
-      </aside>
+        </aside>
+      </div>
     </div>
-
   </div>
+
+  <script>
+    // ═══════════════════════════════════════════════════════════════════════
+    // D3 KNOWLEDGE LANDSCAPE VISUALIZATION
+    // Combines graph, map-like spatial layout, and t-SNE-style clustering
+    // ═══════════════════════════════════════════════════════════════════════
+
+    const landscapeContainer = document.getElementById('landscape-container');
+    if (landscapeContainer) {
+      const width = landscapeContainer.clientWidth || 500;
+      const height = landscapeContainer.clientHeight || 300;
+
+      const svg = d3.select('#landscape-container')
+        .append('svg')
+        .attr('width', width)
+        .attr('height', height);
+
+      // Define domain clusters (simulating t-SNE clustering)
+      const clusters = [
+        { id: 'finance', label: 'Finance', x: 0.15, y: 0.35, color: '#e8c45a', discoveries: 247 },
+        { id: 'medicine', label: 'Medicine', x: 0.35, y: 0.25, color: '#e06c75', discoveries: 189 },
+        { id: 'science', label: 'Science', x: 0.55, y: 0.20, color: '#61afef', discoveries: 142 },
+        { id: 'entertainment', label: 'Media', x: 0.75, y: 0.35, color: '#c9a227', discoveries: 156 },
+        { id: 'manufacturing', label: 'Mfg', x: 0.25, y: 0.65, color: '#d19a66', discoveries: 98 },
+        { id: 'analytics', label: 'Analytics', x: 0.45, y: 0.55, color: '#3d8b8b', discoveries: 134 },
+        { id: 'environment', label: 'Climate', x: 0.65, y: 0.70, color: '#98c379', discoveries: 87 },
+        { id: 'government', label: 'Policy', x: 0.85, y: 0.60, color: '#5a6a8a', discoveries: 76 }
+      ];
+
+      // Create gradient definitions for terrain effect
+      const defs = svg.append('defs');
+
+      // Add radial gradients for each cluster (terrain "elevation")
+      clusters.forEach(cluster => {
+        const gradient = defs.append('radialGradient')
+          .attr('id', `cluster-gradient-${cluster.id}`)
+          .attr('cx', '50%')
+          .attr('cy', '50%')
+          .attr('r', '50%');
+        gradient.append('stop').attr('offset', '0%').attr('stop-color', cluster.color).attr('stop-opacity', 0.25);
+        gradient.append('stop').attr('offset', '60%').attr('stop-color', cluster.color).attr('stop-opacity', 0.08);
+        gradient.append('stop').attr('offset', '100%').attr('stop-color', cluster.color).attr('stop-opacity', 0);
+      });
+
+      // Draw terrain regions (cluster backgrounds)
+      clusters.forEach(cluster => {
+        const cx = cluster.x * width;
+        const cy = cluster.y * height;
+        const radius = 40 + cluster.discoveries / 5;
+
+        // Outer glow/terrain
+        svg.append('ellipse')
+          .attr('cx', cx)
+          .attr('cy', cy)
+          .attr('rx', radius * 1.5)
+          .attr('ry', radius * 1.2)
+          .attr('fill', `url(#cluster-gradient-${cluster.id})`);
+      });
+
+      // Define connections between clusters
+      const connections = [
+        { source: 'finance', target: 'medicine', strength: 47 },
+        { source: 'finance', target: 'analytics', strength: 34 },
+        { source: 'medicine', target: 'science', strength: 38 },
+        { source: 'science', target: 'manufacturing', strength: 28 },
+        { source: 'science', target: 'environment', strength: 25 },
+        { source: 'analytics', target: 'finance', strength: 34 },
+        { source: 'entertainment', target: 'analytics', strength: 22 },
+        { source: 'environment', target: 'government', strength: 29 },
+        { source: 'manufacturing', target: 'analytics', strength: 19 }
+      ];
+
+      // Draw connections as curved paths
+      connections.forEach(conn => {
+        const source = clusters.find(c => c.id === conn.source);
+        const target = clusters.find(c => c.id === conn.target);
+        const x1 = source.x * width;
+        const y1 = source.y * height;
+        const x2 = target.x * width;
+        const y2 = target.y * height;
+        const midX = (x1 + x2) / 2;
+        const midY = (y1 + y2) / 2 - 20;
+
+        svg.append('path')
+          .attr('d', `M${x1},${y1} Q${midX},${midY} ${x2},${y2}`)
+          .attr('fill', 'none')
+          .attr('stroke', '#d4a84b')
+          .attr('stroke-width', Math.max(1, conn.strength / 15))
+          .attr('stroke-opacity', 0.3)
+          .attr('stroke-dasharray', '4,4');
+      });
+
+      // Draw cluster nodes
+      clusters.forEach(cluster => {
+        const cx = cluster.x * width;
+        const cy = cluster.y * height;
+        const nodeRadius = 8 + cluster.discoveries / 40;
+
+        // Outer ring
+        svg.append('circle')
+          .attr('cx', cx)
+          .attr('cy', cy)
+          .attr('r', nodeRadius + 4)
+          .attr('fill', 'none')
+          .attr('stroke', cluster.color)
+          .attr('stroke-width', 1)
+          .attr('stroke-opacity', 0.5);
+
+        // Main node
+        svg.append('circle')
+          .attr('cx', cx)
+          .attr('cy', cy)
+          .attr('r', nodeRadius)
+          .attr('fill', cluster.color)
+          .attr('fill-opacity', 0.9)
+          .attr('stroke', '#07090d')
+          .attr('stroke-width', 2)
+          .style('cursor', 'pointer');
+
+        // Label
+        svg.append('text')
+          .attr('x', cx)
+          .attr('y', cy + nodeRadius + 14)
+          .attr('text-anchor', 'middle')
+          .attr('font-family', 'Barlow Condensed, sans-serif')
+          .attr('font-size', '10px')
+          .attr('font-weight', '600')
+          .attr('letter-spacing', '0.05em')
+          .attr('fill', cluster.color)
+          .text(cluster.label);
+
+        // Discovery count
+        svg.append('text')
+          .attr('x', cx)
+          .attr('y', cy + 4)
+          .attr('text-anchor', 'middle')
+          .attr('font-family', 'Titillium Web, sans-serif')
+          .attr('font-size', '10px')
+          .attr('font-weight', '600')
+          .attr('fill', '#07090d')
+          .text(cluster.discoveries);
+      });
+
+      // Add subtle grid lines for map-like feel
+      for (let i = 1; i < 5; i++) {
+        svg.append('line')
+          .attr('x1', 0)
+          .attr('y1', (i * height) / 5)
+          .attr('x2', width)
+          .attr('y2', (i * height) / 5)
+          .attr('stroke', '#2a3142')
+          .attr('stroke-width', 0.5)
+          .attr('stroke-opacity', 0.3);
+        svg.append('line')
+          .attr('x1', (i * width) / 5)
+          .attr('y1', 0)
+          .attr('x2', (i * width) / 5)
+          .attr('y2', height)
+          .attr('stroke', '#2a3142')
+          .attr('stroke-width', 0.5)
+          .attr('stroke-opacity', 0.3);
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // D3 SANKEY DIAGRAM - INSIGHT FLOW
+    // A proper Sankey showing data flow from sources to actions
+    // ═══════════════════════════════════════════════════════════════════════
+
+    const sankeyContainer = document.getElementById('sankey-container');
+    if (sankeyContainer) {
+      const sankeyWidth = sankeyContainer.clientWidth || 700;
+      const sankeyHeight = 280;
+      const margin = { top: 30, right: 20, bottom: 20, left: 20 };
+      const innerWidth = sankeyWidth - margin.left - margin.right;
+      const innerHeight = sankeyHeight - margin.top - margin.bottom;
+
+      const sankeySvg = d3.select('#sankey-container')
+        .append('svg')
+        .attr('width', sankeyWidth)
+        .attr('height', sankeyHeight)
+        .append('g')
+        .attr('transform', `translate(${margin.left},${margin.top})`);
+
+      // Define the nodes (sources -> processing -> outputs -> actions)
+      const sankeyNodes = [
+        // Column 0: Data Sources
+        { id: 'finance', name: 'Finance', column: 0, color: '#e8c45a' },
+        { id: 'medicine', name: 'Medicine', column: 0, color: '#e06c75' },
+        { id: 'science', name: 'Science', column: 0, color: '#61afef' },
+        { id: 'mfg', name: 'Mfg', column: 0, color: '#d19a66' },
+        // Column 1: Analysis Types
+        { id: 'patterns', name: 'Patterns', column: 1, color: '#d4a84b' },
+        { id: 'anomalies', name: 'Anomalies', column: 1, color: '#e06c75' },
+        { id: 'predictions', name: 'Predictions', column: 1, color: '#61afef' },
+        // Column 2: Insight Quality
+        { id: 'high-conf', name: 'High Confidence', column: 2, color: '#98c379' },
+        { id: 'med-conf', name: 'Medium', column: 2, color: '#c9a227' },
+        // Column 3: Actions
+        { id: 'automated', name: 'Auto-Applied', column: 3, color: '#98c379' },
+        { id: 'review', name: 'For Review', column: 3, color: '#e8c45a' },
+      ];
+
+      // Define flows between nodes
+      const sankeyLinks = [
+        // Sources to Analysis
+        { source: 'finance', target: 'patterns', value: 120 },
+        { source: 'finance', target: 'predictions', value: 80 },
+        { source: 'medicine', target: 'anomalies', value: 95 },
+        { source: 'medicine', target: 'patterns', value: 60 },
+        { source: 'science', target: 'predictions', value: 85 },
+        { source: 'science', target: 'patterns', value: 45 },
+        { source: 'mfg', target: 'anomalies', value: 55 },
+        { source: 'mfg', target: 'predictions', value: 40 },
+        // Analysis to Confidence
+        { source: 'patterns', target: 'high-conf', value: 180 },
+        { source: 'patterns', target: 'med-conf', value: 45 },
+        { source: 'anomalies', target: 'high-conf', value: 100 },
+        { source: 'anomalies', target: 'med-conf', value: 50 },
+        { source: 'predictions', target: 'high-conf', value: 140 },
+        { source: 'predictions', target: 'med-conf', value: 65 },
+        // Confidence to Actions
+        { source: 'high-conf', target: 'automated', value: 280 },
+        { source: 'high-conf', target: 'review', value: 140 },
+        { source: 'med-conf', target: 'review', value: 160 },
+      ];
+
+      // Calculate node positions
+      const columns = 4;
+      const colWidth = innerWidth / columns;
+
+      // Group nodes by column and calculate y positions
+      const nodesByColumn = {};
+      sankeyNodes.forEach(n => {
+        if (!nodesByColumn[n.column]) nodesByColumn[n.column] = [];
+        nodesByColumn[n.column].push(n);
+      });
+
+      // Calculate total flow for each node
+      sankeyNodes.forEach(n => {
+        n.valueIn = sankeyLinks.filter(l => l.target === n.id).reduce((sum, l) => sum + l.value, 0);
+        n.valueOut = sankeyLinks.filter(l => l.source === n.id).reduce((sum, l) => sum + l.value, 0);
+        n.value = Math.max(n.valueIn, n.valueOut, 50);
+      });
+
+      // Position nodes within each column
+      Object.keys(nodesByColumn).forEach(col => {
+        const nodes = nodesByColumn[col];
+        const totalValue = nodes.reduce((sum, n) => sum + n.value, 0);
+        const padding = 15;
+        const availableHeight = innerHeight - (nodes.length - 1) * padding;
+        let y = 0;
+
+        nodes.forEach(n => {
+          n.x = parseInt(col) * colWidth + colWidth / 2;
+          n.height = Math.max(20, (n.value / totalValue) * availableHeight);
+          n.y = y;
+          y += n.height + padding;
+        });
+      });
+
+      // Draw column labels
+      const colLabels = ['Sources', 'Analysis', 'Confidence', 'Actions'];
+      colLabels.forEach((label, i) => {
+        sankeySvg.append('text')
+          .attr('x', i * colWidth + colWidth / 2)
+          .attr('y', -12)
+          .attr('text-anchor', 'middle')
+          .attr('font-family', 'Barlow Condensed, sans-serif')
+          .attr('font-size', '10px')
+          .attr('font-weight', '600')
+          .attr('letter-spacing', '0.1em')
+          .attr('fill', '#a39e8e')
+          .attr('text-transform', 'uppercase')
+          .text(label.toUpperCase());
+      });
+
+      // Draw links
+      sankeyLinks.forEach(link => {
+        const source = sankeyNodes.find(n => n.id === link.source);
+        const target = sankeyNodes.find(n => n.id === link.target);
+
+        const sourceX = source.x + 15;
+        const targetX = target.x - 15;
+        const sourceY = source.y + source.height / 2;
+        const targetY = target.y + target.height / 2;
+
+        const strokeWidth = Math.max(2, link.value / 25);
+
+        // Curved path
+        const path = `M${sourceX},${sourceY} C${sourceX + (targetX - sourceX) / 2},${sourceY} ${targetX - (targetX - sourceX) / 2},${targetY} ${targetX},${targetY}`;
+
+        // Glow
+        sankeySvg.append('path')
+          .attr('d', path)
+          .attr('fill', 'none')
+          .attr('stroke', source.color)
+          .attr('stroke-width', strokeWidth + 3)
+          .attr('stroke-opacity', 0.1);
+
+        // Main path
+        sankeySvg.append('path')
+          .attr('d', path)
+          .attr('fill', 'none')
+          .attr('stroke', source.color)
+          .attr('stroke-width', strokeWidth)
+          .attr('stroke-opacity', 0.5);
+      });
+
+      // Draw nodes
+      sankeyNodes.forEach(node => {
+        // Node rectangle
+        sankeySvg.append('rect')
+          .attr('x', node.x - 12)
+          .attr('y', node.y)
+          .attr('width', 24)
+          .attr('height', node.height)
+          .attr('fill', node.color)
+          .attr('fill-opacity', 0.9)
+          .attr('rx', 3)
+          .attr('stroke', '#07090d')
+          .attr('stroke-width', 1);
+
+        // Node label
+        sankeySvg.append('text')
+          .attr('x', node.x)
+          .attr('y', node.y + node.height / 2 + 3)
+          .attr('text-anchor', 'middle')
+          .attr('font-family', 'Barlow Condensed, sans-serif')
+          .attr('font-size', '9px')
+          .attr('font-weight', '600')
+          .attr('fill', '#07090d')
+          .text(node.name.length > 8 ? node.name.substring(0, 6) + '..' : node.name);
+      });
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // D3 MINI SPARKLINES
+    // ═══════════════════════════════════════════════════════════════════════
+
+    function createSparkline(containerId, data, color = '#d4a84b') {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+
+      const width = 50;
+      const height = 20;
+
+      const svg = d3.select(`#${containerId}`)
+        .append('svg')
+        .attr('width', width)
+        .attr('height', height);
+
+      const x = d3.scaleLinear()
+        .domain([0, data.length - 1])
+        .range([0, width]);
+
+      const y = d3.scaleLinear()
+        .domain([0, d3.max(data)])
+        .range([height - 2, 2]);
+
+      const line = d3.line()
+        .x((d, i) => x(i))
+        .y(d => y(d))
+        .curve(d3.curveMonotoneX);
+
+      const area = d3.area()
+        .x((d, i) => x(i))
+        .y0(height)
+        .y1(d => y(d))
+        .curve(d3.curveMonotoneX);
+
+      svg.append('path')
+        .datum(data)
+        .attr('fill', color)
+        .attr('fill-opacity', 0.2)
+        .attr('d', area);
+
+      svg.append('path')
+        .datum(data)
+        .attr('fill', 'none')
+        .attr('stroke', color)
+        .attr('stroke-width', 1.5)
+        .attr('d', line);
+
+      svg.append('circle')
+        .attr('cx', x(data.length - 1))
+        .attr('cy', y(data[data.length - 1]))
+        .attr('r', 2.5)
+        .attr('fill', color);
+    }
+
+    // Generate random sparkline data
+    const sparklineData = [
+      [3, 5, 8, 7, 12, 15, 18, 22],
+      [2, 4, 3, 8, 12, 10, 14, 17],
+      [5, 3, 6, 8, 7, 11, 13, 16],
+      [1, 4, 6, 5, 9, 8, 12, 14],
+      [4, 3, 5, 7, 6, 10, 11, 13]
+    ];
+
+    createSparkline('sparkline-1', sparklineData[0], '#e8c45a');
+    createSparkline('sparkline-2', sparklineData[1], '#d4a84b');
+    createSparkline('sparkline-3', sparklineData[2], '#e06c75');
+    createSparkline('sparkline-4', sparklineData[3], '#98c379');
+    createSparkline('sparkline-5', sparklineData[4], '#3d8b8b');
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // CARD ANIMATIONS
+    // ═══════════════════════════════════════════════════════════════════════
+
+    anime({
+      targets: '.discovery-card',
+      opacity: [0, 1],
+      translateY: [20, 0],
+      delay: anime.stagger(100, {start: 300}),
+      easing: 'easeOutQuad',
+      duration: 500
+    });
+
+    anime({
+      targets: '.stat-value',
+      opacity: [0, 1],
+      translateY: [10, 0],
+      delay: anime.stagger(100),
+      easing: 'easeOutQuad',
+      duration: 400
+    });
+  </script>
 </body>
 </html>

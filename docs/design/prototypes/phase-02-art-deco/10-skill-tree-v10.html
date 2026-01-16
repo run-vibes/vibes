@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Knowledge Universe — Domain Skill Trees</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    /* ═══════════════════════════════════════════════════════════════════════════
+       V10 — DOMAIN SKILL TREES
+
+       When you zoom into a domain, you see the skill tree within:
+       - Skills as nodes with unlock dependencies
+       - Multiple path types (System, People, Agent, Your Path)
+       - AI Discovery animations
+       - Tasteful gamification (mastery levels, progress)
+       ═══════════════════════════════════════════════════════════════════════════ */
+
+    :root {
+      /* Path colors */
+      --path-system: #d4a84b;       /* Gold - system recommended */
+      --path-people: #8b5a8b;       /* Purple - paths others took */
+      --path-agent: #c45a5a;        /* Red - agent paths */
+      --path-yours: #3d8b8b;        /* Teal - your current path */
+
+      /* Skill states */
+      --skill-mastered: #d4a84b;
+      --skill-learning: #3d8b8b;
+      --skill-locked: #404050;
+      --skill-ai-discovered: #c86dd7;
+
+      /* Mastery levels */
+      --mastery-0: #404050;
+      --mastery-1: #5a6060;
+      --mastery-2: #6a7a7a;
+      --mastery-3: #3d8b8b;
+      --mastery-4: #b8963c;
+      --mastery-5: #d4a84b;
+    }
+
+    body {
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       DOMAIN VIEW — Skill Tree within a Domain
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .domain-view {
+      position: fixed;
+      inset: 0;
+      background: var(--bg-void);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .domain-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-4) var(--space-6);
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .domain-back {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-family: var(--font-condensed);
+      font-size: 12px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      transition: color 0.2s ease;
+    }
+
+    .domain-back:hover {
+      color: var(--gold-primary);
+    }
+
+    .domain-title {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .domain-title-icon {
+      font-size: 24px;
+      color: var(--gold-primary);
+    }
+
+    .domain-title-text {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-primary);
+    }
+
+    .domain-stats {
+      display: flex;
+      gap: var(--space-6);
+      font-family: var(--font-condensed);
+      font-size: 12px;
+    }
+
+    .domain-stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .domain-stat-value {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--gold-primary);
+    }
+
+    .domain-stat-label {
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       SKILL TREE CANVAS
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .skill-tree-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .skill-tree-viewport {
+      position: absolute;
+      inset: 0;
+      cursor: grab;
+    }
+
+    .skill-tree-viewport:active {
+      cursor: grabbing;
+    }
+
+    .skill-tree-canvas {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 2400px;
+      height: 1600px;
+    }
+
+    /* Connection paths between skills */
+    .skill-connections {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .skill-connections svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Path styling */
+    .path-line {
+      fill: none;
+      stroke-width: 3;
+      stroke-linecap: round;
+      opacity: 0.3;
+      transition: opacity 0.3s ease, stroke-width 0.3s ease;
+    }
+
+    .path-line.active {
+      opacity: 1;
+      stroke-width: 4;
+    }
+
+    .path-line.system { stroke: var(--path-system); }
+    .path-line.people { stroke: var(--path-people); }
+    .path-line.agent { stroke: var(--path-agent); }
+    .path-line.yours { stroke: var(--path-yours); stroke-width: 5; opacity: 0.8; }
+
+    /* Animated path flow */
+    .path-line.active {
+      stroke-dasharray: 8 4;
+      animation: path-flow 1s linear infinite;
+    }
+
+    @keyframes path-flow {
+      from { stroke-dashoffset: 0; }
+      to { stroke-dashoffset: -12; }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       SKILL NODES
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .skill-node {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .skill-node:hover {
+      transform: translate(-50%, -50%) scale(1.1);
+      z-index: 100;
+    }
+
+    .skill-frame {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-4);
+      background: var(--bg-card);
+      border: 2px solid var(--border-medium);
+      border-radius: 12px;
+      min-width: 120px;
+      transition: all 0.3s ease;
+    }
+
+    .skill-node:hover .skill-frame {
+      border-color: var(--gold-primary);
+      box-shadow: var(--glow-gold);
+    }
+
+    /* Skill states */
+    .skill-node.mastered .skill-frame {
+      border-color: var(--skill-mastered);
+      box-shadow: 0 0 20px rgba(212, 168, 75, 0.2);
+    }
+
+    .skill-node.learning .skill-frame {
+      border-color: var(--skill-learning);
+      box-shadow: 0 0 15px rgba(61, 139, 139, 0.2);
+    }
+
+    .skill-node.locked .skill-frame {
+      border-color: var(--skill-locked);
+      opacity: 0.6;
+    }
+
+    .skill-node.locked .skill-frame::after {
+      content: '🔒';
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      font-size: 14px;
+    }
+
+    /* AI Discovered state */
+    .skill-node.ai-discovered .skill-frame {
+      border-color: var(--skill-ai-discovered);
+      box-shadow: 0 0 25px rgba(200, 109, 215, 0.3);
+      animation: ai-pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes ai-pulse {
+      0%, 100% { box-shadow: 0 0 25px rgba(200, 109, 215, 0.3); }
+      50% { box-shadow: 0 0 40px rgba(200, 109, 215, 0.5); }
+    }
+
+    .skill-node.ai-discovered .skill-frame::before {
+      content: '✨';
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 16px;
+      animation: sparkle 1.5s ease-in-out infinite;
+    }
+
+    @keyframes sparkle {
+      0%, 100% { opacity: 1; transform: translateX(-50%) scale(1); }
+      50% { opacity: 0.7; transform: translateX(-50%) scale(1.2); }
+    }
+
+    .skill-icon {
+      font-size: 20px;
+      margin-bottom: var(--space-1);
+    }
+
+    .skill-label {
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-primary);
+      text-align: center;
+    }
+
+    /* Mastery bar */
+    .skill-mastery {
+      display: flex;
+      gap: 3px;
+      margin-top: var(--space-2);
+    }
+
+    .mastery-pip {
+      width: 8px;
+      height: 4px;
+      background: var(--mastery-0);
+      border-radius: 2px;
+      transition: background 0.3s ease;
+    }
+
+    .mastery-pip.filled { background: var(--mastery-5); }
+    .mastery-pip.partial { background: var(--mastery-3); }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       AI DISCOVERY MOMENT — Special reveal animation
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .ai-discovery-reveal {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 10, 15, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+    }
+
+    .ai-discovery-reveal.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .discovery-card {
+      position: relative;
+      padding: var(--space-8);
+      background: var(--bg-card);
+      border: 2px solid var(--skill-ai-discovered);
+      border-radius: 16px;
+      text-align: center;
+      max-width: 400px;
+      box-shadow: 0 0 60px rgba(200, 109, 215, 0.4);
+      transform: scale(0.8);
+      transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .ai-discovery-reveal.active .discovery-card {
+      transform: scale(1);
+    }
+
+    .discovery-icon {
+      font-size: 48px;
+      margin-bottom: var(--space-4);
+      animation: discovery-float 2s ease-in-out infinite;
+    }
+
+    @keyframes discovery-float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .discovery-type {
+      font-family: var(--font-condensed);
+      font-size: 12px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--skill-ai-discovered);
+      margin-bottom: var(--space-2);
+    }
+
+    .discovery-title {
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-primary);
+      margin-bottom: var(--space-3);
+    }
+
+    .discovery-desc {
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: var(--space-6);
+    }
+
+    .discovery-actions {
+      display: flex;
+      gap: var(--space-3);
+      justify-content: center;
+    }
+
+    .discovery-btn {
+      padding: var(--space-3) var(--space-5);
+      font-family: var(--font-display);
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border: 1px solid var(--border-medium);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .discovery-btn.primary {
+      background: var(--skill-ai-discovered);
+      border-color: var(--skill-ai-discovered);
+      color: white;
+    }
+
+    .discovery-btn.primary:hover {
+      background: #d87ee8;
+      box-shadow: 0 0 20px rgba(200, 109, 215, 0.5);
+    }
+
+    .discovery-btn.secondary {
+      background: transparent;
+      color: var(--text-secondary);
+    }
+
+    .discovery-btn.secondary:hover {
+      border-color: var(--gold-muted);
+      color: var(--gold-primary);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       PATH LEGEND — Which paths are being shown
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .path-legend {
+      position: fixed;
+      bottom: var(--space-6);
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: var(--space-4);
+      padding: var(--space-3) var(--space-5);
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      border-radius: 8px;
+      z-index: 100;
+    }
+
+    .path-toggle {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      cursor: pointer;
+      transition: opacity 0.2s ease;
+    }
+
+    .path-toggle.inactive {
+      opacity: 0.4;
+    }
+
+    .path-toggle:hover {
+      opacity: 1;
+    }
+
+    .path-indicator {
+      width: 20px;
+      height: 4px;
+      border-radius: 2px;
+    }
+
+    .path-indicator.system { background: var(--path-system); }
+    .path-indicator.people { background: var(--path-people); }
+    .path-indicator.agent { background: var(--path-agent); }
+    .path-indicator.yours { background: var(--path-yours); }
+
+    .path-label {
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       SKILL DETAIL PANEL
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .skill-detail-panel {
+      position: fixed;
+      top: 80px;
+      right: var(--space-6);
+      width: 320px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      border-radius: 12px;
+      padding: var(--space-5);
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(20px);
+      transition: all 0.3s ease;
+    }
+
+    .skill-detail-panel.visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(0);
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-3);
+      margin-bottom: var(--space-4);
+      padding-bottom: var(--space-4);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .panel-icon {
+      font-size: 28px;
+    }
+
+    .panel-title {
+      flex: 1;
+    }
+
+    .panel-name {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-primary);
+    }
+
+    .panel-status {
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      color: var(--skill-learning);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .panel-close {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: 1px solid var(--border-medium);
+      border-radius: 4px;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .panel-close:hover {
+      border-color: var(--gold-muted);
+      color: var(--gold-primary);
+    }
+
+    .panel-section {
+      margin-bottom: var(--space-4);
+    }
+
+    .panel-section-title {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: var(--space-2);
+    }
+
+    .panel-desc {
+      font-family: var(--font-body);
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Progress bar */
+    .progress-bar {
+      height: 8px;
+      background: var(--bg-void);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--skill-learning) 0%, var(--skill-mastered) 100%);
+      border-radius: 4px;
+      transition: width 0.5s ease;
+    }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      margin-top: var(--space-1);
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    /* Path info */
+    .path-info {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .path-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2);
+      background: var(--bg-elevated);
+      border-radius: 6px;
+      font-family: var(--font-condensed);
+      font-size: 11px;
+    }
+
+    .path-item-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .path-item-text {
+      flex: 1;
+      color: var(--text-secondary);
+    }
+
+    .path-item-count {
+      color: var(--text-muted);
+    }
+
+    /* Prerequisites */
+    .prereq-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+    }
+
+    .prereq-chip {
+      padding: var(--space-1) var(--space-2);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: 4px;
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    .prereq-chip.complete {
+      border-color: var(--skill-mastered);
+      color: var(--skill-mastered);
+    }
+
+    /* Action button */
+    .panel-action {
+      width: 100%;
+      padding: var(--space-3);
+      background: var(--skill-learning);
+      border: none;
+      border-radius: 8px;
+      font-family: var(--font-display);
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: white;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .panel-action:hover {
+      background: #4a9c9c;
+      box-shadow: 0 0 20px rgba(61, 139, 139, 0.4);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       ZOOM CONTROLS
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .zoom-controls {
+      position: fixed;
+      top: 50%;
+      right: var(--space-4);
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      z-index: 100;
+    }
+
+    .zoom-btn {
+      width: 36px;
+      height: 36px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      border-radius: 6px;
+      color: var(--text-secondary);
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .zoom-btn:hover {
+      border-color: var(--gold-muted);
+      color: var(--gold-primary);
+    }
+  </style>
+</head>
+<body>
+  <div class="domain-view">
+    <!-- Header -->
+    <div class="domain-header">
+      <div class="domain-back" id="back-btn">
+        ← Back to Constellation
+      </div>
+      <div class="domain-title">
+        <div class="domain-title-icon">⚙</div>
+        <div class="domain-title-text">Technology</div>
+      </div>
+      <div class="domain-stats">
+        <div class="domain-stat">
+          <div class="domain-stat-value">52</div>
+          <div class="domain-stat-label">Skills</div>
+        </div>
+        <div class="domain-stat">
+          <div class="domain-stat-value">31</div>
+          <div class="domain-stat-label">Mastered</div>
+        </div>
+        <div class="domain-stat">
+          <div class="domain-stat-value">+4</div>
+          <div class="domain-stat-label">AI Discovered</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Skill Tree Canvas -->
+    <div class="skill-tree-container">
+      <div class="skill-tree-viewport" id="viewport">
+        <div class="skill-tree-canvas" id="canvas">
+
+          <!-- Connection paths (SVG layer) -->
+          <svg class="skill-connections" viewBox="0 0 2400 1600">
+            <defs>
+              <marker id="arrow-system" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                <path d="M0,0 L6,3 L0,6 Z" fill="var(--path-system)" opacity="0.5"/>
+              </marker>
+              <marker id="arrow-people" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                <path d="M0,0 L6,3 L0,6 Z" fill="var(--path-people)" opacity="0.5"/>
+              </marker>
+              <marker id="arrow-yours" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                <path d="M0,0 L6,3 L0,6 Z" fill="var(--path-yours)" opacity="0.8"/>
+              </marker>
+            </defs>
+
+            <!-- ROOT: Programming Fundamentals -->
+            <!-- Your Path (most prominent) -->
+            <path class="path-line yours active" d="M400,800 C500,800 550,650 650,650" marker-end="url(#arrow-yours)"/>
+            <path class="path-line yours active" d="M750,650 C850,650 900,500 1000,500" marker-end="url(#arrow-yours)"/>
+            <path class="path-line yours active" d="M1100,500 C1200,500 1250,350 1350,350" marker-end="url(#arrow-yours)"/>
+
+            <!-- System recommended paths -->
+            <path class="path-line system" d="M400,800 C500,800 550,650 650,650"/>
+            <path class="path-line system" d="M750,650 C850,650 900,500 1000,500"/>
+            <path class="path-line system" d="M1100,500 C1200,500 1250,650 1350,650"/>
+            <path class="path-line system" d="M1450,650 C1550,650 1600,500 1700,500"/>
+
+            <!-- People paths (how others learned) -->
+            <path class="path-line people" d="M400,800 C450,900 550,950 650,950"/>
+            <path class="path-line people" d="M750,950 C850,950 950,800 1000,800"/>
+            <path class="path-line people" d="M1100,800 C1200,800 1250,650 1350,650"/>
+
+            <!-- Agent recommended path -->
+            <path class="path-line agent" d="M1100,500 C1150,400 1250,350 1350,350"/>
+            <path class="path-line agent" d="M1450,350 C1600,350 1700,450 1700,500"/>
+
+            <!-- Branch: Web Dev -->
+            <path class="path-line system" d="M750,650 C800,750 850,850 950,900"/>
+            <path class="path-line people" d="M1050,900 C1150,900 1200,1000 1300,1000"/>
+
+            <!-- Branch: Systems -->
+            <path class="path-line system" d="M1100,500 C1100,600 1050,700 1000,800"/>
+            <path class="path-line system" d="M1100,800 C1200,800 1300,900 1400,900"/>
+
+            <!-- AI Discovery connections (special styling) -->
+            <path class="path-line agent" d="M1700,500 C1800,500 1900,600 2000,600" stroke-dasharray="5 5"/>
+            <path class="path-line agent" d="M1350,350 C1450,250 1600,200 1750,200" stroke-dasharray="5 5"/>
+          </svg>
+
+          <!-- SKILL NODES -->
+
+          <!-- ROOT: Programming Fundamentals -->
+          <div class="skill-node mastered" style="left: 350px; top: 800px;" data-skill="fundamentals">
+            <div class="skill-frame">
+              <div class="skill-icon">📚</div>
+              <div class="skill-label">Programming<br>Fundamentals</div>
+              <div class="skill-mastery">
+                <div class="mastery-pip filled"></div>
+                <div class="mastery-pip filled"></div>
+                <div class="mastery-pip filled"></div>
+                <div class="mastery-pip filled"></div>
+                <div class="mastery-pip filled"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TIER 1 -->
+          <div class="skill-node mastered" style="left: 700px; top: 650px;" data-skill="python">
+            <div class="skill-frame">
+              <div class="skill-icon">🐍</div>
+              <div class="skill-label">Python</div>
+              <div class="skill-mastery">
+                <div class="mastery-pip filled"></div>
+                <div class="mastery-pip filled"></div>
+                <div class="mastery-pip filled"></div>
+                <div class="mastery-pip filled"></div>
+                <div class="mastery-pip partial"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="skill-node mastered" style="left: 700px; top: 950px;" data-skill="javascript">
+            <div class="skill-frame">
+              <div class="skill-icon">🌐</div>
+              <div class="skill-label">JavaScript</div>
+              <div class="skill-mastery">
+                <div class="mastery-pip filled"></div>
+                <div class="mastery-pip filled"></div>
+                <div class="mastery-pip filled"></div>
+                <div class="mastery-pip filled"></div>
+                <div class="mastery-pip filled"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TIER 2 -->
+          <div class="skill-node mastered" style="left: 1050px; top: 500px;" data-skill="data-science">
+            <div class="skill-frame">
+              <div class="skill-icon">📊</div>
+              <div class="skill-label">Data Science</div>
+              <div class="skill-mastery">
+                <div class="mastery-pip filled"></div>
+                <div class="mastery-pip filled"></div>
+                <div class="mastery-pip filled"></div>
+                <div class="mastery-pip partial"></div>
+                <div class="mastery-pip"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="skill-node learning" style="left: 1050px; top: 800px;" data-skill="systems">
+            <div class="skill-frame">
+              <div class="skill-icon">⚡</div>
+              <div class="skill-label">Systems<br>Programming</div>
+              <div class="skill-mastery">
+                <div class="mastery-pip filled"></div>
+                <div class="mastery-pip filled"></div>
+                <div class="mastery-pip partial"></div>
+                <div class="mastery-pip"></div>
+                <div class="mastery-pip"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="skill-node mastered" style="left: 1000px; top: 900px;" data-skill="react">
+            <div class="skill-frame">
+              <div class="skill-icon">⚛️</div>
+              <div class="skill-label">React</div>
+              <div class="skill-mastery">
+                <div class="mastery-pip filled"></div>
+                <div class="mastery-pip filled"></div>
+                <div class="mastery-pip filled"></div>
+                <div class="mastery-pip filled"></div>
+                <div class="mastery-pip partial"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TIER 3 -->
+          <div class="skill-node learning" style="left: 1400px; top: 350px;" data-skill="ml">
+            <div class="skill-frame">
+              <div class="skill-icon">🤖</div>
+              <div class="skill-label">Machine<br>Learning</div>
+              <div class="skill-mastery">
+                <div class="mastery-pip filled"></div>
+                <div class="mastery-pip filled"></div>
+                <div class="mastery-pip partial"></div>
+                <div class="mastery-pip"></div>
+                <div class="mastery-pip"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="skill-node locked" style="left: 1400px; top: 650px;" data-skill="distributed">
+            <div class="skill-frame">
+              <div class="skill-icon">🌍</div>
+              <div class="skill-label">Distributed<br>Systems</div>
+              <div class="skill-mastery">
+                <div class="mastery-pip"></div>
+                <div class="mastery-pip"></div>
+                <div class="mastery-pip"></div>
+                <div class="mastery-pip"></div>
+                <div class="mastery-pip"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="skill-node locked" style="left: 1400px; top: 900px;" data-skill="devops">
+            <div class="skill-frame">
+              <div class="skill-icon">🔧</div>
+              <div class="skill-label">DevOps</div>
+              <div class="skill-mastery">
+                <div class="mastery-pip"></div>
+                <div class="mastery-pip"></div>
+                <div class="mastery-pip"></div>
+                <div class="mastery-pip"></div>
+                <div class="mastery-pip"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="skill-node learning" style="left: 1350px; top: 1000px;" data-skill="nextjs">
+            <div class="skill-frame">
+              <div class="skill-icon">▲</div>
+              <div class="skill-label">Next.js</div>
+              <div class="skill-mastery">
+                <div class="mastery-pip filled"></div>
+                <div class="mastery-pip partial"></div>
+                <div class="mastery-pip"></div>
+                <div class="mastery-pip"></div>
+                <div class="mastery-pip"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TIER 4 -->
+          <div class="skill-node locked" style="left: 1750px; top: 500px;" data-skill="llm">
+            <div class="skill-frame">
+              <div class="skill-icon">🧠</div>
+              <div class="skill-label">LLM<br>Engineering</div>
+              <div class="skill-mastery">
+                <div class="mastery-pip"></div>
+                <div class="mastery-pip"></div>
+                <div class="mastery-pip"></div>
+                <div class="mastery-pip"></div>
+                <div class="mastery-pip"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI DISCOVERED SKILLS -->
+          <div class="skill-node ai-discovered" style="left: 1800px; top: 200px;" data-skill="ai-prompt-eng" id="ai-discovery-1">
+            <div class="skill-frame">
+              <div class="skill-icon">💬</div>
+              <div class="skill-label">Prompt<br>Engineering</div>
+              <div class="skill-mastery">
+                <div class="mastery-pip filled"></div>
+                <div class="mastery-pip filled"></div>
+                <div class="mastery-pip filled"></div>
+                <div class="mastery-pip"></div>
+                <div class="mastery-pip"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="skill-node ai-discovered" style="left: 2050px; top: 600px;" data-skill="ai-agents" id="ai-discovery-2">
+            <div class="skill-frame">
+              <div class="skill-icon">🤝</div>
+              <div class="skill-label">AI Agent<br>Architecture</div>
+              <div class="skill-mastery">
+                <div class="mastery-pip partial"></div>
+                <div class="mastery-pip"></div>
+                <div class="mastery-pip"></div>
+                <div class="mastery-pip"></div>
+                <div class="mastery-pip"></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Path Legend -->
+  <div class="path-legend">
+    <div class="path-toggle" data-path="yours">
+      <div class="path-indicator yours"></div>
+      <div class="path-label">Your Path</div>
+    </div>
+    <div class="path-toggle" data-path="system">
+      <div class="path-indicator system"></div>
+      <div class="path-label">Recommended</div>
+    </div>
+    <div class="path-toggle" data-path="people">
+      <div class="path-indicator people"></div>
+      <div class="path-label">Others' Paths</div>
+    </div>
+    <div class="path-toggle" data-path="agent">
+      <div class="path-indicator agent"></div>
+      <div class="path-label">AI Suggested</div>
+    </div>
+  </div>
+
+  <!-- Skill Detail Panel -->
+  <div class="skill-detail-panel" id="skill-panel">
+    <div class="panel-header">
+      <div class="panel-icon">🤖</div>
+      <div class="panel-title">
+        <div class="panel-name">Machine Learning</div>
+        <div class="panel-status">Currently Learning</div>
+      </div>
+      <button class="panel-close" id="panel-close">×</button>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-section-title">Description</div>
+      <div class="panel-desc">
+        Understand algorithms that enable computers to learn from data. Covers supervised, unsupervised, and reinforcement learning paradigms.
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-section-title">Mastery Progress</div>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width: 45%;"></div>
+      </div>
+      <div class="progress-label">
+        <span>Level 2</span>
+        <span>45% to Level 3</span>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-section-title">Learning Paths</div>
+      <div class="path-info">
+        <div class="path-item">
+          <div class="path-item-dot" style="background: var(--path-system);"></div>
+          <div class="path-item-text">System recommended</div>
+          <div class="path-item-count">~40 hrs</div>
+        </div>
+        <div class="path-item">
+          <div class="path-item-dot" style="background: var(--path-people);"></div>
+          <div class="path-item-text">Andrew Ng's path</div>
+          <div class="path-item-count">12 learners</div>
+        </div>
+        <div class="path-item">
+          <div class="path-item-dot" style="background: var(--path-agent);"></div>
+          <div class="path-item-text">AI accelerated</div>
+          <div class="path-item-count">~25 hrs</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-section-title">Prerequisites</div>
+      <div class="prereq-list">
+        <div class="prereq-chip complete">Python ✓</div>
+        <div class="prereq-chip complete">Data Science ✓</div>
+        <div class="prereq-chip">Linear Algebra</div>
+      </div>
+    </div>
+
+    <button class="panel-action">Continue Learning</button>
+  </div>
+
+  <!-- Zoom Controls -->
+  <div class="zoom-controls">
+    <button class="zoom-btn" id="zoom-in">+</button>
+    <button class="zoom-btn" id="zoom-out">−</button>
+    <button class="zoom-btn" id="zoom-reset">⌂</button>
+  </div>
+
+  <!-- AI Discovery Reveal Modal -->
+  <div class="ai-discovery-reveal" id="discovery-modal">
+    <div class="discovery-card">
+      <div class="discovery-icon">✨</div>
+      <div class="discovery-type">AI Discovery</div>
+      <div class="discovery-title">Prompt Engineering</div>
+      <div class="discovery-desc">
+        Based on your Machine Learning progress and conversations with AI, you already have foundational skills in Prompt Engineering. This connects your ML knowledge to practical AI applications.
+      </div>
+      <div class="discovery-actions">
+        <button class="discovery-btn primary" id="add-to-path">Add to Path</button>
+        <button class="discovery-btn secondary" id="dismiss-discovery">Later</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ═══════════════════════════════════════════════════════════════════════════
+       V10 — Domain Skill Tree Interactions
+       ═══════════════════════════════════════════════════════════════════════════ */
+
+    const viewport = document.getElementById('viewport');
+    const canvas = document.getElementById('canvas');
+    const skillPanel = document.getElementById('skill-panel');
+    const discoveryModal = document.getElementById('discovery-modal');
+    const pathToggles = document.querySelectorAll('.path-toggle');
+    const pathLines = document.querySelectorAll('.path-line');
+
+    // State
+    let zoom = 1;
+    let panX = 0;
+    let panY = 0;
+    let isPanning = false;
+    let startX, startY;
+    let activePaths = new Set(['yours', 'system', 'people', 'agent']);
+
+    // Transform canvas
+    function updateTransform() {
+      canvas.style.transform = `translate(-50%, -50%) scale(${zoom}) translate(${panX}px, ${panY}px)`;
+    }
+
+    // Zoom controls
+    document.getElementById('zoom-in').addEventListener('click', () => {
+      zoom = Math.min(2, zoom + 0.2);
+      updateTransform();
+    });
+
+    document.getElementById('zoom-out').addEventListener('click', () => {
+      zoom = Math.max(0.5, zoom - 0.2);
+      updateTransform();
+    });
+
+    document.getElementById('zoom-reset').addEventListener('click', () => {
+      zoom = 1;
+      panX = 0;
+      panY = 0;
+      updateTransform();
+    });
+
+    // Mouse wheel zoom
+    viewport.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const delta = -e.deltaY * 0.001;
+      zoom = Math.max(0.5, Math.min(2, zoom + delta));
+      updateTransform();
+    }, { passive: false });
+
+    // Panning
+    viewport.addEventListener('mousedown', (e) => {
+      if (e.target.closest('.skill-node')) return;
+      isPanning = true;
+      startX = e.clientX - panX * zoom;
+      startY = e.clientY - panY * zoom;
+      viewport.style.cursor = 'grabbing';
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isPanning) return;
+      panX = (e.clientX - startX) / zoom;
+      panY = (e.clientY - startY) / zoom;
+      updateTransform();
+    });
+
+    window.addEventListener('mouseup', () => {
+      isPanning = false;
+      viewport.style.cursor = 'grab';
+    });
+
+    // Path toggles
+    pathToggles.forEach(toggle => {
+      toggle.addEventListener('click', () => {
+        const pathType = toggle.dataset.path;
+
+        if (activePaths.has(pathType)) {
+          activePaths.delete(pathType);
+          toggle.classList.add('inactive');
+        } else {
+          activePaths.add(pathType);
+          toggle.classList.remove('inactive');
+        }
+
+        // Update path visibility
+        pathLines.forEach(line => {
+          const lineTypes = ['yours', 'system', 'people', 'agent'];
+          lineTypes.forEach(type => {
+            if (line.classList.contains(type)) {
+              line.style.opacity = activePaths.has(type) ? '' : '0.05';
+            }
+          });
+        });
+      });
+    });
+
+    // Skill node clicks
+    document.querySelectorAll('.skill-node').forEach(node => {
+      node.addEventListener('click', (e) => {
+        // Show panel with skill details
+        skillPanel.classList.add('visible');
+
+        // Update panel content based on clicked skill
+        const skillName = node.querySelector('.skill-label').textContent.replace('<br>', ' ');
+        const skillIcon = node.querySelector('.skill-icon').textContent;
+        const isLearning = node.classList.contains('learning');
+        const isMastered = node.classList.contains('mastered');
+        const isLocked = node.classList.contains('locked');
+        const isAIDiscovered = node.classList.contains('ai-discovered');
+
+        document.querySelector('.panel-icon').textContent = skillIcon;
+        document.querySelector('.panel-name').textContent = skillName;
+
+        let status = 'Locked';
+        if (isMastered) status = 'Mastered';
+        else if (isLearning) status = 'Currently Learning';
+        else if (isAIDiscovered) status = 'AI Discovered';
+
+        document.querySelector('.panel-status').textContent = status;
+        document.querySelector('.panel-status').style.color =
+          isMastered ? 'var(--skill-mastered)' :
+          isLearning ? 'var(--skill-learning)' :
+          isAIDiscovered ? 'var(--skill-ai-discovered)' :
+          'var(--skill-locked)';
+      });
+    });
+
+    // Close panel
+    document.getElementById('panel-close').addEventListener('click', () => {
+      skillPanel.classList.remove('visible');
+    });
+
+    // Back button
+    document.getElementById('back-btn').addEventListener('click', () => {
+      alert('Would navigate back to Skill Realm constellation view');
+    });
+
+    // AI Discovery demo - show modal after 3 seconds
+    setTimeout(() => {
+      discoveryModal.classList.add('active');
+    }, 3000);
+
+    document.getElementById('add-to-path').addEventListener('click', () => {
+      discoveryModal.classList.remove('active');
+      // Highlight the discovered skill
+      document.getElementById('ai-discovery-1').scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+    });
+
+    document.getElementById('dismiss-discovery').addEventListener('click', () => {
+      discoveryModal.classList.remove('active');
+    });
+
+    // Initialize
+    updateTransform();
+    console.log('V10 Domain Skill Tree loaded. Click skills to see details. AI discovery modal appears after 3s.');
+  </script>
+</body>
+</html>

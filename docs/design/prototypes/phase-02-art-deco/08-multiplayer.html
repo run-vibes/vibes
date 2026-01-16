@@ -3,70 +3,118 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Multiplayer — Commanders & Presence</title>
+  <title>Multiplayer | Phosphor Command</title>
   <link rel="stylesheet" href="shared.css">
   <style>
     /* ═══════════════════════════════════════════════════════════════════════
        MULTIPLAYER — Commanders, Presence, Authority, and Handoffs
        ═══════════════════════════════════════════════════════════════════════ */
 
-    .prototype-container {
-      max-width: 1000px;
+    /* ─── Dashboard Container Fix ─── */
+    .dashboard {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ─── Header Bar ─── */
+    .header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-3) var(--space-6);
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--gold-dim);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 400;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+    }
+
+    .logo-tagline {
+      font-family: var(--font-body-condensed);
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold-muted);
+      margin-left: var(--space-4);
+      padding-left: var(--space-4);
+      border-left: 1px solid var(--gold-dim);
+    }
+
+    .header-nav {
+      display: flex;
+      gap: var(--space-1);
+    }
+
+    .nav-item {
+      font-family: var(--font-body-condensed);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      padding: var(--space-2) var(--space-3);
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .nav-item:hover {
+      color: var(--gold-primary);
+    }
+
+    .nav-item.active {
+      color: var(--gold-primary);
+      border-bottom: 1px solid var(--gold-primary);
+    }
+
+    /* ─── Page Header ─── */
+    .page-header {
+      padding: var(--space-6) var(--space-8);
+      border-bottom: 1px solid var(--gold-dim);
+      background: linear-gradient(180deg, var(--bg-card) 0%, var(--bg-surface) 100%);
+    }
+
+    .page-header-content {
+      max-width: 1600px;
       margin: 0 auto;
-      padding: var(--space-6);
     }
 
-    .prototype-header {
-      margin-bottom: var(--space-8);
-      padding-bottom: var(--space-4);
-      border-bottom: 1px solid var(--border-subtle);
-    }
-
-    .prototype-title {
+    .page-title {
       font-family: var(--font-display);
       font-size: 28px;
-      font-weight: 600;
+      font-weight: 400;
       letter-spacing: 0.08em;
+      text-transform: uppercase;
       color: var(--gold-primary);
-      text-shadow: var(--glow-gold);
       margin-bottom: var(--space-2);
     }
 
-    .prototype-desc {
+    .page-description {
       font-size: 13px;
-      color: var(--text-secondary);
-      line-height: 1.6;
+      color: var(--text-tertiary);
+      font-style: italic;
     }
 
+    /* ─── Section Container ─── */
     .section {
-      margin-bottom: var(--space-8);
+      padding: var(--space-5) var(--space-8);
     }
 
     .section-label {
-      font-family: var(--font-condensed);
-      font-size: 10px;
+      font-family: var(--font-display);
+      font-size: 11px;
       font-weight: 600;
       letter-spacing: 0.15em;
       text-transform: uppercase;
-      color: var(--text-tertiary);
-      margin-bottom: var(--space-3);
-      display: flex;
-      align-items: center;
-      gap: var(--space-2);
-    }
-
-    .section-label::before {
-      content: '';
-      flex: 0 0 20px;
-      height: 1px;
-      background: var(--gold-dim);
-    }
-
-    .section-label::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--gold-dim);
+      color: var(--gold-primary);
+      margin-bottom: var(--space-4);
     }
 
     /* ─── Command Bar with Presence ─── */
@@ -125,6 +173,16 @@
     .commander-avatar.ai {
       background: linear-gradient(135deg, var(--accent-navy), #1a2a4a);
       border: 2px solid var(--border-light);
+    }
+
+    .commander-avatar.robot {
+      background: linear-gradient(135deg, #2a3a2a, #1a2a1a);
+      border: 2px solid var(--accent-teal-muted);
+    }
+
+    .commander-avatar.system {
+      background: linear-gradient(135deg, #3a2a3a, #2a1a2a);
+      border: 2px solid var(--accent-rose);
     }
 
     .commander-avatar.you {
@@ -313,6 +371,25 @@
     .authority-desc {
       font-size: 10px;
       color: var(--text-tertiary);
+      line-height: 1.4;
+    }
+
+    .authority-examples {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-1);
+      margin-top: var(--space-2);
+      justify-content: center;
+    }
+
+    .authority-example {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      padding: 2px 6px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 2px;
+      color: var(--text-secondary);
     }
 
     /* ─── Handoff Panel ─── */
@@ -387,6 +464,40 @@
     .handoff-desc {
       font-size: 11px;
       color: var(--text-tertiary);
+      font-style: italic;
+    }
+
+    .handoff-meta {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .handoff-avatar-mini {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--bg-elevated), var(--bg-surface));
+      border: 1px solid var(--border-light);
+      font-size: 8px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .handoff-option.escalation {
+      background: rgba(212, 168, 75, 0.08);
+      border-color: var(--gold-dim);
+    }
+
+    .handoff-option.escalation .handoff-meta {
+      color: var(--accent-warning);
     }
 
     /* ─── Chain of Command ─── */
@@ -504,6 +615,67 @@
       opacity: 0.6;
     }
 
+    .chain-branches.four-col {
+      gap: var(--space-4);
+    }
+
+    .chain-node-badge {
+      font-family: var(--font-condensed);
+      font-size: 8px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 2px;
+      margin-top: var(--space-1);
+    }
+
+    .human-badge {
+      background: rgba(245, 239, 224, 0.1);
+      color: var(--accent-cream);
+      border: 1px solid rgba(245, 239, 224, 0.2);
+    }
+
+    .ai-badge {
+      background: rgba(26, 45, 69, 0.4);
+      color: var(--accent-teal);
+      border: 1px solid var(--accent-teal-muted);
+    }
+
+    .chain-subordinate {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+      margin-top: var(--space-2);
+      padding-left: var(--space-3);
+      border-left: 1px solid var(--border-subtle);
+    }
+
+    .chain-sub-node {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-size: 10px;
+      padding: var(--space-1) var(--space-2);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+    }
+
+    .chain-sub-node.ai {
+      background: rgba(26, 45, 69, 0.3);
+      border: 1px solid var(--accent-navy);
+    }
+
+    .chain-sub-node.robot {
+      background: rgba(42, 58, 42, 0.3);
+      border: 1px solid var(--accent-teal-muted);
+    }
+
+    .chain-sub-node.system {
+      background: rgba(58, 42, 58, 0.3);
+      border: 1px solid var(--accent-rose);
+    }
+
     /* ─── Activity Log ─── */
     .activity-log {
       background: var(--bg-card);
@@ -545,8 +717,36 @@
 
     .activity-log-commander {
       color: var(--gold-primary);
-      width: 80px;
+      width: 100px;
       flex-shrink: 0;
+    }
+
+    .activity-log-commander.medical {
+      color: var(--accent-cream);
+    }
+
+    .activity-log-commander.sales {
+      color: #7aa8d4;
+    }
+
+    .activity-log-commander.creative {
+      color: var(--accent-rose);
+    }
+
+    .activity-log-commander.operations {
+      color: var(--accent-teal);
+    }
+
+    .activity-log-commander.ai {
+      color: var(--accent-navy-light);
+    }
+
+    .activity-log-commander.robot {
+      color: #6aaa6a;
+    }
+
+    .activity-log-commander.system {
+      color: #aa7aaa;
     }
 
     .activity-log-action {
@@ -560,15 +760,31 @@
   </style>
 </head>
 <body class="deco-bg">
+  <div class="dashboard">
 
-  <div class="prototype-container">
-    <header class="prototype-header">
-      <h1 class="prototype-title">Multiplayer</h1>
-      <p class="prototype-desc">
-        The system scales from solo commander to distributed command structure.
-        Humans, AI agents, and robots can all be commanders with different authority scopes.
-      </p>
+    <!-- Header Bar -->
+    <header class="header-bar">
+      <div class="flex items-center">
+        <span class="logo">vibes</span>
+        <span class="logo-tagline">Phosphor Mission Control</span>
+      </div>
+      <nav class="header-nav">
+        <a href="01-full-dashboard.html" class="nav-item">Dashboard</a>
+        <a href="04-activity-feed.html" class="nav-item">Firehose</a>
+        <a href="06-expanded-dashboard.html" class="nav-item">Sessions</a>
+        <a href="09-discovery-feed.html" class="nav-item">Groove</a>
+        <a href="10-cost-intelligence.html" class="nav-item">Costs</a>
+        <a href="07-command-palette.html" class="nav-item">Debug</a>
+      </nav>
     </header>
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="page-header-content">
+        <h1 class="page-title">Multiplayer</h1>
+        <p class="page-description">The system scales from solo commander to distributed command structure. Humans, AI agents, and robots can all be commanders with different authority scopes.</p>
+      </div>
+    </div>
 
     <!-- Presence Bar -->
     <section class="section">
@@ -577,33 +793,49 @@
         <div class="presence-bar">
           <span class="presence-label">COMMANDERS</span>
           <div class="commanders-row">
-            <div class="commander-avatar human you" title="Alex (you) — Owner">
-              <span class="deco-icon deco-icon-star deco-icon-sm deco-icon-gold"></span>
+            <div class="commander-avatar human you" title="Dr. Sarah Chen — Medical Research Lead">
+              <span style="font-size: 12px; font-weight: 600;">SC</span>
               <span class="commander-status active"></span>
             </div>
-            <div class="commander-avatar human" title="Sara — Domain Lead: Auth">
-              <span style="font-size: 12px; font-weight: 600;">S</span>
+            <div class="commander-avatar human" title="Marcus Williams — VP of Sales">
+              <span style="font-size: 12px; font-weight: 600;">MW</span>
               <span class="commander-status active"></span>
             </div>
-            <div class="commander-avatar human" title="Mike — Observer">
-              <span style="font-size: 12px; font-weight: 600;">M</span>
+            <div class="commander-avatar human" title="Elena Rodriguez — Film Director">
+              <span style="font-size: 12px; font-weight: 600;">ER</span>
               <span class="commander-status away"></span>
             </div>
-            <div class="commander-avatar ai" title="Strategy-AI — Autonomous">
+            <div class="commander-avatar human" title="James Park — Supply Chain Manager">
+              <span style="font-size: 12px; font-weight: 600;">JP</span>
+              <span class="commander-status offline"></span>
+            </div>
+            <div class="commander-avatar ai" title="Medical-AI — Patient Risk Analyzer">
               <span class="deco-icon deco-icon-agent deco-icon-sm"></span>
               <span class="commander-status autonomous"></span>
             </div>
-            <div class="commander-avatar ai" title="Ops-AI — Autonomous">
-              <span class="deco-icon deco-icon-agent deco-icon-sm"></span>
+            <div class="commander-avatar ai" title="Sales-AI — Pricing Optimizer">
+              <span class="deco-icon deco-icon-value deco-icon-sm"></span>
               <span class="commander-status autonomous"></span>
             </div>
-            <div class="commander-avatar ai" title="Research-AI — Autonomous">
-              <span class="deco-icon deco-icon-search deco-icon-sm"></span>
+            <div class="commander-avatar ai" title="Creative-AI — Scene Compositor">
+              <span class="deco-icon deco-icon-sunburst deco-icon-sm"></span>
+              <span class="commander-status autonomous"></span>
+            </div>
+            <div class="commander-avatar ai" title="Logistics-AI — Route Optimizer">
+              <span class="deco-icon deco-icon-velocity deco-icon-sm"></span>
+              <span class="commander-status autonomous"></span>
+            </div>
+            <div class="commander-avatar robot" title="Warehouse-Bot-7 — Inventory Management">
+              <span class="deco-icon deco-icon-target deco-icon-sm"></span>
+              <span class="commander-status active"></span>
+            </div>
+            <div class="commander-avatar system" title="SAP-Integration — ERP Coordinator">
+              <span class="deco-icon deco-icon-link deco-icon-sm"></span>
               <span class="commander-status autonomous"></span>
             </div>
           </div>
           <span style="font-size: 10px; color: var(--text-tertiary); margin-left: auto;">
-            2 humans active • 3 AI autonomous
+            4 humans • 4 AI agents • 1 robot • 1 system
           </span>
         </div>
       </div>
@@ -613,62 +845,128 @@
     <section class="section">
       <div class="section-label">Commander Details</div>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
+        <!-- Human: Medical Research Lead -->
         <div class="commander-card">
           <div class="commander-card-header">
             <div class="commander-card-avatar human">
-              <span style="font-size: 18px; font-weight: 600;">S</span>
+              <span style="font-size: 14px; font-weight: 600;">SC</span>
             </div>
             <div class="commander-card-info">
-              <div class="commander-card-name">Sara</div>
-              <div class="commander-card-type">Human • Domain Lead</div>
+              <div class="commander-card-name">Dr. Sarah Chen</div>
+              <div class="commander-card-type">Human — Medical Research Lead</div>
             </div>
-            <span class="commander-card-status active">● Active</span>
+            <span class="commander-card-status active">Active</span>
           </div>
           <div class="commander-card-body">
             <div class="commander-detail-row">
               <span class="commander-detail-label">Currently viewing</span>
-              <span class="commander-detail-value">Goal: Ship auth system</span>
+              <span class="commander-detail-value">Clinical Trial Phase III Dashboard</span>
             </div>
             <div class="commander-detail-row">
               <span class="commander-detail-label">Last action</span>
-              <span class="commander-detail-value">Approved permission • 3m ago</span>
+              <span class="commander-detail-value">Approved patient cohort expansion • 12m ago</span>
             </div>
             <div class="commander-detail-row">
               <span class="commander-detail-label">Authority scope</span>
             </div>
             <div class="commander-scope">
-              <span class="scope-tag active">auth-system</span>
-              <span class="scope-tag">user-management</span>
+              <span class="scope-tag active">clinical-trials</span>
+              <span class="scope-tag active">patient-safety</span>
+              <span class="scope-tag">research-data</span>
             </div>
           </div>
         </div>
 
+        <!-- AI: Medical Patient Risk Analyzer -->
         <div class="commander-card">
           <div class="commander-card-header">
             <div class="commander-card-avatar ai">
               <span class="deco-icon deco-icon-agent deco-icon-md"></span>
             </div>
             <div class="commander-card-info">
-              <div class="commander-card-name">Ops-AI</div>
-              <div class="commander-card-type">AI Agent • Autonomous</div>
+              <div class="commander-card-name">Medical-AI</div>
+              <div class="commander-card-type">AI Agent — Patient Risk Analyzer</div>
             </div>
-            <span class="commander-card-status autonomous">◎ Autonomous</span>
+            <span class="commander-card-status autonomous">Autonomous</span>
           </div>
           <div class="commander-card-body">
             <div class="commander-detail-row">
               <span class="commander-detail-label">Current task</span>
-              <span class="commander-detail-value">Optimizing infrastructure costs</span>
+              <span class="commander-detail-value">Monitoring 847 patient vitals for anomalies</span>
             </div>
             <div class="commander-detail-row">
               <span class="commander-detail-label">Last decision</span>
-              <span class="commander-detail-value">Scaled down idle instances • 1h ago</span>
+              <span class="commander-detail-value">Flagged Patient #4521 for review • 3m ago</span>
             </div>
             <div class="commander-detail-row">
               <span class="commander-detail-label">Authority scope</span>
             </div>
             <div class="commander-scope">
-              <span class="scope-tag active">infrastructure</span>
-              <span class="scope-tag active">cost-optimization</span>
+              <span class="scope-tag active">patient-monitoring</span>
+              <span class="scope-tag active">alert-generation</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Human: VP of Sales -->
+        <div class="commander-card">
+          <div class="commander-card-header">
+            <div class="commander-card-avatar human">
+              <span style="font-size: 14px; font-weight: 600;">MW</span>
+            </div>
+            <div class="commander-card-info">
+              <div class="commander-card-name">Marcus Williams</div>
+              <div class="commander-card-type">Human — VP of Sales, EMEA</div>
+            </div>
+            <span class="commander-card-status active">Active</span>
+          </div>
+          <div class="commander-card-body">
+            <div class="commander-detail-row">
+              <span class="commander-detail-label">Currently viewing</span>
+              <span class="commander-detail-value">Q4 Revenue Pipeline</span>
+            </div>
+            <div class="commander-detail-row">
+              <span class="commander-detail-label">Last action</span>
+              <span class="commander-detail-value">Delegated EMEA pricing to Sales-AI • 2h ago</span>
+            </div>
+            <div class="commander-detail-row">
+              <span class="commander-detail-label">Authority scope</span>
+            </div>
+            <div class="commander-scope">
+              <span class="scope-tag active">sales-emea</span>
+              <span class="scope-tag active">pricing-strategy</span>
+              <span class="scope-tag">deal-approval</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI: Sales Pricing Optimizer -->
+        <div class="commander-card">
+          <div class="commander-card-header">
+            <div class="commander-card-avatar ai">
+              <span class="deco-icon deco-icon-value deco-icon-md"></span>
+            </div>
+            <div class="commander-card-info">
+              <div class="commander-card-name">Sales-AI</div>
+              <div class="commander-card-type">AI Agent — Autonomous Pricing Optimizer</div>
+            </div>
+            <span class="commander-card-status autonomous">Autonomous</span>
+          </div>
+          <div class="commander-card-body">
+            <div class="commander-detail-row">
+              <span class="commander-detail-label">Current task</span>
+              <span class="commander-detail-value">Optimizing EMEA regional pricing tiers</span>
+            </div>
+            <div class="commander-detail-row">
+              <span class="commander-detail-label">Last decision</span>
+              <span class="commander-detail-value">Adjusted Germany tier-2 by +4.2% • 45m ago</span>
+            </div>
+            <div class="commander-detail-row">
+              <span class="commander-detail-label">Authority scope</span>
+            </div>
+            <div class="commander-scope">
+              <span class="scope-tag active">pricing-emea</span>
+              <span class="scope-tag">discount-limits</span>
             </div>
           </div>
         </div>
@@ -682,76 +980,131 @@
         <div class="authority-card">
           <div class="authority-icon"><span class="deco-icon deco-icon-star deco-icon-lg deco-icon-gold"></span></div>
           <div class="authority-title">Owner</div>
-          <div class="authority-desc">Full control over everything</div>
+          <div class="authority-desc">Full organizational control. Can delegate any scope to any commander.</div>
+          <div class="authority-examples">
+            <span class="authority-example">CEO</span>
+            <span class="authority-example">Department Heads</span>
+          </div>
         </div>
         <div class="authority-card">
           <div class="authority-icon"><span class="deco-icon deco-icon-target deco-icon-lg deco-icon-gold"></span></div>
           <div class="authority-title">Domain Lead</div>
-          <div class="authority-desc">Steers specific goal or area</div>
+          <div class="authority-desc">Full control within assigned domain. Can delegate to AI/robots in scope.</div>
+          <div class="authority-examples">
+            <span class="authority-example">Dr. Chen (Medical)</span>
+            <span class="authority-example">Marcus (Sales)</span>
+          </div>
         </div>
         <div class="authority-card">
           <div class="authority-icon"><span class="deco-icon deco-icon-agent deco-icon-lg deco-icon-gold"></span></div>
-          <div class="authority-title">Autonomous</div>
-          <div class="authority-desc">Operates within delegated domain</div>
+          <div class="authority-title">Autonomous Agent</div>
+          <div class="authority-desc">Operates independently within strict boundaries. Must escalate outside scope.</div>
+          <div class="authority-examples">
+            <span class="authority-example">Sales-AI (5% variance)</span>
+            <span class="authority-example">Medical-AI (monitoring)</span>
+          </div>
         </div>
         <div class="authority-card">
           <div class="authority-icon"><span class="deco-icon deco-icon-search deco-icon-lg deco-icon-gold"></span></div>
           <div class="authority-title">Observer</div>
-          <div class="authority-desc">View only, no steering</div>
+          <div class="authority-desc">View-only access. No command authority. Used for auditors and stakeholders.</div>
+          <div class="authority-examples">
+            <span class="authority-example">Auditors</span>
+            <span class="authority-example">Investors</span>
+          </div>
         </div>
       </div>
     </section>
 
     <!-- Handoff Panel -->
     <section class="section">
-      <div class="section-label">Handoff Modes</div>
+      <div class="section-label">Live Handoff Scenarios</div>
       <div class="handoff-panel">
         <div class="handoff-header">
-          <span class="handoff-title">Transfer Control</span>
+          <span class="handoff-title">Active Command Transfers</span>
         </div>
         <div class="handoff-content">
+          <!-- Healthcare: Overnight monitoring delegation -->
           <div class="handoff-option">
             <span class="handoff-arrow">
-              <span style="font-size: 12px;">H</span>
-              <span class="deco-icon deco-icon-velocity deco-icon-sm"></span>
+              <span class="handoff-avatar-mini">SC</span>
+              <span class="deco-icon deco-icon-velocity deco-icon-sm deco-icon-gold"></span>
               <span class="deco-icon deco-icon-agent deco-icon-sm"></span>
             </span>
             <div class="handoff-info">
-              <div class="handoff-label">Delegate to AI</div>
-              <div class="handoff-desc">"Take over cost optimization, keep me posted on big changes"</div>
+              <div class="handoff-label">Dr. Chen to Medical-AI</div>
+              <div class="handoff-desc">"Continue patient monitoring overnight. Alert me immediately for cardiac anomalies or O2 drops below 92%."</div>
+              <div class="handoff-meta">Medical Research — Delegated 6h ago</div>
             </div>
           </div>
+
+          <!-- Sales: Regional pricing delegation -->
           <div class="handoff-option">
+            <span class="handoff-arrow">
+              <span class="handoff-avatar-mini">MW</span>
+              <span class="deco-icon deco-icon-velocity deco-icon-sm deco-icon-gold"></span>
+              <span class="deco-icon deco-icon-value deco-icon-sm"></span>
+            </span>
+            <div class="handoff-info">
+              <div class="handoff-label">Marcus to Sales-AI</div>
+              <div class="handoff-desc">"Take over EMEA price optimization. Stay within 5% variance. Escalate deals over $500k."</div>
+              <div class="handoff-meta">Sales EMEA — Delegated 2h ago</div>
+            </div>
+          </div>
+
+          <!-- Film: Creative direction handoff -->
+          <div class="handoff-option">
+            <span class="handoff-arrow">
+              <span class="handoff-avatar-mini">ER</span>
+              <span class="deco-icon deco-icon-velocity deco-icon-sm deco-icon-gold"></span>
+              <span class="deco-icon deco-icon-sunburst deco-icon-sm"></span>
+            </span>
+            <div class="handoff-info">
+              <div class="handoff-label">Elena to Creative-AI</div>
+              <div class="handoff-desc">"Match the lighting to Spielberg's style for Scene 47. Reference E.T. bicycle sequence. Show me before final render."</div>
+              <div class="handoff-meta">Film Production — Active now</div>
+            </div>
+          </div>
+
+          <!-- Logistics: Route optimization with budget cap -->
+          <div class="handoff-option">
+            <span class="handoff-arrow">
+              <span class="handoff-avatar-mini">JP</span>
+              <span class="deco-icon deco-icon-velocity deco-icon-sm deco-icon-gold"></span>
+              <span class="deco-icon deco-icon-velocity deco-icon-sm"></span>
+            </span>
+            <div class="handoff-info">
+              <div class="handoff-label">James to Logistics-AI</div>
+              <div class="handoff-desc">"Optimize all EU shipping routes. Budget cap $50k/week. Prioritize reliability over speed for fragile goods."</div>
+              <div class="handoff-meta">Supply Chain — Delegated 4h ago</div>
+            </div>
+          </div>
+
+          <!-- AI to Human escalation -->
+          <div class="handoff-option escalation">
             <span class="handoff-arrow">
               <span class="deco-icon deco-icon-agent deco-icon-sm"></span>
-              <span class="deco-icon deco-icon-velocity deco-icon-sm"></span>
-              <span style="font-size: 12px;">H</span>
+              <span class="deco-icon deco-icon-velocity deco-icon-sm deco-icon-warning"></span>
+              <span class="handoff-avatar-mini">SC</span>
             </span>
             <div class="handoff-info">
-              <div class="handoff-label">Escalation</div>
-              <div class="handoff-desc">"Hit a decision point I'm not confident about"</div>
+              <div class="handoff-label">Medical-AI Escalation to Dr. Chen</div>
+              <div class="handoff-desc">"Patient #4521 showing unusual pattern. Vitals stable but trend concerns me. Requesting human review before proceeding."</div>
+              <div class="handoff-meta">Urgent — Waiting for approval</div>
             </div>
           </div>
+
+          <!-- Robot to System handoff -->
           <div class="handoff-option">
             <span class="handoff-arrow">
-              <span style="font-size: 12px;">H</span>
-              <span class="deco-icon deco-icon-velocity deco-icon-sm"></span>
-              <span style="font-size: 12px;">H</span>
+              <span class="deco-icon deco-icon-target deco-icon-sm"></span>
+              <span class="deco-icon deco-icon-velocity deco-icon-sm deco-icon-gold"></span>
+              <span class="deco-icon deco-icon-link deco-icon-sm"></span>
             </span>
             <div class="handoff-info">
-              <div class="handoff-label">Transfer to Teammate</div>
-              <div class="handoff-desc">"Sara, you own auth system now"</div>
-            </div>
-          </div>
-          <div class="handoff-option">
-            <span class="handoff-arrow">
-              <span class="deco-icon deco-icon-time deco-icon-sm"></span>
-              <span class="deco-icon deco-icon-velocity deco-icon-sm"></span>
-              <span class="deco-icon deco-icon-agent deco-icon-sm"></span>
-            </span>
-            <div class="handoff-info">
-              <div class="handoff-label">Shift Change</div>
-              <div class="handoff-desc">"End of my day, AI takes night shift with morning briefing"</div>
+              <div class="handoff-label">Warehouse-Bot-7 to SAP-Integration</div>
+              <div class="handoff-desc">"Inventory count complete for Zone B. 847 items verified. Sync to ERP for procurement triggers."</div>
+              <div class="handoff-meta">Logistics — Auto-handoff completed</div>
             </div>
           </div>
         </div>
@@ -760,63 +1113,98 @@
 
     <!-- Chain of Command -->
     <section class="section">
-      <div class="section-label">Chain of Command</div>
+      <div class="section-label">Chain of Command — Multi-Domain Organization</div>
       <div class="chain-diagram">
+        <!-- CEO Level -->
         <div class="chain-level">
           <div class="chain-node owner">
             <span class="chain-node-icon"><span class="deco-icon deco-icon-star deco-icon-md"></span></span>
-            <span class="chain-node-label">Alex</span>
+            <span class="chain-node-label">CEO</span>
             <span class="chain-node-type">Owner</span>
+            <span class="chain-node-badge human-badge">Human</span>
           </div>
         </div>
 
+        <!-- Department Heads Level -->
         <div class="chain-level">
-          <div class="chain-branches">
+          <div class="chain-branches four-col">
+            <!-- Medical Research -->
             <div class="chain-branch">
               <div class="chain-node">
-                <span class="chain-node-icon"><span class="deco-icon deco-icon-target deco-icon-sm"></span></span>
-                <span class="chain-node-label">Sara</span>
-                <span class="chain-node-type">Product Lead</span>
+                <span class="chain-node-icon"><span class="deco-icon deco-icon-arch deco-icon-sm"></span></span>
+                <span class="chain-node-label">Dr. Sarah Chen</span>
+                <span class="chain-node-type">Medical Lead</span>
+                <span class="chain-node-badge human-badge">Human</span>
               </div>
-              <div class="swarm-label">
-                <span class="swarm-dots">
-                  <span class="swarm-dot"></span>
-                  <span class="swarm-dot"></span>
-                  <span class="swarm-dot"></span>
-                </span>
-                Swarms
+              <div class="chain-subordinate">
+                <div class="chain-sub-node ai">
+                  <span class="deco-icon deco-icon-agent deco-icon-sm"></span>
+                  <span>Medical-AI</span>
+                </div>
+                <div class="chain-sub-node robot">
+                  <span class="deco-icon deco-icon-target deco-icon-sm"></span>
+                  <span>Lab-Analyzer-3</span>
+                </div>
               </div>
             </div>
 
+            <!-- Sales -->
             <div class="chain-branch">
               <div class="chain-node">
-                <span class="chain-node-icon"><span class="deco-icon deco-icon-agent deco-icon-sm"></span></span>
-                <span class="chain-node-label">Eng-AI</span>
-                <span class="chain-node-type">Engineering Lead</span>
+                <span class="chain-node-icon"><span class="deco-icon deco-icon-value deco-icon-sm"></span></span>
+                <span class="chain-node-label">Marcus Williams</span>
+                <span class="chain-node-type">Sales Lead</span>
+                <span class="chain-node-badge human-badge">Human</span>
               </div>
-              <div class="swarm-label">
-                <span class="swarm-dots">
-                  <span class="swarm-dot"></span>
-                  <span class="swarm-dot"></span>
-                  <span class="swarm-dot"></span>
-                  <span class="swarm-dot"></span>
-                </span>
-                Swarms
+              <div class="chain-subordinate">
+                <div class="chain-sub-node ai">
+                  <span class="deco-icon deco-icon-value deco-icon-sm"></span>
+                  <span>Sales-AI</span>
+                </div>
+                <div class="chain-sub-node system">
+                  <span class="deco-icon deco-icon-link deco-icon-sm"></span>
+                  <span>Salesforce-Sync</span>
+                </div>
               </div>
             </div>
 
+            <!-- Film Production -->
             <div class="chain-branch">
               <div class="chain-node">
-                <span class="chain-node-icon"><span class="deco-icon deco-icon-agent deco-icon-sm"></span></span>
-                <span class="chain-node-label">Ops-AI</span>
-                <span class="chain-node-type">Ops Lead</span>
+                <span class="chain-node-icon"><span class="deco-icon deco-icon-sunburst deco-icon-sm"></span></span>
+                <span class="chain-node-label">Elena Rodriguez</span>
+                <span class="chain-node-type">Creative Lead</span>
+                <span class="chain-node-badge human-badge">Human</span>
               </div>
-              <div class="swarm-label">
-                <span class="swarm-dots">
-                  <span class="swarm-dot"></span>
-                  <span class="swarm-dot"></span>
-                </span>
-                Swarms
+              <div class="chain-subordinate">
+                <div class="chain-sub-node ai">
+                  <span class="deco-icon deco-icon-sunburst deco-icon-sm"></span>
+                  <span>Creative-AI</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Supply Chain -->
+            <div class="chain-branch">
+              <div class="chain-node">
+                <span class="chain-node-icon"><span class="deco-icon deco-icon-velocity deco-icon-sm"></span></span>
+                <span class="chain-node-label">James Park</span>
+                <span class="chain-node-type">Operations Lead</span>
+                <span class="chain-node-badge human-badge">Human</span>
+              </div>
+              <div class="chain-subordinate">
+                <div class="chain-sub-node ai">
+                  <span class="deco-icon deco-icon-velocity deco-icon-sm"></span>
+                  <span>Logistics-AI</span>
+                </div>
+                <div class="chain-sub-node robot">
+                  <span class="deco-icon deco-icon-target deco-icon-sm"></span>
+                  <span>Warehouse-Bot-7</span>
+                </div>
+                <div class="chain-sub-node system">
+                  <span class="deco-icon deco-icon-link deco-icon-sm"></span>
+                  <span>SAP-Integration</span>
+                </div>
               </div>
             </div>
           </div>
@@ -826,44 +1214,75 @@
 
     <!-- Activity Log -->
     <section class="section">
-      <div class="section-label">Commander Activity Log</div>
+      <div class="section-label">Commander Activity Log — Cross-Domain</div>
       <div class="activity-log">
-        <div class="activity-log-header">Recent Actions</div>
+        <div class="activity-log-header">Recent Actions Across All Domains</div>
         <div class="activity-log-content">
+          <!-- Medical domain -->
           <div class="activity-log-item">
-            <span class="activity-log-time">14:32</span>
-            <span class="activity-log-commander">Sara</span>
-            <span class="activity-log-action">Approved permission for architect-3 to write /src/auth</span>
+            <span class="activity-log-time">14:47</span>
+            <span class="activity-log-commander medical">Dr. Chen</span>
+            <span class="activity-log-action">Approved Medical-AI escalation — Patient #4521 cleared for continued monitoring</span>
           </div>
           <div class="activity-log-item">
+            <span class="activity-log-time">14:44</span>
+            <span class="activity-log-commander ai">Medical-AI</span>
+            <span class="activity-log-action">Escalated Patient #4521 unusual cardiac pattern to Dr. Chen (autonomous)</span>
+          </div>
+          <!-- Sales domain -->
+          <div class="activity-log-item">
+            <span class="activity-log-time">14:38</span>
+            <span class="activity-log-commander ai">Sales-AI</span>
+            <span class="activity-log-action">Adjusted Germany tier-2 pricing +4.2% within delegated variance (autonomous)</span>
+          </div>
+          <div class="activity-log-item">
+            <span class="activity-log-time">14:32</span>
+            <span class="activity-log-commander sales">Marcus</span>
+            <span class="activity-log-action">Approved $620k Siemens deal — exceeded Sales-AI authority threshold</span>
+          </div>
+          <!-- Film domain -->
+          <div class="activity-log-item">
             <span class="activity-log-time">14:28</span>
-            <span class="activity-log-commander">Ops-AI</span>
-            <span class="activity-log-action">Scaled down 2 idle compute instances (autonomous)</span>
+            <span class="activity-log-commander ai">Creative-AI</span>
+            <span class="activity-log-action">Submitted Scene 47 lighting preview to Elena for approval</span>
           </div>
           <div class="activity-log-item">
             <span class="activity-log-time">14:15</span>
-            <span class="activity-log-commander">Alex</span>
-            <span class="activity-log-action">Created new goal: "Ship auth system"</span>
+            <span class="activity-log-commander creative">Elena</span>
+            <span class="activity-log-action">Delegated Scene 47 lighting to Creative-AI — "Match Spielberg E.T. style"</span>
           </div>
+          <!-- Logistics domain -->
           <div class="activity-log-item">
             <span class="activity-log-time">14:10</span>
-            <span class="activity-log-commander">Strategy-AI</span>
-            <span class="activity-log-action">Escalated decision: "Research budget allocation needs human input"</span>
+            <span class="activity-log-commander robot">Warehouse-Bot-7</span>
+            <span class="activity-log-action">Completed Zone B inventory scan — 847 items verified, synced to SAP</span>
           </div>
           <div class="activity-log-item">
             <span class="activity-log-time">14:02</span>
-            <span class="activity-log-commander">Alex</span>
-            <span class="activity-log-action">Delegated auth-system scope to Sara</span>
+            <span class="activity-log-commander ai">Logistics-AI</span>
+            <span class="activity-log-action">Rerouted 3 EU shipments avoiding port delay — saved $12k (autonomous)</span>
           </div>
           <div class="activity-log-item">
-            <span class="activity-log-time">13:45</span>
-            <span class="activity-log-commander">Research-AI</span>
-            <span class="activity-log-action">Started background scan: rust ecosystem updates</span>
+            <span class="activity-log-time">13:55</span>
+            <span class="activity-log-commander operations">James</span>
+            <span class="activity-log-action">Set fragile goods priority override — reliability over speed for EU routes</span>
+          </div>
+          <!-- System integration -->
+          <div class="activity-log-item">
+            <span class="activity-log-time">13:48</span>
+            <span class="activity-log-commander system">SAP-Integration</span>
+            <span class="activity-log-action">Triggered procurement for 12 items below threshold — auto-reorder enabled</span>
+          </div>
+          <!-- Medical overnight -->
+          <div class="activity-log-item">
+            <span class="activity-log-time">08:00</span>
+            <span class="activity-log-commander medical">Dr. Chen</span>
+            <span class="activity-log-action">Morning review: Medical-AI overnight report — 847 patients monitored, 0 critical events</span>
           </div>
         </div>
       </div>
     </section>
-  </div>
 
+  </div>
 </body>
 </html>
