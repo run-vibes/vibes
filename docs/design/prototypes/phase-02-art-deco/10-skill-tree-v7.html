@@ -1,0 +1,3257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Knowledge Universe — Multiplayer Art Deco</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    /* ═══════════════════════════════════════════════════════════════════════════
+       THE KNOWLEDGE UNIVERSE — Multiplayer Cosmic Navigation
+       Your knowledge is a star. Others orbit in your gravitational field.
+       Zoom in to explore the fractal depths: Universe → Atomic
+       ═══════════════════════════════════════════════════════════════════════════ */
+
+    :root {
+      --spotlight-x: 50%;
+      --spotlight-y: 50%;
+      --spotlight-radius: 400px;
+      --spotlight-intensity: 0;
+      --blur-intensity: 0;
+
+      /* Layer opacities — controlled by JS for smooth transitions */
+      --universe-opacity: 1;
+      --you-opacity: 1;
+      --domain-opacity: 0;
+      --field-opacity: 0;
+      --discipline-opacity: 0;
+      --topic-opacity: 0;
+      --concept-opacity: 0;
+      --detail-opacity: 0;
+      --atomic-opacity: 0;
+      --subatomic-opacity: 0;
+
+      /* Multiplayer user colors */
+      --user-mentor: #3d8b8b;
+      --user-peer: #8b5a8b;
+      --user-team: #d4a84b;
+      --user-ai: #c45a5a;
+      --user-learner: #5a8b5a;
+
+      /* Distant star entity colors */
+      --entity-corp: #4a90d9;      /* Corporate blue */
+      --entity-university: #e8a840; /* Academic gold */
+      --entity-government: #a0b0c0; /* Neutral gray-blue */
+      --entity-influencer: #c86dd7; /* Vibrant magenta */
+      --entity-nonprofit: #5dc97a;  /* Green for good */
+    }
+
+    body {
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    .zoom-viewport {
+      position: fixed;
+      inset: 0;
+      background: var(--bg-void);
+      overflow: hidden;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       STAR FIELD — Deep space background with parallax drift
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .star-field {
+      position: absolute;
+      inset: -100px;
+      pointer-events: none;
+      z-index: 0;
+      opacity: calc(var(--universe-opacity) * 0.8 + 0.2);
+      transition: opacity 0.6s ease;
+    }
+
+    .star-layer {
+      position: absolute;
+      inset: 0;
+    }
+
+    .star-layer-1 {
+      background-image:
+        radial-gradient(1px 1px at 10% 20%, rgba(255, 255, 255, 0.8) 50%, transparent 50%),
+        radial-gradient(1px 1px at 30% 70%, rgba(255, 255, 255, 0.6) 50%, transparent 50%),
+        radial-gradient(1px 1px at 50% 40%, rgba(255, 255, 255, 0.7) 50%, transparent 50%),
+        radial-gradient(1px 1px at 70% 85%, rgba(255, 255, 255, 0.5) 50%, transparent 50%),
+        radial-gradient(1px 1px at 90% 30%, rgba(255, 255, 255, 0.8) 50%, transparent 50%),
+        radial-gradient(1px 1px at 15% 55%, rgba(212, 168, 75, 0.4) 50%, transparent 50%),
+        radial-gradient(1px 1px at 85% 65%, rgba(61, 139, 139, 0.4) 50%, transparent 50%);
+      animation: star-drift-1 120s linear infinite;
+    }
+
+    .star-layer-2 {
+      background-image:
+        radial-gradient(1.5px 1.5px at 25% 35%, rgba(255, 255, 255, 0.5) 50%, transparent 50%),
+        radial-gradient(1.5px 1.5px at 55% 15%, rgba(255, 255, 255, 0.4) 50%, transparent 50%),
+        radial-gradient(1.5px 1.5px at 75% 55%, rgba(255, 255, 255, 0.5) 50%, transparent 50%),
+        radial-gradient(1.5px 1.5px at 5% 85%, rgba(255, 255, 255, 0.4) 50%, transparent 50%),
+        radial-gradient(2px 2px at 45% 95%, rgba(212, 168, 75, 0.3) 50%, transparent 50%);
+      animation: star-drift-2 180s linear infinite;
+    }
+
+    .star-layer-3 {
+      background-image:
+        radial-gradient(2px 2px at 20% 80%, rgba(255, 255, 255, 0.3) 50%, transparent 50%),
+        radial-gradient(2px 2px at 60% 25%, rgba(255, 255, 255, 0.25) 50%, transparent 50%),
+        radial-gradient(2px 2px at 80% 75%, rgba(255, 255, 255, 0.3) 50%, transparent 50%);
+      animation: star-drift-3 240s linear infinite;
+    }
+
+    @keyframes star-drift-1 {
+      from { transform: translate(0, 0); }
+      to { transform: translate(-20px, 10px); }
+    }
+
+    @keyframes star-drift-2 {
+      from { transform: translate(0, 0); }
+      to { transform: translate(15px, -8px); }
+    }
+
+    @keyframes star-drift-3 {
+      from { transform: translate(0, 0); }
+      to { transform: translate(-10px, -15px); }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       DISTANT GALAXIES — External knowledge masses (corporations, universities, etc.)
+       These are entire GALAXIES of knowledge, not mere stars.
+       They appear as spiral/elliptical shapes at the edges of observable space.
+       Travel to them requires special achievements (contributions, employment, etc.)
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .distant-galaxies {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 6000px;
+      height: 6000px;
+      pointer-events: none;
+      z-index: 2;
+      opacity: calc(var(--universe-opacity) * 0.9 + 0.1);
+      transition: opacity 0.6s ease;
+    }
+
+    /* === GALACTIC ZONES — Visual hierarchy of knowledge space === */
+    .galactic-zones {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .galactic-zone {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    /* Your Solar System — innermost zone */
+    .zone-solar-system {
+      width: 800px;
+      height: 800px;
+      border: 1px solid rgba(212, 168, 75, 0.12);
+      background: radial-gradient(circle,
+        rgba(212, 168, 75, 0.04) 0%,
+        rgba(212, 168, 75, 0.01) 70%,
+        transparent 100%
+      );
+    }
+
+    .zone-solar-system::after {
+      content: 'YOUR SOLAR SYSTEM';
+      position: absolute;
+      bottom: -22px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-condensed);
+      font-size: 8px;
+      letter-spacing: 0.15em;
+      color: rgba(212, 168, 75, 0.3);
+      white-space: nowrap;
+    }
+
+    /* Your Galaxy — the broader zone containing nearby stars */
+    .zone-your-galaxy {
+      width: 1600px;
+      height: 1600px;
+      border: 1px dashed rgba(212, 168, 75, 0.08);
+    }
+
+    .zone-your-galaxy::after {
+      content: 'YOUR GALAXY';
+      position: absolute;
+      bottom: -22px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-condensed);
+      font-size: 8px;
+      letter-spacing: 0.15em;
+      color: rgba(212, 168, 75, 0.2);
+      white-space: nowrap;
+    }
+
+    /* Local Cluster — nearby galaxies, reachable with effort */
+    .zone-local-cluster {
+      width: 2800px;
+      height: 2800px;
+      border: 1px dashed rgba(255, 255, 255, 0.06);
+    }
+
+    .zone-local-cluster::after {
+      content: 'LOCAL CLUSTER';
+      position: absolute;
+      bottom: -22px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-condensed);
+      font-size: 8px;
+      letter-spacing: 0.15em;
+      color: rgba(255, 255, 255, 0.12);
+      white-space: nowrap;
+    }
+
+    /* Deep Space — distant galaxies, legendary achievements required */
+    .zone-deep-space {
+      width: 4500px;
+      height: 4500px;
+      border: 1px dashed rgba(255, 255, 255, 0.03);
+    }
+
+    .zone-deep-space::after {
+      content: 'DEEP SPACE';
+      position: absolute;
+      bottom: -22px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-condensed);
+      font-size: 8px;
+      letter-spacing: 0.15em;
+      color: rgba(255, 255, 255, 0.08);
+      white-space: nowrap;
+    }
+
+    /* === DISTANT GALAXY — Individual knowledge galaxy === */
+    .distant-galaxy {
+      position: absolute;
+      cursor: pointer;
+      pointer-events: auto;
+      transition: transform 0.5s ease, filter 0.5s ease, opacity 0.4s ease;
+      opacity: 0.7;
+    }
+
+    .distant-galaxy:hover {
+      opacity: 1;
+      transform: scale(1.4);
+      z-index: 50;
+    }
+
+    /* Galaxy core — bright center */
+    .galaxy-core {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 35%;
+      height: 35%;
+      border-radius: 50%;
+      filter: blur(1px);
+    }
+
+    /* Galaxy disk — spiral or elliptical shape */
+    .galaxy-disk {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      opacity: 0.7;
+    }
+
+    /* Spiral galaxy animation */
+    @keyframes galaxy-rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* Galaxy halo — outer glow */
+    .galaxy-halo {
+      position: absolute;
+      inset: -40%;
+      border-radius: 50%;
+      opacity: 0.4;
+      filter: blur(6px);
+    }
+
+    /* Travel portal — locked by default, shows potential connection */
+    .travel-portal {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 130%;
+      height: 130%;
+      border-radius: 50%;
+      border: 1px dashed rgba(255, 255, 255, 0.08);
+      opacity: 0;
+      transition: opacity 0.4s ease, border-color 0.4s ease;
+    }
+
+    .distant-galaxy:hover .travel-portal {
+      opacity: 1;
+    }
+
+    .travel-portal::after {
+      content: '🔒';
+      position: absolute;
+      bottom: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 9px;
+      opacity: 0.6;
+    }
+
+    /* Unlocked travel — for galaxies you can visit */
+    .distant-galaxy.unlocked .travel-portal {
+      border-color: rgba(212, 168, 75, 0.25);
+    }
+
+    .distant-galaxy.unlocked .travel-portal::after {
+      content: '⟡';
+      color: var(--gold);
+      opacity: 0.9;
+      font-size: 12px;
+    }
+
+    /* Tooltip for galaxy hover */
+    .galaxy-label {
+      position: absolute;
+      bottom: calc(100% + 12px);
+      left: 50%;
+      transform: translateX(-50%) scale(0.85);
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      padding: 5px 10px;
+      background: rgba(15, 15, 18, 0.9);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-primary);
+      opacity: 0;
+      transition: all 0.3s ease;
+      pointer-events: none;
+      z-index: 200;
+    }
+
+    .galaxy-label .galaxy-type {
+      display: block;
+      font-size: 7px;
+      font-weight: 400;
+      color: var(--text-muted);
+      margin-top: 2px;
+      letter-spacing: 0.08em;
+    }
+
+    .distant-galaxy:hover .galaxy-label {
+      transform: translateX(-50%) scale(1);
+      opacity: 1;
+    }
+
+    /* === GALAXY TYPES — Visual treatments by entity category === */
+
+    /* CORPORATIONS — Blue spiral galaxies (organized, structured knowledge) */
+    .distant-galaxy.corporation .galaxy-core {
+      background: radial-gradient(circle,
+        rgba(74, 144, 217, 1) 0%,
+        rgba(74, 144, 217, 0.5) 60%,
+        transparent 100%
+      );
+      box-shadow: 0 0 12px rgba(74, 144, 217, 0.6);
+    }
+
+    .distant-galaxy.corporation .galaxy-disk {
+      background: conic-gradient(
+        from 0deg,
+        transparent 0deg,
+        rgba(74, 144, 217, 0.35) 25deg,
+        transparent 50deg,
+        rgba(74, 144, 217, 0.28) 80deg,
+        transparent 105deg,
+        rgba(74, 144, 217, 0.22) 135deg,
+        transparent 160deg,
+        rgba(74, 144, 217, 0.35) 185deg,
+        transparent 210deg,
+        rgba(74, 144, 217, 0.28) 240deg,
+        transparent 265deg,
+        rgba(74, 144, 217, 0.22) 295deg,
+        transparent 320deg,
+        rgba(74, 144, 217, 0.3) 345deg,
+        transparent 360deg
+      );
+      animation: galaxy-rotate 80s linear infinite;
+    }
+
+    .distant-galaxy.corporation .galaxy-halo {
+      background: radial-gradient(circle, rgba(74, 144, 217, 0.2) 0%, transparent 65%);
+    }
+
+    .distant-galaxy.corporation:hover .galaxy-core {
+      box-shadow: 0 0 20px rgba(74, 144, 217, 0.8), 0 0 40px rgba(74, 144, 217, 0.4);
+    }
+
+    /* UNIVERSITIES — Amber elliptical galaxies (ancient, established knowledge) */
+    .distant-galaxy.university .galaxy-core {
+      background: radial-gradient(circle,
+        rgba(232, 168, 64, 1) 0%,
+        rgba(232, 168, 64, 0.5) 60%,
+        transparent 100%
+      );
+      box-shadow: 0 0 10px rgba(232, 168, 64, 0.6);
+    }
+
+    .distant-galaxy.university .galaxy-disk {
+      background: radial-gradient(ellipse 100% 55% at center,
+        rgba(232, 168, 64, 0.3) 0%,
+        rgba(232, 168, 64, 0.12) 50%,
+        transparent 100%
+      );
+      transform: rotate(-25deg);
+    }
+
+    .distant-galaxy.university .galaxy-halo {
+      background: radial-gradient(circle, rgba(232, 168, 64, 0.18) 0%, transparent 65%);
+    }
+
+    .distant-galaxy.university:hover .galaxy-core {
+      box-shadow: 0 0 18px rgba(232, 168, 64, 0.75), 0 0 35px rgba(232, 168, 64, 0.35);
+    }
+
+    /* GOVERNMENTS — Gray-blue irregular galaxies (vast, distributed knowledge) */
+    .distant-galaxy.government .galaxy-core {
+      background: radial-gradient(circle,
+        rgba(160, 176, 192, 0.95) 0%,
+        rgba(160, 176, 192, 0.45) 60%,
+        transparent 100%
+      );
+      box-shadow: 0 0 10px rgba(160, 176, 192, 0.5);
+    }
+
+    .distant-galaxy.government .galaxy-disk {
+      background:
+        radial-gradient(ellipse 75% 100% at 35% 50%, rgba(160, 176, 192, 0.22) 0%, transparent 55%),
+        radial-gradient(ellipse 100% 75% at 65% 50%, rgba(160, 176, 192, 0.18) 0%, transparent 55%);
+    }
+
+    .distant-galaxy.government .galaxy-halo {
+      background: radial-gradient(circle, rgba(160, 176, 192, 0.15) 0%, transparent 65%);
+    }
+
+    .distant-galaxy.government:hover .galaxy-core {
+      box-shadow: 0 0 16px rgba(160, 176, 192, 0.65), 0 0 32px rgba(160, 176, 192, 0.3);
+    }
+
+    /* INFLUENCERS — Magenta quasars (incredibly bright individual sources) */
+    .distant-galaxy.influencer .galaxy-core {
+      background: radial-gradient(circle,
+        rgba(200, 109, 215, 1) 0%,
+        rgba(200, 109, 215, 0.7) 35%,
+        rgba(200, 109, 215, 0.3) 65%,
+        transparent 100%
+      );
+      box-shadow: 0 0 14px rgba(200, 109, 215, 0.7);
+    }
+
+    .distant-galaxy.influencer .galaxy-disk {
+      background: conic-gradient(
+        from 0deg,
+        rgba(200, 109, 215, 0.45) 0deg,
+        transparent 12deg,
+        rgba(200, 109, 215, 0.35) 85deg,
+        transparent 97deg,
+        rgba(200, 109, 215, 0.45) 175deg,
+        transparent 187deg,
+        rgba(200, 109, 215, 0.35) 265deg,
+        transparent 277deg
+      );
+      animation: galaxy-rotate 40s linear infinite;
+    }
+
+    .distant-galaxy.influencer .galaxy-halo {
+      background: radial-gradient(circle, rgba(200, 109, 215, 0.2) 0%, transparent 65%);
+    }
+
+    .distant-galaxy.influencer:hover .galaxy-core {
+      box-shadow: 0 0 22px rgba(200, 109, 215, 0.85), 0 0 45px rgba(200, 109, 215, 0.45);
+    }
+
+    /* NONPROFITS — Green nebular clusters (diffuse, open knowledge) */
+    .distant-galaxy.nonprofit .galaxy-core {
+      background: radial-gradient(circle,
+        rgba(93, 201, 122, 0.95) 0%,
+        rgba(93, 201, 122, 0.45) 60%,
+        transparent 100%
+      );
+      box-shadow: 0 0 10px rgba(93, 201, 122, 0.5);
+    }
+
+    .distant-galaxy.nonprofit .galaxy-disk {
+      background:
+        radial-gradient(circle at 28% 32%, rgba(93, 201, 122, 0.25) 0%, transparent 45%),
+        radial-gradient(circle at 72% 38%, rgba(93, 201, 122, 0.2) 0%, transparent 40%),
+        radial-gradient(circle at 50% 72%, rgba(93, 201, 122, 0.22) 0%, transparent 45%);
+    }
+
+    .distant-galaxy.nonprofit .galaxy-halo {
+      background: radial-gradient(circle, rgba(93, 201, 122, 0.15) 0%, transparent 65%);
+    }
+
+    .distant-galaxy.nonprofit:hover .galaxy-core {
+      box-shadow: 0 0 16px rgba(93, 201, 122, 0.7), 0 0 32px rgba(93, 201, 122, 0.35);
+    }
+
+    /* === SIZE CLASSES — Based on knowledge mass/influence === */
+    .distant-galaxy.massive { width: 90px; height: 90px; }
+    .distant-galaxy.large { width: 70px; height: 70px; }
+    .distant-galaxy.medium { width: 52px; height: 52px; }
+    .distant-galaxy.small { width: 38px; height: 38px; }
+
+    /* Influencers are more compact — bright individuals, not sprawling orgs */
+    .distant-galaxy.influencer.massive { width: 55px; height: 55px; }
+    .distant-galaxy.influencer.large { width: 45px; height: 45px; }
+    .distant-galaxy.influencer.medium { width: 36px; height: 36px; }
+    .distant-galaxy.influencer.small { width: 28px; height: 28px; }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       NEBULA ATMOSPHERE — Cosmic color clouds
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .nebula {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      opacity: calc(var(--universe-opacity) * 0.5);
+      transition: opacity 0.8s ease;
+    }
+
+    .nebula::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 30%, rgba(139, 90, 139, 0.06) 0%, transparent 50%),
+        radial-gradient(ellipse 60% 80% at 80% 70%, rgba(61, 139, 139, 0.04) 0%, transparent 50%),
+        radial-gradient(ellipse 50% 40% at 50% 50%, rgba(212, 168, 75, 0.03) 0%, transparent 40%);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       SPOTLIGHT & BLUR — Focus effect at deeper zoom levels
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .spotlight-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 100;
+      opacity: var(--spotlight-intensity);
+      transition: opacity 0.8s ease;
+    }
+
+    .spotlight-layer::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        circle var(--spotlight-radius) at var(--spotlight-x) var(--spotlight-y),
+        transparent 0%,
+        transparent 70%,
+        rgba(7, 9, 13, 0.2) 85%,
+        rgba(7, 9, 13, 0.45) 95%,
+        rgba(7, 9, 13, 0.65) 100%
+      );
+    }
+
+    .spotlight-layer::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        circle calc(var(--spotlight-radius) + 30px) at var(--spotlight-x) var(--spotlight-y),
+        transparent 0%,
+        transparent 88%,
+        rgba(212, 168, 75, 0.04) 94%,
+        transparent 100%
+      );
+    }
+
+    .blur-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 99;
+      opacity: var(--blur-intensity);
+      transition: opacity 0.8s ease;
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      mask-image: radial-gradient(
+        circle var(--spotlight-radius) at var(--spotlight-x) var(--spotlight-y),
+        transparent 0%,
+        transparent 65%,
+        black 90%,
+        black 100%
+      );
+      -webkit-mask-image: radial-gradient(
+        circle var(--spotlight-radius) at var(--spotlight-x) var(--spotlight-y),
+        transparent 0%,
+        transparent 65%,
+        black 90%,
+        black 100%
+      );
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       ZOOM CONTAINER — Infinite Canvas
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .zoom-container {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      transform-origin: center center;
+      cursor: grab;
+      z-index: 2;
+    }
+
+    .zoom-container.dragging {
+      cursor: grabbing;
+    }
+
+    .zoom-container.animating {
+      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       KNOWLEDGE UNIVERSE — The infinite canvas containing all layers
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .knowledge-universe {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 3000px;
+      height: 3000px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       LEVEL 0: UNIVERSE VIEW — Multiplayer Overview
+       Other users orbit around your knowledge center
+       Distance = recency of interaction, Size = relative knowledge mass
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .universe-layer {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 2400px;
+      height: 2400px;
+      opacity: var(--universe-opacity);
+      pointer-events: auto;
+      transition: opacity 0.5s ease;
+      z-index: 5;
+    }
+
+    .universe-layer.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Your Knowledge Sun — The center of your universe */
+    .knowledge-sun {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 120px;
+      height: 120px;
+      cursor: pointer;
+      z-index: 10;
+    }
+
+    .sun-core {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle,
+        rgba(232, 196, 90, 0.9) 0%,
+        rgba(212, 168, 75, 0.8) 30%,
+        rgba(180, 140, 60, 0.6) 60%,
+        rgba(150, 110, 40, 0.3) 80%,
+        transparent 100%
+      );
+      border-radius: 50%;
+      animation: sun-pulse 4s ease-in-out infinite;
+    }
+
+    @keyframes sun-pulse {
+      0%, 100% {
+        transform: scale(1);
+        filter: brightness(1);
+      }
+      50% {
+        transform: scale(1.05);
+        filter: brightness(1.2);
+      }
+    }
+
+    .sun-corona {
+      position: absolute;
+      inset: -40px;
+      background: radial-gradient(circle,
+        rgba(212, 168, 75, 0.15) 0%,
+        rgba(212, 168, 75, 0.08) 40%,
+        rgba(212, 168, 75, 0.02) 70%,
+        transparent 100%
+      );
+      border-radius: 50%;
+      animation: corona-flare 8s ease-in-out infinite;
+    }
+
+    @keyframes corona-flare {
+      0%, 100% { transform: scale(1); opacity: 0.6; }
+      50% { transform: scale(1.15); opacity: 1; }
+    }
+
+    .sun-label {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--bg-void);
+      text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+      white-space: nowrap;
+    }
+
+    /* User orbit paths */
+    .user-orbit-path {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      border: 1px dashed rgba(255, 255, 255, 0.08);
+      pointer-events: none;
+    }
+
+    .user-orbit-path.orbit-1 { width: 300px; height: 300px; }
+    .user-orbit-path.orbit-2 { width: 480px; height: 480px; }
+    .user-orbit-path.orbit-3 { width: 700px; height: 700px; }
+    .user-orbit-path.orbit-4 { width: 950px; height: 950px; }
+
+    /* User bodies — Other people/entities in your knowledge universe */
+    .user-orbit-ring {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .user-orbit-ring.ring-1 { width: 300px; height: 300px; }
+    .user-orbit-ring.ring-2 { width: 480px; height: 480px; }
+    .user-orbit-ring.ring-3 { width: 700px; height: 700px; }
+    .user-orbit-ring.ring-4 { width: 950px; height: 950px; }
+
+    .user-body {
+      position: absolute;
+      border-radius: 50%;
+      cursor: pointer;
+      pointer-events: auto;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .user-body::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 40px;
+      height: 40px;
+      min-width: 40px;
+      min-height: 40px;
+      border-radius: 50%;
+    }
+
+    .user-body:hover {
+      transform: scale(1.8) !important;
+    }
+
+    /* User type styling */
+    .user-body.mentor {
+      background: radial-gradient(circle, var(--user-mentor) 30%, rgba(61, 139, 139, 0.4) 70%, transparent 100%);
+      box-shadow: 0 0 15px rgba(61, 139, 139, 0.5);
+    }
+
+    .user-body.peer {
+      background: radial-gradient(circle, var(--user-peer) 30%, rgba(139, 90, 139, 0.4) 70%, transparent 100%);
+      box-shadow: 0 0 12px rgba(139, 90, 139, 0.5);
+    }
+
+    .user-body.team {
+      background: radial-gradient(circle, var(--user-team) 30%, rgba(212, 168, 75, 0.4) 70%, transparent 100%);
+      box-shadow: 0 0 14px rgba(212, 168, 75, 0.5);
+    }
+
+    .user-body.ai {
+      background: radial-gradient(circle, var(--user-ai) 30%, rgba(196, 90, 90, 0.4) 70%, transparent 100%);
+      box-shadow: 0 0 10px rgba(196, 90, 90, 0.5);
+      animation: ai-pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes ai-pulse {
+      0%, 100% { filter: brightness(1); }
+      50% { filter: brightness(1.3); }
+    }
+
+    .user-body.learner {
+      background: radial-gradient(circle, var(--user-learner) 30%, rgba(90, 139, 90, 0.4) 70%, transparent 100%);
+      box-shadow: 0 0 8px rgba(90, 139, 90, 0.4);
+    }
+
+    /* User tooltip */
+    .user-body::after {
+      content: attr(data-name);
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%) scale(0) rotate(var(--counter-rotate, 0deg));
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      padding: 5px 10px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      color: var(--text-primary);
+      opacity: 0;
+      transition: all 0.2s ease;
+      pointer-events: none;
+      z-index: 200;
+    }
+
+    .user-body:hover::after {
+      transform: translateX(-50%) scale(1) rotate(var(--counter-rotate, 0deg));
+      opacity: 1;
+    }
+
+    /* Gravitational connection lines */
+    .gravity-line {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      height: 1px;
+      transform-origin: left center;
+      pointer-events: none;
+      opacity: 0.15;
+    }
+
+    .gravity-line.strong {
+      background: linear-gradient(90deg, var(--gold-primary), transparent);
+      opacity: 0.3;
+    }
+
+    .gravity-line.medium {
+      background: linear-gradient(90deg, var(--accent-teal), transparent);
+      opacity: 0.2;
+    }
+
+    .gravity-line.weak {
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.3), transparent);
+      opacity: 0.1;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       LEVEL 1: YOU VIEW — Your Knowledge as Central Hub
+       The inner solar system of your knowledge
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .you-layer {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 200px;
+      height: 200px;
+      z-index: 20;
+    }
+
+    .you-core {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
+      border: 3px solid var(--gold-primary);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--glow-gold-bright), inset 0 0 50px rgba(212, 168, 75, 0.05);
+      cursor: pointer;
+      transition: all 0.4s ease;
+      animation: you-pulse 4s ease-in-out infinite;
+      z-index: 25;
+    }
+
+    @keyframes you-pulse {
+      0%, 100% {
+        box-shadow: var(--glow-gold-bright), inset 0 0 50px rgba(212, 168, 75, 0.05);
+      }
+      50% {
+        box-shadow: 0 0 50px rgba(232, 196, 90, 0.4), 0 0 100px rgba(212, 168, 75, 0.2), inset 0 0 50px rgba(212, 168, 75, 0.08);
+      }
+    }
+
+    .you-core:hover {
+      animation-play-state: paused;
+      transform: scale(1.08);
+    }
+
+    .you-label {
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+      text-align: center;
+    }
+
+    .you-stats {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      color: var(--text-tertiary);
+      margin-top: 4px;
+    }
+
+    /* Skill orbit rings around "You" */
+    .skill-orbit-zone {
+      position: absolute;
+      inset: -160px;
+      border-radius: 50%;
+      pointer-events: auto;
+      z-index: 1;
+    }
+
+    .skill-orbit-ring {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .skill-orbit-ring.orbit-1 { inset: -35px; border: 1px solid rgba(212, 168, 75, 0.2); }
+    .skill-orbit-ring.orbit-2 { inset: -65px; border: 1px solid rgba(61, 139, 139, 0.15); }
+    .skill-orbit-ring.orbit-3 { inset: -100px; border: 1px dashed rgba(212, 168, 75, 0.1); }
+    .skill-orbit-ring.orbit-4 { inset: -140px; border: 1px dotted rgba(255, 255, 255, 0.05); }
+
+    /* Skill bodies orbiting "You" */
+    .skill-body {
+      position: absolute;
+      border-radius: 50%;
+      box-shadow: 0 0 8px currentColor;
+      pointer-events: auto;
+      cursor: pointer;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      z-index: 10;
+    }
+
+    .skill-body::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 32px;
+      height: 32px;
+      min-width: 32px;
+      min-height: 32px;
+      border-radius: 50%;
+    }
+
+    .skill-body:hover {
+      transform: scale(2.5) !important;
+      box-shadow: 0 0 16px currentColor, 0 0 24px currentColor;
+    }
+
+    .skill-orbit-ring:has(.skill-body:hover) {
+      z-index: 50 !important;
+    }
+
+    .skill-body::after {
+      content: attr(data-label);
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%) scale(0);
+      font-family: var(--font-condensed);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      padding: 5px 10px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      color: var(--text-primary);
+      opacity: 0;
+      transition: all 0.2s ease;
+      pointer-events: none;
+      z-index: 200;
+    }
+
+    .skill-body:hover::after {
+      transform: translateX(-50%) scale(0.4) rotate(var(--counter-rotate, 0deg));
+      opacity: 1;
+    }
+
+    /* Skill body colors */
+    .skill-orbit-ring.orbit-1 .skill-body {
+      width: 12px; height: 12px;
+      background: var(--gold-primary);
+      color: rgba(212, 168, 75, 0.6);
+    }
+
+    .skill-orbit-ring.orbit-2 .skill-body {
+      width: 10px; height: 10px;
+      background: var(--accent-teal);
+      color: rgba(61, 139, 139, 0.5);
+    }
+
+    .skill-orbit-ring.orbit-3 .skill-body {
+      width: 8px; height: 8px;
+      background: var(--gold-muted);
+      color: rgba(212, 168, 75, 0.4);
+    }
+
+    .skill-orbit-ring.orbit-4 .skill-body {
+      width: 6px; height: 6px;
+      background: var(--accent-success);
+      color: rgba(77, 168, 77, 0.4);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       LEVEL 2: DOMAINS — Technology, Finance, Health, Science
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .domain-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: var(--domain-opacity);
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+      z-index: 10;
+    }
+
+    .domain-layer.visible {
+      pointer-events: auto;
+    }
+
+    .domain-layer.emerging .domain-cluster {
+      animation: emerge-from-parent 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .domain-layer.emerging .domain-cluster:nth-child(1) { animation-delay: 0s; }
+    .domain-layer.emerging .domain-cluster:nth-child(2) { animation-delay: 0.1s; }
+    .domain-layer.emerging .domain-cluster:nth-child(3) { animation-delay: 0.2s; }
+    .domain-layer.emerging .domain-cluster:nth-child(4) { animation-delay: 0.3s; }
+
+    @keyframes emerge-from-parent {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0);
+        filter: blur(8px);
+      }
+      50% {
+        opacity: 0.7;
+        filter: blur(2px);
+      }
+      100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+        filter: blur(0);
+      }
+    }
+
+    .domain-cluster {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      transition: all 0.4s ease;
+    }
+
+    .domain-cluster.faded {
+      opacity: 0.15;
+      filter: blur(1px);
+    }
+
+    .domain-frame {
+      width: 100px;
+      height: 100px;
+      background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
+      border: 2px solid var(--border-medium);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+
+    .domain-cluster:hover .domain-frame {
+      border-color: var(--gold-primary);
+      box-shadow: var(--glow-gold);
+      transform: scale(1.1);
+    }
+
+    .domain-label {
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold-muted);
+      margin-top: var(--space-2);
+    }
+
+    .domain-cluster.mastered .domain-frame {
+      border-color: var(--gold-muted);
+      box-shadow: var(--glow-gold);
+    }
+
+    .domain-cluster.frontier .domain-frame {
+      border-color: var(--accent-teal-muted);
+      border-style: dashed;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       LEVEL 3: FIELDS — Software, AI, Derivatives, etc.
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .field-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: var(--field-opacity);
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+      z-index: 9;
+    }
+
+    .field-layer.visible {
+      pointer-events: auto;
+    }
+
+    .field-layer.emerging .field-node {
+      animation: emerge-from-parent 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .field-layer.emerging .field-node:nth-child(1) { animation-delay: 0s; }
+    .field-layer.emerging .field-node:nth-child(2) { animation-delay: 0.06s; }
+    .field-layer.emerging .field-node:nth-child(3) { animation-delay: 0.12s; }
+    .field-layer.emerging .field-node:nth-child(4) { animation-delay: 0.18s; }
+    .field-layer.emerging .field-node:nth-child(5) { animation-delay: 0.24s; }
+    .field-layer.emerging .field-node:nth-child(6) { animation-delay: 0.30s; }
+
+    .field-node {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .field-node.faded {
+      opacity: 0.12;
+      filter: blur(1px);
+    }
+
+    .field-bubble {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
+      border: 2px solid var(--border-medium);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+
+    .field-node:hover .field-bubble {
+      border-color: var(--gold-primary);
+      box-shadow: var(--glow-gold);
+      transform: scale(1.12);
+    }
+
+    .field-label {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .field-node:hover .field-label {
+      color: var(--gold-primary);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       LEVEL 4: DISCIPLINES — Programming Languages, ML, etc.
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .discipline-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: var(--discipline-opacity);
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+      z-index: 8;
+    }
+
+    .discipline-layer.visible {
+      pointer-events: auto;
+    }
+
+    .discipline-layer.emerging .discipline-node {
+      animation: emerge-from-parent 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .discipline-layer.emerging .discipline-node:nth-child(1) { animation-delay: 0s; }
+    .discipline-layer.emerging .discipline-node:nth-child(2) { animation-delay: 0.05s; }
+    .discipline-layer.emerging .discipline-node:nth-child(3) { animation-delay: 0.1s; }
+    .discipline-layer.emerging .discipline-node:nth-child(4) { animation-delay: 0.15s; }
+    .discipline-layer.emerging .discipline-node:nth-child(5) { animation-delay: 0.2s; }
+    .discipline-layer.emerging .discipline-node:nth-child(6) { animation-delay: 0.25s; }
+    .discipline-layer.emerging .discipline-node:nth-child(7) { animation-delay: 0.3s; }
+    .discipline-layer.emerging .discipline-node:nth-child(8) { animation-delay: 0.35s; }
+
+    .discipline-node {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .discipline-node.faded {
+      opacity: 0.1;
+      filter: blur(1px);
+    }
+
+    .discipline-hex {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-elevated) 100%);
+      border: 1.5px solid var(--border-light);
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+
+    .discipline-node:hover .discipline-hex {
+      border-color: var(--gold-primary);
+      background: var(--bg-elevated);
+      box-shadow: var(--glow-gold);
+      transform: scale(1.15);
+    }
+
+    .discipline-label {
+      position: absolute;
+      top: calc(100% + 5px);
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-body);
+      font-size: 9px;
+      color: var(--text-tertiary);
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .discipline-node:hover .discipline-label {
+      color: var(--gold-muted);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       LEVEL 5: TOPICS — Rust, Python, Options, etc.
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .topic-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: var(--topic-opacity);
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+      z-index: 7;
+    }
+
+    .topic-layer.visible {
+      pointer-events: auto;
+    }
+
+    .topic-layer.emerging .topic-node {
+      animation: emerge-from-parent 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .topic-layer.emerging .topic-node:nth-child(1) { animation-delay: 0s; }
+    .topic-layer.emerging .topic-node:nth-child(2) { animation-delay: 0.04s; }
+    .topic-layer.emerging .topic-node:nth-child(3) { animation-delay: 0.08s; }
+    .topic-layer.emerging .topic-node:nth-child(4) { animation-delay: 0.12s; }
+    .topic-layer.emerging .topic-node:nth-child(5) { animation-delay: 0.16s; }
+    .topic-layer.emerging .topic-node:nth-child(6) { animation-delay: 0.20s; }
+
+    .topic-node {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .topic-node.faded {
+      opacity: 0.08;
+    }
+
+    .topic-diamond {
+      width: 50px;
+      height: 50px;
+      background: linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-elevated) 100%);
+      border: 1px solid var(--border-light);
+      clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+
+    .topic-node:hover .topic-diamond {
+      border-color: var(--gold-primary);
+      box-shadow: var(--glow-gold);
+      transform: scale(1.2) rotate(45deg);
+    }
+
+    .topic-label {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-body);
+      font-size: 9px;
+      color: var(--text-tertiary);
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .topic-node:hover .topic-label {
+      color: var(--gold-muted);
+    }
+
+    .topic-node.mastered .topic-diamond {
+      border-color: var(--gold-primary);
+      background: linear-gradient(135deg, var(--gold-subtle) 0%, var(--bg-elevated) 100%);
+    }
+
+    .topic-node.learning .topic-diamond {
+      border-color: var(--accent-teal);
+      box-shadow: var(--glow-teal);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       LEVEL 6: CONCEPTS — Ownership, Borrowing, Lifetimes, etc.
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .concept-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: var(--concept-opacity);
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+      z-index: 6;
+    }
+
+    .concept-layer.visible {
+      pointer-events: auto;
+    }
+
+    .concept-layer.emerging .concept-node {
+      animation: emerge-from-parent 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .concept-layer.emerging .concept-node:nth-child(1) { animation-delay: 0s; }
+    .concept-layer.emerging .concept-node:nth-child(2) { animation-delay: 0.03s; }
+    .concept-layer.emerging .concept-node:nth-child(3) { animation-delay: 0.06s; }
+    .concept-layer.emerging .concept-node:nth-child(4) { animation-delay: 0.09s; }
+    .concept-layer.emerging .concept-node:nth-child(5) { animation-delay: 0.12s; }
+    .concept-layer.emerging .concept-node:nth-child(6) { animation-delay: 0.15s; }
+    .concept-layer.emerging .concept-node:nth-child(7) { animation-delay: 0.18s; }
+    .concept-layer.emerging .concept-node:nth-child(8) { animation-delay: 0.21s; }
+
+    .concept-node {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .concept-node.faded {
+      opacity: 0.08;
+    }
+
+    .concept-pip {
+      width: 36px;
+      height: 36px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--gold-muted);
+      transition: all 0.3s ease;
+    }
+
+    .concept-node:hover .concept-pip {
+      border-color: var(--gold-muted);
+      background: var(--bg-surface);
+      transform: scale(1.25);
+      box-shadow: 0 0 12px rgba(212, 168, 75, 0.3);
+    }
+
+    .concept-label {
+      position: absolute;
+      top: calc(100% + 3px);
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-body);
+      font-size: 8px;
+      color: var(--text-muted);
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .concept-node:hover .concept-label {
+      color: var(--gold-dim);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       LEVEL 7: DETAILS — Move Semantics, Copy Trait, etc.
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .detail-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: var(--detail-opacity);
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+      z-index: 5;
+    }
+
+    .detail-layer.visible {
+      pointer-events: auto;
+    }
+
+    .detail-layer.emerging .detail-fragment {
+      animation: emerge-from-parent 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .detail-layer.emerging .detail-fragment:nth-child(1) { animation-delay: 0s; }
+    .detail-layer.emerging .detail-fragment:nth-child(2) { animation-delay: 0.025s; }
+    .detail-layer.emerging .detail-fragment:nth-child(3) { animation-delay: 0.05s; }
+    .detail-layer.emerging .detail-fragment:nth-child(4) { animation-delay: 0.075s; }
+    .detail-layer.emerging .detail-fragment:nth-child(5) { animation-delay: 0.1s; }
+    .detail-layer.emerging .detail-fragment:nth-child(6) { animation-delay: 0.125s; }
+    .detail-layer.emerging .detail-fragment:nth-child(7) { animation-delay: 0.15s; }
+    .detail-layer.emerging .detail-fragment:nth-child(8) { animation-delay: 0.175s; }
+
+    .detail-fragment {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .detail-fragment.faded {
+      opacity: 0.06;
+    }
+
+    .detail-dot {
+      width: 24px;
+      height: 24px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      color: var(--text-muted);
+      transition: all 0.3s ease;
+    }
+
+    .detail-fragment:hover .detail-dot {
+      border-color: var(--gold-muted);
+      background: var(--bg-surface);
+      transform: scale(1.3);
+      box-shadow: 0 0 10px rgba(212, 168, 75, 0.25);
+    }
+
+    .detail-fragment:hover .detail-dot::after {
+      content: attr(data-label);
+      position: absolute;
+      top: calc(100% + 3px);
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-body);
+      font-size: 7px;
+      color: var(--gold-dim);
+      white-space: nowrap;
+      background: var(--bg-card);
+      padding: 2px 5px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       LEVEL 8: ATOMIC — RAII, Stack Alloc, etc. (deepest)
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .atomic-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: var(--atomic-opacity);
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+      z-index: 4;
+    }
+
+    .atomic-layer.visible {
+      pointer-events: auto;
+    }
+
+    .atomic-layer.emerging .atomic-particle {
+      animation: particle-emerge 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .atomic-layer.emerging .atomic-particle:nth-child(1) { animation-delay: 0s; }
+    .atomic-layer.emerging .atomic-particle:nth-child(2) { animation-delay: 0.02s; }
+    .atomic-layer.emerging .atomic-particle:nth-child(3) { animation-delay: 0.04s; }
+    .atomic-layer.emerging .atomic-particle:nth-child(4) { animation-delay: 0.06s; }
+    .atomic-layer.emerging .atomic-particle:nth-child(5) { animation-delay: 0.08s; }
+    .atomic-layer.emerging .atomic-particle:nth-child(6) { animation-delay: 0.1s; }
+    .atomic-layer.emerging .atomic-particle:nth-child(7) { animation-delay: 0.12s; }
+    .atomic-layer.emerging .atomic-particle:nth-child(8) { animation-delay: 0.14s; }
+    .atomic-layer.emerging .atomic-particle:nth-child(9) { animation-delay: 0.16s; }
+    .atomic-layer.emerging .atomic-particle:nth-child(10) { animation-delay: 0.18s; }
+
+    @keyframes particle-emerge {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0);
+        filter: blur(4px);
+      }
+      60% {
+        opacity: 0.8;
+        filter: blur(1px);
+      }
+      100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+        filter: blur(0);
+      }
+    }
+
+    .atomic-particle {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      width: 6px;
+      height: 6px;
+      background: radial-gradient(circle, var(--gold-primary) 0%, var(--gold-dim) 50%, transparent 70%);
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      animation: particle-pulse 3s ease-in-out infinite;
+    }
+
+    .atomic-particle:nth-child(odd) {
+      animation-delay: -1.5s;
+      width: 4px;
+      height: 4px;
+    }
+
+    .atomic-particle:nth-child(3n) {
+      background: radial-gradient(circle, var(--accent-teal) 0%, rgba(61, 139, 139, 0.3) 50%, transparent 70%);
+    }
+
+    @keyframes particle-pulse {
+      0%, 100% {
+        opacity: 0.6;
+        box-shadow: 0 0 4px rgba(212, 168, 75, 0.4);
+      }
+      50% {
+        opacity: 1;
+        box-shadow: 0 0 8px rgba(212, 168, 75, 0.8);
+      }
+    }
+
+    .atomic-particle:hover {
+      transform: translate(-50%, -50%) scale(2);
+      box-shadow: 0 0 12px var(--gold-primary);
+    }
+
+    .atomic-particle:hover::after {
+      content: attr(data-atomic);
+      position: absolute;
+      bottom: calc(100% + 3px);
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-body);
+      font-size: 7px;
+      color: var(--gold-muted);
+      white-space: nowrap;
+      background: var(--bg-card);
+      padding: 2px 5px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       LEVEL 9: SUBATOMIC — Quarks of knowledge (deepest possible)
+       Syntax nuances, edge cases, compiler behaviors, implementation quirks
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .subatomic-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      opacity: var(--subatomic-opacity);
+      transition: opacity 0.4s ease;
+    }
+
+    .subatomic-layer.visible {
+      pointer-events: auto;
+    }
+
+    .subatomic-layer.emerging .subatomic-quark {
+      animation: quark-emerge 0.3s ease forwards;
+    }
+
+    .subatomic-layer.emerging .subatomic-quark:nth-child(1) { animation-delay: 0s; }
+    .subatomic-layer.emerging .subatomic-quark:nth-child(2) { animation-delay: 0.015s; }
+    .subatomic-layer.emerging .subatomic-quark:nth-child(3) { animation-delay: 0.03s; }
+    .subatomic-layer.emerging .subatomic-quark:nth-child(4) { animation-delay: 0.045s; }
+    .subatomic-layer.emerging .subatomic-quark:nth-child(5) { animation-delay: 0.06s; }
+    .subatomic-layer.emerging .subatomic-quark:nth-child(6) { animation-delay: 0.075s; }
+    .subatomic-layer.emerging .subatomic-quark:nth-child(7) { animation-delay: 0.09s; }
+    .subatomic-layer.emerging .subatomic-quark:nth-child(8) { animation-delay: 0.105s; }
+    .subatomic-layer.emerging .subatomic-quark:nth-child(9) { animation-delay: 0.12s; }
+    .subatomic-layer.emerging .subatomic-quark:nth-child(10) { animation-delay: 0.135s; }
+    .subatomic-layer.emerging .subatomic-quark:nth-child(11) { animation-delay: 0.15s; }
+    .subatomic-layer.emerging .subatomic-quark:nth-child(12) { animation-delay: 0.165s; }
+
+    @keyframes quark-emerge {
+      from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0);
+      }
+      to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+
+    /* Quarks — smallest possible knowledge particles */
+    .subatomic-quark {
+      position: absolute;
+      width: 3px;
+      height: 3px;
+      background: radial-gradient(circle, rgba(200, 109, 215, 0.9) 0%, rgba(200, 109, 215, 0.3) 100%);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      pointer-events: auto;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      box-shadow: 0 0 3px rgba(200, 109, 215, 0.4);
+    }
+
+    /* Quark color variations — different "flavors" */
+    .subatomic-quark.up {
+      background: radial-gradient(circle, rgba(212, 168, 75, 0.95) 0%, rgba(212, 168, 75, 0.35) 100%);
+      box-shadow: 0 0 3px rgba(212, 168, 75, 0.5);
+    }
+
+    .subatomic-quark.down {
+      background: radial-gradient(circle, rgba(61, 139, 139, 0.9) 0%, rgba(61, 139, 139, 0.3) 100%);
+      box-shadow: 0 0 3px rgba(61, 139, 139, 0.4);
+    }
+
+    .subatomic-quark.strange {
+      background: radial-gradient(circle, rgba(196, 90, 90, 0.9) 0%, rgba(196, 90, 90, 0.3) 100%);
+      box-shadow: 0 0 3px rgba(196, 90, 90, 0.4);
+    }
+
+    /* Quantum uncertainty animation */
+    .subatomic-quark::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 50%;
+      background: inherit;
+      opacity: 0.15;
+      animation: quantum-fluctuation 2s ease-in-out infinite;
+    }
+
+    .subatomic-quark:nth-child(odd)::before {
+      animation-delay: -1s;
+    }
+
+    .subatomic-quark:nth-child(3n)::before {
+      animation-duration: 2.5s;
+    }
+
+    @keyframes quantum-fluctuation {
+      0%, 100% { transform: scale(1); opacity: 0.1; }
+      50% { transform: scale(1.8); opacity: 0.25; }
+    }
+
+    .subatomic-quark:hover {
+      transform: translate(-50%, -50%) scale(2.5);
+      box-shadow: 0 0 8px currentColor;
+    }
+
+    .subatomic-quark:hover::after {
+      content: attr(data-quark);
+      position: absolute;
+      bottom: calc(100% + 2px);
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-mono);
+      font-size: 6px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      background: var(--bg-void);
+      padding: 2px 4px;
+      border: 1px solid var(--border-subtle);
+      letter-spacing: 0.03em;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       ZOOM INDICATOR — 10 Levels
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .zoom-indicator {
+      position: fixed;
+      bottom: var(--space-6);
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+      padding: var(--space-3) var(--space-5);
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      z-index: 200;
+    }
+
+    .zoom-indicator::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);
+    }
+
+    .zoom-level-dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .zoom-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--bg-deep);
+      border: 1px solid var(--border-medium);
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .zoom-dot.active {
+      background: var(--gold-primary);
+      border-color: var(--gold-primary);
+      box-shadow: var(--glow-gold);
+    }
+
+    .zoom-dot:hover {
+      border-color: var(--gold-muted);
+    }
+
+    .zoom-label {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold-muted);
+      min-width: 80px;
+      text-align: center;
+    }
+
+    .zoom-breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-family: var(--font-body);
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    .breadcrumb-item {
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 2px 5px;
+      border-radius: 2px;
+      transition: all 0.2s ease;
+    }
+
+    .breadcrumb-item:hover {
+      color: var(--gold-primary);
+      background: var(--gold-subtle);
+    }
+
+    .breadcrumb-item.current {
+      color: var(--gold-primary);
+      cursor: default;
+    }
+
+    .breadcrumb-sep {
+      color: var(--gold-dim);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       CONTROLS
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .controls {
+      position: fixed;
+      top: var(--space-4);
+      right: var(--space-4);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      z-index: 200;
+    }
+
+    .control-btn {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      color: var(--gold-muted);
+      font-size: 18px;
+      font-weight: 300;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .control-btn:hover {
+      background: var(--bg-elevated);
+      border-color: var(--gold-muted);
+      color: var(--gold-primary);
+    }
+
+    .zoom-display {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      text-align: center;
+      color: var(--text-tertiary);
+      padding: var(--space-2);
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-top: none;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       LEGENDS
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .legend {
+      position: fixed;
+      top: var(--space-4);
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: var(--space-4);
+      padding: var(--space-2) var(--space-4);
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      z-index: 200;
+    }
+
+    .legend::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-family: var(--font-condensed);
+      font-size: 8px;
+      letter-spacing: 0.05em;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .legend-dot.mentor { background: var(--user-mentor); }
+    .legend-dot.peer { background: var(--user-peer); }
+    .legend-dot.team { background: var(--user-team); }
+    .legend-dot.ai { background: var(--user-ai); }
+    .legend-dot.learner { background: var(--user-learner); }
+
+    /* Distant galaxy entity legend dots */
+    .legend-dot.corporation { background: var(--entity-corp); }
+    .legend-dot.university { background: var(--entity-university); }
+    .legend-dot.government { background: var(--entity-government); }
+    .legend-dot.influencer { background: var(--entity-influencer); }
+    .legend-dot.nonprofit { background: var(--entity-nonprofit); }
+
+    /* Legend separator */
+    .legend-separator {
+      width: 1px;
+      height: 20px;
+      background: var(--border-light);
+      margin: 0 var(--space-2);
+    }
+
+    /* Universe legend - only visible at universe zoom level */
+    .universe-legend {
+      opacity: var(--universe-opacity);
+      transition: opacity 0.4s ease;
+    }
+
+    .universe-legend.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="zoom-viewport">
+    <!-- Star Field Background -->
+    <div class="star-field">
+      <div class="star-layer star-layer-1"></div>
+      <div class="star-layer star-layer-2"></div>
+      <div class="star-layer star-layer-3"></div>
+    </div>
+
+    <!-- Nebula Atmosphere -->
+    <div class="nebula"></div>
+
+    <!-- Spotlight and Blur Layers -->
+    <div class="spotlight-layer" id="spotlight-layer"></div>
+    <div class="blur-layer" id="blur-layer"></div>
+
+    <!-- Zoom Container -->
+    <div class="zoom-container" id="zoom-container">
+      <div class="knowledge-universe" id="knowledge-universe">
+
+        <!-- Galactic Zones — Visual hierarchy of knowledge space -->
+        <div class="galactic-zones">
+          <div class="galactic-zone zone-deep-space"></div>
+          <div class="galactic-zone zone-local-cluster"></div>
+          <div class="galactic-zone zone-your-galaxy"></div>
+          <div class="galactic-zone zone-solar-system"></div>
+        </div>
+
+        <!-- Distant Galaxies — External knowledge masses (pan/zoom with universe) -->
+        <div class="distant-galaxies" id="distant-galaxies">
+
+          <!-- CORPORATIONS — Blue spiral galaxies in deep space -->
+          <div class="distant-galaxy corporation massive" style="top: 8%; left: 10%;">
+            <div class="galaxy-halo"></div>
+            <div class="galaxy-disk"></div>
+            <div class="galaxy-core"></div>
+            <div class="travel-portal"></div>
+            <div class="galaxy-label">Google<span class="galaxy-type">Corporation</span></div>
+          </div>
+
+          <div class="distant-galaxy corporation massive" style="top: 10%; left: 88%;">
+            <div class="galaxy-halo"></div>
+            <div class="galaxy-disk"></div>
+            <div class="galaxy-core"></div>
+            <div class="travel-portal"></div>
+            <div class="galaxy-label">Microsoft<span class="galaxy-type">Corporation</span></div>
+          </div>
+
+          <div class="distant-galaxy corporation large" style="top: 6%; left: 42%;">
+            <div class="galaxy-halo"></div>
+            <div class="galaxy-disk"></div>
+            <div class="galaxy-core"></div>
+            <div class="travel-portal"></div>
+            <div class="galaxy-label">Apple<span class="galaxy-type">Corporation</span></div>
+          </div>
+
+          <div class="distant-galaxy corporation large" style="top: 92%; left: 72%;">
+            <div class="galaxy-halo"></div>
+            <div class="galaxy-disk"></div>
+            <div class="galaxy-core"></div>
+            <div class="travel-portal"></div>
+            <div class="galaxy-label">Meta<span class="galaxy-type">Corporation</span></div>
+          </div>
+
+          <div class="distant-galaxy corporation medium" style="top: 5%; left: 65%;">
+            <div class="galaxy-halo"></div>
+            <div class="galaxy-disk"></div>
+            <div class="galaxy-core"></div>
+            <div class="travel-portal"></div>
+            <div class="galaxy-label">Amazon<span class="galaxy-type">Corporation</span></div>
+          </div>
+
+          <div class="distant-galaxy corporation medium" style="top: 90%; left: 15%;">
+            <div class="galaxy-halo"></div>
+            <div class="galaxy-disk"></div>
+            <div class="galaxy-core"></div>
+            <div class="travel-portal"></div>
+            <div class="galaxy-label">Netflix<span class="galaxy-type">Corporation</span></div>
+          </div>
+
+          <div class="distant-galaxy corporation small" style="top: 22%; left: 5%;">
+            <div class="galaxy-halo"></div>
+            <div class="galaxy-disk"></div>
+            <div class="galaxy-core"></div>
+            <div class="travel-portal"></div>
+            <div class="galaxy-label">Stripe<span class="galaxy-type">Corporation</span></div>
+          </div>
+
+          <div class="distant-galaxy corporation small" style="top: 70%; left: 94%;">
+            <div class="galaxy-halo"></div>
+            <div class="galaxy-disk"></div>
+            <div class="galaxy-core"></div>
+            <div class="travel-portal"></div>
+            <div class="galaxy-label">Cloudflare<span class="galaxy-type">Corporation</span></div>
+          </div>
+
+          <!-- UNIVERSITIES — Amber elliptical galaxies -->
+          <div class="distant-galaxy university large" style="top: 12%; left: 24%;">
+            <div class="galaxy-halo"></div>
+            <div class="galaxy-disk"></div>
+            <div class="galaxy-core"></div>
+            <div class="travel-portal"></div>
+            <div class="galaxy-label">MIT<span class="galaxy-type">University</span></div>
+          </div>
+
+          <div class="distant-galaxy university large" style="top: 86%; left: 35%;">
+            <div class="galaxy-halo"></div>
+            <div class="galaxy-disk"></div>
+            <div class="galaxy-core"></div>
+            <div class="travel-portal"></div>
+            <div class="galaxy-label">Stanford<span class="galaxy-type">University</span></div>
+          </div>
+
+          <div class="distant-galaxy university medium" style="top: 18%; left: 92%;">
+            <div class="galaxy-halo"></div>
+            <div class="galaxy-disk"></div>
+            <div class="galaxy-core"></div>
+            <div class="travel-portal"></div>
+            <div class="galaxy-label">Berkeley<span class="galaxy-type">University</span></div>
+          </div>
+
+          <div class="distant-galaxy university medium" style="top: 76%; left: 8%;">
+            <div class="galaxy-halo"></div>
+            <div class="galaxy-disk"></div>
+            <div class="galaxy-core"></div>
+            <div class="travel-portal"></div>
+            <div class="galaxy-label">Cambridge<span class="galaxy-type">University</span></div>
+          </div>
+
+          <div class="distant-galaxy university small" style="top: 7%; left: 56%;">
+            <div class="galaxy-halo"></div>
+            <div class="galaxy-disk"></div>
+            <div class="galaxy-core"></div>
+            <div class="travel-portal"></div>
+            <div class="galaxy-label">CMU<span class="galaxy-type">University</span></div>
+          </div>
+
+          <div class="distant-galaxy university small" style="top: 94%; left: 55%;">
+            <div class="galaxy-halo"></div>
+            <div class="galaxy-disk"></div>
+            <div class="galaxy-core"></div>
+            <div class="travel-portal"></div>
+            <div class="galaxy-label">Oxford<span class="galaxy-type">University</span></div>
+          </div>
+
+          <!-- GOVERNMENTS — Gray-blue irregular galaxies -->
+          <div class="distant-galaxy government large" style="top: 10%; left: 6%;">
+            <div class="galaxy-halo"></div>
+            <div class="galaxy-disk"></div>
+            <div class="galaxy-core"></div>
+            <div class="travel-portal"></div>
+            <div class="galaxy-label">NASA<span class="galaxy-type">Government</span></div>
+          </div>
+
+          <div class="distant-galaxy government medium" style="top: 91%; left: 92%;">
+            <div class="galaxy-halo"></div>
+            <div class="galaxy-disk"></div>
+            <div class="galaxy-core"></div>
+            <div class="travel-portal"></div>
+            <div class="galaxy-label">NIH<span class="galaxy-type">Government</span></div>
+          </div>
+
+          <div class="distant-galaxy government medium" style="top: 5%; left: 35%;">
+            <div class="galaxy-halo"></div>
+            <div class="galaxy-disk"></div>
+            <div class="galaxy-core"></div>
+            <div class="travel-portal"></div>
+            <div class="galaxy-label">CERN<span class="galaxy-type">Government</span></div>
+          </div>
+
+          <div class="distant-galaxy government small" style="top: 48%; left: 4%;">
+            <div class="galaxy-halo"></div>
+            <div class="galaxy-disk"></div>
+            <div class="galaxy-core"></div>
+            <div class="travel-portal"></div>
+            <div class="galaxy-label">NIST<span class="galaxy-type">Government</span></div>
+          </div>
+
+          <div class="distant-galaxy government small" style="top: 45%; left: 95%;">
+            <div class="galaxy-halo"></div>
+            <div class="galaxy-disk"></div>
+            <div class="galaxy-core"></div>
+            <div class="travel-portal"></div>
+            <div class="galaxy-label">ESA<span class="galaxy-type">Government</span></div>
+          </div>
+
+          <!-- INFLUENCERS — Magenta quasars (bright individual sources) -->
+          <div class="distant-galaxy influencer medium" style="top: 16%; left: 78%;">
+            <div class="galaxy-halo"></div>
+            <div class="galaxy-disk"></div>
+            <div class="galaxy-core"></div>
+            <div class="travel-portal"></div>
+            <div class="galaxy-label">Andrej Karpathy<span class="galaxy-type">Influencer</span></div>
+          </div>
+
+          <div class="distant-galaxy influencer medium" style="top: 83%; left: 20%;">
+            <div class="galaxy-halo"></div>
+            <div class="galaxy-disk"></div>
+            <div class="galaxy-core"></div>
+            <div class="travel-portal"></div>
+            <div class="galaxy-label">Lex Fridman<span class="galaxy-type">Influencer</span></div>
+          </div>
+
+          <div class="distant-galaxy influencer small" style="top: 28%; left: 93%;">
+            <div class="galaxy-halo"></div>
+            <div class="galaxy-disk"></div>
+            <div class="galaxy-core"></div>
+            <div class="travel-portal"></div>
+            <div class="galaxy-label">ThePrimeagen<span class="galaxy-type">Influencer</span></div>
+          </div>
+
+          <div class="distant-galaxy influencer small" style="top: 66%; left: 6%;">
+            <div class="galaxy-halo"></div>
+            <div class="galaxy-disk"></div>
+            <div class="galaxy-core"></div>
+            <div class="travel-portal"></div>
+            <div class="galaxy-label">Fireship<span class="galaxy-type">Influencer</span></div>
+          </div>
+
+          <div class="distant-galaxy influencer small" style="top: 9%; left: 75%;">
+            <div class="galaxy-halo"></div>
+            <div class="galaxy-disk"></div>
+            <div class="galaxy-core"></div>
+            <div class="travel-portal"></div>
+            <div class="galaxy-label">3Blue1Brown<span class="galaxy-type">Influencer</span></div>
+          </div>
+
+          <!-- NONPROFITS — Green nebular clusters (diffuse, open knowledge) -->
+          <div class="distant-galaxy nonprofit medium unlocked" style="top: 22%; left: 14%;">
+            <div class="galaxy-halo"></div>
+            <div class="galaxy-disk"></div>
+            <div class="galaxy-core"></div>
+            <div class="travel-portal"></div>
+            <div class="galaxy-label">Wikipedia<span class="galaxy-type">Nonprofit · Open</span></div>
+          </div>
+
+          <div class="distant-galaxy nonprofit medium unlocked" style="top: 78%; left: 80%;">
+            <div class="galaxy-halo"></div>
+            <div class="galaxy-disk"></div>
+            <div class="galaxy-core"></div>
+            <div class="travel-portal"></div>
+            <div class="galaxy-label">Khan Academy<span class="galaxy-type">Nonprofit · Open</span></div>
+          </div>
+
+          <div class="distant-galaxy nonprofit small unlocked" style="top: 34%; left: 7%;">
+            <div class="galaxy-halo"></div>
+            <div class="galaxy-disk"></div>
+            <div class="galaxy-core"></div>
+            <div class="travel-portal"></div>
+            <div class="galaxy-label">Mozilla<span class="galaxy-type">Nonprofit · Open</span></div>
+          </div>
+
+          <div class="distant-galaxy nonprofit small unlocked" style="top: 60%; left: 92%;">
+            <div class="galaxy-halo"></div>
+            <div class="galaxy-disk"></div>
+            <div class="galaxy-core"></div>
+            <div class="travel-portal"></div>
+            <div class="galaxy-label">Internet Archive<span class="galaxy-type">Nonprofit · Open</span></div>
+          </div>
+
+          <div class="distant-galaxy nonprofit small unlocked" style="top: 93%; left: 42%;">
+            <div class="galaxy-halo"></div>
+            <div class="galaxy-disk"></div>
+            <div class="galaxy-core"></div>
+            <div class="travel-portal"></div>
+            <div class="galaxy-label">Linux Foundation<span class="galaxy-type">Nonprofit · Open</span></div>
+          </div>
+        </div>
+
+        <!-- LEVEL 0: UNIVERSE — Multiplayer View -->
+        <div class="universe-layer" id="universe-layer">
+          <!-- User orbit paths (decorative) -->
+          <div class="user-orbit-path orbit-1"></div>
+          <div class="user-orbit-path orbit-2"></div>
+          <div class="user-orbit-path orbit-3"></div>
+          <div class="user-orbit-path orbit-4"></div>
+
+          <!-- Knowledge Sun (You) -->
+          <div class="knowledge-sun" id="knowledge-sun">
+            <div class="sun-corona"></div>
+            <div class="sun-core"></div>
+            <span class="sun-label">Your Knowledge</span>
+          </div>
+
+          <!-- User Orbit Rings -->
+          <div class="user-orbit-ring ring-1" id="user-orbit-1">
+            <div class="user-body mentor" style="width: 28px; height: 28px; top: -14px; left: calc(50% - 14px);" data-name="Sarah Chen" data-type="mentor"></div>
+          </div>
+
+          <div class="user-orbit-ring ring-2" id="user-orbit-2">
+            <div class="user-body ai" style="width: 22px; height: 22px; top: 50%; right: -11px; transform: translateY(-50%);" data-name="Claude" data-type="ai"></div>
+            <div class="user-body peer" style="width: 18px; height: 18px; bottom: 10%; left: 15%;" data-name="Marcus Webb" data-type="peer"></div>
+          </div>
+
+          <div class="user-orbit-ring ring-3" id="user-orbit-3">
+            <div class="user-body team" style="width: 24px; height: 24px; top: 20%; right: 10%;" data-name="Vibes Team" data-type="team"></div>
+            <div class="user-body peer" style="width: 16px; height: 16px; bottom: 25%; left: 8%;" data-name="Alex Kim" data-type="peer"></div>
+            <div class="user-body learner" style="width: 12px; height: 12px; top: 60%; right: 5%;" data-name="Jamie Li" data-type="learner"></div>
+          </div>
+
+          <div class="user-orbit-ring ring-4" id="user-orbit-4">
+            <div class="user-body peer" style="width: 14px; height: 14px; top: 15%; left: 20%;" data-name="Robin Patel" data-type="peer"></div>
+            <div class="user-body learner" style="width: 10px; height: 10px; bottom: 30%; right: 25%;" data-name="Casey Nguyen" data-type="learner"></div>
+          </div>
+        </div>
+
+        <!-- LEVEL 1: YOU — Central Knowledge Hub -->
+        <div class="you-layer" id="you-layer">
+          <div class="skill-orbit-zone" id="skill-orbit-zone"></div>
+
+          <!-- Skill Orbit Rings -->
+          <div class="skill-orbit-ring orbit-1" id="skill-ring-1">
+            <div class="skill-body" style="top: -6px; left: calc(50% - 6px);" data-label="Rust" data-domain="technology" data-skill="rust"></div>
+            <div class="skill-body" style="bottom: 15%; right: 8%;" data-label="Options" data-domain="finance" data-skill="options"></div>
+          </div>
+
+          <div class="skill-orbit-ring orbit-2" id="skill-ring-2">
+            <div class="skill-body" style="top: 50%; right: -5px; transform: translateY(-50%);" data-label="LLMs" data-domain="technology" data-skill="llm"></div>
+            <div class="skill-body" style="bottom: 20%; left: 10%;" data-label="Neuro" data-domain="health" data-skill="neuro"></div>
+          </div>
+
+          <div class="skill-orbit-ring orbit-3" id="skill-ring-3">
+            <div class="skill-body" style="top: 15%; right: 15%;" data-label="Python" data-domain="technology" data-skill="python"></div>
+            <div class="skill-body" style="bottom: 10%; left: 25%;" data-label="DCF" data-domain="finance" data-skill="dcf"></div>
+            <div class="skill-body" style="top: 40%; left: 5%;" data-label="Biochem" data-domain="science" data-skill="biochem"></div>
+          </div>
+
+          <div class="skill-orbit-ring orbit-4" id="skill-ring-4">
+            <div class="skill-body" style="top: 5%; left: 30%;" data-label="Agents" data-domain="technology" data-skill="agents"></div>
+            <div class="skill-body" style="bottom: 5%; right: 35%;" data-label="WASM" data-domain="technology" data-skill="wasm"></div>
+          </div>
+
+          <!-- You Core -->
+          <div class="you-core" id="you-core">
+            <span class="you-label">Your Knowledge</span>
+            <span class="you-stats">847 concepts mastered</span>
+          </div>
+        </div>
+
+        <!-- LEVEL 2: DOMAINS -->
+        <div class="domain-layer" id="domain-layer">
+          <div class="domain-cluster mastered" style="top: 30%; left: 35%;" data-domain="technology">
+            <div class="domain-frame">
+              <span class="deco-icon deco-icon-session deco-icon-lg deco-icon-gold"></span>
+            </div>
+            <span class="domain-label">Technology</span>
+          </div>
+          <div class="domain-cluster mastered" style="top: 70%; left: 40%;" data-domain="finance">
+            <div class="domain-frame">
+              <span class="deco-icon deco-icon-value deco-icon-lg deco-icon-gold"></span>
+            </div>
+            <span class="domain-label">Finance</span>
+          </div>
+          <div class="domain-cluster" style="top: 35%; left: 65%;" data-domain="health">
+            <div class="domain-frame">
+              <span class="deco-icon deco-icon-sunburst deco-icon-lg" style="color: var(--accent-teal);"></span>
+            </div>
+            <span class="domain-label">Health</span>
+          </div>
+          <div class="domain-cluster frontier" style="top: 65%; left: 60%;" data-domain="science">
+            <div class="domain-frame">
+              <span class="deco-icon deco-icon-test deco-icon-lg deco-icon-muted"></span>
+            </div>
+            <span class="domain-label">Science</span>
+          </div>
+        </div>
+
+        <!-- LEVEL 3: FIELDS -->
+        <div class="field-layer" id="field-layer">
+          <!-- Technology fields -->
+          <div class="field-node" style="top: 25%; left: 30%;" data-field="software" data-domain="technology">
+            <div class="field-bubble">
+              <span class="deco-icon deco-icon-session deco-icon-md deco-icon-gold"></span>
+            </div>
+            <span class="field-label">Software</span>
+          </div>
+          <div class="field-node" style="top: 28%; left: 40%;" data-field="ai" data-domain="technology">
+            <div class="field-bubble">
+              <span class="deco-icon deco-icon-agent deco-icon-md" style="color: var(--accent-teal);"></span>
+            </div>
+            <span class="field-label">AI / ML</span>
+          </div>
+          <div class="field-node" style="top: 35%; left: 32%;" data-field="infra" data-domain="technology">
+            <div class="field-bubble">
+              <span class="deco-icon deco-icon-arch deco-icon-md deco-icon-muted"></span>
+            </div>
+            <span class="field-label">Infrastructure</span>
+          </div>
+          <!-- Finance fields -->
+          <div class="field-node" style="top: 68%; left: 35%;" data-field="derivatives" data-domain="finance">
+            <div class="field-bubble">
+              <span class="deco-icon deco-icon-value deco-icon-md deco-icon-gold"></span>
+            </div>
+            <span class="field-label">Derivatives</span>
+          </div>
+          <div class="field-node" style="top: 72%; left: 45%;" data-field="valuation" data-domain="finance">
+            <div class="field-bubble">
+              <span class="deco-icon deco-icon-doc deco-icon-md deco-icon-gold"></span>
+            </div>
+            <span class="field-label">Valuation</span>
+          </div>
+        </div>
+
+        <!-- LEVEL 4: DISCIPLINES -->
+        <div class="discipline-layer" id="discipline-layer">
+          <!-- Software disciplines -->
+          <div class="discipline-node" style="top: 20%; left: 26%;" data-discipline="languages" data-field="software">
+            <div class="discipline-hex">
+              <span style="font-size: 14px; color: var(--gold-muted);">{}</span>
+            </div>
+            <span class="discipline-label">Languages</span>
+          </div>
+          <div class="discipline-node" style="top: 22%; left: 34%;" data-discipline="systems" data-field="software">
+            <div class="discipline-hex">
+              <span style="font-size: 14px; color: var(--gold-muted);">&#x2699;</span>
+            </div>
+            <span class="discipline-label">Systems</span>
+          </div>
+          <div class="discipline-node" style="top: 28%; left: 28%;" data-discipline="web" data-field="software">
+            <div class="discipline-hex">
+              <span style="font-size: 14px; color: var(--text-muted);">&#x2B22;</span>
+            </div>
+            <span class="discipline-label">Web</span>
+          </div>
+          <!-- AI disciplines -->
+          <div class="discipline-node" style="top: 24%; left: 42%;" data-discipline="ml" data-field="ai">
+            <div class="discipline-hex">
+              <span style="font-size: 14px; color: var(--accent-teal);">&#x2B2E;</span>
+            </div>
+            <span class="discipline-label">Machine Learning</span>
+          </div>
+          <div class="discipline-node" style="top: 30%; left: 44%;" data-discipline="agents" data-field="ai">
+            <div class="discipline-hex">
+              <span style="font-size: 14px; color: var(--accent-teal);">&#x2662;</span>
+            </div>
+            <span class="discipline-label">Agents</span>
+          </div>
+        </div>
+
+        <!-- LEVEL 5: TOPICS -->
+        <div class="topic-layer" id="topic-layer">
+          <!-- Languages topics -->
+          <div class="topic-node mastered" style="top: 16%; left: 24%;" data-topic="rust" data-discipline="languages">
+            <div class="topic-diamond">
+              <span style="font-size: 10px; color: var(--gold-primary);">Rs</span>
+            </div>
+            <span class="topic-label">Rust</span>
+          </div>
+          <div class="topic-node mastered" style="top: 18%; left: 30%;" data-topic="python" data-discipline="languages">
+            <div class="topic-diamond">
+              <span style="font-size: 10px; color: var(--gold-muted);">Py</span>
+            </div>
+            <span class="topic-label">Python</span>
+          </div>
+          <div class="topic-node learning" style="top: 22%; left: 22%;" data-topic="typescript" data-discipline="languages">
+            <div class="topic-diamond">
+              <span style="font-size: 10px; color: var(--accent-teal);">Ts</span>
+            </div>
+            <span class="topic-label">TypeScript</span>
+          </div>
+          <div class="topic-node" style="top: 24%; left: 28%;" data-topic="go" data-discipline="languages">
+            <div class="topic-diamond">
+              <span style="font-size: 10px; color: var(--text-muted);">Go</span>
+            </div>
+            <span class="topic-label">Go</span>
+          </div>
+        </div>
+
+        <!-- LEVEL 6: CONCEPTS -->
+        <div class="concept-layer" id="concept-layer">
+          <!-- Rust concepts -->
+          <div class="concept-node" style="top: 12%; left: 22%;" data-concept="ownership" data-topic="rust">
+            <div class="concept-pip">O</div>
+            <span class="concept-label">Ownership</span>
+          </div>
+          <div class="concept-node" style="top: 13%; left: 26%;" data-concept="borrowing" data-topic="rust">
+            <div class="concept-pip">B</div>
+            <span class="concept-label">Borrowing</span>
+          </div>
+          <div class="concept-node" style="top: 15%; left: 24%;" data-concept="lifetimes" data-topic="rust">
+            <div class="concept-pip">L</div>
+            <span class="concept-label">Lifetimes</span>
+          </div>
+          <div class="concept-node" style="top: 14%; left: 20%;" data-concept="traits" data-topic="rust">
+            <div class="concept-pip">T</div>
+            <span class="concept-label">Traits</span>
+          </div>
+          <div class="concept-node" style="top: 17%; left: 25%;" data-concept="async" data-topic="rust">
+            <div class="concept-pip">A</div>
+            <span class="concept-label">Async</span>
+          </div>
+        </div>
+
+        <!-- LEVEL 7: DETAILS -->
+        <div class="detail-layer" id="detail-layer">
+          <!-- Ownership details -->
+          <div class="detail-fragment" style="top: 10%; left: 21%;" data-detail="move-semantics" data-concept="ownership">
+            <div class="detail-dot" data-label="Move Semantics">M</div>
+          </div>
+          <div class="detail-fragment" style="top: 11%; left: 23%;" data-detail="copy-trait" data-concept="ownership">
+            <div class="detail-dot" data-label="Copy Trait">C</div>
+          </div>
+          <div class="detail-fragment" style="top: 10.5%; left: 20%;" data-detail="drop-trait" data-concept="ownership">
+            <div class="detail-dot" data-label="Drop Trait">D</div>
+          </div>
+          <div class="detail-fragment" style="top: 11.5%; left: 24%;" data-detail="clone-trait" data-concept="ownership">
+            <div class="detail-dot" data-label="Clone">Cl</div>
+          </div>
+          <!-- Borrowing details -->
+          <div class="detail-fragment" style="top: 11.5%; left: 25.5%;" data-detail="references" data-concept="borrowing">
+            <div class="detail-dot" data-label="References">&</div>
+          </div>
+          <div class="detail-fragment" style="top: 12%; left: 27%;" data-detail="mut-refs" data-concept="borrowing">
+            <div class="detail-dot" data-label="Mutable Refs">&m</div>
+          </div>
+        </div>
+
+        <!-- LEVEL 8: ATOMIC -->
+        <div class="atomic-layer" id="atomic-layer">
+          <div class="atomic-particle" style="top: 9.5%; left: 20.5%;" data-atomic="stack-alloc"></div>
+          <div class="atomic-particle" style="top: 10%; left: 21.5%;" data-atomic="heap-alloc"></div>
+          <div class="atomic-particle" style="top: 9.8%; left: 22.2%;" data-atomic="box-type"></div>
+          <div class="atomic-particle" style="top: 10.5%; left: 23.5%;" data-atomic="rc-type"></div>
+          <div class="atomic-particle" style="top: 10.8%; left: 20.8%;" data-atomic="raii-pattern"></div>
+          <div class="atomic-particle" style="top: 9.2%; left: 21.8%;" data-atomic="destructor"></div>
+          <div class="atomic-particle" style="top: 11.2%; left: 25%;" data-atomic="shared-ref"></div>
+          <div class="atomic-particle" style="top: 11.5%; left: 26.2%;" data-atomic="exclusive-ref"></div>
+          <div class="atomic-particle" style="top: 12.2%; left: 27.5%;" data-atomic="reborrow"></div>
+          <div class="atomic-particle" style="top: 11.8%; left: 26.8%;" data-atomic="lifetime-bound"></div>
+        </div>
+
+        <!-- LEVEL 9: SUBATOMIC — Quarks of knowledge -->
+        <div class="subatomic-layer" id="subatomic-layer">
+          <!-- Stack allocation quarks -->
+          <div class="subatomic-quark up" style="top: 9.4%; left: 20.4%;" data-quark="stack-frame"></div>
+          <div class="subatomic-quark up" style="top: 9.6%; left: 20.6%;" data-quark="sp-register"></div>
+          <div class="subatomic-quark down" style="top: 9.5%; left: 20.3%;" data-quark="alloca"></div>
+          <!-- Heap allocation quarks -->
+          <div class="subatomic-quark" style="top: 9.9%; left: 21.4%;" data-quark="malloc"></div>
+          <div class="subatomic-quark" style="top: 10.1%; left: 21.6%;" data-quark="jemalloc"></div>
+          <div class="subatomic-quark strange" style="top: 10%; left: 21.3%;" data-quark="mmap"></div>
+          <!-- Box type quarks -->
+          <div class="subatomic-quark up" style="top: 9.7%; left: 22.1%;" data-quark="Box::new"></div>
+          <div class="subatomic-quark up" style="top: 9.9%; left: 22.3%;" data-quark="deref-coerce"></div>
+          <div class="subatomic-quark down" style="top: 9.8%; left: 22.0%;" data-quark="box-layout"></div>
+          <!-- Borrowing quarks -->
+          <div class="subatomic-quark" style="top: 11.1%; left: 24.9%;" data-quark="&'a T"></div>
+          <div class="subatomic-quark" style="top: 11.3%; left: 25.1%;" data-quark="&'a mut T"></div>
+          <div class="subatomic-quark strange" style="top: 11.2%; left: 24.8%;" data-quark="reborrow-rule"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+      <button class="control-btn" id="zoom-in" title="Zoom In">+</button>
+      <button class="control-btn" id="zoom-out" title="Zoom Out">-</button>
+      <div class="zoom-display" id="zoom-display">100%</div>
+      <button class="control-btn" id="reset-view" title="Reset View">&#x2302;</button>
+    </div>
+
+    <!-- Universe Legend (visible only at universe zoom) -->
+    <div class="legend universe-legend" id="universe-legend">
+      <!-- Personal orbit (close) -->
+      <div class="legend-item">
+        <span class="legend-dot mentor"></span>
+        <span>Mentor</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-dot peer"></span>
+        <span>Peer</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-dot team"></span>
+        <span>Team</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-dot ai"></span>
+        <span>AI</span>
+      </div>
+
+      <div class="legend-separator"></div>
+
+      <!-- Distant Galaxies (external knowledge masses) -->
+      <div class="legend-item">
+        <span class="legend-dot corporation"></span>
+        <span>Corp</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-dot university"></span>
+        <span>Univ</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-dot government"></span>
+        <span>Gov</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-dot influencer"></span>
+        <span>Creator</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-dot nonprofit"></span>
+        <span>Open</span>
+      </div>
+    </div>
+
+    <!-- Zoom Indicator -->
+    <div class="zoom-indicator">
+      <div class="zoom-level-dots">
+        <div class="zoom-dot active" data-level="0" title="Universe"></div>
+        <div class="zoom-dot" data-level="1" title="You"></div>
+        <div class="zoom-dot" data-level="2" title="Domains"></div>
+        <div class="zoom-dot" data-level="3" title="Fields"></div>
+        <div class="zoom-dot" data-level="4" title="Disciplines"></div>
+        <div class="zoom-dot" data-level="5" title="Topics"></div>
+        <div class="zoom-dot" data-level="6" title="Concepts"></div>
+        <div class="zoom-dot" data-level="7" title="Details"></div>
+        <div class="zoom-dot" data-level="8" title="Atomic"></div>
+        <div class="zoom-dot" data-level="9" title="Subatomic"></div>
+      </div>
+      <div class="zoom-label" id="zoom-level-label">Universe</div>
+      <div class="zoom-breadcrumb" id="breadcrumb">
+        <span class="breadcrumb-item current">Universe</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ═══════════════════════════════════════════════════════════════════════════
+    // STATE
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    var state = {
+      scale: 0.5,  // Start zoomed out to see universe
+      panX: 0,
+      panY: 0,
+      zoomLevel: 0,
+      currentDomain: null,
+      currentField: null,
+      currentDiscipline: null,
+      currentTopic: null,
+      currentConcept: null,
+      isPanning: false,
+      startX: 0,
+      startY: 0,
+      startPanX: 0,
+      startPanY: 0
+    };
+
+    var MIN_SCALE = 0.2;
+    var MAX_SCALE = 12;
+    var ZOOM_SENSITIVITY = 0.002;
+
+    var zoomLevels = ['Universe', 'You', 'Domains', 'Fields', 'Disciplines', 'Topics', 'Concepts', 'Details', 'Atomic', 'Subatomic'];
+
+    var zoomContainer = document.getElementById('zoom-container');
+    var spotlightLayer = document.getElementById('spotlight-layer');
+    var blurLayer = document.getElementById('blur-layer');
+    var universeLayer = document.getElementById('universe-layer');
+    var domainLayer = document.getElementById('domain-layer');
+    var fieldLayer = document.getElementById('field-layer');
+    var disciplineLayer = document.getElementById('discipline-layer');
+    var topicLayer = document.getElementById('topic-layer');
+    var conceptLayer = document.getElementById('concept-layer');
+    var detailLayer = document.getElementById('detail-layer');
+    var atomicLayer = document.getElementById('atomic-layer');
+    var subatomicLayer = document.getElementById('subatomic-layer');
+    var zoomDisplay = document.getElementById('zoom-display');
+    var zoomLevelLabel = document.getElementById('zoom-level-label');
+    var breadcrumb = document.getElementById('breadcrumb');
+    var universeLegend = document.getElementById('universe-legend');
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // TRANSFORM
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    function applyTransform() {
+      zoomContainer.style.transform =
+        'translate(' + state.panX + 'px, ' + state.panY + 'px) scale(' + state.scale + ')';
+      zoomDisplay.textContent = Math.round(state.scale * 100) + '%';
+      updateZoomLevel();
+      updateLayerVisibility();
+      updateSpotlightIntensity();
+    }
+
+    function updateZoomLevel() {
+      var oldLevel = state.zoomLevel;
+
+      // 9 zoom levels with appropriate scale thresholds
+      if (state.scale < 0.6) {
+        state.zoomLevel = 0; // Universe
+      } else if (state.scale < 1.0) {
+        state.zoomLevel = 1; // You
+      } else if (state.scale < 1.6) {
+        state.zoomLevel = 2; // Domains
+      } else if (state.scale < 2.5) {
+        state.zoomLevel = 3; // Fields
+      } else if (state.scale < 3.5) {
+        state.zoomLevel = 4; // Disciplines
+      } else if (state.scale < 5.0) {
+        state.zoomLevel = 5; // Topics
+      } else if (state.scale < 7.0) {
+        state.zoomLevel = 6; // Concepts
+      } else if (state.scale < 9.5) {
+        state.zoomLevel = 7; // Details
+      } else if (state.scale < 11.5) {
+        state.zoomLevel = 8; // Atomic
+      } else {
+        state.zoomLevel = 9; // Subatomic
+      }
+
+      if (oldLevel !== state.zoomLevel) {
+        zoomLevelLabel.textContent = zoomLevels[state.zoomLevel];
+        updateZoomDots();
+      }
+    }
+
+    function updateZoomDots() {
+      document.querySelectorAll('.zoom-dot').forEach(function(dot, i) {
+        dot.classList.toggle('active', i <= state.zoomLevel);
+      });
+    }
+
+    // Track previous visibility states for emerging animations
+    var prevLayerStates = {
+      domain: false, field: false, discipline: false,
+      topic: false, concept: false, detail: false, atomic: false, subatomic: false
+    };
+
+    function updateLayerVisibility() {
+      var root = document.documentElement;
+      var scale = state.scale;
+
+      // ═══════════════════════════════════════════════════════════════════════════
+      // CONTINUOUS OPACITY TRANSITIONS — Smooth fading based on zoom scale
+      // ═══════════════════════════════════════════════════════════════════════════
+
+      // Universe layer: visible until scale 0.8, fades out by 1.2
+      var universeOpacity = scale < 0.8 ? 1 : Math.max(0, 1 - (scale - 0.8) / 0.4);
+      root.style.setProperty('--universe-opacity', universeOpacity.toString());
+      universeLegend.classList.toggle('hidden', universeOpacity < 0.3);
+
+      // You layer (center hub): visible from 0.6 to 2.5
+      var youFadeIn = Math.min(1, Math.max(0, (scale - 0.5) / 0.3));
+      var youFadeOut = scale > 2 ? Math.max(0.1, 1 - (scale - 2) / 1) : 1;
+      var youOpacity = youFadeIn * youFadeOut;
+      root.style.setProperty('--you-opacity', youOpacity.toString());
+
+      // Domains: fade in from 1.0 to 1.6, fade out from 2.5 to 3.5
+      var domainFadeIn = Math.min(1, Math.max(0, (scale - 1.0) / 0.6));
+      var domainFadeOut = scale > 2.5 ? Math.max(0.05, 1 - (scale - 2.5) / 1) : 1;
+      root.style.setProperty('--domain-opacity', (domainFadeIn * domainFadeOut).toString());
+
+      // Fields: fade in from 1.6 to 2.5, fade out from 3.5 to 4.5
+      var fieldFadeIn = Math.min(1, Math.max(0, (scale - 1.6) / 0.9));
+      var fieldFadeOut = scale > 3.5 ? Math.max(0.05, 1 - (scale - 3.5) / 1) : 1;
+      root.style.setProperty('--field-opacity', (fieldFadeIn * fieldFadeOut).toString());
+
+      // Disciplines: fade in from 2.5 to 3.5, fade out from 5.0 to 6.0
+      var disciplineFadeIn = Math.min(1, Math.max(0, (scale - 2.5) / 1));
+      var disciplineFadeOut = scale > 5 ? Math.max(0.05, 1 - (scale - 5) / 1) : 1;
+      root.style.setProperty('--discipline-opacity', (disciplineFadeIn * disciplineFadeOut).toString());
+
+      // Topics: fade in from 3.5 to 5.0, fade out from 7.0 to 8.5
+      var topicFadeIn = Math.min(1, Math.max(0, (scale - 3.5) / 1.5));
+      var topicFadeOut = scale > 7 ? Math.max(0.05, 1 - (scale - 7) / 1.5) : 1;
+      root.style.setProperty('--topic-opacity', (topicFadeIn * topicFadeOut).toString());
+
+      // Concepts: fade in from 5.0 to 7.0, fade out from 9.5 to 11
+      var conceptFadeIn = Math.min(1, Math.max(0, (scale - 5.0) / 2));
+      var conceptFadeOut = scale > 9.5 ? Math.max(0.05, 1 - (scale - 9.5) / 1.5) : 1;
+      root.style.setProperty('--concept-opacity', (conceptFadeIn * conceptFadeOut).toString());
+
+      // Details: fade in from 7.0 to 9.5, fade out from 11 to 12
+      var detailFadeIn = Math.min(1, Math.max(0, (scale - 7.0) / 2.5));
+      var detailFadeOut = scale > 11 ? Math.max(0.05, 1 - (scale - 11) / 1) : 1;
+      root.style.setProperty('--detail-opacity', (detailFadeIn * detailFadeOut).toString());
+
+      // Atomic: fade in from 9.5 to 12 (deepest level)
+      var atomicOpacity = Math.min(1, Math.max(0, (scale - 9.5) / 2.5));
+      root.style.setProperty('--atomic-opacity', atomicOpacity.toString());
+
+      // Subatomic: fade in from 11.5 to 12 (deepest possible)
+      var subatomicOpacity = Math.min(1, Math.max(0, (scale - 11.5) / 0.5));
+      root.style.setProperty('--subatomic-opacity', subatomicOpacity.toString());
+
+      // ═══════════════════════════════════════════════════════════════════════════
+      // LAYER VISIBILITY — Toggle and trigger emerging animations
+      // ═══════════════════════════════════════════════════════════════════════════
+
+      var domainVisible = scale >= 1.0;
+      var fieldVisible = scale >= 1.6;
+      var disciplineVisible = scale >= 2.5;
+      var topicVisible = scale >= 3.5;
+      var conceptVisible = scale >= 5.0;
+      var detailVisible = scale >= 7.0;
+      var atomicVisible = scale >= 9.5;
+      var subatomicVisible = scale >= 11.5;
+
+      // Trigger emerging animation when layer first becomes visible
+      if (domainVisible && !prevLayerStates.domain) {
+        domainLayer.classList.add('emerging');
+        setTimeout(function() { domainLayer.classList.remove('emerging'); }, 800);
+      }
+      if (fieldVisible && !prevLayerStates.field) {
+        fieldLayer.classList.add('emerging');
+        setTimeout(function() { fieldLayer.classList.remove('emerging'); }, 700);
+      }
+      if (disciplineVisible && !prevLayerStates.discipline) {
+        disciplineLayer.classList.add('emerging');
+        setTimeout(function() { disciplineLayer.classList.remove('emerging'); }, 650);
+      }
+      if (topicVisible && !prevLayerStates.topic) {
+        topicLayer.classList.add('emerging');
+        setTimeout(function() { topicLayer.classList.remove('emerging'); }, 600);
+      }
+      if (conceptVisible && !prevLayerStates.concept) {
+        conceptLayer.classList.add('emerging');
+        setTimeout(function() { conceptLayer.classList.remove('emerging'); }, 550);
+      }
+      if (detailVisible && !prevLayerStates.detail) {
+        detailLayer.classList.add('emerging');
+        setTimeout(function() { detailLayer.classList.remove('emerging'); }, 500);
+      }
+      if (atomicVisible && !prevLayerStates.atomic) {
+        atomicLayer.classList.add('emerging');
+        setTimeout(function() { atomicLayer.classList.remove('emerging'); }, 450);
+      }
+      if (subatomicVisible && !prevLayerStates.subatomic) {
+        subatomicLayer.classList.add('emerging');
+        setTimeout(function() { subatomicLayer.classList.remove('emerging'); }, 400);
+      }
+
+      prevLayerStates.domain = domainVisible;
+      prevLayerStates.field = fieldVisible;
+      prevLayerStates.discipline = disciplineVisible;
+      prevLayerStates.topic = topicVisible;
+      prevLayerStates.concept = conceptVisible;
+      prevLayerStates.detail = detailVisible;
+      prevLayerStates.atomic = atomicVisible;
+      prevLayerStates.subatomic = subatomicVisible;
+
+      domainLayer.classList.toggle('visible', domainVisible);
+      fieldLayer.classList.toggle('visible', fieldVisible);
+      disciplineLayer.classList.toggle('visible', disciplineVisible);
+      topicLayer.classList.toggle('visible', topicVisible);
+      conceptLayer.classList.toggle('visible', conceptVisible);
+      detailLayer.classList.toggle('visible', detailVisible);
+      atomicLayer.classList.toggle('visible', atomicVisible);
+      subatomicLayer.classList.toggle('visible', subatomicVisible);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // SPOTLIGHT + BLUR EFFECT
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    var spotlightPos = { x: '50%', y: '50%' };
+
+    function updateSpotlightIntensity() {
+      var root = document.documentElement;
+
+      // Spotlight and blur gradually appear as you zoom in past level 2
+      var intensity = 0;
+      var blurIntensity = 0;
+      if (state.scale > 1.6) {
+        intensity = Math.min(0.65, (state.scale - 1.6) / 5);
+        blurIntensity = Math.min(0.5, (state.scale - 1.6) / 6);
+      }
+
+      root.style.setProperty('--spotlight-intensity', intensity.toString());
+      root.style.setProperty('--blur-intensity', blurIntensity.toString());
+
+      var radius = Math.max(200, 420 - (state.scale * 25));
+      root.style.setProperty('--spotlight-radius', radius + 'px');
+
+      var maskGradient = 'radial-gradient(circle ' + radius + 'px at ' + spotlightPos.x + ' ' + spotlightPos.y + ', transparent 0%, transparent 65%, black 90%, black 100%)';
+      blurLayer.style.maskImage = maskGradient;
+      blurLayer.style.webkitMaskImage = maskGradient;
+    }
+
+    function updateSpotlightPosition(e) {
+      var root = document.documentElement;
+      var x = e.clientX + 'px';
+      var y = e.clientY + 'px';
+
+      spotlightPos.x = x;
+      spotlightPos.y = y;
+
+      root.style.setProperty('--spotlight-x', x);
+      root.style.setProperty('--spotlight-y', y);
+
+      var radius = getComputedStyle(root).getPropertyValue('--spotlight-radius').trim() || '400px';
+      var maskGradient = 'radial-gradient(circle ' + radius + ' at ' + x + ' ' + y + ', transparent 0%, transparent 65%, black 90%, black 100%)';
+      blurLayer.style.maskImage = maskGradient;
+      blurLayer.style.webkitMaskImage = maskGradient;
+    }
+
+    document.addEventListener('mousemove', updateSpotlightPosition);
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // ZOOM TO CURSOR
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    function zoomAtPoint(clientX, clientY, delta) {
+      var viewport = document.querySelector('.zoom-viewport');
+      var rect = viewport.getBoundingClientRect();
+      var mx = clientX - rect.left;
+      var my = clientY - rect.top;
+
+      var zoomFactor = 1 - delta * ZOOM_SENSITIVITY;
+      var newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, state.scale * zoomFactor));
+
+      if (newScale === state.scale) return;
+
+      var contentX = (mx - rect.width / 2 - state.panX) / state.scale;
+      var contentY = (my - rect.height / 2 - state.panY) / state.scale;
+
+      state.scale = newScale;
+      state.panX = mx - rect.width / 2 - contentX * state.scale;
+      state.panY = my - rect.height / 2 - contentY * state.scale;
+
+      applyTransform();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // PAN
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    document.querySelector('.zoom-viewport').addEventListener('mousedown', function(e) {
+      if (e.target.closest('.domain-cluster') ||
+          e.target.closest('.field-node') ||
+          e.target.closest('.discipline-node') ||
+          e.target.closest('.topic-node') ||
+          e.target.closest('.concept-node') ||
+          e.target.closest('.detail-fragment') ||
+          e.target.closest('.you-layer') ||
+          e.target.closest('.skill-body') ||
+          e.target.closest('.user-body') ||
+          e.target.closest('.knowledge-sun')) return;
+
+      state.isPanning = true;
+      state.startX = e.clientX;
+      state.startY = e.clientY;
+      state.startPanX = state.panX;
+      state.startPanY = state.panY;
+      zoomContainer.classList.add('dragging');
+    });
+
+    document.addEventListener('mousemove', function(e) {
+      if (!state.isPanning) return;
+      state.panX = state.startPanX + (e.clientX - state.startX);
+      state.panY = state.startPanY + (e.clientY - state.startY);
+      applyTransform();
+    });
+
+    document.addEventListener('mouseup', function() {
+      state.isPanning = false;
+      zoomContainer.classList.remove('dragging');
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // WHEEL ZOOM
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    document.querySelector('.zoom-viewport').addEventListener('wheel', function(e) {
+      e.preventDefault();
+      zoomAtPoint(e.clientX, e.clientY, e.deltaY);
+    }, { passive: false });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // CONTROL BUTTONS
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    document.getElementById('zoom-in').addEventListener('click', function() {
+      var rect = document.querySelector('.zoom-viewport').getBoundingClientRect();
+      zoomAtPoint(rect.width / 2, rect.height / 2, -150);
+    });
+
+    document.getElementById('zoom-out').addEventListener('click', function() {
+      var rect = document.querySelector('.zoom-viewport').getBoundingClientRect();
+      zoomAtPoint(rect.width / 2, rect.height / 2, 150);
+    });
+
+    document.getElementById('reset-view').addEventListener('click', function() {
+      zoomContainer.classList.add('animating');
+      state.scale = 0.5;
+      state.panX = 0;
+      state.panY = 0;
+      state.currentDomain = null;
+      state.currentField = null;
+      state.currentDiscipline = null;
+      state.currentTopic = null;
+      state.currentConcept = null;
+      applyTransform();
+      updateBreadcrumb([{ label: 'Universe', level: 'universe' }]);
+      setTimeout(function() { zoomContainer.classList.remove('animating'); }, 600);
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // BREADCRUMB
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    function updateBreadcrumb(path) {
+      while (breadcrumb.firstChild) {
+        breadcrumb.removeChild(breadcrumb.firstChild);
+      }
+
+      path.forEach(function(item, i) {
+        if (i > 0) {
+          var sep = document.createElement('span');
+          sep.className = 'breadcrumb-sep';
+          sep.textContent = '\u203A';
+          breadcrumb.appendChild(sep);
+        }
+
+        var crumb = document.createElement('span');
+        crumb.className = 'breadcrumb-item' + (i === path.length - 1 ? ' current' : '');
+        crumb.textContent = item.label;
+        crumb.dataset.level = item.level;
+
+        if (i < path.length - 1) {
+          crumb.addEventListener('click', function() {
+            navigateToLevel(this.dataset.level);
+          });
+        }
+
+        breadcrumb.appendChild(crumb);
+      });
+    }
+
+    function navigateToLevel(level) {
+      zoomContainer.classList.add('animating');
+
+      if (level === 'universe') {
+        state.scale = 0.5;
+        state.panX = 0;
+        state.panY = 0;
+        state.currentDomain = null;
+        state.currentField = null;
+        state.currentDiscipline = null;
+        state.currentTopic = null;
+        state.currentConcept = null;
+        updateBreadcrumb([{ label: 'Universe', level: 'universe' }]);
+      }
+
+      applyTransform();
+      setTimeout(function() { zoomContainer.classList.remove('animating'); }, 600);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // ZOOM DOT CLICKS
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    document.querySelectorAll('.zoom-dot').forEach(function(dot) {
+      dot.addEventListener('click', function() {
+        var level = parseInt(this.dataset.level);
+        // Scale targets for each of the 9 levels
+        var targetScales = [0.4, 0.8, 1.3, 2.0, 3.0, 4.2, 6.0, 8.2, 10.5];
+
+        zoomContainer.classList.add('animating');
+        state.scale = targetScales[level];
+        applyTransform();
+        setTimeout(function() { zoomContainer.classList.remove('animating'); }, 600);
+      });
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // ORBIT ANIMATIONS — User orbits and skill orbits
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    var orbitState = {
+      userIsSlowed: false,
+      skillIsSlowed: false,
+      // User orbit speeds (degrees/second)
+      userSpeeds: [6, -4, 3, -2],
+      // Skill orbit speeds
+      skillSpeeds: [18, -13, 8, -6],
+      slowMultiplier: 0.15,
+      userMultiplier: 1,
+      skillMultiplier: 1,
+      userAngles: [0, 0, 0, 0],
+      skillAngles: [0, 0, 0, 0],
+      lastTime: performance.now()
+    };
+
+    var userOrbitRings = [
+      document.getElementById('user-orbit-1'),
+      document.getElementById('user-orbit-2'),
+      document.getElementById('user-orbit-3'),
+      document.getElementById('user-orbit-4')
+    ];
+
+    var skillOrbitRings = [
+      document.getElementById('skill-ring-1'),
+      document.getElementById('skill-ring-2'),
+      document.getElementById('skill-ring-3'),
+      document.getElementById('skill-ring-4')
+    ];
+
+    function animateOrbits(currentTime) {
+      var deltaTime = (currentTime - orbitState.lastTime) / 1000;
+      orbitState.lastTime = currentTime;
+
+      // Smoothly interpolate multipliers
+      var userTarget = orbitState.userIsSlowed ? orbitState.slowMultiplier : 1;
+      orbitState.userMultiplier += (userTarget - orbitState.userMultiplier) * 0.08;
+
+      var skillTarget = orbitState.skillIsSlowed ? orbitState.slowMultiplier : 1;
+      orbitState.skillMultiplier += (skillTarget - orbitState.skillMultiplier) * 0.08;
+
+      // Update user orbit rotations
+      for (var i = 0; i < 4; i++) {
+        var userSpeed = orbitState.userSpeeds[i] * orbitState.userMultiplier;
+        orbitState.userAngles[i] += userSpeed * deltaTime;
+        if (userOrbitRings[i]) {
+          userOrbitRings[i].style.transform = 'translate(-50%, -50%) rotate(' + orbitState.userAngles[i] + 'deg)';
+          userOrbitRings[i].style.setProperty('--counter-rotate', (-orbitState.userAngles[i]) + 'deg');
+        }
+      }
+
+      // Update skill orbit rotations
+      for (var j = 0; j < 4; j++) {
+        var skillSpeed = orbitState.skillSpeeds[j] * orbitState.skillMultiplier;
+        orbitState.skillAngles[j] += skillSpeed * deltaTime;
+        if (skillOrbitRings[j]) {
+          skillOrbitRings[j].style.transform = 'rotate(' + orbitState.skillAngles[j] + 'deg)';
+          skillOrbitRings[j].style.setProperty('--counter-rotate', (-orbitState.skillAngles[j]) + 'deg');
+        }
+      }
+
+      requestAnimationFrame(animateOrbits);
+    }
+
+    requestAnimationFrame(animateOrbits);
+
+    // Hover detection for user orbits
+    userOrbitRings.forEach(function(ring) {
+      if (!ring) return;
+      ring.addEventListener('mouseenter', function() {
+        orbitState.userIsSlowed = true;
+      });
+      ring.addEventListener('mouseleave', function() {
+        orbitState.userIsSlowed = false;
+      });
+    });
+
+    // Hover detection for skill orbits
+    var skillOrbitZone = document.getElementById('skill-orbit-zone');
+    if (skillOrbitZone) {
+      skillOrbitZone.addEventListener('mouseenter', function() {
+        orbitState.skillIsSlowed = true;
+      });
+      skillOrbitZone.addEventListener('mouseleave', function() {
+        orbitState.skillIsSlowed = false;
+      });
+    }
+
+    document.querySelectorAll('.skill-body').forEach(function(body) {
+      body.addEventListener('mouseenter', function() {
+        orbitState.skillIsSlowed = true;
+      });
+      body.addEventListener('mouseleave', function(e) {
+        if (!e.relatedTarget || !e.relatedTarget.closest('.skill-orbit-ring, .skill-orbit-zone')) {
+          orbitState.skillIsSlowed = false;
+        }
+      });
+    });
+
+    document.querySelectorAll('.user-body').forEach(function(body) {
+      body.addEventListener('mouseenter', function() {
+        orbitState.userIsSlowed = true;
+      });
+      body.addEventListener('mouseleave', function(e) {
+        if (!e.relatedTarget || !e.relatedTarget.closest('.user-orbit-ring')) {
+          orbitState.userIsSlowed = false;
+        }
+      });
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // CLICK HANDLERS — Zoom Into Elements
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    function zoomIntoElement(element, targetScale) {
+      var universe = document.getElementById('knowledge-universe');
+      var universeRect = universe.getBoundingClientRect();
+      var elRect = element.getBoundingClientRect();
+      var viewRect = document.querySelector('.zoom-viewport').getBoundingClientRect();
+
+      var universeCenterX = universeRect.left + universeRect.width / 2;
+      var universeCenterY = universeRect.top + universeRect.height / 2;
+      var elCenterX = elRect.left + elRect.width / 2;
+      var elCenterY = elRect.top + elRect.height / 2;
+
+      var screenOffsetX = elCenterX - universeCenterX;
+      var screenOffsetY = elCenterY - universeCenterY;
+      var contentOffsetX = screenOffsetX / state.scale;
+      var contentOffsetY = screenOffsetY / state.scale;
+
+      zoomContainer.classList.add('animating');
+
+      state.panX = -contentOffsetX * targetScale;
+      state.panY = -contentOffsetY * targetScale;
+      state.scale = targetScale;
+
+      applyTransform();
+      setTimeout(function() { zoomContainer.classList.remove('animating'); }, 600);
+    }
+
+    // Knowledge Sun click — zoom into "You"
+    document.getElementById('knowledge-sun').addEventListener('click', function(e) {
+      e.stopPropagation();
+      zoomIntoElement(this, 1);
+      updateBreadcrumb([
+        { label: 'Universe', level: 'universe' },
+        { label: 'You', level: 'you' }
+      ]);
+    });
+
+    // Domain clicks
+    document.querySelectorAll('.domain-cluster').forEach(function(domain) {
+      domain.addEventListener('click', function(e) {
+        e.stopPropagation();
+        state.currentDomain = this.dataset.domain;
+
+        var label = this.dataset.domain.charAt(0).toUpperCase() + this.dataset.domain.slice(1);
+        updateBreadcrumb([
+          { label: 'Universe', level: 'universe' },
+          { label: 'You', level: 'you' },
+          { label: label, level: 'domain' }
+        ]);
+
+        zoomIntoElement(this, 2);
+      });
+    });
+
+    // Topic clicks
+    document.querySelectorAll('.topic-node').forEach(function(topic) {
+      topic.addEventListener('click', function(e) {
+        e.stopPropagation();
+
+        var topicLabel = this.dataset.topic.charAt(0).toUpperCase() + this.dataset.topic.slice(1);
+        updateBreadcrumb([
+          { label: 'Universe', level: 'universe' },
+          { label: topicLabel, level: 'topic' }
+        ]);
+
+        zoomIntoElement(this, 6);
+      });
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // INITIALIZE
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    applyTransform();
+    updateBreadcrumb([{ label: 'Universe', level: 'universe' }]);
+  </script>
+</body>
+</html>

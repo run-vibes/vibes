@@ -1,0 +1,1745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Infinite Knowledge — Art Deco Command</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    /* ═══════════════════════════════════════════════════════════════════════════
+       INFINITE ZOOM VIEWPORT
+       Knowledge is fractal — each level reveals more depth
+       ═══════════════════════════════════════════════════════════════════════════ */
+
+    :root {
+      --spotlight-x: 50%;
+      --spotlight-y: 50%;
+      --spotlight-radius: 280px;
+      --spotlight-intensity: 0;
+    }
+
+    body {
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    .zoom-viewport {
+      position: fixed;
+      inset: 0;
+      background: var(--bg-void);
+      overflow: hidden;
+    }
+
+    /* Atmospheric depth layers */
+    .atmosphere {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .atmosphere::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 30% 40%, rgba(212, 168, 75, 0.03) 0%, transparent 50%),
+        radial-gradient(ellipse 50% 40% at 70% 60%, rgba(61, 139, 139, 0.02) 0%, transparent 50%);
+    }
+
+    /* Sunburst pattern */
+    .atmosphere::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 200%;
+      height: 200%;
+      background: repeating-conic-gradient(
+        from 0deg,
+        transparent 0deg 4deg,
+        rgba(212, 168, 75, 0.006) 4deg 5deg
+      );
+      transform: translate(-50%, -50%);
+      opacity: 0.5;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       SPOTLIGHT EFFECT — Fog of War Discovery
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .spotlight-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 100;
+      opacity: var(--spotlight-intensity);
+      transition: opacity 0.5s ease;
+    }
+
+    .spotlight-layer::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        circle var(--spotlight-radius) at var(--spotlight-x) var(--spotlight-y),
+        transparent 0%,
+        transparent 60%,
+        rgba(7, 9, 13, 0.4) 75%,
+        rgba(7, 9, 13, 0.75) 90%,
+        rgba(7, 9, 13, 0.92) 100%
+      );
+    }
+
+    /* Inner glow ring around spotlight */
+    .spotlight-layer::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        circle calc(var(--spotlight-radius) + 20px) at var(--spotlight-x) var(--spotlight-y),
+        transparent 0%,
+        transparent 85%,
+        rgba(212, 168, 75, 0.08) 92%,
+        transparent 100%
+      );
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       ZOOM CONTAINER — Infinite Canvas
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .zoom-container {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      transform-origin: center center;
+      cursor: grab;
+      z-index: 2;
+    }
+
+    .zoom-container.dragging {
+      cursor: grabbing;
+    }
+
+    .zoom-container.animating {
+      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       KNOWLEDGE TREE — Root Level
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .knowledge-tree {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 2000px;
+      height: 2000px;
+    }
+
+    /* Connection Lines */
+    .connections-svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .connection-line {
+      stroke: var(--gold-dim);
+      stroke-width: 1.5;
+      fill: none;
+      opacity: 0.25;
+      transition: all 0.4s ease;
+    }
+
+    .connection-line.primary {
+      stroke: url(#gold-gradient);
+      stroke-width: 2.5;
+      opacity: 0.4;
+    }
+
+    .connection-line.highlighted {
+      stroke: var(--gold-primary);
+      stroke-width: 3;
+      opacity: 0.7;
+      filter: drop-shadow(0 0 4px rgba(212, 168, 75, 0.5));
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       CENTER NODE — "You Are Here"
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .center-node {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 180px;
+      height: 180px;
+      z-index: 20;
+    }
+
+    .center-core {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
+      border: 3px solid var(--gold-primary);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow:
+        var(--glow-gold-bright),
+        inset 0 0 50px rgba(212, 168, 75, 0.05);
+      cursor: pointer;
+      transition: all 0.4s ease;
+      animation: center-float 6s ease-in-out infinite;
+    }
+
+    @keyframes center-float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .center-core:hover {
+      animation-play-state: paused;
+      transform: scale(1.1);
+      box-shadow:
+        0 0 40px rgba(232, 196, 90, 0.5),
+        0 0 80px rgba(212, 168, 75, 0.3),
+        inset 0 0 50px rgba(212, 168, 75, 0.1);
+    }
+
+    /* Orbiting ring */
+    .center-ring {
+      position: absolute;
+      inset: -20px;
+      border: 1px solid var(--gold-dim);
+      border-radius: 50%;
+      opacity: 0.4;
+      animation: ring-rotate 30s linear infinite;
+    }
+
+    .center-ring::before {
+      content: '';
+      position: absolute;
+      top: -4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 8px;
+      height: 8px;
+      background: var(--gold-primary);
+      border-radius: 50%;
+      box-shadow: var(--glow-gold);
+    }
+
+    @keyframes ring-rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .center-label {
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+      text-align: center;
+      margin-top: var(--space-2);
+    }
+
+    .center-stats {
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-top: 4px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       DOMAIN CLUSTERS — Level 1
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .domain-cluster {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 10;
+    }
+
+    .domain-cluster.faded {
+      opacity: 0.15;
+      filter: blur(2px);
+    }
+
+    .domain-frame {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-6);
+      background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
+      border: 2px solid var(--border-medium);
+      transition: all 0.3s ease;
+      clip-path: polygon(
+        25% 0%, 75% 0%,
+        100% 25%, 100% 75%,
+        75% 100%, 25% 100%,
+        0% 75%, 0% 25%
+      );
+    }
+
+    /* Inner glow */
+    .domain-frame::before {
+      content: '';
+      position: absolute;
+      inset: 6px;
+      background: radial-gradient(circle at center, rgba(212, 168, 75, 0.04) 0%, transparent 70%);
+      clip-path: inherit;
+      pointer-events: none;
+    }
+
+    .domain-cluster:hover .domain-frame {
+      border-color: var(--gold-primary);
+      background: linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-elevated) 100%);
+      box-shadow: var(--glow-gold);
+      transform: scale(1.08);
+    }
+
+    .domain-cluster:hover .domain-frame::before {
+      background: radial-gradient(circle at center, rgba(212, 168, 75, 0.1) 0%, transparent 70%);
+    }
+
+    .domain-icon {
+      margin-bottom: var(--space-2);
+    }
+
+    .domain-label {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-primary);
+      text-align: center;
+    }
+
+    .domain-meta {
+      display: flex;
+      gap: var(--space-3);
+      margin-top: var(--space-2);
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    .domain-meta-value {
+      color: var(--gold-muted);
+      font-weight: 600;
+    }
+
+    /* Size variants */
+    .domain-cluster.size-xl .domain-frame { width: 180px; height: 180px; }
+    .domain-cluster.size-lg .domain-frame { width: 160px; height: 160px; }
+    .domain-cluster.size-md .domain-frame { width: 140px; height: 140px; }
+    .domain-cluster.size-sm .domain-frame { width: 120px; height: 120px; }
+
+    /* State variants */
+    .domain-cluster.active .domain-frame {
+      border-color: var(--gold-muted);
+      box-shadow: var(--glow-gold);
+      animation: pulse-gold 4s ease-in-out infinite;
+    }
+
+    .domain-cluster.frontier .domain-frame {
+      border-color: var(--accent-teal-muted);
+      border-style: dashed;
+      box-shadow: var(--glow-teal);
+    }
+
+    .domain-cluster.frontier .domain-label {
+      color: var(--accent-teal);
+    }
+
+    @keyframes pulse-gold {
+      0%, 100% { box-shadow: var(--glow-gold); }
+      50% { box-shadow: var(--glow-gold-bright); }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       SKILL NODES — Level 2 (revealed on domain zoom)
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .skill-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+      z-index: 5;
+    }
+
+    .skill-layer.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .skill-node {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .skill-node.faded {
+      opacity: 0.12;
+      filter: blur(1px);
+    }
+
+    .skill-bubble {
+      width: 72px;
+      height: 72px;
+      background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
+      border: 2px solid var(--border-medium);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    /* Pulse ring on hover */
+    .skill-bubble::after {
+      content: '';
+      position: absolute;
+      inset: -8px;
+      border: 1px solid transparent;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+    }
+
+    .skill-node:hover .skill-bubble {
+      border-color: var(--gold-primary);
+      box-shadow: var(--glow-gold);
+      transform: scale(1.15);
+    }
+
+    .skill-node:hover .skill-bubble::after {
+      border-color: var(--gold-dim);
+    }
+
+    .skill-label {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      text-align: center;
+      white-space: nowrap;
+      max-width: 100px;
+      transition: color 0.3s ease;
+    }
+
+    .skill-node:hover .skill-label {
+      color: var(--gold-primary);
+    }
+
+    /* Skill states */
+    .skill-node.mastered .skill-bubble {
+      border-color: var(--gold-primary);
+      background: linear-gradient(135deg, var(--gold-subtle) 0%, var(--bg-elevated) 100%);
+    }
+
+    .skill-node.learning .skill-bubble {
+      border-color: var(--accent-teal);
+      box-shadow: var(--glow-teal);
+    }
+
+    .skill-node.frontier .skill-bubble {
+      border-style: dashed;
+      border-color: var(--accent-teal-muted);
+      opacity: 0.7;
+    }
+
+    .skill-node.discovered .skill-bubble {
+      border-color: var(--accent-success);
+      box-shadow: 0 0 20px rgba(77, 168, 77, 0.4);
+    }
+
+    .skill-node.discovered::before {
+      content: 'AI';
+      position: absolute;
+      top: -4px;
+      right: 8px;
+      font-family: var(--font-condensed);
+      font-size: 8px;
+      font-weight: 700;
+      padding: 2px 5px;
+      background: var(--accent-success);
+      color: var(--bg-void);
+      letter-spacing: 0.05em;
+      z-index: 5;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       CONCEPT NODES — Level 3 (revealed on skill zoom)
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .concept-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+      z-index: 4;
+    }
+
+    .concept-layer.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .concept-node {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .concept-node.faded {
+      opacity: 0.1;
+    }
+
+    .concept-dot {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-elevated) 100%);
+      border: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+      transition: all 0.3s ease;
+    }
+
+    .concept-node:hover .concept-dot {
+      border-color: var(--gold-primary);
+      background: var(--bg-elevated);
+      box-shadow: var(--glow-gold);
+      transform: scale(1.2) rotate(45deg);
+    }
+
+    .concept-label {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-body);
+      font-size: 9px;
+      color: var(--text-tertiary);
+      text-align: center;
+      white-space: nowrap;
+      max-width: 80px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .concept-node:hover .concept-label {
+      color: var(--gold-muted);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       DETAIL FRAGMENTS — Level 4 (deepest zoom)
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .detail-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+      z-index: 3;
+    }
+
+    .detail-layer.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .detail-fragment {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .detail-fragment.faded {
+      opacity: 0.08;
+    }
+
+    .detail-pip {
+      width: 24px;
+      height: 24px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: var(--text-muted);
+      transition: all 0.3s ease;
+    }
+
+    .detail-fragment:hover .detail-pip {
+      border-color: var(--gold-muted);
+      background: var(--bg-surface);
+      transform: scale(1.3);
+      box-shadow: 0 0 12px rgba(212, 168, 75, 0.3);
+    }
+
+    .detail-fragment:hover .detail-pip::after {
+      content: attr(data-label);
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-body);
+      font-size: 8px;
+      color: var(--gold-muted);
+      white-space: nowrap;
+      background: var(--bg-card);
+      padding: 2px 6px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       ZOOM LEVEL INDICATOR
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .zoom-indicator {
+      position: fixed;
+      bottom: var(--space-6);
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+      padding: var(--space-3) var(--space-5);
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      z-index: 200;
+    }
+
+    .zoom-indicator::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);
+    }
+
+    .zoom-level-dots {
+      display: flex;
+      gap: var(--space-2);
+    }
+
+    .zoom-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--bg-deep);
+      border: 1px solid var(--border-medium);
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .zoom-dot.active {
+      background: var(--gold-primary);
+      border-color: var(--gold-primary);
+      box-shadow: var(--glow-gold);
+    }
+
+    .zoom-dot:hover {
+      border-color: var(--gold-muted);
+    }
+
+    .zoom-label {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold-muted);
+      min-width: 100px;
+      text-align: center;
+    }
+
+    .zoom-breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-family: var(--font-body);
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+
+    .breadcrumb-item {
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 2px;
+      transition: all 0.2s ease;
+    }
+
+    .breadcrumb-item:hover {
+      color: var(--gold-primary);
+      background: var(--gold-subtle);
+    }
+
+    .breadcrumb-item.current {
+      color: var(--gold-primary);
+      cursor: default;
+    }
+
+    .breadcrumb-sep {
+      color: var(--gold-dim);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       CONTROLS
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .controls {
+      position: fixed;
+      top: var(--space-4);
+      right: var(--space-4);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      z-index: 200;
+    }
+
+    .control-btn {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      color: var(--gold-muted);
+      font-size: 20px;
+      font-weight: 300;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .control-btn:hover {
+      background: var(--bg-elevated);
+      border-color: var(--gold-muted);
+      color: var(--gold-primary);
+    }
+
+    .control-btn.active {
+      background: var(--gold-subtle);
+      border-color: var(--gold-primary);
+      color: var(--gold-primary);
+    }
+
+    .zoom-display {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      text-align: center;
+      color: var(--text-tertiary);
+      padding: var(--space-2);
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-top: none;
+    }
+
+    /* Spotlight toggle */
+    .spotlight-toggle {
+      position: fixed;
+      top: var(--space-4);
+      left: var(--space-4);
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-2) var(--space-4);
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      cursor: pointer;
+      z-index: 200;
+      transition: all 0.2s ease;
+    }
+
+    .spotlight-toggle:hover {
+      border-color: var(--gold-muted);
+    }
+
+    .spotlight-toggle.active {
+      border-color: var(--gold-primary);
+      background: var(--gold-subtle);
+    }
+
+    .toggle-label {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold-muted);
+    }
+
+    .spotlight-toggle.active .toggle-label {
+      color: var(--gold-primary);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       DETAIL PANEL
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .detail-panel {
+      position: fixed;
+      bottom: 80px;
+      left: var(--space-4);
+      width: 320px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      padding: var(--space-5);
+      opacity: 0;
+      transform: translateY(12px);
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: none;
+      z-index: 150;
+    }
+
+    .detail-panel::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--gold-primary), var(--gold-dim), transparent);
+    }
+
+    .detail-panel.visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .detail-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      margin-bottom: var(--space-4);
+      padding-bottom: var(--space-3);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .detail-icon {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-surface) 100%);
+      border: 1px solid var(--border-medium);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .detail-title {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+    }
+
+    .detail-subtitle {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      color: var(--text-tertiary);
+      letter-spacing: 0.08em;
+      margin-top: 2px;
+    }
+
+    .detail-description {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: var(--space-4);
+    }
+
+    .detail-action {
+      display: block;
+      width: 100%;
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      text-align: center;
+      padding: var(--space-3);
+      background: linear-gradient(135deg, rgba(212, 168, 75, 0.2) 0%, rgba(212, 168, 75, 0.1) 100%);
+      border: 1px solid var(--gold-muted);
+      color: var(--gold-primary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .detail-action:hover {
+      background: var(--gold-primary);
+      color: var(--bg-void);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       LEGEND
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .legend {
+      position: fixed;
+      top: var(--space-4);
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: var(--space-5);
+      padding: var(--space-2) var(--space-4);
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      z-index: 200;
+    }
+
+    .legend::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      letter-spacing: 0.05em;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+    }
+
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 2px solid;
+      background: var(--bg-elevated);
+    }
+
+    .legend-dot.mastered {
+      border-color: var(--gold-primary);
+      background: var(--gold-subtle);
+    }
+
+    .legend-dot.learning {
+      border-color: var(--accent-teal);
+    }
+
+    .legend-dot.frontier {
+      border-style: dashed;
+      border-color: var(--accent-teal-muted);
+    }
+
+    .legend-dot.discovered {
+      border-color: var(--accent-success);
+    }
+  </style>
+</head>
+<body>
+  <div class="zoom-viewport">
+    <!-- Atmosphere -->
+    <div class="atmosphere"></div>
+
+    <!-- Spotlight overlay -->
+    <div class="spotlight-layer" id="spotlight-layer"></div>
+
+    <!-- Main zoom container -->
+    <div class="zoom-container" id="zoom-container">
+      <div class="knowledge-tree" id="knowledge-tree">
+
+        <!-- Connection Lines SVG -->
+        <svg class="connections-svg" viewBox="0 0 2000 2000">
+          <defs>
+            <linearGradient id="gold-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#8a6520" stop-opacity="0.3"/>
+              <stop offset="50%" stop-color="#d4a84b" stop-opacity="0.6"/>
+              <stop offset="100%" stop-color="#8a6520" stop-opacity="0.3"/>
+            </linearGradient>
+          </defs>
+          <!-- Primary connections to center -->
+          <line class="connection-line primary" x1="1000" y1="1000" x2="1000" y2="550"/>
+          <line class="connection-line primary" x1="1000" y1="1000" x2="1380" y2="720"/>
+          <line class="connection-line primary" x1="1000" y1="1000" x2="1380" y2="1280"/>
+          <line class="connection-line primary" x1="1000" y1="1000" x2="1000" y2="1450"/>
+          <line class="connection-line primary" x1="1000" y1="1000" x2="620" y2="1280"/>
+          <line class="connection-line primary" x1="1000" y1="1000" x2="620" y2="720"/>
+          <!-- Secondary inter-cluster connections -->
+          <line class="connection-line" x1="1000" y1="550" x2="1380" y2="720"/>
+          <line class="connection-line" x1="1380" y1="720" x2="1380" y2="1280"/>
+          <line class="connection-line" x1="1380" y1="1280" x2="1000" y2="1450"/>
+          <line class="connection-line" x1="1000" y1="1450" x2="620" y2="1280"/>
+          <line class="connection-line" x1="620" y1="1280" x2="620" y2="720"/>
+          <line class="connection-line" x1="620" y1="720" x2="1000" y2="550"/>
+        </svg>
+
+        <!-- Center Node -->
+        <div class="center-node" id="center-node">
+          <div class="center-ring"></div>
+          <div class="center-core">
+            <span class="deco-icon deco-icon-target deco-icon-xl deco-icon-gold"></span>
+            <span class="center-label">Your Knowledge</span>
+            <span class="center-stats">247 discoveries</span>
+          </div>
+        </div>
+
+        <!-- Domain Clusters -->
+        <div class="domain-cluster size-xl active" style="top: 27.5%; left: 50%;" data-domain="technology" id="domain-technology">
+          <div class="domain-frame">
+            <span class="domain-icon deco-icon deco-icon-agent deco-icon-lg deco-icon-gold"></span>
+            <span class="domain-label">Technology</span>
+            <div class="domain-meta">
+              <span><span class="domain-meta-value">52</span> skills</span>
+              <span><span class="domain-meta-value">+8</span> new</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="domain-cluster size-lg" style="top: 36%; left: 69%;" data-domain="health" id="domain-health">
+          <div class="domain-frame">
+            <span class="domain-icon deco-icon deco-icon-growth deco-icon-lg deco-icon-gold"></span>
+            <span class="domain-label">Health</span>
+            <div class="domain-meta">
+              <span><span class="domain-meta-value">31</span> skills</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="domain-cluster size-md frontier" style="top: 64%; left: 69%;" data-domain="creative" id="domain-creative">
+          <div class="domain-frame">
+            <span class="domain-icon deco-icon deco-icon-star deco-icon-lg" style="color: var(--accent-teal);"></span>
+            <span class="domain-label">Creative</span>
+            <div class="domain-meta">
+              <span><span class="domain-meta-value">24</span> skills</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="domain-cluster size-lg" style="top: 72.5%; left: 50%;" data-domain="finance" id="domain-finance">
+          <div class="domain-frame">
+            <span class="domain-icon deco-icon deco-icon-value deco-icon-lg deco-icon-gold"></span>
+            <span class="domain-label">Finance</span>
+            <div class="domain-meta">
+              <span><span class="domain-meta-value">38</span> skills</span>
+              <span><span class="domain-meta-value">+5</span> new</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="domain-cluster size-sm" style="top: 64%; left: 31%;" data-domain="business" id="domain-business">
+          <div class="domain-frame">
+            <span class="domain-icon deco-icon deco-icon-goal deco-icon-lg deco-icon-gold"></span>
+            <span class="domain-label">Business</span>
+            <div class="domain-meta">
+              <span><span class="domain-meta-value">29</span> skills</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="domain-cluster size-md frontier" style="top: 36%; left: 31%;" data-domain="science" id="domain-science">
+          <div class="domain-frame">
+            <span class="domain-icon deco-icon deco-icon-test deco-icon-lg" style="color: var(--accent-teal);"></span>
+            <span class="domain-label">Science</span>
+            <div class="domain-meta">
+              <span><span class="domain-meta-value">43</span> skills</span>
+              <span><span class="domain-meta-value">+12</span> new</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Skill Layer (Level 2) -->
+        <div class="skill-layer" id="skill-layer">
+          <!-- Technology skills (around domain at 27.5%, 50%) -->
+          <div class="skill-node mastered" style="top: 18%; left: 42%;" data-skill="rust" data-domain="technology">
+            <div class="skill-bubble">
+              <span class="deco-icon deco-icon-session deco-icon-md deco-icon-gold"></span>
+            </div>
+            <span class="skill-label">Rust</span>
+          </div>
+          <div class="skill-node mastered" style="top: 15%; left: 52%;" data-skill="python" data-domain="technology">
+            <div class="skill-bubble">
+              <span class="deco-icon deco-icon-doc deco-icon-md deco-icon-gold"></span>
+            </div>
+            <span class="skill-label">Python</span>
+          </div>
+          <div class="skill-node learning" style="top: 20%; left: 60%;" data-skill="llm" data-domain="technology">
+            <div class="skill-bubble">
+              <span class="deco-icon deco-icon-agent deco-icon-md" style="color: var(--accent-teal);"></span>
+            </div>
+            <span class="skill-label">LLM Fine-tuning</span>
+          </div>
+          <div class="skill-node discovered" style="top: 24%; left: 36%;" data-skill="agents" data-domain="technology">
+            <div class="skill-bubble">
+              <span class="deco-icon deco-icon-link deco-icon-md deco-icon-success"></span>
+            </div>
+            <span class="skill-label">Agent Patterns</span>
+          </div>
+          <div class="skill-node frontier" style="top: 30%; left: 62%;" data-skill="wasm" data-domain="technology">
+            <div class="skill-bubble">
+              <span class="deco-icon deco-icon-bolt deco-icon-md deco-icon-muted"></span>
+            </div>
+            <span class="skill-label">WebAssembly</span>
+          </div>
+
+          <!-- Finance skills -->
+          <div class="skill-node mastered" style="top: 68%; left: 42%;" data-skill="options" data-domain="finance">
+            <div class="skill-bubble">
+              <span class="deco-icon deco-icon-value deco-icon-md deco-icon-gold"></span>
+            </div>
+            <span class="skill-label">Options Trading</span>
+          </div>
+          <div class="skill-node mastered" style="top: 78%; left: 52%;" data-skill="dcf" data-domain="finance">
+            <div class="skill-bubble">
+              <span class="deco-icon deco-icon-doc deco-icon-md deco-icon-gold"></span>
+            </div>
+            <span class="skill-label">DCF Analysis</span>
+          </div>
+          <div class="skill-node learning" style="top: 74%; left: 60%;" data-skill="fixed-income" data-domain="finance">
+            <div class="skill-bubble">
+              <span class="deco-icon deco-icon-arch deco-icon-md" style="color: var(--accent-teal);"></span>
+            </div>
+            <span class="skill-label">Fixed Income</span>
+          </div>
+          <div class="skill-node discovered" style="top: 70%; left: 36%;" data-skill="factor" data-domain="finance">
+            <div class="skill-bubble">
+              <span class="deco-icon deco-icon-bolt deco-icon-md deco-icon-success"></span>
+            </div>
+            <span class="skill-label">Factor Investing</span>
+          </div>
+
+          <!-- Health skills -->
+          <div class="skill-node mastered" style="top: 30%; left: 74%;" data-skill="neuro" data-domain="health">
+            <div class="skill-bubble">
+              <span class="deco-icon deco-icon-sunburst deco-icon-md deco-icon-gold"></span>
+            </div>
+            <span class="skill-label">Neuroscience</span>
+          </div>
+          <div class="skill-node learning" style="top: 38%; left: 78%;" data-skill="pharma" data-domain="health">
+            <div class="skill-bubble">
+              <span class="deco-icon deco-icon-test deco-icon-md" style="color: var(--accent-teal);"></span>
+            </div>
+            <span class="skill-label">Pharmacology</span>
+          </div>
+          <div class="skill-node discovered" style="top: 42%; left: 68%;" data-skill="circadian" data-domain="health">
+            <div class="skill-bubble">
+              <span class="deco-icon deco-icon-time deco-icon-md deco-icon-success"></span>
+            </div>
+            <span class="skill-label">Circadian Biology</span>
+          </div>
+
+          <!-- Science skills -->
+          <div class="skill-node mastered" style="top: 30%; left: 26%;" data-skill="biochem" data-domain="science">
+            <div class="skill-bubble">
+              <span class="deco-icon deco-icon-test deco-icon-md deco-icon-gold"></span>
+            </div>
+            <span class="skill-label">Biochemistry</span>
+          </div>
+          <div class="skill-node learning" style="top: 38%; left: 22%;" data-skill="physics" data-domain="science">
+            <div class="skill-bubble">
+              <span class="deco-icon deco-icon-target deco-icon-md" style="color: var(--accent-teal);"></span>
+            </div>
+            <span class="skill-label">Particle Physics</span>
+          </div>
+          <div class="skill-node discovered" style="top: 42%; left: 32%;" data-skill="complexity" data-domain="science">
+            <div class="skill-bubble">
+              <span class="deco-icon deco-icon-fan deco-icon-md deco-icon-success"></span>
+            </div>
+            <span class="skill-label">Complexity Theory</span>
+          </div>
+        </div>
+
+        <!-- Concept Layer (Level 3) -->
+        <div class="concept-layer" id="concept-layer">
+          <!-- Rust concepts -->
+          <div class="concept-node" style="top: 12%; left: 38%;" data-concept="ownership" data-skill="rust">
+            <div class="concept-dot">
+              <span style="font-size: 12px; color: var(--gold-muted);">O</span>
+            </div>
+            <span class="concept-label">Ownership</span>
+          </div>
+          <div class="concept-node" style="top: 10%; left: 44%;" data-concept="borrowing" data-skill="rust">
+            <div class="concept-dot">
+              <span style="font-size: 12px; color: var(--gold-muted);">B</span>
+            </div>
+            <span class="concept-label">Borrowing</span>
+          </div>
+          <div class="concept-node" style="top: 14%; left: 48%;" data-concept="lifetimes" data-skill="rust">
+            <div class="concept-dot">
+              <span style="font-size: 12px; color: var(--gold-muted);">L</span>
+            </div>
+            <span class="concept-label">Lifetimes</span>
+          </div>
+          <div class="concept-node" style="top: 16%; left: 36%;" data-concept="traits" data-skill="rust">
+            <div class="concept-dot">
+              <span style="font-size: 12px; color: var(--gold-muted);">T</span>
+            </div>
+            <span class="concept-label">Traits</span>
+          </div>
+          <div class="concept-node" style="top: 20%; left: 46%;" data-concept="async" data-skill="rust">
+            <div class="concept-dot">
+              <span style="font-size: 12px; color: var(--gold-muted);">A</span>
+            </div>
+            <span class="concept-label">Async/Await</span>
+          </div>
+        </div>
+
+        <!-- Detail Layer (Level 4) -->
+        <div class="detail-layer" id="detail-layer">
+          <!-- Ownership details -->
+          <div class="detail-fragment" style="top: 8%; left: 36%;" data-detail="move-semantics">
+            <div class="detail-pip" data-label="Move Semantics">M</div>
+          </div>
+          <div class="detail-fragment" style="top: 9%; left: 40%;" data-detail="copy-trait">
+            <div class="detail-pip" data-label="Copy Trait">C</div>
+          </div>
+          <div class="detail-fragment" style="top: 11%; left: 35%;" data-detail="drop-trait">
+            <div class="detail-pip" data-label="Drop Trait">D</div>
+          </div>
+          <div class="detail-fragment" style="top: 10%; left: 42%;" data-detail="clone-trait">
+            <div class="detail-pip" data-label="Clone Trait">Cl</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+      <button class="control-btn" id="zoom-in" title="Zoom In">+</button>
+      <button class="control-btn" id="zoom-out" title="Zoom Out">−</button>
+      <div class="zoom-display" id="zoom-display">100%</div>
+      <button class="control-btn" id="reset-view" title="Reset View">⌂</button>
+    </div>
+
+    <!-- Spotlight Toggle -->
+    <div class="spotlight-toggle" id="spotlight-toggle">
+      <span class="deco-icon deco-icon-sunburst deco-icon-sm deco-icon-gold"></span>
+      <span class="toggle-label">Spotlight</span>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend">
+      <div class="legend-item">
+        <span class="legend-dot mastered"></span>
+        <span>Mastered</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-dot learning"></span>
+        <span>Learning</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-dot frontier"></span>
+        <span>Frontier</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-dot discovered"></span>
+        <span>AI Discovered</span>
+      </div>
+    </div>
+
+    <!-- Zoom Indicator -->
+    <div class="zoom-indicator">
+      <div class="zoom-level-dots">
+        <div class="zoom-dot active" data-level="0" title="Overview"></div>
+        <div class="zoom-dot" data-level="1" title="Domains"></div>
+        <div class="zoom-dot" data-level="2" title="Skills"></div>
+        <div class="zoom-dot" data-level="3" title="Concepts"></div>
+        <div class="zoom-dot" data-level="4" title="Details"></div>
+      </div>
+      <div class="zoom-label" id="zoom-level-label">Overview</div>
+      <div class="zoom-breadcrumb" id="breadcrumb">
+        <span class="breadcrumb-item current">All Knowledge</span>
+      </div>
+    </div>
+
+    <!-- Detail Panel -->
+    <div class="detail-panel" id="detail-panel">
+      <div class="detail-header">
+        <div class="detail-icon">
+          <span class="deco-icon deco-icon-session deco-icon-md deco-icon-gold" id="panel-icon"></span>
+        </div>
+        <div>
+          <div class="detail-title" id="panel-title">Rust</div>
+          <div class="detail-subtitle" id="panel-subtitle">Technology / Systems Programming</div>
+        </div>
+      </div>
+      <p class="detail-description" id="panel-description">
+        A systems programming language focused on safety, speed, and concurrency.
+        Rust's ownership model guarantees memory safety without garbage collection.
+      </p>
+      <button class="detail-action" id="panel-action">Zoom Into This</button>
+    </div>
+  </div>
+
+  <script>
+    // ═══════════════════════════════════════════════════════════════════════════
+    // STATE
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    var state = {
+      scale: 1,
+      panX: 0,
+      panY: 0,
+      zoomLevel: 0, // 0=overview, 1=domains, 2=skills, 3=concepts, 4=details
+      currentDomain: null,
+      currentSkill: null,
+      currentConcept: null,
+      spotlightEnabled: false,
+      isPanning: false,
+      startX: 0,
+      startY: 0,
+      startPanX: 0,
+      startPanY: 0
+    };
+
+    var MIN_SCALE = 0.3;
+    var MAX_SCALE = 8;
+    var ZOOM_SENSITIVITY = 0.002;
+
+    var zoomLevels = ['Overview', 'Domains', 'Skills', 'Concepts', 'Details'];
+
+    var zoomContainer = document.getElementById('zoom-container');
+    var spotlightLayer = document.getElementById('spotlight-layer');
+    var skillLayer = document.getElementById('skill-layer');
+    var conceptLayer = document.getElementById('concept-layer');
+    var detailLayer = document.getElementById('detail-layer');
+    var detailPanel = document.getElementById('detail-panel');
+    var zoomDisplay = document.getElementById('zoom-display');
+    var zoomLevelLabel = document.getElementById('zoom-level-label');
+    var breadcrumb = document.getElementById('breadcrumb');
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // TRANSFORM
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    function applyTransform() {
+      zoomContainer.style.transform =
+        'translate(' + state.panX + 'px, ' + state.panY + 'px) scale(' + state.scale + ')';
+      zoomDisplay.textContent = Math.round(state.scale * 100) + '%';
+      updateZoomLevel();
+      updateLayerVisibility();
+    }
+
+    function updateZoomLevel() {
+      var oldLevel = state.zoomLevel;
+
+      if (state.scale < 0.6) {
+        state.zoomLevel = 0;
+      } else if (state.scale < 1.2) {
+        state.zoomLevel = 1;
+      } else if (state.scale < 2.5) {
+        state.zoomLevel = 2;
+      } else if (state.scale < 5) {
+        state.zoomLevel = 3;
+      } else {
+        state.zoomLevel = 4;
+      }
+
+      if (oldLevel !== state.zoomLevel) {
+        zoomLevelLabel.textContent = zoomLevels[state.zoomLevel];
+        updateZoomDots();
+      }
+    }
+
+    function updateZoomDots() {
+      document.querySelectorAll('.zoom-dot').forEach(function(dot, i) {
+        dot.classList.toggle('active', i <= state.zoomLevel);
+      });
+    }
+
+    function updateLayerVisibility() {
+      // Show/hide layers based on zoom level
+      skillLayer.classList.toggle('visible', state.zoomLevel >= 2);
+      conceptLayer.classList.toggle('visible', state.zoomLevel >= 3);
+      detailLayer.classList.toggle('visible', state.zoomLevel >= 4);
+
+      // Fade domains when zoomed into skills
+      document.querySelectorAll('.domain-cluster').forEach(function(domain) {
+        domain.classList.toggle('faded',
+          state.zoomLevel >= 2 && state.currentDomain && domain.dataset.domain !== state.currentDomain
+        );
+      });
+
+      // Fade skills when zoomed into concepts
+      document.querySelectorAll('.skill-node').forEach(function(skill) {
+        var isCurrentDomain = !state.currentDomain || skill.dataset.domain === state.currentDomain;
+        var isCurrentSkill = !state.currentSkill || skill.dataset.skill === state.currentSkill;
+        skill.classList.toggle('faded',
+          state.zoomLevel >= 3 && (!isCurrentDomain || !isCurrentSkill)
+        );
+      });
+
+      // Fade concepts when zoomed into details
+      document.querySelectorAll('.concept-node').forEach(function(concept) {
+        var isCurrentSkill = !state.currentSkill || concept.dataset.skill === state.currentSkill;
+        concept.classList.toggle('faded',
+          state.zoomLevel >= 4 && !isCurrentSkill
+        );
+      });
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // SPOTLIGHT EFFECT
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    function updateSpotlight(e) {
+      if (!state.spotlightEnabled) return;
+
+      var root = document.documentElement;
+      root.style.setProperty('--spotlight-x', e.clientX + 'px');
+      root.style.setProperty('--spotlight-y', e.clientY + 'px');
+
+      // Adjust radius based on zoom level
+      var radius = 280 + (state.zoomLevel * 40);
+      root.style.setProperty('--spotlight-radius', radius + 'px');
+    }
+
+    function toggleSpotlight() {
+      state.spotlightEnabled = !state.spotlightEnabled;
+      var root = document.documentElement;
+      root.style.setProperty('--spotlight-intensity', state.spotlightEnabled ? '1' : '0');
+      document.getElementById('spotlight-toggle').classList.toggle('active', state.spotlightEnabled);
+    }
+
+    document.getElementById('spotlight-toggle').addEventListener('click', toggleSpotlight);
+    document.addEventListener('mousemove', updateSpotlight);
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // ZOOM TO CURSOR
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    function zoomAtPoint(clientX, clientY, delta) {
+      var viewport = document.querySelector('.zoom-viewport');
+      var rect = viewport.getBoundingClientRect();
+      var mx = clientX - rect.left;
+      var my = clientY - rect.top;
+
+      var zoomFactor = 1 - delta * ZOOM_SENSITIVITY;
+      var newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, state.scale * zoomFactor));
+
+      if (newScale === state.scale) return;
+
+      // Calculate content position under cursor
+      var contentX = (mx - rect.width / 2 - state.panX) / state.scale;
+      var contentY = (my - rect.height / 2 - state.panY) / state.scale;
+
+      state.scale = newScale;
+      state.panX = mx - rect.width / 2 - contentX * state.scale;
+      state.panY = my - rect.height / 2 - contentY * state.scale;
+
+      applyTransform();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // PAN
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    document.querySelector('.zoom-viewport').addEventListener('mousedown', function(e) {
+      if (e.target.closest('.domain-cluster') ||
+          e.target.closest('.skill-node') ||
+          e.target.closest('.concept-node') ||
+          e.target.closest('.detail-fragment') ||
+          e.target.closest('.center-node')) return;
+
+      state.isPanning = true;
+      state.startX = e.clientX;
+      state.startY = e.clientY;
+      state.startPanX = state.panX;
+      state.startPanY = state.panY;
+      zoomContainer.classList.add('dragging');
+    });
+
+    document.addEventListener('mousemove', function(e) {
+      if (!state.isPanning) return;
+      state.panX = state.startPanX + (e.clientX - state.startX);
+      state.panY = state.startPanY + (e.clientY - state.startY);
+      applyTransform();
+    });
+
+    document.addEventListener('mouseup', function() {
+      state.isPanning = false;
+      zoomContainer.classList.remove('dragging');
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // WHEEL ZOOM
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    document.querySelector('.zoom-viewport').addEventListener('wheel', function(e) {
+      e.preventDefault();
+      zoomAtPoint(e.clientX, e.clientY, e.deltaY);
+    }, { passive: false });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // CONTROL BUTTONS
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    document.getElementById('zoom-in').addEventListener('click', function() {
+      var rect = document.querySelector('.zoom-viewport').getBoundingClientRect();
+      zoomAtPoint(rect.width / 2, rect.height / 2, -150);
+    });
+
+    document.getElementById('zoom-out').addEventListener('click', function() {
+      var rect = document.querySelector('.zoom-viewport').getBoundingClientRect();
+      zoomAtPoint(rect.width / 2, rect.height / 2, 150);
+    });
+
+    document.getElementById('reset-view').addEventListener('click', function() {
+      zoomContainer.classList.add('animating');
+      state.scale = 1;
+      state.panX = 0;
+      state.panY = 0;
+      state.currentDomain = null;
+      state.currentSkill = null;
+      state.currentConcept = null;
+      applyTransform();
+      updateBreadcrumb([{ label: 'All Knowledge', level: 'root' }]);
+      setTimeout(function() { zoomContainer.classList.remove('animating'); }, 600);
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // BREADCRUMB
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    function updateBreadcrumb(path) {
+      while (breadcrumb.firstChild) {
+        breadcrumb.removeChild(breadcrumb.firstChild);
+      }
+
+      path.forEach(function(item, i) {
+        if (i > 0) {
+          var sep = document.createElement('span');
+          sep.className = 'breadcrumb-sep';
+          sep.textContent = '›';
+          breadcrumb.appendChild(sep);
+        }
+
+        var crumb = document.createElement('span');
+        crumb.className = 'breadcrumb-item' + (i === path.length - 1 ? ' current' : '');
+        crumb.textContent = item.label;
+        crumb.dataset.level = item.level;
+
+        if (i < path.length - 1) {
+          crumb.addEventListener('click', function() {
+            navigateToLevel(this.dataset.level);
+          });
+        }
+
+        breadcrumb.appendChild(crumb);
+      });
+    }
+
+    function navigateToLevel(level) {
+      zoomContainer.classList.add('animating');
+
+      if (level === 'root') {
+        state.scale = 1;
+        state.panX = 0;
+        state.panY = 0;
+        state.currentDomain = null;
+        state.currentSkill = null;
+        updateBreadcrumb([{ label: 'All Knowledge', level: 'root' }]);
+      }
+
+      applyTransform();
+      setTimeout(function() { zoomContainer.classList.remove('animating'); }, 600);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // CLICK HANDLERS — Zoom Into Elements
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    function zoomIntoElement(element, targetScale) {
+      var viewport = document.querySelector('.zoom-viewport');
+      var viewRect = viewport.getBoundingClientRect();
+      var elRect = element.getBoundingClientRect();
+
+      // Calculate current element center in viewport coordinates
+      var elCenterX = elRect.left + elRect.width / 2 - viewRect.left;
+      var elCenterY = elRect.top + elRect.height / 2 - viewRect.top;
+
+      // Calculate where we want it (center of viewport)
+      var targetX = viewRect.width / 2;
+      var targetY = viewRect.height / 2;
+
+      // Calculate the pan offset needed
+      var scaleRatio = targetScale / state.scale;
+
+      zoomContainer.classList.add('animating');
+
+      state.panX = targetX - elCenterX * scaleRatio + state.panX * (scaleRatio - 1);
+      state.panY = targetY - elCenterY * scaleRatio + state.panY * (scaleRatio - 1);
+      state.scale = targetScale;
+
+      applyTransform();
+      setTimeout(function() { zoomContainer.classList.remove('animating'); }, 600);
+    }
+
+    // Domain clicks
+    document.querySelectorAll('.domain-cluster').forEach(function(domain) {
+      domain.addEventListener('click', function(e) {
+        e.stopPropagation();
+        state.currentDomain = this.dataset.domain;
+        state.currentSkill = null;
+
+        var label = this.dataset.domain.charAt(0).toUpperCase() + this.dataset.domain.slice(1);
+        updateBreadcrumb([
+          { label: 'All Knowledge', level: 'root' },
+          { label: label, level: 'domain' }
+        ]);
+
+        zoomIntoElement(this, 2);
+      });
+    });
+
+    // Skill clicks
+    document.querySelectorAll('.skill-node').forEach(function(skill) {
+      skill.addEventListener('click', function(e) {
+        e.stopPropagation();
+        state.currentDomain = this.dataset.domain;
+        state.currentSkill = this.dataset.skill;
+
+        var domainLabel = this.dataset.domain.charAt(0).toUpperCase() + this.dataset.domain.slice(1);
+        var skillLabel = this.dataset.skill.charAt(0).toUpperCase() + this.dataset.skill.slice(1);
+        updateBreadcrumb([
+          { label: 'All Knowledge', level: 'root' },
+          { label: domainLabel, level: 'domain' },
+          { label: skillLabel, level: 'skill' }
+        ]);
+
+        zoomIntoElement(this, 4);
+        showDetailPanel(this);
+      });
+    });
+
+    // Concept clicks
+    document.querySelectorAll('.concept-node').forEach(function(concept) {
+      concept.addEventListener('click', function(e) {
+        e.stopPropagation();
+
+        var skillLabel = this.dataset.skill.charAt(0).toUpperCase() + this.dataset.skill.slice(1);
+        var conceptLabel = this.dataset.concept.charAt(0).toUpperCase() + this.dataset.concept.slice(1);
+
+        // Find domain from skill
+        var skillNode = document.querySelector('[data-skill="' + this.dataset.skill + '"]');
+        var domainLabel = skillNode ? skillNode.dataset.domain.charAt(0).toUpperCase() + skillNode.dataset.domain.slice(1) : 'Unknown';
+
+        updateBreadcrumb([
+          { label: 'All Knowledge', level: 'root' },
+          { label: domainLabel, level: 'domain' },
+          { label: skillLabel, level: 'skill' },
+          { label: conceptLabel, level: 'concept' }
+        ]);
+
+        zoomIntoElement(this, 6);
+      });
+    });
+
+    // Center node click
+    document.getElementById('center-node').addEventListener('click', function(e) {
+      e.stopPropagation();
+      navigateToLevel('root');
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // DETAIL PANEL
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    var skillInfo = {
+      rust: { title: 'Rust', subtitle: 'Technology / Systems', description: 'A systems programming language focused on safety, speed, and concurrency. Rust\'s ownership model guarantees memory safety without garbage collection.' },
+      python: { title: 'Python', subtitle: 'Technology / General', description: 'A versatile, high-level programming language known for its readability and broad ecosystem. Widely used in data science, web development, and automation.' },
+      llm: { title: 'LLM Fine-tuning', subtitle: 'Technology / AI', description: 'The process of customizing pre-trained language models for specific tasks or domains through targeted training on specialized datasets.' },
+      agents: { title: 'Agent Patterns', subtitle: 'Technology / AI', description: 'Design patterns for building autonomous AI agents that can perceive, reason, and act to accomplish complex goals.' },
+      options: { title: 'Options Trading', subtitle: 'Finance / Derivatives', description: 'Financial contracts that give the right, but not obligation, to buy or sell assets at predetermined prices. Key to hedging and speculation strategies.' },
+      dcf: { title: 'DCF Analysis', subtitle: 'Finance / Valuation', description: 'Discounted Cash Flow analysis estimates investment value by projecting future cash flows and discounting them to present value.' },
+      neuro: { title: 'Neuroscience', subtitle: 'Health / Brain', description: 'The scientific study of the nervous system, exploring how neural circuits give rise to cognition, behavior, and consciousness.' }
+    };
+
+    function showDetailPanel(skillNode) {
+      var skill = skillNode.dataset.skill;
+      var info = skillInfo[skill] || { title: skill, subtitle: 'Unknown', description: 'Details not available.' };
+
+      document.getElementById('panel-title').textContent = info.title;
+      document.getElementById('panel-subtitle').textContent = info.subtitle;
+      document.getElementById('panel-description').textContent = info.description;
+
+      detailPanel.classList.add('visible');
+    }
+
+    // Hide panel when clicking elsewhere
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.skill-node') && !e.target.closest('.detail-panel')) {
+        detailPanel.classList.remove('visible');
+      }
+    });
+
+    // Panel action button
+    document.getElementById('panel-action').addEventListener('click', function() {
+      // Zoom deeper
+      var rect = document.querySelector('.zoom-viewport').getBoundingClientRect();
+      zoomAtPoint(rect.width / 2, rect.height / 2, -300);
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // ZOOM DOT CLICKS
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    document.querySelectorAll('.zoom-dot').forEach(function(dot) {
+      dot.addEventListener('click', function() {
+        var level = parseInt(this.dataset.level);
+        var targetScales = [0.5, 1, 2, 4, 6];
+
+        zoomContainer.classList.add('animating');
+        state.scale = targetScales[level];
+        applyTransform();
+        setTimeout(function() { zoomContainer.classList.remove('animating'); }, 600);
+      });
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // INITIALIZE
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    applyTransform();
+    updateBreadcrumb([{ label: 'All Knowledge', level: 'root' }]);
+  </script>
+</body>
+</html>

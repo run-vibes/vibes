@@ -3,42 +3,127 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ActivityFeed — Event Stream</title>
+  <title>vibes — Activity Feed</title>
   <link rel="stylesheet" href="shared.css">
   <style>
     /* ═══════════════════════════════════════════════════════════════════════
        ACTIVITY FEED — Real-time event stream with filtering and animations
        ═══════════════════════════════════════════════════════════════════════ */
 
-    .prototype-container {
-      max-width: 1100px;
+    .dashboard {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      max-width: 1600px;
       margin: 0 auto;
-      padding: var(--space-6);
+      padding: var(--space-4);
+      gap: var(--space-4);
     }
 
-    .prototype-header {
-      margin-bottom: var(--space-8);
-      padding-bottom: var(--space-4);
-      border-bottom: 1px solid var(--border-subtle);
+    /* ─── Header Bar ─── */
+    .header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-3) var(--space-4);
+      background: var(--bg-panel);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      position: relative;
     }
 
-    .prototype-title {
+    .header-bar::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: var(--space-4);
+      right: var(--space-4);
+      height: 1px;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        var(--gold-dim) 20%,
+        var(--gold-primary) 50%,
+        var(--gold-dim) 80%,
+        transparent 100%
+      );
+      opacity: 0.4;
+    }
+
+    .logo {
       font-family: var(--font-display);
-      font-size: 28px;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--gold-primary);
+      text-shadow: 0 0 20px rgba(212, 168, 75, 0.4), 0 0 40px rgba(212, 168, 75, 0.2);
+      letter-spacing: 0.08em;
+      text-transform: lowercase;
+    }
+
+    .logo-tagline {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      color: var(--text-tertiary);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-left: var(--space-4);
+      padding-left: var(--space-4);
+      border-left: 1px solid var(--border-light);
+    }
+
+    .header-nav {
+      display: flex;
+      gap: var(--space-2);
+    }
+
+    .nav-item {
+      font-size: 11px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-sm);
+      transition: all 0.15s ease;
+    }
+
+    .nav-item:hover {
+      color: var(--text-primary);
+      background: var(--bg-surface);
+    }
+
+    .nav-item.active {
+      color: var(--phosphor-green);
+      background: rgba(57, 255, 20, 0.08);
+    }
+
+    /* ─── Page Header ─── */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-3) var(--space-4);
+      background: var(--bg-panel);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+    }
+
+    .page-title {
+      font-family: var(--font-display);
+      font-size: 18px;
       font-weight: 700;
       color: var(--phosphor-green);
       text-shadow: var(--glow-phosphor);
-      margin-bottom: var(--space-2);
     }
 
-    .prototype-desc {
-      font-size: 13px;
-      color: var(--text-secondary);
-      line-height: 1.6;
+    .page-desc {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-left: var(--space-4);
+      padding-left: var(--space-4);
+      border-left: 1px solid var(--border-light);
     }
 
+    /* ─── Section Labels ─── */
     .section {
-      margin-bottom: var(--space-8);
+      margin-bottom: var(--space-4);
     }
 
     .section-label {
@@ -473,14 +558,27 @@
 </head>
 <body class="scanlines crt-vignette">
 
-  <div class="prototype-container">
-    <header class="prototype-header">
-      <h1 class="prototype-title">ActivityFeed</h1>
-      <p class="prototype-desc">
-        The secondary zone shows a unified event stream with source badges, type indicators,
-        and real-time updates. New events slide in from the top with subtle glow effects.
-      </p>
+  <div class="dashboard">
+    <!-- Header Bar -->
+    <header class="header-bar">
+      <div class="flex items-center">
+        <span class="logo">vibes</span>
+        <span class="logo-tagline">Phosphor Mission Control</span>
+      </div>
+      <nav class="header-nav">
+        <a href="01-full-dashboard.html" class="nav-item">Dashboard</a>
+        <a href="#" class="nav-item active">Firehose</a>
+        <a href="06-expanded-dashboard.html" class="nav-item">Sessions</a>
+        <a href="#" class="nav-item">Groove</a>
+        <a href="07-command-palette.html" class="nav-item">Debug</a>
+      </nav>
     </header>
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1 class="page-title">ActivityFeed</h1>
+      <span class="page-desc">Real-time event stream with filtering and animations</span>
+    </div>
 
     <!-- Full Activity Feed -->
     <section class="section">

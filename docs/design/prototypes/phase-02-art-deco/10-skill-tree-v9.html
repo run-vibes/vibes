@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Knowledge Universe — Two Realms</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    /* ═══════════════════════════════════════════════════════════════════════════
+       TWO REALMS — Distinct Universes Connected by a Portal
+
+       SPACE REALM (zoomed out): Vast, distant, WHO has knowledge
+       SKILL REALM (zoomed in): Achievable, gamified, WHAT you know
+
+       Transition: "Gradual, then all of a sudden" — portal teleportation
+       ═══════════════════════════════════════════════════════════════════════════ */
+
+    :root {
+      /* Realm visibility — sharp transition at threshold */
+      --space-realm-opacity: 1;
+      --skill-realm-opacity: 0;
+      --transition-progress: 0; /* 0 = space, 1 = skill */
+
+      /* Multiplayer colors */
+      --user-mentor: #3d8b8b;
+      --user-peer: #8b5a8b;
+      --user-team: #d4a84b;
+      --user-ai: #c45a5a;
+
+      /* Entity colors */
+      --entity-corp: #4a90d9;
+      --entity-university: #e8a840;
+      --entity-government: #a0b0c0;
+      --entity-influencer: #c86dd7;
+      --entity-nonprofit: #5dc97a;
+    }
+
+    body {
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    .zoom-viewport {
+      position: fixed;
+      inset: 0;
+      background: var(--bg-void);
+      overflow: hidden;
+    }
+
+    .zoom-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform-origin: center center;
+      cursor: grab;
+    }
+
+    .zoom-container:active {
+      cursor: grabbing;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       SPACE REALM — The Cosmic View (WHO has knowledge)
+       Vast distances, orbital dynamics, feeling of scale
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .space-realm {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 4000px;
+      height: 4000px;
+      opacity: var(--space-realm-opacity);
+      transition: opacity 0.15s ease-out; /* Fast transition for "sudden" feel */
+      pointer-events: auto;
+    }
+
+    .space-realm.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Star field background */
+    .star-field {
+      position: absolute;
+      inset: -100px;
+      pointer-events: none;
+    }
+
+    .star-layer {
+      position: absolute;
+      inset: 0;
+    }
+
+    .star-layer-1 {
+      background-image:
+        radial-gradient(1px 1px at 10% 20%, rgba(255, 255, 255, 0.8) 50%, transparent 50%),
+        radial-gradient(1px 1px at 30% 70%, rgba(255, 255, 255, 0.6) 50%, transparent 50%),
+        radial-gradient(1px 1px at 50% 40%, rgba(255, 255, 255, 0.7) 50%, transparent 50%),
+        radial-gradient(1px 1px at 70% 85%, rgba(255, 255, 255, 0.5) 50%, transparent 50%),
+        radial-gradient(1px 1px at 90% 30%, rgba(255, 255, 255, 0.8) 50%, transparent 50%),
+        radial-gradient(1px 1px at 15% 55%, rgba(212, 168, 75, 0.4) 50%, transparent 50%),
+        radial-gradient(1px 1px at 85% 65%, rgba(61, 139, 139, 0.4) 50%, transparent 50%);
+      animation: star-drift-1 120s linear infinite;
+    }
+
+    .star-layer-2 {
+      background-image:
+        radial-gradient(1.5px 1.5px at 25% 35%, rgba(255, 255, 255, 0.5) 50%, transparent 50%),
+        radial-gradient(1.5px 1.5px at 55% 15%, rgba(255, 255, 255, 0.4) 50%, transparent 50%),
+        radial-gradient(1.5px 1.5px at 75% 55%, rgba(255, 255, 255, 0.5) 50%, transparent 50%),
+        radial-gradient(1.5px 1.5px at 5% 85%, rgba(255, 255, 255, 0.4) 50%, transparent 50%);
+      animation: star-drift-2 180s linear infinite;
+    }
+
+    @keyframes star-drift-1 {
+      from { transform: translate(0, 0); }
+      to { transform: translate(-20px, 10px); }
+    }
+
+    @keyframes star-drift-2 {
+      from { transform: translate(0, 0); }
+      to { transform: translate(15px, -8px); }
+    }
+
+    /* Distant galaxies — external knowledge sources */
+    .distant-galaxies {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .galaxy {
+      position: absolute;
+      cursor: pointer;
+      pointer-events: auto;
+      transition: transform 0.3s ease, filter 0.3s ease;
+    }
+
+    .galaxy:hover {
+      transform: scale(1.2);
+      filter: brightness(1.4);
+    }
+
+    .galaxy-body {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .galaxy-icon {
+      font-size: 12px;
+      opacity: 0.7;
+    }
+
+    .galaxy-glow {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      box-shadow: 0 0 12px currentColor, 0 0 24px currentColor;
+    }
+
+    .galaxy-label {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .galaxy:hover .galaxy-label {
+      opacity: 1;
+    }
+
+    .galaxy-type {
+      font-size: 8px;
+      color: var(--text-muted);
+    }
+
+    /* Galaxy type colors */
+    .galaxy.corp { color: var(--entity-corp); }
+    .galaxy.univ { color: var(--entity-university); }
+    .galaxy.gov { color: var(--entity-government); }
+    .galaxy.influencer { color: var(--entity-influencer); }
+    .galaxy.nonprofit { color: var(--entity-nonprofit); }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       YOUR SOLAR SYSTEM — The center of Space Realm
+       Art Deco sun with orbiting collaborators
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .solar-system {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 1000px;
+      height: 1000px;
+    }
+
+    /* Orbital paths */
+    .orbit-path {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      border: 1px dashed rgba(255, 255, 255, 0.08);
+      pointer-events: none;
+    }
+
+    .orbit-path.orbit-1 { width: 300px; height: 300px; }
+    .orbit-path.orbit-2 { width: 480px; height: 480px; }
+    .orbit-path.orbit-3 { width: 700px; height: 700px; }
+
+    /* Orbiting collaborators */
+    .orbit-ring {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .orbit-ring.ring-1 {
+      width: 300px;
+      height: 300px;
+      animation: orbit-spin 30s linear infinite;
+    }
+    .orbit-ring.ring-2 {
+      width: 480px;
+      height: 480px;
+      animation: orbit-spin 50s linear infinite reverse;
+    }
+    .orbit-ring.ring-3 {
+      width: 700px;
+      height: 700px;
+      animation: orbit-spin 80s linear infinite;
+    }
+
+    @keyframes orbit-spin {
+      from { transform: translate(-50%, -50%) rotate(0deg); }
+      to { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+    .collaborator {
+      position: absolute;
+      border-radius: 50%;
+      cursor: pointer;
+      pointer-events: auto;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .collaborator::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+    }
+
+    .collaborator:hover {
+      transform: scale(2);
+      box-shadow: 0 0 20px currentColor;
+    }
+
+    .collaborator.mentor { background: var(--user-mentor); color: var(--user-mentor); }
+    .collaborator.peer { background: var(--user-peer); color: var(--user-peer); }
+    .collaborator.team { background: var(--user-team); color: var(--user-team); }
+    .collaborator.ai { background: var(--user-ai); color: var(--user-ai); }
+
+    /* Position collaborators on orbits */
+    .ring-1 .collaborator:nth-child(1) { width: 14px; height: 14px; top: -7px; left: calc(50% - 7px); }
+    .ring-1 .collaborator:nth-child(2) { width: 12px; height: 12px; bottom: 15%; right: 10%; }
+    .ring-2 .collaborator:nth-child(1) { width: 10px; height: 10px; top: 20%; right: 5%; }
+    .ring-2 .collaborator:nth-child(2) { width: 8px; height: 8px; bottom: 30%; left: 8%; }
+    .ring-2 .collaborator:nth-child(3) { width: 10px; height: 10px; top: 45%; left: 2%; }
+    .ring-3 .collaborator:nth-child(1) { width: 8px; height: 8px; top: 10%; left: 35%; }
+    .ring-3 .collaborator:nth-child(2) { width: 6px; height: 6px; bottom: 20%; right: 25%; }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       THE SUN — Art Deco Knowledge Core (V7 style)
+       This is the portal between realms
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .knowledge-sun {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 120px;
+      height: 120px;
+      cursor: pointer;
+      z-index: 10;
+    }
+
+    .sun-corona {
+      position: absolute;
+      inset: -50px;
+      background: radial-gradient(circle,
+        rgba(212, 168, 75, 0.2) 0%,
+        rgba(212, 168, 75, 0.1) 30%,
+        rgba(212, 168, 75, 0.03) 60%,
+        transparent 100%
+      );
+      border-radius: 50%;
+      animation: corona-pulse 6s ease-in-out infinite;
+    }
+
+    @keyframes corona-pulse {
+      0%, 100% { transform: scale(1); opacity: 0.7; }
+      50% { transform: scale(1.2); opacity: 1; }
+    }
+
+    .sun-outer-ring {
+      position: absolute;
+      inset: -8px;
+      border: 2px solid var(--gold-muted);
+      border-radius: 50%;
+      opacity: 0.6;
+    }
+
+    .sun-core {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle,
+        rgba(232, 196, 90, 0.95) 0%,
+        rgba(212, 168, 75, 0.85) 40%,
+        rgba(180, 140, 60, 0.7) 70%,
+        rgba(150, 110, 40, 0.4) 100%
+      );
+      border-radius: 50%;
+      border: 3px solid var(--gold-primary);
+      box-shadow:
+        0 0 40px rgba(212, 168, 75, 0.5),
+        0 0 80px rgba(212, 168, 75, 0.3),
+        inset 0 0 30px rgba(255, 255, 255, 0.1);
+      animation: sun-glow 4s ease-in-out infinite;
+    }
+
+    @keyframes sun-glow {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow:
+          0 0 40px rgba(212, 168, 75, 0.5),
+          0 0 80px rgba(212, 168, 75, 0.3),
+          inset 0 0 30px rgba(255, 255, 255, 0.1);
+      }
+      50% {
+        transform: scale(1.03);
+        box-shadow:
+          0 0 50px rgba(212, 168, 75, 0.6),
+          0 0 100px rgba(212, 168, 75, 0.4),
+          inset 0 0 40px rgba(255, 255, 255, 0.15);
+      }
+    }
+
+    /* Art Deco geometric accent */
+    .sun-deco {
+      position: absolute;
+      inset: 15px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+    }
+
+    .sun-label {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+
+    .sun-label-text {
+      font-family: var(--font-display);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--bg-void);
+      text-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .sun-label-sub {
+      font-family: var(--font-condensed);
+      font-size: 8px;
+      color: rgba(0, 0, 0, 0.5);
+      margin-top: 2px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       SKILL REALM — The Knowledge Constellation (WHAT you know)
+       Achievable, gamified, video game feel
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .skill-realm {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 2000px;
+      height: 2000px;
+      opacity: var(--skill-realm-opacity);
+      transition: opacity 0.15s ease-out;
+      pointer-events: none;
+    }
+
+    .skill-realm.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* Connection lines to domains */
+    .domain-connections {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .connection-line {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      height: 2px;
+      background: linear-gradient(90deg,
+        var(--gold-primary) 0%,
+        rgba(212, 168, 75, 0.3) 50%,
+        rgba(212, 168, 75, 0.1) 100%
+      );
+      transform-origin: left center;
+    }
+
+    /* Center hub in skill realm */
+    .skill-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 180px;
+      height: 180px;
+      z-index: 20;
+    }
+
+    .skill-center-core {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
+      border: 3px solid var(--gold-primary);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--glow-gold-bright), inset 0 0 50px rgba(212, 168, 75, 0.05);
+      cursor: pointer;
+      transition: all 0.4s ease;
+      animation: center-pulse 4s ease-in-out infinite;
+    }
+
+    @keyframes center-pulse {
+      0%, 100% {
+        box-shadow: var(--glow-gold-bright), inset 0 0 50px rgba(212, 168, 75, 0.05);
+      }
+      50% {
+        box-shadow: 0 0 50px rgba(232, 196, 90, 0.4), 0 0 100px rgba(212, 168, 75, 0.2), inset 0 0 50px rgba(212, 168, 75, 0.08);
+      }
+    }
+
+    .skill-center-icon {
+      font-size: 28px;
+      color: var(--gold-primary);
+      margin-bottom: var(--space-2);
+    }
+
+    .skill-center-label {
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+      text-align: center;
+    }
+
+    .skill-center-stats {
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-top: 4px;
+    }
+
+    /* Orbiting knowledge particles in skill realm */
+    .knowledge-orbit {
+      position: absolute;
+      inset: -30px;
+      border-radius: 50%;
+      animation: knowledge-spin 20s linear infinite;
+    }
+
+    @keyframes knowledge-spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .knowledge-particle {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background: var(--gold-muted);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--gold-muted);
+    }
+
+    .knowledge-particle:nth-child(1) { top: -3px; left: calc(50% - 3px); }
+    .knowledge-particle:nth-child(2) { bottom: 10%; right: 5%; background: var(--accent-teal); box-shadow: 0 0 8px var(--accent-teal); }
+    .knowledge-particle:nth-child(3) { bottom: 20%; left: 8%; }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       DOMAIN CLUSTERS — Skill Realm Level 1
+       Arranged in constellation around center
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .domain-cluster {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 10;
+    }
+
+    .domain-frame {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-6);
+      background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
+      border: 2px solid var(--border-medium);
+      transition: all 0.3s ease;
+      /* Octagonal clip */
+      clip-path: polygon(
+        25% 0%, 75% 0%,
+        100% 25%, 100% 75%,
+        75% 100%, 25% 100%,
+        0% 75%, 0% 25%
+      );
+    }
+
+    .domain-frame::before {
+      content: '';
+      position: absolute;
+      inset: 6px;
+      background: radial-gradient(circle at center, rgba(212, 168, 75, 0.04) 0%, transparent 70%);
+      clip-path: inherit;
+      pointer-events: none;
+    }
+
+    .domain-cluster:hover .domain-frame {
+      border-color: var(--gold-primary);
+      background: linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-elevated) 100%);
+      box-shadow: var(--glow-gold);
+      transform: scale(1.08);
+    }
+
+    .domain-icon {
+      font-size: 24px;
+      margin-bottom: var(--space-2);
+      color: var(--gold-muted);
+    }
+
+    .domain-label {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-primary);
+      text-align: center;
+    }
+
+    .domain-meta {
+      display: flex;
+      gap: var(--space-3);
+      margin-top: var(--space-2);
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    .domain-meta-value {
+      color: var(--gold-muted);
+      font-weight: 600;
+    }
+
+    /* Size variants */
+    .domain-cluster.size-xl .domain-frame { width: 160px; height: 160px; }
+    .domain-cluster.size-lg .domain-frame { width: 140px; height: 140px; }
+    .domain-cluster.size-md .domain-frame { width: 120px; height: 120px; }
+    .domain-cluster.size-sm .domain-frame { width: 100px; height: 100px; }
+
+    /* State variants */
+    .domain-cluster.mastered .domain-frame {
+      border-color: var(--gold-muted);
+      box-shadow: var(--glow-gold);
+    }
+
+    .domain-cluster.learning .domain-frame {
+      border-color: var(--accent-teal-muted);
+    }
+
+    .domain-cluster.frontier .domain-frame {
+      border-color: var(--accent-teal-muted);
+      border-style: dashed;
+    }
+
+    .domain-cluster.frontier .domain-label {
+      color: var(--accent-teal);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       PORTAL TRANSITION EFFECT
+       Visual feedback when crossing between realms
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .portal-effect {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 100;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .portal-effect.active {
+      opacity: 1;
+      animation: portal-flash 0.4s ease-out;
+    }
+
+    @keyframes portal-flash {
+      0% {
+        transform: translate(-50%, -50%) scale(0.5);
+        box-shadow: 0 0 60px rgba(212, 168, 75, 0.8), 0 0 120px rgba(212, 168, 75, 0.4);
+      }
+      50% {
+        transform: translate(-50%, -50%) scale(2);
+        box-shadow: 0 0 100px rgba(212, 168, 75, 1), 0 0 200px rgba(212, 168, 75, 0.6);
+      }
+      100% {
+        transform: translate(-50%, -50%) scale(3);
+        box-shadow: 0 0 0 rgba(212, 168, 75, 0), 0 0 0 rgba(212, 168, 75, 0);
+        opacity: 0;
+      }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       CONTROLS & UI
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .controls {
+      position: fixed;
+      top: 50%;
+      right: var(--space-4);
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      z-index: 1000;
+    }
+
+    .control-btn {
+      width: 40px;
+      height: 40px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      border-radius: 4px;
+      color: var(--text-secondary);
+      font-family: var(--font-display);
+      font-size: 18px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .control-btn:hover {
+      border-color: var(--gold-muted);
+      color: var(--gold-primary);
+      box-shadow: var(--glow-gold);
+    }
+
+    .zoom-display {
+      text-align: center;
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      color: var(--text-tertiary);
+      padding: var(--space-2) 0;
+    }
+
+    /* Realm indicator */
+    .realm-indicator {
+      position: fixed;
+      bottom: var(--space-6);
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+      padding: var(--space-3) var(--space-5);
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      border-radius: 8px;
+      z-index: 1000;
+    }
+
+    .realm-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--border-medium);
+      transition: all 0.3s ease;
+    }
+
+    .realm-dot.space.active {
+      background: var(--gold-primary);
+      box-shadow: 0 0 10px var(--gold-primary);
+    }
+
+    .realm-dot.skill.active {
+      background: var(--accent-teal);
+      box-shadow: 0 0 10px var(--accent-teal);
+    }
+
+    .realm-label {
+      font-family: var(--font-display);
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+
+    .realm-name {
+      font-family: var(--font-display);
+      font-size: 14px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+      min-width: 100px;
+      text-align: center;
+    }
+
+    /* Legend */
+    .legend {
+      position: fixed;
+      top: var(--space-4);
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: var(--space-5);
+      padding: var(--space-3) var(--space-5);
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      border-radius: 8px;
+      z-index: 1000;
+    }
+
+    .legend-section {
+      display: flex;
+      gap: var(--space-4);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .legend-divider {
+      width: 1px;
+      background: var(--border-medium);
+      margin: 0 var(--space-2);
+    }
+
+    /* Legend for skill realm */
+    .legend.skill-legend .legend-section {
+      gap: var(--space-4);
+    }
+  </style>
+</head>
+<body>
+  <div class="zoom-viewport">
+    <div class="zoom-container" id="zoom-container">
+
+      <!-- ════════════════════════════════════════════════════════════════════
+           SPACE REALM — WHO has knowledge
+           ════════════════════════════════════════════════════════════════════ -->
+      <div class="space-realm" id="space-realm">
+
+        <!-- Star field background -->
+        <div class="star-field">
+          <div class="star-layer star-layer-1"></div>
+          <div class="star-layer star-layer-2"></div>
+        </div>
+
+        <!-- Distant galaxies -->
+        <div class="distant-galaxies">
+          <!-- Corporations -->
+          <div class="galaxy corp" style="top: 15%; left: 20%;">
+            <div class="galaxy-body">
+              <span class="galaxy-icon">&#x1F512;</span>
+              <div class="galaxy-glow"></div>
+              <span class="galaxy-label">Google<br><span class="galaxy-type">Corporation</span></span>
+            </div>
+          </div>
+          <div class="galaxy corp" style="top: 25%; left: 75%;">
+            <div class="galaxy-body">
+              <span class="galaxy-icon">&#x1F512;</span>
+              <div class="galaxy-glow"></div>
+              <span class="galaxy-label">Microsoft<br><span class="galaxy-type">Corporation</span></span>
+            </div>
+          </div>
+          <div class="galaxy corp" style="top: 70%; left: 85%;">
+            <div class="galaxy-body">
+              <span class="galaxy-icon">&#x1F512;</span>
+              <div class="galaxy-glow"></div>
+              <span class="galaxy-label">Stripe<br><span class="galaxy-type">Corporation</span></span>
+            </div>
+          </div>
+
+          <!-- Universities -->
+          <div class="galaxy univ" style="top: 10%; left: 55%;">
+            <div class="galaxy-body">
+              <span class="galaxy-icon">&#x1F512;</span>
+              <div class="galaxy-glow"></div>
+              <span class="galaxy-label">MIT<br><span class="galaxy-type">University</span></span>
+            </div>
+          </div>
+          <div class="galaxy univ" style="top: 85%; left: 30%;">
+            <div class="galaxy-body">
+              <span class="galaxy-icon">&#x1F512;</span>
+              <div class="galaxy-glow"></div>
+              <span class="galaxy-label">Stanford<br><span class="galaxy-type">University</span></span>
+            </div>
+          </div>
+
+          <!-- Influencers -->
+          <div class="galaxy influencer" style="top: 30%; left: 12%;">
+            <div class="galaxy-body">
+              <span class="galaxy-icon">&#x1F512;</span>
+              <div class="galaxy-glow"></div>
+              <span class="galaxy-label">Karpathy<br><span class="galaxy-type">Influencer</span></span>
+            </div>
+          </div>
+          <div class="galaxy influencer" style="top: 75%; left: 15%;">
+            <div class="galaxy-body">
+              <span class="galaxy-icon">&#x1F512;</span>
+              <div class="galaxy-glow"></div>
+              <span class="galaxy-label">Fireship<br><span class="galaxy-type">Influencer</span></span>
+            </div>
+          </div>
+
+          <!-- Nonprofits (open) -->
+          <div class="galaxy nonprofit" style="top: 20%; left: 88%;">
+            <div class="galaxy-body">
+              <span class="galaxy-icon">&#x27E1;</span>
+              <div class="galaxy-glow"></div>
+              <span class="galaxy-label">Wikipedia<br><span class="galaxy-type">Open</span></span>
+            </div>
+          </div>
+          <div class="galaxy nonprofit" style="top: 88%; left: 65%;">
+            <div class="galaxy-body">
+              <span class="galaxy-icon">&#x27E1;</span>
+              <div class="galaxy-glow"></div>
+              <span class="galaxy-label">Linux Foundation<br><span class="galaxy-type">Open</span></span>
+            </div>
+          </div>
+
+          <!-- Government -->
+          <div class="galaxy gov" style="top: 8%; left: 35%;">
+            <div class="galaxy-body">
+              <span class="galaxy-icon">&#x1F512;</span>
+              <div class="galaxy-glow"></div>
+              <span class="galaxy-label">NASA<br><span class="galaxy-type">Government</span></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Your solar system -->
+        <div class="solar-system">
+          <!-- Orbital paths -->
+          <div class="orbit-path orbit-1"></div>
+          <div class="orbit-path orbit-2"></div>
+          <div class="orbit-path orbit-3"></div>
+
+          <!-- Orbiting collaborators -->
+          <div class="orbit-ring ring-1">
+            <div class="collaborator team" title="Sarah Chen"></div>
+            <div class="collaborator ai" title="Claude"></div>
+          </div>
+          <div class="orbit-ring ring-2">
+            <div class="collaborator peer" title="Marcus Webb"></div>
+            <div class="collaborator team" title="Vibes Team"></div>
+            <div class="collaborator mentor" title="Alex Kim"></div>
+          </div>
+          <div class="orbit-ring ring-3">
+            <div class="collaborator peer" title="Robin Patel"></div>
+            <div class="collaborator peer" title="Casey Nguyen"></div>
+          </div>
+
+          <!-- The Sun — Portal to Skill Realm -->
+          <div class="knowledge-sun" id="knowledge-sun">
+            <div class="sun-corona"></div>
+            <div class="sun-outer-ring"></div>
+            <div class="sun-core">
+              <div class="sun-deco"></div>
+              <div class="sun-label">
+                <div class="sun-label-text">Your Knowledge</div>
+                <div class="sun-label-sub">345 concepts mastered</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════════════════
+           SKILL REALM — WHAT you know
+           ════════════════════════════════════════════════════════════════════ -->
+      <div class="skill-realm" id="skill-realm">
+
+        <!-- Connection lines to domains -->
+        <svg class="domain-connections" viewBox="0 0 2000 2000">
+          <!-- Lines from center to each domain -->
+          <line x1="1000" y1="1000" x2="1000" y2="650" stroke="url(#line-gradient)" stroke-width="2"/>
+          <line x1="1000" y1="1000" x2="650" y2="800" stroke="url(#line-gradient)" stroke-width="2"/>
+          <line x1="1000" y1="1000" x2="1350" y2="800" stroke="url(#line-gradient)" stroke-width="2"/>
+          <line x1="1000" y1="1000" x2="650" y2="1200" stroke="url(#line-gradient)" stroke-width="2"/>
+          <line x1="1000" y1="1000" x2="1350" y2="1200" stroke="url(#line-gradient)" stroke-width="2"/>
+          <line x1="1000" y1="1000" x2="1000" y2="1350" stroke="url(#line-gradient)" stroke-width="2"/>
+          <defs>
+            <linearGradient id="line-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="rgba(212, 168, 75, 0.8)"/>
+              <stop offset="50%" stop-color="rgba(212, 168, 75, 0.3)"/>
+              <stop offset="100%" stop-color="rgba(212, 168, 75, 0.1)"/>
+            </linearGradient>
+          </defs>
+        </svg>
+
+        <!-- Center hub -->
+        <div class="skill-center">
+          <div class="knowledge-orbit">
+            <div class="knowledge-particle"></div>
+            <div class="knowledge-particle"></div>
+            <div class="knowledge-particle"></div>
+          </div>
+          <div class="skill-center-core">
+            <div class="skill-center-icon">&#x25C7;</div>
+            <div class="skill-center-label">Your Knowledge</div>
+            <div class="skill-center-stats">261 discoveries</div>
+          </div>
+        </div>
+
+        <!-- Domain clusters arranged in constellation -->
+        <div class="domain-cluster mastered size-xl" style="top: 650px; left: 1000px;">
+          <div class="domain-frame">
+            <div class="domain-icon">&#x2699;</div>
+            <div class="domain-label">Technology</div>
+            <div class="domain-meta">
+              <span><span class="domain-meta-value">52</span> skills</span>
+              <span>+4 <span style="color: var(--accent-teal)">new</span></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="domain-cluster mastered size-lg" style="top: 800px; left: 650px;">
+          <div class="domain-frame">
+            <div class="domain-icon">&#x1F9EA;</div>
+            <div class="domain-label">Science</div>
+            <div class="domain-meta">
+              <span><span class="domain-meta-value">41</span> skills</span>
+              <span>+2 <span style="color: var(--accent-teal)">new</span></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="domain-cluster learning size-lg" style="top: 800px; left: 1350px;">
+          <div class="domain-frame">
+            <div class="domain-icon">&#x1F3A8;</div>
+            <div class="domain-label">Health</div>
+            <div class="domain-meta">
+              <span><span class="domain-meta-value">31</span> skills</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="domain-cluster mastered size-md" style="top: 1200px; left: 650px;">
+          <div class="domain-frame">
+            <div class="domain-icon">&#x1F6A9;</div>
+            <div class="domain-label">Business</div>
+            <div class="domain-meta">
+              <span><span class="domain-meta-value">28</span> skills</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="domain-cluster frontier size-md" style="top: 1200px; left: 1350px;">
+          <div class="domain-frame">
+            <div class="domain-icon">&#x2605;</div>
+            <div class="domain-label">Creative</div>
+            <div class="domain-meta">
+              <span><span class="domain-meta-value">24</span> skills</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="domain-cluster mastered size-lg" style="top: 1350px; left: 1000px;">
+          <div class="domain-frame">
+            <div class="domain-icon">&#x1F4B0;</div>
+            <div class="domain-label">Finance</div>
+            <div class="domain-meta">
+              <span><span class="domain-meta-value">38</span> skills</span>
+              <span>+5 <span style="color: var(--accent-teal)">new</span></span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Portal transition effect -->
+    <div class="portal-effect" id="portal-effect"></div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <button class="control-btn" id="zoom-in" title="Zoom In">+</button>
+    <button class="control-btn" id="zoom-out" title="Zoom Out">-</button>
+    <div class="zoom-display" id="zoom-display">100%</div>
+    <button class="control-btn" id="reset-view" title="Reset View">&#x2302;</button>
+  </div>
+
+  <!-- Realm indicator -->
+  <div class="realm-indicator">
+    <div class="realm-dot space active" id="dot-space"></div>
+    <div class="realm-dot skill" id="dot-skill"></div>
+    <div class="realm-name" id="realm-name">Space</div>
+  </div>
+
+  <!-- Legend - Space Realm -->
+  <div class="legend" id="legend-space">
+    <div class="legend-section">
+      <div class="legend-item"><div class="legend-dot" style="background: var(--user-mentor);"></div>Mentor</div>
+      <div class="legend-item"><div class="legend-dot" style="background: var(--user-peer);"></div>Peer</div>
+      <div class="legend-item"><div class="legend-dot" style="background: var(--user-team);"></div>Team</div>
+      <div class="legend-item"><div class="legend-dot" style="background: var(--user-ai);"></div>AI</div>
+    </div>
+    <div class="legend-divider"></div>
+    <div class="legend-section">
+      <div class="legend-item"><div class="legend-dot" style="background: var(--entity-corp);"></div>Corp</div>
+      <div class="legend-item"><div class="legend-dot" style="background: var(--entity-university);"></div>Univ</div>
+      <div class="legend-item"><div class="legend-dot" style="background: var(--entity-government);"></div>Gov</div>
+      <div class="legend-item"><div class="legend-dot" style="background: var(--entity-influencer);"></div>Creator</div>
+      <div class="legend-item"><div class="legend-dot" style="background: var(--entity-nonprofit);"></div>Open</div>
+    </div>
+  </div>
+
+  <!-- Legend - Skill Realm (hidden initially) -->
+  <div class="legend skill-legend" id="legend-skill" style="display: none;">
+    <div class="legend-section">
+      <div class="legend-item"><div class="legend-dot" style="background: var(--gold-primary);"></div>Mastered</div>
+      <div class="legend-item"><div class="legend-dot" style="background: var(--accent-teal);"></div>Learning</div>
+      <div class="legend-item"><div class="legend-dot" style="background: var(--accent-teal); opacity: 0.5;"></div>Frontier</div>
+      <div class="legend-item"><div class="legend-dot" style="background: var(--text-muted);"></div>AI Discovered</div>
+    </div>
+  </div>
+
+  <script>
+    /* ═══════════════════════════════════════════════════════════════════════════
+       TWO REALMS — Portal Transition System
+       "Gradual, then all of a sudden"
+       ═══════════════════════════════════════════════════════════════════════════ */
+
+    const viewport = document.querySelector('.zoom-viewport');
+    const container = document.getElementById('zoom-container');
+    const spaceRealm = document.getElementById('space-realm');
+    const skillRealm = document.getElementById('skill-realm');
+    const portalEffect = document.getElementById('portal-effect');
+    const zoomDisplay = document.getElementById('zoom-display');
+    const dotSpace = document.getElementById('dot-space');
+    const dotSkill = document.getElementById('dot-skill');
+    const realmName = document.getElementById('realm-name');
+    const legendSpace = document.getElementById('legend-space');
+    const legendSkill = document.getElementById('legend-skill');
+
+    // State
+    let currentZoom = 0.6;
+    let targetZoom = 0.6;
+    let panX = 0;
+    let panY = 0;
+    let isPanning = false;
+    let startX, startY;
+    let currentRealm = 'space'; // 'space' or 'skill'
+
+    // PORTAL THRESHOLD — The moment of transition
+    const PORTAL_THRESHOLD = 1.8;
+    const PORTAL_WIDTH = 0.1; // How "sharp" the transition is
+
+    // Zoom limits
+    const ZOOM_MIN = 0.3;
+    const ZOOM_MAX = 8;
+
+    function updateTransform() {
+      container.style.transform = `translate(-50%, -50%) scale(${currentZoom}) translate(${panX}px, ${panY}px)`;
+      zoomDisplay.textContent = Math.round(currentZoom * 100) + '%';
+    }
+
+    function updateRealms() {
+      const prevRealm = currentRealm;
+
+      // Determine which realm we're in based on zoom
+      if (currentZoom < PORTAL_THRESHOLD - PORTAL_WIDTH) {
+        // Firmly in space realm
+        currentRealm = 'space';
+        spaceRealm.style.opacity = '1';
+        skillRealm.style.opacity = '0';
+        spaceRealm.style.pointerEvents = 'auto';
+        skillRealm.style.pointerEvents = 'none';
+      } else if (currentZoom > PORTAL_THRESHOLD + PORTAL_WIDTH) {
+        // Firmly in skill realm
+        currentRealm = 'skill';
+        spaceRealm.style.opacity = '0';
+        skillRealm.style.opacity = '1';
+        spaceRealm.style.pointerEvents = 'none';
+        skillRealm.style.pointerEvents = 'auto';
+      } else {
+        // In the portal zone — sharp crossfade
+        const progress = (currentZoom - (PORTAL_THRESHOLD - PORTAL_WIDTH)) / (PORTAL_WIDTH * 2);
+        const eased = easeInOutCubic(progress);
+
+        spaceRealm.style.opacity = 1 - eased;
+        skillRealm.style.opacity = eased;
+
+        // Disable pointer events during transition
+        spaceRealm.style.pointerEvents = 'none';
+        skillRealm.style.pointerEvents = 'none';
+
+        currentRealm = progress > 0.5 ? 'skill' : 'space';
+      }
+
+      // Update UI indicators
+      dotSpace.classList.toggle('active', currentRealm === 'space');
+      dotSkill.classList.toggle('active', currentRealm === 'skill');
+      realmName.textContent = currentRealm === 'space' ? 'Space' : 'Knowledge';
+
+      // Update legend visibility
+      legendSpace.style.display = currentRealm === 'space' ? 'flex' : 'none';
+      legendSkill.style.display = currentRealm === 'skill' ? 'flex' : 'none';
+
+      // Trigger portal effect on realm change
+      if (prevRealm !== currentRealm && Math.abs(currentZoom - PORTAL_THRESHOLD) < 0.3) {
+        triggerPortalEffect();
+      }
+    }
+
+    function easeInOutCubic(t) {
+      return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    }
+
+    function triggerPortalEffect() {
+      portalEffect.classList.remove('active');
+      void portalEffect.offsetWidth; // Force reflow
+      portalEffect.classList.add('active');
+      setTimeout(() => portalEffect.classList.remove('active'), 500);
+    }
+
+    function zoom(delta) {
+      targetZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, targetZoom + delta));
+      animateZoom();
+    }
+
+    function animateZoom() {
+      const diff = targetZoom - currentZoom;
+      if (Math.abs(diff) < 0.001) {
+        currentZoom = targetZoom;
+        updateTransform();
+        updateRealms();
+        return;
+      }
+
+      currentZoom += diff * 0.15;
+      updateTransform();
+      updateRealms();
+      requestAnimationFrame(animateZoom);
+    }
+
+    // Mouse wheel zoom
+    viewport.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const delta = -e.deltaY * 0.001;
+      zoom(delta);
+    }, { passive: false });
+
+    // Pan with mouse drag
+    viewport.addEventListener('mousedown', (e) => {
+      isPanning = true;
+      startX = e.clientX - panX * currentZoom;
+      startY = e.clientY - panY * currentZoom;
+      container.style.cursor = 'grabbing';
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isPanning) return;
+      panX = (e.clientX - startX) / currentZoom;
+      panY = (e.clientY - startY) / currentZoom;
+      updateTransform();
+    });
+
+    window.addEventListener('mouseup', () => {
+      isPanning = false;
+      container.style.cursor = 'grab';
+    });
+
+    // Control buttons
+    document.getElementById('zoom-in').addEventListener('click', () => zoom(0.3));
+    document.getElementById('zoom-out').addEventListener('click', () => zoom(-0.3));
+    document.getElementById('reset-view').addEventListener('click', () => {
+      targetZoom = 0.6;
+      panX = 0;
+      panY = 0;
+      animateZoom();
+    });
+
+    // Click on sun to zoom into skill realm
+    document.getElementById('knowledge-sun').addEventListener('click', () => {
+      targetZoom = 2.5;
+      panX = 0;
+      panY = 0;
+      animateZoom();
+    });
+
+    // Initialize
+    updateTransform();
+    updateRealms();
+
+    console.log('Two Realms initialized. Zoom past', PORTAL_THRESHOLD, 'to enter Skill Realm.');
+  </script>
+</body>
+</html>

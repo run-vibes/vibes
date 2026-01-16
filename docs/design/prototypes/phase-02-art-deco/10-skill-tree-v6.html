@@ -1,0 +1,2502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Infinite Knowledge — Art Deco Command</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    /* ═══════════════════════════════════════════════════════════════════════════
+       INFINITE ZOOM VIEWPORT
+       Knowledge is fractal — each level reveals more depth
+       ═══════════════════════════════════════════════════════════════════════════ */
+
+    :root {
+      --spotlight-x: 50%;
+      --spotlight-y: 50%;
+      --spotlight-radius: 400px;
+      --spotlight-intensity: 0;
+      --blur-intensity: 0;
+    }
+
+    body {
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    .zoom-viewport {
+      position: fixed;
+      inset: 0;
+      background: var(--bg-void);
+      overflow: hidden;
+    }
+
+    /* Atmospheric depth layers */
+    .atmosphere {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .atmosphere::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 30% 40%, rgba(212, 168, 75, 0.03) 0%, transparent 50%),
+        radial-gradient(ellipse 50% 40% at 70% 60%, rgba(61, 139, 139, 0.02) 0%, transparent 50%);
+    }
+
+    /* Sunburst pattern */
+    .atmosphere::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 200%;
+      height: 200%;
+      background: repeating-conic-gradient(
+        from 0deg,
+        transparent 0deg 4deg,
+        rgba(212, 168, 75, 0.006) 4deg 5deg
+      );
+      transform: translate(-50%, -50%);
+      opacity: 0.5;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       SPOTLIGHT EFFECT — Automatic, Subtle Focus with Blur
+       Gradually appears as you zoom in, follows cursor
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .spotlight-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 100;
+      opacity: var(--spotlight-intensity);
+      transition: opacity 0.8s ease;
+    }
+
+    /* Darkening vignette */
+    .spotlight-layer::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        circle var(--spotlight-radius) at var(--spotlight-x) var(--spotlight-y),
+        transparent 0%,
+        transparent 70%,
+        rgba(7, 9, 13, 0.2) 85%,
+        rgba(7, 9, 13, 0.45) 95%,
+        rgba(7, 9, 13, 0.65) 100%
+      );
+    }
+
+    /* Subtle golden ring at spotlight edge */
+    .spotlight-layer::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        circle calc(var(--spotlight-radius) + 30px) at var(--spotlight-x) var(--spotlight-y),
+        transparent 0%,
+        transparent 88%,
+        rgba(212, 168, 75, 0.04) 94%,
+        transparent 100%
+      );
+    }
+
+    /* Blur layer - separate for performance */
+    .blur-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 99;
+      opacity: var(--blur-intensity);
+      transition: opacity 0.8s ease;
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      mask-image: radial-gradient(
+        circle var(--spotlight-radius) at var(--spotlight-x) var(--spotlight-y),
+        transparent 0%,
+        transparent 65%,
+        black 90%,
+        black 100%
+      );
+      -webkit-mask-image: radial-gradient(
+        circle var(--spotlight-radius) at var(--spotlight-x) var(--spotlight-y),
+        transparent 0%,
+        transparent 65%,
+        black 90%,
+        black 100%
+      );
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       ZOOM CONTAINER — Infinite Canvas
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .zoom-container {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      transform-origin: center center;
+      cursor: grab;
+      z-index: 2;
+    }
+
+    .zoom-container.dragging {
+      cursor: grabbing;
+    }
+
+    .zoom-container.animating {
+      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       KNOWLEDGE TREE — Root Level
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .knowledge-tree {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 2000px;
+      height: 2000px;
+    }
+
+    /* Connection Lines */
+    .connections-svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .connection-line {
+      stroke: var(--gold-dim);
+      stroke-width: 1.5;
+      fill: none;
+      opacity: 0.25;
+      transition: all 0.4s ease;
+    }
+
+    .connection-line.primary {
+      stroke: url(#gold-gradient);
+      stroke-width: 2.5;
+      opacity: 0.4;
+    }
+
+    .connection-line.highlighted {
+      stroke: var(--gold-primary);
+      stroke-width: 3;
+      opacity: 0.7;
+      filter: drop-shadow(0 0 4px rgba(212, 168, 75, 0.5));
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       CENTER NODE — "You Are Here" with ORBITING KNOWLEDGE BODIES
+       The number and speed of orbiting bodies reflects knowledge relative to world
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .center-node {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 180px;
+      height: 180px;
+      z-index: 20;
+    }
+
+    .center-core {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
+      border: 3px solid var(--gold-primary);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow:
+        var(--glow-gold-bright),
+        inset 0 0 50px rgba(212, 168, 75, 0.05);
+      cursor: pointer;
+      transition: all 0.4s ease;
+      animation: center-pulse 4s ease-in-out infinite;
+      z-index: 25;
+    }
+
+    @keyframes center-pulse {
+      0%, 100% {
+        box-shadow: var(--glow-gold-bright), inset 0 0 50px rgba(212, 168, 75, 0.05);
+      }
+      50% {
+        box-shadow: 0 0 50px rgba(232, 196, 90, 0.4), 0 0 100px rgba(212, 168, 75, 0.2), inset 0 0 50px rgba(212, 168, 75, 0.08);
+      }
+    }
+
+    .center-core:hover {
+      animation-play-state: paused;
+      transform: scale(1.08);
+    }
+
+    .center-label {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+      text-align: center;
+      margin-top: var(--space-2);
+    }
+
+    .center-stats {
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-top: 4px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       ORBITAL RINGS — Knowledge Bodies in Motion
+       Hover to slow, click to drill down
+       ═══════════════════════════════════════════════════════════════════════════ */
+
+    /* Invisible hover zone that encompasses all orbits */
+    .orbit-hover-zone {
+      position: absolute;
+      inset: -140px; /* Slightly larger than orbit-4 */
+      border-radius: 50%;
+      pointer-events: auto;
+      z-index: 1;
+    }
+
+    .orbit-ring {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 5; /* Above hover zone, below bodies */
+    }
+
+    /* Orbit rotation is controlled via JavaScript for smooth speed transitions */
+
+    .orbit-1 {
+      inset: -30px;
+      border: 1px solid rgba(212, 168, 75, 0.2);
+    }
+
+    .orbit-2 {
+      inset: -55px;
+      border: 1px solid rgba(61, 139, 139, 0.15);
+    }
+
+    .orbit-3 {
+      inset: -85px;
+      border: 1px dashed rgba(212, 168, 75, 0.1);
+    }
+
+    .orbit-4 {
+      inset: -120px;
+      border: 1px dotted rgba(255, 255, 255, 0.05);
+    }
+
+    /* Orbiting bodies - now interactive */
+    .orbit-body {
+      position: absolute;
+      border-radius: 50%;
+      box-shadow: 0 0 8px currentColor;
+      pointer-events: auto;
+      cursor: pointer;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      z-index: 10; /* Above the hover zone */
+    }
+
+    /* Larger invisible hit area for easier clicking */
+    .orbit-body::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 32px;
+      height: 32px;
+      min-width: 32px;
+      min-height: 32px;
+      border-radius: 50%;
+      /* Uncomment to debug hit area: */
+      /* background: rgba(255, 0, 0, 0.2); */
+    }
+
+    .orbit-body:hover {
+      transform: scale(2.5) !important;
+      box-shadow: 0 0 16px currentColor, 0 0 24px currentColor;
+    }
+
+    /* Elevate entire orbit ring when a body is hovered (so tooltip appears above center) */
+    .orbit-ring:has(.orbit-body:hover) {
+      z-index: 50 !important;
+    }
+
+    /* Tooltip on hover */
+    .orbit-body::after {
+      content: attr(data-label);
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%) scale(0);
+      font-family: var(--font-condensed);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      padding: 6px 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      color: var(--text-primary);
+      opacity: 0;
+      transition: all 0.2s ease;
+      pointer-events: none;
+      z-index: 200;
+    }
+
+    .orbit-body:hover::after {
+      /* Counter-scale and counter-rotate to stay readable regardless of orbit position */
+      transform: translateX(-50%) scale(0.4) rotate(var(--counter-rotate, 0deg));
+      opacity: 1;
+    }
+
+    /* Orbit 1 bodies - Mastered skills (gold, larger) */
+    .orbit-1 .body-1 {
+      width: 10px;
+      height: 10px;
+      background: var(--gold-primary);
+      top: -5px;
+      left: calc(50% - 5px);
+      color: rgba(212, 168, 75, 0.6);
+    }
+
+    .orbit-1 .body-2 {
+      width: 8px;
+      height: 8px;
+      background: var(--gold-muted);
+      bottom: 10%;
+      right: 5%;
+      color: rgba(212, 168, 75, 0.4);
+    }
+
+    .orbit-1 .body-3 {
+      width: 6px;
+      height: 6px;
+      background: var(--gold-dim);
+      bottom: 20%;
+      left: 8%;
+      color: rgba(212, 168, 75, 0.3);
+    }
+
+    /* Orbit 2 bodies - Active learning (teal, medium) */
+    .orbit-2 .body-1 {
+      width: 8px;
+      height: 8px;
+      background: var(--accent-teal);
+      top: 10%;
+      right: 5%;
+      color: rgba(61, 139, 139, 0.5);
+    }
+
+    .orbit-2 .body-2 {
+      width: 6px;
+      height: 6px;
+      background: var(--accent-teal-muted);
+      bottom: -3px;
+      left: calc(50% - 3px);
+      color: rgba(61, 139, 139, 0.4);
+    }
+
+    .orbit-2 .body-3 {
+      width: 7px;
+      height: 7px;
+      background: var(--accent-teal);
+      top: 50%;
+      left: -3px;
+      color: rgba(61, 139, 139, 0.4);
+    }
+
+    .orbit-2 .body-4 {
+      width: 5px;
+      height: 5px;
+      background: var(--accent-teal-muted);
+      top: 30%;
+      left: 15%;
+      color: rgba(61, 139, 139, 0.3);
+    }
+
+    /* Orbit 3 bodies - Discovery frontier (mixed, smaller) */
+    .orbit-3 .body-1 {
+      width: 6px;
+      height: 6px;
+      background: var(--accent-success);
+      top: 5%;
+      left: 30%;
+      color: rgba(77, 168, 77, 0.4);
+    }
+
+    .orbit-3 .body-2 {
+      width: 5px;
+      height: 5px;
+      background: var(--gold-dim);
+      bottom: 15%;
+      right: 20%;
+      color: rgba(212, 168, 75, 0.3);
+    }
+
+    .orbit-3 .body-3 {
+      width: 4px;
+      height: 4px;
+      background: var(--accent-teal-muted);
+      left: 5%;
+      top: 40%;
+      color: rgba(61, 139, 139, 0.3);
+    }
+
+    /* Orbit 4 bodies - Easter egg orbit (dim, smallest, no labels) */
+    .orbit-4 .body-1 {
+      width: 4px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.3);
+      top: 20%;
+      right: 10%;
+      color: rgba(255, 255, 255, 0.15);
+    }
+
+    .orbit-4 .body-2 {
+      width: 3px;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.2);
+      bottom: 25%;
+      left: 15%;
+      color: rgba(255, 255, 255, 0.1);
+    }
+
+    .orbit-4 .body-3 {
+      width: 3px;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.25);
+      top: 60%;
+      right: 25%;
+      color: rgba(255, 255, 255, 0.12);
+    }
+
+    .orbit-4 .body-4 {
+      width: 2px;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.15);
+      bottom: 40%;
+      left: 30%;
+      color: rgba(255, 255, 255, 0.08);
+    }
+
+    /* Orbit 4 bodies have no tooltip - they're the easter egg */
+    .orbit-4 .orbit-body::after {
+      display: none;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       DOMAIN CLUSTERS — Level 1
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .domain-cluster {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 10;
+    }
+
+    .domain-cluster.faded {
+      opacity: 0.15;
+      filter: blur(2px);
+    }
+
+    .domain-frame {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-6);
+      background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
+      border: 2px solid var(--border-medium);
+      transition: all 0.3s ease;
+      clip-path: polygon(
+        25% 0%, 75% 0%,
+        100% 25%, 100% 75%,
+        75% 100%, 25% 100%,
+        0% 75%, 0% 25%
+      );
+    }
+
+    /* Inner glow */
+    .domain-frame::before {
+      content: '';
+      position: absolute;
+      inset: 6px;
+      background: radial-gradient(circle at center, rgba(212, 168, 75, 0.04) 0%, transparent 70%);
+      clip-path: inherit;
+      pointer-events: none;
+    }
+
+    .domain-cluster:hover .domain-frame {
+      border-color: var(--gold-primary);
+      background: linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-elevated) 100%);
+      box-shadow: var(--glow-gold);
+      transform: scale(1.08);
+    }
+
+    .domain-cluster:hover .domain-frame::before {
+      background: radial-gradient(circle at center, rgba(212, 168, 75, 0.1) 0%, transparent 70%);
+    }
+
+    .domain-icon {
+      margin-bottom: var(--space-2);
+    }
+
+    .domain-label {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-primary);
+      text-align: center;
+    }
+
+    .domain-meta {
+      display: flex;
+      gap: var(--space-3);
+      margin-top: var(--space-2);
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    .domain-meta-value {
+      color: var(--gold-muted);
+      font-weight: 600;
+    }
+
+    /* Size variants */
+    .domain-cluster.size-xl .domain-frame { width: 180px; height: 180px; }
+    .domain-cluster.size-lg .domain-frame { width: 160px; height: 160px; }
+    .domain-cluster.size-md .domain-frame { width: 140px; height: 140px; }
+    .domain-cluster.size-sm .domain-frame { width: 120px; height: 120px; }
+
+    /* State variants */
+    .domain-cluster.active .domain-frame {
+      border-color: var(--gold-muted);
+      box-shadow: var(--glow-gold);
+      animation: pulse-gold 4s ease-in-out infinite;
+    }
+
+    .domain-cluster.frontier .domain-frame {
+      border-color: var(--accent-teal-muted);
+      border-style: dashed;
+      box-shadow: var(--glow-teal);
+    }
+
+    .domain-cluster.frontier .domain-label {
+      color: var(--accent-teal);
+    }
+
+    @keyframes pulse-gold {
+      0%, 100% { box-shadow: var(--glow-gold); }
+      50% { box-shadow: var(--glow-gold-bright); }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       SKILL NODES — Level 2 (revealed on domain zoom)
+       Nodes emerge from parent with splitting animation
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .skill-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+      z-index: 5;
+    }
+
+    .skill-layer.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .skill-layer.emerging .skill-node {
+      animation: emerge-from-parent 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Staggered emergence - each node appears slightly after the previous */
+    .skill-layer.emerging .skill-node:nth-child(1) { animation-delay: 0s; }
+    .skill-layer.emerging .skill-node:nth-child(2) { animation-delay: 0.05s; }
+    .skill-layer.emerging .skill-node:nth-child(3) { animation-delay: 0.1s; }
+    .skill-layer.emerging .skill-node:nth-child(4) { animation-delay: 0.15s; }
+    .skill-layer.emerging .skill-node:nth-child(5) { animation-delay: 0.2s; }
+    .skill-layer.emerging .skill-node:nth-child(6) { animation-delay: 0.25s; }
+    .skill-layer.emerging .skill-node:nth-child(7) { animation-delay: 0.3s; }
+    .skill-layer.emerging .skill-node:nth-child(8) { animation-delay: 0.35s; }
+    .skill-layer.emerging .skill-node:nth-child(9) { animation-delay: 0.4s; }
+    .skill-layer.emerging .skill-node:nth-child(10) { animation-delay: 0.45s; }
+    .skill-layer.emerging .skill-node:nth-child(11) { animation-delay: 0.5s; }
+    .skill-layer.emerging .skill-node:nth-child(12) { animation-delay: 0.55s; }
+
+    @keyframes emerge-from-parent {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0);
+        filter: blur(8px);
+      }
+      50% {
+        opacity: 0.7;
+        filter: blur(2px);
+      }
+      100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+        filter: blur(0);
+      }
+    }
+
+    .skill-node {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .skill-node.faded {
+      opacity: 0.12;
+      filter: blur(1px);
+    }
+
+    .skill-bubble {
+      width: 72px;
+      height: 72px;
+      background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
+      border: 2px solid var(--border-medium);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    /* Pulse ring on hover */
+    .skill-bubble::after {
+      content: '';
+      position: absolute;
+      inset: -8px;
+      border: 1px solid transparent;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+    }
+
+    .skill-node:hover .skill-bubble {
+      border-color: var(--gold-primary);
+      box-shadow: var(--glow-gold);
+      transform: scale(1.15);
+    }
+
+    .skill-node:hover .skill-bubble::after {
+      border-color: var(--gold-dim);
+    }
+
+    .skill-label {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      text-align: center;
+      white-space: nowrap;
+      max-width: 100px;
+      transition: color 0.3s ease;
+    }
+
+    .skill-node:hover .skill-label {
+      color: var(--gold-primary);
+    }
+
+    /* Skill states */
+    .skill-node.mastered .skill-bubble {
+      border-color: var(--gold-primary);
+      background: linear-gradient(135deg, var(--gold-subtle) 0%, var(--bg-elevated) 100%);
+    }
+
+    .skill-node.learning .skill-bubble {
+      border-color: var(--accent-teal);
+      box-shadow: var(--glow-teal);
+    }
+
+    .skill-node.frontier .skill-bubble {
+      border-style: dashed;
+      border-color: var(--accent-teal-muted);
+      opacity: 0.7;
+    }
+
+    .skill-node.discovered .skill-bubble {
+      border-color: var(--accent-success);
+      box-shadow: 0 0 20px rgba(77, 168, 77, 0.4);
+    }
+
+    .skill-node.discovered::before {
+      content: 'AI';
+      position: absolute;
+      top: -4px;
+      right: 8px;
+      font-family: var(--font-condensed);
+      font-size: 8px;
+      font-weight: 700;
+      padding: 2px 5px;
+      background: var(--accent-success);
+      color: var(--bg-void);
+      letter-spacing: 0.05em;
+      z-index: 5;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       CONCEPT NODES — Level 3 (revealed on skill zoom)
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .concept-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+      z-index: 4;
+    }
+
+    .concept-layer.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .concept-layer.emerging .concept-node {
+      animation: emerge-from-parent 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .concept-layer.emerging .concept-node:nth-child(1) { animation-delay: 0s; }
+    .concept-layer.emerging .concept-node:nth-child(2) { animation-delay: 0.04s; }
+    .concept-layer.emerging .concept-node:nth-child(3) { animation-delay: 0.08s; }
+    .concept-layer.emerging .concept-node:nth-child(4) { animation-delay: 0.12s; }
+    .concept-layer.emerging .concept-node:nth-child(5) { animation-delay: 0.16s; }
+    .concept-layer.emerging .concept-node:nth-child(6) { animation-delay: 0.2s; }
+    .concept-layer.emerging .concept-node:nth-child(7) { animation-delay: 0.24s; }
+    .concept-layer.emerging .concept-node:nth-child(8) { animation-delay: 0.28s; }
+
+    .concept-node {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .concept-node.faded {
+      opacity: 0.1;
+    }
+
+    .concept-dot {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-elevated) 100%);
+      border: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+      transition: all 0.3s ease;
+    }
+
+    .concept-node:hover .concept-dot {
+      border-color: var(--gold-primary);
+      background: var(--bg-elevated);
+      box-shadow: var(--glow-gold);
+      transform: scale(1.2) rotate(45deg);
+    }
+
+    .concept-label {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-body);
+      font-size: 9px;
+      color: var(--text-tertiary);
+      text-align: center;
+      white-space: nowrap;
+      max-width: 80px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .concept-node:hover .concept-label {
+      color: var(--gold-muted);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       DETAIL FRAGMENTS — Level 4 (deepest zoom)
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .detail-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+      z-index: 3;
+    }
+
+    .detail-layer.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .detail-layer.emerging .detail-fragment {
+      animation: emerge-from-parent 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .detail-layer.emerging .detail-fragment:nth-child(1) { animation-delay: 0s; }
+    .detail-layer.emerging .detail-fragment:nth-child(2) { animation-delay: 0.03s; }
+    .detail-layer.emerging .detail-fragment:nth-child(3) { animation-delay: 0.06s; }
+    .detail-layer.emerging .detail-fragment:nth-child(4) { animation-delay: 0.09s; }
+    .detail-layer.emerging .detail-fragment:nth-child(5) { animation-delay: 0.12s; }
+    .detail-layer.emerging .detail-fragment:nth-child(6) { animation-delay: 0.15s; }
+    .detail-layer.emerging .detail-fragment:nth-child(7) { animation-delay: 0.18s; }
+    .detail-layer.emerging .detail-fragment:nth-child(8) { animation-delay: 0.21s; }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       ATOMIC PARTICLES — Level 5 (deepest zoom, like splitting atoms)
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .atomic-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+      z-index: 2;
+    }
+
+    .atomic-layer.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .atomic-layer.emerging .atomic-particle {
+      animation: particle-emerge 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .atomic-layer.emerging .atomic-particle:nth-child(1) { animation-delay: 0s; }
+    .atomic-layer.emerging .atomic-particle:nth-child(2) { animation-delay: 0.02s; }
+    .atomic-layer.emerging .atomic-particle:nth-child(3) { animation-delay: 0.04s; }
+    .atomic-layer.emerging .atomic-particle:nth-child(4) { animation-delay: 0.06s; }
+    .atomic-layer.emerging .atomic-particle:nth-child(5) { animation-delay: 0.08s; }
+    .atomic-layer.emerging .atomic-particle:nth-child(6) { animation-delay: 0.1s; }
+    .atomic-layer.emerging .atomic-particle:nth-child(7) { animation-delay: 0.12s; }
+    .atomic-layer.emerging .atomic-particle:nth-child(8) { animation-delay: 0.14s; }
+    .atomic-layer.emerging .atomic-particle:nth-child(9) { animation-delay: 0.16s; }
+    .atomic-layer.emerging .atomic-particle:nth-child(10) { animation-delay: 0.18s; }
+    .atomic-layer.emerging .atomic-particle:nth-child(11) { animation-delay: 0.2s; }
+    .atomic-layer.emerging .atomic-particle:nth-child(12) { animation-delay: 0.22s; }
+    .atomic-layer.emerging .atomic-particle:nth-child(13) { animation-delay: 0.24s; }
+    .atomic-layer.emerging .atomic-particle:nth-child(14) { animation-delay: 0.26s; }
+
+    @keyframes particle-emerge {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0);
+        filter: blur(4px);
+      }
+      60% {
+        opacity: 0.8;
+        filter: blur(1px);
+      }
+      100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+        filter: blur(0);
+      }
+    }
+
+    .atomic-particle {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      width: 6px;
+      height: 6px;
+      background: radial-gradient(circle, var(--gold-primary) 0%, var(--gold-dim) 50%, transparent 70%);
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      animation: particle-pulse 3s ease-in-out infinite;
+    }
+
+    .atomic-particle:nth-child(odd) {
+      animation-delay: -1.5s;
+      width: 4px;
+      height: 4px;
+    }
+
+    .atomic-particle:nth-child(3n) {
+      background: radial-gradient(circle, var(--accent-teal) 0%, rgba(61, 139, 139, 0.3) 50%, transparent 70%);
+    }
+
+    @keyframes particle-pulse {
+      0%, 100% {
+        opacity: 0.6;
+        box-shadow: 0 0 4px rgba(212, 168, 75, 0.4);
+      }
+      50% {
+        opacity: 1;
+        box-shadow: 0 0 8px rgba(212, 168, 75, 0.8);
+      }
+    }
+
+    .atomic-particle:hover {
+      transform: translate(-50%, -50%) scale(2);
+      box-shadow: 0 0 12px var(--gold-primary);
+    }
+
+    .atomic-particle:hover::after {
+      content: attr(data-atomic);
+      position: absolute;
+      bottom: calc(100% + 4px);
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-body);
+      font-size: 8px;
+      color: var(--gold-muted);
+      white-space: nowrap;
+      background: var(--bg-card);
+      padding: 2px 6px;
+      border: 1px solid var(--border-subtle);
+      text-transform: capitalize;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       CONTINUOUS ZOOM FADING — Parent nodes fade as children emerge
+       Controlled by CSS variables set via JavaScript
+       ═══════════════════════════════════════════════════════════════════════════ */
+    :root {
+      --domain-opacity: 1;
+      --skill-opacity: 0;
+      --concept-opacity: 0;
+      --detail-opacity: 0;
+      --atomic-opacity: 0;
+      --center-opacity: 1;
+    }
+
+    .domain-cluster {
+      opacity: var(--domain-opacity);
+      transition: opacity 0.3s ease, transform 0.4s ease, filter 0.3s ease;
+    }
+
+    .domain-cluster.fading-out {
+      filter: blur(2px);
+    }
+
+    .center-node {
+      opacity: var(--center-opacity);
+      transition: opacity 0.4s ease, filter 0.3s ease;
+    }
+
+    .center-node.fading-out {
+      filter: blur(3px);
+    }
+
+    /* Skill nodes fade when zooming into concepts */
+    .skill-node {
+      opacity: var(--skill-opacity);
+    }
+
+    .skill-layer.visible .skill-node {
+      opacity: calc(var(--skill-opacity) * 1);
+    }
+
+    .skill-layer.visible .skill-node.fading-out {
+      filter: blur(2px);
+    }
+
+    .detail-fragment {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .detail-fragment.faded {
+      opacity: 0.08;
+    }
+
+    .detail-pip {
+      width: 24px;
+      height: 24px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: var(--text-muted);
+      transition: all 0.3s ease;
+    }
+
+    .detail-fragment:hover .detail-pip {
+      border-color: var(--gold-muted);
+      background: var(--bg-surface);
+      transform: scale(1.3);
+      box-shadow: 0 0 12px rgba(212, 168, 75, 0.3);
+    }
+
+    .detail-fragment:hover .detail-pip::after {
+      content: attr(data-label);
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-body);
+      font-size: 8px;
+      color: var(--gold-muted);
+      white-space: nowrap;
+      background: var(--bg-card);
+      padding: 2px 6px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       ZOOM LEVEL INDICATOR
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .zoom-indicator {
+      position: fixed;
+      bottom: var(--space-6);
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+      padding: var(--space-3) var(--space-5);
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      z-index: 200;
+    }
+
+    .zoom-indicator::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);
+    }
+
+    .zoom-level-dots {
+      display: flex;
+      gap: var(--space-2);
+    }
+
+    .zoom-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--bg-deep);
+      border: 1px solid var(--border-medium);
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .zoom-dot.active {
+      background: var(--gold-primary);
+      border-color: var(--gold-primary);
+      box-shadow: var(--glow-gold);
+    }
+
+    .zoom-dot:hover {
+      border-color: var(--gold-muted);
+    }
+
+    .zoom-label {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold-muted);
+      min-width: 100px;
+      text-align: center;
+    }
+
+    .zoom-breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-family: var(--font-body);
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+
+    .breadcrumb-item {
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 2px;
+      transition: all 0.2s ease;
+    }
+
+    .breadcrumb-item:hover {
+      color: var(--gold-primary);
+      background: var(--gold-subtle);
+    }
+
+    .breadcrumb-item.current {
+      color: var(--gold-primary);
+      cursor: default;
+    }
+
+    .breadcrumb-sep {
+      color: var(--gold-dim);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       CONTROLS
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .controls {
+      position: fixed;
+      top: var(--space-4);
+      right: var(--space-4);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      z-index: 200;
+    }
+
+    .control-btn {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      color: var(--gold-muted);
+      font-size: 20px;
+      font-weight: 300;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .control-btn:hover {
+      background: var(--bg-elevated);
+      border-color: var(--gold-muted);
+      color: var(--gold-primary);
+    }
+
+    .control-btn.active {
+      background: var(--gold-subtle);
+      border-color: var(--gold-primary);
+      color: var(--gold-primary);
+    }
+
+    .zoom-display {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      text-align: center;
+      color: var(--text-tertiary);
+      padding: var(--space-2);
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-top: none;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       LEGEND — No "Global standing" text (it's an easter egg)
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .legend {
+      position: fixed;
+      top: var(--space-4);
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: var(--space-5);
+      padding: var(--space-2) var(--space-4);
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      z-index: 200;
+    }
+
+    .legend::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      letter-spacing: 0.05em;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+    }
+
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 2px solid;
+      background: var(--bg-elevated);
+    }
+
+    .legend-dot.mastered {
+      border-color: var(--gold-primary);
+      background: var(--gold-subtle);
+    }
+
+    .legend-dot.learning {
+      border-color: var(--accent-teal);
+    }
+
+    .legend-dot.frontier {
+      border-style: dashed;
+      border-color: var(--accent-teal-muted);
+    }
+
+    .legend-dot.discovered {
+      border-color: var(--accent-success);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       ORBIT LEGEND — Minimal, no "global standing" text
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .orbit-legend {
+      position: fixed;
+      bottom: var(--space-6);
+      right: var(--space-4);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      padding: var(--space-3) var(--space-4);
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      z-index: 200;
+    }
+
+    .orbit-legend-title {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold-muted);
+      margin-bottom: var(--space-1);
+    }
+
+    .orbit-legend-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-family: var(--font-body);
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    .orbit-legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .orbit-legend-dot.mastered { background: var(--gold-primary); }
+    .orbit-legend-dot.learning { background: var(--accent-teal); }
+    .orbit-legend-dot.frontier { background: var(--accent-success); }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       DETAIL PANEL
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .detail-panel {
+      position: fixed;
+      bottom: 80px;
+      left: var(--space-4);
+      width: 320px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      padding: var(--space-5);
+      opacity: 0;
+      transform: translateY(12px);
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: none;
+      z-index: 150;
+    }
+
+    .detail-panel::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--gold-primary), var(--gold-dim), transparent);
+    }
+
+    .detail-panel.visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .detail-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      margin-bottom: var(--space-4);
+      padding-bottom: var(--space-3);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .detail-icon {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-surface) 100%);
+      border: 1px solid var(--border-medium);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .detail-title {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+    }
+
+    .detail-subtitle {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      color: var(--text-tertiary);
+      letter-spacing: 0.08em;
+      margin-top: 2px;
+    }
+
+    .detail-description {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: var(--space-4);
+    }
+
+    .detail-action {
+      display: block;
+      width: 100%;
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      text-align: center;
+      padding: var(--space-3);
+      background: linear-gradient(135deg, rgba(212, 168, 75, 0.2) 0%, rgba(212, 168, 75, 0.1) 100%);
+      border: 1px solid var(--gold-muted);
+      color: var(--gold-primary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .detail-action:hover {
+      background: var(--gold-primary);
+      color: var(--bg-void);
+    }
+  </style>
+</head>
+<body>
+  <div class="zoom-viewport">
+    <!-- Atmosphere -->
+    <div class="atmosphere"></div>
+
+    <!-- Blur layer (behind spotlight) -->
+    <div class="blur-layer" id="blur-layer"></div>
+
+    <!-- Spotlight overlay (automatic, subtle) -->
+    <div class="spotlight-layer" id="spotlight-layer"></div>
+
+    <!-- Main zoom container -->
+    <div class="zoom-container" id="zoom-container">
+      <div class="knowledge-tree" id="knowledge-tree">
+
+        <!-- Connection Lines SVG -->
+        <svg class="connections-svg" viewBox="0 0 2000 2000">
+          <defs>
+            <linearGradient id="gold-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#8a6520" stop-opacity="0.3"/>
+              <stop offset="50%" stop-color="#d4a84b" stop-opacity="0.6"/>
+              <stop offset="100%" stop-color="#8a6520" stop-opacity="0.3"/>
+            </linearGradient>
+          </defs>
+          <!-- Primary connections to center -->
+          <line class="connection-line primary" x1="1000" y1="1000" x2="1000" y2="550"/>
+          <line class="connection-line primary" x1="1000" y1="1000" x2="1380" y2="720"/>
+          <line class="connection-line primary" x1="1000" y1="1000" x2="1380" y2="1280"/>
+          <line class="connection-line primary" x1="1000" y1="1000" x2="1000" y2="1450"/>
+          <line class="connection-line primary" x1="1000" y1="1000" x2="620" y2="1280"/>
+          <line class="connection-line primary" x1="1000" y1="1000" x2="620" y2="720"/>
+          <!-- Secondary inter-cluster connections -->
+          <line class="connection-line" x1="1000" y1="550" x2="1380" y2="720"/>
+          <line class="connection-line" x1="1380" y1="720" x2="1380" y2="1280"/>
+          <line class="connection-line" x1="1380" y1="1280" x2="1000" y2="1450"/>
+          <line class="connection-line" x1="1000" y1="1450" x2="620" y2="1280"/>
+          <line class="connection-line" x1="620" y1="1280" x2="620" y2="720"/>
+          <line class="connection-line" x1="620" y1="720" x2="1000" y2="550"/>
+        </svg>
+
+        <!-- Center Node with Orbiting Bodies -->
+        <div class="center-node" id="center-node">
+          <!-- Invisible hover zone for orbit slowdown -->
+          <div class="orbit-hover-zone"></div>
+
+          <!-- Orbit rings with interactive bodies -->
+          <div class="orbit-ring orbit-1">
+            <div class="orbit-body body-1" data-label="Rust" data-skill="rust" data-domain="technology"></div>
+            <div class="orbit-body body-2" data-label="Python" data-skill="python" data-domain="technology"></div>
+            <div class="orbit-body body-3" data-label="Options" data-skill="options" data-domain="finance"></div>
+          </div>
+          <div class="orbit-ring orbit-2">
+            <div class="orbit-body body-1" data-label="LLM Tuning" data-skill="llm" data-domain="technology"></div>
+            <div class="orbit-body body-2" data-label="Pharmacology" data-skill="pharma" data-domain="health"></div>
+            <div class="orbit-body body-3" data-label="Physics" data-skill="physics" data-domain="science"></div>
+            <div class="orbit-body body-4" data-label="Fixed Income" data-skill="fixed-income" data-domain="finance"></div>
+          </div>
+          <div class="orbit-ring orbit-3">
+            <div class="orbit-body body-1" data-label="Agent Patterns" data-skill="agents" data-domain="technology"></div>
+            <div class="orbit-body body-2" data-label="Circadian" data-skill="circadian" data-domain="health"></div>
+            <div class="orbit-body body-3" data-label="Complexity" data-skill="complexity" data-domain="science"></div>
+          </div>
+          <div class="orbit-ring orbit-4">
+            <!-- Easter egg orbit - no labels, represents global standing silently -->
+            <div class="orbit-body body-1"></div>
+            <div class="orbit-body body-2"></div>
+            <div class="orbit-body body-3"></div>
+            <div class="orbit-body body-4"></div>
+          </div>
+
+          <div class="center-core">
+            <span class="deco-icon deco-icon-target deco-icon-xl deco-icon-gold"></span>
+            <span class="center-label">Your Knowledge</span>
+            <span class="center-stats">247 discoveries</span>
+          </div>
+        </div>
+
+        <!-- Domain Clusters -->
+        <div class="domain-cluster size-xl active" style="top: 27.5%; left: 50%;" data-domain="technology" id="domain-technology">
+          <div class="domain-frame">
+            <span class="domain-icon deco-icon deco-icon-agent deco-icon-lg deco-icon-gold"></span>
+            <span class="domain-label">Technology</span>
+            <div class="domain-meta">
+              <span><span class="domain-meta-value">52</span> skills</span>
+              <span><span class="domain-meta-value">+8</span> new</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="domain-cluster size-lg" style="top: 36%; left: 69%;" data-domain="health" id="domain-health">
+          <div class="domain-frame">
+            <span class="domain-icon deco-icon deco-icon-growth deco-icon-lg deco-icon-gold"></span>
+            <span class="domain-label">Health</span>
+            <div class="domain-meta">
+              <span><span class="domain-meta-value">31</span> skills</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="domain-cluster size-md frontier" style="top: 64%; left: 69%;" data-domain="creative" id="domain-creative">
+          <div class="domain-frame">
+            <span class="domain-icon deco-icon deco-icon-star deco-icon-lg" style="color: var(--accent-teal);"></span>
+            <span class="domain-label">Creative</span>
+            <div class="domain-meta">
+              <span><span class="domain-meta-value">24</span> skills</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="domain-cluster size-lg" style="top: 72.5%; left: 50%;" data-domain="finance" id="domain-finance">
+          <div class="domain-frame">
+            <span class="domain-icon deco-icon deco-icon-value deco-icon-lg deco-icon-gold"></span>
+            <span class="domain-label">Finance</span>
+            <div class="domain-meta">
+              <span><span class="domain-meta-value">38</span> skills</span>
+              <span><span class="domain-meta-value">+5</span> new</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="domain-cluster size-sm" style="top: 64%; left: 31%;" data-domain="business" id="domain-business">
+          <div class="domain-frame">
+            <span class="domain-icon deco-icon deco-icon-goal deco-icon-lg deco-icon-gold"></span>
+            <span class="domain-label">Business</span>
+            <div class="domain-meta">
+              <span><span class="domain-meta-value">29</span> skills</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="domain-cluster size-md frontier" style="top: 36%; left: 31%;" data-domain="science" id="domain-science">
+          <div class="domain-frame">
+            <span class="domain-icon deco-icon deco-icon-test deco-icon-lg" style="color: var(--accent-teal);"></span>
+            <span class="domain-label">Science</span>
+            <div class="domain-meta">
+              <span><span class="domain-meta-value">43</span> skills</span>
+              <span><span class="domain-meta-value">+12</span> new</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Skill Layer (Level 2) -->
+        <div class="skill-layer" id="skill-layer">
+          <!-- Technology skills -->
+          <div class="skill-node mastered" style="top: 18%; left: 42%;" data-skill="rust" data-domain="technology">
+            <div class="skill-bubble">
+              <span class="deco-icon deco-icon-session deco-icon-md deco-icon-gold"></span>
+            </div>
+            <span class="skill-label">Rust</span>
+          </div>
+          <div class="skill-node mastered" style="top: 15%; left: 52%;" data-skill="python" data-domain="technology">
+            <div class="skill-bubble">
+              <span class="deco-icon deco-icon-doc deco-icon-md deco-icon-gold"></span>
+            </div>
+            <span class="skill-label">Python</span>
+          </div>
+          <div class="skill-node learning" style="top: 20%; left: 60%;" data-skill="llm" data-domain="technology">
+            <div class="skill-bubble">
+              <span class="deco-icon deco-icon-agent deco-icon-md" style="color: var(--accent-teal);"></span>
+            </div>
+            <span class="skill-label">LLM Fine-tuning</span>
+          </div>
+          <div class="skill-node discovered" style="top: 24%; left: 36%;" data-skill="agents" data-domain="technology">
+            <div class="skill-bubble">
+              <span class="deco-icon deco-icon-link deco-icon-md deco-icon-success"></span>
+            </div>
+            <span class="skill-label">Agent Patterns</span>
+          </div>
+          <div class="skill-node frontier" style="top: 30%; left: 62%;" data-skill="wasm" data-domain="technology">
+            <div class="skill-bubble">
+              <span class="deco-icon deco-icon-bolt deco-icon-md deco-icon-muted"></span>
+            </div>
+            <span class="skill-label">WebAssembly</span>
+          </div>
+
+          <!-- Finance skills -->
+          <div class="skill-node mastered" style="top: 68%; left: 42%;" data-skill="options" data-domain="finance">
+            <div class="skill-bubble">
+              <span class="deco-icon deco-icon-value deco-icon-md deco-icon-gold"></span>
+            </div>
+            <span class="skill-label">Options Trading</span>
+          </div>
+          <div class="skill-node mastered" style="top: 78%; left: 52%;" data-skill="dcf" data-domain="finance">
+            <div class="skill-bubble">
+              <span class="deco-icon deco-icon-doc deco-icon-md deco-icon-gold"></span>
+            </div>
+            <span class="skill-label">DCF Analysis</span>
+          </div>
+          <div class="skill-node learning" style="top: 74%; left: 60%;" data-skill="fixed-income" data-domain="finance">
+            <div class="skill-bubble">
+              <span class="deco-icon deco-icon-arch deco-icon-md" style="color: var(--accent-teal);"></span>
+            </div>
+            <span class="skill-label">Fixed Income</span>
+          </div>
+          <div class="skill-node discovered" style="top: 70%; left: 36%;" data-skill="factor" data-domain="finance">
+            <div class="skill-bubble">
+              <span class="deco-icon deco-icon-bolt deco-icon-md deco-icon-success"></span>
+            </div>
+            <span class="skill-label">Factor Investing</span>
+          </div>
+
+          <!-- Health skills -->
+          <div class="skill-node mastered" style="top: 30%; left: 74%;" data-skill="neuro" data-domain="health">
+            <div class="skill-bubble">
+              <span class="deco-icon deco-icon-sunburst deco-icon-md deco-icon-gold"></span>
+            </div>
+            <span class="skill-label">Neuroscience</span>
+          </div>
+          <div class="skill-node learning" style="top: 38%; left: 78%;" data-skill="pharma" data-domain="health">
+            <div class="skill-bubble">
+              <span class="deco-icon deco-icon-test deco-icon-md" style="color: var(--accent-teal);"></span>
+            </div>
+            <span class="skill-label">Pharmacology</span>
+          </div>
+          <div class="skill-node discovered" style="top: 42%; left: 68%;" data-skill="circadian" data-domain="health">
+            <div class="skill-bubble">
+              <span class="deco-icon deco-icon-time deco-icon-md deco-icon-success"></span>
+            </div>
+            <span class="skill-label">Circadian Biology</span>
+          </div>
+
+          <!-- Science skills -->
+          <div class="skill-node mastered" style="top: 30%; left: 26%;" data-skill="biochem" data-domain="science">
+            <div class="skill-bubble">
+              <span class="deco-icon deco-icon-test deco-icon-md deco-icon-gold"></span>
+            </div>
+            <span class="skill-label">Biochemistry</span>
+          </div>
+          <div class="skill-node learning" style="top: 38%; left: 22%;" data-skill="physics" data-domain="science">
+            <div class="skill-bubble">
+              <span class="deco-icon deco-icon-target deco-icon-md" style="color: var(--accent-teal);"></span>
+            </div>
+            <span class="skill-label">Particle Physics</span>
+          </div>
+          <div class="skill-node discovered" style="top: 42%; left: 32%;" data-skill="complexity" data-domain="science">
+            <div class="skill-bubble">
+              <span class="deco-icon deco-icon-fan deco-icon-md deco-icon-success"></span>
+            </div>
+            <span class="skill-label">Complexity Theory</span>
+          </div>
+        </div>
+
+        <!-- Concept Layer (Level 3) -->
+        <div class="concept-layer" id="concept-layer">
+          <!-- Rust concepts -->
+          <div class="concept-node" style="top: 12%; left: 38%;" data-concept="ownership" data-skill="rust">
+            <div class="concept-dot">
+              <span style="font-size: 12px; color: var(--gold-muted);">O</span>
+            </div>
+            <span class="concept-label">Ownership</span>
+          </div>
+          <div class="concept-node" style="top: 10%; left: 44%;" data-concept="borrowing" data-skill="rust">
+            <div class="concept-dot">
+              <span style="font-size: 12px; color: var(--gold-muted);">B</span>
+            </div>
+            <span class="concept-label">Borrowing</span>
+          </div>
+          <div class="concept-node" style="top: 14%; left: 48%;" data-concept="lifetimes" data-skill="rust">
+            <div class="concept-dot">
+              <span style="font-size: 12px; color: var(--gold-muted);">L</span>
+            </div>
+            <span class="concept-label">Lifetimes</span>
+          </div>
+          <div class="concept-node" style="top: 16%; left: 36%;" data-concept="traits" data-skill="rust">
+            <div class="concept-dot">
+              <span style="font-size: 12px; color: var(--gold-muted);">T</span>
+            </div>
+            <span class="concept-label">Traits</span>
+          </div>
+          <div class="concept-node" style="top: 20%; left: 46%;" data-concept="async" data-skill="rust">
+            <div class="concept-dot">
+              <span style="font-size: 12px; color: var(--gold-muted);">A</span>
+            </div>
+            <span class="concept-label">Async/Await</span>
+          </div>
+        </div>
+
+        <!-- Detail Layer (Level 4) -->
+        <div class="detail-layer" id="detail-layer">
+          <!-- Ownership details -->
+          <div class="detail-fragment" style="top: 8%; left: 36%;" data-detail="move-semantics" data-concept="ownership">
+            <div class="detail-pip" data-label="Move Semantics">M</div>
+          </div>
+          <div class="detail-fragment" style="top: 9%; left: 40%;" data-detail="copy-trait" data-concept="ownership">
+            <div class="detail-pip" data-label="Copy Trait">C</div>
+          </div>
+          <div class="detail-fragment" style="top: 11%; left: 35%;" data-detail="drop-trait" data-concept="ownership">
+            <div class="detail-pip" data-label="Drop Trait">D</div>
+          </div>
+          <div class="detail-fragment" style="top: 10%; left: 42%;" data-detail="clone-trait" data-concept="ownership">
+            <div class="detail-pip" data-label="Clone Trait">Cl</div>
+          </div>
+          <!-- Borrowing details -->
+          <div class="detail-fragment" style="top: 7%; left: 45%;" data-detail="references" data-concept="borrowing">
+            <div class="detail-pip" data-label="References">&</div>
+          </div>
+          <div class="detail-fragment" style="top: 8.5%; left: 47%;" data-detail="mut-refs" data-concept="borrowing">
+            <div class="detail-pip" data-label="Mutable Refs">&m</div>
+          </div>
+          <div class="detail-fragment" style="top: 10%; left: 46%;" data-detail="borrow-checker" data-concept="borrowing">
+            <div class="detail-pip" data-label="Borrow Checker">Bc</div>
+          </div>
+          <!-- Lifetimes details -->
+          <div class="detail-fragment" style="top: 12%; left: 49%;" data-detail="lifetime-syntax" data-concept="lifetimes">
+            <div class="detail-pip" data-label="Lifetime Syntax">'a</div>
+          </div>
+          <div class="detail-fragment" style="top: 13.5%; left: 47%;" data-detail="lifetime-elision" data-concept="lifetimes">
+            <div class="detail-pip" data-label="Elision Rules">El</div>
+          </div>
+          <div class="detail-fragment" style="top: 14.5%; left: 50%;" data-detail="static-lifetime" data-concept="lifetimes">
+            <div class="detail-pip" data-label="'static">'s</div>
+          </div>
+        </div>
+
+        <!-- Atomic Layer (Level 5) — Deepest zoom, appears like particles -->
+        <div class="atomic-layer" id="atomic-layer">
+          <div class="atomic-particle" style="top: 7.5%; left: 35.5%;" data-atomic="stack-allocation"></div>
+          <div class="atomic-particle" style="top: 8.2%; left: 36.8%;" data-atomic="heap-allocation"></div>
+          <div class="atomic-particle" style="top: 7.8%; left: 37.5%;" data-atomic="box-type"></div>
+          <div class="atomic-particle" style="top: 8.8%; left: 39.5%;" data-atomic="rc-type"></div>
+          <div class="atomic-particle" style="top: 9.3%; left: 40.8%;" data-atomic="arc-type"></div>
+          <div class="atomic-particle" style="top: 9.8%; left: 41.2%;" data-atomic="weak-refs"></div>
+          <div class="atomic-particle" style="top: 10.5%; left: 34.5%;" data-atomic="destructor"></div>
+          <div class="atomic-particle" style="top: 11.2%; left: 35.8%;" data-atomic="raii-pattern"></div>
+          <div class="atomic-particle" style="top: 6.8%; left: 44.5%;" data-atomic="shared-ref"></div>
+          <div class="atomic-particle" style="top: 7.2%; left: 46.2%;" data-atomic="exclusive-ref"></div>
+          <div class="atomic-particle" style="top: 8%; left: 47.8%;" data-atomic="reborrowing"></div>
+          <div class="atomic-particle" style="top: 12.5%; left: 48.5%;" data-atomic="variance"></div>
+          <div class="atomic-particle" style="top: 13%; left: 49.8%;" data-atomic="subtyping"></div>
+          <div class="atomic-particle" style="top: 14%; left: 50.5%;" data-atomic="coercion"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+      <button class="control-btn" id="zoom-in" title="Zoom In">+</button>
+      <button class="control-btn" id="zoom-out" title="Zoom Out">−</button>
+      <div class="zoom-display" id="zoom-display">100%</div>
+      <button class="control-btn" id="reset-view" title="Reset View">⌂</button>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend">
+      <div class="legend-item">
+        <span class="legend-dot mastered"></span>
+        <span>Mastered</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-dot learning"></span>
+        <span>Learning</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-dot frontier"></span>
+        <span>Frontier</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-dot discovered"></span>
+        <span>AI Discovered</span>
+      </div>
+    </div>
+
+    <!-- Orbit Legend — No "global standing" (easter egg) -->
+    <div class="orbit-legend">
+      <div class="orbit-legend-title">Orbiting Bodies</div>
+      <div class="orbit-legend-item">
+        <span class="orbit-legend-dot mastered"></span>
+        <span>Mastered skills</span>
+      </div>
+      <div class="orbit-legend-item">
+        <span class="orbit-legend-dot learning"></span>
+        <span>Active learning</span>
+      </div>
+      <div class="orbit-legend-item">
+        <span class="orbit-legend-dot frontier"></span>
+        <span>New discoveries</span>
+      </div>
+    </div>
+
+    <!-- Zoom Indicator -->
+    <div class="zoom-indicator">
+      <div class="zoom-level-dots">
+        <div class="zoom-dot active" data-level="0" title="Overview"></div>
+        <div class="zoom-dot" data-level="1" title="Domains"></div>
+        <div class="zoom-dot" data-level="2" title="Skills"></div>
+        <div class="zoom-dot" data-level="3" title="Concepts"></div>
+        <div class="zoom-dot" data-level="4" title="Details"></div>
+        <div class="zoom-dot" data-level="5" title="Atomic"></div>
+      </div>
+      <div class="zoom-label" id="zoom-level-label">Overview</div>
+      <div class="zoom-breadcrumb" id="breadcrumb">
+        <span class="breadcrumb-item current">All Knowledge</span>
+      </div>
+    </div>
+
+    <!-- Detail Panel -->
+    <div class="detail-panel" id="detail-panel">
+      <div class="detail-header">
+        <div class="detail-icon">
+          <span class="deco-icon deco-icon-session deco-icon-md deco-icon-gold" id="panel-icon"></span>
+        </div>
+        <div>
+          <div class="detail-title" id="panel-title">Rust</div>
+          <div class="detail-subtitle" id="panel-subtitle">Technology / Systems Programming</div>
+        </div>
+      </div>
+      <p class="detail-description" id="panel-description">
+        A systems programming language focused on safety, speed, and concurrency.
+        Rust's ownership model guarantees memory safety without garbage collection.
+      </p>
+      <button class="detail-action" id="panel-action">Zoom Into This</button>
+    </div>
+  </div>
+
+  <script>
+    // ═══════════════════════════════════════════════════════════════════════════
+    // STATE
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    var state = {
+      scale: 1,
+      panX: 0,
+      panY: 0,
+      zoomLevel: 0,
+      currentDomain: null,
+      currentSkill: null,
+      currentConcept: null,
+      isPanning: false,
+      startX: 0,
+      startY: 0,
+      startPanX: 0,
+      startPanY: 0
+    };
+
+    var MIN_SCALE = 0.3;
+    var MAX_SCALE = 8;
+    var ZOOM_SENSITIVITY = 0.002;
+
+    var zoomLevels = ['Overview', 'Domains', 'Skills', 'Concepts', 'Details', 'Atomic'];
+
+    var zoomContainer = document.getElementById('zoom-container');
+    var spotlightLayer = document.getElementById('spotlight-layer');
+    var blurLayer = document.getElementById('blur-layer');
+    var skillLayer = document.getElementById('skill-layer');
+    var conceptLayer = document.getElementById('concept-layer');
+    var detailLayer = document.getElementById('detail-layer');
+    var atomicLayer = document.getElementById('atomic-layer');
+    var detailPanel = document.getElementById('detail-panel');
+    var zoomDisplay = document.getElementById('zoom-display');
+    var zoomLevelLabel = document.getElementById('zoom-level-label');
+    var breadcrumb = document.getElementById('breadcrumb');
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // TRANSFORM
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    function applyTransform() {
+      zoomContainer.style.transform =
+        'translate(' + state.panX + 'px, ' + state.panY + 'px) scale(' + state.scale + ')';
+      zoomDisplay.textContent = Math.round(state.scale * 100) + '%';
+      updateZoomLevel();
+      updateLayerVisibility();
+      updateSpotlightIntensity();
+    }
+
+    function updateZoomLevel() {
+      var oldLevel = state.zoomLevel;
+
+      if (state.scale < 0.6) {
+        state.zoomLevel = 0;
+      } else if (state.scale < 1.2) {
+        state.zoomLevel = 1;
+      } else if (state.scale < 2.5) {
+        state.zoomLevel = 2;
+      } else if (state.scale < 4.5) {
+        state.zoomLevel = 3;
+      } else if (state.scale < 6.5) {
+        state.zoomLevel = 4;
+      } else {
+        state.zoomLevel = 5;
+      }
+
+      if (oldLevel !== state.zoomLevel) {
+        zoomLevelLabel.textContent = zoomLevels[state.zoomLevel];
+        updateZoomDots();
+      }
+    }
+
+    function updateZoomDots() {
+      document.querySelectorAll('.zoom-dot').forEach(function(dot, i) {
+        dot.classList.toggle('active', i <= state.zoomLevel);
+      });
+    }
+
+    // Track previous visibility states for emerging animations
+    var prevLayerStates = { skill: false, concept: false, detail: false, atomic: false };
+
+    function updateLayerVisibility() {
+      var root = document.documentElement;
+      var scale = state.scale;
+
+      // ═══════════════════════════════════════════════════════════════════════════
+      // CONTINUOUS OPACITY TRANSITIONS — Smooth fading based on zoom scale
+      // Each layer has a fade-in range and fade-out range (like atoms splitting)
+      // ═══════════════════════════════════════════════════════════════════════════
+
+      // Center node: fully visible until scale 1.5, then fades out by scale 3
+      var centerOpacity = scale < 1.5 ? 1 : Math.max(0.1, 1 - (scale - 1.5) / 2);
+      root.style.setProperty('--center-opacity', centerOpacity.toString());
+      document.getElementById('center-node').classList.toggle('fading-out', scale > 2);
+
+      // Domains: fully visible until scale 1.8, fade out by scale 3.5
+      var domainOpacity = scale < 1.8 ? 1 : Math.max(0.05, 1 - (scale - 1.8) / 2);
+      root.style.setProperty('--domain-opacity', domainOpacity.toString());
+
+      // Skills: fade in from scale 1.2 to 2, fade out from scale 3.5 to 5
+      var skillFadeIn = Math.min(1, Math.max(0, (scale - 1.2) / 0.8));
+      var skillFadeOut = scale > 3.5 ? Math.max(0.05, 1 - (scale - 3.5) / 1.5) : 1;
+      var skillOpacity = skillFadeIn * skillFadeOut;
+      root.style.setProperty('--skill-opacity', skillOpacity.toString());
+
+      // Concepts: fade in from scale 2.5 to 3.5, fade out from scale 5.5 to 7
+      var conceptFadeIn = Math.min(1, Math.max(0, (scale - 2.5) / 1));
+      var conceptFadeOut = scale > 5.5 ? Math.max(0.05, 1 - (scale - 5.5) / 1.5) : 1;
+      var conceptOpacity = conceptFadeIn * conceptFadeOut;
+      root.style.setProperty('--concept-opacity', conceptOpacity.toString());
+
+      // Details: fade in from scale 4.5 to 5.5, fade out from scale 7 to 8
+      var detailFadeIn = Math.min(1, Math.max(0, (scale - 4.5) / 1));
+      var detailFadeOut = scale > 7 ? Math.max(0.05, 1 - (scale - 7) / 1) : 1;
+      var detailOpacity = detailFadeIn * detailFadeOut;
+      root.style.setProperty('--detail-opacity', detailOpacity.toString());
+
+      // Atomic particles: fade in from scale 6.5 to 7.5 (deepest level)
+      var atomicOpacity = Math.min(1, Math.max(0, (scale - 6.5) / 1));
+      root.style.setProperty('--atomic-opacity', atomicOpacity.toString());
+
+      // ═══════════════════════════════════════════════════════════════════════════
+      // LAYER VISIBILITY — Toggle visibility and trigger emerging animations
+      // ═══════════════════════════════════════════════════════════════════════════
+
+      var skillVisible = scale >= 1.2;
+      var conceptVisible = scale >= 2.5;
+      var detailVisible = scale >= 4.5;
+      var atomicVisible = scale >= 6.5;
+
+      // Trigger emerging animation when layer first becomes visible
+      if (skillVisible && !prevLayerStates.skill) {
+        skillLayer.classList.add('emerging');
+        setTimeout(function() { skillLayer.classList.remove('emerging'); }, 800);
+      }
+      if (conceptVisible && !prevLayerStates.concept) {
+        conceptLayer.classList.add('emerging');
+        setTimeout(function() { conceptLayer.classList.remove('emerging'); }, 700);
+      }
+      if (detailVisible && !prevLayerStates.detail) {
+        detailLayer.classList.add('emerging');
+        setTimeout(function() { detailLayer.classList.remove('emerging'); }, 600);
+      }
+      if (atomicVisible && !prevLayerStates.atomic) {
+        atomicLayer.classList.add('emerging');
+        setTimeout(function() { atomicLayer.classList.remove('emerging'); }, 500);
+      }
+
+      prevLayerStates.skill = skillVisible;
+      prevLayerStates.concept = conceptVisible;
+      prevLayerStates.detail = detailVisible;
+      prevLayerStates.atomic = atomicVisible;
+
+      skillLayer.classList.toggle('visible', skillVisible);
+      conceptLayer.classList.toggle('visible', conceptVisible);
+      detailLayer.classList.toggle('visible', detailVisible);
+      atomicLayer.classList.toggle('visible', atomicVisible);
+
+      // ═══════════════════════════════════════════════════════════════════════════
+      // FOCUSED ELEMENT FADING — Non-focused elements fade more
+      // ═══════════════════════════════════════════════════════════════════════════
+
+      document.querySelectorAll('.domain-cluster').forEach(function(domain) {
+        var isFocused = !state.currentDomain || domain.dataset.domain === state.currentDomain;
+        domain.classList.toggle('faded', scale >= 1.8 && !isFocused);
+        domain.classList.toggle('fading-out', scale >= 2.5);
+      });
+
+      document.querySelectorAll('.skill-node').forEach(function(skill) {
+        var isCurrentDomain = !state.currentDomain || skill.dataset.domain === state.currentDomain;
+        var isCurrentSkill = !state.currentSkill || skill.dataset.skill === state.currentSkill;
+        skill.classList.toggle('faded', scale >= 3 && (!isCurrentDomain || !isCurrentSkill));
+        skill.classList.toggle('fading-out', scale >= 4 && isCurrentSkill);
+      });
+
+      document.querySelectorAll('.concept-node').forEach(function(concept) {
+        var isCurrentSkill = !state.currentSkill || concept.dataset.skill === state.currentSkill;
+        concept.classList.toggle('faded', scale >= 5 && !isCurrentSkill);
+      });
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // SPOTLIGHT + BLUR EFFECT — Automatic and Subtle
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    // Track current spotlight position for radius updates
+    var spotlightPos = { x: '50%', y: '50%' };
+
+    function updateSpotlightIntensity() {
+      var root = document.documentElement;
+
+      // Spotlight and blur gradually appear as you zoom past level 1
+      var intensity = 0;
+      var blurIntensity = 0;
+      if (state.scale > 1.2) {
+        intensity = Math.min(0.65, (state.scale - 1.2) / 4);
+        blurIntensity = Math.min(0.5, (state.scale - 1.2) / 5);
+      }
+
+      root.style.setProperty('--spotlight-intensity', intensity.toString());
+      root.style.setProperty('--blur-intensity', blurIntensity.toString());
+
+      // Adjust radius based on zoom — smaller spotlight when zoomed in more
+      var radius = Math.max(200, 420 - (state.scale * 35));
+      root.style.setProperty('--spotlight-radius', radius + 'px');
+
+      // Update blur mask with new radius
+      var maskGradient = 'radial-gradient(circle ' + radius + 'px at ' + spotlightPos.x + ' ' + spotlightPos.y + ', transparent 0%, transparent 65%, black 90%, black 100%)';
+      blurLayer.style.maskImage = maskGradient;
+      blurLayer.style.webkitMaskImage = maskGradient;
+    }
+
+    function updateSpotlightPosition(e) {
+      var root = document.documentElement;
+      var x = e.clientX + 'px';
+      var y = e.clientY + 'px';
+
+      // Track position for radius updates
+      spotlightPos.x = x;
+      spotlightPos.y = y;
+
+      // Update CSS variables for spotlight layer
+      root.style.setProperty('--spotlight-x', x);
+      root.style.setProperty('--spotlight-y', y);
+
+      // Directly update blur layer mask for reliable cursor tracking
+      var radius = getComputedStyle(root).getPropertyValue('--spotlight-radius').trim() || '400px';
+      var maskGradient = 'radial-gradient(circle ' + radius + ' at ' + x + ' ' + y + ', transparent 0%, transparent 65%, black 90%, black 100%)';
+      blurLayer.style.maskImage = maskGradient;
+      blurLayer.style.webkitMaskImage = maskGradient;
+    }
+
+    document.addEventListener('mousemove', updateSpotlightPosition);
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // ZOOM TO CURSOR
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    function zoomAtPoint(clientX, clientY, delta) {
+      var viewport = document.querySelector('.zoom-viewport');
+      var rect = viewport.getBoundingClientRect();
+      var mx = clientX - rect.left;
+      var my = clientY - rect.top;
+
+      var zoomFactor = 1 - delta * ZOOM_SENSITIVITY;
+      var newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, state.scale * zoomFactor));
+
+      if (newScale === state.scale) return;
+
+      var contentX = (mx - rect.width / 2 - state.panX) / state.scale;
+      var contentY = (my - rect.height / 2 - state.panY) / state.scale;
+
+      state.scale = newScale;
+      state.panX = mx - rect.width / 2 - contentX * state.scale;
+      state.panY = my - rect.height / 2 - contentY * state.scale;
+
+      applyTransform();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // PAN
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    document.querySelector('.zoom-viewport').addEventListener('mousedown', function(e) {
+      if (e.target.closest('.domain-cluster') ||
+          e.target.closest('.skill-node') ||
+          e.target.closest('.concept-node') ||
+          e.target.closest('.detail-fragment') ||
+          e.target.closest('.center-node') ||
+          e.target.closest('.orbit-body')) return;
+
+      state.isPanning = true;
+      state.startX = e.clientX;
+      state.startY = e.clientY;
+      state.startPanX = state.panX;
+      state.startPanY = state.panY;
+      zoomContainer.classList.add('dragging');
+    });
+
+    document.addEventListener('mousemove', function(e) {
+      if (!state.isPanning) return;
+      state.panX = state.startPanX + (e.clientX - state.startX);
+      state.panY = state.startPanY + (e.clientY - state.startY);
+      applyTransform();
+    });
+
+    document.addEventListener('mouseup', function() {
+      state.isPanning = false;
+      zoomContainer.classList.remove('dragging');
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // WHEEL ZOOM
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    document.querySelector('.zoom-viewport').addEventListener('wheel', function(e) {
+      e.preventDefault();
+      zoomAtPoint(e.clientX, e.clientY, e.deltaY);
+    }, { passive: false });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // CONTROL BUTTONS
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    document.getElementById('zoom-in').addEventListener('click', function() {
+      var rect = document.querySelector('.zoom-viewport').getBoundingClientRect();
+      zoomAtPoint(rect.width / 2, rect.height / 2, -150);
+    });
+
+    document.getElementById('zoom-out').addEventListener('click', function() {
+      var rect = document.querySelector('.zoom-viewport').getBoundingClientRect();
+      zoomAtPoint(rect.width / 2, rect.height / 2, 150);
+    });
+
+    document.getElementById('reset-view').addEventListener('click', function() {
+      zoomContainer.classList.add('animating');
+      state.scale = 1;
+      state.panX = 0;
+      state.panY = 0;
+      state.currentDomain = null;
+      state.currentSkill = null;
+      state.currentConcept = null;
+      applyTransform();
+      updateBreadcrumb([{ label: 'All Knowledge', level: 'root' }]);
+      setTimeout(function() { zoomContainer.classList.remove('animating'); }, 600);
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // BREADCRUMB
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    function updateBreadcrumb(path) {
+      while (breadcrumb.firstChild) {
+        breadcrumb.removeChild(breadcrumb.firstChild);
+      }
+
+      path.forEach(function(item, i) {
+        if (i > 0) {
+          var sep = document.createElement('span');
+          sep.className = 'breadcrumb-sep';
+          sep.textContent = '›';
+          breadcrumb.appendChild(sep);
+        }
+
+        var crumb = document.createElement('span');
+        crumb.className = 'breadcrumb-item' + (i === path.length - 1 ? ' current' : '');
+        crumb.textContent = item.label;
+        crumb.dataset.level = item.level;
+
+        if (i < path.length - 1) {
+          crumb.addEventListener('click', function() {
+            navigateToLevel(this.dataset.level);
+          });
+        }
+
+        breadcrumb.appendChild(crumb);
+      });
+    }
+
+    function navigateToLevel(level) {
+      zoomContainer.classList.add('animating');
+
+      if (level === 'root') {
+        state.scale = 1;
+        state.panX = 0;
+        state.panY = 0;
+        state.currentDomain = null;
+        state.currentSkill = null;
+        updateBreadcrumb([{ label: 'All Knowledge', level: 'root' }]);
+      }
+
+      applyTransform();
+      setTimeout(function() { zoomContainer.classList.remove('animating'); }, 600);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // CLICK HANDLERS — Zoom Into Elements
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    function zoomIntoElement(element, targetScale) {
+      var tree = document.getElementById('knowledge-tree');
+      var treeRect = tree.getBoundingClientRect();
+      var elRect = element.getBoundingClientRect();
+      var viewRect = document.querySelector('.zoom-viewport').getBoundingClientRect();
+
+      var treeCenterX = treeRect.left + treeRect.width / 2;
+      var treeCenterY = treeRect.top + treeRect.height / 2;
+      var elCenterX = elRect.left + elRect.width / 2;
+      var elCenterY = elRect.top + elRect.height / 2;
+
+      var screenOffsetX = elCenterX - treeCenterX;
+      var screenOffsetY = elCenterY - treeCenterY;
+      var contentOffsetX = screenOffsetX / state.scale;
+      var contentOffsetY = screenOffsetY / state.scale;
+
+      zoomContainer.classList.add('animating');
+
+      state.panX = -contentOffsetX * targetScale;
+      state.panY = -contentOffsetY * targetScale;
+      state.scale = targetScale;
+
+      applyTransform();
+      setTimeout(function() { zoomContainer.classList.remove('animating'); }, 600);
+    }
+
+    // Domain clicks
+    document.querySelectorAll('.domain-cluster').forEach(function(domain) {
+      domain.addEventListener('click', function(e) {
+        e.stopPropagation();
+        state.currentDomain = this.dataset.domain;
+        state.currentSkill = null;
+
+        var label = this.dataset.domain.charAt(0).toUpperCase() + this.dataset.domain.slice(1);
+        updateBreadcrumb([
+          { label: 'All Knowledge', level: 'root' },
+          { label: label, level: 'domain' }
+        ]);
+
+        zoomIntoElement(this, 2);
+      });
+    });
+
+    // Skill clicks
+    document.querySelectorAll('.skill-node').forEach(function(skill) {
+      skill.addEventListener('click', function(e) {
+        e.stopPropagation();
+        state.currentDomain = this.dataset.domain;
+        state.currentSkill = this.dataset.skill;
+
+        var domainLabel = this.dataset.domain.charAt(0).toUpperCase() + this.dataset.domain.slice(1);
+        var skillLabel = this.dataset.skill.charAt(0).toUpperCase() + this.dataset.skill.slice(1);
+        updateBreadcrumb([
+          { label: 'All Knowledge', level: 'root' },
+          { label: domainLabel, level: 'domain' },
+          { label: skillLabel, level: 'skill' }
+        ]);
+
+        zoomIntoElement(this, 4);
+        showDetailPanel(this);
+      });
+    });
+
+    // Concept clicks
+    document.querySelectorAll('.concept-node').forEach(function(concept) {
+      concept.addEventListener('click', function(e) {
+        e.stopPropagation();
+
+        var skillLabel = this.dataset.skill.charAt(0).toUpperCase() + this.dataset.skill.slice(1);
+        var conceptLabel = this.dataset.concept.charAt(0).toUpperCase() + this.dataset.concept.slice(1);
+        var skillNode = document.querySelector('[data-skill="' + this.dataset.skill + '"]');
+        var domainLabel = skillNode ? skillNode.dataset.domain.charAt(0).toUpperCase() + skillNode.dataset.domain.slice(1) : 'Unknown';
+
+        updateBreadcrumb([
+          { label: 'All Knowledge', level: 'root' },
+          { label: domainLabel, level: 'domain' },
+          { label: skillLabel, level: 'skill' },
+          { label: conceptLabel, level: 'concept' }
+        ]);
+
+        zoomIntoElement(this, 6);
+      });
+    });
+
+    // Center node click
+    document.getElementById('center-node').addEventListener('click', function(e) {
+      if (e.target.closest('.orbit-body')) return;
+      e.stopPropagation();
+      navigateToLevel('root');
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // ORBIT BODY CLICKS — Drill down from orbits
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    document.querySelectorAll('.orbit-body[data-skill]').forEach(function(body) {
+      body.addEventListener('click', function(e) {
+        e.stopPropagation();
+
+        var skillName = this.dataset.skill;
+        var domainName = this.dataset.domain;
+
+        // Find the corresponding skill node on the map
+        var skillNode = document.querySelector('.skill-node[data-skill="' + skillName + '"]');
+        if (skillNode) {
+          state.currentDomain = domainName;
+          state.currentSkill = skillName;
+
+          var domainLabel = domainName.charAt(0).toUpperCase() + domainName.slice(1);
+          var skillLabel = skillName.charAt(0).toUpperCase() + skillName.slice(1);
+          updateBreadcrumb([
+            { label: 'All Knowledge', level: 'root' },
+            { label: domainLabel, level: 'domain' },
+            { label: skillLabel, level: 'skill' }
+          ]);
+
+          zoomIntoElement(skillNode, 4);
+          showDetailPanel(skillNode);
+        }
+      });
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // DETAIL PANEL
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    var skillInfo = {
+      rust: { title: 'Rust', subtitle: 'Technology / Systems', description: 'A systems programming language focused on safety, speed, and concurrency. Rust\'s ownership model guarantees memory safety without garbage collection.' },
+      python: { title: 'Python', subtitle: 'Technology / General', description: 'A versatile, high-level programming language known for its readability and broad ecosystem. Widely used in data science, web development, and automation.' },
+      llm: { title: 'LLM Fine-tuning', subtitle: 'Technology / AI', description: 'The process of customizing pre-trained language models for specific tasks or domains through targeted training on specialized datasets.' },
+      agents: { title: 'Agent Patterns', subtitle: 'Technology / AI', description: 'Design patterns for building autonomous AI agents that can perceive, reason, and act to accomplish complex goals.' },
+      options: { title: 'Options Trading', subtitle: 'Finance / Derivatives', description: 'Financial contracts that give the right, but not obligation, to buy or sell assets at predetermined prices. Key to hedging and speculation strategies.' },
+      dcf: { title: 'DCF Analysis', subtitle: 'Finance / Valuation', description: 'Discounted Cash Flow analysis estimates investment value by projecting future cash flows and discounting them to present value.' },
+      neuro: { title: 'Neuroscience', subtitle: 'Health / Brain', description: 'The scientific study of the nervous system, exploring how neural circuits give rise to cognition, behavior, and consciousness.' },
+      pharma: { title: 'Pharmacology', subtitle: 'Health / Medicine', description: 'The study of drug action and how pharmaceutical compounds interact with biological systems to produce therapeutic effects.' },
+      physics: { title: 'Particle Physics', subtitle: 'Science / Fundamental', description: 'The study of fundamental particles and forces that constitute matter and radiation, probing the deepest structure of the universe.' },
+      circadian: { title: 'Circadian Biology', subtitle: 'Health / Chronobiology', description: 'The study of biological rhythms and how the body\'s internal clock regulates sleep, metabolism, and cellular processes.' },
+      complexity: { title: 'Complexity Theory', subtitle: 'Science / Systems', description: 'The study of complex adaptive systems, emergence, and how simple rules generate sophisticated behaviors.' },
+      'fixed-income': { title: 'Fixed Income', subtitle: 'Finance / Bonds', description: 'Investment securities that pay fixed interest or dividend payments until maturity, including bonds and structured products.' }
+    };
+
+    function showDetailPanel(skillNode) {
+      var skill = skillNode.dataset.skill;
+      var info = skillInfo[skill] || { title: skill, subtitle: 'Unknown', description: 'Details not available.' };
+
+      document.getElementById('panel-title').textContent = info.title;
+      document.getElementById('panel-subtitle').textContent = info.subtitle;
+      document.getElementById('panel-description').textContent = info.description;
+
+      detailPanel.classList.add('visible');
+    }
+
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.skill-node') && !e.target.closest('.detail-panel') && !e.target.closest('.orbit-body')) {
+        detailPanel.classList.remove('visible');
+      }
+    });
+
+    document.getElementById('panel-action').addEventListener('click', function() {
+      var rect = document.querySelector('.zoom-viewport').getBoundingClientRect();
+      zoomAtPoint(rect.width / 2, rect.height / 2, -300);
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // ZOOM DOT CLICKS
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    document.querySelectorAll('.zoom-dot').forEach(function(dot) {
+      dot.addEventListener('click', function() {
+        var level = parseInt(this.dataset.level);
+        var targetScales = [0.5, 1, 2, 3.5, 5.5, 7.5];
+
+        zoomContainer.classList.add('animating');
+        state.scale = targetScales[level];
+        applyTransform();
+        setTimeout(function() { zoomContainer.classList.remove('animating'); }, 600);
+      });
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // ORBIT ANIMATION — Smooth JavaScript-controlled rotation
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    var orbitState = {
+      isSlowed: false,
+      // Degrees per second for each orbit (normal speed)
+      normalSpeeds: [18, -13, 8, -6], // orbit 1-4, negative = reverse
+      // Slow speed multiplier
+      slowMultiplier: 0.15,
+      // Current speed multiplier (animated between 1 and slowMultiplier)
+      currentMultiplier: 1,
+      // Current rotation angles
+      angles: [0, 0, 0, 0],
+      // Last frame time
+      lastTime: performance.now()
+    };
+
+    var orbitRings = [
+      document.querySelector('.orbit-1'),
+      document.querySelector('.orbit-2'),
+      document.querySelector('.orbit-3'),
+      document.querySelector('.orbit-4')
+    ];
+
+    function animateOrbits(currentTime) {
+      var deltaTime = (currentTime - orbitState.lastTime) / 1000; // seconds
+      orbitState.lastTime = currentTime;
+
+      // Smoothly interpolate speed multiplier
+      var targetMultiplier = orbitState.isSlowed ? orbitState.slowMultiplier : 1;
+      orbitState.currentMultiplier += (targetMultiplier - orbitState.currentMultiplier) * 0.08;
+
+      // Update each orbit's rotation
+      for (var i = 0; i < 4; i++) {
+        var speed = orbitState.normalSpeeds[i] * orbitState.currentMultiplier;
+        orbitState.angles[i] += speed * deltaTime;
+        orbitRings[i].style.transform = 'rotate(' + orbitState.angles[i] + 'deg)';
+        // Set counter-rotation variable so tooltips stay upright
+        orbitRings[i].style.setProperty('--counter-rotate', (-orbitState.angles[i]) + 'deg');
+      }
+
+      requestAnimationFrame(animateOrbits);
+    }
+
+    // Start the animation loop
+    requestAnimationFrame(animateOrbits);
+
+    // Hover detection
+    var orbitHoverZone = document.querySelector('.orbit-hover-zone');
+
+    orbitHoverZone.addEventListener('mouseenter', function() {
+      orbitState.isSlowed = true;
+    });
+
+    orbitHoverZone.addEventListener('mouseleave', function(e) {
+      if (!e.relatedTarget || !e.relatedTarget.closest('.orbit-body')) {
+        orbitState.isSlowed = false;
+      }
+    });
+
+    document.querySelectorAll('.orbit-body').forEach(function(body) {
+      body.addEventListener('mouseenter', function() {
+        orbitState.isSlowed = true;
+      });
+      body.addEventListener('mouseleave', function(e) {
+        if (!e.relatedTarget || !e.relatedTarget.closest('.orbit-ring, .orbit-hover-zone')) {
+          orbitState.isSlowed = false;
+        }
+      });
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // INITIALIZE
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    applyTransform();
+    updateBreadcrumb([{ label: 'All Knowledge', level: 'root' }]);
+  </script>
+</body>
+</html>

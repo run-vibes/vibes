@@ -3,168 +3,110 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Phosphor Command — Dashboard</title>
+  <title>Expanded Dashboard | Phosphor Command</title>
   <link rel="stylesheet" href="shared.css">
   <style>
-    /* ─── Page Layout ─── */
-    .app {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
+    /* ─── Dashboard Container Fix ─── */
+    .dashboard {
+      position: relative;
+      z-index: 1;
     }
 
-    /* ─── Command Bar ─── */
-    .command-bar {
+    /* ─── Header Bar ─── */
+    .header-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: var(--space-4) var(--space-8);
-      background: var(--bg-deep);
-      border-bottom: 1px solid var(--border-light);
-      position: relative;
+      padding: var(--space-3) var(--space-6);
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--gold-dim);
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
 
-    .command-bar::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: var(--space-8);
-      right: var(--space-8);
-      height: 1px;
-      background: linear-gradient(90deg,
-        transparent 0%,
-        var(--gold-dim) 10%,
-        var(--gold-primary) 50%,
-        var(--gold-dim) 90%,
-        transparent 100%
-      );
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: var(--space-4);
-    }
-
-    .brand-mark {
-      width: 32px;
-      height: 32px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, var(--gold-primary), var(--gold-dim));
-      border-radius: var(--radius-sm);
-      position: relative;
-    }
-
-    .brand-mark::before {
-      content: '◇';
-      color: var(--bg-void);
-      font-size: 16px;
-      font-weight: bold;
-    }
-
-    .brand-name {
+    .logo {
       font-family: var(--font-display);
-      font-size: 18px;
-      font-weight: 600;
-      letter-spacing: 0.1em;
-      color: var(--text-primary);
-    }
-
-    .brand-status {
-      font-family: var(--font-condensed);
-      font-size: 10px;
+      font-size: 20px;
+      font-weight: 400;
       letter-spacing: 0.15em;
       text-transform: uppercase;
-      color: var(--accent-success);
+      color: var(--gold-primary);
+    }
+
+    .logo-tagline {
+      font-family: var(--font-body-condensed);
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold-muted);
+      margin-left: var(--space-4);
+      padding-left: var(--space-4);
+      border-left: 1px solid var(--gold-dim);
+    }
+
+    .header-nav {
       display: flex;
-      align-items: center;
-      gap: var(--space-2);
+      gap: var(--space-1);
     }
 
-    .command-search {
-      flex: 1;
-      max-width: 480px;
-      margin: 0 var(--space-8);
-    }
-
-    .search-input {
-      width: 100%;
-      padding: var(--space-3) var(--space-5);
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-sm);
-      font-family: var(--font-body);
-      font-size: 13px;
-      color: var(--text-primary);
-      transition: all var(--transition-fast);
-    }
-
-    .search-input::placeholder {
-      color: var(--text-muted);
-    }
-
-    .search-input:focus {
-      outline: none;
-      border-color: var(--gold-muted);
-      background: var(--bg-elevated);
-    }
-
-    .command-actions {
-      display: flex;
-      align-items: center;
-      gap: var(--space-4);
-    }
-
-    .commanders {
-      display: flex;
-      align-items: center;
-      gap: var(--space-2);
-    }
-
-    .commander-avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: var(--bg-elevated);
-      border: 2px solid var(--border-light);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      font-weight: 600;
+    .nav-item {
+      font-family: var(--font-body-condensed);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
       color: var(--text-secondary);
-      position: relative;
+      padding: var(--space-2) var(--space-3);
+      text-decoration: none;
+      transition: color 0.2s ease;
     }
 
-    .commander-avatar.active {
-      border-color: var(--gold-primary);
-      box-shadow: var(--glow-gold);
+    .nav-item:hover {
+      color: var(--gold-primary);
     }
 
-    .commander-avatar.active::after {
-      content: '';
-      position: absolute;
-      bottom: -2px;
-      right: -2px;
-      width: 10px;
-      height: 10px;
-      background: var(--accent-success);
-      border-radius: 50%;
-      border: 2px solid var(--bg-deep);
+    .nav-item.active {
+      color: var(--gold-primary);
+      border-bottom: 1px solid var(--gold-primary);
+    }
+
+    /* ─── Page Header ─── */
+    .page-header {
+      padding: var(--space-6) var(--space-8);
+      border-bottom: 1px solid var(--gold-dim);
+      background: linear-gradient(180deg, var(--bg-card) 0%, var(--bg-surface) 100%);
+    }
+
+    .page-header-content {
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .page-title {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 400;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+      margin-bottom: var(--space-2);
+    }
+
+    .page-description {
+      font-size: 13px;
+      color: var(--text-tertiary);
+      font-style: italic;
     }
 
     /* ─── Main Content ─── */
     .main-content {
       flex: 1;
-      padding: var(--space-8);
       display: grid;
       grid-template-columns: 1fr 340px;
       gap: var(--space-8);
-      max-width: 1600px;
+      padding: var(--space-6) var(--space-8);
+      max-width: 1800px;
       margin: 0 auto;
-      width: 100%;
     }
 
     /* ─── Primary Column ─── */
@@ -747,6 +689,299 @@
       color: var(--text-tertiary);
     }
 
+    /* ─── Command Bar ─── */
+    .command-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-3) var(--space-8);
+      background: linear-gradient(180deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .command-bar-left {
+      display: flex;
+      align-items: center;
+      gap: var(--space-6);
+    }
+
+    .mode-switcher {
+      display: flex;
+      background: var(--bg-void);
+      border-radius: var(--radius-md);
+      padding: 3px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .mode-btn {
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: var(--space-2) var(--space-4);
+      border-radius: var(--radius-sm);
+      color: var(--text-tertiary);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .mode-btn:hover {
+      color: var(--text-secondary);
+    }
+
+    .mode-btn.active {
+      background: linear-gradient(180deg, var(--gold-subtle), rgba(201, 162, 39, 0.1));
+      color: var(--gold-primary);
+      box-shadow: 0 0 8px rgba(201, 162, 39, 0.2);
+    }
+
+    .commanders-group {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .commanders-label {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+    }
+
+    .commander-avatars {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .commander-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      border: 2px solid var(--bg-card);
+      position: relative;
+      margin-left: -6px;
+    }
+
+    .commander-avatar:first-child {
+      margin-left: 0;
+    }
+
+    .commander-avatar.human {
+      background: linear-gradient(135deg, #4a6fa5, #6b8cba);
+    }
+
+    .commander-avatar.ai {
+      background: linear-gradient(135deg, #8b5a9a, #a974bc);
+    }
+
+    .commander-avatar.active::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      right: -2px;
+      width: 10px;
+      height: 10px;
+      background: var(--accent-success);
+      border-radius: 50%;
+      border: 2px solid var(--bg-card);
+      box-shadow: 0 0 6px rgba(92, 184, 92, 0.5);
+    }
+
+    .commander-avatar.autonomous::after {
+      background: var(--gold-primary);
+      box-shadow: 0 0 6px rgba(201, 162, 39, 0.5);
+    }
+
+    .command-bar-right {
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+    }
+
+    .cmd-search {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-3);
+      background: var(--bg-void);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .cmd-search:hover {
+      border-color: var(--border-light);
+    }
+
+    .cmd-search-icon {
+      color: var(--text-tertiary);
+      font-size: 14px;
+    }
+
+    .cmd-search-text {
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+
+    .cmd-search-kbd {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-tertiary);
+      background: var(--bg-surface);
+      padding: 2px 5px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+    }
+
+    /* ─── Artifacts Zone ─── */
+    .artifacts-zone {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .artifacts-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-3) var(--space-5);
+      background: linear-gradient(180deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .artifacts-title {
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-primary);
+    }
+
+    .artifacts-count {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      color: var(--text-tertiary);
+      background: var(--bg-surface);
+      padding: 2px 6px;
+      border-radius: var(--radius-sm);
+    }
+
+    .artifacts-stream {
+      display: flex;
+      gap: var(--space-3);
+      padding: var(--space-4) var(--space-5);
+      overflow-x: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border-light) transparent;
+    }
+
+    .artifact-card {
+      flex: 0 0 auto;
+      width: 140px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .artifact-card:hover {
+      border-color: var(--border-light);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .artifact-preview {
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-void);
+      font-size: 32px;
+      position: relative;
+    }
+
+    .artifact-preview.video {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    }
+
+    .artifact-preview.image {
+      background: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
+    }
+
+    .artifact-preview.report {
+      background: linear-gradient(135deg, #1e3a3a 0%, #1a1a2e 100%);
+    }
+
+    .artifact-preview.audio {
+      background: linear-gradient(135deg, #3d1a3d 0%, #1a1a2e 100%);
+    }
+
+    .artifact-preview.build {
+      background: linear-gradient(135deg, #2d2d1a 0%, #1a1a2e 100%);
+    }
+
+    .artifact-badge {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+    }
+
+    .artifact-badge.passed {
+      background: var(--accent-success);
+      color: white;
+    }
+
+    .artifact-badge.pending {
+      background: var(--accent-warning);
+      color: var(--bg-void);
+    }
+
+    .artifact-badge.failed {
+      background: var(--accent-danger);
+      color: white;
+    }
+
+    .artifact-info {
+      padding: var(--space-2) var(--space-3);
+    }
+
+    .artifact-name {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 2px;
+    }
+
+    .artifact-meta {
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
     /* ─── Footer Status ─── */
     .footer-status {
       display: flex;
@@ -783,35 +1018,58 @@
   </style>
 </head>
 <body class="deco-bg">
-  <div class="app">
+  <div class="dashboard">
+
+    <!-- Header Bar -->
+    <header class="header-bar">
+      <div class="flex items-center">
+        <span class="logo">vibes</span>
+        <span class="logo-tagline">Phosphor Mission Control</span>
+      </div>
+      <nav class="header-nav">
+        <a href="01-full-dashboard.html" class="nav-item">Dashboard</a>
+        <a href="04-activity-feed.html" class="nav-item">Firehose</a>
+        <a href="06-expanded-dashboard.html" class="nav-item active">Sessions</a>
+        <a href="09-discovery-feed.html" class="nav-item">Groove</a>
+        <a href="10-cost-intelligence.html" class="nav-item">Costs</a>
+        <a href="07-command-palette.html" class="nav-item">Debug</a>
+      </nav>
+    </header>
 
     <!-- Command Bar -->
-    <header class="command-bar">
-      <div class="brand">
-        <div class="brand-mark"></div>
-        <div>
-          <div class="brand-name">PHOSPHOR COMMAND</div>
-          <div class="brand-status">
-            <span class="status-dot active"></span>
-            Systems Operational
+    <div class="command-bar">
+      <div class="command-bar-left">
+        <div class="mode-switcher">
+          <button class="mode-btn">Survey</button>
+          <button class="mode-btn active">Command</button>
+          <button class="mode-btn">Deep Dive</button>
+        </div>
+        <div class="commanders-group">
+          <span class="commanders-label">Commanders</span>
+          <div class="commander-avatars">
+            <div class="commander-avatar human active" title="You (active)">👤</div>
+            <div class="commander-avatar human" title="Sara (away)">👤</div>
+            <div class="commander-avatar ai autonomous" title="Ops-AI (autonomous)">🤖</div>
+            <div class="commander-avatar ai autonomous" title="Research-AI (autonomous)">🤖</div>
           </div>
         </div>
       </div>
-
-      <div class="command-search">
-        <input type="text" class="search-input" placeholder="Command palette... ⌘K">
-      </div>
-
-      <div class="command-actions">
-        <div class="commanders">
-          <div class="commander-avatar active">AJ</div>
-          <div class="commander-avatar">SR</div>
-          <div class="commander-avatar" style="background: linear-gradient(135deg, var(--accent-teal), var(--accent-navy)); color: white; font-size: 10px;">AI</div>
+      <div class="command-bar-right">
+        <div class="cmd-search">
+          <span class="cmd-search-icon">🔍</span>
+          <span class="cmd-search-text">Search or command...</span>
+          <span class="cmd-search-kbd">⌘K</span>
         </div>
-        <button class="btn">Handoff</button>
-        <button class="btn btn-primary">New Session</button>
       </div>
-    </header>
+    </div>
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="page-header-content">
+        <h1 class="page-title">Expanded Dashboard</h1>
+        <p class="page-description">Full feature dashboard with all widgets, attention zones, metrics, sessions, goals, and live activity feed.</p>
+      </div>
+    </div>
 
     <!-- Main Content -->
     <main class="main-content">
@@ -821,14 +1079,14 @@
 
         <!-- Attention Zone -->
         <div class="attention-zone sunburst-hero">
-          <div class="attention-icon"><span class="deco-icon deco-icon-bolt deco-icon-xl deco-icon-gold"></span></div>
+          <div class="attention-icon"><span class="deco-icon deco-icon-bolt deco-icon-xl deco-icon-gold"></span><span class="sr-only">Alert</span></div>
           <div class="attention-content">
-            <div class="attention-title">3 agents awaiting review in Payment Integration</div>
-            <div class="attention-detail">Verification artifacts ready • 2 tests pending approval</div>
+            <div class="attention-title">Patient cohort analysis ready for Dr. Chen's review</div>
+            <div class="attention-detail">12,400 records analyzed with 3 high-priority cases flagged for follow-up</div>
           </div>
           <div class="attention-actions">
             <button class="btn">Dismiss</button>
-            <button class="btn btn-primary">Review Now</button>
+            <button class="btn btn-primary">Review Findings</button>
           </div>
         </div>
 
@@ -888,13 +1146,13 @@
               <div class="session-item">
                 <div class="session-status"></div>
                 <div class="session-info">
-                  <div class="session-name">Payment Integration Refactor</div>
-                  <div class="session-meta">vibes-core • 4 files changed</div>
+                  <div class="session-name">Q4 Sales Forecast Model Training</div>
+                  <div class="session-meta">Marketing/Sales • Revenue prediction for APAC region</div>
                 </div>
                 <div class="session-agents">
-                  <span class="agent-pill">Builder</span>
-                  <span class="agent-pill">Reviewer</span>
-                  <span class="agent-pill">+2</span>
+                  <span class="agent-pill">Forecast</span>
+                  <span class="agent-pill">Analyst</span>
+                  <span class="agent-pill">+1</span>
                 </div>
                 <div class="session-time">Active now</div>
               </div>
@@ -902,25 +1160,64 @@
               <div class="session-item">
                 <div class="session-status pending"></div>
                 <div class="session-info">
-                  <div class="session-name">Dashboard Component Tests</div>
-                  <div class="session-meta">web-ui • Awaiting review</div>
+                  <div class="session-name">Patient Cohort Analysis - Diabetes Study</div>
+                  <div class="session-meta">Medicine • 12,400 patient records analyzed</div>
                 </div>
                 <div class="session-agents">
-                  <span class="agent-pill">Tester</span>
+                  <span class="agent-pill">Research</span>
+                  <span class="agent-pill">Privacy</span>
                 </div>
-                <div class="session-time">12m ago</div>
+                <div class="session-time">Awaiting Dr. Chen</div>
               </div>
 
               <div class="session-item">
                 <div class="session-status"></div>
                 <div class="session-info">
-                  <div class="session-name">API Documentation</div>
-                  <div class="session-meta">docs • Generating</div>
+                  <div class="session-name">Film Color Grading AI Assist</div>
+                  <div class="session-meta">Hollywood • Scene 47-52 color correction</div>
                 </div>
                 <div class="session-agents">
-                  <span class="agent-pill">Writer</span>
+                  <span class="agent-pill">Color</span>
+                  <span class="agent-pill">Render</span>
                 </div>
-                <div class="session-time">25m ago</div>
+                <div class="session-time">8m ago</div>
+              </div>
+
+              <div class="session-item">
+                <div class="session-status"></div>
+                <div class="session-info">
+                  <div class="session-name">Supply Chain Optimization - EU Logistics</div>
+                  <div class="session-meta">Manufacturing • Route optimization across 14 warehouses</div>
+                </div>
+                <div class="session-agents">
+                  <span class="agent-pill">Logistics</span>
+                </div>
+                <div class="session-time">22m ago</div>
+              </div>
+
+              <div class="session-item">
+                <div class="session-status pending"></div>
+                <div class="session-info">
+                  <div class="session-name">Customer Churn Prediction Model</div>
+                  <div class="session-meta">Finance • Identifying at-risk accounts for Q1</div>
+                </div>
+                <div class="session-agents">
+                  <span class="agent-pill">Predict</span>
+                  <span class="agent-pill">Segment</span>
+                </div>
+                <div class="session-time">35m ago</div>
+              </div>
+
+              <div class="session-item">
+                <div class="session-status idle"></div>
+                <div class="session-info">
+                  <div class="session-name">Game Balance Simulation - Patch 2.3</div>
+                  <div class="session-meta">Gaming • Testing new hero abilities across 50k matches</div>
+                </div>
+                <div class="session-agents">
+                  <span class="agent-pill">Simulate</span>
+                </div>
+                <div class="session-time">1h ago</div>
               </div>
             </div>
           </div>
@@ -941,46 +1238,126 @@
             <div class="goals-grid">
               <div class="goal-card">
                 <div class="goal-header">
-                  <div class="goal-title">Complete M50 Home Redesign</div>
-                  <div class="goal-percent">67%</div>
+                  <div class="goal-title">Q4 Sales Forecast Accuracy</div>
+                  <div class="goal-percent">92%</div>
                 </div>
                 <div class="goal-progress">
-                  <div class="goal-fill" style="width: 67%;"></div>
+                  <div class="goal-fill" style="width: 92%;"></div>
                 </div>
-                <div class="goal-meta">8 of 12 tasks complete</div>
+                <div class="goal-meta">Target: 95% prediction accuracy</div>
               </div>
 
               <div class="goal-card">
                 <div class="goal-header">
-                  <div class="goal-title">Reduce API Response Time</div>
-                  <div class="goal-percent">89%</div>
-                </div>
-                <div class="goal-progress">
-                  <div class="goal-fill" style="width: 89%;"></div>
-                </div>
-                <div class="goal-meta">Target: <200ms avg</div>
-              </div>
-
-              <div class="goal-card">
-                <div class="goal-header">
-                  <div class="goal-title">Test Coverage to 85%</div>
+                  <div class="goal-title">Patient Risk Screening Coverage</div>
                   <div class="goal-percent">78%</div>
                 </div>
                 <div class="goal-progress">
                   <div class="goal-fill" style="width: 78%;"></div>
                 </div>
-                <div class="goal-meta">Currently at 72%</div>
+                <div class="goal-meta">9,672 of 12,400 patients screened</div>
               </div>
 
               <div class="goal-card">
                 <div class="goal-header">
-                  <div class="goal-title">Document All Public APIs</div>
-                  <div class="goal-percent">45%</div>
+                  <div class="goal-title">Supply Chain Optimization</div>
+                  <div class="goal-percent">67%</div>
                 </div>
                 <div class="goal-progress">
-                  <div class="goal-fill" style="width: 45%;"></div>
+                  <div class="goal-fill" style="width: 67%;"></div>
                 </div>
-                <div class="goal-meta">23 of 51 endpoints</div>
+                <div class="goal-meta">$340k saved of $500k target</div>
+              </div>
+
+              <div class="goal-card">
+                <div class="goal-header">
+                  <div class="goal-title">Customer Churn Reduction</div>
+                  <div class="goal-percent">54%</div>
+                </div>
+                <div class="goal-progress">
+                  <div class="goal-fill" style="width: 54%;"></div>
+                </div>
+                <div class="goal-meta">Reduced from 8.2% to 5.4%</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Artifacts Zone -->
+        <section class="artifacts-zone">
+          <div class="artifacts-header">
+            <span class="artifacts-title">Verification Artifacts</span>
+            <span class="artifacts-count">12 today</span>
+          </div>
+          <div class="artifacts-stream">
+            <div class="artifact-card">
+              <div class="artifact-preview report">
+                <span aria-hidden="true">📊</span>
+                <span class="artifact-badge passed">✓</span>
+              </div>
+              <div class="artifact-info">
+                <div class="artifact-name">quarterly-sales-report.pdf</div>
+                <div class="artifact-meta">Finance • Q4 Revenue</div>
+              </div>
+            </div>
+            <div class="artifact-card">
+              <div class="artifact-preview video">
+                <span aria-hidden="true">🎬</span>
+                <span class="artifact-badge pending">⏳</span>
+              </div>
+              <div class="artifact-info">
+                <div class="artifact-name">patient-risk-analysis.mp4</div>
+                <div class="artifact-meta">Medicine • Dr. Chen</div>
+              </div>
+            </div>
+            <div class="artifact-card">
+              <div class="artifact-preview image">
+                <span aria-hidden="true">🖼️</span>
+                <span class="artifact-badge passed">✓</span>
+              </div>
+              <div class="artifact-info">
+                <div class="artifact-name">scene-lighting-compare.png</div>
+                <div class="artifact-meta">Hollywood • Scene 47</div>
+              </div>
+            </div>
+            <div class="artifact-card">
+              <div class="artifact-preview build">
+                <span aria-hidden="true">📦</span>
+                <span class="artifact-badge passed">✓</span>
+              </div>
+              <div class="artifact-info">
+                <div class="artifact-name">supply-chain-dash.xlsx</div>
+                <div class="artifact-meta">Manufacturing • EU</div>
+              </div>
+            </div>
+            <div class="artifact-card">
+              <div class="artifact-preview audio">
+                <span aria-hidden="true">🎙️</span>
+                <span class="artifact-badge passed">✓</span>
+              </div>
+              <div class="artifact-info">
+                <div class="artifact-name">customer-segment.mp3</div>
+                <div class="artifact-meta">Marketing • Focus group</div>
+              </div>
+            </div>
+            <div class="artifact-card">
+              <div class="artifact-preview report">
+                <span aria-hidden="true">📈</span>
+                <span class="artifact-badge passed">✓</span>
+              </div>
+              <div class="artifact-info">
+                <div class="artifact-name">churn-prediction.pdf</div>
+                <div class="artifact-meta">Finance • At-risk</div>
+              </div>
+            </div>
+            <div class="artifact-card">
+              <div class="artifact-preview video">
+                <span aria-hidden="true">🎮</span>
+                <span class="artifact-badge failed">✗</span>
+              </div>
+              <div class="artifact-info">
+                <div class="artifact-name">hero-balance-sim.webm</div>
+                <div class="artifact-meta">Gaming • Patch 2.3</div>
               </div>
             </div>
           </div>
@@ -1025,24 +1402,38 @@
           </div>
           <div class="discovery-list">
             <div class="discovery-item">
-              <span class="discovery-type"><span class="deco-icon deco-icon-growth deco-icon-md" style="color: var(--accent-success);"></span></span>
+              <span class="discovery-type"><span class="deco-icon deco-icon-growth deco-icon-md" style="color: var(--accent-success);"></span><span class="sr-only">Growth</span></span>
               <div class="discovery-info">
-                <div class="discovery-text">Agents self-organizing around shared context pools</div>
-                <div class="discovery-meta">Emergent • 12m ago</div>
+                <div class="discovery-text">Fashion trend correlation found: social media mentions predict sales velocity with 87% accuracy</div>
+                <div class="discovery-meta">Marketing • 12m ago</div>
               </div>
             </div>
             <div class="discovery-item">
-              <span class="discovery-type"><span class="deco-icon deco-icon-bolt deco-icon-md deco-icon-gold"></span></span>
+              <span class="discovery-type"><span class="deco-icon deco-icon-bolt deco-icon-md deco-icon-gold"></span><span class="sr-only">Efficiency</span></span>
               <div class="discovery-info">
-                <div class="discovery-text">Batch API calls could reduce costs by 35%</div>
-                <div class="discovery-meta">Efficiency • 1h ago</div>
+                <div class="discovery-text">Family vacation optimizer reduced travel stress indicators by 34% across 2,400 itineraries</div>
+                <div class="discovery-meta">Lifestyle • 45m ago</div>
               </div>
             </div>
             <div class="discovery-item">
-              <span class="discovery-type"><span class="deco-icon deco-icon-link deco-icon-md" style="color: var(--accent-teal);"></span></span>
+              <span class="discovery-type"><span class="deco-icon deco-icon-target deco-icon-md" style="color: var(--accent-teal);"></span><span class="sr-only">Prediction</span></span>
               <div class="discovery-info">
-                <div class="discovery-text">Verification artifacts can auto-track goal progress</div>
-                <div class="discovery-meta">Connection • 3h ago</div>
+                <div class="discovery-text">Fishing yield prediction accuracy improved to 89% for Lake Superior seasonal patterns</div>
+                <div class="discovery-meta">Outdoors • 1h ago</div>
+              </div>
+            </div>
+            <div class="discovery-item">
+              <span class="discovery-type"><span class="deco-icon deco-icon-agent deco-icon-md" style="color: var(--accent-purple);"></span><span class="sr-only">Sports</span></span>
+              <div class="discovery-info">
+                <div class="discovery-text">Sports analytics detected defensive formation weakness in opponent's zone coverage</div>
+                <div class="discovery-meta">Athletics • 2h ago</div>
+              </div>
+            </div>
+            <div class="discovery-item">
+              <span class="discovery-type"><span class="deco-icon deco-icon-value deco-icon-md" style="color: var(--accent-success);"></span><span class="sr-only">Savings</span></span>
+              <div class="discovery-info">
+                <div class="discovery-text">Manufacturing predictive maintenance saved $120k this month by preventing 3 equipment failures</div>
+                <div class="discovery-meta">Industrial • 3h ago</div>
               </div>
             </div>
           </div>
@@ -1059,38 +1450,45 @@
           </div>
           <div class="activity-feed">
             <div class="activity-item">
-              <div class="activity-icon"><span class="deco-icon deco-icon-check deco-icon-sm deco-icon-success"></span></div>
+              <div class="activity-icon"><span class="deco-icon deco-icon-check deco-icon-sm deco-icon-success"></span><span class="sr-only">Approved</span></div>
               <div class="activity-content">
-                <div class="activity-text"><strong>Builder-7</strong> completed payment handler refactor</div>
+                <div class="activity-text"><strong>Sara</strong> approved the fashion trend analysis report for Q4 marketing campaign</div>
                 <div class="activity-time">Just now</div>
               </div>
             </div>
             <div class="activity-item">
-              <div class="activity-icon"><span class="deco-icon deco-icon-search deco-icon-sm deco-icon-muted"></span></div>
+              <div class="activity-icon"><span class="deco-icon deco-icon-agent deco-icon-sm deco-icon-gold"></span><span class="sr-only">Analysis</span></div>
               <div class="activity-content">
-                <div class="activity-text"><strong>Reviewer-3</strong> approved PR #247</div>
-                <div class="activity-time">2m ago</div>
+                <div class="activity-text"><strong>Ops-AI</strong> completed supply chain optimization analysis for EU distribution network</div>
+                <div class="activity-time">3m ago</div>
               </div>
             </div>
             <div class="activity-item">
-              <div class="activity-icon"><span class="deco-icon deco-icon-test deco-icon-sm deco-icon-muted"></span></div>
+              <div class="activity-icon"><span class="deco-icon deco-icon-search deco-icon-sm deco-icon-muted"></span><span class="sr-only">Review</span></div>
               <div class="activity-content">
-                <div class="activity-text"><strong>Tester-1</strong> generated 12 test cases</div>
-                <div class="activity-time">5m ago</div>
-              </div>
-            </div>
-            <div class="activity-item">
-              <div class="activity-icon"><span class="deco-icon deco-icon-doc deco-icon-sm deco-icon-muted"></span></div>
-              <div class="activity-content">
-                <div class="activity-text"><strong>Writer-2</strong> updated API documentation</div>
+                <div class="activity-text"><strong>Dr. Chen</strong> reviewed patient cohort findings and flagged 3 cases for follow-up</div>
                 <div class="activity-time">8m ago</div>
               </div>
             </div>
             <div class="activity-item">
-              <div class="activity-icon"><span class="deco-icon deco-icon-rocket deco-icon-sm deco-icon-gold"></span></div>
+              <div class="activity-icon"><span class="deco-icon deco-icon-rocket deco-icon-sm deco-icon-success"></span><span class="sr-only">Deploy</span></div>
               <div class="activity-content">
-                <div class="activity-text"><strong>Deploy</strong> staged build v2.4.1</div>
+                <div class="activity-text"><strong>Marketing team</strong> deployed the campaign optimizer to production environment</div>
                 <div class="activity-time">15m ago</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon"><span class="deco-icon deco-icon-value deco-icon-sm deco-icon-gold"></span><span class="sr-only">Savings</span></div>
+              <div class="activity-content">
+                <div class="activity-text"><strong>Manufacturing</strong> saved $42k by catching equipment anomaly before failure</div>
+                <div class="activity-time">28m ago</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon"><span class="deco-icon deco-icon-target deco-icon-sm deco-icon-muted"></span><span class="sr-only">Prediction</span></div>
+              <div class="activity-content">
+                <div class="activity-text"><strong>Sports Analytics</strong> updated game predictions for this weekend's matches</div>
+                <div class="activity-time">45m ago</div>
               </div>
             </div>
           </div>
