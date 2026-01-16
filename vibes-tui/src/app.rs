@@ -256,6 +256,84 @@ impl App {
                     agent_state.confirmation.show(ConfirmationType::Restart);
                 }
             }
+            // Swarm merge actions
+            Action::Merge => {
+                if let View::Swarm(swarm_id) = &self.views.current
+                    && let Some(swarm_state) = self.state.swarms.get_mut(swarm_id)
+                {
+                    // Show merge dialog if not already showing results
+                    if !swarm_state.merge_results.is_visible() {
+                        // TODO: Gather completed agents from swarm data
+                        // For now, this will be wired up when swarm data is available
+                    }
+                }
+            }
+            Action::CopyToClipboard => {
+                if let View::Swarm(swarm_id) = &self.views.current
+                    && let Some(swarm_state) = self.state.swarms.get(swarm_id)
+                    && swarm_state.merge_results.is_visible()
+                {
+                    let content = swarm_state.merge_results.as_markdown();
+                    match crate::clipboard::copy_to_clipboard(&content) {
+                        Ok(()) => {
+                            tracing::info!("Copied merged results to clipboard");
+                        }
+                        Err(e) => {
+                            tracing::warn!("Failed to copy to clipboard: {}", e);
+                        }
+                    }
+                }
+            }
+            Action::SaveToFile => {
+                if let View::Swarm(swarm_id) = &self.views.current
+                    && let Some(swarm_state) = self.state.swarms.get(swarm_id)
+                    && swarm_state.merge_results.is_visible()
+                {
+                    let content = swarm_state.merge_results.as_markdown();
+                    // Generate timestamped filename
+                    let timestamp = chrono::Local::now().format("%Y%m%d_%H%M%S");
+                    let filename = format!("merged_results_{}.md", timestamp);
+                    match std::fs::write(&filename, &content) {
+                        Ok(()) => {
+                            tracing::info!("Saved merged results to {}", filename);
+                        }
+                        Err(e) => {
+                            tracing::warn!("Failed to save to file: {}", e);
+                        }
+                    }
+                }
+            }
+            Action::ScrollUp => {
+                if let View::Swarm(swarm_id) = &self.views.current
+                    && let Some(swarm_state) = self.state.swarms.get_mut(swarm_id)
+                {
+                    swarm_state.merge_results.scroll_up();
+                }
+            }
+            Action::ScrollDown => {
+                if let View::Swarm(swarm_id) = &self.views.current
+                    && let Some(swarm_state) = self.state.swarms.get_mut(swarm_id)
+                {
+                    // TODO: Get actual viewport height from render context
+                    swarm_state.merge_results.scroll_down(20);
+                }
+            }
+            Action::PageUp => {
+                if let View::Swarm(swarm_id) = &self.views.current
+                    && let Some(swarm_state) = self.state.swarms.get_mut(swarm_id)
+                {
+                    // TODO: Get actual viewport height from render context
+                    swarm_state.merge_results.page_up(20);
+                }
+            }
+            Action::PageDown => {
+                if let View::Swarm(swarm_id) = &self.views.current
+                    && let Some(swarm_state) = self.state.swarms.get_mut(swarm_id)
+                {
+                    // TODO: Get actual viewport height from render context
+                    swarm_state.merge_results.page_down(20);
+                }
+            }
             // Other actions - will be wired up in future stories
             Action::NavigateLeft
             | Action::NavigateRight

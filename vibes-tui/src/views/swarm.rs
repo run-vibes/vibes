@@ -235,6 +235,15 @@ impl ViewRenderer for SwarmView {
         self.render_header(frame, chunks[0], app);
         self.render_agent_area(frame, chunks[1], app);
         self.render_footer(frame, chunks[2], app);
+
+        // Render merge dialog/results as modal overlays
+        if let Some(swarm_state) = app.state.swarms.get(&self.swarm_id) {
+            if swarm_state.merge_results.is_visible() {
+                swarm_state.merge_results.render(frame, &app.theme);
+            } else if swarm_state.merge_dialog.is_visible() {
+                swarm_state.merge_dialog.render(frame, &app.theme);
+            }
+        }
     }
 
     fn title(&self) -> &str {
@@ -689,6 +698,169 @@ mod tests {
         assert!(
             content.contains("Agent Beta"),
             "Expected 'Agent Beta' in: {}",
+            content
+        );
+    }
+
+    // ==================== Merge Dialog Integration Tests ====================
+
+    #[test]
+    fn swarm_view_renders_merge_dialog_when_visible() {
+        use crate::state::SwarmState;
+        use crate::widgets::CompletedAgent;
+
+        let mut app = App::default();
+        let view = SwarmView::new("swarm-test".into());
+
+        // Set up swarm state with visible merge dialog
+        let mut swarm_state = SwarmState::default();
+        swarm_state.merge_dialog.show(
+            vec![CompletedAgent {
+                agent_id: "agent-1".into(),
+                name: "Security Agent".into(),
+                task_summary: "Security review".into(),
+            }],
+            0,
+        );
+        app.state.swarms.insert("swarm-test".into(), swarm_state);
+
+        let backend = TestBackend::new(80, 24);
+        let mut terminal = Terminal::new(backend).unwrap();
+
+        terminal
+            .draw(|f| {
+                view.render(f, f.area(), &app);
+            })
+            .unwrap();
+
+        let buffer = terminal.backend().buffer();
+        let content: String = buffer.content().iter().map(|cell| cell.symbol()).collect();
+
+        assert!(
+            content.contains("Merge Results"),
+            "Expected merge dialog title 'Merge Results' in: {}",
+            content
+        );
+        assert!(
+            content.contains("Security Agent"),
+            "Expected agent name in merge dialog: {}",
+            content
+        );
+    }
+
+    #[test]
+    fn swarm_view_renders_merge_results_when_visible() {
+        use crate::state::SwarmState;
+        use crate::widgets::ResultSection;
+
+        let mut app = App::default();
+        let view = SwarmView::new("swarm-results".into());
+
+        // Set up swarm state with visible merge results
+        let mut swarm_state = SwarmState::default();
+        swarm_state.merge_results.show(vec![ResultSection {
+            agent_name: "Code Review Agent".into(),
+            content: "No issues found.".into(),
+        }]);
+        app.state.swarms.insert("swarm-results".into(), swarm_state);
+
+        let backend = TestBackend::new(80, 24);
+        let mut terminal = Terminal::new(backend).unwrap();
+
+        terminal
+            .draw(|f| {
+                view.render(f, f.area(), &app);
+            })
+            .unwrap();
+
+        let buffer = terminal.backend().buffer();
+        let content: String = buffer.content().iter().map(|cell| cell.symbol()).collect();
+
+        assert!(
+            content.contains("Merged Results"),
+            "Expected results view title 'Merged Results' in: {}",
+            content
+        );
+        assert!(
+            content.contains("Code Review Agent"),
+            "Expected agent section in results: {}",
+            content
+        );
+    }
+
+    #[test]
+    fn swarm_view_results_take_priority_over_dialog() {
+        use crate::state::SwarmState;
+        use crate::widgets::{CompletedAgent, ResultSection};
+
+        let mut app = App::default();
+        let view = SwarmView::new("swarm-priority".into());
+
+        // Set up swarm state with BOTH dialog and results visible
+        let mut swarm_state = SwarmState::default();
+        swarm_state.merge_dialog.show(
+            vec![CompletedAgent {
+                agent_id: "agent-1".into(),
+                name: "Dialog Agent".into(),
+                task_summary: "Task".into(),
+            }],
+            0,
+        );
+        swarm_state.merge_results.show(vec![ResultSection {
+            agent_name: "Results Agent".into(),
+            content: "Output".into(),
+        }]);
+        app.state
+            .swarms
+            .insert("swarm-priority".into(), swarm_state);
+
+        let backend = TestBackend::new(80, 24);
+        let mut terminal = Terminal::new(backend).unwrap();
+
+        terminal
+            .draw(|f| {
+                view.render(f, f.area(), &app);
+            })
+            .unwrap();
+
+        let buffer = terminal.backend().buffer();
+        let content: String = buffer.content().iter().map(|cell| cell.symbol()).collect();
+
+        // Results should be shown, not dialog
+        assert!(
+            content.contains("Merged Results"),
+            "Results view should take priority"
+        );
+        assert!(
+            content.contains("Results Agent"),
+            "Results content should be shown"
+        );
+    }
+
+    #[test]
+    fn swarm_view_footer_shows_merge_keybinding() {
+        let app = App::default();
+        let view = SwarmView::new("swarm-1".into());
+        let backend = TestBackend::new(80, 24);
+        let mut terminal = Terminal::new(backend).unwrap();
+
+        terminal
+            .draw(|f| {
+                view.render(f, f.area(), &app);
+            })
+            .unwrap();
+
+        let buffer = terminal.backend().buffer();
+        let content: String = buffer.content().iter().map(|cell| cell.symbol()).collect();
+
+        assert!(
+            content.contains("[m]"),
+            "Expected '[m]' keybinding hint in footer: {}",
+            content
+        );
+        assert!(
+            content.contains("Merge"),
+            "Expected 'Merge' label in footer: {}",
             content
         );
     }

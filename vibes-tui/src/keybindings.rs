@@ -38,6 +38,15 @@ pub enum Action {
     Restart,
     ViewDiff,
 
+    // Swarm-specific
+    Merge,
+    CopyToClipboard,
+    SaveToFile,
+    ScrollUp,
+    ScrollDown,
+    PageUp,
+    PageDown,
+
     // Connection
     Retry,
 }
@@ -51,6 +60,8 @@ pub struct KeyBindings {
     pub view_specific: HashMap<View, HashMap<KeyEvent, Action>>,
     /// Agent view bindings (applies to any Agent view regardless of agent ID).
     agent_bindings: HashMap<KeyEvent, Action>,
+    /// Swarm view bindings (applies to any Swarm view regardless of swarm ID).
+    swarm_bindings: HashMap<KeyEvent, Action>,
 }
 
 impl KeyBindings {
@@ -71,6 +82,13 @@ impl KeyBindings {
         // Check agent bindings for any Agent view
         if matches!(current_view, View::Agent(_))
             && let Some(action) = self.agent_bindings.get(&key)
+        {
+            return Some(action.clone());
+        }
+
+        // Check swarm bindings for any Swarm view
+        if matches!(current_view, View::Swarm(_))
+            && let Some(action) = self.swarm_bindings.get(&key)
         {
             return Some(action.clone());
         }
@@ -134,10 +152,19 @@ impl Default for KeyBindings {
         agent_bindings.insert(key('c'), Action::Cancel);
         agent_bindings.insert(key('r'), Action::Restart);
 
+        // Swarm view-specific bindings
+        let mut swarm_bindings = HashMap::new();
+        swarm_bindings.insert(key('m'), Action::Merge);
+        swarm_bindings.insert(key('c'), Action::CopyToClipboard);
+        swarm_bindings.insert(key('s'), Action::SaveToFile);
+        swarm_bindings.insert(key_code(KeyCode::PageUp), Action::PageUp);
+        swarm_bindings.insert(key_code(KeyCode::PageDown), Action::PageDown);
+
         Self {
             global,
             view_specific: HashMap::new(),
             agent_bindings,
+            swarm_bindings,
         }
     }
 }
@@ -409,5 +436,80 @@ mod tests {
     #[test]
     fn action_enum_has_restart_variant() {
         let _restart = Action::Restart;
+    }
+
+    #[test]
+    fn action_enum_has_swarm_variants() {
+        let _merge = Action::Merge;
+        let _copy = Action::CopyToClipboard;
+        let _save = Action::SaveToFile;
+        let _scroll_up = Action::ScrollUp;
+        let _scroll_down = Action::ScrollDown;
+        let _page_up = Action::PageUp;
+        let _page_down = Action::PageDown;
+    }
+
+    // ==================== Swarm View Keybinding Tests ====================
+
+    #[test]
+    fn keybindings_swarm_view_m_maps_to_merge() {
+        let bindings = KeyBindings::default();
+        assert_eq!(
+            bindings.resolve(key('m'), &View::Swarm("test-swarm".into())),
+            Some(Action::Merge)
+        );
+    }
+
+    #[test]
+    fn keybindings_swarm_view_c_maps_to_copy() {
+        let bindings = KeyBindings::default();
+        assert_eq!(
+            bindings.resolve(key('c'), &View::Swarm("test-swarm".into())),
+            Some(Action::CopyToClipboard)
+        );
+    }
+
+    #[test]
+    fn keybindings_swarm_view_s_maps_to_save() {
+        let bindings = KeyBindings::default();
+        assert_eq!(
+            bindings.resolve(key('s'), &View::Swarm("test-swarm".into())),
+            Some(Action::SaveToFile)
+        );
+    }
+
+    #[test]
+    fn keybindings_swarm_view_page_up_maps_to_page_up() {
+        let bindings = KeyBindings::default();
+        assert_eq!(
+            bindings.resolve(key_code(KeyCode::PageUp), &View::Swarm("test".into())),
+            Some(Action::PageUp)
+        );
+    }
+
+    #[test]
+    fn keybindings_swarm_view_page_down_maps_to_page_down() {
+        let bindings = KeyBindings::default();
+        assert_eq!(
+            bindings.resolve(key_code(KeyCode::PageDown), &View::Swarm("test".into())),
+            Some(Action::PageDown)
+        );
+    }
+
+    #[test]
+    fn keybindings_swarm_bindings_dont_apply_to_dashboard() {
+        let bindings = KeyBindings::default();
+        // 'm' should not be Merge on Dashboard
+        assert_eq!(bindings.resolve(key('m'), &View::Dashboard), None);
+    }
+
+    #[test]
+    fn keybindings_swarm_view_falls_back_to_global() {
+        let bindings = KeyBindings::default();
+        // 'q' should still be Quit on Swarm view
+        assert_eq!(
+            bindings.resolve(key('q'), &View::Swarm("test".into())),
+            Some(Action::Quit)
+        );
     }
 }

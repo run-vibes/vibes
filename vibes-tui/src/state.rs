@@ -2,7 +2,10 @@
 
 use std::collections::HashMap;
 
-use crate::widgets::{ConfirmationDialog, ControlBar, DiffModal, OutputBuffer, PermissionWidget};
+use crate::widgets::{
+    ConfirmationDialog, ControlBar, DiffModal, MergeDialog, MergeResultsView, OutputBuffer,
+    PermissionWidget,
+};
 
 /// Unique identifier for a session.
 pub type SessionId = String;
@@ -28,9 +31,14 @@ pub struct AgentState {
     pub confirmation: ConfirmationDialog,
 }
 
-/// Placeholder for swarm state (expanded in later stories).
+/// State for a swarm including merge dialog and results view.
 #[derive(Debug, Clone, Default)]
-pub struct SwarmState;
+pub struct SwarmState {
+    /// Merge dialog for confirming result aggregation.
+    pub merge_dialog: MergeDialog,
+    /// Merged results view for displaying combined output.
+    pub merge_results: MergeResultsView,
+}
 
 /// The current UI mode.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -199,5 +207,50 @@ mod tests {
         let mut state = AgentState::default();
         state.confirmation.show(ConfirmationType::Cancel);
         assert!(state.confirmation.is_visible());
+    }
+
+    // ==================== SwarmState Tests ====================
+
+    #[test]
+    fn swarm_state_defaults_with_hidden_dialogs() {
+        let state = SwarmState::default();
+        assert!(!state.merge_dialog.is_visible());
+        assert!(!state.merge_results.is_visible());
+    }
+
+    #[test]
+    fn swarm_state_has_merge_dialog() {
+        use crate::widgets::CompletedAgent;
+        let mut state = SwarmState::default();
+        state.merge_dialog.show(
+            vec![CompletedAgent {
+                agent_id: "a1".into(),
+                name: "Test".into(),
+                task_summary: "Task".into(),
+            }],
+            0,
+        );
+        assert!(state.merge_dialog.is_visible());
+    }
+
+    #[test]
+    fn swarm_state_has_merge_results() {
+        use crate::widgets::ResultSection;
+        let mut state = SwarmState::default();
+        state.merge_results.show(vec![ResultSection {
+            agent_name: "Agent".into(),
+            content: "Results".into(),
+        }]);
+        assert!(state.merge_results.is_visible());
+    }
+
+    #[test]
+    fn app_state_can_store_swarms() {
+        let mut state = AppState::default();
+        state
+            .swarms
+            .insert("swarm-1".to_string(), SwarmState::default());
+        assert_eq!(state.swarms.len(), 1);
+        assert!(state.swarms.contains_key("swarm-1"));
     }
 }

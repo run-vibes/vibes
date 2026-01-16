@@ -5,6 +5,7 @@
 
 mod app;
 mod client;
+mod clipboard;
 mod keybindings;
 mod state;
 mod terminal;
