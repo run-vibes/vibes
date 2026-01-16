@@ -20,7 +20,6 @@
 | [feat-0078-connectivity-validation](stages/backlog/stories/feat-0078-connectivity-validation.md) | feat | medium | cli,networking |
 | [feat-0101-header-identity-display](stages/backlog/stories/feat-0101-header-identity-display.md) | feat | low | web-ui,design-system |
 | [m39-feat-06-eval-web-ui](stages/backlog/stories/m39-feat-06-eval-web-ui.md) | feat | medium | evals |
-| [m43-feat-04-agent-control-actions](stages/backlog/stories/m43-feat-04-agent-control-actions.md) | feat | high | tui |
 | [m44-feat-01-swarm-view-layout](stages/backlog/stories/m44-feat-01-swarm-view-layout.md) | feat | high | tui |
 | [m44-feat-02-agent-progress-bars](stages/backlog/stories/m44-feat-02-agent-progress-bars.md) | feat | high | tui |
 | [m44-feat-03-result-merge-interface](stages/backlog/stories/m44-feat-03-result-merge-interface.md) | feat | medium | tui |
@@ -291,6 +290,7 @@
 - [m43-feat-01-agent-detail-view-layout](stages/done/stories/m43-feat-01-agent-detail-view-layout.md)
 - [m43-feat-02-output-stream-panel](stages/done/stories/m43-feat-02-output-stream-panel.md)
 - [m43-feat-03-permission-approval-widget](stages/done/stories/m43-feat-03-permission-approval-widget.md)
+- [m43-feat-04-agent-control-actions](stages/done/stories/m43-feat-04-agent-control-actions.md)
 - [refactor-0008-consolidate-assessment-types-module](stages/done/stories/refactor-0008-consolidate-assessment-types-module.md)
 - [refactor-0069-dashboard-visual-consistency](stages/done/stories/refactor-0069-dashboard-visual-consistency.md)
 - [refactor-0070-design-system-extraction](stages/done/stories/refactor-0070-design-system-extraction.md)
