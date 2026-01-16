@@ -11,6 +11,7 @@ use ratatui::{
 use super::traits::ViewRenderer;
 use crate::App;
 use crate::state::AgentId;
+use crate::widgets::OutputPanelWidget;
 
 /// The agent detail view showing output, context, and controls for a single agent.
 #[derive(Debug, Clone)]
@@ -54,18 +55,19 @@ impl AgentView {
         frame.render_widget(header, area);
     }
 
-    /// Renders the output panel placeholder (left side).
+    /// Renders the output panel with real-time agent output.
     fn render_output_panel(&self, frame: &mut Frame, area: Rect, app: &App) {
-        let block = Block::default()
-            .title(" Output ")
-            .borders(Borders::ALL)
-            .border_style(Style::default().fg(app.theme.border));
+        // Get the output buffer from the agent state, or use an empty widget
+        let widget = if let Some(agent_state) = app.state.agents.get(&self.agent_id) {
+            OutputPanelWidget {
+                buffer: agent_state.output.clone(),
+            }
+        } else {
+            OutputPanelWidget::new()
+        };
 
-        let content = Paragraph::new("(output stream - coming in m43-feat-02)")
-            .style(app.theme.dim)
-            .block(block);
-
-        frame.render_widget(content, area);
+        let paragraph = widget.to_paragraph(&app.theme, area.height as usize);
+        frame.render_widget(paragraph, area);
     }
 
     /// Renders the context panel with stats (right side).

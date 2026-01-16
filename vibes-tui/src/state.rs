@@ -2,6 +2,8 @@
 
 use std::collections::HashMap;
 
+use crate::widgets::OutputBuffer;
+
 /// Unique identifier for a session.
 pub type SessionId = String;
 
@@ -11,9 +13,12 @@ pub type AgentId = String;
 /// Unique identifier for a swarm.
 pub type SwarmId = String;
 
-/// Placeholder for agent state (expanded in later stories).
+/// State for a single agent including output buffer.
 #[derive(Debug, Clone, Default)]
-pub struct AgentState;
+pub struct AgentState {
+    /// Output buffer for the agent's output stream.
+    pub output: OutputBuffer,
+}
 
 /// Placeholder for swarm state (expanded in later stories).
 #[derive(Debug, Clone, Default)]
@@ -105,8 +110,16 @@ mod tests {
     #[test]
     fn app_state_can_store_agents() {
         let mut state = AppState::default();
-        state.agents.insert("agent-1".to_string(), AgentState);
+        state
+            .agents
+            .insert("agent-1".to_string(), AgentState::default());
         assert_eq!(state.agents.len(), 1);
         assert!(state.agents.contains_key("agent-1"));
+    }
+
+    #[test]
+    fn agent_state_has_output_buffer() {
+        let state = AgentState::default();
+        assert!(state.output.is_empty());
     }
 }
