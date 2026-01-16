@@ -1,7 +1,7 @@
 ---
 id: 43-tui-agent-control
 title: TUI Agent Control
-status: planned
+status: done
 epics: [tui]
 ---
 
