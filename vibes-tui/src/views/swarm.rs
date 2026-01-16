@@ -11,12 +11,14 @@ use ratatui::{
 use super::traits::ViewRenderer;
 use crate::App;
 use crate::state::{AgentId, SwarmId};
+use crate::widgets::AgentCard;
 
 /// The swarm view showing agents in a grid with header and footer controls.
 #[derive(Debug, Clone)]
 pub struct SwarmView {
     swarm_id: SwarmId,
     agents: Vec<AgentId>,
+    agent_cards: Vec<AgentCard>,
     #[allow(dead_code)] // Used in tests and future key handling
     selected_index: usize,
 }
@@ -27,6 +29,7 @@ impl SwarmView {
         Self {
             swarm_id,
             agents: Vec::new(),
+            agent_cards: Vec::new(),
             selected_index: 0,
         }
     }
@@ -85,6 +88,22 @@ impl SwarmView {
         }
     }
 
+    /// Sets the agent cards for this swarm.
+    #[cfg(test)]
+    pub fn set_agent_cards(&mut self, cards: Vec<AgentCard>) {
+        self.agent_cards = cards;
+        // Reset selection if out of bounds
+        if self.selected_index >= self.agent_cards.len() && !self.agent_cards.is_empty() {
+            self.selected_index = 0;
+        }
+    }
+
+    /// Returns the agent cards (used in tests).
+    #[cfg(test)]
+    pub fn agent_cards(&self) -> &[AgentCard] {
+        &self.agent_cards
+    }
+
     /// Renders the header section with swarm metadata.
     fn render_header(&self, frame: &mut Frame, area: Rect, app: &App) {
         // Row 1: Swarm name and status
@@ -106,7 +125,7 @@ impl SwarmView {
         frame.render_widget(header, area);
     }
 
-    /// Renders the agent grid area (placeholder for now).
+    /// Renders the agent grid area with AgentCards.
     fn render_agent_area(&self, frame: &mut Frame, area: Rect, app: &App) {
         let block = Block::default()
             .borders(Borders::TOP | Borders::BOTTOM)
@@ -115,7 +134,13 @@ impl SwarmView {
         let inner = block.inner(area);
         frame.render_widget(block, area);
 
-        // Show agent count or empty state
+        // If we have agent cards, render them in a grid
+        if !self.agent_cards.is_empty() {
+            self.render_agent_cards(frame, inner, app);
+            return;
+        }
+
+        // Fallback: Show agent count or empty state (for backwards compatibility)
         let content = if self.agents.is_empty() {
             Line::from(Span::styled("No agents in swarm", app.theme.dim))
         } else {
@@ -131,6 +156,41 @@ impl SwarmView {
 
         let paragraph = Paragraph::new(content);
         frame.render_widget(paragraph, inner);
+    }
+
+    /// Renders agent cards in a vertical list within the given area.
+    fn render_agent_cards(&self, frame: &mut Frame, area: Rect, app: &App) {
+        // Each card needs 4 rows (border + 2 content lines + border)
+        let card_height = 4u16;
+        let card_count = self.agent_cards.len();
+
+        // Calculate how many cards can fit
+        let max_cards = (area.height / card_height) as usize;
+        let cards_to_render = card_count.min(max_cards);
+
+        if cards_to_render == 0 {
+            return;
+        }
+
+        // Create constraints for the cards
+        let constraints: Vec<Constraint> = (0..cards_to_render)
+            .map(|_| Constraint::Length(card_height))
+            .chain(std::iter::once(Constraint::Min(0))) // Remaining space
+            .collect();
+
+        let chunks = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(constraints)
+            .split(area);
+
+        // Render each card
+        for (i, card) in self.agent_cards.iter().take(cards_to_render).enumerate() {
+            let mut card_to_render = card.clone();
+            // Mark as selected if this is the selected index
+            card_to_render.selected = i == self.selected_index;
+
+            card_to_render.render(frame, chunks[i], &app.theme);
+        }
     }
 
     /// Renders the footer with keybinding hints.
@@ -434,6 +494,202 @@ mod tests {
         assert!(
             content.contains("2 agents"),
             "Expected '2 agents' in agent area"
+        );
+    }
+
+    // === AgentCard integration tests ===
+
+    #[test]
+    fn swarm_view_set_agent_cards_stores_cards() {
+        use crate::widgets::{AgentCard, AgentCardStatus};
+
+        let mut view = SwarmView::new("swarm-1".into());
+        let cards = vec![
+            AgentCard {
+                agent_id: "agent-1".into(),
+                name: "Code Reviewer".into(),
+                task: "Review PR".into(),
+                progress: 0.5,
+                status: AgentCardStatus::Running,
+                selected: false,
+            },
+            AgentCard {
+                agent_id: "agent-2".into(),
+                name: "Security Auditor".into(),
+                task: "Security audit".into(),
+                progress: 0.8,
+                status: AgentCardStatus::Running,
+                selected: false,
+            },
+        ];
+
+        view.set_agent_cards(cards);
+
+        assert_eq!(view.agent_cards().len(), 2);
+        assert_eq!(view.agent_cards()[0].name, "Code Reviewer");
+        assert_eq!(view.agent_cards()[1].name, "Security Auditor");
+    }
+
+    #[test]
+    fn swarm_view_renders_agent_cards_with_names() {
+        use crate::widgets::{AgentCard, AgentCardStatus};
+
+        let app = App::default();
+        let mut view = SwarmView::new("swarm-1".into());
+        view.set_agent_cards(vec![AgentCard {
+            agent_id: "agent-1".into(),
+            name: "Code Reviewer".into(),
+            task: "Review PR".into(),
+            progress: 0.5,
+            status: AgentCardStatus::Running,
+            selected: false,
+        }]);
+
+        let backend = TestBackend::new(80, 24);
+        let mut terminal = Terminal::new(backend).unwrap();
+
+        terminal
+            .draw(|f| {
+                view.render(f, f.area(), &app);
+            })
+            .unwrap();
+
+        let buffer = terminal.backend().buffer();
+        let content: String = buffer.content().iter().map(|cell| cell.symbol()).collect();
+
+        assert!(
+            content.contains("Code Reviewer"),
+            "Expected 'Code Reviewer' in rendered view: {}",
+            content
+        );
+    }
+
+    #[test]
+    fn swarm_view_renders_agent_cards_with_progress_bars() {
+        use crate::widgets::{AgentCard, AgentCardStatus};
+
+        let app = App::default();
+        let mut view = SwarmView::new("swarm-1".into());
+        view.set_agent_cards(vec![AgentCard {
+            agent_id: "agent-1".into(),
+            name: "Agent".into(),
+            task: "Task".into(),
+            progress: 0.5,
+            status: AgentCardStatus::Running,
+            selected: false,
+        }]);
+
+        let backend = TestBackend::new(80, 24);
+        let mut terminal = Terminal::new(backend).unwrap();
+
+        terminal
+            .draw(|f| {
+                view.render(f, f.area(), &app);
+            })
+            .unwrap();
+
+        let buffer = terminal.backend().buffer();
+        let content: String = buffer.content().iter().map(|cell| cell.symbol()).collect();
+
+        // Should contain progress bar characters
+        assert!(
+            content.contains('█') && content.contains('░'),
+            "Expected progress bar characters in: {}",
+            content
+        );
+    }
+
+    #[test]
+    fn swarm_view_selected_agent_card_has_highlight() {
+        use crate::widgets::{AgentCard, AgentCardStatus};
+
+        let app = App::default();
+        let mut view = SwarmView::new("swarm-1".into());
+        view.set_agent_cards(vec![
+            AgentCard {
+                agent_id: "agent-1".into(),
+                name: "Agent 1".into(),
+                task: "Task 1".into(),
+                progress: 0.3,
+                status: AgentCardStatus::Running,
+                selected: false,
+            },
+            AgentCard {
+                agent_id: "agent-2".into(),
+                name: "Agent 2".into(),
+                task: "Task 2".into(),
+                progress: 0.7,
+                status: AgentCardStatus::Running,
+                selected: false,
+            },
+        ]);
+
+        // Select first agent (index 0 is selected by default)
+        let backend = TestBackend::new(80, 24);
+        let mut terminal = Terminal::new(backend).unwrap();
+
+        terminal
+            .draw(|f| {
+                view.render(f, f.area(), &app);
+            })
+            .unwrap();
+
+        // Check that selection background color is present
+        let buffer = terminal.backend().buffer();
+        let has_selection_bg = buffer.content().iter().any(|c| c.bg == app.theme.selection);
+        assert!(
+            has_selection_bg,
+            "Selected agent card should have selection background"
+        );
+    }
+
+    #[test]
+    fn swarm_view_multiple_cards_rendered_in_grid() {
+        use crate::widgets::{AgentCard, AgentCardStatus};
+
+        let app = App::default();
+        let mut view = SwarmView::new("swarm-1".into());
+        view.set_agent_cards(vec![
+            AgentCard {
+                agent_id: "agent-1".into(),
+                name: "Agent Alpha".into(),
+                task: "Task A".into(),
+                progress: 0.25,
+                status: AgentCardStatus::Running,
+                selected: false,
+            },
+            AgentCard {
+                agent_id: "agent-2".into(),
+                name: "Agent Beta".into(),
+                task: "Task B".into(),
+                progress: 0.75,
+                status: AgentCardStatus::Completed,
+                selected: false,
+            },
+        ]);
+
+        let backend = TestBackend::new(80, 24);
+        let mut terminal = Terminal::new(backend).unwrap();
+
+        terminal
+            .draw(|f| {
+                view.render(f, f.area(), &app);
+            })
+            .unwrap();
+
+        let buffer = terminal.backend().buffer();
+        let content: String = buffer.content().iter().map(|cell| cell.symbol()).collect();
+
+        // Both agent names should be visible
+        assert!(
+            content.contains("Agent Alpha"),
+            "Expected 'Agent Alpha' in: {}",
+            content
+        );
+        assert!(
+            content.contains("Agent Beta"),
+            "Expected 'Agent Beta' in: {}",
+            content
         );
     }
 }
