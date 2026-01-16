@@ -48,6 +48,8 @@ pub struct KeyBindings {
     pub global: HashMap<KeyEvent, Action>,
     /// View-specific keybindings that override global bindings.
     pub view_specific: HashMap<View, HashMap<KeyEvent, Action>>,
+    /// Agent view bindings (applies to any Agent view regardless of agent ID).
+    agent_bindings: HashMap<KeyEvent, Action>,
 }
 
 impl KeyBindings {
@@ -61,6 +63,13 @@ impl KeyBindings {
         // Check view-specific first
         if let Some(view_bindings) = self.view_specific.get(current_view)
             && let Some(action) = view_bindings.get(&key)
+        {
+            return Some(action.clone());
+        }
+
+        // Check agent bindings for any Agent view
+        if matches!(current_view, View::Agent(_))
+            && let Some(action) = self.agent_bindings.get(&key)
         {
             return Some(action.clone());
         }
@@ -115,9 +124,18 @@ impl Default for KeyBindings {
             );
         }
 
+        // Agent view-specific bindings
+        let mut agent_bindings = HashMap::new();
+        agent_bindings.insert(key('y'), Action::Approve);
+        agent_bindings.insert(key('n'), Action::Deny);
+        agent_bindings.insert(key('v'), Action::ViewDiff);
+        agent_bindings.insert(key('p'), Action::Pause);
+        agent_bindings.insert(key('c'), Action::Cancel);
+
         Self {
             global,
             view_specific: HashMap::new(),
+            agent_bindings,
         }
     }
 }
@@ -328,5 +346,52 @@ mod tests {
         let bindings = KeyBindings::default();
 
         assert_eq!(bindings.resolve(key('z'), &View::Dashboard), None);
+    }
+
+    // ==================== Agent View Keybinding Tests ====================
+
+    #[test]
+    fn keybindings_agent_view_y_maps_to_approve() {
+        let bindings = KeyBindings::default();
+        assert_eq!(
+            bindings.resolve(key('y'), &View::Agent("test".into())),
+            Some(Action::Approve)
+        );
+    }
+
+    #[test]
+    fn keybindings_agent_view_n_maps_to_deny() {
+        let bindings = KeyBindings::default();
+        assert_eq!(
+            bindings.resolve(key('n'), &View::Agent("test".into())),
+            Some(Action::Deny)
+        );
+    }
+
+    #[test]
+    fn keybindings_agent_view_v_maps_to_view_diff() {
+        let bindings = KeyBindings::default();
+        assert_eq!(
+            bindings.resolve(key('v'), &View::Agent("test".into())),
+            Some(Action::ViewDiff)
+        );
+    }
+
+    #[test]
+    fn keybindings_agent_view_p_maps_to_pause() {
+        let bindings = KeyBindings::default();
+        assert_eq!(
+            bindings.resolve(key('p'), &View::Agent("test".into())),
+            Some(Action::Pause)
+        );
+    }
+
+    #[test]
+    fn keybindings_agent_view_c_maps_to_cancel() {
+        let bindings = KeyBindings::default();
+        assert_eq!(
+            bindings.resolve(key('c'), &View::Agent("test".into())),
+            Some(Action::Cancel)
+        );
     }
 }
