@@ -2,7 +2,7 @@
 id: m44-feat-02
 title: Agent progress bars
 type: feat
-status: backlog
+status: done
 priority: high
 epics: [tui]
 depends: [m44-feat-01]
@@ -81,11 +81,11 @@ Using the theme system:
 
 ## Acceptance Criteria
 
-- [ ] AgentCard widget renders agent name in bordered box
-- [ ] Progress bar shows visual fill based on percentage
-- [ ] Percentage displayed next to task description
-- [ ] Completed agents show checkmark indicator
-- [ ] Failed agents show error indicator with theme.error color
-- [ ] Selected card has highlight background
-- [ ] Progress updates reflect real-time agent state
-- [ ] Works with varying agent counts in swarm
+- [x] AgentCard widget renders agent name in bordered box
+- [x] Progress bar shows visual fill based on percentage
+- [x] Percentage displayed next to task description
+- [x] Completed agents show checkmark indicator
+- [x] Failed agents show error indicator with theme.error color
+- [x] Selected card has highlight background
+- [x] Progress updates reflect real-time agent state
+- [x] Works with varying agent counts in swarm
