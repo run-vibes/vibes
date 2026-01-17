@@ -10,7 +10,11 @@ use vibes_core::{
     TunnelManager, VapidKeyManager, VibesEvent,
     pty::{PtyConfig, PtyManager},
 };
-use vibes_evals::{CreateStudy, PeriodType, Study, StudyConfig, StudyId, StudyManager};
+use vibes_evals::{
+    CreateStudy, EvalProjectionConsumer, PeriodType, StoredEvalEvent, Study, StudyConfig, StudyId,
+    StudyManager,
+    storage::{TursoEvalProjection, TursoEvalStorage},
+};
 use vibes_iggy::{
     EventLog, IggyConfig, IggyEventLog, IggyManager, InMemoryEventLog, Offset, run_preflight_checks,
 };
@@ -220,7 +224,19 @@ impl AppState {
         let (log, manager) = Self::try_start_iggy().await?;
         tracing::info!("Using Iggy for persistent event storage");
         let event_log: Arc<dyn EventLog<StoredEvent>> = Arc::new(log);
-        let iggy_manager = Some(manager);
+        let iggy_manager = Some(Arc::clone(&manager));
+
+        // Set up eval study system
+        let study_manager = match Self::setup_eval_system(Arc::clone(&manager)).await {
+            Ok(sm) => Some(sm),
+            Err(e) => {
+                tracing::warn!(
+                    "Failed to initialize eval study system: {}. Eval commands will be disabled.",
+                    e
+                );
+                None
+            }
+        };
 
         let plugin_host = Arc::new(RwLock::new(PluginHost::new(PluginHostConfig::default())));
         let tunnel_manager = Arc::new(RwLock::new(TunnelManager::new(
@@ -249,7 +265,7 @@ impl AppState {
             consumer_shutdown: CancellationToken::new(),
             model_registry: Arc::new(RwLock::new(ModelRegistry::new())),
             agent_registry: Arc::new(RwLock::new(ServerAgentRegistry::new())),
-            study_manager: None,
+            study_manager,
             plugin_host,
         })
     }
@@ -338,6 +354,61 @@ impl AppState {
         event_log.connect().await?;
 
         Ok((event_log, manager))
+    }
+
+    /// Set up the eval study system with Iggy event log and Turso storage.
+    ///
+    /// Creates:
+    /// - A separate Iggy stream for eval events
+    /// - A Turso/SQLite database for the projection
+    /// - A StudyManager connecting both
+    /// - A background projection consumer
+    async fn setup_eval_system(
+        iggy_manager: Arc<IggyManager>,
+    ) -> Result<Arc<StudyManager>, Box<dyn std::error::Error + Send + Sync>> {
+        // Get the data directory for eval storage
+        let data_dir = dirs::data_dir()
+            .unwrap_or_else(|| std::path::PathBuf::from("."))
+            .join("vibes");
+        std::fs::create_dir_all(&data_dir)?;
+        let eval_db_path = data_dir.join("eval.db");
+
+        tracing::info!(
+            "Initializing eval study system with database at {:?}",
+            eval_db_path
+        );
+
+        // Create Turso storage (SQLite for queries)
+        let storage = TursoEvalStorage::new_local(&eval_db_path).await?;
+        let storage_arc: Arc<dyn vibes_evals::EvalStorage> = Arc::new(storage.clone());
+
+        // Create projection (wraps storage for event application)
+        let projection: Arc<dyn vibes_evals::EvalProjection> =
+            Arc::new(TursoEvalProjection::new(storage));
+
+        // Create eval event log (separate "evals" stream in Iggy)
+        let eval_event_log = IggyEventLog::<StoredEvalEvent>::with_stream(
+            iggy_manager,
+            "evals".to_string(),
+            "events".to_string(),
+        );
+        eval_event_log.connect().await?;
+        let eval_event_log: Arc<dyn EventLog<StoredEvalEvent>> = Arc::new(eval_event_log);
+
+        // Create study manager
+        let study_manager = Arc::new(StudyManager::new(Arc::clone(&eval_event_log), storage_arc));
+
+        // Start projection consumer as background task
+        let consumer =
+            EvalProjectionConsumer::new(Arc::clone(&eval_event_log), projection, "eval-projection");
+        tokio::spawn(async move {
+            if let Err(e) = consumer.run().await {
+                tracing::error!("Eval projection consumer exited with error: {}", e);
+            }
+        });
+
+        tracing::info!("Eval study system initialized successfully");
+        Ok(study_manager)
     }
 
     /// Configure authentication for this state

@@ -61,6 +61,12 @@ pub struct IggyEventLog<E> {
     /// The Iggy client for sending messages.
     client: IggyClient,
 
+    /// Stream name for this event log.
+    stream_name: String,
+
+    /// Topic name for this event log.
+    topic_name: String,
+
     /// Buffer for events during disconnect.
     reconnect_buffer: RwLock<Vec<E>>,
 
@@ -78,12 +84,29 @@ impl<E> IggyEventLog<E>
 where
     E: Serialize + for<'de> Deserialize<'de> + Send + Sync + Clone + Partitionable + 'static,
 {
-    /// Create a new IggyEventLog.
+    /// Create a new IggyEventLog with default stream/topic names.
+    ///
+    /// Uses "vibes" stream and "events" topic. For custom names, use `with_stream()`.
     ///
     /// The manager should be started before calling this.
     /// Call `connect()` to establish the connection.
     #[must_use]
     pub fn new(manager: Arc<IggyManager>) -> Self {
+        Self::with_stream(
+            manager,
+            topics::STREAM_NAME.to_string(),
+            topics::EVENTS_TOPIC.to_string(),
+        )
+    }
+
+    /// Create a new IggyEventLog with custom stream and topic names.
+    ///
+    /// Use this when you need a separate event stream (e.g., for eval events).
+    ///
+    /// The manager should be started before calling this.
+    /// Call `connect()` to establish the connection.
+    #[must_use]
+    pub fn with_stream(manager: Arc<IggyManager>, stream_name: String, topic_name: String) -> Self {
         let client = IggyClient::builder()
             .with_tcp()
             .with_server_address(manager.connection_address())
@@ -93,6 +116,8 @@ where
         Self {
             manager,
             client,
+            stream_name,
+            topic_name,
             reconnect_buffer: RwLock::new(Vec::new()),
             high_water_mark: AtomicU64::new(0),
             connected: RwLock::new(false),
@@ -120,15 +145,15 @@ where
 
         // Get or create stream
         let streams = self.client.get_streams().await?;
-        let stream_id = Identifier::named(topics::STREAM_NAME)
+        let stream_id = Identifier::named(&self.stream_name)
             .map_err(|e| Error::Iggy(format!("Invalid stream name: {}", e)))?;
-        let stream_exists = streams.iter().any(|s| s.name == topics::STREAM_NAME);
+        let stream_exists = streams.iter().any(|s| s.name == self.stream_name);
 
         if stream_exists {
-            debug!("Stream '{}' already exists", topics::STREAM_NAME);
+            debug!("Stream '{}' already exists", self.stream_name);
         } else {
-            match self.client.create_stream(topics::STREAM_NAME).await {
-                Ok(_) => info!("Created stream '{}'", topics::STREAM_NAME),
+            match self.client.create_stream(&self.stream_name).await {
+                Ok(_) => info!("Created stream '{}'", self.stream_name),
                 Err(e) if is_already_exists_error(&e) => {
                     debug!("Stream already exists (concurrent creation)");
                 }
@@ -141,7 +166,7 @@ where
             .client
             .create_topic(
                 &stream_id,
-                topics::EVENTS_TOPIC,
+                &self.topic_name,
                 topics::PARTITION_COUNT,
                 CompressionAlgorithm::None,
                 None, // replication_factor
@@ -150,7 +175,7 @@ where
             )
             .await
         {
-            Ok(_) => info!("Created topic '{}'", topics::EVENTS_TOPIC),
+            Ok(_) => info!("Created topic '{}'", self.topic_name),
             Err(e) if is_already_exists_error(&e) => {
                 debug!("Topic already exists");
             }
@@ -159,7 +184,7 @@ where
 
         // Query the topic to get the actual message count
         // This initializes high_water_mark correctly on server restart
-        let topic_id = Identifier::named(topics::EVENTS_TOPIC)
+        let topic_id = Identifier::named(&self.topic_name)
             .map_err(|e| Error::Iggy(format!("Invalid topic name: {}", e)))?;
         if let Some(topic_details) = self.client.get_topic(&stream_id, &topic_id).await? {
             let message_count = topic_details.messages_count;
@@ -207,9 +232,9 @@ where
         })?;
 
         // Send to Iggy
-        let stream_id = Identifier::named(topics::STREAM_NAME)
+        let stream_id = Identifier::named(&self.stream_name)
             .map_err(|e| Error::Iggy(format!("Invalid stream name: {}", e)))?;
-        let topic_id = Identifier::named(topics::EVENTS_TOPIC)
+        let topic_id = Identifier::named(&self.topic_name)
             .map_err(|e| Error::Iggy(format!("Invalid topic name: {}", e)))?;
 
         let mut messages = [message];
@@ -264,9 +289,9 @@ where
     ///
     /// Call this before reading historical events to ensure all data is visible.
     pub async fn flush_to_disk(&self) -> Result<()> {
-        let stream_id = Identifier::named(topics::STREAM_NAME)
+        let stream_id = Identifier::named(&self.stream_name)
             .map_err(|e| Error::Iggy(format!("Invalid stream name: {}", e)))?;
-        let topic_id = Identifier::named(topics::EVENTS_TOPIC)
+        let topic_id = Identifier::named(&self.topic_name)
             .map_err(|e| Error::Iggy(format!("Invalid topic name: {}", e)))?;
 
         debug!("Flushing Iggy server buffer to disk with fsync");
@@ -279,6 +304,16 @@ where
 
         debug!("Iggy buffer flushed successfully");
         Ok(())
+    }
+
+    /// Get the stream name for this event log.
+    pub fn stream_name(&self) -> &str {
+        &self.stream_name
+    }
+
+    /// Get the topic name for this event log.
+    pub fn topic_name(&self) -> &str {
+        &self.topic_name
     }
 }
 
@@ -346,6 +381,8 @@ where
         Ok(Box::new(IggyEventConsumer::new(
             consumer_client,
             group.to_string(),
+            self.stream_name.clone(),
+            self.topic_name.clone(),
         )))
     }
 
@@ -365,6 +402,10 @@ where
 pub struct IggyEventConsumer<E> {
     client: IggyClient,
     group: String,
+    /// Stream name for this consumer.
+    stream_name: String,
+    /// Topic name for this consumer.
+    topic_name: String,
     /// Unique consumer ID for this instance (avoids Iggy's cached offset issue).
     consumer_id: u32,
     /// Current read position in partition 0.
@@ -403,7 +444,7 @@ impl<E> IggyEventConsumer<E>
 where
     E: for<'de> Deserialize<'de> + Send + Clone + 'static,
 {
-    fn new(client: IggyClient, group: String) -> Self {
+    fn new(client: IggyClient, group: String, stream_name: String, topic_name: String) -> Self {
         // Generate a unique consumer ID per instance to avoid Iggy's cached offset issue.
         // Even explicit PollingStrategy::offset(N) doesn't override cached offsets for
         // consumer IDs that have stored offsets in Iggy.
@@ -411,6 +452,8 @@ where
         Self {
             client,
             group,
+            stream_name,
+            topic_name,
             consumer_id,
             offset: 0,
             committed_offset: 0,
@@ -434,9 +477,9 @@ where
             max_count,
             "Polling: about to request from offset"
         );
-        let stream_id = Identifier::named(topics::STREAM_NAME)
+        let stream_id = Identifier::named(&self.stream_name)
             .map_err(|e| Error::Iggy(format!("Invalid stream name: {}", e)))?;
-        let topic_id = Identifier::named(topics::EVENTS_TOPIC)
+        let topic_id = Identifier::named(&self.topic_name)
             .map_err(|e| Error::Iggy(format!("Invalid topic name: {}", e)))?;
         // Use a unique numeric consumer ID per instance to avoid Iggy's cached offset issue.
         // Even PollingStrategy::first() doesn't override cached offsets for shared consumer IDs.
@@ -504,9 +547,9 @@ where
     }
 
     async fn commit(&mut self, _offset: Offset) -> Result<()> {
-        let stream_id = Identifier::named(topics::STREAM_NAME)
+        let stream_id = Identifier::named(&self.stream_name)
             .map_err(|e| Error::Iggy(format!("Invalid stream name: {}", e)))?;
-        let topic_id = Identifier::named(topics::EVENTS_TOPIC)
+        let topic_id = Identifier::named(&self.topic_name)
             .map_err(|e| Error::Iggy(format!("Invalid topic name: {}", e)))?;
         let consumer =
             Consumer::new(Identifier::named(&self.group).map_err(|e| Error::Iggy(e.to_string()))?);
@@ -521,9 +564,9 @@ where
     }
 
     async fn seek(&mut self, position: SeekPosition) -> Result<()> {
-        let stream_id = Identifier::named(topics::STREAM_NAME)
+        let stream_id = Identifier::named(&self.stream_name)
             .map_err(|e| Error::Iggy(format!("Invalid stream name: {}", e)))?;
-        let topic_id = Identifier::named(topics::EVENTS_TOPIC)
+        let topic_id = Identifier::named(&self.topic_name)
             .map_err(|e| Error::Iggy(format!("Invalid topic name: {}", e)))?;
 
         match position {
