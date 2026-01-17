@@ -17,7 +17,10 @@ mod widgets;
 pub use app::App;
 pub use client::TuiClient;
 pub use keybindings::{Action, KeyBindings};
-pub use state::{AgentId, AgentState, AppState, Mode, Selection, SessionId, SwarmId, SwarmState};
+pub use state::{
+    AgentId, AgentState, AppState, Mode, Selection, SessionId, SettingsFocus, SettingsState,
+    SwarmId, SwarmState,
+};
 pub use terminal::{VibesTerminal, install_panic_hook, restore_terminal, setup_terminal};
 pub use theme::{
     Theme, ThemeConfig, ThemeConfigRaw, ThemeLoadError, ThemeLoader, ThemeSection, parse_hex_color,

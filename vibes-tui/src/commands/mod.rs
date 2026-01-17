@@ -4,10 +4,12 @@
 
 mod input;
 mod registry;
+mod settings;
 mod theme;
 
 pub use input::CommandInput;
 pub use registry::CommandRegistry;
+pub use settings::SettingsCommand;
 pub use theme::ThemeCommand;
 
 /// Result of executing a command.

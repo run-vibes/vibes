@@ -19,7 +19,6 @@
 | [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli,cross-platform |
 | [feat-0101-header-identity-display](stages/backlog/stories/feat-0101-header-identity-display.md) | feat | low | web-ui,design-system |
 | [m39-feat-06-eval-web-ui](stages/backlog/stories/m39-feat-06-eval-web-ui.md) | feat | medium | evals |
-| [m45-feat-04-theme-preview-settings](stages/backlog/stories/m45-feat-04-theme-preview-settings.md) | feat | medium | tui |
 | [m46-feat-01-pty-server-core](stages/backlog/stories/m46-feat-01-pty-server-core.md) | feat | medium | tui |
 | [m46-feat-02-session-management](stages/backlog/stories/m46-feat-02-session-management.md) | feat | medium | tui |
 | [m46-feat-03-websocket-pty-endpoint](stages/backlog/stories/m46-feat-03-websocket-pty-endpoint.md) | feat | medium | tui |
@@ -291,6 +290,7 @@
 - [m45-feat-01-theme-config-loader](stages/done/stories/m45-feat-01-theme-config-loader.md)
 - [m45-feat-02-builtin-theme-variants](stages/done/stories/m45-feat-02-builtin-theme-variants.md)
 - [m45-feat-03-runtime-theme-switching](stages/done/stories/m45-feat-03-runtime-theme-switching.md)
+- [m45-feat-04-theme-preview-settings](stages/done/stories/m45-feat-04-theme-preview-settings.md)
 - [refactor-0008-consolidate-assessment-types-module](stages/done/stories/refactor-0008-consolidate-assessment-types-module.md)
 - [refactor-0069-dashboard-visual-consistency](stages/done/stories/refactor-0069-dashboard-visual-consistency.md)
 - [refactor-0070-design-system-extraction](stages/done/stories/refactor-0070-design-system-extraction.md)

@@ -8,12 +8,14 @@
 
 mod agent;
 mod dashboard;
+mod settings;
 mod stack;
 mod swarm;
 mod traits;
 
 pub use agent::AgentView;
 pub use dashboard::DashboardView;
+pub use settings::SettingsView;
 pub use stack::{View, ViewStack};
 pub use swarm::SwarmView;
 pub use traits::ViewRenderer;

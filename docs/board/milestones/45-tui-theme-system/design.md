@@ -129,3 +129,101 @@ Mode::Command handling:
 | `app.rs` | Add command fields, wire Mode::Command |
 | `lib.rs` | Export commands module |
 | `widgets/mod.rs` | Export CommandBarWidget |
+
+---
+
+## Theme Preview in Settings (m45-feat-04)
+
+Visual theme selector with live preview in the Settings view.
+
+### Navigation
+
+**Entry points**:
+- Keybinding: `s` from Dashboard → `Action::OpenSettings`
+- Command: `:settings` → pushes `View::Settings`
+
+**Exit**:
+- `Esc` or `q` cancels and restores original theme
+- `Enter` applies and exits
+
+### SettingsView State
+
+```rust
+pub struct SettingsState {
+    original_theme: String,    // Theme when view opened
+    preview_theme: String,     // Currently previewed theme
+    selected_index: usize,     // Index in theme list
+    focus: SettingsFocus,
+}
+
+pub enum SettingsFocus {
+    ThemeList,
+    ApplyButton,
+    CancelButton,
+}
+```
+
+The `App.theme` field is temporarily swapped to show previews. On Cancel, restore `original_theme`. On Apply, keep current and optionally save.
+
+### Widgets
+
+**ThemeSelector** - Vertical list of theme names:
+```rust
+pub struct ThemeSelector<'a> {
+    themes: &'a [String],
+    selected: usize,
+    current_theme: &'a str,  // Marked with ●
+}
+```
+
+**ThemePreview** - Visual color display:
+```rust
+pub struct ThemePreview<'a> {
+    theme: &'a Theme,
+}
+```
+
+Renders:
+1. Color swatches: `████ bg  ████ fg  ████ accent`
+2. Semantic colors: `● Success  ● Warning  ● Error`
+3. Status colors: `● Running  ● Paused  ● Completed  ● Failed`
+4. Sample text in normal, bold, dim styles
+5. Border using `theme.border`
+
+### Keyboard Navigation
+
+**ThemeList focused**:
+| Key | Action |
+|-----|--------|
+| `j`/`↓` | Next theme, update preview |
+| `k`/`↑` | Previous theme, update preview |
+| `Enter` | Apply and exit |
+| `Tab` | Focus Apply button |
+| `Esc` | Cancel and exit |
+
+**Buttons focused**:
+| Key | Action |
+|-----|--------|
+| `Tab`/`←`/`→` | Move between buttons |
+| `Shift+Tab` | Return to ThemeList |
+| `Enter` | Execute button |
+
+### Files
+
+**New**:
+| File | Purpose |
+|------|---------|
+| `views/settings.rs` | SettingsView |
+| `widgets/theme_selector.rs` | ThemeSelector |
+| `widgets/theme_preview.rs` | ThemePreview |
+| `commands/settings.rs` | SettingsCommand |
+
+**Modified**:
+| File | Changes |
+|------|---------|
+| `state.rs` | Add SettingsState |
+| `keybindings.rs` | Add OpenSettings action, map `s` |
+| `app.rs` | Handle Settings view, wire command |
+| `views/mod.rs` | Export SettingsView |
+| `widgets/mod.rs` | Export new widgets |
+| `commands/mod.rs` | Export SettingsCommand |

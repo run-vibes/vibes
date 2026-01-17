@@ -40,6 +40,76 @@ pub struct SwarmState {
     pub merge_results: MergeResultsView,
 }
 
+/// Focus state within the Settings view.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum SettingsFocus {
+    #[default]
+    ThemeList,
+    ApplyButton,
+    CancelButton,
+}
+
+/// State for the Settings view with theme preview.
+#[derive(Debug, Clone)]
+pub struct SettingsState {
+    original_theme: String,
+    preview_theme: String,
+    selected_index: usize,
+    focus: SettingsFocus,
+}
+
+impl SettingsState {
+    /// Create new settings state with the given current theme.
+    pub fn new(current_theme: &str) -> Self {
+        Self {
+            original_theme: current_theme.to_string(),
+            preview_theme: current_theme.to_string(),
+            selected_index: 0,
+            focus: SettingsFocus::default(),
+        }
+    }
+
+    /// The theme name when the settings view was opened.
+    pub fn original_theme(&self) -> &str {
+        &self.original_theme
+    }
+
+    /// The currently previewed theme name.
+    pub fn preview_theme(&self) -> &str {
+        &self.preview_theme
+    }
+
+    /// The selected index in the theme list.
+    pub fn selected_index(&self) -> usize {
+        self.selected_index
+    }
+
+    /// Set the selected index in the theme list.
+    pub fn set_selected_index(&mut self, index: usize) {
+        self.selected_index = index;
+    }
+
+    /// Set the preview theme name.
+    pub fn set_preview_theme(&mut self, name: &str) {
+        self.preview_theme = name.to_string();
+    }
+
+    /// Get the current focus.
+    pub fn focus(&self) -> SettingsFocus {
+        self.focus
+    }
+
+    /// Set the focus.
+    pub fn set_focus(&mut self, focus: SettingsFocus) {
+        self.focus = focus;
+    }
+
+    /// Returns true if the preview differs from the original.
+    pub fn is_modified(&self) -> bool {
+        self.preview_theme != self.original_theme
+    }
+}
+
 /// The current UI mode.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Mode {
@@ -252,5 +322,60 @@ mod tests {
             .insert("swarm-1".to_string(), SwarmState::default());
         assert_eq!(state.swarms.len(), 1);
         assert!(state.swarms.contains_key("swarm-1"));
+    }
+
+    // ==================== SettingsState Tests ====================
+
+    #[test]
+    fn settings_focus_defaults_to_theme_list() {
+        let focus = SettingsFocus::default();
+        assert_eq!(focus, SettingsFocus::ThemeList);
+    }
+
+    #[test]
+    fn settings_state_stores_original_theme() {
+        let state = SettingsState::new("vibes");
+        assert_eq!(state.original_theme(), "vibes");
+    }
+
+    #[test]
+    fn settings_state_preview_starts_as_original() {
+        let state = SettingsState::new("dark");
+        assert_eq!(state.preview_theme(), "dark");
+    }
+
+    #[test]
+    fn settings_state_selected_index_starts_at_zero() {
+        let state = SettingsState::new("vibes");
+        assert_eq!(state.selected_index(), 0);
+    }
+
+    #[test]
+    fn settings_state_can_set_selected_index() {
+        let mut state = SettingsState::new("vibes");
+        state.set_selected_index(2);
+        assert_eq!(state.selected_index(), 2);
+    }
+
+    #[test]
+    fn settings_state_can_set_preview_theme() {
+        let mut state = SettingsState::new("vibes");
+        state.set_preview_theme("dark");
+        assert_eq!(state.preview_theme(), "dark");
+    }
+
+    #[test]
+    fn settings_state_focus_can_be_changed() {
+        let mut state = SettingsState::new("vibes");
+        state.set_focus(SettingsFocus::ApplyButton);
+        assert_eq!(state.focus(), SettingsFocus::ApplyButton);
+    }
+
+    #[test]
+    fn settings_state_is_modified_when_preview_differs() {
+        let mut state = SettingsState::new("vibes");
+        assert!(!state.is_modified());
+        state.set_preview_theme("dark");
+        assert!(state.is_modified());
     }
 }

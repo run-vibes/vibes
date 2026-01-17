@@ -11,16 +11,20 @@ use ratatui::{
 };
 
 use crate::client::{ReconnectConfig, TuiClient};
-use crate::commands::{CommandInput, CommandRegistry, CommandResult, ThemeCommand};
+use crate::commands::{
+    CommandInput, CommandRegistry, CommandResult, SettingsCommand, ThemeCommand,
+};
 use crate::keybindings::{Action, KeyBindings};
-use crate::theme::ThemeLoader;
-use crate::views::{AgentView, DashboardView, SwarmView, View, ViewRenderer, ViewStack};
+use crate::views::{
+    AgentView, DashboardView, SettingsView, SwarmView, View, ViewRenderer, ViewStack,
+};
 use crate::widgets::{
     ActivityEvent, ActivityFeedWidget, CommandBarWidget, ConnectionStatus, SessionInfo,
     SessionListWidget, SessionStatus, StatsBarWidget,
 };
 use crate::{
-    AppState, Mode, Theme, VibesTerminal, restore_terminal, setup_terminal, vibes_default,
+    AppState, Mode, SettingsState, Theme, ThemeLoader, VibesTerminal, restore_terminal,
+    setup_terminal, vibes_default,
 };
 
 /// Main TUI application.
@@ -53,6 +57,10 @@ pub struct App {
     pub command_input: CommandInput,
     /// Registry of available commands.
     pub command_registry: CommandRegistry,
+    /// Theme loader for accessing themes.
+    pub theme_loader: ThemeLoader,
+    /// Settings view state (when in settings view).
+    pub settings_state: Option<SettingsState>,
 }
 
 impl App {
@@ -60,7 +68,7 @@ impl App {
     pub fn new() -> Self {
         let loader = ThemeLoader::from_default_config();
         let theme = loader.active().cloned().unwrap_or_else(vibes_default);
-        let command_registry = Self::create_command_registry(loader);
+        let command_registry = Self::create_command_registry(loader.clone());
 
         Self {
             state: AppState::default(),
@@ -80,6 +88,8 @@ impl App {
             last_reconnect_attempt: None,
             command_input: CommandInput::default(),
             command_registry,
+            theme_loader: loader,
+            settings_state: None,
         }
     }
 
@@ -87,13 +97,14 @@ impl App {
     fn create_command_registry(loader: ThemeLoader) -> CommandRegistry {
         let mut registry = CommandRegistry::new();
         registry.register(Box::new(ThemeCommand::new(loader)));
+        registry.register(Box::new(SettingsCommand));
         registry
     }
 
     /// Creates a new App with a custom theme.
     pub fn with_theme(theme: Theme) -> Self {
         let loader = ThemeLoader::new();
-        let command_registry = Self::create_command_registry(loader);
+        let command_registry = Self::create_command_registry(loader.clone());
 
         Self {
             state: AppState::default(),
@@ -113,6 +124,8 @@ impl App {
             last_reconnect_attempt: None,
             command_input: CommandInput::default(),
             command_registry,
+            theme_loader: loader,
+            settings_state: None,
         }
     }
 
@@ -120,7 +133,7 @@ impl App {
     pub fn with_client(client: TuiClient) -> Self {
         let loader = ThemeLoader::from_default_config();
         let theme = loader.active().cloned().unwrap_or_else(vibes_default);
-        let command_registry = Self::create_command_registry(loader);
+        let command_registry = Self::create_command_registry(loader.clone());
 
         Self {
             state: AppState::default(),
@@ -143,6 +156,8 @@ impl App {
             last_reconnect_attempt: None,
             command_input: CommandInput::default(),
             command_registry,
+            theme_loader: loader,
+            settings_state: None,
         }
     }
 
@@ -150,7 +165,7 @@ impl App {
     pub fn with_client_url(client: TuiClient, url: String) -> Self {
         let loader = ThemeLoader::from_default_config();
         let theme = loader.active().cloned().unwrap_or_else(vibes_default);
-        let command_registry = Self::create_command_registry(loader);
+        let command_registry = Self::create_command_registry(loader.clone());
 
         Self {
             state: AppState::default(),
@@ -173,6 +188,8 @@ impl App {
             last_reconnect_attempt: None,
             command_input: CommandInput::default(),
             command_registry,
+            theme_loader: loader,
+            settings_state: None,
         }
     }
 
@@ -336,11 +353,35 @@ impl App {
             Action::NavigateUp => {
                 if self.views.current == View::Dashboard {
                     self.session_widget.select_prev();
+                } else if self.views.current == View::Settings
+                    && let Some(ref mut settings) = self.settings_state
+                {
+                    let idx = settings.selected_index();
+                    if idx > 0 {
+                        settings.set_selected_index(idx - 1);
+                        // Update preview theme
+                        let themes = self.theme_loader.list();
+                        if let Some(name) = themes.get(idx - 1) {
+                            settings.set_preview_theme(name);
+                        }
+                    }
                 }
             }
             Action::NavigateDown => {
                 if self.views.current == View::Dashboard {
                     self.session_widget.select_next();
+                } else if self.views.current == View::Settings
+                    && let Some(ref mut settings) = self.settings_state
+                {
+                    let idx = settings.selected_index();
+                    let themes = self.theme_loader.list();
+                    if idx + 1 < themes.len() {
+                        settings.set_selected_index(idx + 1);
+                        // Update preview theme
+                        if let Some(name) = themes.get(idx + 1) {
+                            settings.set_preview_theme(name);
+                        }
+                    }
                 }
             }
             Action::Select => {
@@ -350,6 +391,17 @@ impl App {
                         tracing::debug!("Selected session: {}", session.id);
                         // TODO: Push session detail view
                     }
+                } else if self.views.current == View::Settings {
+                    // Apply the selected theme
+                    if let Some(ref settings) = self.settings_state {
+                        let preview = settings.preview_theme().to_string();
+                        if let Some(theme) = self.theme_loader.get(&preview) {
+                            self.theme = theme.clone();
+                        }
+                    }
+                    // Clear settings state and return to previous view
+                    self.settings_state = None;
+                    self.views.pop();
                 }
             }
             // Agent control actions
@@ -474,6 +526,11 @@ impl App {
                 self.state.mode = Mode::Command;
                 self.command_input.clear();
             }
+            Action::OpenSettings => {
+                // Initialize settings state with current theme
+                self.settings_state = Some(SettingsState::new(&self.theme.name));
+                self.views.push(View::Settings);
+            }
             // Other actions - will be wired up in future stories
             Action::NavigateLeft
             | Action::NavigateRight
@@ -520,6 +577,7 @@ impl App {
             View::Dashboard => DashboardView.render(frame, area, self),
             View::Agent(agent_id) => AgentView::new(agent_id.clone()).render(frame, area, self),
             View::Swarm(swarm_id) => SwarmView::new(swarm_id.clone()).render(frame, area, self),
+            View::Settings => SettingsView.render(frame, area, self),
             // Other views will be implemented in later stories
             _ => DashboardView.render(frame, area, self),
         }
@@ -1181,5 +1239,163 @@ mod tests {
         app.handle_key(key);
 
         assert_eq!(app.theme.name, "light");
+    }
+
+    // ==================== Settings View Tests ====================
+
+    #[test]
+    fn handle_key_s_opens_settings_view() {
+        let mut app = App::new();
+        assert_eq!(app.views.current, View::Dashboard);
+        assert!(app.settings_state.is_none());
+
+        let key = KeyEvent::new(KeyCode::Char('s'), KeyModifiers::NONE);
+        app.handle_key(key);
+
+        assert_eq!(app.views.current, View::Settings);
+        assert!(app.settings_state.is_some());
+    }
+
+    #[test]
+    fn settings_state_initialized_with_current_theme() {
+        let mut app = App::new();
+        assert_eq!(app.theme.name, "vibes");
+
+        let key = KeyEvent::new(KeyCode::Char('s'), KeyModifiers::NONE);
+        app.handle_key(key);
+
+        let settings = app.settings_state.as_ref().unwrap();
+        assert_eq!(settings.original_theme(), "vibes");
+        assert_eq!(settings.preview_theme(), "vibes");
+    }
+
+    #[test]
+    fn settings_view_esc_returns_to_dashboard() {
+        let mut app = App::new();
+
+        // Open settings
+        let key = KeyEvent::new(KeyCode::Char('s'), KeyModifiers::NONE);
+        app.handle_key(key);
+        assert_eq!(app.views.current, View::Settings);
+
+        // Press Esc to go back
+        let key = KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE);
+        app.handle_key(key);
+
+        assert_eq!(app.views.current, View::Dashboard);
+    }
+
+    #[test]
+    fn settings_view_j_navigates_down() {
+        let mut app = App::new();
+
+        // Open settings
+        let key = KeyEvent::new(KeyCode::Char('s'), KeyModifiers::NONE);
+        app.handle_key(key);
+        assert_eq!(app.views.current, View::Settings);
+
+        // Initial selected index is 0
+        assert_eq!(app.settings_state.as_ref().unwrap().selected_index(), 0);
+
+        // Press j to go down
+        let key = KeyEvent::new(KeyCode::Char('j'), KeyModifiers::NONE);
+        app.handle_key(key);
+
+        // Selected index should increase
+        assert_eq!(app.settings_state.as_ref().unwrap().selected_index(), 1);
+    }
+
+    #[test]
+    fn settings_view_k_navigates_up() {
+        let mut app = App::new();
+
+        // Open settings and move down first
+        let key = KeyEvent::new(KeyCode::Char('s'), KeyModifiers::NONE);
+        app.handle_key(key);
+
+        // Move down twice
+        let key = KeyEvent::new(KeyCode::Char('j'), KeyModifiers::NONE);
+        app.handle_key(key);
+        app.handle_key(key);
+        assert_eq!(app.settings_state.as_ref().unwrap().selected_index(), 2);
+
+        // Press k to go up
+        let key = KeyEvent::new(KeyCode::Char('k'), KeyModifiers::NONE);
+        app.handle_key(key);
+
+        assert_eq!(app.settings_state.as_ref().unwrap().selected_index(), 1);
+    }
+
+    #[test]
+    fn settings_view_navigation_updates_preview_theme() {
+        let mut app = App::new();
+
+        // Open settings
+        let key = KeyEvent::new(KeyCode::Char('s'), KeyModifiers::NONE);
+        app.handle_key(key);
+
+        // Initial preview is vibes
+        assert_eq!(
+            app.settings_state.as_ref().unwrap().preview_theme(),
+            "vibes"
+        );
+
+        // Navigate down to select next theme
+        let key = KeyEvent::new(KeyCode::Char('j'), KeyModifiers::NONE);
+        app.handle_key(key);
+
+        // Preview theme should change to the next theme in the list
+        let themes = app.theme_loader.list();
+        let expected_theme = themes.get(1).unwrap();
+        assert_eq!(
+            app.settings_state.as_ref().unwrap().preview_theme(),
+            *expected_theme
+        );
+    }
+
+    #[test]
+    fn settings_view_navigation_wraps_at_boundaries() {
+        let mut app = App::new();
+
+        // Open settings
+        let key = KeyEvent::new(KeyCode::Char('s'), KeyModifiers::NONE);
+        app.handle_key(key);
+
+        // Press k when at index 0 should stay at 0 (or wrap to end)
+        let key = KeyEvent::new(KeyCode::Char('k'), KeyModifiers::NONE);
+        app.handle_key(key);
+
+        // Should stay at 0 (no wrap up from start)
+        assert_eq!(app.settings_state.as_ref().unwrap().selected_index(), 0);
+    }
+
+    #[test]
+    fn settings_view_enter_applies_theme() {
+        let mut app = App::new();
+        assert_eq!(app.theme.name, "vibes");
+
+        // Open settings
+        let key = KeyEvent::new(KeyCode::Char('s'), KeyModifiers::NONE);
+        app.handle_key(key);
+
+        // Navigate to dark theme (index depends on loader)
+        let themes = app.theme_loader.list();
+        if let Some(dark_idx) = themes.iter().position(|t| *t == "dark") {
+            for _ in 0..dark_idx {
+                let key = KeyEvent::new(KeyCode::Char('j'), KeyModifiers::NONE);
+                app.handle_key(key);
+            }
+
+            // Press Enter to apply
+            let key = KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE);
+            app.handle_key(key);
+
+            // Theme should be applied
+            assert_eq!(app.theme.name, "dark");
+            // Should return to Dashboard
+            assert_eq!(app.views.current, View::Dashboard);
+            // Settings state should be cleared
+            assert!(app.settings_state.is_none());
+        }
     }
 }
