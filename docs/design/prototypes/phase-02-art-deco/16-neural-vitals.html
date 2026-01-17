@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neural Vitals — System Health as Biological Signs</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    body {
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 60px;
+    }
+
+    /* Fix z-index stacking over deco-bg pseudo-elements */
+    section {
+      position: relative;
+      z-index: 1;
+    }
+
+    .section-label {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold-dim);
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 300;
+      letter-spacing: 0.1em;
+      color: var(--gold-primary);
+      margin-bottom: 8px;
+    }
+
+    .section-desc {
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+      max-width: 600px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       HEARTBEAT MONITOR — Primary vital sign
+       ═══════════════════════════════════════════════════════════════════ */
+
+    .vitals-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: 4px;
+      padding: 24px;
+    }
+
+    .vitals-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .vitals-title {
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-primary);
+    }
+
+    .vitals-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .vitals-status.healthy { color: var(--accent-success); }
+    .vitals-status.stressed { color: var(--accent-warning); }
+    .vitals-status.critical { color: var(--accent-danger); }
+
+    /* ECG-style heartbeat display */
+    .ecg-container {
+      height: 120px;
+      background: var(--bg-void);
+      border: 1px solid var(--border-subtle);
+      border-radius: 4px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Grid background */
+    .ecg-container::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, var(--border-subtle) 1px, transparent 1px),
+        linear-gradient(180deg, var(--border-subtle) 1px, transparent 1px);
+      background-size: 20px 20px;
+      opacity: 0.3;
+    }
+
+    /* ECG line using SVG */
+    .ecg-line {
+      position: absolute;
+      inset: 0;
+    }
+
+    .ecg-line svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .ecg-path {
+      fill: none;
+      stroke: var(--accent-teal);
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      filter: drop-shadow(0 0 4px var(--accent-teal));
+    }
+
+    /* Animated scanning line */
+    .ecg-scan {
+      position: absolute;
+      top: 0;
+      width: 2px;
+      height: 100%;
+      background: linear-gradient(180deg,
+        transparent 0%,
+        var(--accent-teal) 40%,
+        var(--accent-teal) 60%,
+        transparent 100%
+      );
+      animation: ecg-scan 3s linear infinite;
+      box-shadow: 0 0 10px var(--accent-teal);
+    }
+
+    @keyframes ecg-scan {
+      0% { left: 0; }
+      100% { left: 100%; }
+    }
+
+    /* Heartbeat rate display */
+    .heartbeat-rate {
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+
+    .rate-value {
+      font-family: var(--font-display);
+      font-size: 32px;
+      font-weight: 300;
+      color: var(--accent-teal);
+      animation: rate-pulse 1s ease-in-out infinite;
+    }
+
+    @keyframes rate-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    .rate-unit {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       VITAL SIGNS GRID — Multiple health indicators
+       ═══════════════════════════════════════════════════════════════════ */
+
+    .vitals-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .vital-card {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: 4px;
+      padding: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .vital-card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--accent-teal);
+    }
+
+    .vital-card.warning::before { background: var(--accent-warning); }
+    .vital-card.danger::before { background: var(--accent-danger); }
+
+    .vital-label {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-bottom: 8px;
+    }
+
+    .vital-value-row {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+
+    .vital-value {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 300;
+      color: var(--text-bright);
+      line-height: 1;
+    }
+
+    .vital-unit {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    .vital-trend {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 8px;
+      font-family: var(--font-body);
+      font-size: 11px;
+    }
+
+    .vital-trend.up { color: var(--accent-success); }
+    .vital-trend.down { color: var(--accent-danger); }
+    .vital-trend.stable { color: var(--text-tertiary); }
+
+    /* Mini sparkline */
+    .vital-sparkline {
+      height: 24px;
+      margin-top: 8px;
+    }
+
+    .vital-sparkline svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .sparkline-path {
+      fill: none;
+      stroke: var(--accent-teal);
+      stroke-width: 1.5;
+    }
+
+    .vital-card.warning .sparkline-path { stroke: var(--accent-warning); }
+    .vital-card.danger .sparkline-path { stroke: var(--accent-danger); }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       BREATHING ANIMATION — System at rest vs active
+       ═══════════════════════════════════════════════════════════════════ */
+
+    .breathing-demo {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+    }
+
+    .breath-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: 4px;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .breath-visual {
+      width: 100px;
+      height: 100px;
+      margin: 0 auto 16px;
+      position: relative;
+    }
+
+    .breath-circle {
+      position: absolute;
+      inset: 0;
+      border: 2px solid;
+      border-radius: 50%;
+    }
+
+    /* Resting state */
+    .breath-card.resting .breath-circle {
+      border-color: var(--accent-teal);
+      animation: breathe-slow 6s ease-in-out infinite;
+    }
+
+    @keyframes breathe-slow {
+      0%, 100% {
+        transform: scale(0.9);
+        opacity: 0.6;
+        box-shadow: 0 0 10px rgba(61, 139, 139, 0.2);
+      }
+      50% {
+        transform: scale(1);
+        opacity: 1;
+        box-shadow: 0 0 20px rgba(61, 139, 139, 0.4);
+      }
+    }
+
+    /* Active state */
+    .breath-card.active .breath-circle {
+      border-color: var(--gold-primary);
+      animation: breathe-fast 2s ease-in-out infinite;
+    }
+
+    @keyframes breathe-fast {
+      0%, 100% {
+        transform: scale(0.85);
+        opacity: 0.7;
+        box-shadow: 0 0 15px rgba(212, 168, 75, 0.3);
+      }
+      50% {
+        transform: scale(1.05);
+        opacity: 1;
+        box-shadow: 0 0 30px rgba(212, 168, 75, 0.6);
+      }
+    }
+
+    /* Stressed state */
+    .breath-card.stressed .breath-circle {
+      border-color: var(--accent-danger);
+      animation: breathe-erratic 1s ease-in-out infinite;
+    }
+
+    @keyframes breathe-erratic {
+      0% { transform: scale(0.9); opacity: 0.8; }
+      25% { transform: scale(1.1); opacity: 1; }
+      50% { transform: scale(0.95); opacity: 0.7; }
+      75% { transform: scale(1.05); opacity: 0.9; }
+      100% { transform: scale(0.9); opacity: 0.8; }
+    }
+
+    .breath-label {
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .breath-desc {
+      font-family: var(--font-body);
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       NEURAL ACTIVITY STATES
+       ═══════════════════════════════════════════════════════════════════ */
+
+    .activity-states {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .state-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: 4px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .state-visual {
+      width: 60px;
+      height: 60px;
+      margin: 0 auto 12px;
+      position: relative;
+    }
+
+    .state-ring {
+      position: absolute;
+      inset: 0;
+      border: 2px solid var(--gold-dim);
+      border-radius: 50%;
+    }
+
+    .state-core {
+      position: absolute;
+      inset: 15px;
+      background: var(--gold-dim);
+      border-radius: 50%;
+    }
+
+    /* Idle state */
+    .state-card.idle .state-ring {
+      border-color: var(--text-muted);
+      opacity: 0.5;
+    }
+
+    .state-card.idle .state-core {
+      background: var(--text-muted);
+      opacity: 0.3;
+    }
+
+    /* Processing state */
+    .state-card.processing .state-ring {
+      border-color: var(--accent-teal);
+      animation: ring-spin 2s linear infinite;
+      border-top-color: transparent;
+    }
+
+    @keyframes ring-spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .state-card.processing .state-core {
+      background: var(--accent-teal);
+      animation: core-pulse 1s ease-in-out infinite;
+    }
+
+    @keyframes core-pulse {
+      0%, 100% { opacity: 0.5; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1); box-shadow: 0 0 15px var(--accent-teal); }
+    }
+
+    /* Thinking state (deep processing) */
+    .state-card.thinking .state-ring {
+      border-color: var(--gold-primary);
+      animation: ring-glow 3s ease-in-out infinite;
+    }
+
+    @keyframes ring-glow {
+      0%, 100% {
+        box-shadow: 0 0 5px rgba(212, 168, 75, 0.2);
+        opacity: 0.6;
+      }
+      50% {
+        box-shadow: 0 0 20px rgba(212, 168, 75, 0.5), 0 0 40px rgba(212, 168, 75, 0.2);
+        opacity: 1;
+      }
+    }
+
+    .state-card.thinking .state-core {
+      background: var(--gold-primary);
+      animation: core-think 3s ease-in-out infinite;
+    }
+
+    @keyframes core-think {
+      0%, 100% { opacity: 0.7; }
+      50% { opacity: 1; box-shadow: 0 0 20px var(--gold-primary); }
+    }
+
+    /* Error state */
+    .state-card.error .state-ring {
+      border-color: var(--accent-danger);
+      animation: ring-error 0.5s ease-in-out infinite;
+    }
+
+    @keyframes ring-error {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .state-card.error .state-core {
+      background: var(--accent-danger);
+      animation: core-error 0.5s ease-in-out infinite;
+    }
+
+    @keyframes core-error {
+      0%, 100% { opacity: 1; box-shadow: 0 0 10px var(--accent-danger); }
+      50% { opacity: 0.7; box-shadow: 0 0 5px var(--accent-danger); }
+    }
+
+    .state-label {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       PAIN VISUALIZATION — Error/disruption as neural pain
+       ═══════════════════════════════════════════════════════════════════ */
+
+    .pain-demo {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: 4px;
+      padding: 24px;
+    }
+
+    .pain-network {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+      padding: 32px;
+      position: relative;
+    }
+
+    .pain-node {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: var(--bg-elevated);
+      border: 2px solid var(--gold-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+    }
+
+    .pain-node.healthy {
+      border-color: var(--accent-teal);
+      box-shadow: 0 0 10px rgba(61, 139, 139, 0.3);
+    }
+
+    .pain-node.injured {
+      border-color: var(--accent-danger);
+      animation: injury-pulse 0.8s ease-in-out infinite;
+    }
+
+    @keyframes injury-pulse {
+      0%, 100% {
+        box-shadow: 0 0 10px rgba(199, 85, 85, 0.3);
+      }
+      50% {
+        box-shadow: 0 0 25px rgba(199, 85, 85, 0.6), 0 0 40px rgba(199, 85, 85, 0.3);
+      }
+    }
+
+    .pain-path {
+      width: 80px;
+      height: 3px;
+      background: var(--gold-dim);
+      position: relative;
+    }
+
+    .pain-path.disrupted {
+      background: var(--accent-danger);
+      animation: path-disruption 0.3s ease-in-out infinite;
+    }
+
+    @keyframes path-disruption {
+      0%, 100% { transform: translateY(0); }
+      25% { transform: translateY(-2px); }
+      75% { transform: translateY(2px); }
+    }
+
+    .pain-path.disrupted::after {
+      content: '⚡';
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 16px;
+      animation: lightning-flash 0.5s ease-in-out infinite;
+    }
+
+    @keyframes lightning-flash {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .pain-label {
+      text-align: center;
+      margin-top: 16px;
+      font-family: var(--font-body);
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .pain-label code {
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      color: var(--accent-danger);
+      background: rgba(199, 85, 85, 0.1);
+      padding: 2px 6px;
+      border-radius: 2px;
+    }
+  </style>
+</head>
+<body class="deco-bg">
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       SECTION 1: ECG-Style Heartbeat Monitor
+       ═══════════════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="section-title">System Vitals — Heartbeat Monitor</div>
+    <div class="section-desc">
+      The dashboard breathes. Event throughput visualized as a heartbeat —
+      a glanceable indicator that the system is alive and healthy.
+    </div>
+
+    <div class="vitals-panel">
+      <div class="vitals-header">
+        <span class="vitals-title">Iggy Event Stream</span>
+        <span class="vitals-status healthy">
+          <span class="status-dot active"></span>
+          Healthy
+        </span>
+      </div>
+
+      <div class="ecg-container">
+        <div class="ecg-line">
+          <svg viewBox="0 0 800 120" preserveAspectRatio="none">
+            <path class="ecg-path" d="
+              M0,60
+              L80,60
+              L100,60 L110,20 L120,100 L130,40 L140,60
+              L220,60
+              L240,60 L250,25 L260,95 L270,45 L280,60
+              L360,60
+              L380,60 L390,15 L400,105 L410,35 L420,60
+              L500,60
+              L520,60 L530,30 L540,90 L550,50 L560,60
+              L640,60
+              L660,60 L670,22 L680,98 L690,42 L700,60
+              L800,60
+            "/>
+          </svg>
+        </div>
+        <div class="ecg-scan"></div>
+        <div class="heartbeat-rate">
+          <span class="rate-value">72</span>
+          <span class="rate-unit">evt/s</span>
+        </div>
+      </div>
+
+      <div class="vitals-grid">
+        <div class="vital-card">
+          <div class="vital-label">Event Throughput</div>
+          <div class="vital-value-row">
+            <span class="vital-value">72</span>
+            <span class="vital-unit">evt/s</span>
+          </div>
+          <div class="vital-trend up">↗ +12% from avg</div>
+          <div class="vital-sparkline">
+            <svg viewBox="0 0 100 24" preserveAspectRatio="none">
+              <path class="sparkline-path" d="M0,18 L15,14 L30,16 L45,10 L60,12 L75,6 L90,8 L100,4"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="vital-card">
+          <div class="vital-label">Active Sessions</div>
+          <div class="vital-value-row">
+            <span class="vital-value">3</span>
+            <span class="vital-unit">sessions</span>
+          </div>
+          <div class="vital-trend stable">→ Stable</div>
+          <div class="vital-sparkline">
+            <svg viewBox="0 0 100 24" preserveAspectRatio="none">
+              <path class="sparkline-path" d="M0,12 L20,12 L40,10 L60,14 L80,12 L100,12"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="vital-card warning">
+          <div class="vital-label">Memory Pressure</div>
+          <div class="vital-value-row">
+            <span class="vital-value">78</span>
+            <span class="vital-unit">%</span>
+          </div>
+          <div class="vital-trend up">↗ Elevated</div>
+          <div class="vital-sparkline">
+            <svg viewBox="0 0 100 24" preserveAspectRatio="none">
+              <path class="sparkline-path" d="M0,20 L20,16 L40,12 L60,8 L80,6 L100,4"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="vital-card">
+          <div class="vital-label">Latency P99</div>
+          <div class="vital-value-row">
+            <span class="vital-value">42</span>
+            <span class="vital-unit">ms</span>
+          </div>
+          <div class="vital-trend down">↘ -8ms</div>
+          <div class="vital-sparkline">
+            <svg viewBox="0 0 100 24" preserveAspectRatio="none">
+              <path class="sparkline-path" d="M0,4 L20,8 L40,6 L60,10 L80,14 L100,18"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       SECTION 2: Breathing Animation States
+       ═══════════════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="section-label">Concept — System Breathing</div>
+
+    <div class="breathing-demo">
+      <div class="breath-card resting">
+        <div class="breath-visual">
+          <div class="breath-circle"></div>
+        </div>
+        <div class="breath-label">Resting</div>
+        <div class="breath-desc">Low activity, slow breath</div>
+      </div>
+
+      <div class="breath-card active">
+        <div class="breath-visual">
+          <div class="breath-circle"></div>
+        </div>
+        <div class="breath-label">Active</div>
+        <div class="breath-desc">Processing, faster rhythm</div>
+      </div>
+
+      <div class="breath-card stressed">
+        <div class="breath-visual">
+          <div class="breath-circle"></div>
+        </div>
+        <div class="breath-label">Stressed</div>
+        <div class="breath-desc">High load, erratic pattern</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       SECTION 3: Neural Activity States
+       ═══════════════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="section-label">Concept — Neural Activity States</div>
+
+    <div class="activity-states">
+      <div class="state-card idle">
+        <div class="state-visual">
+          <div class="state-ring"></div>
+          <div class="state-core"></div>
+        </div>
+        <div class="state-label">Idle</div>
+      </div>
+
+      <div class="state-card processing">
+        <div class="state-visual">
+          <div class="state-ring"></div>
+          <div class="state-core"></div>
+        </div>
+        <div class="state-label">Processing</div>
+      </div>
+
+      <div class="state-card thinking">
+        <div class="state-visual">
+          <div class="state-ring"></div>
+          <div class="state-core"></div>
+        </div>
+        <div class="state-label">Deep Thinking</div>
+      </div>
+
+      <div class="state-card error">
+        <div class="state-visual">
+          <div class="state-ring"></div>
+          <div class="state-core"></div>
+        </div>
+        <div class="state-label">Error</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       SECTION 4: Pain Visualization (Errors as Neural Pain)
+       ═══════════════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="section-label">Concept — Errors as Neural Pain</div>
+    <div class="section-desc">
+      When connections fail, the nervous system shows pain — disrupted signals,
+      inflammation at the injury site. Not alarming red screens, but biological distress.
+    </div>
+
+    <div class="pain-demo">
+      <div class="pain-network">
+        <div class="pain-node healthy">Source</div>
+        <div class="pain-path disrupted"></div>
+        <div class="pain-node injured">Handler</div>
+        <div class="pain-path"></div>
+        <div class="pain-node healthy">Sink</div>
+      </div>
+
+      <div class="pain-label">
+        Connection disrupted: <code>ECONNREFUSED</code> — Signal cannot reach handler
+      </div>
+    </div>
+  </section>
+
+</body>
+</html>

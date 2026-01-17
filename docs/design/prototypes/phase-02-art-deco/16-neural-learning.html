@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neural Learning — Groove Pathway Formation</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    body {
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 60px;
+    }
+
+    /* Fix z-index stacking over deco-bg pseudo-elements */
+    section {
+      position: relative;
+      z-index: 1;
+    }
+
+    .section-label {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold-dim);
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 300;
+      letter-spacing: 0.1em;
+      color: var(--gold-primary);
+      margin-bottom: 8px;
+    }
+
+    .section-desc {
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+      max-width: 600px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       LEARNING VISUALIZATION — Pathway Formation
+       ═══════════════════════════════════════════════════════════════════ */
+
+    .learning-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: 4px;
+      padding: 32px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .learning-container::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 100% 60% at 50% 100%, rgba(61, 139, 139, 0.06) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .pathway-network {
+      position: relative;
+      height: 400px;
+    }
+
+    /* Concept nodes */
+    .concept-node {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .concept-node:hover {
+      transform: scale(1.1);
+    }
+
+    .concept-core {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: var(--bg-elevated);
+      border: 2px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      transition: all 0.3s ease;
+    }
+
+    .concept-node:hover .concept-core {
+      border-color: var(--gold-primary);
+      box-shadow: var(--glow-gold);
+    }
+
+    /* Mastery levels */
+    .concept-node.novice .concept-core {
+      border-color: var(--text-muted);
+    }
+
+    .concept-node.learning .concept-core {
+      border-color: var(--accent-teal-muted);
+      box-shadow: 0 0 8px rgba(61, 139, 139, 0.3);
+    }
+
+    .concept-node.proficient .concept-core {
+      border-color: var(--gold-muted);
+      box-shadow: 0 0 12px rgba(212, 168, 75, 0.3);
+    }
+
+    .concept-node.mastered .concept-core {
+      border-color: var(--gold-primary);
+      background: linear-gradient(135deg, var(--bg-elevated) 0%, rgba(212, 168, 75, 0.1) 100%);
+      box-shadow: var(--glow-gold);
+    }
+
+    .concept-label {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+    }
+
+    .concept-node.mastered .concept-label {
+      color: var(--gold-primary);
+    }
+
+    /* Neural pathways SVG layer */
+    .pathway-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Pathway lines */
+    .pathway-line {
+      fill: none;
+      stroke-linecap: round;
+    }
+
+    .pathway-line.weak {
+      stroke: rgba(212, 168, 75, 0.15);
+      stroke-width: 1;
+    }
+
+    .pathway-line.forming {
+      stroke: var(--accent-teal-muted);
+      stroke-width: 2;
+      animation: pathway-form 2s ease-in-out infinite;
+    }
+
+    @keyframes pathway-form {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 0.8; }
+    }
+
+    .pathway-line.strong {
+      stroke: var(--gold-muted);
+      stroke-width: 3;
+      filter: drop-shadow(0 0 4px rgba(212, 168, 75, 0.3));
+    }
+
+    .pathway-line.highway {
+      stroke: var(--gold-primary);
+      stroke-width: 4;
+      filter: drop-shadow(0 0 6px rgba(212, 168, 75, 0.5));
+    }
+
+    /* Traveling signals */
+    .pathway-signal {
+      fill: var(--gold-bright);
+      filter: drop-shadow(0 0 4px var(--gold-bright));
+    }
+
+    .signal-1 { offset-path: path('M130,80 Q190,115 280,180'); animation: signal-travel-1 2.5s ease-in-out infinite; }
+    .signal-2 { offset-path: path('M280,180 Q340,130 430,110'); animation: signal-travel-2 3s ease-in-out infinite 0.5s; }
+    .signal-3 { offset-path: path('M430,110 Q490,145 580,210'); animation: signal-travel-3 2.8s ease-in-out infinite 1s; }
+    .signal-4 { offset-path: path('M430,350 Q515,280 630,280'); animation: signal-travel-4 2.2s ease-in-out infinite 0.3s; }
+
+    @keyframes signal-travel-1 {
+      0% { offset-distance: 0%; opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { offset-distance: 100%; opacity: 0; }
+    }
+    @keyframes signal-travel-2 {
+      0% { offset-distance: 0%; opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { offset-distance: 100%; opacity: 0; }
+    }
+    @keyframes signal-travel-3 {
+      0% { offset-distance: 0%; opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { offset-distance: 100%; opacity: 0; }
+    }
+    @keyframes signal-travel-4 {
+      0% { offset-distance: 0%; opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { offset-distance: 100%; opacity: 0; }
+    }
+
+    /* Positioned nodes and pathways */
+    .node-tdd { top: 50px; left: 100px; }
+    .node-testing { top: 150px; left: 250px; }
+    .node-refactor { top: 80px; left: 400px; }
+    .node-git { top: 180px; left: 550px; }
+    .node-debug { top: 280px; left: 150px; }
+    .node-read { top: 320px; left: 400px; }
+    .node-edit { top: 250px; left: 600px; }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       LEARNING PROGRESS PANEL
+       ═══════════════════════════════════════════════════════════════════ */
+
+    .learning-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-top: 32px;
+    }
+
+    .stat-card {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: 4px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-family: var(--font-display);
+      font-size: 32px;
+      font-weight: 300;
+      color: var(--gold-primary);
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-top: 8px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       PATHWAY STRENGTH ANIMATION
+       ═══════════════════════════════════════════════════════════════════ */
+
+    .pathway-demo {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      padding: 24px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: 4px;
+    }
+
+    .demo-row {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .demo-label {
+      width: 120px;
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+    }
+
+    .demo-pathway {
+      flex: 1;
+      height: 24px;
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .demo-line {
+      width: 100%;
+      border-radius: 2px;
+    }
+
+    .demo-line.weak {
+      height: 1px;
+      background: var(--border-subtle);
+    }
+
+    .demo-line.forming {
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent-teal-muted), var(--accent-teal), var(--accent-teal-muted));
+      animation: pulse-line 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-line {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+
+    .demo-line.strong {
+      height: 3px;
+      background: linear-gradient(90deg, var(--gold-dim), var(--gold-muted), var(--gold-dim));
+      box-shadow: 0 0 4px rgba(212, 168, 75, 0.3);
+    }
+
+    .demo-line.highway {
+      height: 5px;
+      background: linear-gradient(90deg, var(--gold-muted), var(--gold-bright), var(--gold-muted));
+      box-shadow: 0 0 8px rgba(212, 168, 75, 0.5);
+      animation: highway-glow 3s ease-in-out infinite;
+    }
+
+    @keyframes highway-glow {
+      0%, 100% {
+        box-shadow: 0 0 8px rgba(212, 168, 75, 0.3);
+      }
+      50% {
+        box-shadow: 0 0 16px rgba(212, 168, 75, 0.6), 0 0 24px rgba(212, 168, 75, 0.3);
+      }
+    }
+
+    .demo-usage {
+      width: 80px;
+      text-align: right;
+      font-family: var(--font-body);
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       DNA HELIX VISUALIZATION (Learning encoded as genetic memory)
+       ═══════════════════════════════════════════════════════════════════ */
+
+    .dna-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: 4px;
+    }
+
+    .dna-helix-svg {
+      width: 100%;
+      max-width: 600px;
+      height: 180px;
+    }
+
+    /* Backbone strands */
+    .dna-backbone {
+      fill: none;
+      stroke-width: 3;
+      stroke-linecap: round;
+    }
+
+    .dna-backbone.strand-a {
+      stroke: var(--accent-teal);
+      filter: drop-shadow(0 0 4px rgba(61, 139, 139, 0.5));
+    }
+
+    .dna-backbone.strand-b {
+      stroke: var(--gold-primary);
+      filter: drop-shadow(0 0 4px rgba(212, 168, 75, 0.5));
+    }
+
+    /* Base pair connections */
+    .base-pair {
+      stroke: var(--border-medium);
+      stroke-width: 2;
+      opacity: 0.6;
+    }
+
+    /* Nucleotide nodes at connection points */
+    .nucleotide {
+      filter: drop-shadow(0 0 3px currentColor);
+    }
+
+    .nucleotide.read { fill: var(--accent-teal); }
+    .nucleotide.write { fill: var(--gold-primary); }
+    .nucleotide.tool { fill: var(--accent-rose); }
+    .nucleotide.chat { fill: #6a9fd4; }
+
+    /* Rotation animation for the helix */
+    .dna-helix-svg {
+      animation: dna-rotate 20s linear infinite;
+    }
+
+    @keyframes dna-rotate {
+      0% { --dna-phase: 0; }
+      100% { --dna-phase: 360; }
+    }
+
+    /* Pulsing glow on nucleotides */
+    .nucleotide {
+      animation: nucleotide-pulse 3s ease-in-out infinite;
+    }
+
+    .nucleotide:nth-child(odd) { animation-delay: 0s; }
+    .nucleotide:nth-child(even) { animation-delay: 1.5s; }
+
+    @keyframes nucleotide-pulse {
+      0%, 100% { opacity: 0.7; }
+      50% { opacity: 1; }
+    }
+
+    /* Legend */
+    .dna-legend {
+      display: flex;
+      gap: 24px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .dna-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+    }
+
+    .dna-legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .dna-legend-dot.read { background: var(--accent-teal); }
+    .dna-legend-dot.write { background: var(--gold-primary); }
+    .dna-legend-dot.tool { background: var(--accent-rose); }
+    .dna-legend-dot.chat { background: #6a9fd4; }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       SYNAPTIC PRUNING (Forgetting unused patterns)
+       ═══════════════════════════════════════════════════════════════════ */
+
+    .pruning-demo {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: 4px;
+      padding: 24px;
+    }
+
+    .pruning-network {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      height: 120px;
+      position: relative;
+    }
+
+    .pruning-node {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: var(--bg-elevated);
+      border: 2px solid var(--gold-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      transition: all 0.3s ease;
+    }
+
+    .pruning-node.active {
+      border-color: var(--gold-primary);
+      box-shadow: var(--glow-gold);
+      color: var(--gold-primary);
+    }
+
+    .pruning-node.fading {
+      opacity: 0.4;
+      border-style: dashed;
+      animation: fade-out 3s ease-in-out infinite;
+    }
+
+    @keyframes fade-out {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 0.2; }
+    }
+
+    .pruning-path {
+      position: absolute;
+      height: 2px;
+      background: var(--gold-dim);
+      z-index: -1;
+    }
+
+    .pruning-path.active {
+      background: var(--gold-primary);
+      box-shadow: 0 0 6px rgba(212, 168, 75, 0.4);
+    }
+
+    .pruning-path.fading {
+      background: var(--border-subtle);
+      opacity: 0.3;
+      animation: path-fade 3s ease-in-out infinite;
+    }
+
+    @keyframes path-fade {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.1; }
+    }
+
+    .pruning-label {
+      text-align: center;
+      margin-top: 16px;
+      font-family: var(--font-body);
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .pruning-label em {
+      color: var(--accent-teal);
+      font-style: normal;
+    }
+  </style>
+</head>
+<body class="deco-bg">
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       SECTION 1: Pathway Network
+       ═══════════════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="section-title">Groove Learning Visualization</div>
+    <div class="section-desc">
+      As Groove detects patterns in your workflow, neural pathways form between related concepts.
+      Repeated patterns strengthen connections (myelination), creating "highways" of learned behavior.
+    </div>
+
+    <div class="learning-container">
+      <div class="pathway-network">
+        <!-- SVG layer for pathway connections -->
+        <svg class="pathway-svg" viewBox="0 0 700 420" preserveAspectRatio="xMidYMid meet">
+          <!-- TDD → Testing (highway) -->
+          <path class="pathway-line highway" d="M130,80 Q190,115 280,180"/>
+          <!-- Testing → Refactor (strong) -->
+          <path class="pathway-line strong" d="M280,180 Q340,130 430,110"/>
+          <!-- Refactor → Git (forming) -->
+          <path class="pathway-line forming" d="M430,110 Q490,145 580,210"/>
+          <!-- Debug → Read (weak) -->
+          <path class="pathway-line weak" d="M180,310 Q290,315 430,350"/>
+          <!-- Read → Edit (strong) -->
+          <path class="pathway-line strong" d="M430,350 Q515,280 630,280"/>
+          <!-- TDD → Debug (weak) -->
+          <path class="pathway-line weak" d="M130,80 Q150,195 180,310"/>
+
+          <!-- Traveling signals -->
+          <circle class="pathway-signal signal-1" r="5"/>
+          <circle class="pathway-signal signal-2" r="5"/>
+          <circle class="pathway-signal signal-3" r="5"/>
+          <circle class="pathway-signal signal-4" r="5"/>
+        </svg>
+
+        <!-- Positioned concept nodes -->
+        <div class="concept-node mastered node-tdd">
+          <div class="concept-core">TDD</div>
+          <div class="concept-label">Mastered</div>
+        </div>
+
+        <div class="concept-node proficient node-testing">
+          <div class="concept-core">Test</div>
+          <div class="concept-label">Proficient</div>
+        </div>
+
+        <div class="concept-node proficient node-refactor">
+          <div class="concept-core">Refactor</div>
+          <div class="concept-label">Proficient</div>
+        </div>
+
+        <div class="concept-node learning node-git">
+          <div class="concept-core">Git</div>
+          <div class="concept-label">Learning</div>
+        </div>
+
+        <div class="concept-node learning node-debug">
+          <div class="concept-core">Debug</div>
+          <div class="concept-label">Learning</div>
+        </div>
+
+        <div class="concept-node novice node-read">
+          <div class="concept-core">Read</div>
+          <div class="concept-label">Novice</div>
+        </div>
+
+        <div class="concept-node mastered node-edit">
+          <div class="concept-core">Edit</div>
+          <div class="concept-label">Mastered</div>
+        </div>
+      </div>
+
+      <div class="learning-stats">
+        <div class="stat-card">
+          <div class="stat-value">2</div>
+          <div class="stat-label">Mastered Skills</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">2</div>
+          <div class="stat-label">Proficient</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">2</div>
+          <div class="stat-label">Learning</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">1</div>
+          <div class="stat-label">Novice</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       SECTION 2: Pathway Strength Demo
+       ═══════════════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="section-label">Pathway Strength (Myelination)</div>
+
+    <div class="pathway-demo">
+      <div class="demo-row">
+        <div class="demo-label">Unused</div>
+        <div class="demo-pathway">
+          <div class="demo-line weak"></div>
+        </div>
+        <div class="demo-usage">0 uses</div>
+      </div>
+
+      <div class="demo-row">
+        <div class="demo-label">Forming</div>
+        <div class="demo-pathway">
+          <div class="demo-line forming"></div>
+        </div>
+        <div class="demo-usage">5+ uses</div>
+      </div>
+
+      <div class="demo-row">
+        <div class="demo-label">Strong</div>
+        <div class="demo-pathway">
+          <div class="demo-line strong"></div>
+        </div>
+        <div class="demo-usage">20+ uses</div>
+      </div>
+
+      <div class="demo-row">
+        <div class="demo-label">Highway</div>
+        <div class="demo-pathway">
+          <div class="demo-line highway"></div>
+        </div>
+        <div class="demo-usage">100+ uses</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       SECTION 3: DNA Helix (Learned Patterns as Genetic Memory)
+       ═══════════════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="section-label">Concept — Learned Patterns as DNA</div>
+    <div class="section-desc">
+      Event types as nucleotides. Repeated patterns crystallize into behavioral "genes."
+      This is the subatomic level where biology meets code.
+    </div>
+
+    <div class="dna-container">
+      <svg class="dna-helix-svg" viewBox="0 0 600 160" preserveAspectRatio="xMidYMid meet">
+        <!-- Base pair connections (the rungs of the ladder) -->
+        <g class="base-pairs">
+          <line class="base-pair" x1="50" y1="30" x2="50" y2="130"/>
+          <line class="base-pair" x1="100" y1="55" x2="100" y2="105"/>
+          <line class="base-pair" x1="150" y1="75" x2="150" y2="85"/>
+          <line class="base-pair" x1="200" y1="85" x2="200" y2="75"/>
+          <line class="base-pair" x1="250" y1="105" x2="250" y2="55"/>
+          <line class="base-pair" x1="300" y1="130" x2="300" y2="30"/>
+          <line class="base-pair" x1="350" y1="105" x2="350" y2="55"/>
+          <line class="base-pair" x1="400" y1="85" x2="400" y2="75"/>
+          <line class="base-pair" x1="450" y1="75" x2="450" y2="85"/>
+          <line class="base-pair" x1="500" y1="55" x2="500" y2="105"/>
+          <line class="base-pair" x1="550" y1="30" x2="550" y2="130"/>
+        </g>
+
+        <!-- Strand A (teal) - sinusoidal wave -->
+        <path class="dna-backbone strand-a"
+              d="M 20,80
+                 Q 50,20 100,55
+                 Q 150,90 200,85
+                 Q 250,80 300,130
+                 Q 350,80 400,85
+                 Q 450,90 500,55
+                 Q 550,20 580,80"/>
+
+        <!-- Strand B (gold) - opposite phase sinusoidal wave -->
+        <path class="dna-backbone strand-b"
+              d="M 20,80
+                 Q 50,140 100,105
+                 Q 150,70 200,75
+                 Q 250,80 300,30
+                 Q 350,80 400,75
+                 Q 450,70 500,105
+                 Q 550,140 580,80"/>
+
+        <!-- Nucleotides on Strand A -->
+        <circle class="nucleotide read" cx="50" cy="30" r="6"/>
+        <circle class="nucleotide write" cx="100" cy="55" r="6"/>
+        <circle class="nucleotide tool" cx="150" cy="75" r="6"/>
+        <circle class="nucleotide chat" cx="200" cy="85" r="6"/>
+        <circle class="nucleotide read" cx="250" cy="105" r="6"/>
+        <circle class="nucleotide write" cx="300" cy="130" r="6"/>
+        <circle class="nucleotide tool" cx="350" cy="105" r="6"/>
+        <circle class="nucleotide chat" cx="400" cy="85" r="6"/>
+        <circle class="nucleotide read" cx="450" cy="75" r="6"/>
+        <circle class="nucleotide write" cx="500" cy="55" r="6"/>
+        <circle class="nucleotide tool" cx="550" cy="30" r="6"/>
+
+        <!-- Nucleotides on Strand B (complementary) -->
+        <circle class="nucleotide write" cx="50" cy="130" r="6"/>
+        <circle class="nucleotide read" cx="100" cy="105" r="6"/>
+        <circle class="nucleotide chat" cx="150" cy="85" r="6"/>
+        <circle class="nucleotide tool" cx="200" cy="75" r="6"/>
+        <circle class="nucleotide write" cx="250" cy="55" r="6"/>
+        <circle class="nucleotide read" cx="300" cy="30" r="6"/>
+        <circle class="nucleotide chat" cx="350" cy="55" r="6"/>
+        <circle class="nucleotide tool" cx="400" cy="75" r="6"/>
+        <circle class="nucleotide write" cx="450" cy="85" r="6"/>
+        <circle class="nucleotide read" cx="500" cy="105" r="6"/>
+        <circle class="nucleotide chat" cx="550" cy="130" r="6"/>
+      </svg>
+
+      <div class="dna-legend">
+        <div class="dna-legend-item">
+          <div class="dna-legend-dot read"></div>
+          <span>Read Events</span>
+        </div>
+        <div class="dna-legend-item">
+          <div class="dna-legend-dot write"></div>
+          <span>Write Events</span>
+        </div>
+        <div class="dna-legend-item">
+          <div class="dna-legend-dot tool"></div>
+          <span>Tool Calls</span>
+        </div>
+        <div class="dna-legend-item">
+          <div class="dna-legend-dot chat"></div>
+          <span>Chat Events</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       SECTION 4: Synaptic Pruning
+       ═══════════════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="section-label">Concept — Synaptic Pruning (Forgetting)</div>
+
+    <div class="pruning-demo">
+      <div class="pruning-network">
+        <div class="pruning-node active">TDD</div>
+        <div class="pruning-node active">Test</div>
+        <div class="pruning-node fading">Unused</div>
+        <div class="pruning-node active">Edit</div>
+        <div class="pruning-node fading">Old API</div>
+
+        <div class="pruning-path active" style="top: 60px; left: 80px; width: 100px;"></div>
+        <div class="pruning-path fading" style="top: 60px; left: 200px; width: 100px;"></div>
+        <div class="pruning-path active" style="top: 60px; left: 320px; width: 100px;"></div>
+        <div class="pruning-path fading" style="top: 60px; left: 440px; width: 100px;"></div>
+      </div>
+
+      <div class="pruning-label">
+        Unused patterns <em>fade</em> over time — the system forgets what's no longer relevant.
+      </div>
+    </div>
+  </section>
+
+</body>
+</html>

@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spoke as Brain — Neural Hub Visualization</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    body {
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 60px;
+    }
+
+    /* Fix z-index stacking over deco-bg pseudo-elements */
+    body > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .section-label {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold-dim);
+      margin-bottom: 16px;
+      align-self: flex-start;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       SPOKE AS BRAIN — The neural hub-and-spoke
+       ═══════════════════════════════════════════════════════════════════ */
+
+    .neural-hub {
+      position: relative;
+      width: 600px;
+      height: 600px;
+    }
+
+    /* Outer rim (sensory periphery) */
+    .rim {
+      position: absolute;
+      inset: 0;
+      border: 2px solid var(--gold-dim);
+      border-radius: 50%;
+      opacity: 0.4;
+    }
+
+    .rim::after {
+      content: '';
+      position: absolute;
+      inset: 8px;
+      border: 1px dashed var(--gold-dim);
+      border-radius: 50%;
+      opacity: 0.3;
+    }
+
+    /* Hub (central processor / you) */
+    .hub {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 80px;
+      height: 80px;
+    }
+
+    .hub-outer {
+      position: absolute;
+      inset: 0;
+      border: 3px solid var(--gold-primary);
+      border-radius: 50%;
+      animation: hub-breathe 4s ease-in-out infinite;
+    }
+
+    @keyframes hub-breathe {
+      0%, 100% {
+        box-shadow: 0 0 20px rgba(212, 168, 75, 0.3);
+      }
+      50% {
+        box-shadow: 0 0 40px rgba(212, 168, 75, 0.6), 0 0 60px rgba(212, 168, 75, 0.3);
+      }
+    }
+
+    .hub-inner {
+      position: absolute;
+      inset: 15px;
+      background: radial-gradient(circle at 40% 40%,
+        var(--gold-bright) 0%,
+        var(--gold-primary) 50%,
+        var(--gold-muted) 100%
+      );
+      border-radius: 50%;
+      box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.3);
+    }
+
+    .hub-label {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: var(--font-display);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--bg-void);
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    /* Spokes (axons) */
+    .spoke {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 220px;
+      height: 4px;
+      transform-origin: left center;
+      display: flex;
+      align-items: center;
+    }
+
+    .spoke-line {
+      flex: 1;
+      height: 3px;
+      background: linear-gradient(90deg,
+        var(--gold-primary) 0%,
+        var(--gold-dim) 60%,
+        transparent 100%
+      );
+      border-radius: 2px;
+      position: relative;
+      margin-left: 40px;
+    }
+
+    /* Neural signal traveling along spoke */
+    .spoke-line::after {
+      content: '';
+      position: absolute;
+      top: -4px;
+      left: 0;
+      width: 20px;
+      height: 11px;
+      background: radial-gradient(ellipse at center,
+        var(--gold-bright) 0%,
+        rgba(232, 196, 90, 0.6) 40%,
+        transparent 70%
+      );
+      border-radius: 50%;
+      animation: spoke-signal 3s ease-in-out infinite;
+    }
+
+    .spoke:nth-child(1) .spoke-line::after { animation-delay: 0s; }
+    .spoke:nth-child(2) .spoke-line::after { animation-delay: 0.5s; }
+    .spoke:nth-child(3) .spoke-line::after { animation-delay: 1s; }
+    .spoke:nth-child(4) .spoke-line::after { animation-delay: 1.5s; }
+    .spoke:nth-child(5) .spoke-line::after { animation-delay: 2s; }
+    .spoke:nth-child(6) .spoke-line::after { animation-delay: 2.5s; }
+
+    @keyframes spoke-signal {
+      0% { left: 0; opacity: 0; }
+      10% { opacity: 1; }
+      80% { left: calc(100% - 20px); opacity: 1; }
+      100% { left: calc(100% - 20px); opacity: 0; }
+    }
+
+    /* Spoke rotations (6 spokes at 60° intervals) */
+    .spoke:nth-child(1) { transform: rotate(0deg); }
+    .spoke:nth-child(2) { transform: rotate(60deg); }
+    .spoke:nth-child(3) { transform: rotate(120deg); }
+    .spoke:nth-child(4) { transform: rotate(180deg); }
+    .spoke:nth-child(5) { transform: rotate(240deg); }
+    .spoke:nth-child(6) { transform: rotate(300deg); }
+
+    /* Data source nodes (at rim) */
+    .source-node {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: var(--bg-card);
+      border: 2px solid var(--gold-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .source-node:hover {
+      border-color: var(--gold-primary);
+      box-shadow: var(--glow-gold);
+      transform: scale(1.1);
+    }
+
+    .source-node.active {
+      border-color: var(--accent-teal);
+      box-shadow: var(--glow-teal);
+    }
+
+    .source-node.active::after {
+      content: '';
+      position: absolute;
+      inset: -8px;
+      border: 1px solid var(--accent-teal);
+      border-radius: 50%;
+      animation: pulse-ring 2s ease-out infinite;
+    }
+
+    @keyframes pulse-ring {
+      0% { transform: scale(1); opacity: 0.8; }
+      100% { transform: scale(1.3); opacity: 0; }
+    }
+
+    .source-icon {
+      font-size: 18px;
+      color: var(--text-secondary);
+    }
+
+    .source-node:hover .source-icon,
+    .source-node.active .source-icon {
+      color: var(--text-primary);
+    }
+
+    /* Position source nodes at spoke ends */
+    .source-node:nth-of-type(1) { top: 50%; right: 0; transform: translate(50%, -50%); }
+    .source-node:nth-of-type(2) { top: 12%; right: 12%; transform: translate(25%, -25%); }
+    .source-node:nth-of-type(3) { top: 12%; left: 12%; transform: translate(-25%, -25%); }
+    .source-node:nth-of-type(4) { top: 50%; left: 0; transform: translate(-50%, -50%); }
+    .source-node:nth-of-type(5) { bottom: 12%; left: 12%; transform: translate(-25%, 25%); }
+    .source-node:nth-of-type(6) { bottom: 12%; right: 12%; transform: translate(25%, 25%); }
+
+    .source-label {
+      position: absolute;
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      white-space: nowrap;
+    }
+
+    .source-node:nth-of-type(1) .source-label { left: calc(100% + 12px); }
+    .source-node:nth-of-type(2) .source-label { left: calc(100% + 8px); top: 0; }
+    .source-node:nth-of-type(3) .source-label { right: calc(100% + 8px); top: 0; }
+    .source-node:nth-of-type(4) .source-label { right: calc(100% + 12px); }
+    .source-node:nth-of-type(5) .source-label { right: calc(100% + 8px); bottom: 0; }
+    .source-node:nth-of-type(6) .source-label { left: calc(100% + 8px); bottom: 0; }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       NEURAL ACTIVITY INDICATOR
+       ═══════════════════════════════════════════════════════════════════ */
+
+    .activity-indicator {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .activity-ring {
+      position: absolute;
+      inset: 0;
+      border: 1px solid var(--gold-primary);
+      border-radius: 50%;
+      opacity: 0;
+      animation: activity-pulse 4s ease-out infinite;
+    }
+
+    .activity-ring:nth-child(1) { animation-delay: 0s; }
+    .activity-ring:nth-child(2) { animation-delay: 1s; }
+    .activity-ring:nth-child(3) { animation-delay: 2s; }
+    .activity-ring:nth-child(4) { animation-delay: 3s; }
+
+    @keyframes activity-pulse {
+      0% {
+        transform: scale(0.6);
+        opacity: 0.8;
+      }
+      100% {
+        transform: scale(2);
+        opacity: 0;
+      }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       SECONDARY CONNECTIONS (branching dendrites)
+       ═══════════════════════════════════════════════════════════════════ */
+
+    .dendrite-cluster {
+      position: absolute;
+    }
+
+    .dendrite {
+      position: absolute;
+      width: 40px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--gold-dim), transparent);
+      transform-origin: left center;
+      opacity: 0.5;
+    }
+
+    .dendrite-tip {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background: var(--gold-dim);
+      border-radius: 50%;
+    }
+
+    /* Mini source nodes for dendrites */
+    .mini-source {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-light);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    /* Status legend */
+    .legend {
+      display: flex;
+      gap: 32px;
+      margin-top: 24px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+    }
+
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 2px solid;
+    }
+
+    .legend-dot.active {
+      border-color: var(--accent-teal);
+      box-shadow: 0 0 6px var(--accent-teal);
+    }
+
+    .legend-dot.idle {
+      border-color: var(--gold-dim);
+    }
+
+    .legend-dot.error {
+      border-color: var(--accent-danger);
+      box-shadow: 0 0 6px var(--accent-danger);
+    }
+
+    /* Title */
+    .hub-title {
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 300;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    .hub-subtitle {
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: var(--text-secondary);
+      text-align: center;
+      max-width: 400px;
+    }
+  </style>
+</head>
+<body class="deco-bg">
+
+  <div>
+    <div class="hub-title">Spoke as Neural Hub</div>
+    <div class="hub-subtitle">
+      The wheel becomes a brain. Spokes are axons carrying signals between you (the hub)
+      and your data sources (the sensory periphery).
+    </div>
+  </div>
+
+  <div class="section-label" style="width: 600px;">Interactive Neural Map</div>
+
+  <div class="neural-hub">
+    <!-- Outer rim -->
+    <div class="rim"></div>
+
+    <!-- Spokes (axons) -->
+    <div class="spoke"><div class="spoke-line"></div></div>
+    <div class="spoke"><div class="spoke-line"></div></div>
+    <div class="spoke"><div class="spoke-line"></div></div>
+    <div class="spoke"><div class="spoke-line"></div></div>
+    <div class="spoke"><div class="spoke-line"></div></div>
+    <div class="spoke"><div class="spoke-line"></div></div>
+
+    <!-- Activity indicator (pulsing rings) -->
+    <div class="activity-indicator">
+      <div class="activity-ring"></div>
+      <div class="activity-ring"></div>
+      <div class="activity-ring"></div>
+      <div class="activity-ring"></div>
+    </div>
+
+    <!-- Central hub -->
+    <div class="hub">
+      <div class="hub-outer"></div>
+      <div class="hub-inner"></div>
+      <div class="hub-label">YOU</div>
+    </div>
+
+    <!-- Data source nodes -->
+    <div class="source-node active">
+      <span class="source-icon">◈</span>
+      <span class="source-label">Postgres</span>
+    </div>
+
+    <div class="source-node active">
+      <span class="source-icon">◇</span>
+      <span class="source-label">S3 Bucket</span>
+    </div>
+
+    <div class="source-node">
+      <span class="source-icon">○</span>
+      <span class="source-label">API</span>
+    </div>
+
+    <div class="source-node active">
+      <span class="source-icon">◈</span>
+      <span class="source-label">Lance DB</span>
+    </div>
+
+    <div class="source-node">
+      <span class="source-icon">◇</span>
+      <span class="source-label">Redis</span>
+    </div>
+
+    <div class="source-node">
+      <span class="source-icon">○</span>
+      <span class="source-label">Files</span>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item">
+      <div class="legend-dot active"></div>
+      <span>Active Signal</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot idle"></div>
+      <span>Idle / Dormant</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot error"></div>
+      <span>Error / Disrupted</span>
+    </div>
+  </div>
+
+</body>
+</html>

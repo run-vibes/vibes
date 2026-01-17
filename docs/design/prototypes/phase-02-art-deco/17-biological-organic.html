@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Biological Layer — Organic Life</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600&family=Karla:wght@300;400;500&display=swap');
+
+    :root {
+      --bg-void: #07090d;
+      --bg-deep: #0c1018;
+      --gold-primary: #d4a84b;
+      --gold-bright: #e8c45a;
+      --gold-dim: #8a6520;
+      --teal: #5da8a8;
+      --teal-glow: rgba(93, 168, 168, 0.6);
+      --rose: #c98a7a;
+      --text-primary: #f5f0e1;
+      --text-secondary: #a39e8e;
+      --text-dim: #6b6760;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Karla', sans-serif;
+      background: var(--bg-void);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 40px;
+      line-height: 1.6;
+    }
+
+    h1 {
+      font-family: 'Titillium Web', sans-serif;
+      font-weight: 300;
+      font-size: 28px;
+      color: var(--gold-primary);
+      margin-bottom: 8px;
+      letter-spacing: 0.05em;
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 16px;
+      margin-bottom: 48px;
+      max-width: 600px;
+    }
+
+    .section-label {
+      font-family: 'Titillium Web', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold-dim);
+      margin-bottom: 16px;
+      margin-top: 48px;
+    }
+
+    .demo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 32px;
+      margin-bottom: 48px;
+    }
+
+    .demo-card {
+      background: linear-gradient(135deg, rgba(20, 26, 38, 0.8), rgba(12, 16, 24, 0.9));
+      border: 1px solid rgba(212, 168, 75, 0.15);
+      border-radius: 12px;
+      padding: 24px;
+    }
+
+    .demo-title {
+      font-family: 'Titillium Web', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+      letter-spacing: 0.05em;
+    }
+
+    .demo-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 16px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       LIVING CELL — Organic membrane with internal motion
+       ═══════════════════════════════════════════════════════════════════ */
+
+    .cell-container {
+      height: 250px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .living-cell {
+      width: 180px;
+      height: 180px;
+      position: relative;
+    }
+
+    /* Outer membrane - organic blob shape */
+    .cell-membrane {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 30% 30%,
+        rgba(93, 168, 168, 0.15) 0%,
+        rgba(93, 168, 168, 0.05) 50%,
+        transparent 70%
+      );
+      border: 2px solid rgba(93, 168, 168, 0.4);
+      border-radius: 47% 53% 52% 48% / 46% 48% 52% 54%;
+      animation: membrane-morph 8s ease-in-out infinite;
+      box-shadow:
+        0 0 30px rgba(93, 168, 168, 0.2),
+        inset 0 0 40px rgba(93, 168, 168, 0.1);
+    }
+
+    @keyframes membrane-morph {
+      0%, 100% {
+        border-radius: 47% 53% 52% 48% / 46% 48% 52% 54%;
+      }
+      25% {
+        border-radius: 53% 47% 48% 52% / 52% 46% 54% 48%;
+      }
+      50% {
+        border-radius: 48% 52% 54% 46% / 48% 54% 46% 52%;
+      }
+      75% {
+        border-radius: 52% 48% 46% 54% / 54% 52% 48% 46%;
+      }
+    }
+
+    /* Nucleus */
+    .cell-nucleus {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 60px;
+      height: 60px;
+      background: radial-gradient(ellipse at 40% 40%,
+        rgba(212, 168, 75, 0.4) 0%,
+        rgba(212, 168, 75, 0.2) 50%,
+        rgba(212, 168, 75, 0.1) 100%
+      );
+      border: 1px solid rgba(212, 168, 75, 0.5);
+      border-radius: 45% 55% 50% 50% / 50% 45% 55% 50%;
+      animation: nucleus-pulse 4s ease-in-out infinite;
+      box-shadow:
+        0 0 20px rgba(212, 168, 75, 0.3),
+        inset 0 0 15px rgba(212, 168, 75, 0.2);
+    }
+
+    @keyframes nucleus-pulse {
+      0%, 100% {
+        transform: translate(-50%, -50%) scale(1);
+        box-shadow: 0 0 20px rgba(212, 168, 75, 0.3);
+      }
+      50% {
+        transform: translate(-50%, -50%) scale(1.08);
+        box-shadow: 0 0 35px rgba(212, 168, 75, 0.5);
+      }
+    }
+
+    /* Organelles floating inside */
+    .organelle {
+      position: absolute;
+      border-radius: 50%;
+      animation: float-organelle 6s ease-in-out infinite;
+    }
+
+    .organelle-1 {
+      width: 12px;
+      height: 12px;
+      background: radial-gradient(circle, rgba(93, 168, 168, 0.6), transparent);
+      top: 25%;
+      left: 20%;
+      animation-delay: 0s;
+    }
+
+    .organelle-2 {
+      width: 8px;
+      height: 8px;
+      background: radial-gradient(circle, rgba(201, 138, 122, 0.5), transparent);
+      top: 65%;
+      left: 25%;
+      animation-delay: 1s;
+    }
+
+    .organelle-3 {
+      width: 10px;
+      height: 10px;
+      background: radial-gradient(circle, rgba(93, 168, 168, 0.5), transparent);
+      top: 30%;
+      right: 25%;
+      animation-delay: 2s;
+    }
+
+    .organelle-4 {
+      width: 6px;
+      height: 6px;
+      background: radial-gradient(circle, rgba(232, 196, 90, 0.4), transparent);
+      bottom: 30%;
+      right: 20%;
+      animation-delay: 3s;
+    }
+
+    @keyframes float-organelle {
+      0%, 100% {
+        transform: translate(0, 0);
+        opacity: 0.8;
+      }
+      25% {
+        transform: translate(8px, -5px);
+        opacity: 1;
+      }
+      50% {
+        transform: translate(3px, 8px);
+        opacity: 0.7;
+      }
+      75% {
+        transform: translate(-6px, 3px);
+        opacity: 0.9;
+      }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       HEARTBEAT — Organic pulsing
+       ═══════════════════════════════════════════════════════════════════ */
+
+    .heartbeat-container {
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .heart {
+      width: 80px;
+      height: 80px;
+      position: relative;
+    }
+
+    .heart-core {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 40% 35%,
+        rgba(199, 85, 85, 0.9) 0%,
+        rgba(160, 50, 50, 0.8) 40%,
+        rgba(120, 30, 30, 0.7) 100%
+      );
+      border-radius: 50% 50% 50% 50%;
+      animation: heartbeat 1.2s ease-in-out infinite;
+      box-shadow:
+        0 0 40px rgba(199, 85, 85, 0.4),
+        inset 0 -10px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    @keyframes heartbeat {
+      0% {
+        transform: scale(1);
+        box-shadow: 0 0 30px rgba(199, 85, 85, 0.3);
+      }
+      15% {
+        transform: scale(1.15);
+        box-shadow: 0 0 50px rgba(199, 85, 85, 0.6);
+      }
+      30% {
+        transform: scale(1);
+        box-shadow: 0 0 30px rgba(199, 85, 85, 0.3);
+      }
+      45% {
+        transform: scale(1.1);
+        box-shadow: 0 0 45px rgba(199, 85, 85, 0.5);
+      }
+      60%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 30px rgba(199, 85, 85, 0.3);
+      }
+    }
+
+    /* Pulse waves emanating */
+    .pulse-wave {
+      position: absolute;
+      inset: -20px;
+      border: 2px solid rgba(199, 85, 85, 0.4);
+      border-radius: 50%;
+      animation: pulse-expand 1.2s ease-out infinite;
+    }
+
+    .pulse-wave:nth-child(2) { animation-delay: 0.4s; }
+    .pulse-wave:nth-child(3) { animation-delay: 0.8s; }
+
+    @keyframes pulse-expand {
+      0% {
+        transform: scale(0.8);
+        opacity: 0.6;
+      }
+      100% {
+        transform: scale(2);
+        opacity: 0;
+      }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       NEURAL PATHWAY — Organic flowing connection
+       ═══════════════════════════════════════════════════════════════════ */
+
+    .pathway-container {
+      height: 150px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .pathway-svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .pathway-line {
+      fill: none;
+      stroke: url(#pathway-gradient);
+      stroke-width: 4;
+      stroke-linecap: round;
+      filter: drop-shadow(0 0 8px rgba(93, 168, 168, 0.5));
+    }
+
+    .pathway-glow {
+      fill: none;
+      stroke: rgba(93, 168, 168, 0.3);
+      stroke-width: 12;
+      stroke-linecap: round;
+      filter: blur(4px);
+    }
+
+    /* Signal traveling along path */
+    .signal-dot {
+      fill: var(--gold-bright);
+      filter: drop-shadow(0 0 10px var(--gold-bright));
+    }
+
+    .signal-travel {
+      animation: travel-path 3s ease-in-out infinite;
+    }
+
+    @keyframes travel-path {
+      0% { offset-distance: 0%; opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { offset-distance: 100%; opacity: 0; }
+    }
+
+    /* Synapse nodes */
+    .synapse {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+    }
+
+    .synapse-body {
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 40% 40%,
+        rgba(93, 168, 168, 0.8) 0%,
+        rgba(93, 168, 168, 0.4) 50%,
+        transparent 70%
+      );
+      border-radius: 50%;
+      animation: synapse-glow 2s ease-in-out infinite;
+    }
+
+    @keyframes synapse-glow {
+      0%, 100% {
+        box-shadow: 0 0 10px rgba(93, 168, 168, 0.4);
+        transform: scale(1);
+      }
+      50% {
+        box-shadow: 0 0 25px rgba(93, 168, 168, 0.7);
+        transform: scale(1.1);
+      }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       BIOLUMINESCENCE — Glowing particles
+       ═══════════════════════════════════════════════════════════════════ */
+
+    .biolum-container {
+      height: 200px;
+      position: relative;
+      overflow: hidden;
+      background: radial-gradient(ellipse at 50% 100%, rgba(10, 20, 30, 0.8), transparent);
+      border-radius: 8px;
+    }
+
+    .biolum-particle {
+      position: absolute;
+      border-radius: 50%;
+      animation: biolum-float 8s ease-in-out infinite;
+    }
+
+    .biolum-particle::after {
+      content: '';
+      position: absolute;
+      inset: -50%;
+      background: inherit;
+      border-radius: 50%;
+      filter: blur(8px);
+      opacity: 0.5;
+    }
+
+    .p1 {
+      width: 8px; height: 8px;
+      background: rgba(93, 168, 168, 0.9);
+      left: 10%; bottom: 20%;
+      animation-delay: 0s;
+    }
+    .p2 {
+      width: 6px; height: 6px;
+      background: rgba(232, 196, 90, 0.8);
+      left: 25%; bottom: 30%;
+      animation-delay: 1s;
+    }
+    .p3 {
+      width: 10px; height: 10px;
+      background: rgba(93, 168, 168, 0.7);
+      left: 40%; bottom: 15%;
+      animation-delay: 2s;
+    }
+    .p4 {
+      width: 5px; height: 5px;
+      background: rgba(201, 138, 122, 0.8);
+      left: 55%; bottom: 35%;
+      animation-delay: 3s;
+    }
+    .p5 {
+      width: 7px; height: 7px;
+      background: rgba(232, 196, 90, 0.7);
+      left: 70%; bottom: 25%;
+      animation-delay: 4s;
+    }
+    .p6 {
+      width: 9px; height: 9px;
+      background: rgba(93, 168, 168, 0.8);
+      left: 85%; bottom: 20%;
+      animation-delay: 5s;
+    }
+
+    @keyframes biolum-float {
+      0%, 100% {
+        transform: translateY(0) scale(1);
+        opacity: 0.6;
+      }
+      25% {
+        transform: translateY(-40px) scale(1.2);
+        opacity: 1;
+      }
+      50% {
+        transform: translateY(-80px) scale(0.9);
+        opacity: 0.8;
+      }
+      75% {
+        transform: translateY(-50px) scale(1.1);
+        opacity: 0.9;
+      }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       BREATHING ORGANISM — Expanding/contracting
+       ═══════════════════════════════════════════════════════════════════ */
+
+    .organism-container {
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .organism {
+      width: 120px;
+      height: 120px;
+      position: relative;
+    }
+
+    .organism-body {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 35% 35%,
+        rgba(93, 168, 168, 0.3) 0%,
+        rgba(93, 168, 168, 0.15) 40%,
+        rgba(93, 168, 168, 0.05) 70%,
+        transparent 100%
+      );
+      border: 1px solid rgba(93, 168, 168, 0.4);
+      border-radius: 50%;
+      animation: breathe 5s ease-in-out infinite;
+      box-shadow:
+        0 0 40px rgba(93, 168, 168, 0.2),
+        inset 0 0 30px rgba(93, 168, 168, 0.1);
+    }
+
+    @keyframes breathe {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow:
+          0 0 30px rgba(93, 168, 168, 0.2),
+          inset 0 0 20px rgba(93, 168, 168, 0.1);
+      }
+      50% {
+        transform: scale(1.15);
+        box-shadow:
+          0 0 50px rgba(93, 168, 168, 0.4),
+          inset 0 0 40px rgba(93, 168, 168, 0.2);
+      }
+    }
+
+    /* Inner membrane */
+    .organism-inner {
+      position: absolute;
+      inset: 25%;
+      background: radial-gradient(circle,
+        rgba(212, 168, 75, 0.3) 0%,
+        rgba(212, 168, 75, 0.1) 60%,
+        transparent 100%
+      );
+      border-radius: 50%;
+      animation: breathe-inner 5s ease-in-out infinite;
+    }
+
+    @keyframes breathe-inner {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 0.7;
+      }
+      50% {
+        transform: scale(1.2);
+        opacity: 1;
+      }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       FLOWING BLOOD — Particle stream
+       ═══════════════════════════════════════════════════════════════════ */
+
+    .bloodflow-container {
+      height: 80px;
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(90deg,
+        transparent,
+        rgba(120, 30, 30, 0.2) 20%,
+        rgba(120, 30, 30, 0.3) 50%,
+        rgba(120, 30, 30, 0.2) 80%,
+        transparent
+      );
+      border-radius: 40px;
+    }
+
+    .blood-vessel {
+      position: absolute;
+      inset: 0;
+      border: 1px solid rgba(160, 50, 50, 0.3);
+      border-radius: 40px;
+    }
+
+    .blood-cell {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 10px;
+      background: radial-gradient(ellipse at 40% 40%,
+        rgba(220, 80, 80, 0.9) 0%,
+        rgba(180, 50, 50, 0.8) 60%,
+        rgba(140, 30, 30, 0.7) 100%
+      );
+      border-radius: 50%;
+      animation: flow-right 4s linear infinite;
+      box-shadow: 0 0 8px rgba(200, 60, 60, 0.5);
+    }
+
+    .blood-cell:nth-child(1) { animation-delay: 0s; }
+    .blood-cell:nth-child(2) { animation-delay: 0.8s; top: 40%; }
+    .blood-cell:nth-child(3) { animation-delay: 1.6s; top: 60%; }
+    .blood-cell:nth-child(4) { animation-delay: 2.4s; }
+    .blood-cell:nth-child(5) { animation-delay: 3.2s; top: 55%; }
+
+    @keyframes flow-right {
+      0% {
+        left: -20px;
+        opacity: 0;
+      }
+      10% {
+        opacity: 1;
+      }
+      90% {
+        opacity: 1;
+      }
+      100% {
+        left: calc(100% + 20px);
+        opacity: 0;
+      }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       NERVE CLUSTER — Multiple connected cells with SVG connections
+       ═══════════════════════════════════════════════════════════════════ */
+
+    .nerve-cluster {
+      height: 280px;
+      position: relative;
+    }
+
+    .nerve-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .nerve-path {
+      fill: none;
+      stroke: rgba(93, 168, 168, 0.5);
+      stroke-width: 3;
+      stroke-linecap: round;
+      filter: drop-shadow(0 0 4px rgba(93, 168, 168, 0.4));
+    }
+
+    .nerve-path-glow {
+      fill: none;
+      stroke: rgba(93, 168, 168, 0.2);
+      stroke-width: 10;
+      stroke-linecap: round;
+      filter: blur(3px);
+    }
+
+    /* Signal dots traveling along paths */
+    .nerve-signal {
+      fill: var(--gold-bright);
+      filter: drop-shadow(0 0 6px var(--gold-bright));
+    }
+
+    .signal-1 {
+      offset-path: path('M70,95 Q120,60 180,75');
+      animation: signal-travel 2.5s ease-in-out infinite;
+    }
+    .signal-2 {
+      offset-path: path('M180,75 Q240,55 290,110');
+      animation: signal-travel 2.5s ease-in-out infinite;
+      animation-delay: 0.8s;
+    }
+    .signal-3 {
+      offset-path: path('M70,95 Q100,140 130,170');
+      animation: signal-travel 2.5s ease-in-out infinite;
+      animation-delay: 1.6s;
+    }
+    .signal-4 {
+      offset-path: path('M130,170 Q180,160 240,165');
+      animation: signal-travel 2.5s ease-in-out infinite;
+      animation-delay: 0.4s;
+    }
+    .signal-5 {
+      offset-path: path('M180,75 Q150,120 130,170');
+      animation: signal-travel 2.5s ease-in-out infinite;
+      animation-delay: 1.2s;
+    }
+
+    @keyframes signal-travel {
+      0% { offset-distance: 0%; opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { offset-distance: 100%; opacity: 0; }
+    }
+
+    /* Nerve cell bodies */
+    .nerve-cell {
+      position: absolute;
+      width: 45px;
+      height: 45px;
+    }
+
+    .nerve-cell-body {
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(ellipse at 35% 35%,
+        rgba(93, 168, 168, 0.7) 0%,
+        rgba(93, 168, 168, 0.4) 40%,
+        rgba(93, 168, 168, 0.15) 70%,
+        transparent 100%
+      );
+      border: 1.5px solid rgba(93, 168, 168, 0.6);
+      border-radius: 45% 55% 50% 50% / 50% 45% 55% 50%;
+      animation: cell-breathe 4s ease-in-out infinite;
+      box-shadow:
+        0 0 25px rgba(93, 168, 168, 0.4),
+        inset 0 0 15px rgba(93, 168, 168, 0.2);
+    }
+
+    /* Position cells at path endpoints */
+    .nerve-cell.c1 { top: 75px; left: 50px; }
+    .nerve-cell.c2 { top: 55px; left: 160px; }
+    .nerve-cell.c3 { top: 90px; left: 270px; }
+    .nerve-cell.c4 { top: 150px; left: 110px; }
+    .nerve-cell.c5 { top: 145px; left: 220px; }
+
+    .nerve-cell.c1 .nerve-cell-body { animation-delay: 0s; }
+    .nerve-cell.c2 .nerve-cell-body { animation-delay: 0.8s; }
+    .nerve-cell.c3 .nerve-cell-body { animation-delay: 1.6s; }
+    .nerve-cell.c4 .nerve-cell-body { animation-delay: 2.4s; }
+    .nerve-cell.c5 .nerve-cell-body { animation-delay: 0.4s; }
+
+    @keyframes cell-breathe {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 20px rgba(93, 168, 168, 0.3);
+        border-radius: 45% 55% 50% 50% / 50% 45% 55% 50%;
+      }
+      50% {
+        transform: scale(1.08);
+        box-shadow: 0 0 35px rgba(93, 168, 168, 0.6);
+        border-radius: 50% 50% 55% 45% / 45% 50% 50% 55%;
+      }
+    }
+
+    /* Inner nucleus in each cell */
+    .nerve-nucleus {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 12px;
+      height: 12px;
+      background: radial-gradient(circle,
+        rgba(212, 168, 75, 0.8) 0%,
+        rgba(212, 168, 75, 0.4) 50%,
+        transparent 100%
+      );
+      border-radius: 50%;
+      animation: nucleus-glow 4s ease-in-out infinite;
+    }
+
+    .nerve-cell.c1 .nerve-nucleus { animation-delay: 0s; }
+    .nerve-cell.c2 .nerve-nucleus { animation-delay: 0.8s; }
+    .nerve-cell.c3 .nerve-nucleus { animation-delay: 1.6s; }
+    .nerve-cell.c4 .nerve-nucleus { animation-delay: 2.4s; }
+    .nerve-cell.c5 .nerve-nucleus { animation-delay: 0.4s; }
+
+    @keyframes nucleus-glow {
+      0%, 100% {
+        box-shadow: 0 0 8px rgba(212, 168, 75, 0.4);
+      }
+      50% {
+        box-shadow: 0 0 15px rgba(212, 168, 75, 0.8);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Biological Layer — Organic Life</h1>
+  <p class="subtitle">
+    Exploring truly biological visualizations: organic shapes, flowing motion,
+    bioluminescence, cellular structures. The system as a living organism.
+  </p>
+
+  <div class="demo-grid">
+
+    <!-- Living Cell -->
+    <div class="demo-card">
+      <div class="demo-title">Living Cell</div>
+      <div class="cell-container">
+        <div class="living-cell">
+          <div class="cell-membrane"></div>
+          <div class="cell-nucleus"></div>
+          <div class="organelle organelle-1"></div>
+          <div class="organelle organelle-2"></div>
+          <div class="organelle organelle-3"></div>
+          <div class="organelle organelle-4"></div>
+        </div>
+      </div>
+      <p class="demo-desc">Organic membrane morphs. Nucleus pulses. Organelles float inside.</p>
+    </div>
+
+    <!-- Heartbeat -->
+    <div class="demo-card">
+      <div class="demo-title">Heartbeat</div>
+      <div class="heartbeat-container">
+        <div class="heart">
+          <div class="pulse-wave"></div>
+          <div class="pulse-wave"></div>
+          <div class="pulse-wave"></div>
+          <div class="heart-core"></div>
+        </div>
+      </div>
+      <p class="demo-desc">Organic double-beat rhythm. Pulse waves emanate outward.</p>
+    </div>
+
+    <!-- Breathing Organism -->
+    <div class="demo-card">
+      <div class="demo-title">Breathing Organism</div>
+      <div class="organism-container">
+        <div class="organism">
+          <div class="organism-body"></div>
+          <div class="organism-inner"></div>
+        </div>
+      </div>
+      <p class="demo-desc">Slow, deep breathing. Expands and contracts with life.</p>
+    </div>
+
+    <!-- Bioluminescence -->
+    <div class="demo-card">
+      <div class="demo-title">Bioluminescence</div>
+      <div class="biolum-container">
+        <div class="biolum-particle p1"></div>
+        <div class="biolum-particle p2"></div>
+        <div class="biolum-particle p3"></div>
+        <div class="biolum-particle p4"></div>
+        <div class="biolum-particle p5"></div>
+        <div class="biolum-particle p6"></div>
+      </div>
+      <p class="demo-desc">Glowing particles rise and fade. Deep sea luminescence.</p>
+    </div>
+
+  </div>
+
+  <div class="section-label">Blood Flow</div>
+  <div class="demo-card" style="margin-bottom: 32px;">
+    <div class="demo-title">Flowing Blood Cells</div>
+    <div class="bloodflow-container">
+      <div class="blood-vessel"></div>
+      <div class="blood-cell"></div>
+      <div class="blood-cell"></div>
+      <div class="blood-cell"></div>
+      <div class="blood-cell"></div>
+      <div class="blood-cell"></div>
+    </div>
+    <p class="demo-desc">Events as blood cells flowing through a vessel. Continuous stream of life.</p>
+  </div>
+
+  <div class="section-label">Neural Pathway</div>
+  <div class="demo-card" style="margin-bottom: 32px;">
+    <div class="demo-title">Organic Neural Connection</div>
+    <div class="pathway-container">
+      <svg class="pathway-svg" viewBox="0 0 400 120">
+        <defs>
+          <linearGradient id="pathway-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color: rgba(93, 168, 168, 0.8)" />
+            <stop offset="50%" style="stop-color: rgba(93, 168, 168, 1)" />
+            <stop offset="100%" style="stop-color: rgba(93, 168, 168, 0.8)" />
+          </linearGradient>
+        </defs>
+        <!-- Organic curved path -->
+        <path class="pathway-glow" d="M30,60 Q100,20 150,50 T250,40 T350,70"/>
+        <path class="pathway-line" d="M30,60 Q100,20 150,50 T250,40 T350,70"/>
+        <!-- Signal dots -->
+        <circle class="signal-dot" r="6" style="offset-path: path('M30,60 Q100,20 150,50 T250,40 T350,70'); animation: travel-path 3s ease-in-out infinite;"/>
+        <circle class="signal-dot" r="5" style="offset-path: path('M30,60 Q100,20 150,50 T250,40 T350,70'); animation: travel-path 3s ease-in-out infinite; animation-delay: 1s; opacity: 0.7;"/>
+      </svg>
+      <div class="synapse" style="left: 20px; top: 48px;">
+        <div class="synapse-body"></div>
+      </div>
+      <div class="synapse" style="right: 30px; top: 55px;">
+        <div class="synapse-body" style="animation-delay: 1s;"></div>
+      </div>
+    </div>
+    <p class="demo-desc">Organic curves, not straight lines. Signals pulse between living synapses.</p>
+  </div>
+
+  <div class="section-label">Nerve Cluster</div>
+  <div class="demo-card">
+    <div class="demo-title">Connected Neural Network</div>
+    <div class="nerve-cluster">
+      <!-- SVG connections (behind cells) -->
+      <svg class="nerve-svg" viewBox="0 0 360 220">
+        <!-- Glow layer -->
+        <path class="nerve-path-glow" d="M70,95 Q120,60 180,75"/>
+        <path class="nerve-path-glow" d="M180,75 Q240,55 290,110"/>
+        <path class="nerve-path-glow" d="M70,95 Q100,140 130,170"/>
+        <path class="nerve-path-glow" d="M130,170 Q180,160 240,165"/>
+        <path class="nerve-path-glow" d="M180,75 Q150,120 130,170"/>
+        <!-- Main paths -->
+        <path class="nerve-path" d="M70,95 Q120,60 180,75"/>
+        <path class="nerve-path" d="M180,75 Q240,55 290,110"/>
+        <path class="nerve-path" d="M70,95 Q100,140 130,170"/>
+        <path class="nerve-path" d="M130,170 Q180,160 240,165"/>
+        <path class="nerve-path" d="M180,75 Q150,120 130,170"/>
+        <!-- Traveling signals -->
+        <circle class="nerve-signal signal-1" r="5"/>
+        <circle class="nerve-signal signal-2" r="5"/>
+        <circle class="nerve-signal signal-3" r="5"/>
+        <circle class="nerve-signal signal-4" r="5"/>
+        <circle class="nerve-signal signal-5" r="5"/>
+      </svg>
+      <!-- Cell bodies -->
+      <div class="nerve-cell c1">
+        <div class="nerve-cell-body"></div>
+        <div class="nerve-nucleus"></div>
+      </div>
+      <div class="nerve-cell c2">
+        <div class="nerve-cell-body"></div>
+        <div class="nerve-nucleus"></div>
+      </div>
+      <div class="nerve-cell c3">
+        <div class="nerve-cell-body"></div>
+        <div class="nerve-nucleus"></div>
+      </div>
+      <div class="nerve-cell c4">
+        <div class="nerve-cell-body"></div>
+        <div class="nerve-nucleus"></div>
+      </div>
+      <div class="nerve-cell c5">
+        <div class="nerve-cell-body"></div>
+        <div class="nerve-nucleus"></div>
+      </div>
+    </div>
+    <p class="demo-desc">Living cells connected by organic axons. Signals pulse between neurons.</p>
+  </div>
+
+</body>
+</html>

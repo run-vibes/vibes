@@ -24,6 +24,7 @@ This milestone evolved from a home page redesign into a comprehensive product vi
 ### Completed
 - [Visual Depth System](visual-depth-system.md) — Documents the aesthetic hierarchy (cosmic → luxury → mechanical → subatomic)
 - [Biological Layer](biological-layer.md) — Iggy as the nervous system, neural pathway visualization, the Ka metaphor
+- [Biological Design Language](biological-design-language.md) — CSS/animation patterns for organic, living UI elements
 - [Command Modes System](command-modes-system.md) — Survey/Command/Deep Dive as vessel configurations
 - [Lakehouse Architecture](lakehouse-architecture.md) — Hybrid execution, object-first storage, multi-modal queries
 - [Spoke Brand](spoke-brand.md) — Brand positioning, messaging, logo concepts

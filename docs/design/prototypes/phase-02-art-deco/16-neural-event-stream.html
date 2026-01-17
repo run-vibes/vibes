@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neural Event Stream — Biological Layer Exploration</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    body {
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 60px;
+    }
+
+    /* Fix z-index stacking over deco-bg pseudo-elements */
+    section {
+      position: relative;
+      z-index: 1;
+    }
+
+    .section-label {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold-dim);
+      margin-bottom: 16px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       NEURAL EVENT STREAM — Events as synaptic firing
+       ═══════════════════════════════════════════════════════════════════ */
+
+    .neural-stream {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: 4px;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .neural-stream::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 80%, rgba(61, 139, 139, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse 60% 40% at 80% 20%, rgba(212, 168, 75, 0.05) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .stream-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .stream-title {
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-primary);
+    }
+
+    .stream-vitals {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .vital {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+
+    /* Heartbeat indicator */
+    .heartbeat {
+      width: 40px;
+      height: 16px;
+      position: relative;
+    }
+
+    .heartbeat-line {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--accent-teal);
+      opacity: 0.3;
+    }
+
+    .heartbeat-pulse {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      transform: translateY(-50%);
+    }
+
+    .heartbeat-pulse svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .heartbeat-pulse path {
+      fill: none;
+      stroke: var(--accent-teal);
+      stroke-width: 2;
+      stroke-linecap: round;
+      animation: heartbeat-draw 1.2s ease-in-out infinite;
+    }
+
+    @keyframes heartbeat-draw {
+      0%, 100% {
+        stroke-dashoffset: 80;
+        opacity: 0.4;
+      }
+      50% {
+        stroke-dashoffset: 0;
+        opacity: 1;
+      }
+    }
+
+    /* Neural pathway container */
+    .neural-pathways {
+      position: relative;
+      height: 300px;
+    }
+
+    /* Central spine (main event bus) */
+    .neural-spine {
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: linear-gradient(180deg,
+        transparent 0%,
+        var(--gold-dim) 10%,
+        var(--gold-primary) 50%,
+        var(--gold-dim) 90%,
+        transparent 100%
+      );
+      transform: translateX(-50%);
+      border-radius: 2px;
+      z-index: 1;
+    }
+
+    .neural-spine::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--gold-primary);
+      border-radius: 2px;
+      animation: spine-pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes spine-pulse {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.8; }
+    }
+
+    /* Event nodes along the spine — FIXED z-index */
+    .event-node {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 2; /* Stack above spine */
+    }
+
+    .event-node.left {
+      flex-direction: row-reverse;
+    }
+
+    /* Synapse (connection point) */
+    .synapse {
+      width: 12px;
+      height: 12px;
+      background: var(--bg-card);
+      border: 2px solid var(--gold-primary);
+      border-radius: 50%;
+      position: relative;
+      z-index: 3;
+    }
+
+    .synapse::after {
+      content: '';
+      position: absolute;
+      inset: 2px;
+      background: var(--gold-primary);
+      border-radius: 50%;
+      opacity: 0;
+      animation: synapse-fire 3s ease-out infinite;
+    }
+
+    .event-node:nth-child(2) .synapse::after { animation-delay: 0s; }
+    .event-node:nth-child(3) .synapse::after { animation-delay: 0.5s; }
+    .event-node:nth-child(4) .synapse::after { animation-delay: 1s; }
+    .event-node:nth-child(5) .synapse::after { animation-delay: 1.5s; }
+    .event-node:nth-child(6) .synapse::after { animation-delay: 2s; }
+
+    @keyframes synapse-fire {
+      0% { opacity: 0; transform: scale(0.5); }
+      10% { opacity: 1; transform: scale(1); }
+      30% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: scale(1); }
+    }
+
+    /* Axon (connection line to event) */
+    .axon {
+      width: 60px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--gold-primary), var(--gold-dim));
+      position: relative;
+    }
+
+    .event-node.left .axon {
+      background: linear-gradient(90deg, var(--gold-dim), var(--gold-primary));
+    }
+
+    /* Signal traveling along axon */
+    .axon::after {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: 0;
+      width: 12px;
+      height: 6px;
+      background: radial-gradient(ellipse at center, var(--gold-bright), transparent);
+      border-radius: 50%;
+      animation: signal-travel 3s ease-in-out infinite;
+    }
+
+    .event-node.left .axon::after {
+      animation: signal-travel-left 3s ease-in-out infinite;
+    }
+
+    .event-node:nth-child(2) .axon::after { animation-delay: 0s; }
+    .event-node:nth-child(3) .axon::after { animation-delay: 0.5s; }
+    .event-node:nth-child(4) .axon::after { animation-delay: 1s; }
+    .event-node:nth-child(5) .axon::after { animation-delay: 1.5s; }
+    .event-node:nth-child(6) .axon::after { animation-delay: 2s; }
+
+    @keyframes signal-travel {
+      0%, 10% { left: 0; opacity: 0; }
+      15% { opacity: 1; }
+      50% { left: 100%; opacity: 1; }
+      55%, 100% { opacity: 0; left: 100%; }
+    }
+
+    @keyframes signal-travel-left {
+      0%, 10% { right: 0; left: auto; opacity: 0; }
+      15% { opacity: 1; }
+      50% { right: 100%; left: auto; opacity: 1; }
+      55%, 100% { opacity: 0; right: 100%; left: auto; }
+    }
+
+    /* Event content bubble */
+    .event-content {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-light);
+      border-radius: 4px;
+      padding: 8px 12px;
+      max-width: 200px;
+      opacity: 0.7;
+      transition: all 0.3s ease;
+    }
+
+    .event-node:hover .event-content {
+      opacity: 1;
+      border-color: var(--gold-muted);
+      box-shadow: var(--shadow-gold);
+    }
+
+    .event-type {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent-teal);
+      margin-bottom: 4px;
+    }
+
+    .event-message {
+      font-family: var(--font-body);
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .event-time {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       TIME TRAVEL — Session replay with scrubber
+       ═══════════════════════════════════════════════════════════════════ */
+
+    .time-travel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: 4px;
+      padding: 24px;
+    }
+
+    .time-travel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .time-travel-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .control-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-light);
+      color: var(--text-secondary);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .control-btn:hover {
+      border-color: var(--gold-muted);
+      color: var(--gold-primary);
+      box-shadow: var(--glow-gold);
+    }
+
+    .control-btn.active {
+      background: var(--gold-primary);
+      border-color: var(--gold-primary);
+      color: var(--bg-void);
+    }
+
+    .playhead-time {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 300;
+      color: var(--gold-primary);
+      letter-spacing: 0.05em;
+    }
+
+    .time-range {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      color: var(--text-tertiary);
+      margin-left: 12px;
+    }
+
+    /* Scrubber track */
+    .scrubber-container {
+      position: relative;
+      height: 60px;
+      margin: 20px 0;
+    }
+
+    .scrubber-track {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      height: 4px;
+      background: var(--bg-void);
+      border-radius: 2px;
+      transform: translateY(-50%);
+    }
+
+    .scrubber-progress {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 65%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-teal), var(--gold-primary));
+      border-radius: 2px;
+    }
+
+    /* Playhead */
+    .playhead {
+      position: absolute;
+      left: 65%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 16px;
+      height: 16px;
+      background: var(--gold-primary);
+      border: 2px solid var(--gold-bright);
+      border-radius: 50%;
+      cursor: grab;
+      z-index: 2;
+      animation: playhead-glow 2s ease-in-out infinite;
+    }
+
+    @keyframes playhead-glow {
+      0%, 100% { box-shadow: 0 0 10px rgba(212, 168, 75, 0.4); }
+      50% { box-shadow: 0 0 20px rgba(232, 196, 90, 0.6); }
+    }
+
+    /* Event markers on scrubber */
+    .event-marker {
+      position: absolute;
+      top: 50%;
+      width: 8px;
+      height: 8px;
+      background: var(--accent-teal);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .event-marker:hover {
+      transform: translate(-50%, -50%) scale(1.5);
+      box-shadow: 0 0 10px var(--accent-teal);
+    }
+
+    .event-marker.active {
+      background: var(--gold-primary);
+    }
+
+    .event-marker.error {
+      background: var(--accent-danger);
+    }
+
+    /* Marker labels */
+    .marker-tooltip {
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-light);
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .event-marker:hover .marker-tooltip {
+      opacity: 1;
+    }
+
+    /* Time labels */
+    .scrubber-times {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 32px;
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    /* Jump buttons */
+    .jump-points {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .jump-btn {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: 4px;
+      padding: 8px 12px;
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .jump-btn:hover {
+      border-color: var(--gold-muted);
+      color: var(--gold-primary);
+    }
+
+    .jump-btn .jump-icon {
+      margin-right: 6px;
+      color: var(--accent-teal);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       PATTERN RECOGNITION — What Groove detected
+       ═══════════════════════════════════════════════════════════════════ */
+
+    .pattern-recognition {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: 4px;
+      padding: 24px;
+    }
+
+    .pattern-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .pattern-card {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: 4px;
+      padding: 16px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .pattern-card:hover {
+      border-color: var(--gold-muted);
+      box-shadow: var(--shadow-gold);
+    }
+
+    .pattern-card.detected {
+      border-left: 3px solid var(--accent-teal);
+    }
+
+    .pattern-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .pattern-name {
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-primary);
+    }
+
+    .pattern-confidence {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 300;
+      color: var(--accent-teal);
+    }
+
+    .pattern-visual {
+      height: 40px;
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      margin-bottom: 12px;
+    }
+
+    .pattern-bar {
+      flex: 1;
+      background: var(--accent-teal-muted);
+      border-radius: 2px 2px 0 0;
+      opacity: 0.6;
+    }
+
+    .pattern-bar.highlight {
+      background: var(--gold-primary);
+      opacity: 1;
+    }
+
+    .pattern-desc {
+      font-family: var(--font-body);
+      font-size: 11px;
+      color: var(--text-tertiary);
+      line-height: 1.4;
+    }
+
+    .pattern-insight {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border-subtle);
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      color: var(--gold-primary);
+    }
+
+    .insight-icon {
+      color: var(--accent-teal);
+    }
+
+    /* Summary stats */
+    .pattern-summary {
+      display: flex;
+      gap: 32px;
+      margin-bottom: 20px;
+      padding: 16px;
+      background: var(--bg-void);
+      border-radius: 4px;
+    }
+
+    .summary-stat {
+      text-align: center;
+    }
+
+    .summary-value {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 300;
+      color: var(--gold-primary);
+      line-height: 1;
+    }
+
+    .summary-label {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-top: 6px;
+    }
+  </style>
+</head>
+<body class="deco-bg">
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       SECTION 1: Vertical Neural Event Stream
+       ═══════════════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="section-label">Concept A — Neural Event Stream</div>
+
+    <div class="neural-stream">
+      <div class="stream-header">
+        <span class="stream-title">Event Stream — Iggy Nervous System</span>
+        <div class="stream-vitals">
+          <div class="vital">
+            <div class="heartbeat">
+              <div class="heartbeat-line"></div>
+              <div class="heartbeat-pulse">
+                <svg viewBox="0 0 40 16" preserveAspectRatio="none">
+                  <path d="M0,8 L8,8 L12,2 L16,14 L20,8 L40,8" stroke-dasharray="80" />
+                </svg>
+              </div>
+            </div>
+            <span>72 evt/s</span>
+          </div>
+          <div class="vital">
+            <span class="status-dot active"></span>
+            <span>Healthy</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="neural-pathways">
+        <div class="neural-spine"></div>
+
+        <div class="event-node" style="top: 20px;">
+          <div class="synapse"></div>
+          <div class="axon"></div>
+          <div class="event-content">
+            <div class="event-type">Session.Created</div>
+            <div class="event-message">New session: architect-refactor</div>
+            <div class="event-time">14:36:02.142</div>
+          </div>
+        </div>
+
+        <div class="event-node left" style="top: 80px;">
+          <div class="synapse"></div>
+          <div class="axon"></div>
+          <div class="event-content">
+            <div class="event-type">Agent.Spawned</div>
+            <div class="event-message">Opus agent initialized</div>
+            <div class="event-time">14:36:02.891</div>
+          </div>
+        </div>
+
+        <div class="event-node" style="top: 140px;">
+          <div class="synapse"></div>
+          <div class="axon"></div>
+          <div class="event-content">
+            <div class="event-type">Tool.Invoked</div>
+            <div class="event-message">Read: src/main.rs</div>
+            <div class="event-time">14:36:03.234</div>
+          </div>
+        </div>
+
+        <div class="event-node left" style="top: 200px;">
+          <div class="synapse"></div>
+          <div class="axon"></div>
+          <div class="event-content">
+            <div class="event-type">Groove.Pattern</div>
+            <div class="event-message">Recognized: TDD workflow</div>
+            <div class="event-time">14:36:04.012</div>
+          </div>
+        </div>
+
+        <div class="event-node" style="top: 260px;">
+          <div class="synapse"></div>
+          <div class="axon"></div>
+          <div class="event-content">
+            <div class="event-type">Tool.Invoked</div>
+            <div class="event-message">Edit: tests/unit.rs</div>
+            <div class="event-time">14:36:05.567</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       SECTION 2: Time Travel — Session Replay Interface
+       ═══════════════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="section-label">Concept B — Time Travel Interface</div>
+
+    <div class="time-travel">
+      <div class="time-travel-header">
+        <div class="time-travel-controls">
+          <button class="control-btn" title="Jump to start">⏮</button>
+          <button class="control-btn" title="Step back">⏪</button>
+          <button class="control-btn active" title="Pause">⏸</button>
+          <button class="control-btn" title="Step forward">⏩</button>
+          <button class="control-btn" title="Jump to end">⏭</button>
+        </div>
+        <div style="display: flex; align-items: baseline;">
+          <span class="playhead-time">14:36:04.012</span>
+          <span class="time-range">of 14:36:00 – 14:38:42</span>
+        </div>
+      </div>
+
+      <div class="scrubber-container">
+        <div class="scrubber-track">
+          <div class="scrubber-progress"></div>
+        </div>
+
+        <!-- Event markers along timeline -->
+        <div class="event-marker" style="left: 5%;">
+          <span class="marker-tooltip">Session.Created</span>
+        </div>
+        <div class="event-marker" style="left: 15%;">
+          <span class="marker-tooltip">Agent.Spawned</span>
+        </div>
+        <div class="event-marker" style="left: 25%;">
+          <span class="marker-tooltip">Read: 12 files</span>
+        </div>
+        <div class="event-marker active" style="left: 45%;">
+          <span class="marker-tooltip">Groove: TDD pattern</span>
+        </div>
+        <div class="event-marker" style="left: 55%;">
+          <span class="marker-tooltip">Edit: 3 files</span>
+        </div>
+        <div class="event-marker" style="left: 65%;">
+          <span class="marker-tooltip">Test.Run</span>
+        </div>
+        <div class="event-marker error" style="left: 75%;">
+          <span class="marker-tooltip">Error: Compile failed</span>
+        </div>
+        <div class="event-marker" style="left: 85%;">
+          <span class="marker-tooltip">Edit: Fix</span>
+        </div>
+        <div class="event-marker" style="left: 95%;">
+          <span class="marker-tooltip">Test.Pass</span>
+        </div>
+
+        <div class="playhead"></div>
+
+        <div class="scrubber-times">
+          <span>14:36:00</span>
+          <span>14:37:00</span>
+          <span>14:38:00</span>
+          <span>14:38:42</span>
+        </div>
+      </div>
+
+      <div class="jump-points">
+        <button class="jump-btn"><span class="jump-icon">◈</span> Session Start</button>
+        <button class="jump-btn"><span class="jump-icon">◈</span> First Pattern</button>
+        <button class="jump-btn"><span class="jump-icon">⚠</span> Error Point</button>
+        <button class="jump-btn"><span class="jump-icon">✓</span> Resolution</button>
+        <button class="jump-btn"><span class="jump-icon">◈</span> Live</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       SECTION 3: Pattern Recognition — What Groove Detected
+       ═══════════════════════════════════════════════════════════════════ -->
+  <section>
+    <div class="section-label">Concept C — Pattern Recognition</div>
+
+    <div class="pattern-recognition">
+      <div class="stream-header">
+        <span class="stream-title">Groove Pattern Detection</span>
+        <div class="stream-vitals">
+          <div class="vital">
+            <span>This session</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="pattern-summary">
+        <div class="summary-stat">
+          <div class="summary-value">3</div>
+          <div class="summary-label">Patterns Detected</div>
+        </div>
+        <div class="summary-stat">
+          <div class="summary-value">87%</div>
+          <div class="summary-label">Avg. Confidence</div>
+        </div>
+        <div class="summary-stat">
+          <div class="summary-value">12</div>
+          <div class="summary-label">Events Matched</div>
+        </div>
+        <div class="summary-stat">
+          <div class="summary-value">+2</div>
+          <div class="summary-label">New This Session</div>
+        </div>
+      </div>
+
+      <div class="pattern-grid">
+        <div class="pattern-card detected">
+          <div class="pattern-header">
+            <span class="pattern-name">TDD Workflow</span>
+            <span class="pattern-confidence">94%</span>
+          </div>
+          <div class="pattern-visual">
+            <div class="pattern-bar highlight" style="height: 30%;"></div>
+            <div class="pattern-bar" style="height: 60%;"></div>
+            <div class="pattern-bar highlight" style="height: 80%;"></div>
+            <div class="pattern-bar" style="height: 40%;"></div>
+            <div class="pattern-bar highlight" style="height: 100%;"></div>
+            <div class="pattern-bar" style="height: 20%;"></div>
+            <div class="pattern-bar highlight" style="height: 70%;"></div>
+          </div>
+          <div class="pattern-desc">
+            Write test → Run test (fail) → Implement → Run test (pass)
+          </div>
+          <div class="pattern-insight">
+            <span class="insight-icon">★</span>
+            Mastered — 47 occurrences
+          </div>
+        </div>
+
+        <div class="pattern-card detected">
+          <div class="pattern-header">
+            <span class="pattern-name">Read-Before-Edit</span>
+            <span class="pattern-confidence">89%</span>
+          </div>
+          <div class="pattern-visual">
+            <div class="pattern-bar highlight" style="height: 80%;"></div>
+            <div class="pattern-bar highlight" style="height: 60%;"></div>
+            <div class="pattern-bar" style="height: 30%;"></div>
+            <div class="pattern-bar highlight" style="height: 90%;"></div>
+            <div class="pattern-bar" style="height: 40%;"></div>
+            <div class="pattern-bar highlight" style="height: 70%;"></div>
+            <div class="pattern-bar" style="height: 20%;"></div>
+          </div>
+          <div class="pattern-desc">
+            Always reads context before editing files
+          </div>
+          <div class="pattern-insight">
+            <span class="insight-icon">↗</span>
+            Forming — 12 occurrences
+          </div>
+        </div>
+
+        <div class="pattern-card detected">
+          <div class="pattern-header">
+            <span class="pattern-name">Error → Fix → Verify</span>
+            <span class="pattern-confidence">78%</span>
+          </div>
+          <div class="pattern-visual">
+            <div class="pattern-bar" style="height: 50%; background: var(--accent-danger);"></div>
+            <div class="pattern-bar highlight" style="height: 70%;"></div>
+            <div class="pattern-bar highlight" style="height: 90%;"></div>
+            <div class="pattern-bar" style="height: 40%; background: var(--accent-teal);"></div>
+            <div class="pattern-bar" style="height: 20%;"></div>
+            <div class="pattern-bar" style="height: 30%;"></div>
+            <div class="pattern-bar" style="height: 10%;"></div>
+          </div>
+          <div class="pattern-desc">
+            On error: edit fix → run test to verify
+          </div>
+          <div class="pattern-insight">
+            <span class="insight-icon">◇</span>
+            Learning — 5 occurrences
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</body>
+</html>
