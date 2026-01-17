@@ -11,7 +11,7 @@ use ratatui::{
 use super::traits::ViewRenderer;
 use crate::App;
 use crate::state::{AgentId, SwarmId};
-use crate::widgets::AgentCard;
+use crate::widgets::{AgentCard, AgentCardStatus, AgentCounts, SwarmStatus, SwarmStrategy};
 
 /// The swarm view showing agents in a grid with header and footer controls.
 #[derive(Debug, Clone)]
@@ -21,6 +21,10 @@ pub struct SwarmView {
     agent_cards: Vec<AgentCard>,
     #[allow(dead_code)] // Used in tests and future key handling
     selected_index: usize,
+    status: SwarmStatus,
+    strategy: SwarmStrategy,
+    /// Animation frame counter for spinner.
+    spinner_frame: usize,
 }
 
 impl SwarmView {
@@ -31,7 +35,70 @@ impl SwarmView {
             agents: Vec::new(),
             agent_cards: Vec::new(),
             selected_index: 0,
+            status: SwarmStatus::default(),
+            strategy: SwarmStrategy::default(),
+            spinner_frame: 0,
         }
+    }
+
+    /// Returns the current swarm status.
+    #[allow(dead_code)] // Used in tests and future swarm integration
+    pub fn status(&self) -> SwarmStatus {
+        self.status
+    }
+
+    /// Returns the current swarm strategy.
+    #[allow(dead_code)] // Used in tests and future swarm integration
+    pub fn strategy(&self) -> SwarmStrategy {
+        self.strategy
+    }
+
+    /// Sets the swarm status.
+    #[cfg(test)]
+    pub fn set_status(&mut self, status: SwarmStatus) {
+        self.status = status;
+    }
+
+    /// Sets the swarm strategy.
+    #[cfg(test)]
+    pub fn set_strategy(&mut self, strategy: SwarmStrategy) {
+        self.strategy = strategy;
+    }
+
+    /// Returns the aggregate progress across all agents.
+    ///
+    /// This is the average of all agent card progress values.
+    /// Returns 0.0 if there are no agents.
+    pub fn aggregate_progress(&self) -> f32 {
+        if self.agent_cards.is_empty() {
+            return 0.0;
+        }
+        let sum: f32 = self.agent_cards.iter().map(|c| c.progress).sum();
+        sum / self.agent_cards.len() as f32
+    }
+
+    /// Returns agent counts breakdown.
+    ///
+    /// Counts the number of agents in each status category.
+    pub fn agent_counts(&self) -> AgentCounts {
+        let total = self.agent_cards.len() as u32;
+        let running = self
+            .agent_cards
+            .iter()
+            .filter(|c| c.status == AgentCardStatus::Running)
+            .count() as u32;
+        let completed = self
+            .agent_cards
+            .iter()
+            .filter(|c| c.status == AgentCardStatus::Completed)
+            .count() as u32;
+        let failed = self
+            .agent_cards
+            .iter()
+            .filter(|c| c.status == AgentCardStatus::Failed)
+            .count() as u32;
+
+        AgentCounts::new(total, running, completed, failed)
     }
 
     /// Returns the swarm ID (used in tests).
@@ -104,16 +171,50 @@ impl SwarmView {
         &self.agent_cards
     }
 
+    /// Returns the color for the current status based on the theme.
+    fn status_color(&self, app: &App) -> ratatui::style::Color {
+        match self.status {
+            SwarmStatus::Pending => app.theme.border,
+            SwarmStatus::Running => app.theme.running,
+            SwarmStatus::Completed => app.theme.completed,
+            SwarmStatus::Failed => app.theme.error,
+            SwarmStatus::Partial => app.theme.warning,
+            SwarmStatus::Cancelled => app.theme.border,
+        }
+    }
+
+    /// Renders an aggregate progress bar of the given width.
+    fn render_progress_bar(&self, width: usize) -> String {
+        let progress = self.aggregate_progress().clamp(0.0, 1.0);
+        let filled = (progress * width as f32).round() as usize;
+        let empty = width.saturating_sub(filled);
+        "█".repeat(filled) + &"░".repeat(empty)
+    }
+
     /// Renders the header section with swarm metadata.
     fn render_header(&self, frame: &mut Frame, area: Rect, app: &App) {
-        // Row 1: Swarm name and status
-        let row1 = Line::from(vec![
+        let status_color = self.status_color(app);
+        let spinner = self.status.spinner_char(self.spinner_frame);
+
+        // Row 1: Strategy, status, and spinner
+        let mut row1_spans = vec![
             Span::styled("Strategy: ", Style::default().fg(app.theme.fg)),
-            Span::styled("parallel", app.theme.dim),
+            Span::styled(self.strategy.label(), app.theme.dim),
             Span::raw("   "),
             Span::styled("Status: ", Style::default().fg(app.theme.fg)),
-            Span::styled("Running", Style::default().fg(app.theme.running)),
-        ]);
+            Span::styled(self.status.label(), Style::default().fg(status_color)),
+        ];
+
+        // Add spinner if showing
+        if spinner != ' ' {
+            row1_spans.push(Span::raw("   "));
+            row1_spans.push(Span::styled(
+                spinner.to_string(),
+                Style::default().fg(status_color),
+            ));
+        }
+
+        let row1 = Line::from(row1_spans);
 
         // Row 2: Task description
         let row2 = Line::from(vec![
@@ -121,7 +222,24 @@ impl SwarmView {
             Span::styled("implement feature across multiple files", app.theme.dim),
         ]);
 
-        let header = Paragraph::new(vec![row1, row2]);
+        // Row 3: Agent counts
+        let counts = self.agent_counts();
+        let row3 = Line::from(vec![
+            Span::styled("Agents: ", Style::default().fg(app.theme.fg)),
+            Span::styled(counts.format_summary(), app.theme.dim),
+        ]);
+
+        // Row 4: Aggregate progress bar
+        let progress_percent = (self.aggregate_progress() * 100.0) as u8;
+        let progress_bar = self.render_progress_bar(20);
+        let row4 = Line::from(vec![
+            Span::styled("Progress: ", Style::default().fg(app.theme.fg)),
+            Span::styled(progress_bar, Style::default().fg(status_color)),
+            Span::raw(" "),
+            Span::styled(format!("{}%", progress_percent), app.theme.dim),
+        ]);
+
+        let header = Paragraph::new(vec![row1, row2, row3, row4]);
         frame.render_widget(header, area);
     }
 
@@ -221,11 +339,11 @@ impl ViewRenderer for SwarmView {
         let inner = block.inner(area);
         frame.render_widget(block, area);
 
-        // Split into: header (2 lines), agent area (flex), footer (1 line)
+        // Split into: header (4 lines), agent area (flex), footer (1 line)
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Length(2), // Header
+                Constraint::Length(4), // Header (4 rows: strategy/status, task, agents, progress)
                 Constraint::Min(4),    // Agent grid area
                 Constraint::Length(1), // Footer
             ])
@@ -861,6 +979,350 @@ mod tests {
         assert!(
             content.contains("Merge"),
             "Expected 'Merge' label in footer: {}",
+            content
+        );
+    }
+
+    // ==================== SwarmStatus/SwarmStrategy Integration Tests ====================
+
+    #[test]
+    fn swarm_view_has_default_status_pending() {
+        use crate::widgets::SwarmStatus;
+        let view = SwarmView::new("swarm-1".into());
+        assert_eq!(view.status(), SwarmStatus::Pending);
+    }
+
+    #[test]
+    fn swarm_view_has_default_strategy_parallel() {
+        use crate::widgets::SwarmStrategy;
+        let view = SwarmView::new("swarm-1".into());
+        assert_eq!(view.strategy(), SwarmStrategy::Parallel);
+    }
+
+    #[test]
+    fn swarm_view_set_status_updates_status() {
+        use crate::widgets::SwarmStatus;
+        let mut view = SwarmView::new("swarm-1".into());
+        view.set_status(SwarmStatus::Running);
+        assert_eq!(view.status(), SwarmStatus::Running);
+    }
+
+    #[test]
+    fn swarm_view_set_strategy_updates_strategy() {
+        use crate::widgets::SwarmStrategy;
+        let mut view = SwarmView::new("swarm-1".into());
+        view.set_strategy(SwarmStrategy::Sequential);
+        assert_eq!(view.strategy(), SwarmStrategy::Sequential);
+    }
+
+    #[test]
+    fn swarm_view_renders_dynamic_strategy_in_header() {
+        use crate::widgets::SwarmStrategy;
+        let app = App::default();
+        let mut view = SwarmView::new("swarm-1".into());
+        view.set_strategy(SwarmStrategy::Pipeline);
+
+        let backend = TestBackend::new(80, 24);
+        let mut terminal = Terminal::new(backend).unwrap();
+
+        terminal
+            .draw(|f| {
+                view.render(f, f.area(), &app);
+            })
+            .unwrap();
+
+        let buffer = terminal.backend().buffer();
+        let content: String = buffer.content().iter().map(|cell| cell.symbol()).collect();
+
+        assert!(
+            content.contains("Pipeline"),
+            "Expected 'Pipeline' strategy in header: {}",
+            content
+        );
+    }
+
+    #[test]
+    fn swarm_view_renders_dynamic_status_in_header() {
+        use crate::widgets::SwarmStatus;
+        let app = App::default();
+        let mut view = SwarmView::new("swarm-1".into());
+        view.set_status(SwarmStatus::Completed);
+
+        let backend = TestBackend::new(80, 24);
+        let mut terminal = Terminal::new(backend).unwrap();
+
+        terminal
+            .draw(|f| {
+                view.render(f, f.area(), &app);
+            })
+            .unwrap();
+
+        let buffer = terminal.backend().buffer();
+        let content: String = buffer.content().iter().map(|cell| cell.symbol()).collect();
+
+        assert!(
+            content.contains("Completed"),
+            "Expected 'Completed' status in header: {}",
+            content
+        );
+    }
+
+    // ==================== Aggregate Progress Tests ====================
+
+    #[test]
+    fn swarm_view_aggregate_progress_empty_returns_zero() {
+        let view = SwarmView::new("swarm-1".into());
+        assert!((view.aggregate_progress() - 0.0).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn swarm_view_aggregate_progress_single_agent() {
+        use crate::widgets::{AgentCard, AgentCardStatus};
+        let mut view = SwarmView::new("swarm-1".into());
+        view.set_agent_cards(vec![AgentCard {
+            agent_id: "agent-1".into(),
+            name: "Agent 1".into(),
+            task: "Task".into(),
+            progress: 0.5,
+            status: AgentCardStatus::Running,
+            selected: false,
+        }]);
+        assert!((view.aggregate_progress() - 0.5).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn swarm_view_aggregate_progress_multiple_agents() {
+        use crate::widgets::{AgentCard, AgentCardStatus};
+        let mut view = SwarmView::new("swarm-1".into());
+        view.set_agent_cards(vec![
+            AgentCard {
+                agent_id: "agent-1".into(),
+                name: "Agent 1".into(),
+                task: "Task".into(),
+                progress: 0.0,
+                status: AgentCardStatus::Running,
+                selected: false,
+            },
+            AgentCard {
+                agent_id: "agent-2".into(),
+                name: "Agent 2".into(),
+                task: "Task".into(),
+                progress: 0.5,
+                status: AgentCardStatus::Running,
+                selected: false,
+            },
+            AgentCard {
+                agent_id: "agent-3".into(),
+                name: "Agent 3".into(),
+                task: "Task".into(),
+                progress: 1.0,
+                status: AgentCardStatus::Completed,
+                selected: false,
+            },
+        ]);
+        // Average of 0.0, 0.5, 1.0 = 0.5
+        assert!((view.aggregate_progress() - 0.5).abs() < f32::EPSILON);
+    }
+
+    // ==================== Agent Counts Tests ====================
+
+    #[test]
+    fn swarm_view_agent_counts_empty() {
+        use crate::widgets::AgentCounts;
+        let view = SwarmView::new("swarm-1".into());
+        assert_eq!(view.agent_counts(), AgentCounts::default());
+    }
+
+    #[test]
+    fn swarm_view_agent_counts_from_cards() {
+        use crate::widgets::{AgentCard, AgentCardStatus};
+        let mut view = SwarmView::new("swarm-1".into());
+        view.set_agent_cards(vec![
+            AgentCard {
+                agent_id: "agent-1".into(),
+                name: "Agent 1".into(),
+                task: "Task".into(),
+                progress: 0.5,
+                status: AgentCardStatus::Running,
+                selected: false,
+            },
+            AgentCard {
+                agent_id: "agent-2".into(),
+                name: "Agent 2".into(),
+                task: "Task".into(),
+                progress: 0.7,
+                status: AgentCardStatus::Running,
+                selected: false,
+            },
+            AgentCard {
+                agent_id: "agent-3".into(),
+                name: "Agent 3".into(),
+                task: "Task".into(),
+                progress: 1.0,
+                status: AgentCardStatus::Completed,
+                selected: false,
+            },
+        ]);
+        let counts = view.agent_counts();
+        assert_eq!(counts.total, 3);
+        assert_eq!(counts.running, 2);
+        assert_eq!(counts.completed, 1);
+        assert_eq!(counts.failed, 0);
+    }
+
+    #[test]
+    fn swarm_view_agent_counts_with_failed() {
+        use crate::widgets::{AgentCard, AgentCardStatus};
+        let mut view = SwarmView::new("swarm-1".into());
+        view.set_agent_cards(vec![
+            AgentCard {
+                agent_id: "agent-1".into(),
+                name: "Agent 1".into(),
+                task: "Task".into(),
+                progress: 0.3,
+                status: AgentCardStatus::Failed,
+                selected: false,
+            },
+            AgentCard {
+                agent_id: "agent-2".into(),
+                name: "Agent 2".into(),
+                task: "Task".into(),
+                progress: 1.0,
+                status: AgentCardStatus::Completed,
+                selected: false,
+            },
+        ]);
+        let counts = view.agent_counts();
+        assert_eq!(counts.total, 2);
+        assert_eq!(counts.running, 0);
+        assert_eq!(counts.completed, 1);
+        assert_eq!(counts.failed, 1);
+    }
+
+    // ==================== Header Coordination Display Tests ====================
+
+    #[test]
+    fn swarm_view_renders_agent_counts_in_header() {
+        use crate::widgets::{AgentCard, AgentCardStatus};
+        let app = App::default();
+        let mut view = SwarmView::new("swarm-1".into());
+        view.set_agent_cards(vec![
+            AgentCard {
+                agent_id: "agent-1".into(),
+                name: "Agent 1".into(),
+                task: "Task".into(),
+                progress: 0.5,
+                status: AgentCardStatus::Running,
+                selected: false,
+            },
+            AgentCard {
+                agent_id: "agent-2".into(),
+                name: "Agent 2".into(),
+                task: "Task".into(),
+                progress: 1.0,
+                status: AgentCardStatus::Completed,
+                selected: false,
+            },
+        ]);
+
+        let backend = TestBackend::new(80, 24);
+        let mut terminal = Terminal::new(backend).unwrap();
+
+        terminal
+            .draw(|f| {
+                view.render(f, f.area(), &app);
+            })
+            .unwrap();
+
+        let buffer = terminal.backend().buffer();
+        let content: String = buffer.content().iter().map(|cell| cell.symbol()).collect();
+
+        assert!(
+            content.contains("Agents:"),
+            "Expected 'Agents:' label in header: {}",
+            content
+        );
+        assert!(
+            content.contains("1/2 running"),
+            "Expected '1/2 running' in header: {}",
+            content
+        );
+    }
+
+    #[test]
+    fn swarm_view_renders_aggregate_progress_in_header() {
+        use crate::widgets::{AgentCard, AgentCardStatus};
+        let app = App::default();
+        let mut view = SwarmView::new("swarm-1".into());
+        view.set_agent_cards(vec![
+            AgentCard {
+                agent_id: "agent-1".into(),
+                name: "Agent 1".into(),
+                task: "Task".into(),
+                progress: 0.5,
+                status: AgentCardStatus::Running,
+                selected: false,
+            },
+            AgentCard {
+                agent_id: "agent-2".into(),
+                name: "Agent 2".into(),
+                task: "Task".into(),
+                progress: 0.5,
+                status: AgentCardStatus::Running,
+                selected: false,
+            },
+        ]);
+
+        let backend = TestBackend::new(80, 24);
+        let mut terminal = Terminal::new(backend).unwrap();
+
+        terminal
+            .draw(|f| {
+                view.render(f, f.area(), &app);
+            })
+            .unwrap();
+
+        let buffer = terminal.backend().buffer();
+        let content: String = buffer.content().iter().map(|cell| cell.symbol()).collect();
+
+        assert!(
+            content.contains("Progress:"),
+            "Expected 'Progress:' label in header: {}",
+            content
+        );
+        assert!(
+            content.contains("50%"),
+            "Expected '50%' in header: {}",
+            content
+        );
+    }
+
+    #[test]
+    fn swarm_view_renders_spinner_when_running() {
+        use crate::widgets::SwarmStatus;
+        let app = App::default();
+        let mut view = SwarmView::new("swarm-1".into());
+        view.set_status(SwarmStatus::Running);
+
+        let backend = TestBackend::new(80, 24);
+        let mut terminal = Terminal::new(backend).unwrap();
+
+        terminal
+            .draw(|f| {
+                view.render(f, f.area(), &app);
+            })
+            .unwrap();
+
+        let buffer = terminal.backend().buffer();
+        let content: String = buffer.content().iter().map(|cell| cell.symbol()).collect();
+
+        // Should contain one of the spinner characters
+        assert!(
+            content.contains('⟳')
+                || content.contains('◐')
+                || content.contains('◓')
+                || content.contains('◑'),
+            "Expected spinner character in header when running: {}",
             content
         );
     }
