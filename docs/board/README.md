@@ -31,6 +31,7 @@
 |------|--------|---------|
 | [agents](epics/agents/) | planned | 0 |
 | [cli](epics/cli/) | active | 13 |
+| [coherence-verification](epics/coherence-verification/) | active | 0 |
 | [core](epics/core/) | active | 22 |
 | [cross-platform](epics/cross-platform/) | active | 1 |
 | [dev-environment](epics/dev-environment/) | active | 0 |

@@ -229,21 +229,30 @@ _next-id TYPE:
     #!/usr/bin/env bash
     cd "{{board_dir}}"
     type="{{TYPE}}"
+    type_upper="${type^^}"
     max=0
 
-    # Search in all stages for stories with this type prefix
-    for f in $(find stages -name "${type}-*.md" -o -name "*-${type}-*.md" 2>/dev/null); do
-        # Extract sequence number after type prefix (e.g., feat-01, m37-feat-01)
-        # Pattern: TYPE-NN where NN is the sequence number we want
-        num=$(basename "$f" .md | grep -oE "(feat|bug|chore|refactor|fix|docs)-[0-9]+" | grep -oE "[0-9]+$")
-        # Skip if no match found
+    # Search for new format: [TYPE][NNNN]-*.md
+    for f in $(find stages -name "\[${type_upper}\]\[*\]*.md" 2>/dev/null); do
+        # Extract sequence number from [TYPE][NNNN] format
+        num=$(basename "$f" .md | grep -oE "\[${type_upper}\]\[[0-9]+\]" | grep -oE "[0-9]+")
         [[ -z "$num" ]] && continue
-        # Strip leading zeros to avoid octal interpretation (e.g., 08 -> 8)
         num=$((10#$num))
         if [[ "$num" -gt "$max" ]]; then
             max=$num
         fi
     done
+
+    # Also search old format for backwards compatibility: type-NNNN-*.md
+    for f in $(find stages -name "${type}-*.md" -o -name "*-${type}-*.md" 2>/dev/null); do
+        num=$(basename "$f" .md | grep -oE "(feat|bug|chore|refactor|fix|docs)-[0-9]+" | grep -oE "[0-9]+$")
+        [[ -z "$num" ]] && continue
+        num=$((10#$num))
+        if [[ "$num" -gt "$max" ]]; then
+            max=$num
+        fi
+    done
+
     printf "%04d" $((max + 1))
 
 # Get next milestone number
@@ -337,24 +346,16 @@ _new-story TITLE TYPE="" EPICS="" MILESTONE="":
     # Create slug from title
     slug=$(echo "$title" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd 'a-z0-9-')
 
-    # Build filename - include milestone prefix if provided
-    if [[ -n "$milestone" ]]; then
-        # Extract milestone number (e.g., "27" from "27-crt-design-system")
-        ms_num=$(echo "$milestone" | grep -oE '^[0-9]+' || echo "")
-        if [[ -n "$ms_num" ]]; then
-            filename="stages/backlog/stories/m${ms_num}-${type}-${id}-${slug}.md"
-        else
-            filename="stages/backlog/stories/${type}-${id}-${slug}.md"
-        fi
-    else
-        filename="stages/backlog/stories/${type}-${id}-${slug}.md"
-    fi
+    # Build filename with new [TYPE][NNNN] format
+    # Format: [TYPE][NNNN]-verb-phrase.md
+    type_upper="${type^^}"
+    filename="stages/backlog/stories/[${type_upper}][${id}]-${slug}.md"
 
     # Create the story file
     date=$(date +%Y-%m-%d)
     {
         echo '---'
-        echo "id: ${type^^}${id}"
+        echo "id: ${type_upper}${id}"
         echo "title: ${title}"
         echo "type: ${type}"
         echo "status: backlog"

@@ -28,6 +28,9 @@ mod plugin '.justfiles/plugin.just'
 # CLI recording commands
 mod cli '.justfiles/cli.just'
 
+# Verification commands
+mod verify '.justfiles/verify.just'
+
 # ─── Top-Level Commands ──────────────────────────────────────────────────────
 
 # Show available commands
