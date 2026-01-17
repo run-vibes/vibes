@@ -1,0 +1,6 @@
+# Ignore all artifacts except the report
+*
+!.gitignore
+!report.md
+!snapshots.json
+!checkpoints.json

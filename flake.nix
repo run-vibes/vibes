@@ -27,8 +27,9 @@
             pkgs.cargo-mutants
             pkgs.cargo-watch
             pkgs.sccache
-            # CLI recording
+            # CLI recording and video processing
             pkgs.vhs
+            pkgs.ffmpeg
             # Cloudflare tunnel client
             pkgs.cloudflared
             # Native build deps for CozoDB/RocksDB

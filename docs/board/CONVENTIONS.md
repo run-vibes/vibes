@@ -47,12 +47,14 @@ docs/board/
 ├── stages/                # Story files organized by status
 │   ├── backlog/stories/   # Future work
 │   ├── in-progress/stories/ # Currently being worked on
-│   └── done/stories/      # Completed work
-├── epics/                 # Story groupings (symlinks to stories)
-│   ├── core/              # Core functionality
-│   ├── web-ui/            # Web UI features
+│   ├── done/stories/      # Completed work
+│   └── icebox/stories/    # Blocked or deferred work
+├── epics/                 # Large initiatives containing milestones
+│   ├── coherence-verification/
+│   │   ├── README.md
+│   │   └── milestones/    # Milestones within this epic
 │   └── ...
-├── milestones/            # Large deliverables (symlinks to epics)
+├── milestones/            # Standalone milestones (not in an epic)
 │   ├── 01-core-proxy/
 │   └── ...
 ├── templates/             # Templates for new items
@@ -63,6 +65,27 @@ docs/board/
 └── in-progress/           # Legacy: milestone directories (to be migrated)
 ```
 
+### Hierarchy
+
+The board follows a three-level hierarchy (like Linear):
+
+```
+Epic (large initiative)
+└── Milestone (deliverable with design doc)
+    └── Story (implementable unit of work)
+```
+
+| Level | Scope | Example |
+|-------|-------|---------|
+| **Epic** | Large initiative spanning multiple milestones | "Coherence Verification" |
+| **Milestone** | Deliverable with design doc, multiple stories | "Artifact Pipeline" |
+| **Story** | Single implementable unit, ends with a commit | "Add snapshot capture" |
+
+**Key differences from previous hierarchy:**
+- Epics contain milestones (not the reverse)
+- Epics have status (`active`, `done`) and can be closed when complete
+- Milestones can exist standalone (in `milestones/`) or within an epic (`epics/<name>/milestones/`)
+
 ## Stages
 
 Stories live in `stages/<stage>/stories/` and move between stages as work progresses.
@@ -72,6 +95,14 @@ Stories live in `stages/<stage>/stories/` and move between stages as work progre
 | **backlog** | `stages/backlog/stories/` | Future work, not yet started |
 | **in-progress** | `stages/in-progress/stories/` | Currently being worked on |
 | **done** | `stages/done/stories/` | Completed work |
+| **icebox** | `stages/icebox/stories/` | Blocked or deferred work |
+
+The **icebox** stage is for stories that are:
+- Blocked by external dependencies
+- Deferred to a future milestone
+- Paused pending decisions or clarification
+
+Use `just board ice <id>` to move a story to icebox and `just board thaw <id>` to bring it back to backlog.
 
 ### Story File Format
 
@@ -97,7 +128,7 @@ updated: 2025-01-07
 | `id` | Yes | Unique identifier (prefix with milestone: `m26-feat-01`) |
 | `title` | Yes | Human-readable title |
 | `type` | Yes | `feat`, `bug`, `chore`, `refactor` |
-| `status` | Yes | `backlog`, `in-progress`, `done` |
+| `status` | Yes | `backlog`, `in-progress`, `done`, `icebox` |
 | `priority` | No | `low`, `medium`, `high`, `critical` |
 | `epics` | No | List of epic IDs this story belongs to |
 | `depends` | No | List of story IDs that must complete first |
@@ -107,99 +138,168 @@ updated: 2025-01-07
 
 ### Story Naming
 
-Stories use prefixes to indicate type, with optional milestone prefix:
+Stories use a bracketed format for type and ID:
 
-| Pattern | Example | Use Case |
-|---------|---------|----------|
-| `m<NN>-feat-<NN>-<name>.md` | `m26-feat-01-eventlog.md` | Milestone story |
-| `feat-<NNNN>-<name>.md` | `feat-0003-navigation.md` | Standalone feature |
-| `bug-<NNNN>-<name>.md` | `bug-0001-cwd-propagation.md` | Standalone bug fix |
-| `chore-<NNNN>-<name>.md` | `chore-0001-cleanup.md` | Standalone maintenance |
+```
+[TYPE][NNNN]-verb-phrase.md
+```
+
+| Component | Description |
+|-----------|-------------|
+| `[TYPE]` | Story type in uppercase: `FEAT`, `BUG`, `CHORE`, `REFACTOR` |
+| `[NNNN]` | Zero-padded 4-digit ID (auto-generated) |
+| `verb-phrase` | Imperative description with hyphens |
+
+**Examples:**
+
+| Pattern | Example | Description |
+|---------|---------|-------------|
+| Feature | `[FEAT][0042]-add-session-export.md` | New functionality |
+| Bug fix | `[BUG][0015]-fix-cwd-propagation.md` | Bug fix |
+| Chore | `[CHORE][0008]-update-dependencies.md` | Maintenance task |
+| Refactor | `[REFACTOR][0003]-simplify-auth-flow.md` | Code restructuring |
+
+**Legacy naming:** The board commands also recognize older patterns (`feat-NNNN-name.md`, `m26-feat-01-name.md`) for backwards compatibility, but new stories use the bracketed format.
 
 ## Epics
 
-Epics group related stories across milestones. Each epic is a directory in `epics/` containing:
+Epics are large initiatives that contain one or more milestones. Each epic is a directory in `epics/` containing:
 
-- `README.md` with epic metadata
-- Symlinks to stories (pointing to `../../stages/<stage>/stories/<story>.md`)
+- `README.md` with epic metadata and overview
+- `milestones/` subdirectory with milestone design documents
 
 ```
 epics/
-├── core/
-│   ├── README.md
-│   ├── m26-feat-01-eventlog.md -> ../../stages/in-progress/stories/m26-feat-01-eventlog.md
-│   └── m26-feat-02-processor.md -> ../../stages/in-progress/stories/m26-feat-02-processor.md
-└── web-ui/
+├── coherence-verification/
+│   ├── README.md                    # Epic overview
+│   └── milestones/
+│       ├── 01-artifact-pipeline/
+│       │   ├── design.md
+│       │   └── implementation.md
+│       └── 02-board-restructure/
+│           └── design.md
+└── core/
     ├── README.md
-    └── feat-0003-navigation.md -> ../../stages/done/stories/feat-0003-navigation.md
+    └── milestones/
+        └── 01-event-sourcing/
+            └── design.md
 ```
 
 ### Epic README Format
 
 ```yaml
 ---
-id: core
-title: Core Functionality
+id: coherence-verification
+title: Coherence Verification
 status: active
-description: Core vibes functionality and infrastructure
+description: Reduce spec-to-implementation drift through visual verification
+milestones:
+  - 01-artifact-pipeline
+  - 02-board-restructure
 ---
+
+# Coherence Verification
+
+[Epic overview and goals...]
 ```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `id` | Yes | URL-safe identifier |
+| `title` | Yes | Human-readable title |
+| `status` | Yes | `active` or `done` |
+| `description` | Yes | One-line summary |
+| `milestones` | No | List of milestone IDs within this epic |
 
 ### Key Properties
 
-- A story can belong to **multiple epics** (via symlinks from each epic)
-- Symlinks automatically stay valid when stories move between stages (relative paths)
-- Epics provide a cross-cutting view of work by theme
+- Epics contain milestones (not the reverse)
+- Epics have status and can be closed when all milestones complete
+- Epics provide a high-level view of large initiatives
 
 ## Milestones
 
-Milestones are large deliverables that span multiple work sessions. They live in `milestones/` and contain:
+Milestones are large deliverables with design documents and multiple stories. They can exist in two locations:
 
-- `README.md` with milestone metadata
-- `design.md` for architecture decisions
+1. **Within an epic:** `epics/<epic-name>/milestones/<milestone-id>/`
+2. **Standalone:** `milestones/<milestone-id>/` (for work not tied to a specific epic)
+
+Each milestone directory contains:
+
+- `design.md` for architecture decisions (required)
 - `implementation.md` for story index (optional)
-- Symlinks to related epics
+- `README.md` for standalone milestones
 
 ```
+# Within an epic
+epics/coherence-verification/milestones/
+└── 01-artifact-pipeline/
+    ├── design.md
+    └── implementation.md
+
+# Standalone
 milestones/
-└── 26-assessment-framework/
+└── 45-theme-config/
     ├── README.md
     ├── design.md
-    ├── implementation.md
-    └── core -> ../../epics/core
+    └── implementation.md
 ```
 
-### Milestone README Format
+### Milestone README Format (Standalone)
 
 ```yaml
 ---
-id: 26
-title: Assessment Framework
+id: 45
+title: Theme Configuration
 status: in-progress
-epics: [core]
 ---
+
+# Theme Configuration
+
+[Milestone overview...]
 ```
 
-### Milestone-Epic Relationship
+### Milestone Status
 
-- Milestones link to epics (not directly to stories)
-- This creates a hierarchy: Milestone -> Epic -> Stories
-- An epic can be linked to multiple milestones
+| Status | Description |
+|--------|-------------|
+| `backlog` | Planned but not started |
+| `in-progress` | Active development |
+| `done` | All stories complete |
+
+Use `just board start-milestone <id>` and `just board done-milestone <id>` to manage status.
 
 ## Commands
+
+### Story Management
+
+| Command | Action |
+|---------|--------|
+| `just board new story "title"` | Create story in backlog (interactive type selection) |
+| `just board new story feat "title"` | Create feature story in backlog |
+| `just board new story bug "title"` | Create bug story in backlog |
+| `just board start <id>` | Move story to in-progress |
+| `just board done <id>` | Move story to done + changelog |
+| `just board ice <id>` | Move story to icebox (blocked/deferred) |
+| `just board thaw <id>` | Move story from icebox to backlog |
+
+### Epic and Milestone Management
+
+| Command | Action |
+|---------|--------|
+| `just board new epic "name"` | Create new epic |
+| `just board new milestone "name"` | Create new standalone milestone |
+| `just board start-milestone <id>` | Set milestone to in-progress |
+| `just board done-milestone <id>` | Set milestone to done |
+| `just board link <story> <epic>` | Link story to epic |
+
+### Board Operations
 
 | Command | Action |
 |---------|--------|
 | `just board` | Show available commands |
 | `just board generate` | Regenerate README.md |
-| `just board status` | Show counts per stage |
-| `just board new story "title"` | Create story in backlog |
-| `just board new epic "name"` | Create new epic |
-| `just board new milestone "name"` | Create new milestone |
-| `just board start <id>` | Move story to in-progress |
-| `just board done <id>` | Move story to done + changelog |
-| `just board link <story> <epic>` | Link story to epic |
-| `just board link-epic <epic> <milestone>` | Link epic to milestone |
+| `just board status` | Show counts per stage (backlog, in-progress, done, icebox) |
 
 ---
 
