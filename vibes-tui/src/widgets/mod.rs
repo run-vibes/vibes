@@ -5,6 +5,7 @@
 
 mod activity_feed;
 mod agent_card;
+mod command_bar;
 mod confirmation;
 mod control_bar;
 mod diff_modal;
@@ -19,6 +20,7 @@ mod swarm_status;
 pub use activity_feed::{ActivityEvent, ActivityFeedWidget};
 #[allow(unused_imports)] // AgentCardStatus used in tests and future swarm integration
 pub use agent_card::{AgentCard, AgentCardStatus};
+pub use command_bar::CommandBarWidget;
 pub use confirmation::{ConfirmationDialog, ConfirmationType};
 pub use control_bar::{AgentStatus, ControlBar};
 pub use diff_modal::DiffModal;

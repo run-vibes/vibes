@@ -2,7 +2,7 @@
 id: m45-feat-03
 title: Runtime theme switching
 type: feat
-status: backlog
+status: done
 priority: medium
 epics: [tui]
 depends: [m45-feat-01, m45-feat-02]
