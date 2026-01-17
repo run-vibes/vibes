@@ -15,10 +15,16 @@
 |-------|------|----------|-------|
 | [chore-0087-use-cranelift-for-builds](stages/backlog/stories/chore-0087-use-cranelift-for-builds.md) | chore | low | dev-environment |
 | [chore-0110-add-scheduled-mutation-testing-workflow](stages/backlog/stories/chore-0110-add-scheduled-mutation-testing-workflow.md) | chore | medium |  |
+| [[CHORE][0111]-create-design-system-epic](stages/backlog/stories/[CHORE][0111]-create-design-system-epic.md) | chore | high | coherence-verification |
+| [[CHORE][0112]-migrate-milestones-to-epics](stages/backlog/stories/[CHORE][0112]-migrate-milestones-to-epics.md) | chore | high | coherence-verification |
+| [[CHORE][0113]-rename-stories-new-format](stages/backlog/stories/[CHORE][0113]-rename-stories-new-format.md) | chore | high | coherence-verification |
+| [[CHORE][0114]-update-board-documentation](stages/backlog/stories/[CHORE][0114]-update-board-documentation.md) | chore | high | coherence-verification |
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
 | [docs-0004-event-schema-versioning-strategy](stages/backlog/stories/docs-0004-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
 | [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli,cross-platform |
 | [feat-0101-header-identity-display](stages/backlog/stories/feat-0101-header-identity-display.md) | feat | low | web-ui,design-system |
+| [[FEAT][0109]-board-generator-grouped-layout](stages/backlog/stories/[FEAT][0109]-board-generator-grouped-layout.md) | feat | high | coherence-verification |
+| [[FEAT][0110]-board-state-command-sync](stages/backlog/stories/[FEAT][0110]-board-state-command-sync.md) | feat | high | coherence-verification |
 | [m39-feat-06-eval-web-ui](stages/backlog/stories/m39-feat-06-eval-web-ui.md) | feat | medium | evals |
 | [m46-feat-01-pty-server-core](stages/backlog/stories/m46-feat-01-pty-server-core.md) | feat | medium | tui |
 | [m46-feat-02-session-management](stages/backlog/stories/m46-feat-02-session-management.md) | feat | medium | tui |
@@ -31,7 +37,7 @@
 |------|--------|---------|
 | [agents](epics/agents/) | planned | 0 |
 | [cli](epics/cli/) | active | 13 |
-| [coherence-verification](epics/coherence-verification/) | active | 0 |
+| [coherence-verification](epics/coherence-verification/) | active | 6 |
 | [core](epics/core/) | active | 22 |
 | [cross-platform](epics/cross-platform/) | active | 1 |
 | [dev-environment](epics/dev-environment/) | active | 0 |
