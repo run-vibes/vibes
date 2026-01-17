@@ -8,7 +8,6 @@
 | Story | Type | Priority | Epics |
 |-------|------|----------|-------|
 | [m39-feat-05-eval-cli](stages/in-progress/stories/m39-feat-05-eval-cli.md) | feat | medium | evals |
-| [m45-feat-01-theme-config-loader](stages/in-progress/stories/m45-feat-01-theme-config-loader.md) | feat | high | tui |
 
 ## Backlog
 
@@ -289,6 +288,7 @@
 - [m44-feat-02-agent-progress-bars](stages/done/stories/m44-feat-02-agent-progress-bars.md)
 - [m44-feat-03-result-merge-interface](stages/done/stories/m44-feat-03-result-merge-interface.md)
 - [m44-feat-04-swarm-coordination-status](stages/done/stories/m44-feat-04-swarm-coordination-status.md)
+- [m45-feat-01-theme-config-loader](stages/done/stories/m45-feat-01-theme-config-loader.md)
 - [m45-feat-02-builtin-theme-variants](stages/done/stories/m45-feat-02-builtin-theme-variants.md)
 - [m45-feat-03-runtime-theme-switching](stages/done/stories/m45-feat-03-runtime-theme-switching.md)
 - [refactor-0008-consolidate-assessment-types-module](stages/done/stories/refactor-0008-consolidate-assessment-types-module.md)

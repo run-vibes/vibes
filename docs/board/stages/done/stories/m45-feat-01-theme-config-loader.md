@@ -2,7 +2,7 @@
 id: m45-feat-01
 title: Theme config file loader
 type: feat
-status: in-progress
+status: done
 priority: high
 epics: [tui]
 depends: []
