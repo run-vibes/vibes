@@ -1,5 +1,7 @@
 # vibes task runner
 
+set unstable
+
 # ─── Modules ─────────────────────────────────────────────────────────────────
 
 # Planning board management
@@ -28,16 +30,19 @@ mod cli '.justfiles/cli.just'
 
 # ─── Top-Level Commands ──────────────────────────────────────────────────────
 
-# Default: show available commands
+# Show available commands
+[group('common')]
 default:
     @just --list
 
 # Setup git hooks (run once after clone)
+[group('setup')]
 setup-hooks:
     git config core.hooksPath .githooks
     @echo "✓ Git hooks configured"
 
 # Full setup for new developers
+[group('setup')]
 setup: setup-hooks
     #!/usr/bin/env bash
     set -euo pipefail
@@ -54,11 +59,13 @@ setup: setup-hooks
     echo "✓ Setup complete. Run 'just build' to build."
 
 # Run all checks (pre-commit)
+[group('common')]
 pre-commit: quality::fmt-check quality::clippy tests::run web::typecheck web::test
     @echo "✓ All pre-commit checks passed"
 
 # Build debug (vibes + iggy)
 # Compiles to $CARGO_TARGET_DIR, copies binaries to ./target/debug/ for worktree isolation
+[group('common')]
 build: web::build builds::_check-submodules
     #!/usr/bin/env bash
     set -euo pipefail
