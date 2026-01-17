@@ -6,6 +6,7 @@
 mod app;
 mod client;
 mod clipboard;
+pub mod commands;
 mod keybindings;
 mod state;
 mod terminal;

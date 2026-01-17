@@ -11,18 +11,19 @@ use ratatui::{
 };
 
 use crate::client::{ReconnectConfig, TuiClient};
+use crate::commands::{CommandInput, CommandRegistry, CommandResult, ThemeCommand};
 use crate::keybindings::{Action, KeyBindings};
+use crate::theme::ThemeLoader;
 use crate::views::{AgentView, DashboardView, SwarmView, View, ViewRenderer, ViewStack};
 use crate::widgets::{
-    ActivityEvent, ActivityFeedWidget, ConnectionStatus, SessionInfo, SessionListWidget,
-    SessionStatus, StatsBarWidget,
+    ActivityEvent, ActivityFeedWidget, CommandBarWidget, ConnectionStatus, SessionInfo,
+    SessionListWidget, SessionStatus, StatsBarWidget,
 };
 use crate::{
     AppState, Mode, Theme, VibesTerminal, restore_terminal, setup_terminal, vibes_default,
 };
 
 /// Main TUI application.
-#[derive(Debug)]
 pub struct App {
     pub state: AppState,
     pub views: ViewStack,
@@ -48,32 +49,19 @@ pub struct App {
     reconnect_attempt: u32,
     /// Time of last reconnection attempt (for backoff).
     last_reconnect_attempt: Option<std::time::Instant>,
+    /// Command input state for command mode.
+    pub command_input: CommandInput,
+    /// Registry of available commands.
+    pub command_registry: CommandRegistry,
 }
 
 impl App {
     /// Creates a new App instance with default settings.
     pub fn new() -> Self {
-        Self {
-            state: AppState::default(),
-            views: ViewStack::new(),
-            keybindings: KeyBindings::default(),
-            theme: vibes_default(),
-            client: None,
-            running: true,
-            error_message: None,
-            server_url: None,
-            retry_requested: false,
-            session_widget: SessionListWidget::new(),
-            stats_widget: StatsBarWidget::default(),
-            activity_widget: ActivityFeedWidget::new(),
-            reconnect_config: ReconnectConfig::default(),
-            reconnect_attempt: 0,
-            last_reconnect_attempt: None,
-        }
-    }
+        let loader = ThemeLoader::from_default_config();
+        let theme = loader.active().cloned().unwrap_or_else(vibes_default);
+        let command_registry = Self::create_command_registry(loader);
 
-    /// Creates a new App with a custom theme.
-    pub fn with_theme(theme: Theme) -> Self {
         Self {
             state: AppState::default(),
             views: ViewStack::new(),
@@ -90,16 +78,55 @@ impl App {
             reconnect_config: ReconnectConfig::default(),
             reconnect_attempt: 0,
             last_reconnect_attempt: None,
+            command_input: CommandInput::default(),
+            command_registry,
+        }
+    }
+
+    /// Creates the command registry with all available commands.
+    fn create_command_registry(loader: ThemeLoader) -> CommandRegistry {
+        let mut registry = CommandRegistry::new();
+        registry.register(Box::new(ThemeCommand::new(loader)));
+        registry
+    }
+
+    /// Creates a new App with a custom theme.
+    pub fn with_theme(theme: Theme) -> Self {
+        let loader = ThemeLoader::new();
+        let command_registry = Self::create_command_registry(loader);
+
+        Self {
+            state: AppState::default(),
+            views: ViewStack::new(),
+            keybindings: KeyBindings::default(),
+            theme,
+            client: None,
+            running: true,
+            error_message: None,
+            server_url: None,
+            retry_requested: false,
+            session_widget: SessionListWidget::new(),
+            stats_widget: StatsBarWidget::default(),
+            activity_widget: ActivityFeedWidget::new(),
+            reconnect_config: ReconnectConfig::default(),
+            reconnect_attempt: 0,
+            last_reconnect_attempt: None,
+            command_input: CommandInput::default(),
+            command_registry,
         }
     }
 
     /// Creates a new App with a connected client.
     pub fn with_client(client: TuiClient) -> Self {
+        let loader = ThemeLoader::from_default_config();
+        let theme = loader.active().cloned().unwrap_or_else(vibes_default);
+        let command_registry = Self::create_command_registry(loader);
+
         Self {
             state: AppState::default(),
             views: ViewStack::new(),
             keybindings: KeyBindings::default(),
-            theme: vibes_default(),
+            theme,
             client: Some(client),
             running: true,
             error_message: None,
@@ -114,16 +141,22 @@ impl App {
             reconnect_config: ReconnectConfig::default(),
             reconnect_attempt: 0,
             last_reconnect_attempt: None,
+            command_input: CommandInput::default(),
+            command_registry,
         }
     }
 
     /// Creates a new App with a connected client and stores the server URL.
     pub fn with_client_url(client: TuiClient, url: String) -> Self {
+        let loader = ThemeLoader::from_default_config();
+        let theme = loader.active().cloned().unwrap_or_else(vibes_default);
+        let command_registry = Self::create_command_registry(loader);
+
         Self {
             state: AppState::default(),
             views: ViewStack::new(),
             keybindings: KeyBindings::default(),
-            theme: vibes_default(),
+            theme,
             client: Some(client),
             running: true,
             error_message: None,
@@ -138,6 +171,8 @@ impl App {
             reconnect_config: ReconnectConfig::default(),
             reconnect_attempt: 0,
             last_reconnect_attempt: None,
+            command_input: CommandInput::default(),
+            command_registry,
         }
     }
 
@@ -190,6 +225,7 @@ impl App {
     ///
     /// Resolves the key to an action using keybindings, then executes the action.
     /// Ctrl-C is handled as a special case to always quit.
+    /// In Command mode, keys are routed to the command input instead.
     pub fn handle_key(&mut self, key: KeyEvent) {
         // Ctrl-C always quits (special case, not in keybindings)
         if key.code == KeyCode::Char('c') && key.modifiers.contains(KeyModifiers::CONTROL) {
@@ -197,9 +233,88 @@ impl App {
             return;
         }
 
+        // In command mode, handle keys specially
+        if self.state.mode == Mode::Command {
+            self.handle_command_mode_key(key);
+            return;
+        }
+
         // Resolve key to action using keybindings
         if let Some(action) = self.keybindings.resolve(key, &self.views.current) {
             self.execute_action(action);
+        }
+    }
+
+    /// Handle keys when in command mode.
+    fn handle_command_mode_key(&mut self, key: KeyEvent) {
+        match key.code {
+            KeyCode::Esc => {
+                // Exit command mode
+                self.command_input.clear();
+                self.state.mode = Mode::Normal;
+            }
+            KeyCode::Enter => {
+                // Execute the command
+                let input = self.command_input.buffer.clone();
+                self.command_input.clear();
+                self.state.mode = Mode::Normal;
+
+                if !input.trim().is_empty() {
+                    // Take registry out temporarily to avoid borrow conflict
+                    let mut registry = std::mem::take(&mut self.command_registry);
+                    let result = registry.execute(&input, self);
+                    self.command_registry = registry;
+
+                    match result {
+                        CommandResult::Ok(Some(msg)) => {
+                            self.command_input.set_message(&msg, false);
+                        }
+                        CommandResult::Err(msg) => {
+                            self.command_input.set_message(&msg, true);
+                        }
+                        CommandResult::Quit => {
+                            self.running = false;
+                        }
+                        CommandResult::Ok(None) => {}
+                    }
+                }
+            }
+            KeyCode::Backspace => {
+                self.command_input.backspace();
+            }
+            KeyCode::Delete => {
+                self.command_input.delete();
+            }
+            KeyCode::Left => {
+                self.command_input.move_left();
+            }
+            KeyCode::Right => {
+                self.command_input.move_right();
+            }
+            KeyCode::Home => {
+                self.command_input.move_to_start();
+            }
+            KeyCode::End => {
+                self.command_input.move_to_end();
+            }
+            KeyCode::Tab => {
+                // Trigger tab completion
+                if self.command_input.completion_idx.is_some() {
+                    self.command_input.next_completion();
+                } else {
+                    let buffer = self.command_input.buffer.clone();
+                    let completions = self.command_registry.completions(&buffer, self);
+                    self.command_input.set_completions(completions);
+                    self.command_input.next_completion();
+                }
+            }
+            KeyCode::Char(c) => {
+                self.command_input.insert(c);
+                // Clear completions when typing
+                self.command_input.completions.clear();
+                self.command_input.completion_idx = None;
+            }
+            _ => {}
         }
     }
 
@@ -355,10 +470,13 @@ impl App {
                     swarm_state.merge_results.page_down(20);
                 }
             }
+            Action::CommandMode => {
+                self.state.mode = Mode::Command;
+                self.command_input.clear();
+            }
             // Other actions - will be wired up in future stories
             Action::NavigateLeft
             | Action::NavigateRight
-            | Action::CommandMode
             | Action::SearchMode
             | Action::HelpMode
             | Action::JumpToView(_)
@@ -373,15 +491,27 @@ impl App {
     /// Renders the application to the terminal frame.
     ///
     /// Delegates to the current view's renderer based on the view stack.
+    /// Shows the command bar at the bottom when in command mode.
     pub fn render(&self, frame: &mut Frame) {
         let area = frame.area();
 
-        let chunks = Layout::default()
-            .constraints([Constraint::Min(0)])
-            .split(area);
+        // Reserve space for command bar if in command mode
+        let (main_area, command_area) = if self.state.mode == Mode::Command {
+            let chunks = Layout::default()
+                .constraints([Constraint::Min(0), Constraint::Length(1)])
+                .split(area);
+            (chunks[0], Some(chunks[1]))
+        } else {
+            (area, None)
+        };
 
         // Delegate rendering to the current view
-        self.render_current_view(frame, chunks[0]);
+        self.render_current_view(frame, main_area);
+
+        // Render command bar if in command mode
+        if let Some(cmd_area) = command_area {
+            CommandBarWidget::render(frame, cmd_area, &self.command_input, &self.theme);
+        }
     }
 
     /// Renders the current view from the view stack.
@@ -955,5 +1085,101 @@ mod tests {
             confirmation.confirmation_type(),
             Some(ConfirmationType::Restart)
         );
+    }
+
+    // ==================== Command Mode Tests ====================
+
+    #[test]
+    fn handle_key_colon_enters_command_mode() {
+        let mut app = App::new();
+        assert_eq!(app.state.mode, Mode::Normal);
+
+        let key = KeyEvent::new(KeyCode::Char(':'), KeyModifiers::NONE);
+        app.handle_key(key);
+
+        assert_eq!(app.state.mode, Mode::Command);
+    }
+
+    #[test]
+    fn command_mode_escape_returns_to_normal() {
+        let mut app = App::new();
+        app.state.mode = Mode::Command;
+
+        let key = KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE);
+        app.handle_key(key);
+
+        assert_eq!(app.state.mode, Mode::Normal);
+    }
+
+    #[test]
+    fn command_mode_typing_fills_buffer() {
+        let mut app = App::new();
+        app.state.mode = Mode::Command;
+
+        // Type "theme"
+        for c in "theme".chars() {
+            let key = KeyEvent::new(KeyCode::Char(c), KeyModifiers::NONE);
+            app.handle_key(key);
+        }
+
+        assert_eq!(app.command_input.buffer, "theme");
+    }
+
+    #[test]
+    fn command_mode_enter_executes_command() {
+        let mut app = App::new();
+        app.state.mode = Mode::Command;
+        app.command_input.buffer = "theme dark".into();
+        app.command_input.cursor = 10;
+
+        let key = KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE);
+        app.handle_key(key);
+
+        // Theme should have changed
+        assert_eq!(app.theme.name, "dark");
+        // Should return to normal mode
+        assert_eq!(app.state.mode, Mode::Normal);
+    }
+
+    #[test]
+    fn command_mode_backspace_deletes_char() {
+        let mut app = App::new();
+        app.state.mode = Mode::Command;
+        app.command_input.buffer = "theme".into();
+        app.command_input.cursor = 5;
+
+        let key = KeyEvent::new(KeyCode::Backspace, KeyModifiers::NONE);
+        app.handle_key(key);
+
+        assert_eq!(app.command_input.buffer, "them");
+    }
+
+    #[test]
+    fn command_mode_tab_triggers_completion() {
+        let mut app = App::new();
+        app.state.mode = Mode::Command;
+        app.command_input.buffer = "th".into();
+        app.command_input.cursor = 2;
+
+        let key = KeyEvent::new(KeyCode::Tab, KeyModifiers::NONE);
+        app.handle_key(key);
+
+        // Should have completions
+        assert!(!app.command_input.completions.is_empty());
+    }
+
+    #[test]
+    fn theme_command_changes_app_theme() {
+        let mut app = App::new();
+        assert_eq!(app.theme.name, "vibes");
+
+        // Enter command mode and execute theme command
+        app.state.mode = Mode::Command;
+        app.command_input.buffer = "theme light".into();
+
+        let key = KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE);
+        app.handle_key(key);
+
+        assert_eq!(app.theme.name, "light");
     }
 }
