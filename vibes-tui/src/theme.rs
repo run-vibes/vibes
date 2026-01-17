@@ -92,7 +92,7 @@ impl ThemeLoader {
     /// Create a new loader with only builtin themes.
     pub fn new() -> Self {
         Self {
-            builtin: vec![vibes_default()],
+            builtin: builtin_themes(),
             custom: Vec::new(),
             active: "vibes".into(),
         }
@@ -110,7 +110,7 @@ impl ThemeLoader {
             .collect();
 
         Ok(Self {
-            builtin: vec![vibes_default()],
+            builtin: builtin_themes(),
             custom: custom?,
             active: config.theme.active,
         })
@@ -264,6 +264,118 @@ pub fn vibes_default() -> Theme {
         dim: Style::default().fg(fg).add_modifier(Modifier::DIM),
         italic: Style::default().fg(fg).add_modifier(Modifier::ITALIC),
     }
+}
+
+/// Creates the dark theme with neutral gray tones for reduced eye strain.
+pub fn dark() -> Theme {
+    let fg = Color::Rgb(212, 212, 212); // #d4d4d4
+
+    Theme {
+        name: "dark".into(),
+
+        // Base colors
+        bg: Color::Rgb(30, 30, 30), // #1e1e1e
+        fg,
+        accent: Color::Rgb(86, 156, 214),   // #569cd6 blue
+        success: Color::Rgb(78, 201, 176),  // #4ec9b0 teal
+        warning: Color::Rgb(220, 220, 170), // #dcdcaa yellow
+        error: Color::Rgb(244, 71, 71),     // #f44747 red
+
+        // Status colors
+        running: Color::Rgb(78, 201, 176),    // teal
+        paused: Color::Rgb(220, 220, 170),    // yellow
+        completed: Color::Rgb(128, 128, 128), // gray
+        failed: Color::Rgb(244, 71, 71),      // red
+
+        // UI element colors
+        border: Color::Rgb(68, 68, 68),     // #444444
+        selection: Color::Rgb(38, 79, 120), // #264f78 blue
+        highlight: Color::Rgb(51, 51, 51),  // #333333
+
+        // Text styles
+        bold: Style::default().fg(fg).add_modifier(Modifier::BOLD),
+        dim: Style::default().fg(fg).add_modifier(Modifier::DIM),
+        italic: Style::default().fg(fg).add_modifier(Modifier::ITALIC),
+    }
+}
+
+/// Creates the light theme for bright environments.
+pub fn light() -> Theme {
+    let fg = Color::Rgb(51, 51, 51); // #333333
+
+    Theme {
+        name: "light".into(),
+
+        // Base colors
+        bg: Color::Rgb(255, 255, 255), // #ffffff white
+        fg,
+        accent: Color::Rgb(0, 122, 204),  // #007acc blue
+        success: Color::Rgb(22, 163, 74), // #16a34a green
+        warning: Color::Rgb(202, 138, 4), // #ca8a04 amber
+        error: Color::Rgb(220, 38, 38),   // #dc2626 red
+
+        // Status colors
+        running: Color::Rgb(22, 163, 74),     // green
+        paused: Color::Rgb(202, 138, 4),      // amber
+        completed: Color::Rgb(156, 163, 175), // gray
+        failed: Color::Rgb(220, 38, 38),      // red
+
+        // UI element colors
+        border: Color::Rgb(209, 213, 219), // #d1d5db visible on white
+        selection: Color::Rgb(191, 219, 254), // #bfdbfe light blue
+        highlight: Color::Rgb(243, 244, 246), // #f3f4f6 light gray
+
+        // Text styles
+        bold: Style::default().fg(fg).add_modifier(Modifier::BOLD),
+        dim: Style::default().fg(fg).add_modifier(Modifier::DIM),
+        italic: Style::default().fg(fg).add_modifier(Modifier::ITALIC),
+    }
+}
+
+/// Creates the high-contrast theme for maximum accessibility.
+pub fn high_contrast() -> Theme {
+    let fg = Color::White;
+
+    Theme {
+        name: "high-contrast".into(),
+
+        // Base colors - pure black and white
+        bg: Color::Black,
+        fg,
+        accent: Color::Rgb(0, 255, 255),  // #00ffff pure cyan
+        success: Color::Rgb(0, 255, 0),   // #00ff00 pure green
+        warning: Color::Rgb(255, 255, 0), // #ffff00 pure yellow
+        error: Color::Rgb(255, 0, 0),     // #ff0000 pure red
+
+        // Status colors - saturated for visibility
+        running: Color::Rgb(0, 255, 0),       // pure green
+        paused: Color::Rgb(255, 255, 0),      // pure yellow
+        completed: Color::Rgb(128, 128, 128), // mid gray
+        failed: Color::Rgb(255, 0, 0),        // pure red
+
+        // UI element colors
+        border: Color::White,
+        selection: Color::Rgb(0, 0, 128),  // navy blue
+        highlight: Color::Rgb(64, 64, 64), // dark gray
+
+        // Text styles
+        bold: Style::default().fg(fg).add_modifier(Modifier::BOLD),
+        dim: Style::default().fg(fg).add_modifier(Modifier::DIM),
+        italic: Style::default().fg(fg).add_modifier(Modifier::ITALIC),
+    }
+}
+
+/// Returns all builtin themes.
+pub fn builtin_themes() -> Vec<Theme> {
+    vec![vibes_default(), dark(), light(), high_contrast()]
+}
+
+/// Gets a builtin theme by name.
+///
+/// Used by the `:theme` command to select themes at runtime.
+#[allow(dead_code)] // Used by m45-feat-03 runtime theme switching
+pub fn builtin_theme(name: &str) -> Option<Theme> {
+    builtin_themes().into_iter().find(|t| t.name == name)
 }
 
 #[cfg(test)]
@@ -486,5 +598,173 @@ highlight = "#009664"
         let theme = vibes_default();
         let cloned = theme.clone();
         assert_eq!(theme.name, cloned.name);
+    }
+
+    // === Builtin theme registry tests (TDD: RED first) ===
+
+    #[test]
+    fn builtin_themes_returns_all_four_themes() {
+        let themes = builtin_themes();
+        assert_eq!(themes.len(), 4);
+    }
+
+    #[test]
+    fn builtin_themes_includes_vibes() {
+        let themes = builtin_themes();
+        assert!(themes.iter().any(|t| t.name == "vibes"));
+    }
+
+    #[test]
+    fn builtin_themes_includes_dark() {
+        let themes = builtin_themes();
+        assert!(themes.iter().any(|t| t.name == "dark"));
+    }
+
+    #[test]
+    fn builtin_themes_includes_light() {
+        let themes = builtin_themes();
+        assert!(themes.iter().any(|t| t.name == "light"));
+    }
+
+    #[test]
+    fn builtin_themes_includes_high_contrast() {
+        let themes = builtin_themes();
+        assert!(themes.iter().any(|t| t.name == "high-contrast"));
+    }
+
+    #[test]
+    fn builtin_theme_finds_vibes_by_name() {
+        let theme = builtin_theme("vibes");
+        assert!(theme.is_some());
+        assert_eq!(theme.unwrap().name, "vibes");
+    }
+
+    #[test]
+    fn builtin_theme_finds_dark_by_name() {
+        let theme = builtin_theme("dark");
+        assert!(theme.is_some());
+        assert_eq!(theme.unwrap().name, "dark");
+    }
+
+    #[test]
+    fn builtin_theme_returns_none_for_unknown() {
+        let theme = builtin_theme("nonexistent");
+        assert!(theme.is_none());
+    }
+
+    // === Dark theme tests (TDD: RED first) ===
+
+    #[test]
+    fn dark_theme_has_correct_name() {
+        let theme = dark();
+        assert_eq!(theme.name, "dark");
+    }
+
+    #[test]
+    fn dark_theme_has_dark_background() {
+        let theme = dark();
+        // #1e1e1e = RGB(30, 30, 30)
+        assert_eq!(theme.bg, Color::Rgb(30, 30, 30));
+    }
+
+    #[test]
+    fn dark_theme_has_light_foreground() {
+        let theme = dark();
+        // #d4d4d4 = RGB(212, 212, 212)
+        assert_eq!(theme.fg, Color::Rgb(212, 212, 212));
+    }
+
+    #[test]
+    fn dark_theme_has_blue_accent() {
+        let theme = dark();
+        // #569cd6 = RGB(86, 156, 214)
+        assert_eq!(theme.accent, Color::Rgb(86, 156, 214));
+    }
+
+    // === Light theme tests (TDD: RED first) ===
+
+    #[test]
+    fn light_theme_has_correct_name() {
+        let theme = light();
+        assert_eq!(theme.name, "light");
+    }
+
+    #[test]
+    fn light_theme_has_white_background() {
+        let theme = light();
+        // #ffffff = RGB(255, 255, 255)
+        assert_eq!(theme.bg, Color::Rgb(255, 255, 255));
+    }
+
+    #[test]
+    fn light_theme_has_dark_foreground() {
+        let theme = light();
+        // #333333 = RGB(51, 51, 51)
+        assert_eq!(theme.fg, Color::Rgb(51, 51, 51));
+    }
+
+    #[test]
+    fn light_theme_has_visible_border() {
+        let theme = light();
+        // Border should contrast with white background
+        // Should be darker than #dddddd for visibility
+        if let Color::Rgb(r, g, b) = theme.border {
+            assert!(
+                r < 220 && g < 220 && b < 220,
+                "border should be visible on white"
+            );
+        } else {
+            panic!("border should be RGB");
+        }
+    }
+
+    // === High-contrast theme tests (TDD: RED first) ===
+
+    #[test]
+    fn high_contrast_theme_has_correct_name() {
+        let theme = high_contrast();
+        assert_eq!(theme.name, "high-contrast");
+    }
+
+    #[test]
+    fn high_contrast_theme_has_black_background() {
+        let theme = high_contrast();
+        assert_eq!(theme.bg, Color::Black);
+    }
+
+    #[test]
+    fn high_contrast_theme_has_white_foreground() {
+        let theme = high_contrast();
+        assert_eq!(theme.fg, Color::White);
+    }
+
+    #[test]
+    fn high_contrast_theme_has_cyan_accent() {
+        let theme = high_contrast();
+        // Pure cyan #00ffff
+        assert_eq!(theme.accent, Color::Rgb(0, 255, 255));
+    }
+
+    #[test]
+    fn high_contrast_theme_uses_saturated_colors() {
+        let theme = high_contrast();
+        // Success should be pure green
+        assert_eq!(theme.success, Color::Rgb(0, 255, 0));
+        // Warning should be pure yellow
+        assert_eq!(theme.warning, Color::Rgb(255, 255, 0));
+        // Error should be pure red
+        assert_eq!(theme.error, Color::Rgb(255, 0, 0));
+    }
+
+    // === ThemeLoader builtin integration tests ===
+
+    #[test]
+    fn theme_loader_new_includes_all_builtins() {
+        let loader = ThemeLoader::new();
+        let names = loader.list();
+        assert!(names.contains(&"vibes"));
+        assert!(names.contains(&"dark"));
+        assert!(names.contains(&"light"));
+        assert!(names.contains(&"high-contrast"));
     }
 }

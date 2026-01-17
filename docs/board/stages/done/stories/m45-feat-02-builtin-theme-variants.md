@@ -2,7 +2,7 @@
 id: m45-feat-02
 title: Built-in theme variants
 type: feat
-status: backlog
+status: done
 priority: high
 epics: [tui]
 depends: [m45-feat-01]
@@ -115,11 +115,11 @@ pub fn builtin_theme(name: &str) -> Option<Theme> {
 
 ## Acceptance Criteria
 
-- [ ] `dark` theme provides neutral gray tones
-- [ ] `light` theme has white background with dark text
-- [ ] `high-contrast` theme uses pure black/white with saturated colors
-- [ ] All themes have consistent field mappings
-- [ ] `builtin_themes()` returns all 4 themes
-- [ ] `builtin_theme("name")` returns correct theme
-- [ ] Each theme has appropriate selection/highlight contrast
-- [ ] Light theme borders are visible on white background
+- [x] `dark` theme provides neutral gray tones
+- [x] `light` theme has white background with dark text
+- [x] `high-contrast` theme uses pure black/white with saturated colors
+- [x] All themes have consistent field mappings
+- [x] `builtin_themes()` returns all 4 themes
+- [x] `builtin_theme("name")` returns correct theme
+- [x] Each theme has appropriate selection/highlight contrast
+- [x] Light theme borders are visible on white background
