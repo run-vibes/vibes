@@ -2,7 +2,7 @@
 id: m45-feat-01
 title: Theme config file loader
 type: feat
-status: backlog
+status: in-progress
 priority: high
 epics: [tui]
 depends: []
@@ -119,11 +119,11 @@ pub enum ThemeLoadError {
 
 ## Acceptance Criteria
 
-- [ ] ThemeLoader loads themes from TOML config file
-- [ ] Custom themes override builtin themes with same name
-- [ ] Invalid config files produce clear error messages
-- [ ] Hex colors in #RRGGBB format are parsed correctly
-- [ ] Missing config file falls back to builtin themes gracefully
-- [ ] `theme.active` selects the startup theme
-- [ ] All theme fields are configurable via TOML
-- [ ] Unit tests cover color parsing edge cases
+- [x] ThemeLoader loads themes from TOML config file
+- [x] Custom themes override builtin themes with same name
+- [x] Invalid config files produce clear error messages
+- [x] Hex colors in #RRGGBB format are parsed correctly
+- [x] Missing config file falls back to builtin themes gracefully
+- [x] `theme.active` selects the startup theme
+- [x] All theme fields are configurable via TOML
+- [x] Unit tests cover color parsing edge cases

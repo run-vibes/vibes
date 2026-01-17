@@ -7995,10 +7995,14 @@ dependencies = [
  "crossterm 0.28.1",
  "futures-util",
  "ratatui",
+ "serde",
  "serde_json",
+ "thiserror 2.0.17",
  "tokio",
  "tokio-tungstenite 0.26.2",
+ "toml 0.8.23",
  "tracing",
+ "vibes-paths",
  "vibes-server",
 ]
 

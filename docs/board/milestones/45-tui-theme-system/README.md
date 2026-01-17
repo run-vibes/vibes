@@ -1,7 +1,7 @@
 ---
 id: 45-tui-theme-system
 title: TUI Theme System
-status: planned
+status: in-progress
 epics: [tui]
 ---
 
