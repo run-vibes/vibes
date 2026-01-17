@@ -2,7 +2,7 @@
 id: m45-feat-04
 title: Theme preview in settings
 type: feat
-status: backlog
+status: in-progress
 priority: medium
 epics: [tui]
 depends: [m45-feat-01, m45-feat-02]
