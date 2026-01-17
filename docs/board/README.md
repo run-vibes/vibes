@@ -15,7 +15,6 @@
 |-------|------|----------|-------|
 | [chore-0087-use-cranelift-for-builds](stages/backlog/stories/chore-0087-use-cranelift-for-builds.md) | chore | low | dev-environment |
 | [chore-0110-add-scheduled-mutation-testing-workflow](stages/backlog/stories/chore-0110-add-scheduled-mutation-testing-workflow.md) | chore | medium |  |
-| [[CHORE][0111]-create-design-system-epic](stages/backlog/stories/[CHORE][0111]-create-design-system-epic.md) | chore | high | coherence-verification |
 | [[CHORE][0112]-migrate-milestones-to-epics](stages/backlog/stories/[CHORE][0112]-migrate-milestones-to-epics.md) | chore | high | coherence-verification |
 | [[CHORE][0113]-rename-stories-new-format](stages/backlog/stories/[CHORE][0113]-rename-stories-new-format.md) | chore | high | coherence-verification |
 | [[CHORE][0114]-update-board-documentation](stages/backlog/stories/[CHORE][0114]-update-board-documentation.md) | chore | high | coherence-verification |
@@ -40,6 +39,7 @@
 | [coherence-verification](epics/coherence-verification/) | active | 6 |
 | [core](epics/core/) | active | 22 |
 | [cross-platform](epics/cross-platform/) | active | 1 |
+| [design-system](epics/design-system/) | active | 0 |
 | [dev-environment](epics/dev-environment/) | active | 0 |
 | [evals](epics/evals/) | planned | 0 |
 | [groove](epics/groove/) | active | 0 |
@@ -144,6 +144,7 @@
 - [chore-0089-add-sccache-to-nix-dev-shell](stages/done/stories/chore-0089-add-sccache-to-nix-dev-shell.md)
 - [chore-0090-fix-sccache-for-worktrees-and-cross-project-use](stages/done/stories/chore-0090-fix-sccache-for-worktrees-and-cross-project-use.md)
 - [chore-0109-turborepo-worktree-caching](stages/done/stories/chore-0109-turborepo-worktree-caching.md)
+- [[CHORE][0111]-create-design-system-epic](stages/done/stories/[CHORE][0111]-create-design-system-epic.md)
 - [docs-0001-fix-broken-documentation-links](stages/done/stories/docs-0001-fix-broken-documentation-links.md)
 - [docs-0002-update-prd-for-current-architecture](stages/done/stories/docs-0002-update-prd-for-current-architecture.md)
 - [docs-0068-documentation-review](stages/done/stories/docs-0068-documentation-review.md)

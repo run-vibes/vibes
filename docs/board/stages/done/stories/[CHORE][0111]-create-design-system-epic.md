@@ -2,7 +2,7 @@
 id: CHORE0111
 title: Create design-system epic
 type: chore
-status: backlog
+status: done
 priority: high
 epics: [coherence-verification]
 depends: []
