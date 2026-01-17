@@ -86,7 +86,6 @@ This means:
 | `just` | List all available commands |
 | `just setup` | Full setup for new developers |
 | `just build` | Debug build (vibes + iggy-server) |
-| `just build-release` | Release build |
 | `just pre-commit` | All checks before committing |
 
 ### Module Commands

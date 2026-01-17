@@ -68,13 +68,3 @@ build: web::build builds::_check-submodules
     echo "✓ Built: vibes (debug), iggy-server (debug)"
     echo "  Local: ./target/debug/"
 
-# Build release (vibes + iggy)
-# Compiles to $CARGO_TARGET_DIR, copies binaries to ./target/release/ for worktree isolation
-build-release: web::build builds::_check-submodules
-    #!/usr/bin/env bash
-    set -euo pipefail
-    cargo build --release
-    cargo build --release --manifest-path vendor/iggy/Cargo.toml -p server
-    just builds _copy-binaries release
-    echo "✓ Built: vibes (release), iggy-server (release)"
-    echo "  Local: ./target/release/"
