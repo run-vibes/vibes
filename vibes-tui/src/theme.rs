@@ -82,6 +82,7 @@ impl ThemeConfigRaw {
 }
 
 /// Loads and manages themes from config files.
+#[derive(Clone)]
 pub struct ThemeLoader {
     builtin: Vec<Theme>,
     custom: Vec<Theme>,

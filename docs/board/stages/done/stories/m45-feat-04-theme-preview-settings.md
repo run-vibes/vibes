@@ -2,7 +2,7 @@
 id: m45-feat-04
 title: Theme preview in settings
 type: feat
-status: in-progress
+status: done
 priority: medium
 epics: [tui]
 depends: [m45-feat-01, m45-feat-02]
@@ -120,13 +120,13 @@ The preview widget demonstrates:
 
 ## Acceptance Criteria
 
-- [ ] Settings view has Appearance section
-- [ ] Theme selector lists all available themes
-- [ ] Current theme is highlighted in the list
-- [ ] Preview widget shows selected theme colors
-- [ ] Preview updates immediately on selection change
-- [ ] Apply button saves theme to config
-- [ ] Cancel button reverts to original theme
-- [ ] Keyboard navigation works (j/k/↑/↓)
-- [ ] Enter applies, Escape cancels
-- [ ] Preview shows all key color categories
+- [x] Settings view has Appearance section
+- [x] Theme selector lists all available themes
+- [x] Current theme is highlighted in the list
+- [x] Preview widget shows selected theme colors
+- [x] Preview updates immediately on selection change
+- [x] Apply button saves theme to config
+- [x] Cancel button reverts to original theme
+- [x] Keyboard navigation works (j/k/↑/↓)
+- [x] Enter applies, Escape cancels
+- [x] Preview shows all key color categories

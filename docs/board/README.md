@@ -8,7 +8,6 @@
 | Story | Type | Priority | Epics |
 |-------|------|----------|-------|
 | [m39-feat-05-eval-cli](stages/in-progress/stories/m39-feat-05-eval-cli.md) | feat | medium | evals |
-| [m45-feat-04-theme-preview-settings](stages/in-progress/stories/m45-feat-04-theme-preview-settings.md) | feat | medium | tui |
 
 ## Backlog
 
@@ -291,6 +290,7 @@
 - [m45-feat-01-theme-config-loader](stages/done/stories/m45-feat-01-theme-config-loader.md)
 - [m45-feat-02-builtin-theme-variants](stages/done/stories/m45-feat-02-builtin-theme-variants.md)
 - [m45-feat-03-runtime-theme-switching](stages/done/stories/m45-feat-03-runtime-theme-switching.md)
+- [m45-feat-04-theme-preview-settings](stages/done/stories/m45-feat-04-theme-preview-settings.md)
 - [refactor-0008-consolidate-assessment-types-module](stages/done/stories/refactor-0008-consolidate-assessment-types-module.md)
 - [refactor-0069-dashboard-visual-consistency](stages/done/stories/refactor-0069-dashboard-visual-consistency.md)
 - [refactor-0070-design-system-extraction](stages/done/stories/refactor-0070-design-system-extraction.md)

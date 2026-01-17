@@ -49,6 +49,9 @@ pub enum Action {
 
     // Connection
     Retry,
+
+    // Settings
+    OpenSettings,
 }
 
 /// Keybindings configuration with global and view-specific layers.
@@ -134,6 +137,9 @@ impl Default for KeyBindings {
 
         // Connection
         global.insert(key('r'), Action::Retry);
+
+        // Settings
+        global.insert(key('s'), Action::OpenSettings);
 
         // Jump to views (1-9)
         for i in 1..=9 {
@@ -510,6 +516,41 @@ mod tests {
         assert_eq!(
             bindings.resolve(key('q'), &View::Swarm("test".into())),
             Some(Action::Quit)
+        );
+    }
+
+    // ==================== Settings Keybinding Tests ====================
+
+    #[test]
+    fn action_enum_has_open_settings_variant() {
+        let _settings = Action::OpenSettings;
+    }
+
+    #[test]
+    fn keybindings_s_maps_to_open_settings_globally() {
+        let bindings = KeyBindings::default();
+        assert_eq!(
+            bindings.resolve_global(key('s')),
+            Some(Action::OpenSettings)
+        );
+    }
+
+    #[test]
+    fn keybindings_dashboard_s_opens_settings() {
+        let bindings = KeyBindings::default();
+        assert_eq!(
+            bindings.resolve(key('s'), &View::Dashboard),
+            Some(Action::OpenSettings)
+        );
+    }
+
+    #[test]
+    fn keybindings_swarm_s_saves_to_file_not_settings() {
+        let bindings = KeyBindings::default();
+        // In Swarm view, 's' should be SaveToFile (swarm binding overrides global)
+        assert_eq!(
+            bindings.resolve(key('s'), &View::Swarm("test".into())),
+            Some(Action::SaveToFile)
         );
     }
 }

@@ -16,6 +16,8 @@ mod permission;
 mod session_list;
 mod stats_bar;
 mod swarm_status;
+mod theme_preview;
+mod theme_selector;
 
 pub use activity_feed::{ActivityEvent, ActivityFeedWidget};
 #[allow(unused_imports)] // AgentCardStatus used in tests and future swarm integration
@@ -38,3 +40,5 @@ pub use session_list::{SessionInfo, SessionListWidget, SessionStatus};
 pub use stats_bar::{ConnectionStatus, StatsBarWidget};
 #[allow(unused_imports)] // Public API for swarm coordination status
 pub use swarm_status::{AgentCounts, SwarmMetrics, SwarmStatus, SwarmStrategy};
+pub use theme_preview::ThemePreview;
+pub use theme_selector::ThemeSelector;
