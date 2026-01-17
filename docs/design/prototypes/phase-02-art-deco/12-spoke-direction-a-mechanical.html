@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SPOKE — Direction A: Mechanical Precision</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    /* ═══════════════════════════════════════════════════════════════════════════
+       SPOKE — DIRECTION A: MECHANICAL PRECISION
+       Da Vinci meets NASA. Blueprint engineering. Technical mastery.
+
+       Key elements:
+       - Blueprint grid background with technical markings
+       - Radial gauge aesthetics
+       - Wheel cross-sections and spoke geometry
+       - Technical annotations and measurement lines
+       - Industrial typography (more condensed, all-caps)
+       ═══════════════════════════════════════════════════════════════════════════ */
+
+    :root {
+      /* Override gold with more industrial copper/bronze tones */
+      --mech-copper: #c4956a;
+      --mech-bronze: #a87d52;
+      --mech-steel: #7a8a9a;
+      --mech-grid: rgba(100, 130, 160, 0.08);
+      --mech-grid-strong: rgba(100, 130, 160, 0.15);
+      --mech-annotation: #5d7a94;
+      --mech-highlight: #e8c45a;
+    }
+
+    body {
+      background: var(--bg-void);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ─── Blueprint Grid Background ─── */
+    .blueprint-bg {
+      position: fixed;
+      inset: 0;
+      background:
+        /* Major grid lines */
+        linear-gradient(var(--mech-grid-strong) 1px, transparent 1px) 0 0 / 100px 100px,
+        linear-gradient(90deg, var(--mech-grid-strong) 1px, transparent 1px) 0 0 / 100px 100px,
+        /* Minor grid lines */
+        linear-gradient(var(--mech-grid) 1px, transparent 1px) 0 0 / 20px 20px,
+        linear-gradient(90deg, var(--mech-grid) 1px, transparent 1px) 0 0 / 20px 20px,
+        var(--bg-void);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── Technical Annotation Style ─── */
+    .annotation {
+      font-family: 'Courier New', monospace;
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--mech-annotation);
+      opacity: 0.7;
+    }
+
+    .dimension-line {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dimension-line::before,
+    .dimension-line::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--mech-annotation);
+      opacity: 0.4;
+    }
+
+    .dimension-line::before {
+      background: linear-gradient(90deg, transparent, var(--mech-annotation));
+    }
+
+    .dimension-line::after {
+      background: linear-gradient(90deg, var(--mech-annotation), transparent);
+    }
+
+    /* ─── Main Container ─── */
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 40px;
+    }
+
+    /* ─── Technical Header ─── */
+    .tech-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 60px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--mech-grid-strong);
+    }
+
+    .logo-section {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .spoke-mark {
+      width: 80px;
+      height: 80px;
+      position: relative;
+    }
+
+    /* SVG Wheel Mark - Technical/Blueprint style */
+    .spoke-mark svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .wordmark {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .wordmark-main {
+      font-family: var(--font-condensed);
+      font-size: 48px;
+      font-weight: 700;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--text-primary);
+      line-height: 1;
+    }
+
+    .wordmark-sub {
+      font-family: 'Courier New', monospace;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--mech-annotation);
+    }
+
+    .header-meta {
+      text-align: right;
+    }
+
+    .drawing-number {
+      font-family: var(--font-condensed);
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      color: var(--mech-copper);
+    }
+
+    .revision-info {
+      font-family: 'Courier New', monospace;
+      font-size: 9px;
+      color: var(--mech-annotation);
+      margin-top: 4px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       MAIN VISUALIZATION — Technical Wheel Diagram
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .wheel-diagram {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 40px 0;
+    }
+
+    .wheel-container {
+      position: relative;
+      width: 600px;
+      height: 600px;
+    }
+
+    /* Technical measurement guides */
+    .measurement-guides {
+      position: absolute;
+      inset: -60px;
+      pointer-events: none;
+    }
+
+    .guide-ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px dashed var(--mech-annotation);
+      opacity: 0.3;
+    }
+
+    .guide-ring.outer { inset: 0; }
+    .guide-ring.middle { inset: 60px; }
+    .guide-ring.inner { inset: 120px; }
+    .guide-ring.hub { inset: 220px; }
+
+    /* Radial tick marks */
+    .tick-marks {
+      position: absolute;
+      inset: 0;
+    }
+
+    .tick-mark {
+      position: absolute;
+      width: 2px;
+      height: 15px;
+      background: var(--mech-annotation);
+      opacity: 0.4;
+      transform-origin: center 300px;
+    }
+
+    .tick-mark.major {
+      height: 25px;
+      opacity: 0.6;
+    }
+
+    /* ─── Central Hub (You) ─── */
+    .hub {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 160px;
+      height: 160px;
+      z-index: 10;
+    }
+
+    .hub-outer {
+      position: absolute;
+      inset: 0;
+      border: 3px solid var(--mech-copper);
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 30% 30%, rgba(196, 149, 106, 0.15) 0%, transparent 50%),
+        var(--bg-card);
+    }
+
+    .hub-inner {
+      position: absolute;
+      inset: 20px;
+      border: 2px solid var(--mech-bronze);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-elevated);
+    }
+
+    .hub-center-dot {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 8px;
+      height: 8px;
+      background: var(--mech-highlight);
+      border-radius: 50%;
+      box-shadow: 0 0 20px var(--mech-highlight);
+    }
+
+    .hub-label {
+      font-family: var(--font-condensed);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--mech-copper);
+      margin-bottom: 4px;
+    }
+
+    .hub-sublabel {
+      font-family: 'Courier New', monospace;
+      font-size: 8px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--mech-annotation);
+    }
+
+    /* Cross-hairs through hub */
+    .hub-crosshair {
+      position: absolute;
+      background: var(--mech-annotation);
+      opacity: 0.3;
+    }
+
+    .hub-crosshair.horizontal {
+      width: 200%;
+      height: 1px;
+      top: 50%;
+      left: -50%;
+    }
+
+    .hub-crosshair.vertical {
+      width: 1px;
+      height: 200%;
+      left: 50%;
+      top: -50%;
+    }
+
+    /* ─── Spokes ─── */
+    .spoke {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform-origin: 0 0;
+      z-index: 5;
+    }
+
+    .spoke-line {
+      position: absolute;
+      width: 220px;
+      height: 2px;
+      background: linear-gradient(90deg,
+        var(--mech-bronze) 0%,
+        var(--mech-copper) 50%,
+        var(--mech-steel) 100%
+      );
+      transform-origin: left center;
+      box-shadow: 0 0 10px rgba(196, 149, 106, 0.2);
+    }
+
+    .spoke-line::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 8px;
+      height: 8px;
+      background: var(--mech-bronze);
+      border-radius: 50%;
+      border: 2px solid var(--mech-copper);
+    }
+
+    /* ─── Data Source Nodes (Rim) ─── */
+    .node {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 15;
+    }
+
+    .node-body {
+      width: 100px;
+      height: 70px;
+      background: var(--bg-card);
+      border: 2px solid var(--mech-steel);
+      clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 8px;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .node-body::before {
+      content: '';
+      position: absolute;
+      inset: 3px;
+      clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .node:hover .node-body {
+      border-color: var(--mech-copper);
+      box-shadow: 0 0 20px rgba(196, 149, 106, 0.3);
+    }
+
+    .node-icon {
+      font-size: 18px;
+      margin-bottom: 4px;
+    }
+
+    .node-label {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      text-align: center;
+    }
+
+    .node-status {
+      font-family: 'Courier New', monospace;
+      font-size: 8px;
+      color: var(--accent-success);
+      margin-top: 2px;
+    }
+
+    /* Position nodes around the wheel */
+    .node-1 { transform: translate(-50%, -50%) translate(0, -280px); }
+    .node-2 { transform: translate(-50%, -50%) translate(243px, -140px); }
+    .node-3 { transform: translate(-50%, -50%) translate(243px, 140px); }
+    .node-4 { transform: translate(-50%, -50%) translate(0, 280px); }
+    .node-5 { transform: translate(-50%, -50%) translate(-243px, 140px); }
+    .node-6 { transform: translate(-50%, -50%) translate(-243px, -140px); }
+
+    /* ─── Technical Callouts ─── */
+    .callout {
+      position: absolute;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .callout-line {
+      width: 60px;
+      height: 1px;
+      background: var(--mech-annotation);
+      opacity: 0.5;
+      margin-top: 6px;
+    }
+
+    .callout-content {
+      max-width: 160px;
+    }
+
+    .callout-title {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--mech-copper);
+      margin-bottom: 4px;
+    }
+
+    .callout-text {
+      font-family: 'Courier New', monospace;
+      font-size: 9px;
+      line-height: 1.5;
+      color: var(--mech-annotation);
+    }
+
+    .callout.left {
+      right: calc(50% + 340px);
+      flex-direction: row-reverse;
+      text-align: right;
+    }
+
+    .callout.right {
+      left: calc(50% + 340px);
+    }
+
+    .callout.top { top: 80px; }
+    .callout.middle { top: 50%; transform: translateY(-50%); }
+    .callout.bottom { bottom: 80px; }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       METRICS PANEL — Industrial Gauge Style
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .metrics-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-top: 60px;
+    }
+
+    .gauge-card {
+      background: var(--bg-card);
+      border: 1px solid var(--mech-grid-strong);
+      padding: 20px;
+      position: relative;
+    }
+
+    .gauge-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: linear-gradient(90deg, var(--mech-bronze), var(--mech-copper), var(--mech-bronze));
+    }
+
+    .gauge-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .gauge-label {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--mech-annotation);
+    }
+
+    .gauge-unit {
+      font-family: 'Courier New', monospace;
+      font-size: 8px;
+      color: var(--text-muted);
+    }
+
+    .gauge-value {
+      font-family: var(--font-display);
+      font-size: 36px;
+      font-weight: 300;
+      color: var(--text-bright);
+      line-height: 1;
+      margin-bottom: 12px;
+    }
+
+    .gauge-bar {
+      height: 8px;
+      background: var(--bg-void);
+      position: relative;
+      margin-bottom: 8px;
+    }
+
+    .gauge-bar::before,
+    .gauge-bar::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 4px;
+      height: 14px;
+      background: var(--mech-bronze);
+    }
+
+    .gauge-bar::before { left: -6px; }
+    .gauge-bar::after { right: -6px; }
+
+    .gauge-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--mech-bronze), var(--mech-copper));
+      transition: width 0.6s ease;
+    }
+
+    .gauge-scale {
+      display: flex;
+      justify-content: space-between;
+      font-family: 'Courier New', monospace;
+      font-size: 8px;
+      color: var(--text-muted);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       FOOTER — Technical Drawing Style
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .tech-footer {
+      margin-top: 60px;
+      padding-top: 20px;
+      border-top: 1px solid var(--mech-grid-strong);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .title-block {
+      display: grid;
+      grid-template-columns: repeat(4, auto);
+      gap: 1px;
+      background: var(--mech-grid-strong);
+      border: 1px solid var(--mech-grid-strong);
+    }
+
+    .title-cell {
+      background: var(--bg-card);
+      padding: 8px 16px;
+    }
+
+    .title-cell-label {
+      font-family: 'Courier New', monospace;
+      font-size: 8px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--mech-annotation);
+      margin-bottom: 2px;
+    }
+
+    .title-cell-value {
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: var(--text-primary);
+    }
+
+    .scale-indicator {
+      font-family: 'Courier New', monospace;
+      font-size: 10px;
+      color: var(--mech-annotation);
+    }
+  </style>
+</head>
+<body class="deco-bg">
+  <div class="blueprint-bg"></div>
+
+  <div class="container">
+    <!-- Technical Header -->
+    <header class="tech-header">
+      <div class="logo-section">
+        <div class="spoke-mark">
+          <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Outer rim -->
+            <circle cx="40" cy="40" r="38" stroke="#7a8a9a" stroke-width="1.5" stroke-dasharray="4 2" fill="none"/>
+            <circle cx="40" cy="40" r="34" stroke="#a87d52" stroke-width="2" fill="none"/>
+
+            <!-- Hub -->
+            <circle cx="40" cy="40" r="12" stroke="#c4956a" stroke-width="2" fill="none"/>
+            <circle cx="40" cy="40" r="8" stroke="#a87d52" stroke-width="1" fill="none"/>
+            <circle cx="40" cy="40" r="3" fill="#e8c45a"/>
+
+            <!-- Spokes (6) -->
+            <line x1="40" y1="14" x2="40" y2="28" stroke="#c4956a" stroke-width="2"/>
+            <line x1="62.5" y1="27" x2="50.4" y2="34" stroke="#c4956a" stroke-width="2"/>
+            <line x1="62.5" y1="53" x2="50.4" y2="46" stroke="#c4956a" stroke-width="2"/>
+            <line x1="40" y1="66" x2="40" y2="52" stroke="#c4956a" stroke-width="2"/>
+            <line x1="17.5" y1="53" x2="29.6" y2="46" stroke="#c4956a" stroke-width="2"/>
+            <line x1="17.5" y1="27" x2="29.6" y2="34" stroke="#c4956a" stroke-width="2"/>
+
+            <!-- Node indicators on rim -->
+            <circle cx="40" cy="8" r="4" fill="none" stroke="#7a8a9a" stroke-width="1"/>
+            <circle cx="67.7" cy="24" r="4" fill="none" stroke="#7a8a9a" stroke-width="1"/>
+            <circle cx="67.7" cy="56" r="4" fill="none" stroke="#7a8a9a" stroke-width="1"/>
+            <circle cx="40" cy="72" r="4" fill="none" stroke="#7a8a9a" stroke-width="1"/>
+            <circle cx="12.3" cy="56" r="4" fill="none" stroke="#7a8a9a" stroke-width="1"/>
+            <circle cx="12.3" cy="24" r="4" fill="none" stroke="#7a8a9a" stroke-width="1"/>
+
+            <!-- Measurement tick marks -->
+            <line x1="40" y1="2" x2="40" y2="5" stroke="#5d7a94" stroke-width="0.5"/>
+            <line x1="78" y1="40" x2="75" y2="40" stroke="#5d7a94" stroke-width="0.5"/>
+            <line x1="40" y1="78" x2="40" y2="75" stroke="#5d7a94" stroke-width="0.5"/>
+            <line x1="2" y1="40" x2="5" y2="40" stroke="#5d7a94" stroke-width="0.5"/>
+          </svg>
+        </div>
+        <div class="wordmark">
+          <div class="wordmark-main">SPOKE</div>
+          <div class="wordmark-sub">UNIFIED DATA INFRASTRUCTURE // DIRECTION A</div>
+        </div>
+      </div>
+      <div class="header-meta">
+        <div class="drawing-number">DWG-001-A</div>
+        <div class="revision-info">REV 1.0 // 2026-01-16</div>
+      </div>
+    </header>
+
+    <!-- Main Wheel Diagram -->
+    <div class="wheel-diagram">
+      <!-- Left Callouts -->
+      <div class="callout left top">
+        <div class="callout-content">
+          <div class="callout-title">Data Ingestion</div>
+          <div class="callout-text">Unified pipeline for batch and streaming data from all connected sources</div>
+        </div>
+        <div class="callout-line"></div>
+      </div>
+
+      <div class="callout left middle">
+        <div class="callout-content">
+          <div class="callout-title">Central Hub</div>
+          <div class="callout-text">Your command center. All spokes connect here. All data flows through.</div>
+        </div>
+        <div class="callout-line"></div>
+      </div>
+
+      <div class="callout left bottom">
+        <div class="callout-content">
+          <div class="callout-title">Hybrid Execution</div>
+          <div class="callout-text">Local processing for speed. Cloud scaling for volume. Automatic routing.</div>
+        </div>
+        <div class="callout-line"></div>
+      </div>
+
+      <!-- Right Callouts -->
+      <div class="callout right top">
+        <div class="callout-content">
+          <div class="callout-title">Data Sources</div>
+          <div class="callout-text">Connect any data source. Each spoke is a typed, versioned connection.</div>
+        </div>
+        <div class="callout-line"></div>
+      </div>
+
+      <div class="callout right middle">
+        <div class="callout-content">
+          <div class="callout-title">Processing Layer</div>
+          <div class="callout-text">Apache Arrow for analytics. Event sourcing for state. Lakehouse for scale.</div>
+        </div>
+        <div class="callout-line"></div>
+      </div>
+
+      <div class="callout right bottom">
+        <div class="callout-content">
+          <div class="callout-title">Serving Layer</div>
+          <div class="callout-text">CLI, Web UI, and SaaS all query the same unified data model.</div>
+        </div>
+        <div class="callout-line"></div>
+      </div>
+
+      <div class="wheel-container">
+        <!-- Measurement guides -->
+        <div class="measurement-guides">
+          <div class="guide-ring outer"></div>
+          <div class="guide-ring middle"></div>
+          <div class="guide-ring inner"></div>
+          <div class="guide-ring hub"></div>
+        </div>
+
+        <!-- Central Hub -->
+        <div class="hub">
+          <div class="hub-outer">
+            <div class="hub-crosshair horizontal"></div>
+            <div class="hub-crosshair vertical"></div>
+            <div class="hub-inner">
+              <div class="hub-label">YOU</div>
+              <div class="hub-sublabel">Command Center</div>
+              <div class="hub-center-dot"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Data Source Nodes -->
+        <div class="node node-1">
+          <div class="node-body">
+            <div class="node-icon">🗄️</div>
+            <div class="node-label">Databases</div>
+            <div class="node-status">● CONNECTED</div>
+          </div>
+        </div>
+
+        <div class="node node-2">
+          <div class="node-body">
+            <div class="node-icon">☁️</div>
+            <div class="node-label">Cloud APIs</div>
+            <div class="node-status">● CONNECTED</div>
+          </div>
+        </div>
+
+        <div class="node node-3">
+          <div class="node-body">
+            <div class="node-icon">📊</div>
+            <div class="node-label">Analytics</div>
+            <div class="node-status">● CONNECTED</div>
+          </div>
+        </div>
+
+        <div class="node node-4">
+          <div class="node-body">
+            <div class="node-icon">🤖</div>
+            <div class="node-label">AI Agents</div>
+            <div class="node-status">● ACTIVE</div>
+          </div>
+        </div>
+
+        <div class="node node-5">
+          <div class="node-body">
+            <div class="node-icon">📁</div>
+            <div class="node-label">File Systems</div>
+            <div class="node-status">● CONNECTED</div>
+          </div>
+        </div>
+
+        <div class="node node-6">
+          <div class="node-body">
+            <div class="node-icon">🔌</div>
+            <div class="node-label">Integrations</div>
+            <div class="node-status">● CONNECTED</div>
+          </div>
+        </div>
+
+        <!-- Connection Lines (SVG) -->
+        <svg class="connections-svg" viewBox="0 0 600 600">
+          <defs>
+            <linearGradient id="spoke-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" style="stop-color:#a87d52"/>
+              <stop offset="50%" style="stop-color:#c4956a"/>
+              <stop offset="100%" style="stop-color:#7a8a9a"/>
+            </linearGradient>
+          </defs>
+
+          <!-- Spokes from center to nodes -->
+          <line x1="300" y1="300" x2="300" y2="80" stroke="url(#spoke-gradient)" stroke-width="2"/>
+          <line x1="300" y1="300" x2="490" y2="190" stroke="url(#spoke-gradient)" stroke-width="2"/>
+          <line x1="300" y1="300" x2="490" y2="410" stroke="url(#spoke-gradient)" stroke-width="2"/>
+          <line x1="300" y1="300" x2="300" y2="520" stroke="url(#spoke-gradient)" stroke-width="2"/>
+          <line x1="300" y1="300" x2="110" y2="410" stroke="url(#spoke-gradient)" stroke-width="2"/>
+          <line x1="300" y1="300" x2="110" y2="190" stroke="url(#spoke-gradient)" stroke-width="2"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Metrics Row -->
+    <div class="metrics-row">
+      <div class="gauge-card">
+        <div class="gauge-header">
+          <span class="gauge-label">Data Sources</span>
+          <span class="gauge-unit">COUNT</span>
+        </div>
+        <div class="gauge-value">24</div>
+        <div class="gauge-bar">
+          <div class="gauge-fill" style="width: 80%"></div>
+        </div>
+        <div class="gauge-scale">
+          <span>0</span>
+          <span>30</span>
+        </div>
+      </div>
+
+      <div class="gauge-card">
+        <div class="gauge-header">
+          <span class="gauge-label">Throughput</span>
+          <span class="gauge-unit">EVENTS/SEC</span>
+        </div>
+        <div class="gauge-value">12.4K</div>
+        <div class="gauge-bar">
+          <div class="gauge-fill" style="width: 62%"></div>
+        </div>
+        <div class="gauge-scale">
+          <span>0</span>
+          <span>20K</span>
+        </div>
+      </div>
+
+      <div class="gauge-card">
+        <div class="gauge-header">
+          <span class="gauge-label">Latency</span>
+          <span class="gauge-unit">P99 MS</span>
+        </div>
+        <div class="gauge-value">23</div>
+        <div class="gauge-bar">
+          <div class="gauge-fill" style="width: 23%"></div>
+        </div>
+        <div class="gauge-scale">
+          <span>0</span>
+          <span>100</span>
+        </div>
+      </div>
+
+      <div class="gauge-card">
+        <div class="gauge-header">
+          <span class="gauge-label">Storage</span>
+          <span class="gauge-unit">TB USED</span>
+        </div>
+        <div class="gauge-value">4.2</div>
+        <div class="gauge-bar">
+          <div class="gauge-fill" style="width: 42%"></div>
+        </div>
+        <div class="gauge-scale">
+          <span>0</span>
+          <span>10</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Technical Footer -->
+    <footer class="tech-footer">
+      <div class="title-block">
+        <div class="title-cell">
+          <div class="title-cell-label">Project</div>
+          <div class="title-cell-value">SPOKE</div>
+        </div>
+        <div class="title-cell">
+          <div class="title-cell-label">Sheet</div>
+          <div class="title-cell-value">1 OF 1</div>
+        </div>
+        <div class="title-cell">
+          <div class="title-cell-label">Scale</div>
+          <div class="title-cell-value">NTS</div>
+        </div>
+        <div class="title-cell">
+          <div class="title-cell-label">Date</div>
+          <div class="title-cell-value">2026-01-16</div>
+        </div>
+      </div>
+      <div class="scale-indicator">DIRECTION A: MECHANICAL PRECISION // SPOKE.SH</div>
+    </footer>
+  </div>
+</body>
+</html>

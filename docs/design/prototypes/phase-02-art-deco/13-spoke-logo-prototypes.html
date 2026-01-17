@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spoke Logo Prototypes</title>
+    <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold-primary: #d4a84b;
+            --gold-bright: #e8c45a;
+            --gold-dim: #8a6520;
+            --bg-void: #07090d;
+            --bg-card: #141a26;
+            --accent-navy: #1a2d45;
+            --text-primary: #e8e4d9;
+            --text-dim: #8a9bae;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Titillium Web', sans-serif;
+            background: var(--bg-void);
+            color: var(--text-primary);
+            padding: 40px;
+            min-height: 100vh;
+        }
+
+        h1 {
+            font-weight: 300;
+            font-size: 2rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--gold-bright);
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--text-dim);
+            font-size: 0.9rem;
+            letter-spacing: 0.1em;
+            margin-bottom: 60px;
+        }
+
+        .section {
+            margin-bottom: 80px;
+        }
+
+        .section-title {
+            font-weight: 400;
+            font-size: 1rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--gold-primary);
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--accent-navy);
+        }
+
+        .logo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 40px;
+        }
+
+        .logo-card {
+            background: var(--bg-card);
+            border: 1px solid var(--accent-navy);
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .logo-card:hover {
+            border-color: var(--gold-dim);
+        }
+
+        .logo-container {
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .logo-name {
+            font-size: 0.85rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--gold-primary);
+            margin-bottom: 8px;
+        }
+
+        .logo-desc {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            line-height: 1.5;
+        }
+
+        /* Wordmark styles */
+        .wordmark {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .wordmark-text {
+            font-family: 'Titillium Web', sans-serif;
+            font-weight: 300;
+            font-size: 2rem;
+            letter-spacing: 0.4em;
+            color: var(--gold-bright);
+        }
+
+        .wordmark-small {
+            font-size: 1.2rem;
+            letter-spacing: 0.3em;
+        }
+
+        /* Size comparison */
+        .size-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+            padding: 40px;
+            background: var(--bg-card);
+            border-radius: 8px;
+            border: 1px solid var(--accent-navy);
+        }
+
+        .size-item {
+            text-align: center;
+        }
+
+        .size-label {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            margin-top: 10px;
+        }
+
+        /* Dark/Light comparison */
+        .theme-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .theme-card {
+            padding: 60px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-dark {
+            background: var(--bg-void);
+            border: 1px solid var(--accent-navy);
+        }
+
+        .theme-light {
+            background: #f5f3ee;
+            border: 1px solid #d4d0c8;
+        }
+
+        .theme-light .wordmark-text {
+            color: var(--gold-dim);
+        }
+    </style>
+</head>
+<body>
+    <h1>Spoke Logo Prototypes</h1>
+    <p class="subtitle">Exploring the visual identity — Explore. Connect. Amplify.</p>
+
+    <!-- Section 0: Primary Logo (from Direction B) -->
+    <div class="section">
+        <h2 class="section-title">0. Primary Logo (Preferred)</h2>
+        <div class="logo-grid">
+
+            <!-- Direction B Original -->
+            <div class="logo-card" style="border-color: var(--gold-primary); background: linear-gradient(135deg, var(--bg-card) 0%, var(--accent-navy) 100%);">
+                <div class="logo-container">
+                    <svg width="100" height="100" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="gold-ring-primary" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#b8892e"/>
+                                <stop offset="50%" style="stop-color:#d4a84b"/>
+                                <stop offset="100%" style="stop-color:#b8892e"/>
+                            </linearGradient>
+                            <linearGradient id="spoke-grad-primary" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" style="stop-color:#d4a84b"/>
+                                <stop offset="100%" style="stop-color:#8a6520"/>
+                            </linearGradient>
+                        </defs>
+                        <!-- 6 elegant spokes (drawn first so they appear behind rings) -->
+                        <line x1="28" y1="6" x2="28" y2="18" stroke="url(#spoke-grad-primary)" stroke-width="1.5"/>
+                        <line x1="47" y1="17" x2="36.7" y2="23" stroke="url(#spoke-grad-primary)" stroke-width="1.5"/>
+                        <line x1="47" y1="39" x2="36.7" y2="33" stroke="url(#spoke-grad-primary)" stroke-width="1.5"/>
+                        <line x1="28" y1="50" x2="28" y2="38" stroke="url(#spoke-grad-primary)" stroke-width="1.5"/>
+                        <line x1="9" y1="39" x2="19.3" y2="33" stroke="url(#spoke-grad-primary)" stroke-width="1.5"/>
+                        <line x1="9" y1="17" x2="19.3" y2="23" stroke="url(#spoke-grad-primary)" stroke-width="1.5"/>
+                        <!-- Outer ring with warm glow -->
+                        <circle cx="28" cy="28" r="26" stroke="url(#gold-ring-primary)" stroke-width="2" fill="none"/>
+                        <!-- Inner dashed ring -->
+                        <circle cx="28" cy="28" r="20" stroke="#8a6520" stroke-width="1" stroke-dasharray="2 4" fill="none" opacity="0.5"/>
+                        <!-- Hub ring -->
+                        <circle cx="28" cy="28" r="10" stroke="#d4a84b" stroke-width="2" fill="none"/>
+                        <!-- Hub core -->
+                        <circle cx="28" cy="28" r="4" fill="#e8c45a"/>
+                    </svg>
+                </div>
+                <div class="logo-name">Direction B Original</div>
+                <div class="logo-desc">6 spokes, dashed inner ring, gradient strokes, hub ring + core. The preferred design.</div>
+            </div>
+
+            <!-- Direction B with Wordmark -->
+            <div class="logo-card" style="border-color: var(--gold-primary); background: linear-gradient(135deg, var(--bg-card) 0%, var(--accent-navy) 100%);">
+                <div class="logo-container">
+                    <div class="wordmark">
+                        <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <linearGradient id="gold-ring-wm" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#b8892e"/>
+                                    <stop offset="50%" style="stop-color:#d4a84b"/>
+                                    <stop offset="100%" style="stop-color:#b8892e"/>
+                                </linearGradient>
+                                <linearGradient id="spoke-grad-wm" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" style="stop-color:#d4a84b"/>
+                                    <stop offset="100%" style="stop-color:#8a6520"/>
+                                </linearGradient>
+                            </defs>
+                            <!-- Spokes first (behind rings) -->
+                            <line x1="28" y1="6" x2="28" y2="18" stroke="url(#spoke-grad-wm)" stroke-width="1.5"/>
+                            <line x1="47" y1="17" x2="36.7" y2="23" stroke="url(#spoke-grad-wm)" stroke-width="1.5"/>
+                            <line x1="47" y1="39" x2="36.7" y2="33" stroke="url(#spoke-grad-wm)" stroke-width="1.5"/>
+                            <line x1="28" y1="50" x2="28" y2="38" stroke="url(#spoke-grad-wm)" stroke-width="1.5"/>
+                            <line x1="9" y1="39" x2="19.3" y2="33" stroke="url(#spoke-grad-wm)" stroke-width="1.5"/>
+                            <line x1="9" y1="17" x2="19.3" y2="23" stroke="url(#spoke-grad-wm)" stroke-width="1.5"/>
+                            <!-- Rings on top -->
+                            <circle cx="28" cy="28" r="26" stroke="url(#gold-ring-wm)" stroke-width="2" fill="none"/>
+                            <circle cx="28" cy="28" r="20" stroke="#8a6520" stroke-width="1" stroke-dasharray="2 4" fill="none" opacity="0.5"/>
+                            <circle cx="28" cy="28" r="10" stroke="#d4a84b" stroke-width="2" fill="none"/>
+                            <circle cx="28" cy="28" r="4" fill="#e8c45a"/>
+                        </svg>
+                        <span class="wordmark-text">SPOKE</span>
+                    </div>
+                </div>
+                <div class="logo-name">Primary + Wordmark</div>
+                <div class="logo-desc">Horizontal lockup with the preferred logo.</div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Section 1: Icon Variations -->
+    <div class="section">
+        <h2 class="section-title">1. Alternative Icon Variations</h2>
+        <div class="logo-grid">
+
+            <!-- Classic Wheel -->
+            <div class="logo-card">
+                <div class="logo-container">
+                    <svg width="80" height="80" viewBox="0 0 100 100">
+                        <!-- Outer ring -->
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="#d4a84b" stroke-width="2"/>
+                        <!-- Hub -->
+                        <circle cx="50" cy="50" r="6" fill="#e8c45a"/>
+                        <!-- Spokes -->
+                        <line x1="50" y1="15" x2="50" y2="44" stroke="#d4a84b" stroke-width="2"/>
+                        <line x1="50" y1="56" x2="50" y2="85" stroke="#d4a84b" stroke-width="2"/>
+                        <line x1="15" y1="50" x2="44" y2="50" stroke="#d4a84b" stroke-width="2"/>
+                        <line x1="56" y1="50" x2="85" y2="50" stroke="#d4a84b" stroke-width="2"/>
+                        <!-- Tick marks -->
+                        <line x1="50" y1="5" x2="50" y2="10" stroke="#d4a84b" stroke-width="1" opacity="0.5"/>
+                        <line x1="50" y1="90" x2="50" y2="95" stroke="#d4a84b" stroke-width="1" opacity="0.5"/>
+                        <line x1="5" y1="50" x2="10" y2="50" stroke="#d4a84b" stroke-width="1" opacity="0.5"/>
+                        <line x1="90" y1="50" x2="95" y2="50" stroke="#d4a84b" stroke-width="1" opacity="0.5"/>
+                    </svg>
+                </div>
+                <div class="logo-name">Classic Wheel</div>
+                <div class="logo-desc">Clean geometric wheel with hub, 4 spokes, tick marks. Based on Direction B.</div>
+            </div>
+
+            <!-- Minimal -->
+            <div class="logo-card">
+                <div class="logo-container">
+                    <svg width="80" height="80" viewBox="0 0 100 100">
+                        <!-- Hub -->
+                        <circle cx="50" cy="50" r="6" fill="#e8c45a"/>
+                        <!-- Spokes only -->
+                        <line x1="50" y1="10" x2="50" y2="44" stroke="#d4a84b" stroke-width="2"/>
+                        <line x1="50" y1="56" x2="50" y2="90" stroke="#d4a84b" stroke-width="2"/>
+                        <line x1="10" y1="50" x2="44" y2="50" stroke="#d4a84b" stroke-width="2"/>
+                        <line x1="56" y1="50" x2="90" y2="50" stroke="#d4a84b" stroke-width="2"/>
+                    </svg>
+                </div>
+                <div class="logo-name">Minimal</div>
+                <div class="logo-desc">Just the essence. Hub and four spokes. No ring.</div>
+            </div>
+
+            <!-- 8 Spokes -->
+            <div class="logo-card">
+                <div class="logo-container">
+                    <svg width="80" height="80" viewBox="0 0 100 100">
+                        <!-- Outer ring -->
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="#d4a84b" stroke-width="2"/>
+                        <!-- Hub -->
+                        <circle cx="50" cy="50" r="6" fill="#e8c45a"/>
+                        <!-- 8 Spokes -->
+                        <line x1="50" y1="15" x2="50" y2="44" stroke="#d4a84b" stroke-width="2"/>
+                        <line x1="50" y1="56" x2="50" y2="85" stroke="#d4a84b" stroke-width="2"/>
+                        <line x1="15" y1="50" x2="44" y2="50" stroke="#d4a84b" stroke-width="2"/>
+                        <line x1="56" y1="50" x2="85" y2="50" stroke="#d4a84b" stroke-width="2"/>
+                        <!-- Diagonal spokes -->
+                        <line x1="22" y1="22" x2="42" y2="42" stroke="#d4a84b" stroke-width="1.5"/>
+                        <line x1="58" y1="58" x2="78" y2="78" stroke="#d4a84b" stroke-width="1.5"/>
+                        <line x1="78" y1="22" x2="58" y2="42" stroke="#d4a84b" stroke-width="1.5"/>
+                        <line x1="42" y1="58" x2="22" y2="78" stroke="#d4a84b" stroke-width="1.5"/>
+                    </svg>
+                </div>
+                <div class="logo-name">8 Spokes</div>
+                <div class="logo-desc">More connections. Compass-like. Increased complexity.</div>
+            </div>
+
+            <!-- Neural Hint -->
+            <div class="logo-card">
+                <div class="logo-container">
+                    <svg width="80" height="80" viewBox="0 0 100 100">
+                        <!-- Outer ring -->
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="#d4a84b" stroke-width="2"/>
+                        <!-- Hub -->
+                        <circle cx="50" cy="50" r="6" fill="#e8c45a"/>
+                        <!-- Spokes with branching ends -->
+                        <!-- Top spoke -->
+                        <line x1="50" y1="15" x2="50" y2="44" stroke="#d4a84b" stroke-width="2"/>
+                        <line x1="50" y1="15" x2="45" y2="8" stroke="#d4a84b" stroke-width="1"/>
+                        <line x1="50" y1="15" x2="55" y2="8" stroke="#d4a84b" stroke-width="1"/>
+                        <!-- Bottom spoke -->
+                        <line x1="50" y1="56" x2="50" y2="85" stroke="#d4a84b" stroke-width="2"/>
+                        <line x1="50" y1="85" x2="45" y2="92" stroke="#d4a84b" stroke-width="1"/>
+                        <line x1="50" y1="85" x2="55" y2="92" stroke="#d4a84b" stroke-width="1"/>
+                        <!-- Left spoke -->
+                        <line x1="15" y1="50" x2="44" y2="50" stroke="#d4a84b" stroke-width="2"/>
+                        <line x1="15" y1="50" x2="8" y2="45" stroke="#d4a84b" stroke-width="1"/>
+                        <line x1="15" y1="50" x2="8" y2="55" stroke="#d4a84b" stroke-width="1"/>
+                        <!-- Right spoke -->
+                        <line x1="56" y1="50" x2="85" y2="50" stroke="#d4a84b" stroke-width="2"/>
+                        <line x1="85" y1="50" x2="92" y2="45" stroke="#d4a84b" stroke-width="1"/>
+                        <line x1="85" y1="50" x2="92" y2="55" stroke="#d4a84b" stroke-width="1"/>
+                    </svg>
+                </div>
+                <div class="logo-name">Neural Hint</div>
+                <div class="logo-desc">Spokes branch at ends like dendrites. Wheel + nervous system.</div>
+            </div>
+
+            <!-- Sunburst -->
+            <div class="logo-card">
+                <div class="logo-container">
+                    <svg width="80" height="80" viewBox="0 0 100 100">
+                        <!-- Hub with glow -->
+                        <circle cx="50" cy="50" r="10" fill="#e8c45a" opacity="0.3"/>
+                        <circle cx="50" cy="50" r="6" fill="#e8c45a"/>
+                        <!-- 12 rays -->
+                        <g stroke="#d4a84b" stroke-width="1.5">
+                            <line x1="50" y1="5" x2="50" y2="40"/>
+                            <line x1="50" y1="60" x2="50" y2="95"/>
+                            <line x1="5" y1="50" x2="40" y2="50"/>
+                            <line x1="60" y1="50" x2="95" y2="50"/>
+                            <line x1="18" y1="18" x2="40" y2="40"/>
+                            <line x1="60" y1="60" x2="82" y2="82"/>
+                            <line x1="82" y1="18" x2="60" y2="40"/>
+                            <line x1="40" y1="60" x2="18" y2="82"/>
+                            <!-- Additional rays -->
+                            <line x1="27" y1="5" x2="42" y2="42" opacity="0.6"/>
+                            <line x1="73" y1="5" x2="58" y2="42" opacity="0.6"/>
+                            <line x1="27" y1="95" x2="42" y2="58" opacity="0.6"/>
+                            <line x1="73" y1="95" x2="58" y2="58" opacity="0.6"/>
+                        </g>
+                    </svg>
+                </div>
+                <div class="logo-name">Sunburst</div>
+                <div class="logo-desc">Art Deco radiance. Egyptian sun god Ra. Energy emanating.</div>
+            </div>
+
+            <!-- Compass -->
+            <div class="logo-card">
+                <div class="logo-container">
+                    <svg width="80" height="80" viewBox="0 0 100 100">
+                        <!-- Outer ring -->
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="#d4a84b" stroke-width="2"/>
+                        <!-- Inner ring -->
+                        <circle cx="50" cy="50" r="35" fill="none" stroke="#d4a84b" stroke-width="1" opacity="0.3"/>
+                        <!-- Hub -->
+                        <circle cx="50" cy="50" r="4" fill="#e8c45a"/>
+                        <!-- Cardinal directions (pointed) -->
+                        <polygon points="50,8 46,40 50,35 54,40" fill="#d4a84b"/>
+                        <polygon points="50,92 46,60 50,65 54,60" fill="#d4a84b" opacity="0.6"/>
+                        <polygon points="8,50 40,46 35,50 40,54" fill="#d4a84b" opacity="0.6"/>
+                        <polygon points="92,50 60,46 65,50 60,54" fill="#d4a84b" opacity="0.6"/>
+                    </svg>
+                </div>
+                <div class="logo-name">Compass</div>
+                <div class="logo-desc">Navigation focus. Pointed spokes. Direction and exploration.</div>
+            </div>
+
+            <!-- Abstract Brain -->
+            <div class="logo-card">
+                <div class="logo-container">
+                    <svg width="80" height="80" viewBox="0 0 100 100">
+                        <!-- Brain-like outer shape -->
+                        <ellipse cx="50" cy="50" rx="40" ry="35" fill="none" stroke="#d4a84b" stroke-width="2"/>
+                        <!-- Central division -->
+                        <path d="M50 15 Q50 50 50 85" fill="none" stroke="#d4a84b" stroke-width="1.5"/>
+                        <!-- Hub -->
+                        <circle cx="50" cy="50" r="6" fill="#e8c45a"/>
+                        <!-- Neural connections -->
+                        <line x1="50" y1="50" x2="25" y2="35" stroke="#d4a84b" stroke-width="1.5"/>
+                        <line x1="50" y1="50" x2="75" y2="35" stroke="#d4a84b" stroke-width="1.5"/>
+                        <line x1="50" y1="50" x2="25" y2="65" stroke="#d4a84b" stroke-width="1.5"/>
+                        <line x1="50" y1="50" x2="75" y2="65" stroke="#d4a84b" stroke-width="1.5"/>
+                        <!-- Synaptic nodes -->
+                        <circle cx="25" cy="35" r="3" fill="#d4a84b"/>
+                        <circle cx="75" cy="35" r="3" fill="#d4a84b"/>
+                        <circle cx="25" cy="65" r="3" fill="#d4a84b"/>
+                        <circle cx="75" cy="65" r="3" fill="#d4a84b"/>
+                    </svg>
+                </div>
+                <div class="logo-name">Neural Hub</div>
+                <div class="logo-desc">Brain silhouette with central hub. Synaptic nodes at spoke ends.</div>
+            </div>
+
+            <!-- Diamond Hub -->
+            <div class="logo-card">
+                <div class="logo-container">
+                    <svg width="80" height="80" viewBox="0 0 100 100">
+                        <!-- Outer ring -->
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="#d4a84b" stroke-width="2"/>
+                        <!-- Diamond hub -->
+                        <polygon points="50,42 58,50 50,58 42,50" fill="#e8c45a"/>
+                        <!-- Spokes -->
+                        <line x1="50" y1="10" x2="50" y2="42" stroke="#d4a84b" stroke-width="2"/>
+                        <line x1="50" y1="58" x2="50" y2="90" stroke="#d4a84b" stroke-width="2"/>
+                        <line x1="10" y1="50" x2="42" y2="50" stroke="#d4a84b" stroke-width="2"/>
+                        <line x1="58" y1="50" x2="90" y2="50" stroke="#d4a84b" stroke-width="2"/>
+                    </svg>
+                </div>
+                <div class="logo-name">Diamond Hub</div>
+                <div class="logo-desc">Art Deco diamond center. Geometric precision.</div>
+            </div>
+
+            <!-- Orbital -->
+            <div class="logo-card">
+                <div class="logo-container">
+                    <svg width="80" height="80" viewBox="0 0 100 100">
+                        <!-- Orbital rings -->
+                        <ellipse cx="50" cy="50" rx="45" ry="20" fill="none" stroke="#d4a84b" stroke-width="1" transform="rotate(-30 50 50)" opacity="0.5"/>
+                        <ellipse cx="50" cy="50" rx="45" ry="20" fill="none" stroke="#d4a84b" stroke-width="1" transform="rotate(30 50 50)" opacity="0.5"/>
+                        <ellipse cx="50" cy="50" rx="45" ry="20" fill="none" stroke="#d4a84b" stroke-width="1" transform="rotate(90 50 50)" opacity="0.5"/>
+                        <!-- Hub -->
+                        <circle cx="50" cy="50" r="8" fill="#e8c45a"/>
+                        <!-- Orbital nodes -->
+                        <circle cx="50" cy="10" r="4" fill="#d4a84b"/>
+                        <circle cx="90" cy="50" r="4" fill="#d4a84b"/>
+                        <circle cx="50" cy="90" r="4" fill="#d4a84b"/>
+                        <circle cx="10" cy="50" r="4" fill="#d4a84b"/>
+                    </svg>
+                </div>
+                <div class="logo-name">Orbital</div>
+                <div class="logo-desc">Atomic/cosmic feel. Data sources orbiting the hub.</div>
+            </div>
+
+            <!-- Hexagonal -->
+            <div class="logo-card">
+                <div class="logo-container">
+                    <svg width="80" height="80" viewBox="0 0 100 100">
+                        <!-- Hexagonal outer -->
+                        <polygon points="50,5 93,27.5 93,72.5 50,95 7,72.5 7,27.5" fill="none" stroke="#d4a84b" stroke-width="2"/>
+                        <!-- Hub -->
+                        <circle cx="50" cy="50" r="6" fill="#e8c45a"/>
+                        <!-- 6 spokes -->
+                        <line x1="50" y1="5" x2="50" y2="44" stroke="#d4a84b" stroke-width="2"/>
+                        <line x1="50" y1="56" x2="50" y2="95" stroke="#d4a84b" stroke-width="2"/>
+                        <line x1="93" y1="27.5" x2="56" y2="47" stroke="#d4a84b" stroke-width="2"/>
+                        <line x1="7" y1="72.5" x2="44" y2="53" stroke="#d4a84b" stroke-width="2"/>
+                        <line x1="7" y1="27.5" x2="44" y2="47" stroke="#d4a84b" stroke-width="2"/>
+                        <line x1="93" y1="72.5" x2="56" y2="53" stroke="#d4a84b" stroke-width="2"/>
+                    </svg>
+                </div>
+                <div class="logo-name">Hexagonal</div>
+                <div class="logo-desc">Six-sided. Honeycomb/molecular structure. Technical precision.</div>
+            </div>
+
+            <!-- Concentric -->
+            <div class="logo-card">
+                <div class="logo-container">
+                    <svg width="80" height="80" viewBox="0 0 100 100">
+                        <!-- Concentric rings -->
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="#d4a84b" stroke-width="1.5"/>
+                        <circle cx="50" cy="50" r="32" fill="none" stroke="#d4a84b" stroke-width="1" opacity="0.6"/>
+                        <circle cx="50" cy="50" r="20" fill="none" stroke="#d4a84b" stroke-width="1" opacity="0.4"/>
+                        <!-- Hub -->
+                        <circle cx="50" cy="50" r="6" fill="#e8c45a"/>
+                        <!-- Spokes that cross rings -->
+                        <line x1="50" y1="5" x2="50" y2="44" stroke="#d4a84b" stroke-width="2"/>
+                        <line x1="50" y1="56" x2="50" y2="95" stroke="#d4a84b" stroke-width="2"/>
+                        <line x1="5" y1="50" x2="44" y2="50" stroke="#d4a84b" stroke-width="2"/>
+                        <line x1="56" y1="50" x2="95" y2="50" stroke="#d4a84b" stroke-width="2"/>
+                    </svg>
+                </div>
+                <div class="logo-name">Concentric</div>
+                <div class="logo-desc">Layered rings. Depth and hierarchy. Target-like focus.</div>
+            </div>
+
+            <!-- Abstract S -->
+            <div class="logo-card">
+                <div class="logo-container">
+                    <svg width="80" height="80" viewBox="0 0 100 100">
+                        <!-- S shape made of spokes -->
+                        <path d="M70 20 Q50 20 50 35 Q50 50 30 50 Q50 50 50 65 Q50 80 30 80"
+                              fill="none" stroke="#d4a84b" stroke-width="3" stroke-linecap="round"/>
+                        <!-- Hub at center -->
+                        <circle cx="50" cy="50" r="6" fill="#e8c45a"/>
+                        <!-- Connecting spokes -->
+                        <line x1="30" y1="50" x2="44" y2="50" stroke="#d4a84b" stroke-width="2"/>
+                        <line x1="56" y1="50" x2="75" y2="50" stroke="#d4a84b" stroke-width="2"/>
+                    </svg>
+                </div>
+                <div class="logo-name">Abstract S</div>
+                <div class="logo-desc">Lettermark. S for Spoke. Flowing connection path.</div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Section 2: With Wordmark -->
+    <div class="section">
+        <h2 class="section-title">2. Icon + Wordmark Combinations</h2>
+        <div class="logo-grid">
+
+            <div class="logo-card">
+                <div class="logo-container">
+                    <div class="wordmark">
+                        <svg width="50" height="50" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="45" fill="none" stroke="#d4a84b" stroke-width="2"/>
+                            <circle cx="50" cy="50" r="6" fill="#e8c45a"/>
+                            <line x1="50" y1="15" x2="50" y2="44" stroke="#d4a84b" stroke-width="2"/>
+                            <line x1="50" y1="56" x2="50" y2="85" stroke="#d4a84b" stroke-width="2"/>
+                            <line x1="15" y1="50" x2="44" y2="50" stroke="#d4a84b" stroke-width="2"/>
+                            <line x1="56" y1="50" x2="85" y2="50" stroke="#d4a84b" stroke-width="2"/>
+                        </svg>
+                        <span class="wordmark-text">SPOKE</span>
+                    </div>
+                </div>
+                <div class="logo-name">Classic + Wordmark</div>
+                <div class="logo-desc">Horizontal lockup. Spaced uppercase letters.</div>
+            </div>
+
+            <div class="logo-card">
+                <div class="logo-container">
+                    <div class="wordmark">
+                        <svg width="50" height="50" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="6" fill="#e8c45a"/>
+                            <line x1="50" y1="10" x2="50" y2="44" stroke="#d4a84b" stroke-width="2"/>
+                            <line x1="50" y1="56" x2="50" y2="90" stroke="#d4a84b" stroke-width="2"/>
+                            <line x1="10" y1="50" x2="44" y2="50" stroke="#d4a84b" stroke-width="2"/>
+                            <line x1="56" y1="50" x2="90" y2="50" stroke="#d4a84b" stroke-width="2"/>
+                        </svg>
+                        <span class="wordmark-text">SPOKE</span>
+                    </div>
+                </div>
+                <div class="logo-name">Minimal + Wordmark</div>
+                <div class="logo-desc">Clean and open. No ring.</div>
+            </div>
+
+            <div class="logo-card">
+                <div class="logo-container">
+                    <div class="wordmark">
+                        <svg width="50" height="50" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="45" fill="none" stroke="#d4a84b" stroke-width="2"/>
+                            <circle cx="50" cy="50" r="6" fill="#e8c45a"/>
+                            <line x1="50" y1="15" x2="50" y2="44" stroke="#d4a84b" stroke-width="2"/>
+                            <line x1="50" y1="15" x2="45" y2="8" stroke="#d4a84b" stroke-width="1"/>
+                            <line x1="50" y1="15" x2="55" y2="8" stroke="#d4a84b" stroke-width="1"/>
+                            <line x1="50" y1="56" x2="50" y2="85" stroke="#d4a84b" stroke-width="2"/>
+                            <line x1="50" y1="85" x2="45" y2="92" stroke="#d4a84b" stroke-width="1"/>
+                            <line x1="50" y1="85" x2="55" y2="92" stroke="#d4a84b" stroke-width="1"/>
+                            <line x1="15" y1="50" x2="44" y2="50" stroke="#d4a84b" stroke-width="2"/>
+                            <line x1="15" y1="50" x2="8" y2="45" stroke="#d4a84b" stroke-width="1"/>
+                            <line x1="15" y1="50" x2="8" y2="55" stroke="#d4a84b" stroke-width="1"/>
+                            <line x1="56" y1="50" x2="85" y2="50" stroke="#d4a84b" stroke-width="2"/>
+                            <line x1="85" y1="50" x2="92" y2="45" stroke="#d4a84b" stroke-width="1"/>
+                            <line x1="85" y1="50" x2="92" y2="55" stroke="#d4a84b" stroke-width="1"/>
+                        </svg>
+                        <span class="wordmark-text">SPOKE</span>
+                    </div>
+                </div>
+                <div class="logo-name">Neural + Wordmark</div>
+                <div class="logo-desc">Branching spokes suggest nervous system.</div>
+            </div>
+
+            <div class="logo-card">
+                <div class="logo-container">
+                    <div class="wordmark">
+                        <svg width="50" height="50" viewBox="0 0 100 100">
+                            <polygon points="50,42 58,50 50,58 42,50" fill="#e8c45a"/>
+                            <circle cx="50" cy="50" r="45" fill="none" stroke="#d4a84b" stroke-width="2"/>
+                            <line x1="50" y1="10" x2="50" y2="42" stroke="#d4a84b" stroke-width="2"/>
+                            <line x1="50" y1="58" x2="50" y2="90" stroke="#d4a84b" stroke-width="2"/>
+                            <line x1="10" y1="50" x2="42" y2="50" stroke="#d4a84b" stroke-width="2"/>
+                            <line x1="58" y1="50" x2="90" y2="50" stroke="#d4a84b" stroke-width="2"/>
+                        </svg>
+                        <span class="wordmark-text">SPOKE</span>
+                    </div>
+                </div>
+                <div class="logo-name">Diamond + Wordmark</div>
+                <div class="logo-desc">Art Deco diamond center.</div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Section 3: Size Comparison -->
+    <div class="section">
+        <h2 class="section-title">3. Size Comparison (Classic Wheel)</h2>
+        <div class="size-row">
+            <div class="size-item">
+                <svg width="16" height="16" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="45" fill="none" stroke="#d4a84b" stroke-width="4"/>
+                    <circle cx="50" cy="50" r="8" fill="#e8c45a"/>
+                    <line x1="50" y1="15" x2="50" y2="42" stroke="#d4a84b" stroke-width="4"/>
+                    <line x1="50" y1="58" x2="50" y2="85" stroke="#d4a84b" stroke-width="4"/>
+                    <line x1="15" y1="50" x2="42" y2="50" stroke="#d4a84b" stroke-width="4"/>
+                    <line x1="58" y1="50" x2="85" y2="50" stroke="#d4a84b" stroke-width="4"/>
+                </svg>
+                <div class="size-label">16px (favicon)</div>
+            </div>
+            <div class="size-item">
+                <svg width="24" height="24" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="45" fill="none" stroke="#d4a84b" stroke-width="3"/>
+                    <circle cx="50" cy="50" r="7" fill="#e8c45a"/>
+                    <line x1="50" y1="15" x2="50" y2="43" stroke="#d4a84b" stroke-width="3"/>
+                    <line x1="50" y1="57" x2="50" y2="85" stroke="#d4a84b" stroke-width="3"/>
+                    <line x1="15" y1="50" x2="43" y2="50" stroke="#d4a84b" stroke-width="3"/>
+                    <line x1="57" y1="50" x2="85" y2="50" stroke="#d4a84b" stroke-width="3"/>
+                </svg>
+                <div class="size-label">24px (toolbar)</div>
+            </div>
+            <div class="size-item">
+                <svg width="32" height="32" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="45" fill="none" stroke="#d4a84b" stroke-width="2.5"/>
+                    <circle cx="50" cy="50" r="6" fill="#e8c45a"/>
+                    <line x1="50" y1="15" x2="50" y2="44" stroke="#d4a84b" stroke-width="2.5"/>
+                    <line x1="50" y1="56" x2="50" y2="85" stroke="#d4a84b" stroke-width="2.5"/>
+                    <line x1="15" y1="50" x2="44" y2="50" stroke="#d4a84b" stroke-width="2.5"/>
+                    <line x1="56" y1="50" x2="85" y2="50" stroke="#d4a84b" stroke-width="2.5"/>
+                </svg>
+                <div class="size-label">32px (nav)</div>
+            </div>
+            <div class="size-item">
+                <svg width="48" height="48" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="45" fill="none" stroke="#d4a84b" stroke-width="2"/>
+                    <circle cx="50" cy="50" r="6" fill="#e8c45a"/>
+                    <line x1="50" y1="15" x2="50" y2="44" stroke="#d4a84b" stroke-width="2"/>
+                    <line x1="50" y1="56" x2="50" y2="85" stroke="#d4a84b" stroke-width="2"/>
+                    <line x1="15" y1="50" x2="44" y2="50" stroke="#d4a84b" stroke-width="2"/>
+                    <line x1="56" y1="50" x2="85" y2="50" stroke="#d4a84b" stroke-width="2"/>
+                    <line x1="50" y1="5" x2="50" y2="10" stroke="#d4a84b" stroke-width="1" opacity="0.5"/>
+                    <line x1="50" y1="90" x2="50" y2="95" stroke="#d4a84b" stroke-width="1" opacity="0.5"/>
+                    <line x1="5" y1="50" x2="10" y2="50" stroke="#d4a84b" stroke-width="1" opacity="0.5"/>
+                    <line x1="90" y1="50" x2="95" y2="50" stroke="#d4a84b" stroke-width="1" opacity="0.5"/>
+                </svg>
+                <div class="size-label">48px (header)</div>
+            </div>
+            <div class="size-item">
+                <svg width="64" height="64" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="45" fill="none" stroke="#d4a84b" stroke-width="2"/>
+                    <circle cx="50" cy="50" r="6" fill="#e8c45a"/>
+                    <line x1="50" y1="15" x2="50" y2="44" stroke="#d4a84b" stroke-width="2"/>
+                    <line x1="50" y1="56" x2="50" y2="85" stroke="#d4a84b" stroke-width="2"/>
+                    <line x1="15" y1="50" x2="44" y2="50" stroke="#d4a84b" stroke-width="2"/>
+                    <line x1="56" y1="50" x2="85" y2="50" stroke="#d4a84b" stroke-width="2"/>
+                    <line x1="50" y1="5" x2="50" y2="10" stroke="#d4a84b" stroke-width="1" opacity="0.5"/>
+                    <line x1="50" y1="90" x2="50" y2="95" stroke="#d4a84b" stroke-width="1" opacity="0.5"/>
+                    <line x1="5" y1="50" x2="10" y2="50" stroke="#d4a84b" stroke-width="1" opacity="0.5"/>
+                    <line x1="90" y1="50" x2="95" y2="50" stroke="#d4a84b" stroke-width="1" opacity="0.5"/>
+                </svg>
+                <div class="size-label">64px (app icon)</div>
+            </div>
+            <div class="size-item">
+                <svg width="128" height="128" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="45" fill="none" stroke="#d4a84b" stroke-width="1.5"/>
+                    <circle cx="50" cy="50" r="6" fill="#e8c45a"/>
+                    <line x1="50" y1="15" x2="50" y2="44" stroke="#d4a84b" stroke-width="1.5"/>
+                    <line x1="50" y1="56" x2="50" y2="85" stroke="#d4a84b" stroke-width="1.5"/>
+                    <line x1="15" y1="50" x2="44" y2="50" stroke="#d4a84b" stroke-width="1.5"/>
+                    <line x1="56" y1="50" x2="85" y2="50" stroke="#d4a84b" stroke-width="1.5"/>
+                    <line x1="50" y1="5" x2="50" y2="10" stroke="#d4a84b" stroke-width="1" opacity="0.5"/>
+                    <line x1="50" y1="90" x2="50" y2="95" stroke="#d4a84b" stroke-width="1" opacity="0.5"/>
+                    <line x1="5" y1="50" x2="10" y2="50" stroke="#d4a84b" stroke-width="1" opacity="0.5"/>
+                    <line x1="90" y1="50" x2="95" y2="50" stroke="#d4a84b" stroke-width="1" opacity="0.5"/>
+                </svg>
+                <div class="size-label">128px (large)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 4: Dark vs Light -->
+    <div class="section">
+        <h2 class="section-title">4. Dark vs Light Theme</h2>
+        <div class="theme-row">
+            <div class="theme-card theme-dark">
+                <div class="wordmark">
+                    <svg width="60" height="60" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="#d4a84b" stroke-width="2"/>
+                        <circle cx="50" cy="50" r="6" fill="#e8c45a"/>
+                        <line x1="50" y1="15" x2="50" y2="44" stroke="#d4a84b" stroke-width="2"/>
+                        <line x1="50" y1="56" x2="50" y2="85" stroke="#d4a84b" stroke-width="2"/>
+                        <line x1="15" y1="50" x2="44" y2="50" stroke="#d4a84b" stroke-width="2"/>
+                        <line x1="56" y1="50" x2="85" y2="50" stroke="#d4a84b" stroke-width="2"/>
+                    </svg>
+                    <span class="wordmark-text">SPOKE</span>
+                </div>
+            </div>
+            <div class="theme-card theme-light">
+                <div class="wordmark">
+                    <svg width="60" height="60" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="#8a6520" stroke-width="2"/>
+                        <circle cx="50" cy="50" r="6" fill="#d4a84b"/>
+                        <line x1="50" y1="15" x2="50" y2="44" stroke="#8a6520" stroke-width="2"/>
+                        <line x1="50" y1="56" x2="50" y2="85" stroke="#8a6520" stroke-width="2"/>
+                        <line x1="15" y1="50" x2="44" y2="50" stroke="#8a6520" stroke-width="2"/>
+                        <line x1="56" y1="50" x2="85" y2="50" stroke="#8a6520" stroke-width="2"/>
+                    </svg>
+                    <span class="wordmark-text">SPOKE</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 5: Animated Concepts -->
+    <div class="section">
+        <h2 class="section-title">5. Animation Concepts</h2>
+        <div class="logo-grid">
+
+            <div class="logo-card">
+                <div class="logo-container">
+                    <svg width="80" height="80" viewBox="0 0 100 100">
+                        <style>
+                            @keyframes pulse {
+                                0%, 100% { r: 6; opacity: 1; }
+                                50% { r: 10; opacity: 0.7; }
+                            }
+                            .hub-pulse { animation: pulse 2s ease-in-out infinite; }
+                        </style>
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="#d4a84b" stroke-width="2"/>
+                        <circle cx="50" cy="50" r="6" fill="#e8c45a" class="hub-pulse"/>
+                        <line x1="50" y1="15" x2="50" y2="44" stroke="#d4a84b" stroke-width="2"/>
+                        <line x1="50" y1="56" x2="50" y2="85" stroke="#d4a84b" stroke-width="2"/>
+                        <line x1="15" y1="50" x2="44" y2="50" stroke="#d4a84b" stroke-width="2"/>
+                        <line x1="56" y1="50" x2="85" y2="50" stroke="#d4a84b" stroke-width="2"/>
+                    </svg>
+                </div>
+                <div class="logo-name">Pulsing Hub</div>
+                <div class="logo-desc">Heartbeat effect. The system is alive.</div>
+            </div>
+
+            <div class="logo-card">
+                <div class="logo-container">
+                    <svg width="80" height="80" viewBox="0 0 100 100">
+                        <style>
+                            @keyframes rotate {
+                                from { transform: rotate(0deg); }
+                                to { transform: rotate(360deg); }
+                            }
+                            .rotating {
+                                animation: rotate 20s linear infinite;
+                                transform-origin: 50px 50px;
+                            }
+                        </style>
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="#d4a84b" stroke-width="2"/>
+                        <circle cx="50" cy="50" r="6" fill="#e8c45a"/>
+                        <g class="rotating">
+                            <line x1="50" y1="15" x2="50" y2="44" stroke="#d4a84b" stroke-width="2"/>
+                            <line x1="50" y1="56" x2="50" y2="85" stroke="#d4a84b" stroke-width="2"/>
+                            <line x1="15" y1="50" x2="44" y2="50" stroke="#d4a84b" stroke-width="2"/>
+                            <line x1="56" y1="50" x2="85" y2="50" stroke="#d4a84b" stroke-width="2"/>
+                        </g>
+                    </svg>
+                </div>
+                <div class="logo-name">Slow Rotation</div>
+                <div class="logo-desc">Wheel turning. Constant motion. Processing.</div>
+            </div>
+
+            <div class="logo-card">
+                <div class="logo-container">
+                    <svg width="80" height="80" viewBox="0 0 100 100">
+                        <style>
+                            @keyframes signal1 { 0%, 100% { opacity: 1; } 25% { opacity: 0.3; } }
+                            @keyframes signal2 { 0%, 100% { opacity: 0.3; } 25% { opacity: 1; } 50% { opacity: 0.3; } }
+                            @keyframes signal3 { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } 75% { opacity: 0.3; } }
+                            @keyframes signal4 { 0%, 100% { opacity: 0.3; } 75% { opacity: 1; } }
+                            .spoke1 { animation: signal1 2s ease-in-out infinite; }
+                            .spoke2 { animation: signal2 2s ease-in-out infinite; }
+                            .spoke3 { animation: signal3 2s ease-in-out infinite; }
+                            .spoke4 { animation: signal4 2s ease-in-out infinite; }
+                        </style>
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="#d4a84b" stroke-width="2"/>
+                        <circle cx="50" cy="50" r="6" fill="#e8c45a"/>
+                        <line x1="50" y1="15" x2="50" y2="44" stroke="#d4a84b" stroke-width="2" class="spoke1"/>
+                        <line x1="56" y1="50" x2="85" y2="50" stroke="#d4a84b" stroke-width="2" class="spoke2"/>
+                        <line x1="50" y1="56" x2="50" y2="85" stroke="#d4a84b" stroke-width="2" class="spoke3"/>
+                        <line x1="15" y1="50" x2="44" y2="50" stroke="#d4a84b" stroke-width="2" class="spoke4"/>
+                    </svg>
+                </div>
+                <div class="logo-name">Signal Flow</div>
+                <div class="logo-desc">Pulses traveling through spokes. Neural firing.</div>
+            </div>
+
+            <div class="logo-card">
+                <div class="logo-container">
+                    <svg width="80" height="80" viewBox="0 0 100 100">
+                        <style>
+                            @keyframes expand {
+                                0% { r: 45; opacity: 1; stroke-width: 2; }
+                                100% { r: 60; opacity: 0; stroke-width: 0.5; }
+                            }
+                            .ring-expand {
+                                animation: expand 3s ease-out infinite;
+                            }
+                        </style>
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="#d4a84b" stroke-width="2"/>
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="#d4a84b" class="ring-expand"/>
+                        <circle cx="50" cy="50" r="6" fill="#e8c45a"/>
+                        <line x1="50" y1="15" x2="50" y2="44" stroke="#d4a84b" stroke-width="2"/>
+                        <line x1="50" y1="56" x2="50" y2="85" stroke="#d4a84b" stroke-width="2"/>
+                        <line x1="15" y1="50" x2="44" y2="50" stroke="#d4a84b" stroke-width="2"/>
+                        <line x1="56" y1="50" x2="85" y2="50" stroke="#d4a84b" stroke-width="2"/>
+                    </svg>
+                </div>
+                <div class="logo-name">Expanding Ring</div>
+                <div class="logo-desc">Ripple effect. Reach expanding outward.</div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Section 6: CLI Usage -->
+    <div class="section">
+        <h2 class="section-title">6. CLI Application</h2>
+        <div class="logo-card" style="max-width: 600px;">
+            <div style="background: #0d1117; padding: 30px; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 14px; text-align: left;">
+                <div style="color: #8b949e; margin-bottom: 20px;">$ spoke</div>
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+                    <span style="color: #d4a84b; font-size: 20px;">◇</span>
+                    <span style="color: #e8c45a; letter-spacing: 0.3em;">SPOKE</span>
+                    <span style="color: #8b949e;">— Explore. Connect. Amplify.</span>
+                </div>
+                <div style="color: #c9d1d9; margin-bottom: 15px;">
+                    <span style="color: #d4a84b;">Commands:</span>
+                </div>
+                <div style="color: #8b949e; padding-left: 20px; line-height: 1.8;">
+                    session&nbsp;&nbsp;&nbsp;Manage sessions<br>
+                    query&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Run queries<br>
+                    connect&nbsp;&nbsp;&nbsp;Add data sources<br>
+                    agent&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Manage agents<br>
+                    config&nbsp;&nbsp;&nbsp;&nbsp;Configuration
+                </div>
+            </div>
+            <div class="logo-name" style="margin-top: 20px;">CLI Header</div>
+            <div class="logo-desc">Diamond icon in terminal. Tagline. Clean command list.</div>
+        </div>
+    </div>
+
+</body>
+</html>

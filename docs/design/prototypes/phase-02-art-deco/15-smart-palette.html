@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Palette | Spoke</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    /* ═══════════════════════════════════════════════════════════════════════
+       SMART PALETTE — Adaptive, learning, contextual command interface
+       ═══════════════════════════════════════════════════════════════════════ */
+
+    :root {
+      --icon-muted: #5d7a94;
+      --icon-muted-hover: #7a9ab4;
+      --groove-green: #4a7a5a;
+      --groove-subtle: rgba(74, 122, 90, 0.15);
+    }
+
+    /* ─── Section Labels ─── */
+    .section-label {
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+      margin-bottom: var(--space-3);
+      padding: var(--space-2) var(--space-3);
+      background: var(--bg-card);
+      border-left: 2px solid var(--gold-dim);
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ─── Backdrop ─── */
+    .palette-backdrop {
+      position: relative;
+      padding: var(--space-8);
+      background: rgba(0, 0, 0, 0.6);
+      border-radius: var(--radius-lg);
+      display: flex;
+      justify-content: center;
+    }
+
+    /* ─── Command Palette ─── */
+    .command-palette {
+      width: 100%;
+      max-width: 600px;
+      background: var(--bg-card);
+      border: 1px solid var(--gold-dim);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5),
+                  0 0 0 1px rgba(201, 162, 39, 0.1),
+                  var(--glow-gold);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .command-palette::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--gold-dim), var(--gold-bright), var(--gold-dim));
+    }
+
+    /* Header */
+    .palette-header {
+      display: flex;
+      align-items: center;
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 1px solid var(--border-subtle);
+      background: var(--bg-elevated);
+    }
+
+    .palette-icon {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: var(--space-3);
+      color: var(--gold-primary);
+      flex-shrink: 0;
+    }
+
+    .palette-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: var(--text-primary);
+      outline: none;
+    }
+
+    .palette-input::placeholder {
+      color: var(--text-tertiary);
+    }
+
+    .palette-shortcut {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      padding: 2px 6px;
+      background: var(--bg-deep);
+      border: 1px solid var(--border-subtle);
+      border-radius: 3px;
+      color: var(--text-tertiary);
+    }
+
+    /* ─── Mindset Indicator ─── */
+    .mindset-bar {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-1) var(--space-4);
+      background: var(--groove-subtle);
+      border-bottom: 1px solid rgba(74, 122, 90, 0.25);
+      font-size: 10px;
+      color: var(--groove-green);
+    }
+
+    .mindset-bar .pulse {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--groove-green);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.4; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.2); }
+    }
+
+    /* Sections */
+    .palette-section {
+      padding: var(--space-2) 0;
+      border-bottom: 1px solid var(--border-subtle);
+      position: relative;
+      z-index: 1;
+    }
+
+    .palette-section:last-child {
+      border-bottom: none;
+    }
+
+    .palette-section-title {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      padding: var(--space-1) var(--space-4);
+      margin-bottom: var(--space-1);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .palette-section-title .groove-badge {
+      font-size: 8px;
+      padding: 1px 4px;
+      background: var(--groove-subtle);
+      border: 1px solid rgba(74, 122, 90, 0.4);
+      border-radius: 2px;
+      color: var(--groove-green);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Items */
+    .palette-item {
+      display: flex;
+      align-items: center;
+      padding: var(--space-2) var(--space-4);
+      cursor: pointer;
+      transition: background 0.1s ease;
+    }
+
+    .palette-item:hover {
+      background: var(--bg-surface);
+    }
+
+    .palette-item:hover .palette-item-icon {
+      color: var(--icon-muted-hover);
+    }
+
+    .palette-item.selected {
+      background: var(--gold-subtle);
+      border-left: 2px solid var(--gold-primary);
+      padding-left: calc(var(--space-4) - 2px);
+    }
+
+    .palette-item.selected .palette-item-icon {
+      color: var(--gold-primary);
+    }
+
+    /* Groove-suggested items */
+    .palette-item.suggested {
+      background: var(--groove-subtle);
+      border-left: 2px solid var(--groove-green);
+      padding-left: calc(var(--space-4) - 2px);
+    }
+
+    .palette-item.suggested .palette-item-icon {
+      color: var(--groove-green);
+    }
+
+    .palette-item-icon {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-right: var(--space-3);
+      color: var(--icon-muted);
+    }
+
+    .palette-item-icon .deco-icon {
+      font-size: 14px;
+    }
+
+    .palette-item-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .palette-item-title {
+      font-size: 13px;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .palette-item-desc {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .palette-item-reason {
+      font-size: 10px;
+      color: var(--groove-green);
+      font-style: italic;
+    }
+
+    .palette-item-key {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      color: var(--text-tertiary);
+      padding: 2px 6px;
+      background: var(--bg-deep);
+      border: 1px solid var(--border-subtle);
+      border-radius: 3px;
+      margin-left: var(--space-2);
+    }
+
+    /* ─── Spokes Bar (Stable) ─── */
+    .spokes-bar {
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+      padding: var(--space-2) var(--space-4);
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+      position: relative;
+      z-index: 1;
+    }
+
+    .spoke-chip {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      padding: 3px 8px;
+      background: var(--bg-deep);
+      border: 1px solid var(--border-subtle);
+      border-radius: 3px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.1s ease;
+    }
+
+    .spoke-chip:hover {
+      border-color: var(--gold-dim);
+      color: var(--gold-primary);
+    }
+
+    .spoke-chip .prefix {
+      color: var(--text-tertiary);
+      margin-right: 2px;
+    }
+
+    /* Footer */
+    .palette-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-2) var(--space-4);
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border-subtle);
+      font-size: 10px;
+      color: var(--text-tertiary);
+      position: relative;
+      z-index: 1;
+    }
+
+    .palette-footer-hints {
+      display: flex;
+      gap: var(--space-4);
+    }
+
+    .palette-hint kbd {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      padding: 1px 4px;
+      background: var(--bg-deep);
+      border: 1px solid var(--border-subtle);
+      border-radius: 2px;
+      margin-right: 4px;
+    }
+
+    /* ─── Mindset Cards ─── */
+    .mindset-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-4);
+      margin-top: var(--space-4);
+      position: relative;
+      z-index: 1;
+    }
+
+    .mindset-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+    }
+
+    .mindset-card-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      margin-bottom: var(--space-3);
+    }
+
+    .mindset-card-icon {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--icon-muted);
+    }
+
+    .mindset-card-title {
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .mindset-card-signals {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-bottom: var(--space-2);
+    }
+
+    .mindset-card-result {
+      font-size: 11px;
+      color: var(--groove-green);
+      padding: var(--space-2);
+      background: var(--groove-subtle);
+      border-radius: var(--radius-sm);
+    }
+
+    /* ─── Context Label ─── */
+    .context-label {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-1);
+      font-size: 10px;
+      color: var(--text-tertiary);
+      padding: 2px 6px;
+      background: var(--bg-deep);
+      border-radius: 2px;
+      margin-left: auto;
+    }
+  </style>
+</head>
+<body class="deco-bg">
+  <div class="dashboard">
+
+    <!-- Header Bar -->
+    <header class="header-bar">
+      <div class="flex items-center">
+        <span class="logo">SPOKE</span>
+        <span class="logo-tagline">Explore. Connect. Amplify.</span>
+      </div>
+      <nav class="header-nav">
+        <a href="01-full-dashboard.html" class="nav-item">Dashboard</a>
+        <a href="14-command-palette-refined.html" class="nav-item">Cmd+K v1</a>
+        <a href="15-smart-palette.html" class="nav-item active">Smart Palette</a>
+      </nav>
+    </header>
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="page-header-content">
+        <h1 class="page-title">Smart Palette</h1>
+        <p class="page-description">The palette learns your mindset and surfaces what you need. Iggy's voice in a text field.</p>
+      </div>
+    </div>
+
+    <!-- Layered Structure -->
+    <section class="section">
+      <div class="section-label">Layered Structure: Smart + Stable + History</div>
+      <div class="palette-backdrop">
+        <div class="command-palette">
+          <div class="mindset-bar">
+            <span class="pulse"></span>
+            <span>Sensing: just finished reviewing a failed test</span>
+          </div>
+          <div class="palette-header">
+            <span class="palette-icon"><span class="deco-icon deco-icon-arch deco-icon-sm deco-icon-gold"></span></span>
+            <input type="text" class="palette-input" placeholder="What do you need?" readonly>
+            <span class="palette-shortcut">ESC</span>
+          </div>
+
+          <!-- FOR YOU NOW — Dynamic, learned -->
+          <div class="palette-section">
+            <div class="palette-section-title">
+              For You Now
+              <span class="groove-badge">Groove</span>
+            </div>
+            <div class="palette-item suggested">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-session deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">Inspect test-runner session</div>
+                <div class="palette-item-reason">You usually check traces after failures</div>
+              </div>
+              <span class="palette-item-key">↵</span>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-doc deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">View test output diff</div>
+                <div class="palette-item-reason">Related to the failure</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SPOKES — Stable, predictable -->
+          <div class="spokes-bar">
+            <span class="spoke-chip"><span class="prefix">s:</span>Sessions</span>
+            <span class="spoke-chip"><span class="prefix">a:</span>Agents</span>
+            <span class="spoke-chip"><span class="prefix">g:</span>Goals</span>
+            <span class="spoke-chip"><span class="prefix">d:</span>Data</span>
+            <span class="spoke-chip"><span class="prefix">q:</span>Query</span>
+            <span class="spoke-chip"><span class="prefix">/</span>Cmds</span>
+          </div>
+
+          <!-- RECENT — Your history -->
+          <div class="palette-section">
+            <div class="palette-section-title">Recent</div>
+            <div class="palette-item">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-session deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">auth-refactor</div>
+                <div class="palette-item-desc">Session • 15m ago</div>
+              </div>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-search deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">SELECT * FROM users WHERE...</div>
+                <div class="palette-item-desc">Query • 1h ago</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="palette-footer">
+            <div class="palette-footer-hints">
+              <span class="palette-hint"><kbd>↑↓</kbd> Navigate</span>
+              <span class="palette-hint"><kbd>↵</kbd> Select</span>
+              <span class="palette-hint"><kbd>Tab</kbd> Skip to spokes</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Mindset: Morning Start -->
+    <section class="section">
+      <div class="section-label">Mindset: Morning Start</div>
+      <div class="palette-backdrop">
+        <div class="command-palette">
+          <div class="mindset-bar">
+            <span class="pulse"></span>
+            <span>Sensing: first open today, Monday 9:14am</span>
+          </div>
+          <div class="palette-header">
+            <span class="palette-icon"><span class="deco-icon deco-icon-arch deco-icon-sm deco-icon-gold"></span></span>
+            <input type="text" class="palette-input" placeholder="Good morning" readonly>
+            <span class="palette-shortcut">ESC</span>
+          </div>
+
+          <div class="palette-section">
+            <div class="palette-section-title">
+              For You Now
+              <span class="groove-badge">Groove</span>
+              <span class="context-label">☀️ Monday morning</span>
+            </div>
+            <div class="palette-item suggested">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-sunburst deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">Overnight summary</div>
+                <div class="palette-item-reason">3 sessions completed, 1 needs review</div>
+              </div>
+              <span class="palette-item-key">↵</span>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-search deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">Weekly users query</div>
+                <div class="palette-item-reason">You run this every Monday</div>
+              </div>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-target deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">Resume: Ship auth system</div>
+                <div class="palette-item-reason">73% → 74% achievable today</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="spokes-bar">
+            <span class="spoke-chip"><span class="prefix">s:</span>Sessions</span>
+            <span class="spoke-chip"><span class="prefix">a:</span>Agents</span>
+            <span class="spoke-chip"><span class="prefix">g:</span>Goals</span>
+            <span class="spoke-chip"><span class="prefix">d:</span>Data</span>
+            <span class="spoke-chip"><span class="prefix">q:</span>Query</span>
+            <span class="spoke-chip"><span class="prefix">/</span>Cmds</span>
+          </div>
+
+          <div class="palette-footer">
+            <div class="palette-footer-hints">
+              <span class="palette-hint"><kbd>↵</kbd> Select</span>
+            </div>
+            <span>Learned from 47 Monday mornings</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Mindset: Deep Focus -->
+    <section class="section">
+      <div class="section-label">Mindset: Deep Focus</div>
+      <div class="palette-backdrop">
+        <div class="command-palette">
+          <div class="mindset-bar">
+            <span class="pulse"></span>
+            <span>Sensing: 45min in session, no ⌘K for 30min, high keystroke rate</span>
+          </div>
+          <div class="palette-header">
+            <span class="palette-icon"><span class="deco-icon deco-icon-arch deco-icon-sm deco-icon-gold"></span></span>
+            <input type="text" class="palette-input" placeholder="Quick action?" readonly>
+            <span class="palette-shortcut">ESC</span>
+          </div>
+
+          <div class="palette-section">
+            <div class="palette-section-title">
+              For You Now
+              <span class="groove-badge">Groove</span>
+              <span class="context-label">🎯 Deep focus</span>
+            </div>
+            <div class="palette-item suggested">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-velocity deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">Silence notifications for 30min</div>
+                <div class="palette-item-reason">Protect your flow state</div>
+              </div>
+              <span class="palette-item-key">↵</span>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-bolt deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">1 decision pending (can wait)</div>
+                <div class="palette-item-reason">Not blocking anything</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="spokes-bar">
+            <span class="spoke-chip"><span class="prefix">s:</span>Sessions</span>
+            <span class="spoke-chip"><span class="prefix">a:</span>Agents</span>
+            <span class="spoke-chip"><span class="prefix">g:</span>Goals</span>
+            <span class="spoke-chip"><span class="prefix">d:</span>Data</span>
+            <span class="spoke-chip"><span class="prefix">q:</span>Query</span>
+            <span class="spoke-chip"><span class="prefix">/</span>Cmds</span>
+          </div>
+
+          <div class="palette-footer">
+            <div class="palette-footer-hints">
+              <span class="palette-hint"><kbd>ESC</kbd> Back to work</span>
+            </div>
+            <span>Minimal interruption mode</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Mindset: Decision Queue -->
+    <section class="section">
+      <div class="section-label">Mindset: Decision Queue</div>
+      <div class="palette-backdrop">
+        <div class="command-palette">
+          <div class="mindset-bar">
+            <span class="pulse"></span>
+            <span>Sensing: just approved permission, 2 more pending</span>
+          </div>
+          <div class="palette-header">
+            <span class="palette-icon"><span class="deco-icon deco-icon-arch deco-icon-sm deco-icon-gold"></span></span>
+            <input type="text" class="palette-input" placeholder="Next decision..." readonly>
+            <span class="palette-shortcut">ESC</span>
+          </div>
+
+          <div class="palette-section">
+            <div class="palette-section-title">
+              For You Now
+              <span class="groove-badge">Groove</span>
+              <span class="context-label">⚡ Decision mode</span>
+            </div>
+            <div class="palette-item suggested">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-bolt deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">Permission: delete test fixtures</div>
+                <div class="palette-item-reason">qa-agent • Next in queue</div>
+              </div>
+              <span class="palette-item-key">↵</span>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-bolt deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">Review: screenshot mismatch</div>
+                <div class="palette-item-reason">After this one</div>
+              </div>
+              <span class="palette-item-key">2</span>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-check deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">Done with decisions</div>
+                <div class="palette-item-reason">Clear queue, return to work</div>
+              </div>
+              <span class="palette-item-key">d</span>
+            </div>
+          </div>
+
+          <div class="spokes-bar">
+            <span class="spoke-chip"><span class="prefix">s:</span>Sessions</span>
+            <span class="spoke-chip"><span class="prefix">a:</span>Agents</span>
+            <span class="spoke-chip"><span class="prefix">g:</span>Goals</span>
+            <span class="spoke-chip"><span class="prefix">d:</span>Data</span>
+            <span class="spoke-chip"><span class="prefix">q:</span>Query</span>
+            <span class="spoke-chip"><span class="prefix">/</span>Cmds</span>
+          </div>
+
+          <div class="palette-footer">
+            <div class="palette-footer-hints">
+              <span class="palette-hint"><kbd>y</kbd> Approve</span>
+              <span class="palette-hint"><kbd>n</kbd> Deny</span>
+              <span class="palette-hint"><kbd>→</kbd> Next</span>
+            </div>
+            <span>2 remaining</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Mindset: End of Day -->
+    <section class="section">
+      <div class="section-label">Mindset: End of Day</div>
+      <div class="palette-backdrop">
+        <div class="command-palette">
+          <div class="mindset-bar">
+            <span class="pulse"></span>
+            <span>Sensing: 6:47pm, activity winding down, fewer keystrokes</span>
+          </div>
+          <div class="palette-header">
+            <span class="palette-icon"><span class="deco-icon deco-icon-arch deco-icon-sm deco-icon-gold"></span></span>
+            <input type="text" class="palette-input" placeholder="Wrapping up?" readonly>
+            <span class="palette-shortcut">ESC</span>
+          </div>
+
+          <div class="palette-section">
+            <div class="palette-section-title">
+              For You Now
+              <span class="groove-badge">Groove</span>
+              <span class="context-label">🌙 Winding down</span>
+            </div>
+            <div class="palette-item suggested">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-doc deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">Today's summary</div>
+                <div class="palette-item-reason">4 sessions, 2 goals progressed, $32 spent</div>
+              </div>
+              <span class="palette-item-key">↵</span>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-velocity deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">Schedule overnight agents</div>
+                <div class="palette-item-reason">Let them work while you rest</div>
+              </div>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-target deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">Set tomorrow's priority</div>
+                <div class="palette-item-reason">You do this 80% of evenings</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="spokes-bar">
+            <span class="spoke-chip"><span class="prefix">s:</span>Sessions</span>
+            <span class="spoke-chip"><span class="prefix">a:</span>Agents</span>
+            <span class="spoke-chip"><span class="prefix">g:</span>Goals</span>
+            <span class="spoke-chip"><span class="prefix">d:</span>Data</span>
+            <span class="spoke-chip"><span class="prefix">q:</span>Query</span>
+            <span class="spoke-chip"><span class="prefix">/</span>Cmds</span>
+          </div>
+
+          <div class="palette-footer">
+            <div class="palette-footer-hints">
+              <span class="palette-hint"><kbd>↵</kbd> Select</span>
+            </div>
+            <span>Good work today</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Mindset Detection Signals -->
+    <section class="section">
+      <div class="section-label">Mindset Detection Signals</div>
+      <div class="mindset-grid">
+        <div class="mindset-card">
+          <div class="mindset-card-header">
+            <div class="mindset-card-icon"><span class="deco-icon deco-icon-velocity deco-icon-sm"></span></div>
+            <div class="mindset-card-title">Rapid Glancing</div>
+          </div>
+          <div class="mindset-card-signals">
+            Quick ⌘K opens and closes<br>
+            Low dwell time on items<br>
+            No typing, just arrow keys
+          </div>
+          <div class="mindset-card-result">
+            → Survey mode: status summary only
+          </div>
+        </div>
+
+        <div class="mindset-card">
+          <div class="mindset-card-header">
+            <div class="mindset-card-icon"><span class="deco-icon deco-icon-search deco-icon-sm"></span></div>
+            <div class="mindset-card-title">Searching</div>
+          </div>
+          <div class="mindset-card-signals">
+            Typing partial terms<br>
+            Backspace corrections<br>
+            Scrolling through results
+          </div>
+          <div class="mindset-card-result">
+            → Expand search, show more results
+          </div>
+        </div>
+
+        <div class="mindset-card">
+          <div class="mindset-card-header">
+            <div class="mindset-card-icon"><span class="deco-icon deco-icon-bolt deco-icon-sm"></span></div>
+            <div class="mindset-card-title">Deciding</div>
+          </div>
+          <div class="mindset-card-signals">
+            Just approved/denied something<br>
+            More items in attention queue<br>
+            Short session durations
+          </div>
+          <div class="mindset-card-result">
+            → Queue next decision, offer batch actions
+          </div>
+        </div>
+
+        <div class="mindset-card">
+          <div class="mindset-card-header">
+            <div class="mindset-card-icon"><span class="deco-icon deco-icon-target deco-icon-sm"></span></div>
+            <div class="mindset-card-title">Deep Focus</div>
+          </div>
+          <div class="mindset-card-signals">
+            Long time in single session<br>
+            No ⌘K for 20+ minutes<br>
+            High keystroke rate
+          </div>
+          <div class="mindset-card-result">
+            → Minimal UI, protect flow state
+          </div>
+        </div>
+
+        <div class="mindset-card">
+          <div class="mindset-card-header">
+            <div class="mindset-card-icon"><span class="deco-icon deco-icon-time deco-icon-sm"></span></div>
+            <div class="mindset-card-title">Time Patterns</div>
+          </div>
+          <div class="mindset-card-signals">
+            Morning: first activity<br>
+            Post-lunch: resuming<br>
+            Evening: winding down
+          </div>
+          <div class="mindset-card-result">
+            → Context-appropriate suggestions
+          </div>
+        </div>
+
+        <div class="mindset-card">
+          <div class="mindset-card-header">
+            <div class="mindset-card-icon"><span class="deco-icon deco-icon-growth deco-icon-sm"></span></div>
+            <div class="mindset-card-title">Learned Habits</div>
+          </div>
+          <div class="mindset-card-signals">
+            Repeated sequences detected<br>
+            Time-based patterns<br>
+            Context-action correlations
+          </div>
+          <div class="mindset-card-result">
+            → Pre-populate likely next action
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</body>
+</html>

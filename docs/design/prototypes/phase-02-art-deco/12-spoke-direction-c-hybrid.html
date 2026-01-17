@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SPOKE — Direction C: Hybrid Context-Dependent</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    /* ═══════════════════════════════════════════════════════════════════════════
+       SPOKE — DIRECTION C: HYBRID CONTEXT-DEPENDENT
+       Mechanical precision for data/infrastructure. Warm luxury for command.
+
+       The key insight: Different contexts call for different tones.
+       - Infrastructure views → Blueprint/technical (you're an engineer)
+       - Command views → Warm luxury (you're a commander)
+
+       This prototype demonstrates both in a single dashboard.
+       ═══════════════════════════════════════════════════════════════════════════ */
+
+    :root {
+      /* Mechanical palette */
+      --mech-copper: #c4956a;
+      --mech-bronze: #a87d52;
+      --mech-steel: #7a8a9a;
+      --mech-grid: rgba(100, 130, 160, 0.08);
+      --mech-annotation: #5d7a94;
+    }
+
+    body {
+      background: var(--bg-void);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 32px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       HEADER — Unified Brand (Warm Luxury)
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 24px;
+      margin-bottom: 32px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .logo-group {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .spoke-mark {
+      width: 40px;
+      height: 40px;
+    }
+
+    .spoke-mark svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .brand-name {
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 300;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-bright);
+    }
+
+    .header-center {
+      display: flex;
+      gap: 8px;
+    }
+
+    .mode-tab {
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 8px 16px;
+      background: transparent;
+      border: 1px solid var(--border-light);
+      color: var(--text-tertiary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .mode-tab:hover {
+      border-color: var(--gold-dim);
+      color: var(--text-secondary);
+    }
+
+    .mode-tab.active {
+      background: var(--gold-subtle);
+      border-color: var(--gold-primary);
+      color: var(--gold-primary);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       MAIN LAYOUT — Split View
+       Left: Infrastructure (Mechanical)
+       Right: Command (Warm Luxury)
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+    }
+
+    /* ─── Zone Labels ─── */
+    .zone-label {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .zone-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border-subtle);
+    }
+
+    .zone-label span {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       LEFT ZONE — INFRASTRUCTURE (Mechanical Precision)
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .infrastructure-zone {
+      position: relative;
+    }
+
+    .infrastructure-zone .zone-label span {
+      color: var(--mech-annotation);
+    }
+
+    /* Blueprint background for infrastructure zone */
+    .infra-panel {
+      background:
+        linear-gradient(var(--mech-grid) 1px, transparent 1px) 0 0 / 20px 20px,
+        linear-gradient(90deg, var(--mech-grid) 1px, transparent 1px) 0 0 / 20px 20px,
+        var(--bg-card);
+      border: 1px solid var(--mech-steel);
+      border-radius: var(--radius-sm);
+      padding: 24px;
+      position: relative;
+    }
+
+    .infra-panel::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--mech-bronze), var(--mech-copper), var(--mech-bronze));
+    }
+
+    .infra-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px dashed rgba(100, 130, 160, 0.2);
+    }
+
+    .infra-title {
+      font-family: var(--font-condensed);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--mech-copper);
+    }
+
+    .infra-meta {
+      font-family: 'Courier New', monospace;
+      font-size: 9px;
+      color: var(--mech-annotation);
+    }
+
+    /* Lakehouse Diagram */
+    .lakehouse-diagram {
+      position: relative;
+      height: 300px;
+      margin-bottom: 20px;
+    }
+
+    .layer {
+      position: absolute;
+      left: 0;
+      right: 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .layer-label {
+      width: 80px;
+      font-family: 'Courier New', monospace;
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--mech-annotation);
+      text-align: right;
+    }
+
+    .layer-content {
+      flex: 1;
+      display: flex;
+      gap: 8px;
+    }
+
+    .layer-box {
+      flex: 1;
+      height: 40px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--mech-steel);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      position: relative;
+    }
+
+    .layer-box::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--mech-copper);
+    }
+
+    .layer.ingestion { top: 0; }
+    .layer.processing { top: 70px; }
+    .layer.storage { top: 140px; }
+    .layer.serving { top: 210px; }
+
+    /* Vertical flow arrows */
+    .flow-arrows {
+      position: absolute;
+      left: 100px;
+      top: 45px;
+      bottom: 45px;
+      width: calc(100% - 100px);
+      pointer-events: none;
+    }
+
+    .flow-arrow {
+      position: absolute;
+      width: 1px;
+      height: 25px;
+      background: var(--mech-annotation);
+      opacity: 0.4;
+    }
+
+    .flow-arrow::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: -3px;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-top: 6px solid var(--mech-annotation);
+    }
+
+    /* Connection Stats */
+    .connection-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .stat-box {
+      background: var(--bg-surface);
+      border: 1px solid rgba(100, 130, 160, 0.2);
+      padding: 12px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 300;
+      color: var(--mech-copper);
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-family: 'Courier New', monospace;
+      font-size: 8px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--mech-annotation);
+      margin-top: 4px;
+    }
+
+    /* Source List (Mechanical Style) */
+    .source-list {
+      margin-top: 20px;
+    }
+
+    .source-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      background: var(--bg-surface);
+      border: 1px solid rgba(100, 130, 160, 0.15);
+      margin-bottom: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .source-item:hover {
+      border-color: var(--mech-copper);
+    }
+
+    .source-status {
+      width: 8px;
+      height: 8px;
+      background: var(--accent-success);
+      border-radius: 0;
+      transform: rotate(45deg);
+    }
+
+    .source-name {
+      flex: 1;
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-primary);
+    }
+
+    .source-type {
+      font-family: 'Courier New', monospace;
+      font-size: 9px;
+      color: var(--mech-annotation);
+      padding: 2px 8px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .source-throughput {
+      font-family: 'Courier New', monospace;
+      font-size: 10px;
+      color: var(--mech-copper);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       RIGHT ZONE — COMMAND (Warm Luxury)
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .command-zone {
+      position: relative;
+    }
+
+    .command-zone .zone-label span {
+      color: var(--gold-primary);
+    }
+
+    /* Warm panel styling */
+    .command-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      position: relative;
+    }
+
+    .command-panel::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg,
+        var(--gold-dim) 0%,
+        var(--gold-primary) 50%,
+        var(--gold-dim) 100%
+      );
+    }
+
+    .command-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .command-title {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+    }
+
+    /* Attention Items (Warm Style) */
+    .attention-banner {
+      background: linear-gradient(135deg, rgba(212, 168, 75, 0.08) 0%, rgba(212, 168, 75, 0.03) 100%);
+      border: 1px solid var(--gold-dim);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    .attention-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .attention-icon {
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    .attention-title {
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+    }
+
+    .attention-count {
+      margin-left: auto;
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      padding: 2px 8px;
+      background: var(--gold-subtle);
+      border: 1px solid var(--gold-dim);
+      color: var(--gold-primary);
+    }
+
+    .attention-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .attention-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .attention-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--accent-warning);
+      border-radius: 50%;
+      box-shadow: 0 0 8px rgba(212, 168, 75, 0.5);
+      animation: pulse-gold 2s ease-in-out infinite;
+    }
+
+    .attention-text {
+      flex: 1;
+      font-family: var(--font-body);
+      font-size: 13px;
+      color: var(--text-primary);
+    }
+
+    .attention-action {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 6px 12px;
+      background: transparent;
+      border: 1px solid var(--gold-dim);
+      color: var(--gold-muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .attention-action:hover {
+      background: var(--gold-subtle);
+      border-color: var(--gold-primary);
+      color: var(--gold-primary);
+    }
+
+    /* Goals Widget (Warm Style) */
+    .goals-widget {
+      margin-bottom: 20px;
+    }
+
+    .goal-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .goal-item:hover {
+      border-color: var(--gold-dim);
+    }
+
+    .goal-icon {
+      font-size: 18px;
+    }
+
+    .goal-content {
+      flex: 1;
+    }
+
+    .goal-name {
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+
+    .goal-progress-bar {
+      height: 4px;
+      background: var(--bg-void);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .goal-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--gold-muted), var(--gold-primary));
+      border-radius: 2px;
+    }
+
+    .goal-percent {
+      font-family: var(--font-condensed);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gold-primary);
+      min-width: 40px;
+      text-align: right;
+    }
+
+    /* Metrics (Warm Style) */
+    .metrics-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .metric-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      text-align: center;
+    }
+
+    .metric-value {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 300;
+      color: var(--text-bright);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .metric-value.gold {
+      color: var(--gold-primary);
+    }
+
+    .metric-label {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       FOOTER — Unified
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .footer {
+      margin-top: 40px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-left {
+      display: flex;
+      gap: 32px;
+    }
+
+    .footer-section {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .footer-label {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .footer-value {
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .footer-right {
+      text-align: right;
+    }
+
+    .footer-brand {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold-muted);
+    }
+
+    .footer-tagline {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       ANNOTATIONS — Show the duality
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .design-note {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      padding: 12px 24px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      z-index: 100;
+    }
+
+    .note-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .note-swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+    }
+
+    .note-swatch.mechanical {
+      background: linear-gradient(135deg, var(--mech-bronze), var(--mech-steel));
+      border: 1px solid var(--mech-steel);
+    }
+
+    .note-swatch.luxury {
+      background: linear-gradient(135deg, var(--gold-muted), var(--gold-primary));
+      border: 1px solid var(--gold-dim);
+    }
+
+    .note-text {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+
+    .note-divider {
+      width: 1px;
+      height: 20px;
+      background: var(--border-light);
+    }
+  </style>
+</head>
+<body class="deco-bg">
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo-group">
+        <div class="spoke-mark">
+          <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="20" cy="20" r="18" stroke="#d4a84b" stroke-width="1.5" fill="none"/>
+            <circle cx="20" cy="20" r="6" stroke="#d4a84b" stroke-width="1.5" fill="none"/>
+            <circle cx="20" cy="20" r="2" fill="#e8c45a"/>
+            <line x1="20" y1="5" x2="20" y2="14" stroke="#d4a84b" stroke-width="1"/>
+            <line x1="33" y1="12.3" x2="25.2" y2="17" stroke="#d4a84b" stroke-width="1"/>
+            <line x1="33" y1="27.7" x2="25.2" y2="23" stroke="#d4a84b" stroke-width="1"/>
+            <line x1="20" y1="35" x2="20" y2="26" stroke="#d4a84b" stroke-width="1"/>
+            <line x1="7" y1="27.7" x2="14.8" y2="23" stroke="#d4a84b" stroke-width="1"/>
+            <line x1="7" y1="12.3" x2="14.8" y2="17" stroke="#d4a84b" stroke-width="1"/>
+          </svg>
+        </div>
+        <span class="brand-name">Spoke</span>
+      </div>
+
+      <div class="header-center">
+        <button class="mode-tab">Survey</button>
+        <button class="mode-tab active">Command</button>
+        <button class="mode-tab">Deep Dive</button>
+      </div>
+
+      <div class="header-actions">
+        <button class="btn btn-ghost">⌘K</button>
+        <button class="btn btn-primary">+ Session</button>
+      </div>
+    </header>
+
+    <!-- Main Split View -->
+    <div class="main-grid">
+      <!-- LEFT: Infrastructure Zone (Mechanical) -->
+      <div class="infrastructure-zone">
+        <div class="zone-label">
+          <span>Infrastructure · Mechanical Precision</span>
+        </div>
+
+        <div class="infra-panel">
+          <div class="infra-header">
+            <span class="infra-title">Lakehouse Architecture</span>
+            <span class="infra-meta">DWG-001 // REV 1.0</span>
+          </div>
+
+          <!-- Lakehouse Layers Diagram -->
+          <div class="lakehouse-diagram">
+            <div class="layer ingestion">
+              <div class="layer-label">Ingestion</div>
+              <div class="layer-content">
+                <div class="layer-box">Batch</div>
+                <div class="layer-box">Stream</div>
+                <div class="layer-box">CDC</div>
+              </div>
+            </div>
+
+            <div class="layer processing">
+              <div class="layer-label">Processing</div>
+              <div class="layer-content">
+                <div class="layer-box">Apache Arrow</div>
+                <div class="layer-box">Event Sourcing</div>
+              </div>
+            </div>
+
+            <div class="layer storage">
+              <div class="layer-label">Storage</div>
+              <div class="layer-content">
+                <div class="layer-box">Local</div>
+                <div class="layer-box">Object Store</div>
+                <div class="layer-box">Iggy</div>
+              </div>
+            </div>
+
+            <div class="layer serving">
+              <div class="layer-label">Serving</div>
+              <div class="layer-content">
+                <div class="layer-box">CLI</div>
+                <div class="layer-box">Web UI</div>
+                <div class="layer-box">SaaS API</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Connection Stats -->
+          <div class="connection-stats">
+            <div class="stat-box">
+              <div class="stat-value">24</div>
+              <div class="stat-label">Sources</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-value">12.4K</div>
+              <div class="stat-label">Events/Sec</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-value">23ms</div>
+              <div class="stat-label">P99 Latency</div>
+            </div>
+          </div>
+
+          <!-- Source List -->
+          <div class="source-list">
+            <div class="source-item">
+              <div class="source-status"></div>
+              <div class="source-name">PostgreSQL Primary</div>
+              <div class="source-type">DATABASE</div>
+              <div class="source-throughput">2.1K/s</div>
+            </div>
+            <div class="source-item">
+              <div class="source-status"></div>
+              <div class="source-name">AWS S3 Data Lake</div>
+              <div class="source-type">OBJECT</div>
+              <div class="source-throughput">840/s</div>
+            </div>
+            <div class="source-item">
+              <div class="source-status"></div>
+              <div class="source-name">Stripe Webhooks</div>
+              <div class="source-type">STREAM</div>
+              <div class="source-throughput">156/s</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Command Zone (Warm Luxury) -->
+      <div class="command-zone">
+        <div class="zone-label">
+          <span>Command Center · Warm Luxury</span>
+        </div>
+
+        <div class="command-panel">
+          <div class="command-header">
+            <span class="command-title">Mission Control</span>
+            <span class="badge badge-gold">Live</span>
+          </div>
+
+          <!-- Attention Banner -->
+          <div class="attention-banner">
+            <div class="attention-header">
+              <div class="attention-icon">⚡</div>
+              <span class="attention-title">Needs Attention</span>
+              <span class="attention-count">2</span>
+            </div>
+            <div class="attention-item">
+              <div class="attention-dot"></div>
+              <span class="attention-text">Agent architect requesting write access to /src/auth</span>
+              <button class="attention-action">Review</button>
+            </div>
+            <div class="attention-item">
+              <div class="attention-dot"></div>
+              <span class="attention-text">Verification failed: Screenshot mismatch in checkout flow</span>
+              <button class="attention-action">Inspect</button>
+            </div>
+          </div>
+
+          <!-- Goals -->
+          <div class="goals-widget">
+            <div class="goal-item">
+              <div class="goal-icon">🎯</div>
+              <div class="goal-content">
+                <div class="goal-name">Ship authentication system</div>
+                <div class="goal-progress-bar">
+                  <div class="goal-progress-fill" style="width: 73%"></div>
+                </div>
+              </div>
+              <div class="goal-percent">73%</div>
+            </div>
+            <div class="goal-item">
+              <div class="goal-icon">🌱</div>
+              <div class="goal-content">
+                <div class="goal-name">Improve onboarding experience</div>
+                <div class="goal-progress-bar">
+                  <div class="goal-progress-fill" style="width: 28%"></div>
+                </div>
+              </div>
+              <div class="goal-percent">28%</div>
+            </div>
+          </div>
+
+          <!-- Metrics -->
+          <div class="metrics-row">
+            <div class="metric-card">
+              <div class="metric-value gold">8</div>
+              <div class="metric-label">Active Sessions</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value">12</div>
+              <div class="metric-label">Agents Running</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value gold">$47</div>
+              <div class="metric-label">Cost Today</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value">94%</div>
+              <div class="metric-label">Success Rate</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="footer-left">
+        <div class="footer-section">
+          <span class="footer-label">Direction</span>
+          <span class="footer-value">C: Hybrid Context-Dependent</span>
+        </div>
+        <div class="footer-section">
+          <span class="footer-label">Principle</span>
+          <span class="footer-value">Engineering views → Mechanical | Command views → Luxurious</span>
+        </div>
+      </div>
+      <div class="footer-right">
+        <div class="footer-brand">spoke.sh</div>
+        <div class="footer-tagline">Your Hub. Your Data. Your Command.</div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Design Note -->
+  <div class="design-note">
+    <div class="note-item">
+      <div class="note-swatch mechanical"></div>
+      <span class="note-text">Left: Mechanical Precision (Infrastructure)</span>
+    </div>
+    <div class="note-divider"></div>
+    <div class="note-item">
+      <div class="note-swatch luxury"></div>
+      <span class="note-text">Right: Warm Luxury (Command)</span>
+    </div>
+  </div>
+</body>
+</html>

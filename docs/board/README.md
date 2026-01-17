@@ -100,7 +100,7 @@
 | [44-tui-swarm-visualization](milestones/44-tui-swarm-visualization/) | planned | tui |
 | [45-tui-theme-system](milestones/45-tui-theme-system/) | planned | tui |
 | [46-tui-pty-server](milestones/46-tui-pty-server/) | planned | tui |
-| [47-home-page-redesign](milestones/47-home-page-redesign/) | done | web-ui,plugin-system |
+| [47-vision-expansion](milestones/47-vision-expansion/) | in-progress | web-ui,plugin-system,design-system |
 | [48-longitudinal-mode](milestones/48-longitudinal-mode/) | planned | evals |
 | [49-eval-reports](milestones/49-eval-reports/) | planned | evals |
 | [50-trend-analysis](milestones/50-trend-analysis/) | planned | evals |

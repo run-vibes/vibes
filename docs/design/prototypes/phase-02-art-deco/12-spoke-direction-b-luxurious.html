@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SPOKE — Direction B: Warm & Luxurious</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    /* ═══════════════════════════════════════════════════════════════════════════
+       SPOKE — DIRECTION B: WARM & LUXURIOUS
+       Preserve the Art Deco warmth. Spoke is the metaphor, luxury is the feeling.
+
+       Key elements:
+       - Keep the gold/navy warmth from existing Art Deco theme
+       - Subtle wheel motifs (not overt engineering)
+       - "Command center" not "factory floor"
+       - Elegant spoke patterns in decorative elements
+       - Premium materials feeling (gold, champagne, deep navy)
+       ═══════════════════════════════════════════════════════════════════════════ */
+
+    body {
+      background: var(--bg-void);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 40px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ─── Atmospheric Background ─── */
+    .atmosphere {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .atmosphere::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        /* Warm golden glow from center */
+        radial-gradient(ellipse 80% 60% at 50% 40%, rgba(212, 168, 75, 0.04) 0%, transparent 60%),
+        /* Navy depth */
+        radial-gradient(ellipse 100% 80% at 30% 70%, rgba(26, 45, 69, 0.4) 0%, transparent 50%),
+        radial-gradient(ellipse 80% 60% at 80% 80%, rgba(26, 45, 69, 0.3) 0%, transparent 50%);
+    }
+
+    /* Subtle radiating lines (spoke motif) */
+    .atmosphere::after {
+      content: '';
+      position: absolute;
+      top: 30%;
+      left: 50%;
+      width: 200%;
+      height: 200%;
+      background: repeating-conic-gradient(
+        from 0deg,
+        transparent 0deg 8deg,
+        rgba(212, 168, 75, 0.008) 8deg 10deg
+      );
+      transform: translate(-50%, -50%);
+      opacity: 0.6;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       HEADER — Elegant with Spoke Accent
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 32px;
+      margin-bottom: 48px;
+      border-bottom: 1px solid var(--border-light);
+      position: relative;
+    }
+
+    /* Decorative spoke pattern under header */
+    .header::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 50%;
+      width: 200px;
+      height: 3px;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        var(--gold-dim) 20%,
+        var(--gold-primary) 50%,
+        var(--gold-dim) 80%,
+        transparent 100%
+      );
+      transform: translateX(-50%);
+    }
+
+    .logo-group {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    /* Elegant Wheel Mark */
+    .spoke-emblem {
+      width: 56px;
+      height: 56px;
+      position: relative;
+    }
+
+    .spoke-emblem svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .brand-name {
+      font-family: var(--font-display);
+      font-size: 32px;
+      font-weight: 300;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--text-bright);
+      line-height: 1;
+    }
+
+    .brand-tagline {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold-muted);
+    }
+
+    .header-nav {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       HERO SECTION — Central Hub Visualization
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .hero {
+      text-align: center;
+      margin-bottom: 64px;
+    }
+
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+      margin-bottom: 16px;
+    }
+
+    .hero-headline {
+      font-family: var(--font-display);
+      font-size: 40px;
+      font-weight: 300;
+      letter-spacing: 0.02em;
+      color: var(--text-bright);
+      margin-bottom: 12px;
+      line-height: 1.2;
+    }
+
+    .hero-sub {
+      font-family: var(--font-body);
+      font-size: 16px;
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* ─── Central Wheel Visualization ─── */
+    .wheel-hero {
+      position: relative;
+      width: 500px;
+      height: 500px;
+      margin: 60px auto;
+    }
+
+    /* Outer decorative ring */
+    .wheel-outer-ring {
+      position: absolute;
+      inset: 0;
+      border: 1px solid var(--border-light);
+      border-radius: 50%;
+    }
+
+    .wheel-outer-ring::before {
+      content: '';
+      position: absolute;
+      inset: 8px;
+      border: 1px solid var(--border-subtle);
+      border-radius: 50%;
+    }
+
+    /* Spoke lines */
+    .wheel-spokes {
+      position: absolute;
+      inset: 0;
+    }
+
+    .spoke-line {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 50%;
+      height: 2px;
+      background: linear-gradient(90deg,
+        var(--gold-primary) 0%,
+        var(--gold-dim) 60%,
+        transparent 100%
+      );
+      transform-origin: left center;
+      opacity: 0.4;
+    }
+
+    .spoke-line:nth-child(1) { transform: rotate(0deg); }
+    .spoke-line:nth-child(2) { transform: rotate(60deg); }
+    .spoke-line:nth-child(3) { transform: rotate(120deg); }
+    .spoke-line:nth-child(4) { transform: rotate(180deg); }
+    .spoke-line:nth-child(5) { transform: rotate(240deg); }
+    .spoke-line:nth-child(6) { transform: rotate(300deg); }
+
+    /* Hub */
+    .wheel-hub {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 140px;
+      height: 140px;
+    }
+
+    .hub-ring {
+      position: absolute;
+      inset: 0;
+      border: 3px solid var(--gold-primary);
+      border-radius: 50%;
+      box-shadow: var(--glow-gold-bright);
+      animation: hub-glow 4s ease-in-out infinite;
+    }
+
+    @keyframes hub-glow {
+      0%, 100% { box-shadow: var(--glow-gold); }
+      50% { box-shadow: var(--glow-gold-bright); }
+    }
+
+    .hub-inner {
+      position: absolute;
+      inset: 15px;
+      background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
+      border: 1px solid var(--gold-dim);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .hub-icon {
+      width: 32px;
+      height: 32px;
+      margin-bottom: 8px;
+    }
+
+    .hub-label {
+      font-family: var(--font-display);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+    }
+
+    .hub-sublabel {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      color: var(--text-tertiary);
+      margin-top: 2px;
+    }
+
+    /* Rim Nodes */
+    .rim-node {
+      position: absolute;
+      width: 90px;
+      height: 90px;
+      transform: translate(-50%, -50%);
+    }
+
+    .rim-node-inner {
+      width: 100%;
+      height: 100%;
+      background: var(--bg-card);
+      border: 2px solid var(--border-medium);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .rim-node:hover .rim-node-inner {
+      border-color: var(--gold-primary);
+      box-shadow: var(--glow-gold);
+      transform: scale(1.1);
+    }
+
+    .rim-node-icon {
+      font-size: 20px;
+      margin-bottom: 4px;
+    }
+
+    .rim-node-label {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      text-align: center;
+    }
+
+    /* Position nodes */
+    .rim-node:nth-child(1) { top: 5%; left: 50%; }
+    .rim-node:nth-child(2) { top: 27.5%; left: 89%; }
+    .rim-node:nth-child(3) { top: 72.5%; left: 89%; }
+    .rim-node:nth-child(4) { top: 95%; left: 50%; }
+    .rim-node:nth-child(5) { top: 72.5%; left: 11%; }
+    .rim-node:nth-child(6) { top: 27.5%; left: 11%; }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       FEATURES GRID — Elegant Cards
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .features-section {
+      margin-bottom: 64px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+
+    .section-header::before,
+    .section-header::after {
+      content: '';
+      width: 80px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold-dim));
+    }
+
+    .section-header::after {
+      background: linear-gradient(90deg, var(--gold-dim), transparent);
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 32px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg,
+        var(--gold-dim) 0%,
+        var(--gold-primary) 50%,
+        var(--gold-dim) 100%
+      );
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .feature-card:hover {
+      border-color: var(--gold-dim);
+      box-shadow: var(--shadow-gold);
+    }
+
+    .feature-card:hover::before {
+      opacity: 1;
+    }
+
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
+
+    .feature-title {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: var(--text-bright);
+      margin-bottom: 12px;
+    }
+
+    .feature-desc {
+      font-family: var(--font-body);
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       METRICS BAR — Elegant Counters
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .metrics-bar {
+      display: flex;
+      justify-content: center;
+      gap: 64px;
+      padding: 40px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      margin-bottom: 64px;
+    }
+
+    .metric-item {
+      text-align: center;
+    }
+
+    .metric-value {
+      font-family: var(--font-display);
+      font-size: 40px;
+      font-weight: 300;
+      color: var(--gold-primary);
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .metric-label {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       COMMAND MODES — Mode Switcher Preview
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .modes-section {
+      margin-bottom: 64px;
+    }
+
+    .modes-container {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .mode-card {
+      width: 200px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .mode-card:hover {
+      border-color: var(--gold-dim);
+    }
+
+    .mode-card.active {
+      border-color: var(--gold-primary);
+      box-shadow: var(--glow-gold);
+    }
+
+    .mode-icon {
+      font-size: 28px;
+      margin-bottom: 12px;
+    }
+
+    .mode-name {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .mode-desc {
+      font-family: var(--font-body);
+      font-size: 12px;
+      color: var(--text-tertiary);
+      line-height: 1.5;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       FOOTER — Elegant with Spoke Pattern
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .footer {
+      text-align: center;
+      padding-top: 40px;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .footer-spoke-pattern {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .footer-spoke-pattern span {
+      width: 40px;
+      height: 1px;
+      background: var(--gold-dim);
+    }
+
+    .footer-spoke-pattern .center-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--gold-primary);
+      transform: rotate(45deg);
+      box-shadow: var(--glow-gold);
+    }
+
+    .footer-text {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .footer-brand {
+      color: var(--gold-muted);
+    }
+  </style>
+</head>
+<body class="deco-bg">
+  <div class="atmosphere"></div>
+
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo-group">
+        <div class="spoke-emblem">
+          <svg viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Outer ring with warm glow -->
+            <circle cx="28" cy="28" r="26" stroke="url(#gold-ring)" stroke-width="2" fill="none"/>
+
+            <!-- Inner rings -->
+            <circle cx="28" cy="28" r="20" stroke="#8a6520" stroke-width="1" stroke-dasharray="2 4" fill="none" opacity="0.5"/>
+
+            <!-- Hub -->
+            <circle cx="28" cy="28" r="10" stroke="#d4a84b" stroke-width="2" fill="none"/>
+            <circle cx="28" cy="28" r="4" fill="#e8c45a"/>
+
+            <!-- Elegant spokes -->
+            <line x1="28" y1="6" x2="28" y2="18" stroke="url(#spoke-grad)" stroke-width="1.5"/>
+            <line x1="47" y1="17" x2="36.7" y2="23" stroke="url(#spoke-grad)" stroke-width="1.5"/>
+            <line x1="47" y1="39" x2="36.7" y2="33" stroke="url(#spoke-grad)" stroke-width="1.5"/>
+            <line x1="28" y1="50" x2="28" y2="38" stroke="url(#spoke-grad)" stroke-width="1.5"/>
+            <line x1="9" y1="39" x2="19.3" y2="33" stroke="url(#spoke-grad)" stroke-width="1.5"/>
+            <line x1="9" y1="17" x2="19.3" y2="23" stroke="url(#spoke-grad)" stroke-width="1.5"/>
+
+            <defs>
+              <linearGradient id="gold-ring" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#b8892e"/>
+                <stop offset="50%" style="stop-color:#d4a84b"/>
+                <stop offset="100%" style="stop-color:#b8892e"/>
+              </linearGradient>
+              <linearGradient id="spoke-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style="stop-color:#d4a84b"/>
+                <stop offset="100%" style="stop-color:#8a6520"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <div class="brand-name">Spoke</div>
+          <div class="brand-tagline">Direction B — Warm & Luxurious</div>
+        </div>
+      </div>
+
+      <nav class="header-nav">
+        <a href="#" class="nav-item active">Dashboard</a>
+        <a href="#" class="nav-item">Sessions</a>
+        <a href="#" class="nav-item">Agents</a>
+        <a href="#" class="nav-item">Settings</a>
+      </nav>
+    </header>
+
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero-title">Unified Data Infrastructure</div>
+      <h1 class="hero-headline">Your Hub. Your Data. Your Command.</h1>
+      <p class="hero-sub">Connect every data source through a single hub. Each spoke is a connection. Each connection expands your reach.</p>
+
+      <!-- Wheel Visualization -->
+      <div class="wheel-hero">
+        <div class="wheel-outer-ring"></div>
+
+        <!-- Spokes -->
+        <div class="wheel-spokes">
+          <div class="spoke-line"></div>
+          <div class="spoke-line"></div>
+          <div class="spoke-line"></div>
+          <div class="spoke-line"></div>
+          <div class="spoke-line"></div>
+          <div class="spoke-line"></div>
+        </div>
+
+        <!-- Rim Nodes -->
+        <div class="rim-node">
+          <div class="rim-node-inner">
+            <div class="rim-node-icon">🗄️</div>
+            <div class="rim-node-label">Databases</div>
+          </div>
+        </div>
+        <div class="rim-node">
+          <div class="rim-node-inner">
+            <div class="rim-node-icon">☁️</div>
+            <div class="rim-node-label">Cloud</div>
+          </div>
+        </div>
+        <div class="rim-node">
+          <div class="rim-node-inner">
+            <div class="rim-node-icon">📊</div>
+            <div class="rim-node-label">Analytics</div>
+          </div>
+        </div>
+        <div class="rim-node">
+          <div class="rim-node-inner">
+            <div class="rim-node-icon">🤖</div>
+            <div class="rim-node-label">Agents</div>
+          </div>
+        </div>
+        <div class="rim-node">
+          <div class="rim-node-inner">
+            <div class="rim-node-icon">📁</div>
+            <div class="rim-node-label">Files</div>
+          </div>
+        </div>
+        <div class="rim-node">
+          <div class="rim-node-inner">
+            <div class="rim-node-icon">🔌</div>
+            <div class="rim-node-label">APIs</div>
+          </div>
+        </div>
+
+        <!-- Central Hub -->
+        <div class="wheel-hub">
+          <div class="hub-ring"></div>
+          <div class="hub-inner">
+            <svg class="hub-icon" viewBox="0 0 32 32" fill="none">
+              <circle cx="16" cy="16" r="6" stroke="#d4a84b" stroke-width="2" fill="none"/>
+              <circle cx="16" cy="16" r="2" fill="#e8c45a"/>
+              <line x1="16" y1="4" x2="16" y2="10" stroke="#d4a84b" stroke-width="1.5"/>
+              <line x1="16" y1="22" x2="16" y2="28" stroke="#d4a84b" stroke-width="1.5"/>
+              <line x1="4" y1="16" x2="10" y2="16" stroke="#d4a84b" stroke-width="1.5"/>
+              <line x1="22" y1="16" x2="28" y2="16" stroke="#d4a84b" stroke-width="1.5"/>
+            </svg>
+            <div class="hub-label">You</div>
+            <div class="hub-sublabel">Command Center</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Metrics Bar -->
+    <div class="metrics-bar">
+      <div class="metric-item">
+        <div class="metric-value">24</div>
+        <div class="metric-label">Connected Sources</div>
+      </div>
+      <div class="metric-item">
+        <div class="metric-value">12.4K</div>
+        <div class="metric-label">Events / Second</div>
+      </div>
+      <div class="metric-item">
+        <div class="metric-value">23ms</div>
+        <div class="metric-label">P99 Latency</div>
+      </div>
+      <div class="metric-item">
+        <div class="metric-value">4.2TB</div>
+        <div class="metric-label">Data Indexed</div>
+      </div>
+    </div>
+
+    <!-- Command Modes -->
+    <section class="modes-section">
+      <div class="section-header">
+        <span class="section-title">Command Modes</span>
+      </div>
+
+      <div class="modes-container">
+        <div class="mode-card">
+          <div class="mode-icon">👁️</div>
+          <div class="mode-name">Survey</div>
+          <div class="mode-desc">Quick glance. Key metrics. System health at a glance.</div>
+        </div>
+        <div class="mode-card active">
+          <div class="mode-icon">🎯</div>
+          <div class="mode-name">Command</div>
+          <div class="mode-desc">Active steering. Goals, progress, decisions needed.</div>
+        </div>
+        <div class="mode-card">
+          <div class="mode-icon">🔬</div>
+          <div class="mode-name">Deep Dive</div>
+          <div class="mode-desc">Investigation mode. Artifacts, research, details.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section class="features-section">
+      <div class="section-header">
+        <span class="section-title">Lakehouse Architecture</span>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🔗</div>
+          <div class="feature-title">Connect</div>
+          <div class="feature-desc">Add spokes to your wheel. Each connection is typed, versioned, and monitored. One hub, infinite reach.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <div class="feature-title">Process</div>
+          <div class="feature-desc">Apache Arrow for speed. Event sourcing for truth. Batch and streaming unified in one pipeline.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🌐</div>
+          <div class="feature-title">Serve</div>
+          <div class="feature-desc">CLI, Web UI, SaaS — all query the same model. Hybrid execution: local for speed, cloud for scale.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="footer-spoke-pattern">
+        <span></span>
+        <span></span>
+        <div class="center-dot"></div>
+        <span></span>
+        <span></span>
+      </div>
+      <div class="footer-text">
+        Direction B: Warm & Luxurious — <span class="footer-brand">spoke.sh</span>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>

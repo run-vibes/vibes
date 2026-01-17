@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Command Palette Refined | Spoke</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    /* ═══════════════════════════════════════════════════════════════════════
+       COMMAND PALETTE REFINED — Unified icon treatment, three directions
+       ═══════════════════════════════════════════════════════════════════════ */
+
+    /* ─── Unified Icon Color ─── */
+    :root {
+      --icon-muted: #5d7a94;  /* Muted slate blue for all icons */
+      --icon-muted-hover: #7a9ab4;
+    }
+
+    /* ─── Backdrop ─── */
+    .palette-backdrop {
+      position: relative;
+      padding: var(--space-8);
+      background: rgba(0, 0, 0, 0.6);
+      border-radius: var(--radius-lg);
+      display: flex;
+      justify-content: center;
+    }
+
+    /* ─── Command Palette ─── */
+    .command-palette {
+      width: 100%;
+      max-width: 600px;
+      background: var(--bg-card);
+      border: 1px solid var(--gold-dim);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5),
+                  0 0 0 1px rgba(201, 162, 39, 0.1),
+                  var(--glow-gold);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .command-palette::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--gold-dim), var(--gold-bright), var(--gold-dim));
+    }
+
+    /* Header */
+    .palette-header {
+      display: flex;
+      align-items: center;
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 1px solid var(--border-subtle);
+      background: var(--bg-elevated);
+    }
+
+    .palette-icon {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: var(--space-3);
+      color: var(--gold-primary);
+      flex-shrink: 0;
+    }
+
+    .palette-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: var(--text-primary);
+      outline: none;
+    }
+
+    .palette-input::placeholder {
+      color: var(--text-tertiary);
+    }
+
+    .palette-shortcut {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      padding: 2px 6px;
+      background: var(--bg-deep);
+      border: 1px solid var(--border-subtle);
+      border-radius: 3px;
+      color: var(--text-tertiary);
+    }
+
+    /* Sections */
+    .palette-section {
+      padding: var(--space-2) 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .palette-section:last-child {
+      border-bottom: none;
+    }
+
+    .palette-section-title {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      padding: var(--space-1) var(--space-4);
+      margin-bottom: var(--space-1);
+    }
+
+    /* Items — CONSISTENT icon positioning */
+    .palette-item {
+      display: flex;
+      align-items: center;
+      padding: var(--space-2) var(--space-4);
+      cursor: pointer;
+      transition: background 0.1s ease;
+    }
+
+    .palette-item:hover {
+      background: var(--bg-surface);
+    }
+
+    .palette-item:hover .palette-item-icon {
+      color: var(--icon-muted-hover);
+    }
+
+    .palette-item.selected {
+      background: var(--gold-subtle);
+      border-left: 2px solid var(--gold-primary);
+      padding-left: calc(var(--space-4) - 2px);
+    }
+
+    .palette-item.selected .palette-item-icon {
+      color: var(--gold-primary);
+    }
+
+    /* FIXED: Consistent icon container */
+    .palette-item-icon {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-right: var(--space-3);
+      color: var(--icon-muted);  /* Single muted color for all */
+    }
+
+    .palette-item-icon .deco-icon {
+      font-size: 14px;
+    }
+
+    .palette-item-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .palette-item-title {
+      font-size: 13px;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .palette-item-desc {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .palette-item-badge {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 3px;
+      margin-left: var(--space-2);
+      background: rgba(212, 168, 75, 0.2);
+      color: var(--gold-primary);
+    }
+
+    .palette-item-key {
+      font-family: var(--font-condensed);
+      font-size: 10px;
+      color: var(--text-tertiary);
+      padding: 2px 6px;
+      background: var(--bg-deep);
+      border: 1px solid var(--border-subtle);
+      border-radius: 3px;
+      margin-left: var(--space-2);
+    }
+
+    /* Footer */
+    .palette-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-2) var(--space-4);
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border-subtle);
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    .palette-footer-hints {
+      display: flex;
+      gap: var(--space-4);
+    }
+
+    .palette-hint kbd {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      padding: 1px 4px;
+      background: var(--bg-deep);
+      border: 1px solid var(--border-subtle);
+      border-radius: 2px;
+      margin-right: 4px;
+    }
+
+    /* ─── Prefix Mode States ─── */
+    .palette-prefix {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 3px;
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-right: var(--space-2);
+    }
+
+    .palette-prefix.active {
+      background: var(--gold-subtle);
+      border-color: var(--gold-dim);
+      color: var(--gold-primary);
+    }
+
+    /* ─── Mode Indicator ─── */
+    .palette-mode-indicator {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-1) var(--space-3);
+      background: var(--bg-deep);
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    .mode-badge {
+      font-family: var(--font-condensed);
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 3px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .mode-badge.survey { border-color: var(--cosmic-teal); color: var(--cosmic-teal); }
+    .mode-badge.command { border-color: var(--gold-primary); color: var(--gold-primary); }
+    .mode-badge.deep { border-color: var(--mech-copper); color: var(--mech-copper); }
+
+    /* ─── Spoke/Hub Indicator ─── */
+    .spoke-indicator {
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    .spoke-indicator .spoke-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--icon-muted);
+    }
+
+    /* ─── Prefix Reference (refined) ─── */
+    .prefix-reference {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-2);
+      margin-top: var(--space-4);
+    }
+
+    .prefix-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: var(--space-2);
+      text-align: center;
+      transition: all var(--transition-fast);
+    }
+
+    .prefix-card:hover {
+      border-color: var(--gold-dim);
+    }
+
+    .prefix-code {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--gold-primary);
+    }
+
+    .prefix-desc {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      margin-top: 2px;
+    }
+
+    /* ─── Comparison Layout ─── */
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-6);
+      margin-top: var(--space-4);
+    }
+
+    .comparison-label {
+      font-family: var(--font-condensed);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-bottom: var(--space-2);
+    }
+  </style>
+</head>
+<body class="deco-bg">
+  <div class="dashboard">
+
+    <!-- Header Bar -->
+    <header class="header-bar">
+      <div class="flex items-center">
+        <span class="logo">SPOKE</span>
+        <span class="logo-tagline">Explore. Connect. Amplify.</span>
+      </div>
+      <nav class="header-nav">
+        <a href="01-full-dashboard.html" class="nav-item">Dashboard</a>
+        <a href="04-activity-feed.html" class="nav-item">Firehose</a>
+        <a href="06-expanded-dashboard.html" class="nav-item">Sessions</a>
+        <a href="14-command-palette-refined.html" class="nav-item active">Cmd+K</a>
+      </nav>
+    </header>
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="page-header-content">
+        <h1 class="page-title">Command Palette Refined</h1>
+        <p class="page-description">Unified icon treatment, vessel mode integration, hub-and-spoke navigation, lakehouse commands.</p>
+      </div>
+    </div>
+
+    <!-- COMPARISON: Before vs After Icons -->
+    <section class="section">
+      <div class="section-label">Before vs After: Icon Treatment</div>
+      <div class="comparison-grid">
+        <div>
+          <div class="comparison-label">Before (Multi-color)</div>
+          <div class="palette-backdrop" style="padding: var(--space-4);">
+            <div class="command-palette" style="max-width: 100%;">
+              <div class="palette-section" style="border: none;">
+                <div class="palette-item">
+                  <span class="palette-item-icon" style="color: var(--gold-primary);"><span class="deco-icon deco-icon-target deco-icon-sm"></span></span>
+                  <div class="palette-item-content">
+                    <div class="palette-item-title">Goal item</div>
+                  </div>
+                </div>
+                <div class="palette-item">
+                  <span class="palette-item-icon" style="color: var(--accent-success);"><span class="deco-icon deco-icon-session deco-icon-sm"></span></span>
+                  <div class="palette-item-content">
+                    <div class="palette-item-title">Session item</div>
+                  </div>
+                </div>
+                <div class="palette-item">
+                  <span class="palette-item-icon" style="color: var(--accent-teal);"><span class="deco-icon deco-icon-fan deco-icon-sm"></span></span>
+                  <div class="palette-item-content">
+                    <div class="palette-item-title">Artifact item</div>
+                  </div>
+                </div>
+                <div class="palette-item">
+                  <span class="palette-item-icon" style="color: var(--accent-warning);"><span class="deco-icon deco-icon-bolt deco-icon-sm"></span></span>
+                  <div class="palette-item-content">
+                    <div class="palette-item-title">Attention item</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="comparison-label">After (Unified Muted Blue)</div>
+          <div class="palette-backdrop" style="padding: var(--space-4);">
+            <div class="command-palette" style="max-width: 100%;">
+              <div class="palette-section" style="border: none;">
+                <div class="palette-item">
+                  <span class="palette-item-icon"><span class="deco-icon deco-icon-target deco-icon-sm"></span></span>
+                  <div class="palette-item-content">
+                    <div class="palette-item-title">Goal item</div>
+                  </div>
+                </div>
+                <div class="palette-item">
+                  <span class="palette-item-icon"><span class="deco-icon deco-icon-session deco-icon-sm"></span></span>
+                  <div class="palette-item-content">
+                    <div class="palette-item-title">Session item</div>
+                  </div>
+                </div>
+                <div class="palette-item">
+                  <span class="palette-item-icon"><span class="deco-icon deco-icon-fan deco-icon-sm"></span></span>
+                  <div class="palette-item-content">
+                    <div class="palette-item-title">Artifact item</div>
+                  </div>
+                </div>
+                <div class="palette-item selected">
+                  <span class="palette-item-icon"><span class="deco-icon deco-icon-bolt deco-icon-sm"></span></span>
+                  <div class="palette-item-content">
+                    <div class="palette-item-title">Selected → gold</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Direction A: Hub-and-Spoke Default State -->
+    <section class="section">
+      <div class="section-label">Direction A: Hub-and-Spoke Navigation</div>
+      <div class="palette-backdrop">
+        <div class="command-palette">
+          <div class="palette-header">
+            <span class="palette-icon"><span class="deco-icon deco-icon-arch deco-icon-sm deco-icon-gold"></span></span>
+            <input type="text" class="palette-input" placeholder="Navigate to spoke..." readonly>
+            <span class="palette-shortcut">ESC</span>
+          </div>
+
+          <div class="palette-section">
+            <div class="palette-section-title">You are here: Hub</div>
+            <div class="palette-item selected">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-arch deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">Dashboard</div>
+                <div class="palette-item-desc">Command center • Current location</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="palette-section">
+            <div class="palette-section-title">Spokes</div>
+            <div class="palette-item">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-session deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">Sessions</div>
+                <div class="palette-item-desc">3 active</div>
+              </div>
+              <span class="palette-item-key">s:</span>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-agent deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">Agents</div>
+                <div class="palette-item-desc">12 running</div>
+              </div>
+              <span class="palette-item-key">a:</span>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-target deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">Goals</div>
+                <div class="palette-item-desc">2 in progress</div>
+              </div>
+              <span class="palette-item-key">g:</span>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-link deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">Sources</div>
+                <div class="palette-item-desc">4 connected</div>
+              </div>
+              <span class="palette-item-key">d:</span>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-search deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">Query</div>
+                <div class="palette-item-desc">SQL, vector, graph</div>
+              </div>
+              <span class="palette-item-key">q:</span>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-growth deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">Groove</div>
+                <div class="palette-item-desc">Learning • 847 patterns</div>
+              </div>
+              <span class="palette-item-key">l:</span>
+            </div>
+          </div>
+
+          <div class="palette-footer">
+            <div class="palette-footer-hints">
+              <span class="palette-hint"><kbd>↑↓</kbd> Navigate</span>
+              <span class="palette-hint"><kbd>↵</kbd> Go to spoke</span>
+            </div>
+            <span>Type prefix to filter • / for commands</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Direction B: Vessel Mode Integration -->
+    <section class="section">
+      <div class="section-label">Direction B: Vessel Mode Integration (Command Mode)</div>
+      <div class="palette-backdrop">
+        <div class="command-palette">
+          <div class="palette-mode-indicator">
+            <span class="mode-badge command">Command</span>
+            <span>Showing actionable items • Switch: <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></span>
+          </div>
+          <div class="palette-header">
+            <span class="palette-icon"><span class="deco-icon deco-icon-arch deco-icon-sm deco-icon-gold"></span></span>
+            <input type="text" class="palette-input" placeholder="What needs doing?" readonly>
+            <span class="palette-shortcut">ESC</span>
+          </div>
+
+          <div class="palette-section">
+            <div class="palette-section-title">Needs Decision (2)</div>
+            <div class="palette-item selected">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-bolt deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">Permission: write to /src/auth</div>
+                <div class="palette-item-desc">architect • waiting 2m</div>
+              </div>
+              <span class="palette-item-badge">decide</span>
+              <span class="palette-item-key">1</span>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-bolt deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">Verification failed: screenshot</div>
+                <div class="palette-item-desc">qa-agent • 5m ago</div>
+              </div>
+              <span class="palette-item-badge">review</span>
+              <span class="palette-item-key">2</span>
+            </div>
+          </div>
+
+          <div class="palette-section">
+            <div class="palette-section-title">Quick Actions</div>
+            <div class="palette-item">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-session deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">New session</div>
+              </div>
+              <span class="palette-item-key">n</span>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-velocity deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">Pause all agents</div>
+              </div>
+              <span class="palette-item-key">p</span>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-search deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">Run query</div>
+              </div>
+              <span class="palette-item-key">q</span>
+            </div>
+          </div>
+
+          <div class="palette-footer">
+            <div class="palette-footer-hints">
+              <span class="palette-hint"><kbd>↵</kbd> Execute</span>
+              <span class="palette-hint"><kbd>1</kbd> Survey</span>
+              <span class="palette-hint"><kbd>2</kbd> Command</span>
+              <span class="palette-hint"><kbd>3</kbd> Deep</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Direction B: Survey Mode -->
+    <section class="section">
+      <div class="section-label">Direction B: Vessel Mode Integration (Survey Mode)</div>
+      <div class="palette-backdrop">
+        <div class="command-palette">
+          <div class="palette-mode-indicator">
+            <span class="mode-badge survey">Survey</span>
+            <span>Glanceable status only</span>
+          </div>
+          <div class="palette-header">
+            <span class="palette-icon"><span class="deco-icon deco-icon-arch deco-icon-sm deco-icon-gold"></span></span>
+            <input type="text" class="palette-input" placeholder="Quick look..." readonly>
+            <span class="palette-shortcut">ESC</span>
+          </div>
+
+          <div class="palette-section">
+            <div class="palette-section-title">Status</div>
+            <div class="palette-item selected">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-check deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">All systems nominal</div>
+                <div class="palette-item-desc">3 sessions • 12 agents • $47 today</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="palette-section">
+            <div class="palette-section-title">Attention (2)</div>
+            <div class="palette-item">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-bolt deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">2 items need you</div>
+              </div>
+              <span class="palette-item-key">↵</span>
+            </div>
+          </div>
+
+          <div class="palette-footer">
+            <div class="palette-footer-hints">
+              <span class="palette-hint"><kbd>↵</kbd> See details</span>
+              <span class="palette-hint"><kbd>2</kbd> → Command mode</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Direction B: Deep Dive Mode -->
+    <section class="section">
+      <div class="section-label">Direction B: Vessel Mode Integration (Deep Dive Mode)</div>
+      <div class="palette-backdrop">
+        <div class="command-palette">
+          <div class="palette-mode-indicator">
+            <span class="mode-badge deep">Deep Dive</span>
+            <span>Full inspection available</span>
+          </div>
+          <div class="palette-header">
+            <span class="palette-icon"><span class="deco-icon deco-icon-arch deco-icon-sm deco-icon-gold"></span></span>
+            <input type="text" class="palette-input" placeholder="Inspect anything..." readonly>
+            <span class="palette-shortcut">ESC</span>
+          </div>
+
+          <div class="palette-section">
+            <div class="palette-section-title">Inspect</div>
+            <div class="palette-item selected">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-session deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">Session: architect-refactor-ui</div>
+                <div class="palette-item-desc">2h 34m • 142K tokens • $3.21</div>
+              </div>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-agent deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">Agent: architect</div>
+                <div class="palette-item-desc">Decision trace • Event log</div>
+              </div>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-doc deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">Event: read_file src/auth/login.ts</div>
+                <div class="palette-item-desc">14:36:02 • 2.1KB</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="palette-section">
+            <div class="palette-section-title">Deep Commands</div>
+            <div class="palette-item">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-time deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">/trace [event-id]</div>
+                <div class="palette-item-desc">Show event causality chain</div>
+              </div>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-value deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">/explain [session]</div>
+                <div class="palette-item-desc">Narrate what happened</div>
+              </div>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-test deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">/replay [session] --from [event]</div>
+                <div class="palette-item-desc">Replay from specific point</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="palette-footer">
+            <div class="palette-footer-hints">
+              <span class="palette-hint"><kbd>↵</kbd> Inspect</span>
+              <span class="palette-hint"><kbd>e</kbd> Events</span>
+              <span class="palette-hint"><kbd>t</kbd> Trace</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Direction C: Lakehouse Integration -->
+    <section class="section">
+      <div class="section-label">Direction C: Lakehouse Integration</div>
+      <div class="palette-backdrop">
+        <div class="command-palette">
+          <div class="palette-header">
+            <span class="palette-icon"><span class="deco-icon deco-icon-arch deco-icon-sm deco-icon-gold"></span></span>
+            <span class="palette-prefix active">d:</span>
+            <input type="text" class="palette-input" placeholder="Search sources..." value="postgres" readonly>
+            <span class="palette-shortcut">ESC</span>
+          </div>
+
+          <div class="palette-section">
+            <div class="palette-section-title">Connected Sources</div>
+            <div class="palette-item selected">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-link deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">postgres-prod</div>
+                <div class="palette-item-desc">PostgreSQL • 47 tables • Remote</div>
+              </div>
+              <span class="spoke-indicator">
+                <span class="spoke-dot"></span>
+                <span>spoke</span>
+              </span>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-link deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">postgres-analytics</div>
+                <div class="palette-item-desc">PostgreSQL • 12 tables • Remote</div>
+              </div>
+              <span class="spoke-indicator">
+                <span class="spoke-dot"></span>
+                <span>spoke</span>
+              </span>
+            </div>
+          </div>
+
+          <div class="palette-section">
+            <div class="palette-section-title">Lakehouse Actions</div>
+            <div class="palette-item">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-search deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">/query postgres-prod</div>
+                <div class="palette-item-desc">Open query editor for source</div>
+              </div>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-doc deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">/schema postgres-prod.users</div>
+                <div class="palette-item-desc">Inspect table schema</div>
+              </div>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-velocity deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">/ingest postgres-prod.events</div>
+                <div class="palette-item-desc">Pull data into local lakehouse</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="palette-footer">
+            <div class="palette-footer-hints">
+              <span class="palette-hint"><kbd>↵</kbd> Select source</span>
+              <span class="palette-hint"><kbd>⌫</kbd> Clear prefix</span>
+            </div>
+            <span>d: sources • q: query • v: vector • g: graph</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Direction C: Query Mode -->
+    <section class="section">
+      <div class="section-label">Direction C: Multi-Modal Query</div>
+      <div class="palette-backdrop">
+        <div class="command-palette">
+          <div class="palette-header">
+            <span class="palette-icon"><span class="deco-icon deco-icon-arch deco-icon-sm deco-icon-gold"></span></span>
+            <span class="palette-prefix active">q:</span>
+            <input type="text" class="palette-input" value="SELECT * FROM users WHERE" readonly>
+            <span class="palette-shortcut">ESC</span>
+          </div>
+
+          <div class="palette-section">
+            <div class="palette-section-title">Query Mode</div>
+            <div class="palette-item selected">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-doc deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">SQL</div>
+                <div class="palette-item-desc">Standard SQL via DataFusion</div>
+              </div>
+              <span class="palette-item-key">active</span>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-sunburst deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">Vector</div>
+                <div class="palette-item-desc">Semantic search via LanceDB</div>
+              </div>
+              <span class="palette-item-key">v:</span>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-growth deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">Graph</div>
+                <div class="palette-item-desc">Relationship traversal via Cypher</div>
+              </div>
+              <span class="palette-item-key">g:</span>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-value deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">Natural</div>
+                <div class="palette-item-desc">Ask in plain English</div>
+              </div>
+              <span class="palette-item-key">?:</span>
+            </div>
+          </div>
+
+          <div class="palette-section">
+            <div class="palette-section-title">Completions</div>
+            <div class="palette-item">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-doc deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">users.email</div>
+                <div class="palette-item-desc">VARCHAR • postgres-prod</div>
+              </div>
+            </div>
+            <div class="palette-item">
+              <span class="palette-item-icon"><span class="deco-icon deco-icon-doc deco-icon-sm"></span></span>
+              <div class="palette-item-content">
+                <div class="palette-item-title">users.created_at</div>
+                <div class="palette-item-desc">TIMESTAMP • postgres-prod</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="palette-footer">
+            <div class="palette-footer-hints">
+              <span class="palette-hint"><kbd>Tab</kbd> Complete</span>
+              <span class="palette-hint"><kbd>⌘↵</kbd> Execute</span>
+            </div>
+            <span>Gravity: prefer local • Security: role_based</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Refined Prefix Reference -->
+    <section class="section">
+      <div class="section-label">Refined Prefix System</div>
+      <div class="prefix-reference">
+        <div class="prefix-card">
+          <div class="prefix-code">s:</div>
+          <div class="prefix-desc">Sessions</div>
+        </div>
+        <div class="prefix-card">
+          <div class="prefix-code">a:</div>
+          <div class="prefix-desc">Agents</div>
+        </div>
+        <div class="prefix-card">
+          <div class="prefix-code">g:</div>
+          <div class="prefix-desc">Goals</div>
+        </div>
+        <div class="prefix-card">
+          <div class="prefix-code">d:</div>
+          <div class="prefix-desc">Data Sources</div>
+        </div>
+        <div class="prefix-card">
+          <div class="prefix-code">q:</div>
+          <div class="prefix-desc">Query (SQL)</div>
+        </div>
+        <div class="prefix-card">
+          <div class="prefix-code">v:</div>
+          <div class="prefix-desc">Vector Search</div>
+        </div>
+        <div class="prefix-card">
+          <div class="prefix-code">l:</div>
+          <div class="prefix-desc">Learning (Groove)</div>
+        </div>
+        <div class="prefix-card">
+          <div class="prefix-code">/</div>
+          <div class="prefix-desc">Commands</div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</body>
+</html>
