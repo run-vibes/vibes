@@ -2,7 +2,7 @@
 id: m44-feat-04
 title: Swarm coordination status
 type: feat
-status: backlog
+status: done
 priority: medium
 epics: [tui]
 depends: [m44-feat-01]
