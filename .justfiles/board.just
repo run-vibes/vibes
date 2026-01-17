@@ -20,6 +20,8 @@ default:
     echo "  just board start <id>       Move story to in-progress"
     echo "  just board done <id> [summary]"
     echo "                              Move story to done + changelog"
+    echo "  just board ice <id>         Move story to icebox (blocked/deferred)"
+    echo "  just board thaw <id>        Move story from icebox to backlog"
     echo ""
     echo "Epic/Milestone management:"
     echo "  just board new epic \"name\" [description]"
@@ -184,6 +186,7 @@ status:
     cd "{{board_dir}}"
 
     # Count stories in each stage
+    icebox=$(find stages/icebox/stories -name "*.md" ! -name ".gitkeep" 2>/dev/null | wc -l | tr -d ' ')
     in_progress=$(find stages/in-progress/stories -name "*.md" ! -name ".gitkeep" 2>/dev/null | wc -l | tr -d ' ')
     backlog=$(find stages/backlog/stories -name "*.md" ! -name ".gitkeep" 2>/dev/null | wc -l | tr -d ' ')
     done_count=$(find stages/done/stories -name "*.md" ! -name ".gitkeep" 2>/dev/null | wc -l | tr -d ' ')
@@ -194,6 +197,7 @@ status:
     echo "Stories by Stage:"
     echo "  In Progress: $in_progress"
     echo "  Backlog:     $backlog"
+    echo "  Icebox:      $icebox"
     echo "  Done:        $done_count"
     echo ""
 
@@ -558,8 +562,8 @@ _find-story PATTERN:
     cd "{{board_dir}}"
     pattern="{{PATTERN}}"
 
-    # Search in stages (backlog, in-progress, done)
-    for stage in backlog in-progress done; do
+    # Search in stages (icebox, backlog, in-progress, done)
+    for stage in icebox backlog in-progress done; do
         dir="stages/$stage/stories"
         [[ -d "$dir" ]] || continue
 
@@ -712,6 +716,116 @@ done ID SUMMARY="__PROMPT__":
             sed -i "4a\\| $date | $title | $summary |" CHANGELOG.md
             echo "Added to CHANGELOG.md"
         fi
+    fi
+
+    # Regenerate README
+    just board generate
+    echo "Board updated"
+
+# Move story to icebox (blocked or deferred)
+ice ID:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd "{{board_dir}}"
+
+    path=$(just board _find-story "{{ID}}")
+
+    if [[ -z "$path" ]]; then
+        echo "Error: Story '{{ID}}' not found"
+        exit 1
+    fi
+
+    # Check if already in icebox
+    if [[ "$path" == *"icebox"* ]]; then
+        echo "Error: Story is already in icebox"
+        exit 1
+    fi
+
+    # Check if already done
+    if [[ "$path" == *"done"* ]]; then
+        echo "Error: Cannot ice a completed story"
+        exit 1
+    fi
+
+    name=$(basename "$path")
+    dest="stages/icebox/stories/$name"
+
+    # Get epics from frontmatter before moving
+    epics=$(grep -m1 "^epics:" "$path" 2>/dev/null | sed 's/^epics: *//' | tr -d '[]' || echo "")
+
+    # Move the file
+    mv "$path" "$dest"
+
+    # Update status in frontmatter
+    sed -i 's/^status: .*/status: icebox/' "$dest"
+    sed -i "s/^updated: .*/updated: $(date +%Y-%m-%d)/" "$dest"
+
+    echo "Iced: $name"
+
+    # Update symlinks in epics
+    if [[ -n "$epics" ]]; then
+        IFS=', ' read -ra epic_list <<< "$epics"
+        for epic in "${epic_list[@]}"; do
+            epic=$(echo "$epic" | tr -d ' ')
+            link="epics/$epic/$name"
+            if [[ -L "$link" ]]; then
+                rm "$link"
+                ln -sf "../../stages/icebox/stories/$name" "$link"
+                echo "Updated symlink in epic: $epic"
+            fi
+        done
+    fi
+
+    # Regenerate README
+    just board generate
+    echo "Board updated"
+
+# Move story from icebox to backlog (unblock)
+thaw ID:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd "{{board_dir}}"
+
+    path=$(just board _find-story "{{ID}}")
+
+    if [[ -z "$path" ]]; then
+        echo "Error: Story '{{ID}}' not found"
+        exit 1
+    fi
+
+    # Check if in icebox
+    if [[ "$path" != *"icebox"* ]]; then
+        echo "Error: Story is not in icebox (current location: $path)"
+        exit 1
+    fi
+
+    name=$(basename "$path")
+    dest="stages/backlog/stories/$name"
+
+    # Get epics from frontmatter before moving
+    epics=$(grep -m1 "^epics:" "$path" 2>/dev/null | sed 's/^epics: *//' | tr -d '[]' || echo "")
+
+    # Move the file
+    mv "$path" "$dest"
+
+    # Update status in frontmatter
+    sed -i 's/^status: .*/status: backlog/' "$dest"
+    sed -i "s/^updated: .*/updated: $(date +%Y-%m-%d)/" "$dest"
+
+    echo "Thawed: $name"
+
+    # Update symlinks in epics
+    if [[ -n "$epics" ]]; then
+        IFS=', ' read -ra epic_list <<< "$epics"
+        for epic in "${epic_list[@]}"; do
+            epic=$(echo "$epic" | tr -d ' ')
+            link="epics/$epic/$name"
+            if [[ -L "$link" ]]; then
+                rm "$link"
+                ln -sf "../../stages/backlog/stories/$name" "$link"
+                echo "Updated symlink in epic: $epic"
+            fi
+        done
     fi
 
     # Regenerate README
