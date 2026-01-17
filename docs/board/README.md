@@ -8,6 +8,7 @@
 | Story | Type | Priority | Epics |
 |-------|------|----------|-------|
 | [m39-feat-05-eval-cli](stages/in-progress/stories/m39-feat-05-eval-cli.md) | feat | medium | evals |
+| [m45-feat-01-theme-config-loader](stages/in-progress/stories/m45-feat-01-theme-config-loader.md) | feat | high | tui |
 
 ## Backlog
 
@@ -19,7 +20,6 @@
 | [feat-0013-windows-daemon-support](stages/backlog/stories/feat-0013-windows-daemon-support.md) | feat | low | cli,cross-platform |
 | [feat-0101-header-identity-display](stages/backlog/stories/feat-0101-header-identity-display.md) | feat | low | web-ui,design-system |
 | [m39-feat-06-eval-web-ui](stages/backlog/stories/m39-feat-06-eval-web-ui.md) | feat | medium | evals |
-| [m45-feat-01-theme-config-loader](stages/backlog/stories/m45-feat-01-theme-config-loader.md) | feat | high | tui |
 | [m45-feat-02-builtin-theme-variants](stages/backlog/stories/m45-feat-02-builtin-theme-variants.md) | feat | high | tui |
 | [m45-feat-03-runtime-theme-switching](stages/backlog/stories/m45-feat-03-runtime-theme-switching.md) | feat | medium | tui |
 | [m45-feat-04-theme-preview-settings](stages/backlog/stories/m45-feat-04-theme-preview-settings.md) | feat | medium | tui |
@@ -97,7 +97,7 @@
 | [42-tui-dashboard](milestones/42-tui-dashboard/) | done | tui |
 | [43-tui-agent-control](milestones/43-tui-agent-control/) | done | tui |
 | [44-tui-swarm-visualization](milestones/44-tui-swarm-visualization/) | planned | tui |
-| [45-tui-theme-system](milestones/45-tui-theme-system/) | planned | tui |
+| [45-tui-theme-system](milestones/45-tui-theme-system/) | in-progress | tui |
 | [46-tui-pty-server](milestones/46-tui-pty-server/) | planned | tui |
 | [47-vision-expansion](milestones/47-vision-expansion/) | in-progress | web-ui,plugin-system,design-system |
 | [48-longitudinal-mode](milestones/48-longitudinal-mode/) | planned | evals |

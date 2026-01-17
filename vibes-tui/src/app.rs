@@ -72,6 +72,27 @@ impl App {
         }
     }
 
+    /// Creates a new App with a custom theme.
+    pub fn with_theme(theme: Theme) -> Self {
+        Self {
+            state: AppState::default(),
+            views: ViewStack::new(),
+            keybindings: KeyBindings::default(),
+            theme,
+            client: None,
+            running: true,
+            error_message: None,
+            server_url: None,
+            retry_requested: false,
+            session_widget: SessionListWidget::new(),
+            stats_widget: StatsBarWidget::default(),
+            activity_widget: ActivityFeedWidget::new(),
+            reconnect_config: ReconnectConfig::default(),
+            reconnect_attempt: 0,
+            last_reconnect_attempt: None,
+        }
+    }
+
     /// Creates a new App with a connected client.
     pub fn with_client(client: TuiClient) -> Self {
         Self {
@@ -652,6 +673,14 @@ mod tests {
     fn app_new_has_vibes_theme() {
         let app = App::new();
         assert_eq!(app.theme.name, "vibes");
+    }
+
+    #[test]
+    fn app_with_theme_uses_provided_theme() {
+        let mut custom = vibes_default();
+        custom.name = "custom".into();
+        let app = App::with_theme(custom);
+        assert_eq!(app.theme.name, "custom");
     }
 
     #[test]

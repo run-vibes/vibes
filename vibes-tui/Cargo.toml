@@ -13,11 +13,15 @@ tokio = { workspace = true }
 tokio-tungstenite = "0.26"
 futures-util = "0.3"
 vibes-server = { path = "../vibes-server" }
+vibes-paths = { path = "../vibes-paths" }
 anyhow = "1"
 tracing = { workspace = true }
 serde_json = { workspace = true }
 chrono = { workspace = true }
 arboard = "3"
+toml = "0.8"
+serde = { workspace = true, features = ["derive"] }
+thiserror = "2"
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["macros", "rt"] }
