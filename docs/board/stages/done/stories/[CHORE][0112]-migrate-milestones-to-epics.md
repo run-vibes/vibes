@@ -2,7 +2,7 @@
 id: CHORE0112
 title: Migrate milestones to epics
 type: chore
-status: backlog
+status: done
 priority: high
 epics: [coherence-verification]
 depends: [CHORE0111]

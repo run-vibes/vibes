@@ -2,6 +2,7 @@
 
 > Updated when items move to done. Most recent first.
 
+| 2026-01-17 | Migrate milestones to epics | Migrated 55 milestones into parent epic directories |
 | 2026-01-13 | Add Ollama as a model provider | Added Ollama as a local model provider with CLI integration |
 | 2026-01-13 | Fix flaky iggy_client token cache tests | Fixed flaky Iggy client token refresh tests |
 | 2026-01-12 | Fix inconsistent directory paths on macOS | Implemented XDG paths consistently across all platforms |

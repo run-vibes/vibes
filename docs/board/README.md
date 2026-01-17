@@ -15,7 +15,6 @@
 |-------|------|----------|-------|
 | [chore-0087-use-cranelift-for-builds](stages/backlog/stories/chore-0087-use-cranelift-for-builds.md) | chore | low | dev-environment |
 | [chore-0110-add-scheduled-mutation-testing-workflow](stages/backlog/stories/chore-0110-add-scheduled-mutation-testing-workflow.md) | chore | medium |  |
-| [[CHORE][0112]-migrate-milestones-to-epics](stages/backlog/stories/[CHORE][0112]-migrate-milestones-to-epics.md) | chore | high | coherence-verification |
 | [[CHORE][0113]-rename-stories-new-format](stages/backlog/stories/[CHORE][0113]-rename-stories-new-format.md) | chore | high | coherence-verification |
 | [[CHORE][0114]-update-board-documentation](stages/backlog/stories/[CHORE][0114]-update-board-documentation.md) | chore | high | coherence-verification |
 | [docs-0003-plugin-api-versioning-migration-plan](stages/backlog/stories/docs-0003-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
@@ -55,63 +54,6 @@
 
 ## Milestones
 
-| Milestone | Status | Epics |
-|-----------|--------|-------|
-| [01-core-proxy](milestones/01-core-proxy/) | done | core,networking |
-| [02-cli](milestones/02-cli/) | done | cli |
-| [03-plugin-foundation](milestones/03-plugin-foundation/) | done | plugin-system |
-| [04-server-web-ui](milestones/04-server-web-ui/) | done | web-ui |
-| [05-cloudflare-tunnel](milestones/05-cloudflare-tunnel/) | done | networking |
-| [06-cloudflare-access](milestones/06-cloudflare-access/) | done | networking |
-| [07-push-notifications](milestones/07-push-notifications/) | done | mobile,networking |
-| [08-chat-history](milestones/08-chat-history/) | done | core |
-| [09-multi-session](milestones/09-multi-session/) | done | core |
-| [10-cli-web-mirroring](milestones/10-cli-web-mirroring/) | done | cli |
-| [11-test-coverage](milestones/11-test-coverage/) | done | core |
-| [12-pty-backend](milestones/12-pty-backend/) | done | core |
-| [13-scrollback-simplification](milestones/13-scrollback-simplification/) | done | core |
-| [14-kanban-board](milestones/14-kanban-board/) | done | core |
-| [15-harness-introspection](milestones/15-harness-introspection/) | done | groove |
-| [16-iggy-bundling](milestones/16-iggy-bundling/) | done | core |
-| [17-web-ui-modernization](milestones/17-web-ui-modernization/) | done | web-ui |
-| [18-iggy-sdk-integration](milestones/18-iggy-sdk-integration/) | done | core |
-| [19-eventlog-wiring](milestones/19-eventlog-wiring/) | done | core |
-| [20-event-cli](milestones/20-event-cli/) | done | cli |
-| [21-storage-foundation](milestones/21-storage-foundation/) | done | groove |
-| [22-security-foundation](milestones/22-security-foundation/) | done | groove |
-| [23-plugin-api-extension](milestones/23-plugin-api-extension/) | done | plugin-system |
-| [24-capture-inject](milestones/24-capture-inject/) | done | groove |
-| [25-assessment-types](milestones/25-assessment-types/) | done | groove |
-| [26-firehose-infinite-scroll](milestones/26-firehose-infinite-scroll/) | done | web-ui |
-| [27-crt-design-system](milestones/27-crt-design-system/) | done | web-ui |
-| [28-board-restructure](milestones/28-board-restructure/) | done | core |
-| [29-assessment-framework](milestones/29-assessment-framework/) | done | groove |
-| [30-learning-extraction](milestones/30-learning-extraction/) | done | groove |
-| [31-attribution-engine](milestones/31-attribution-engine/) | done | groove |
-| [32-adaptive-strategies](milestones/32-adaptive-strategies/) | done | groove |
-| [33-groove-dashboard](milestones/33-groove-dashboard/) | done | groove |
-| [34-open-world-adaptation](milestones/34-open-world-adaptation/) | done | groove |
-| [35-setup-wizards](milestones/35-setup-wizards/) | done | cli |
-| [36-openworld-dashboard](milestones/36-openworld-dashboard/) | done | groove |
-| [37-models-registry-auth](milestones/37-models-registry-auth/) | done | models |
-| [38-agent-core](milestones/38-agent-core/) | done | agents |
-| [39-eval-core](milestones/39-eval-core/) | in-progress | evals |
-| [40-observability-tracing](milestones/40-observability-tracing/) | done | observability |
-| [41-tui-core](milestones/41-tui-core/) | done | tui |
-| [42-tui-dashboard](milestones/42-tui-dashboard/) | done | tui |
-| [43-tui-agent-control](milestones/43-tui-agent-control/) | done | tui |
-| [44-tui-swarm-visualization](milestones/44-tui-swarm-visualization/) | planned | tui |
-| [45-tui-theme-system](milestones/45-tui-theme-system/) | in-progress | tui |
-| [46-tui-pty-server](milestones/46-tui-pty-server/) | planned | tui |
-| [47-vision-expansion](milestones/47-vision-expansion/) | in-progress | web-ui,plugin-system,design-system |
-| [48-longitudinal-mode](milestones/48-longitudinal-mode/) | planned | evals |
-| [49-eval-reports](milestones/49-eval-reports/) | planned | evals |
-| [50-trend-analysis](milestones/50-trend-analysis/) | planned | evals |
-| [51-benchmark-harness](milestones/51-benchmark-harness/) | planned | evals |
-| [52-additional-benchmarks](milestones/52-additional-benchmarks/) | planned | evals |
-| [53-default-plugins](milestones/53-default-plugins/) | planned | plugin-system |
-| [54-cli-enhancements](milestones/54-cli-enhancements/) | planned | cli |
-| [55-ios-app](milestones/55-ios-app/) | planned | mobile |
 
 ## Done
 
@@ -145,6 +87,7 @@
 - [chore-0090-fix-sccache-for-worktrees-and-cross-project-use](stages/done/stories/chore-0090-fix-sccache-for-worktrees-and-cross-project-use.md)
 - [chore-0109-turborepo-worktree-caching](stages/done/stories/chore-0109-turborepo-worktree-caching.md)
 - [[CHORE][0111]-create-design-system-epic](stages/done/stories/[CHORE][0111]-create-design-system-epic.md)
+- [[CHORE][0112]-migrate-milestones-to-epics](stages/done/stories/[CHORE][0112]-migrate-milestones-to-epics.md)
 - [docs-0001-fix-broken-documentation-links](stages/done/stories/docs-0001-fix-broken-documentation-links.md)
 - [docs-0002-update-prd-for-current-architecture](stages/done/stories/docs-0002-update-prd-for-current-architecture.md)
 - [docs-0068-documentation-review](stages/done/stories/docs-0068-documentation-review.md)
