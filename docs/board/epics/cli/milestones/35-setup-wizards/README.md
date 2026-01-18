@@ -1,11 +1,11 @@
 ---
 id: 32-setup-wizards
-title: Setup Wizards
+title: Guided Setup
 status: done
 epics: [cli]
 ---
 
-# Setup Wizards
+# Guided Setup
 
 ## Overview
 

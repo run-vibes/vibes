@@ -1,11 +1,11 @@
 ---
 id: 42-tui-dashboard
-title: TUI Dashboard
+title: Terminal Dashboard
 status: done
 epics: [tui]
 ---
 
-# TUI Dashboard
+# Terminal Dashboard
 
 ## Overview
 

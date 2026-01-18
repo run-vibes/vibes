@@ -1,11 +1,11 @@
 ---
 id: 21-storage-foundation
-title: Storage Foundation
+title: Persistent Learning Storage
 status: done
 epics: [groove]
 ---
 
-# Storage Foundation
+# Persistent Learning Storage
 
 ## Overview
 

@@ -1,11 +1,11 @@
 ---
 id: 33-groove-dashboard
-title: Groove Dashboard
+title: Learning Insights Dashboard
 status: done
 epics: [groove]
 ---
 
-# Groove Dashboard
+# Learning Insights Dashboard
 
 ## Overview
 

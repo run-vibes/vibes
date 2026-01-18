@@ -1,11 +1,11 @@
 ---
 id: 10-cli-web-mirroring
-title: Cli Web Mirroring
+title: Live Terminal Sync
 status: done
 epics: [cli]
 ---
 
-# Cli Web Mirroring
+# Live Terminal Sync
 
 ## Overview
 

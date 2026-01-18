@@ -1,11 +1,11 @@
 ---
 id: 09-multi-session
-title: Multi Session
+title: Parallel Workspaces
 status: done
 epics: [core]
 ---
 
-# Multi Session
+# Parallel Workspaces
 
 ## Overview
 

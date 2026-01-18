@@ -1,11 +1,11 @@
 ---
 id: 50-trend-analysis
-title: Trend Analysis
+title: Performance Trends
 status: planned
 epics: [evals]
 ---
 
-# Trend Analysis
+# Performance Trends
 
 ## Overview
 

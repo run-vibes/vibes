@@ -1,11 +1,11 @@
 ---
 id: 22-security-foundation
-title: Security Foundation
+title: Secure Data Handling
 status: done
 epics: [groove]
 ---
 
-# Security Foundation
+# Secure Data Handling
 
 ## Overview
 

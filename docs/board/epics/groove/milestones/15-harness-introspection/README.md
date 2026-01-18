@@ -1,11 +1,11 @@
 ---
 id: 15-harness-introspection
-title: Harness Introspection
+title: AI Harness Discovery
 status: done
 epics: [groove]
 ---
 
-# Harness Introspection
+# AI Harness Discovery
 
 ## Overview
 

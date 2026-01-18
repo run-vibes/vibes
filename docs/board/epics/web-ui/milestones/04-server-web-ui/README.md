@@ -1,11 +1,11 @@
 ---
 id: 04-server-web-ui
-title: Server Web Ui
+title: Web Dashboard
 status: done
 epics: [web-ui]
 ---
 
-# Server Web Ui
+# Web Dashboard
 
 ## Overview
 

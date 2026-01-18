@@ -1,11 +1,11 @@
 ---
 id: 01-core-proxy
-title: Core Proxy
+title: Remote Session Access
 status: done
 epics: [core, networking]
 ---
 
-# Core Proxy
+# Remote Session Access
 
 ## Overview
 

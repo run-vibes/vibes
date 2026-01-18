@@ -1,11 +1,11 @@
 ---
 id: 36-openworld-dashboard
-title: Open-World Dashboard
+title: Novelty Monitoring
 status: done
 epics: [groove]
 ---
 
-# Open-World Dashboard
+# Novelty Monitoring
 
 ## Overview
 

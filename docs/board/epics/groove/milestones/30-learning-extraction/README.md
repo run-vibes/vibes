@@ -1,11 +1,11 @@
 ---
 id: 30-learning-extraction
-title: Learning Extraction
+title: Automatic Learning Capture
 status: done
 epics: [groove]
 ---
 
-# Learning Extraction
+# Automatic Learning Capture
 
 ## Overview
 

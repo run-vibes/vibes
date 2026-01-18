@@ -1,11 +1,11 @@
 ---
 id: 03-plugin-foundation
-title: Plugin Foundation
+title: Extensible Plugin System
 status: done
 epics: [plugin-system]
 ---
 
-# Plugin Foundation
+# Extensible Plugin System
 
 ## Overview
 

@@ -1,6 +1,6 @@
 ---
 id: coherence-02
-title: Board Restructure
+title: Epic-Based Project Hierarchy
 status: planned
 epic: coherence-verification
 created: 2026-01-17

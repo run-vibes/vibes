@@ -1,11 +1,11 @@
 ---
 id: 46-tui-pty-server
-title: TUI PTY Server
+title: Terminal Server
 status: planned
 epics: [tui]
 ---
 
-# TUI PTY Server
+# Terminal Server
 
 ## Overview
 

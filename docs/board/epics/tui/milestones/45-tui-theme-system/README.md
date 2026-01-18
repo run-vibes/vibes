@@ -1,11 +1,11 @@
 ---
 id: 45-tui-theme-system
-title: TUI Theme System
+title: Customizable Themes
 status: in-progress
 epics: [tui]
 ---
 
-# TUI Theme System
+# Customizable Themes
 
 ## Overview
 

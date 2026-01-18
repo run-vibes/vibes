@@ -1,11 +1,11 @@
 ---
 id: 54-cli-enhancements
-title: Cli Enhancements
+title: Enhanced CLI Experience
 status: planned
 epics: [cli]
 ---
 
-# Cli Enhancements
+# Enhanced CLI Experience
 
 ## Overview
 

@@ -1,11 +1,11 @@
 ---
 id: 02-cli
-title: Cli
+title: Command Line Control
 status: done
 epics: [cli]
 ---
 
-# Cli
+# Command Line Control
 
 ## Overview
 

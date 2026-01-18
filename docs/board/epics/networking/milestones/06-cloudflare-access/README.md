@@ -1,11 +1,11 @@
 ---
 id: 06-cloudflare-access
-title: Cloudflare Access
+title: Team Authentication
 status: done
 epics: [networking]
 ---
 
-# Cloudflare Access
+# Team Authentication
 
 ## Overview
 

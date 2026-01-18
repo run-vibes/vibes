@@ -1,11 +1,11 @@
 ---
 id: 12-pty-backend
-title: Pty Backend
+title: Full Terminal Emulation
 status: done
 epics: [core]
 ---
 
-# Pty Backend
+# Full Terminal Emulation
 
 ## Overview
 

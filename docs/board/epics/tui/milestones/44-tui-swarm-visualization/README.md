@@ -1,11 +1,11 @@
 ---
 id: 44-tui-swarm-visualization
-title: TUI Swarm Visualization
+title: Swarm Monitoring
 status: planned
 epics: [tui]
 ---
 
-# TUI Swarm Visualization
+# Swarm Monitoring
 
 ## Overview
 

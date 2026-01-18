@@ -1,11 +1,11 @@
 ---
 id: 13-scrollback-simplification
-title: Scrollback Simplification
+title: Efficient Scrollback
 status: done
 epics: [core]
 ---
 
-# Scrollback Simplification
+# Efficient Scrollback
 
 ## Overview
 

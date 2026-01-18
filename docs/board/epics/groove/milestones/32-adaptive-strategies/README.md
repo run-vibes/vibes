@@ -1,11 +1,11 @@
 ---
 id: 32-adaptive-strategies
-title: Adaptive Strategies
+title: Smart Recommendations
 status: done
 epics: [groove]
 ---
 
-# Adaptive Strategies
+# Smart Recommendations
 
 ## Overview
 

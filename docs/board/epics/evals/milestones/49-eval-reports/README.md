@@ -1,11 +1,11 @@
 ---
 id: 49-eval-reports
-title: Eval Reports
+title: Performance Reports
 status: planned
 epics: [evals]
 ---
 
-# Eval Reports
+# Performance Reports
 
 ## Overview
 

@@ -1,11 +1,11 @@
 ---
 id: 05-cloudflare-tunnel
-title: Cloudflare Tunnel
+title: Secure Remote Access
 status: done
 epics: [networking]
 ---
 
-# Cloudflare Tunnel
+# Secure Remote Access
 
 ## Overview
 

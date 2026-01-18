@@ -1,11 +1,11 @@
 ---
 id: 39-eval-core
-title: Eval Core
+title: Performance Evaluation
 status: in-progress
 epics: [evals]
 ---
 
-# Eval Core
+# Performance Evaluation
 
 ## Overview
 

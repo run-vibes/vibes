@@ -1,11 +1,11 @@
 ---
 id: 55-ios-app
-title: Ios App
+title: iOS Mobile App
 status: planned
 epics: [mobile]
 ---
 
-# Ios App
+# iOS Mobile App
 
 ## Overview
 

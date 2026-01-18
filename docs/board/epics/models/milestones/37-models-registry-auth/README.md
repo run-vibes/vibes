@@ -1,11 +1,11 @@
 ---
 id: 37-models-registry-auth
-title: Models Registry & Auth
+title: Model Management
 status: done
 epics: [models]
 ---
 
-# Models Registry & Auth
+# Model Management
 
 ## Overview
 

@@ -1,11 +1,11 @@
 ---
 id: 40-observability-tracing
-title: Observability Tracing
+title: Distributed Tracing
 status: done
 epics: [observability]
 ---
 
-# Observability Tracing
+# Distributed Tracing
 
 ## Overview
 

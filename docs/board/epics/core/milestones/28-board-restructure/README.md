@@ -1,11 +1,11 @@
 ---
 id: 38-board-restructure
-title: Board Restructure
+title: Organized Project Tracking
 status: done
 epics: [core]
 ---
 
-# Board Restructure
+# Organized Project Tracking
 
 ## Overview
 

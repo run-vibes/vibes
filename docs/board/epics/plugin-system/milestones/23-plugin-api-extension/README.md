@@ -1,11 +1,11 @@
 ---
 id: 23-plugin-api-extension
-title: Plugin Api Extension
+title: Rich Plugin APIs
 status: done
 epics: [plugin-system]
 ---
 
-# Plugin Api Extension
+# Rich Plugin APIs
 
 ## Overview
 

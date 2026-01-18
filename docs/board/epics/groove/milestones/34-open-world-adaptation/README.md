@@ -1,11 +1,11 @@
 ---
 id: 34-open-world-adaptation
-title: Open World Adaptation
+title: Handling New Situations
 status: done
 epics: [groove]
 ---
 
-# Open World Adaptation
+# Handling New Situations
 
 ## Overview
 

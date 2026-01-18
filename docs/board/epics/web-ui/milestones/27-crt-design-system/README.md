@@ -1,11 +1,11 @@
 ---
 id: 37-crt-design-system
-title: Crt Design System
+title: CRT Visual Design
 status: done
 epics: [web-ui]
 ---
 
-# Crt Design System
+# CRT Visual Design
 
 ## Overview
 

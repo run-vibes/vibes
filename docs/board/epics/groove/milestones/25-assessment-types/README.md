@@ -1,11 +1,11 @@
 ---
 id: 25-assessment-types
-title: Assessment Types
+title: Structured Assessments
 status: done
 epics: [groove]
 ---
 
-# Assessment Types
+# Structured Assessments
 
 ## Overview
 

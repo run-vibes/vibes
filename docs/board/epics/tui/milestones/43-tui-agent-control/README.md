@@ -1,11 +1,11 @@
 ---
 id: 43-tui-agent-control
-title: TUI Agent Control
+title: Terminal Agent Control
 status: done
 epics: [tui]
 ---
 
-# TUI Agent Control
+# Terminal Agent Control
 
 ## Overview
 

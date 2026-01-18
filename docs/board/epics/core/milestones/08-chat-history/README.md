@@ -1,11 +1,11 @@
 ---
 id: 08-chat-history
-title: Chat History
+title: Persistent Conversations
 status: done
 epics: [core]
 ---
 
-# Chat History
+# Persistent Conversations
 
 ## Overview
 

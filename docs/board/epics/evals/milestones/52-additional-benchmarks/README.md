@@ -1,11 +1,11 @@
 ---
 id: 52-additional-benchmarks
-title: Additional Benchmarks
+title: Extended Benchmarks
 status: planned
 epics: [evals]
 ---
 
-# Additional Benchmarks
+# Extended Benchmarks
 
 ## Overview
 

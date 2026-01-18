@@ -1,11 +1,11 @@
 ---
 id: 14-kanban-board
-title: Kanban Board
+title: Visual Project Planning
 status: done
 epics: [core]
 ---
 
-# Kanban Board
+# Visual Project Planning
 
 ## Overview
 

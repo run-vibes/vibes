@@ -1,11 +1,11 @@
 ---
 id: 07-push-notifications
-title: Push Notifications
+title: Mobile Alerts
 status: done
 epics: [mobile, networking]
 ---
 
-# Push Notifications
+# Mobile Alerts
 
 ## Overview
 

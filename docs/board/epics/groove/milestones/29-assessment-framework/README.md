@@ -1,11 +1,11 @@
 ---
 id: 29-assessment-framework
-title: Assessment Framework
+title: Assessment Pipeline
 status: done
 epics: [groove]
 ---
 
-# Assessment Framework
+# Assessment Pipeline
 
 ## Overview
 

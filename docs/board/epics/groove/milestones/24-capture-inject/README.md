@@ -1,11 +1,11 @@
 ---
 id: 24-capture-inject
-title: Capture Inject
+title: Context Injection
 status: done
 epics: [groove]
 ---
 
-# Capture Inject
+# Context Injection
 
 ## Overview
 

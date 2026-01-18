@@ -1,11 +1,11 @@
 ---
 id: 53-default-plugins
-title: Default Plugins
+title: Out-of-Box Plugins
 status: planned
 epics: [plugin-system]
 ---
 
-# Default Plugins
+# Out-of-Box Plugins
 
 ## Overview
 

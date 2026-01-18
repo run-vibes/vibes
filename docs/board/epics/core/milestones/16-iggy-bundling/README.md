@@ -1,11 +1,11 @@
 ---
 id: 16-iggy-bundling
-title: Iggy Bundling
+title: Bundled Event Store
 status: done
 epics: [core]
 ---
 
-# Iggy Bundling
+# Bundled Event Store
 
 ## Overview
 

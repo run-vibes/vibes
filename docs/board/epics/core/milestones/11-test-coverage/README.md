@@ -1,11 +1,11 @@
 ---
 id: 11-test-coverage
-title: Test Coverage
+title: Reliable Test Suite
 status: done
 epics: [core]
 ---
 
-# Test Coverage
+# Reliable Test Suite
 
 ## Overview
 

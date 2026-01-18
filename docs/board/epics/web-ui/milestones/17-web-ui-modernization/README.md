@@ -1,11 +1,11 @@
 ---
 id: 17-web-ui-modernization
-title: Web Ui Modernization
+title: Modern Web Interface
 status: done
 epics: [web-ui]
 ---
 
-# Web Ui Modernization
+# Modern Web Interface
 
 ## Overview
 

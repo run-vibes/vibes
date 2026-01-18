@@ -1,11 +1,11 @@
 ---
 id: 48-longitudinal-mode
-title: Longitudinal Mode
+title: Long-term Studies
 status: planned
 epics: [evals]
 ---
 
-# Longitudinal Mode
+# Long-term Studies
 
 ## Overview
 

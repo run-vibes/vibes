@@ -1,11 +1,11 @@
 ---
 id: 41-tui-core
-title: TUI Core
+title: Terminal UI Framework
 status: done
 epics: [tui]
 ---
 
-# TUI Core
+# Terminal UI Framework
 
 ## Overview
 

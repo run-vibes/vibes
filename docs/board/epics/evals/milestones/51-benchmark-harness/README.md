@@ -1,11 +1,11 @@
 ---
 id: 51-benchmark-harness
-title: Benchmark Harness
+title: Benchmark Suite
 status: planned
 epics: [evals]
 ---
 
-# Benchmark Harness
+# Benchmark Suite
 
 ## Overview
 

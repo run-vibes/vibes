@@ -1,11 +1,11 @@
 ---
 id: 36-firehose-infinite-scroll
-title: Firehose Infinite Scroll
+title: Infinite Event Stream
 status: done
 epics: [web-ui]
 ---
 
-# Firehose Infinite Scroll
+# Infinite Event Stream
 
 ## Overview
 

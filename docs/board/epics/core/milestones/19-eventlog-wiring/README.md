@@ -1,11 +1,11 @@
 ---
 id: 19-eventlog-wiring
-title: Eventlog Wiring
+title: Event-Driven Architecture
 status: done
 epics: [core]
 ---
 
-# Eventlog Wiring
+# Event-Driven Architecture
 
 ## Overview
 

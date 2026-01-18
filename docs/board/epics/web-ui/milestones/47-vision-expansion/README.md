@@ -1,11 +1,11 @@
 ---
 id: 47-vision-expansion
-title: Vision Expansion
+title: Image Understanding
 status: in-progress
 epics: [web-ui, plugin-system, design-system]
 ---
 
-# Vision Expansion
+# Image Understanding
 
 > **"Spoke"** — Your hub. Your data. Your command. The wheel that connects everything.
 

@@ -1,11 +1,11 @@
 ---
 id: 20-event-cli
-title: Event Cli
+title: Event Management Commands
 status: done
 epics: [cli]
 ---
 
-# Event Cli
+# Event Management Commands
 
 ## Overview
 

@@ -1,11 +1,11 @@
 ---
 id: 18-iggy-sdk-integration
-title: Iggy Sdk Integration
+title: Native Event Storage
 status: done
 epics: [core]
 ---
 
-# Iggy Sdk Integration
+# Native Event Storage
 
 ## Overview
 

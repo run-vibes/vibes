@@ -1,11 +1,11 @@
 ---
 id: 38-agent-core
-title: Agent Core
+title: Autonomous Agents
 status: done
 epics: [agents]
 ---
 
-# Agent Core
+# Autonomous Agents
 
 ## Overview
 
