@@ -2,7 +2,7 @@
 id: FEAT0109
 title: Board generator grouped layout
 type: feat
-status: backlog
+status: done
 priority: high
 epics: [coherence-verification]
 depends: []

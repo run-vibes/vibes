@@ -64,16 +64,6 @@ generate:
         get_field "$1" "status"
     }
 
-    # Helper: render checkbox based on status
-    story_checkbox() {
-        local status=$(get_status "$1")
-        case "$status" in
-            done) echo "[x]" ;;
-            in-progress) echo "[~]" ;;
-            *) echo "[ ]" ;;
-        esac
-    }
-
     # Generate README.md
     {
     echo "# Planning Board"
@@ -86,16 +76,14 @@ generate:
     echo "## In Progress"
     echo ""
     if [[ -d stages/in-progress/stories ]] && ls stages/in-progress/stories/*.md &>/dev/null; then
-        echo "| Story | Type | Priority | Epics |"
-        echo "|-------|------|----------|-------|"
+        echo "| Story | Type | Priority | Epic |"
+        echo "|-------|------|----------|------|"
         for story in stages/in-progress/stories/*.md; do
             [[ -f "$story" ]] || continue
             name=$(basename "$story" .md)
-            title=$(get_field "$story" "title")
             type=$(get_field "$story" "type")
             priority=$(get_field "$story" "priority")
             epics=$(get_field "$story" "epics" | tr -d '[]')
-            [[ -z "$title" ]] && title="$name"
             echo "| [$name](stages/in-progress/stories/$name.md) | $type | $priority | $epics |"
         done
     else
@@ -107,16 +95,14 @@ generate:
     echo "## Backlog"
     echo ""
     if [[ -d stages/backlog/stories ]] && ls stages/backlog/stories/*.md &>/dev/null; then
-        echo "| Story | Type | Priority | Epics |"
-        echo "|-------|------|----------|-------|"
+        echo "| Story | Type | Priority | Epic |"
+        echo "|-------|------|----------|------|"
         for story in stages/backlog/stories/*.md; do
             [[ -f "$story" ]] || continue
             name=$(basename "$story" .md)
-            title=$(get_field "$story" "title")
             type=$(get_field "$story" "type")
             priority=$(get_field "$story" "priority")
             epics=$(get_field "$story" "epics" | tr -d '[]')
-            [[ -z "$title" ]] && title="$name"
             echo "| [$name](stages/backlog/stories/$name.md) | $type | $priority | $epics |"
         done
     else
@@ -124,57 +110,138 @@ generate:
     fi
     echo ""
 
-    # Epics
+    # Icebox stories
+    echo "## Icebox"
+    echo ""
+    if [[ -d stages/icebox/stories ]] && ls stages/icebox/stories/*.md &>/dev/null 2>&1; then
+        echo "| Story | Type | Priority | Blocked By |"
+        echo "|-------|------|----------|------------|"
+        for story in stages/icebox/stories/*.md; do
+            [[ -f "$story" ]] || continue
+            name=$(basename "$story" .md)
+            type=$(get_field "$story" "type")
+            priority=$(get_field "$story" "priority")
+            depends=$(get_field "$story" "depends" | tr -d '[]')
+            echo "| [$name](stages/icebox/stories/$name.md) | $type | $priority | $depends |"
+        done
+    else
+        echo "*No stories in icebox*"
+    fi
+    echo ""
+
+    # Epics section - group milestones under each epic
     echo "## Epics"
     echo ""
     if [[ -d epics ]]; then
-        echo "| Epic | Status | Stories |"
-        echo "|------|--------|---------|"
+        # Collect epics with active/in-progress milestones first
         for epic_dir in epics/*/; do
             [[ -d "$epic_dir" ]] || continue
-            name=$(basename "$epic_dir")
+            epic_name=$(basename "$epic_dir")
             [[ -f "${epic_dir}README.md" ]] || continue
-            status=$(get_field "${epic_dir}README.md" "status")
-            # Count symlinks (stories) in epic dir
-            count=$(find "$epic_dir" -maxdepth 1 -type l -name "*.md" 2>/dev/null | wc -l | tr -d ' ')
-            echo "| [$name](epics/$name/) | $status | $count |"
+
+            epic_status=$(get_field "${epic_dir}README.md" "status")
+
+            # Check if this epic has milestones
+            if [[ -d "${epic_dir}milestones" ]]; then
+                # Count milestones and done milestones
+                total_ms=0
+                done_ms=0
+                in_progress_ms=0
+                for ms_dir in "${epic_dir}milestones"/*/; do
+                    [[ -d "$ms_dir" ]] || continue
+                    [[ -f "${ms_dir}README.md" ]] || continue
+                    total_ms=$((total_ms + 1))
+                    ms_status=$(get_field "${ms_dir}README.md" "status")
+                    if [[ "$ms_status" == "done" ]]; then
+                        done_ms=$((done_ms + 1))
+                    elif [[ "$ms_status" == "in-progress" ]]; then
+                        in_progress_ms=$((in_progress_ms + 1))
+                    fi
+                done
+
+                # Skip epics with no milestones
+                [[ $total_ms -eq 0 ]] && continue
+
+                # Skip if all milestones are done (will appear in Done section)
+                [[ $done_ms -eq $total_ms ]] && continue
+
+                echo "### $epic_name ($epic_status) - $total_ms milestones, $done_ms done"
+                echo ""
+                echo "| Milestone | Status |"
+                echo "|-----------|--------|"
+
+                # List milestones sorted by numeric prefix
+                for ms_dir in $(ls -d "${epic_dir}milestones"/*/ 2>/dev/null | sort -t'/' -k5 -V); do
+                    [[ -d "$ms_dir" ]] || continue
+                    ms_name=$(basename "$ms_dir")
+                    [[ -f "${ms_dir}README.md" ]] || continue
+                    ms_status=$(get_field "${ms_dir}README.md" "status")
+                    echo "| [$ms_name](epics/$epic_name/milestones/$ms_name/) | $ms_status |"
+                done
+                echo ""
+            fi
         done
     fi
-    echo ""
 
-    # Milestones
-    echo "## Milestones"
-    echo ""
-    if [[ -d milestones ]]; then
-        echo "| Milestone | Status | Epics |"
-        echo "|-----------|--------|-------|"
-        for ms_dir in milestones/*/; do
-            [[ -d "$ms_dir" ]] || continue
-            name=$(basename "$ms_dir")
-            [[ -f "${ms_dir}README.md" ]] || continue
-            status=$(get_field "${ms_dir}README.md" "status")
-            epics=$(get_field "${ms_dir}README.md" "epics" | tr -d '[]')
-            echo "| [$name](milestones/$name/) | $status | $epics |"
-        done
-    fi
-    echo ""
-
-    # Done stories (collapsed)
+    # Done section - completed epics and milestones
     echo "## Done"
     echo ""
     echo "<details>"
-    echo "<summary>View completed stories</summary>"
+    echo "<summary>Completed Epics & Milestones</summary>"
     echo ""
-    if [[ -d stages/done/stories ]] && ls stages/done/stories/*.md &>/dev/null; then
-        for story in stages/done/stories/*.md; do
-            [[ -f "$story" ]] || continue
-            name=$(basename "$story" .md)
-            echo "- [$name](stages/done/stories/$name.md)"
+
+    # First, show epics where ALL milestones are done
+    if [[ -d epics ]]; then
+        for epic_dir in epics/*/; do
+            [[ -d "$epic_dir" ]] || continue
+            epic_name=$(basename "$epic_dir")
+            [[ -f "${epic_dir}README.md" ]] || continue
+
+            epic_status=$(get_field "${epic_dir}README.md" "status")
+
+            if [[ -d "${epic_dir}milestones" ]]; then
+                # Count milestones
+                total_ms=0
+                done_ms=0
+                for ms_dir in "${epic_dir}milestones"/*/; do
+                    [[ -d "$ms_dir" ]] || continue
+                    [[ -f "${ms_dir}README.md" ]] || continue
+                    total_ms=$((total_ms + 1))
+                    ms_status=$(get_field "${ms_dir}README.md" "status")
+                    if [[ "$ms_status" == "done" ]]; then
+                        done_ms=$((done_ms + 1))
+                    fi
+                done
+
+                # Show epic if ALL milestones are done
+                if [[ $total_ms -gt 0 ]] && [[ $done_ms -eq $total_ms ]]; then
+                    echo "### [$epic_name](epics/$epic_name/) (done)"
+                    echo ""
+                    for ms_dir in $(ls -d "${epic_dir}milestones"/*/ 2>/dev/null | sort -t'/' -k5 -V); do
+                        [[ -d "$ms_dir" ]] || continue
+                        ms_name=$(basename "$ms_dir")
+                        echo "- [$ms_name](epics/$epic_name/milestones/$ms_name/)"
+                    done
+                    echo ""
+                # Show completed milestones from active epics
+                elif [[ $done_ms -gt 0 ]]; then
+                    echo "### [$epic_name](epics/$epic_name/) - Completed Milestones"
+                    echo ""
+                    for ms_dir in $(ls -d "${epic_dir}milestones"/*/ 2>/dev/null | sort -t'/' -k5 -V); do
+                        [[ -d "$ms_dir" ]] || continue
+                        ms_name=$(basename "$ms_dir")
+                        [[ -f "${ms_dir}README.md" ]] || continue
+                        ms_status=$(get_field "${ms_dir}README.md" "status")
+                        if [[ "$ms_status" == "done" ]]; then
+                            echo "- [$ms_name](epics/$epic_name/milestones/$ms_name/)"
+                        fi
+                    done
+                    echo ""
+                fi
+            fi
         done
-    else
-        echo "*No completed stories*"
     fi
-    echo ""
+
     echo "</details>"
     } > README.md
 
