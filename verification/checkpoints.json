@@ -1,0 +1,39 @@
+{
+  "baseUrl": "http://localhost:3000",
+  "outputDir": "verification/checkpoints",
+  "checkpoints": [
+    {
+      "name": "navigate-groove-dashboard",
+      "description": "Navigate through main Groove dashboard tabs",
+      "steps": [
+        {"action": "goto", "url": "/groove/status", "screenshot": "01-status-page"},
+        {"action": "goto", "url": "/groove/learnings", "screenshot": "02-learnings-page"},
+        {"action": "goto", "url": "/groove/strategy", "screenshot": "03-strategy-page"},
+        {"action": "goto", "url": "/groove/trends", "screenshot": "04-trends-page"}
+      ]
+    },
+    {
+      "name": "view-session-detail",
+      "description": "Navigate from sessions list to session detail",
+      "steps": [
+        {"action": "goto", "url": "/sessions", "screenshot": "01-sessions-list"},
+        {"action": "click", "selector": ".session-row:first-child, [data-testid='session-row']:first-child, tr:first-child a", "screenshot": "02-session-detail", "optional": true}
+      ]
+    },
+    {
+      "name": "explore-event-stream",
+      "description": "View real-time events in the stream",
+      "steps": [
+        {"action": "goto", "url": "/groove/stream", "screenshot": "01-stream-initial"},
+        {"action": "wait", "duration": 2000, "screenshot": "02-stream-after-events"}
+      ]
+    },
+    {
+      "name": "settings-navigation",
+      "description": "Navigate through settings page",
+      "steps": [
+        {"action": "goto", "url": "/settings", "screenshot": "01-settings-page"}
+      ]
+    }
+  ]
+}

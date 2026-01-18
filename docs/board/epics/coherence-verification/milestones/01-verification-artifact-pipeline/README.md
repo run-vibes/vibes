@@ -31,9 +31,9 @@ See [design.md](design.md) for architecture and implementation details.
 
 | ID | Story | Status |
 |----|-------|--------|
-| TBD | Create verification directory structure | planned |
-| TBD | Implement snapshot capture command | planned |
-| TBD | Implement checkpoint capture command | planned |
-| TBD | Implement video recording and stitching | planned |
-| TBD | Implement report generation | planned |
-| TBD | Integrate with pre-commit | planned |
+| FEAT0191 | Create verification definition files | planned |
+| FEAT0192 | Implement snapshots.spec.ts | planned |
+| FEAT0193 | Implement checkpoints.spec.ts | planned |
+| FEAT0194 | Implement videos.spec.ts | planned |
+| CHORE0195 | Add pre-commit integration | planned |
+| DOCS0196 | Document verification commands | planned |

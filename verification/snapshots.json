@@ -1,0 +1,81 @@
+{
+  "baseUrl": "http://localhost:3000",
+  "outputDir": "verification/snapshots",
+  "snapshots": [
+    {
+      "name": "sessions",
+      "url": "/sessions",
+      "description": "Session list page"
+    },
+    {
+      "name": "groove-status",
+      "url": "/groove/status",
+      "description": "Groove overview/status page"
+    },
+    {
+      "name": "groove-learnings",
+      "url": "/groove/learnings",
+      "description": "Learnings dashboard"
+    },
+    {
+      "name": "groove-strategy",
+      "url": "/groove/strategy",
+      "description": "Strategy recommendations"
+    },
+    {
+      "name": "groove-stream",
+      "url": "/groove/stream",
+      "description": "Real-time event stream"
+    },
+    {
+      "name": "groove-trends",
+      "url": "/groove/trends",
+      "description": "Trend analysis"
+    },
+    {
+      "name": "groove-openworld",
+      "url": "/groove/openworld",
+      "description": "Open world novelty detection"
+    },
+    {
+      "name": "groove-history",
+      "url": "/groove/history",
+      "description": "Assessment history"
+    },
+    {
+      "name": "groove-security",
+      "url": "/groove/security",
+      "description": "Security dashboard"
+    },
+    {
+      "name": "firehose",
+      "url": "/firehose",
+      "description": "Raw event firehose"
+    },
+    {
+      "name": "streams",
+      "url": "/streams",
+      "description": "Event streams page"
+    },
+    {
+      "name": "settings",
+      "url": "/settings",
+      "description": "Application settings"
+    },
+    {
+      "name": "models",
+      "url": "/models",
+      "description": "Model configuration"
+    },
+    {
+      "name": "agents",
+      "url": "/agents",
+      "description": "Agent management"
+    },
+    {
+      "name": "traces",
+      "url": "/traces",
+      "description": "Distributed traces"
+    }
+  ]
+}

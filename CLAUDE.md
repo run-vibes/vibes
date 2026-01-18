@@ -120,6 +120,27 @@ Commands are organized into modules. Use `just <module>` to see available subcom
 | `just board done-milestone <id>` | Set milestone to done |
 | `just board done-epic <id>` | Set epic to done |
 
+### Verification Commands
+
+Visual verification captures screenshots and videos to document system behavior.
+
+| Command | Purpose |
+|---------|---------|
+| `just verify` | Show available verify commands |
+| `just verify snapshots` | Tier 1: Capture key screen PNGs (~30s) |
+| `just verify checkpoints` | Tier 2: Capture interaction sequences (~2min) |
+| `just verify videos` | Tier 3: Record CLI + Web videos (~5min) |
+| `just verify all` | Run all tiers and generate report |
+| `just verify report` | Generate verification/report.md |
+| `just verify summary` | Show artifact counts |
+| `just verify clean` | Remove all artifacts |
+
+**Run `just verify all` before creating PRs** to capture visual documentation.
+
+Artifacts are gitignored except `verification/report.md`. Define what to capture in:
+- `verification/snapshots.json` - Pages to screenshot
+- `verification/checkpoints.json` - Interaction sequences
+
 ## Workflow
 
 **Always use these superpowers skills:**
