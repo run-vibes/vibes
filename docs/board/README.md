@@ -42,12 +42,12 @@
 | [35-guided-setup](epics/cli/milestones/35-guided-setup/) | done |
 | [54-enhanced-cli-experience](epics/cli/milestones/54-enhanced-cli-experience/) | planned |
 
-### [coherence-verification](epics/coherence-verification/) (active) - 2 milestones, 0 done
+### [coherence-verification](epics/coherence-verification/) (active) - 2 milestones, 1 done
 
 | Milestone | Status |
 |-----------|--------|
 | [01-verification-artifact-pipeline](epics/coherence-verification/milestones/01-verification-artifact-pipeline/) | planned |
-| [02-epic-based-project-hierarchy](epics/coherence-verification/milestones/02-epic-based-project-hierarchy/) | planned |
+| [02-epic-based-project-hierarchy](epics/coherence-verification/milestones/02-epic-based-project-hierarchy/) | done |
 
 ### [evals](epics/evals/) (planned) - 6 milestones, 0 done
 
@@ -111,6 +111,10 @@
 - [10-live-terminal-sync](epics/cli/milestones/10-live-terminal-sync/)
 - [20-event-management-commands](epics/cli/milestones/20-event-management-commands/)
 - [35-guided-setup](epics/cli/milestones/35-guided-setup/)
+
+### [coherence-verification](epics/coherence-verification/) - Completed Milestones
+
+- [02-epic-based-project-hierarchy](epics/coherence-verification/milestones/02-epic-based-project-hierarchy/)
 
 ### [core](epics/core/) (done)
 

@@ -37,9 +37,9 @@
 
 ## Completion Criteria
 
-- [ ] All 55 milestones nested under epics
-- [ ] All stories use [TYPE][NNNN] naming
-- [ ] Board README shows grouped epic sections
-- [ ] `just board done-epic` command works
-- [ ] State commands auto-sync milestone/epic docs
-- [ ] Documentation updated
+- [x] All 55 milestones nested under epics
+- [x] All stories use [TYPE][NNNN] naming
+- [x] Board README shows grouped epic sections
+- [x] `just board done-epic` command works
+- [x] State commands auto-sync milestone/epic docs
+- [x] Documentation updated

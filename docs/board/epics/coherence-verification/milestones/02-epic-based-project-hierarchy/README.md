@@ -1,7 +1,8 @@
 ---
 id: 02-epic-based-project-hierarchy
 title: Epic-Based Project Hierarchy
-status: planned
+status: done
+completed: 2026-01-18
 epic: coherence-verification
 created: 2026-01-17
 ---
@@ -16,12 +17,12 @@ The board hierarchy matches mental model (Epic > Milestone > Story), stories hav
 
 ## Done Criteria
 
-- [ ] Epic structure is `epics/<epic>/milestones/<NN-value>/`
-- [ ] Stories use `[TYPE][NNNN]-verb-phrase` naming
-- [ ] Icebox stage exists at `stages/icebox/stories/`
-- [ ] `just board ice` and `just board thaw` commands work
-- [ ] CONVENTIONS.md reflects new hierarchy
-- [ ] Existing stories migrated to new format
+- [x] Epic structure is `epics/<epic>/milestones/<NN-value>/`
+- [x] Stories use `[TYPE][NNNN]-verb-phrase` naming
+- [x] Icebox stage exists at `stages/icebox/stories/`
+- [x] `just board ice` and `just board thaw` commands work
+- [x] CONVENTIONS.md reflects new hierarchy
+- [x] Existing stories migrated to new format
 
 ## Design
 
@@ -31,9 +32,9 @@ See [design.md](design.md) for architecture and implementation details.
 
 | ID | Story | Status |
 |----|-------|--------|
-| TBD | Add icebox stage directory | planned |
-| TBD | Implement ice and thaw commands | planned |
-| TBD | Update story naming in board commands | planned |
-| TBD | Create epic milestone directory structure | planned |
-| TBD | Migrate existing stories to new format | planned |
-| TBD | Update CONVENTIONS.md | planned |
+| CHORE0111 | Create design-system epic | done |
+| CHORE0112 | Migrate milestones to epics | done |
+| CHORE0113 | Rename stories to new format | done |
+| FEAT0109 | Board generator grouped layout | done |
+| FEAT0110 | Board state command sync | done |
+| CHORE0114 | Update board documentation | done |
