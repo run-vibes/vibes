@@ -24,13 +24,13 @@ Build a verification system that captures system behavior as visual artifacts (s
 | ID | Milestone | Status |
 |----|-----------|--------|
 | 01 | [Artifact Pipeline](milestones/01-artifact-pipeline/) | planned |
-| 02 | Board Restructure (Epic > Milestone > Story) | planned |
+| 02 | [Board Restructure](milestones/02-board-restructure/) | in-progress |
 | 03 | AI-Assisted Verification | planned |
 
 ## Success Criteria
 
 - [ ] `just verify all` captures snapshots, checkpoints, and stitched videos
 - [ ] `verification/report.md` links artifacts to story acceptance criteria
-- [ ] Board hierarchy is Epic > Milestone > Story with clear lifecycles
-- [ ] Icebox stage exists for blocked/deferred work
-- [ ] Story naming follows `[TYPE][NNNN]-verb-phrase` convention
+- [x] Board hierarchy is Epic > Milestone > Story with clear lifecycles
+- [x] Icebox stage exists for blocked/deferred work
+- [x] Story naming follows `[TYPE][NNNN]-verb-phrase` convention

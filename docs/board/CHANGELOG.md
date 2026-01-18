@@ -2,6 +2,7 @@
 
 > Updated when items move to done. Most recent first.
 
+| 2026-01-17 | Update board documentation | Updated CONVENTIONS.md and CLAUDE.md for new board hierarchy |
 | 2026-01-17 | Board generator grouped layout | Implemented grouped layout for board generator with milestones nested under epics |
 | 2026-01-17 | Migrate milestones to epics | Migrated 55 milestones into parent epic directories |
 | 2026-01-13 | Add Ollama as a model provider | Added Ollama as a local model provider with CLI integration |

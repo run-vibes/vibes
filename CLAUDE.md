@@ -114,8 +114,11 @@ Commands are organized into modules. Use `just <module>` to see available subcom
 | `just board new milestone "name"` | Create new milestone |
 | `just board start <id>` | Move story to in-progress |
 | `just board done <id>` | Move story to done |
+| `just board ice <id>` | Move story to icebox (blocked/deferred) |
+| `just board thaw <id>` | Move story from icebox to backlog |
 | `just board start-milestone <id>` | Set milestone to in-progress |
 | `just board done-milestone <id>` | Set milestone to done |
+| `just board done-epic <id>` | Set epic to done |
 
 ## Workflow
 
@@ -146,8 +149,8 @@ All designs go in `docs/board/` following CONVENTIONS.md:
 
 | Size | Structure |
 |------|-----------|
-| **Small feature** | Story file: `docs/board/stages/backlog/stories/<type>-NNNN-name.md` |
-| **Large feature** | Milestone directory: `docs/board/milestones/NN-name/design.md` |
+| **Small feature** | Story file: `docs/board/stages/backlog/stories/[TYPE][NNNN]-name.md` |
+| **Large feature** | Milestone directory: `docs/board/epics/<epic>/milestones/NN-name/design.md` |
 
 Use `just board new story "name"` or `just board new milestone "name"` to create the correct structure.
 
@@ -238,7 +241,14 @@ These commands handle file moves, symlink updates, and changelog entries automat
 1. Run `just board done-milestone <id>`
 2. Commit with message: `chore(board): complete milestone NN-name`
 
-Milestone files live in `docs/board/milestones/<id>/README.md`.
+Milestone files live in `docs/board/epics/<epic>/milestones/<id>/`.
+
+### Epic Management
+
+**When completing all milestones of an epic:**
+
+1. Run `just board done-epic <id>`
+2. Commit with message: `chore(board): complete epic <name>`
 
 ### Completing Work
 

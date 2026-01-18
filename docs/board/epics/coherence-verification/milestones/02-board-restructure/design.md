@@ -361,23 +361,23 @@ No external dependencies - this is board tooling changes.
 
 ### Infrastructure
 - [x] `stages/icebox/stories/` directory (already exists)
-- [ ] `epics/design-system/` epic created
-- [ ] All 55 milestones moved into `epics/<epic>/milestones/`
-- [ ] All stories renamed to `[TYPE][NNNN]-verb-phrase.md` format
-- [ ] All epic symlinks updated
+- [x] `epics/design-system/` epic created
+- [x] All 55 milestones moved into `epics/<epic>/milestones/`
+- [x] All stories renamed to `[TYPE][NNNN]-verb-phrase.md` format
+- [x] All epic symlinks updated
 
 ### Board Generator
-- [ ] Grouped epic sections with milestone tables
-- [ ] Icebox section in README
-- [ ] Done section shows milestones/epics with links
-- [ ] Milestone progress tracking (stories done/total)
+- [x] Grouped epic sections with milestone tables
+- [x] Icebox section in README
+- [x] Done section shows milestones/epics with links
+- [x] Milestone progress tracking (stories done/total)
 
 ### State Commands
-- [ ] `just board done-epic <id>` command
+- [x] `just board done-epic <id>` command
 - [ ] Auto-sync milestone docs on story state change
 - [ ] Auto-sync epic docs on milestone state change
 - [ ] `completed:` date added to milestone frontmatter
 
 ### Documentation
-- [ ] Updated CONVENTIONS.md
-- [ ] Updated CLAUDE.md
+- [x] Updated CONVENTIONS.md
+- [x] Updated CLAUDE.md

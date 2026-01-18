@@ -1,1 +1,1 @@
-../../stages/backlog/stories/[CHORE][0114]-update-board-documentation.md
+../../stages/done/stories/[CHORE][0114]-update-board-documentation.md

@@ -54,15 +54,10 @@ docs/board/
 │   │   ├── README.md
 │   │   └── milestones/    # Milestones within this epic
 │   └── ...
-├── milestones/            # Standalone milestones (not in an epic)
-│   ├── 01-core-proxy/
-│   └── ...
-├── templates/             # Templates for new items
-│   ├── story.md
-│   ├── epic.md
-│   └── milestone.md
-├── backlog/               # Legacy: milestone directories (to be migrated)
-└── in-progress/           # Legacy: milestone directories (to be migrated)
+└── templates/             # Templates for new items
+    ├── story.md
+    ├── epic.md
+    └── milestone.md
 ```
 
 ### Hierarchy
@@ -81,10 +76,10 @@ Epic (large initiative)
 | **Milestone** | Deliverable with design doc, multiple stories | "Artifact Pipeline" |
 | **Story** | Single implementable unit, ends with a commit | "Add snapshot capture" |
 
-**Key differences from previous hierarchy:**
+**Key principles:**
 - Epics contain milestones (not the reverse)
 - Epics have status (`active`, `done`) and can be closed when complete
-- Milestones can exist standalone (in `milestones/`) or within an epic (`epics/<name>/milestones/`)
+- All milestones live within epics (`epics/<name>/milestones/`)
 
 ## Stages
 
@@ -219,44 +214,20 @@ milestones:
 
 ## Milestones
 
-Milestones are large deliverables with design documents and multiple stories. They can exist in two locations:
-
-1. **Within an epic:** `epics/<epic-name>/milestones/<milestone-id>/`
-2. **Standalone:** `milestones/<milestone-id>/` (for work not tied to a specific epic)
+Milestones are large deliverables with design documents and multiple stories. All milestones live within an epic at `epics/<epic-name>/milestones/<milestone-id>/`.
 
 Each milestone directory contains:
 
 - `design.md` for architecture decisions (required)
 - `implementation.md` for story index (optional)
-- `README.md` for standalone milestones
 
 ```
-# Within an epic
 epics/coherence-verification/milestones/
-└── 01-artifact-pipeline/
-    ├── design.md
-    └── implementation.md
-
-# Standalone
-milestones/
-└── 45-theme-config/
-    ├── README.md
-    ├── design.md
-    └── implementation.md
-```
-
-### Milestone README Format (Standalone)
-
-```yaml
----
-id: 45
-title: Theme Configuration
-status: in-progress
----
-
-# Theme Configuration
-
-[Milestone overview...]
+├── 01-artifact-pipeline/
+│   ├── design.md
+│   └── implementation.md
+└── 02-board-restructure/
+    └── design.md
 ```
 
 ### Milestone Status
@@ -288,10 +259,12 @@ Use `just board start-milestone <id>` and `just board done-milestone <id>` to ma
 | Command | Action |
 |---------|--------|
 | `just board new epic "name"` | Create new epic |
-| `just board new milestone "name"` | Create new standalone milestone |
+| `just board new milestone "name"` | Create new milestone (within current epic) |
 | `just board start-milestone <id>` | Set milestone to in-progress |
 | `just board done-milestone <id>` | Set milestone to done |
+| `just board done-epic <id>` | Set epic to done |
 | `just board link <story> <epic>` | Link story to epic |
+| `just board unlink <story> <epic>` | Remove story from epic |
 
 ### Board Operations
 

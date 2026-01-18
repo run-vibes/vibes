@@ -15,7 +15,6 @@
 |-------|------|----------|------|
 | [[CHORE][0087]-use-cranelift-for-builds](stages/backlog/stories/[CHORE][0087]-use-cranelift-for-builds.md) | chore | low | dev-environment |
 | [[CHORE][0110]-add-scheduled-mutation-testing-workflow](stages/backlog/stories/[CHORE][0110]-add-scheduled-mutation-testing-workflow.md) | chore | medium |  |
-| [[CHORE][0114]-update-board-documentation](stages/backlog/stories/[CHORE][0114]-update-board-documentation.md) | chore | high | coherence-verification |
 | [[DOCS][0003]-plugin-api-versioning-migration-plan](stages/backlog/stories/[DOCS][0003]-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
 | [[DOCS][0004]-event-schema-versioning-strategy](stages/backlog/stories/[DOCS][0004]-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
 | [[FEAT][0013]-windows-daemon-support](stages/backlog/stories/[FEAT][0013]-windows-daemon-support.md) | feat | low | cli,cross-platform |

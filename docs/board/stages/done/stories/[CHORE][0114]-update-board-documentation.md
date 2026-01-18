@@ -2,7 +2,7 @@
 id: CHORE0114
 title: Update board documentation
 type: chore
-status: backlog
+status: done
 priority: high
 epics: [coherence-verification]
 depends: [CHORE0113, FEAT0110]
