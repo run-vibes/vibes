@@ -1,1 +1,1 @@
-../../stages/backlog/stories/[DOCS][0004]-event-schema-versioning-strategy.md
+../../stages/icebox/stories/[DOCS][0004]-event-schema-versioning-strategy.md

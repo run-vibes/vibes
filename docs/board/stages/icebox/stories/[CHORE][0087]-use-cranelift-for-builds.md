@@ -2,7 +2,7 @@
 id: CHORE0087
 title: Use Cranelift for faster builds
 type: chore
-status: blocked
+status: icebox
 priority: low
 epics: [dev-environment]
 depends: []

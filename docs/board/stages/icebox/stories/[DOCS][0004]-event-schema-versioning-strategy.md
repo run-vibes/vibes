@@ -2,13 +2,13 @@
 id: DOCS0004
 title: Event schema versioning strategy
 type: docs
-status: backlog
+status: icebox
 priority: low
 epics: [core,plugin-system]
 depends: []
 estimate: 2h
 created: 2026-01-08
-updated: 2026-01-08
+updated: 2026-01-18
 ---
 
 # Event schema versioning strategy

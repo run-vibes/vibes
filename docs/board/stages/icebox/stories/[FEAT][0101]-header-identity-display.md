@@ -2,7 +2,7 @@
 id: FEAT0101
 title: Header Identity Display
 type: feat
-status: pending
+status: icebox
 priority: low
 epics: [web-ui, design-system]
 depends: [refactor-0100]

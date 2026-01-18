@@ -13,12 +13,6 @@
 
 | Story | Type | Priority | Epic |
 |-------|------|----------|------|
-| [[CHORE][0087]-use-cranelift-for-builds](stages/backlog/stories/[CHORE][0087]-use-cranelift-for-builds.md) | chore | low | dev-environment |
-| [[CHORE][0110]-add-scheduled-mutation-testing-workflow](stages/backlog/stories/[CHORE][0110]-add-scheduled-mutation-testing-workflow.md) | chore | medium |  |
-| [[DOCS][0003]-plugin-api-versioning-migration-plan](stages/backlog/stories/[DOCS][0003]-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
-| [[DOCS][0004]-event-schema-versioning-strategy](stages/backlog/stories/[DOCS][0004]-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
-| [[FEAT][0013]-windows-daemon-support](stages/backlog/stories/[FEAT][0013]-windows-daemon-support.md) | feat | low | cli,cross-platform |
-| [[FEAT][0101]-header-identity-display](stages/backlog/stories/[FEAT][0101]-header-identity-display.md) | feat | low | web-ui,design-system |
 | [[FEAT][0115]-eval-web-ui](stages/backlog/stories/[FEAT][0115]-eval-web-ui.md) | feat | medium | evals |
 | [[FEAT][0116]-pty-server-core](stages/backlog/stories/[FEAT][0116]-pty-server-core.md) | feat | medium | tui |
 | [[FEAT][0117]-session-management](stages/backlog/stories/[FEAT][0117]-session-management.md) | feat | medium | tui |
@@ -27,7 +21,14 @@
 
 ## Icebox
 
-*No stories in icebox*
+| Story | Type | Priority | Blocked By |
+|-------|------|----------|------------|
+| [[CHORE][0087]-use-cranelift-for-builds](stages/icebox/stories/[CHORE][0087]-use-cranelift-for-builds.md) | chore | low |  |
+| [[CHORE][0110]-add-scheduled-mutation-testing-workflow](stages/icebox/stories/[CHORE][0110]-add-scheduled-mutation-testing-workflow.md) | chore | medium |  |
+| [[DOCS][0003]-plugin-api-versioning-migration-plan](stages/icebox/stories/[DOCS][0003]-plugin-api-versioning-migration-plan.md) | docs | low |  |
+| [[DOCS][0004]-event-schema-versioning-strategy](stages/icebox/stories/[DOCS][0004]-event-schema-versioning-strategy.md) | docs | low |  |
+| [[FEAT][0013]-windows-daemon-support](stages/icebox/stories/[FEAT][0013]-windows-daemon-support.md) | feat | low |  |
+| [[FEAT][0101]-header-identity-display](stages/icebox/stories/[FEAT][0101]-header-identity-display.md) | feat | low | refactor-0100 |
 
 ## Epics
 

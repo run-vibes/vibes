@@ -2,13 +2,13 @@
 id: CHORE0110
 title: Add scheduled mutation testing workflow
 type: chore
-status: backlog
+status: icebox
 priority: medium
 epics: []
 depends: []
 estimate:
 created: 2026-01-17
-updated: 2026-01-17
+updated: 2026-01-18
 ---
 
 # Add scheduled mutation testing workflow

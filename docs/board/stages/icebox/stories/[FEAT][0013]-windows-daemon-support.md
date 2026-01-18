@@ -2,13 +2,13 @@
 id: FEAT0013
 title: Windows daemon support
 type: feat
-status: backlog
+status: icebox
 priority: low
 epics: [cli, cross-platform]
 depends: []
 estimate: 1w
 created: 2026-01-08
-updated: 2026-01-08
+updated: 2026-01-18
 ---
 
 # Windows daemon support
