@@ -31,7 +31,7 @@
 
 ## Epics
 
-### cli (active) - 5 milestones, 4 done
+### [cli](epics/cli/) (active) - 5 milestones, 4 done
 
 | Milestone | Status |
 |-----------|--------|
@@ -41,14 +41,14 @@
 | [35-setup-wizards](epics/cli/milestones/35-setup-wizards/) | done |
 | [54-cli-enhancements](epics/cli/milestones/54-cli-enhancements/) | planned |
 
-### coherence-verification (active) - 2 milestones, 0 done
+### [coherence-verification](epics/coherence-verification/) (active) - 2 milestones, 0 done
 
 | Milestone | Status |
 |-----------|--------|
 | [01-artifact-pipeline](epics/coherence-verification/milestones/01-artifact-pipeline/) | planned |
 | [02-board-restructure](epics/coherence-verification/milestones/02-board-restructure/) | planned |
 
-### evals (planned) - 6 milestones, 0 done
+### [evals](epics/evals/) (planned) - 6 milestones, 0 done
 
 | Milestone | Status |
 |-----------|--------|
@@ -59,14 +59,14 @@
 | [51-benchmark-harness](epics/evals/milestones/51-benchmark-harness/) | planned |
 | [52-additional-benchmarks](epics/evals/milestones/52-additional-benchmarks/) | planned |
 
-### mobile (active) - 2 milestones, 1 done
+### [mobile](epics/mobile/) (active) - 2 milestones, 1 done
 
 | Milestone | Status |
 |-----------|--------|
 | [07-push-notifications](epics/mobile/milestones/07-push-notifications/) | done |
 | [55-ios-app](epics/mobile/milestones/55-ios-app/) | planned |
 
-### plugin-system (active) - 3 milestones, 2 done
+### [plugin-system](epics/plugin-system/) (active) - 3 milestones, 2 done
 
 | Milestone | Status |
 |-----------|--------|
@@ -74,7 +74,7 @@
 | [23-plugin-api-extension](epics/plugin-system/milestones/23-plugin-api-extension/) | done |
 | [53-default-plugins](epics/plugin-system/milestones/53-default-plugins/) | planned |
 
-### tui (planned) - 6 milestones, 3 done
+### [tui](epics/tui/) (planned) - 6 milestones, 3 done
 
 | Milestone | Status |
 |-----------|--------|
@@ -85,7 +85,7 @@
 | [45-tui-theme-system](epics/tui/milestones/45-tui-theme-system/) | in-progress |
 | [46-tui-pty-server](epics/tui/milestones/46-tui-pty-server/) | planned |
 
-### web-ui (active) - 5 milestones, 4 done
+### [web-ui](epics/web-ui/) (active) - 5 milestones, 4 done
 
 | Milestone | Status |
 |-----------|--------|

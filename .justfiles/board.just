@@ -166,7 +166,7 @@ generate:
                 # Skip if all milestones are done (will appear in Done section)
                 [[ $done_ms -eq $total_ms ]] && continue
 
-                echo "### $epic_name ($epic_status) - $total_ms milestones, $done_ms done"
+                echo "### [$epic_name](epics/$epic_name/) ($epic_status) - $total_ms milestones, $done_ms done"
                 echo ""
                 echo "| Milestone | Status |"
                 echo "|-----------|--------|"
