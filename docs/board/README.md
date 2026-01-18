@@ -36,65 +36,65 @@
 
 | Milestone | Status |
 |-----------|--------|
-| [02-cli](epics/cli/milestones/02-cli/) | done |
-| [10-cli-web-mirroring](epics/cli/milestones/10-cli-web-mirroring/) | done |
-| [20-event-cli](epics/cli/milestones/20-event-cli/) | done |
-| [35-setup-wizards](epics/cli/milestones/35-setup-wizards/) | done |
-| [54-cli-enhancements](epics/cli/milestones/54-cli-enhancements/) | planned |
+| [02-command-line-control](epics/cli/milestones/02-command-line-control/) | done |
+| [10-live-terminal-sync](epics/cli/milestones/10-live-terminal-sync/) | done |
+| [20-event-management-commands](epics/cli/milestones/20-event-management-commands/) | done |
+| [35-guided-setup](epics/cli/milestones/35-guided-setup/) | done |
+| [54-enhanced-cli-experience](epics/cli/milestones/54-enhanced-cli-experience/) | planned |
 
 ### [coherence-verification](epics/coherence-verification/) (active) - 2 milestones, 0 done
 
 | Milestone | Status |
 |-----------|--------|
-| [01-artifact-pipeline](epics/coherence-verification/milestones/01-artifact-pipeline/) | planned |
-| [02-board-restructure](epics/coherence-verification/milestones/02-board-restructure/) | planned |
+| [01-verification-artifact-pipeline](epics/coherence-verification/milestones/01-verification-artifact-pipeline/) | planned |
+| [02-epic-based-project-hierarchy](epics/coherence-verification/milestones/02-epic-based-project-hierarchy/) | planned |
 
 ### [evals](epics/evals/) (planned) - 6 milestones, 0 done
 
 | Milestone | Status |
 |-----------|--------|
-| [39-eval-core](epics/evals/milestones/39-eval-core/) | in-progress |
-| [48-longitudinal-mode](epics/evals/milestones/48-longitudinal-mode/) | planned |
-| [49-eval-reports](epics/evals/milestones/49-eval-reports/) | planned |
-| [50-trend-analysis](epics/evals/milestones/50-trend-analysis/) | planned |
-| [51-benchmark-harness](epics/evals/milestones/51-benchmark-harness/) | planned |
-| [52-additional-benchmarks](epics/evals/milestones/52-additional-benchmarks/) | planned |
+| [39-performance-evaluation](epics/evals/milestones/39-performance-evaluation/) | in-progress |
+| [48-long-term-studies](epics/evals/milestones/48-long-term-studies/) | planned |
+| [49-performance-reports](epics/evals/milestones/49-performance-reports/) | planned |
+| [50-performance-trends](epics/evals/milestones/50-performance-trends/) | planned |
+| [51-benchmark-suite](epics/evals/milestones/51-benchmark-suite/) | planned |
+| [52-extended-benchmarks](epics/evals/milestones/52-extended-benchmarks/) | planned |
 
 ### [mobile](epics/mobile/) (active) - 2 milestones, 1 done
 
 | Milestone | Status |
 |-----------|--------|
-| [07-push-notifications](epics/mobile/milestones/07-push-notifications/) | done |
-| [55-ios-app](epics/mobile/milestones/55-ios-app/) | planned |
+| [07-mobile-alerts](epics/mobile/milestones/07-mobile-alerts/) | done |
+| [55-ios-mobile-app](epics/mobile/milestones/55-ios-mobile-app/) | planned |
 
 ### [plugin-system](epics/plugin-system/) (active) - 3 milestones, 2 done
 
 | Milestone | Status |
 |-----------|--------|
-| [03-plugin-foundation](epics/plugin-system/milestones/03-plugin-foundation/) | done |
-| [23-plugin-api-extension](epics/plugin-system/milestones/23-plugin-api-extension/) | done |
-| [53-default-plugins](epics/plugin-system/milestones/53-default-plugins/) | planned |
+| [03-extensible-plugin-system](epics/plugin-system/milestones/03-extensible-plugin-system/) | done |
+| [23-rich-plugin-apis](epics/plugin-system/milestones/23-rich-plugin-apis/) | done |
+| [53-out-of-box-plugins](epics/plugin-system/milestones/53-out-of-box-plugins/) | planned |
 
 ### [tui](epics/tui/) (planned) - 6 milestones, 3 done
 
 | Milestone | Status |
 |-----------|--------|
-| [41-tui-core](epics/tui/milestones/41-tui-core/) | done |
-| [42-tui-dashboard](epics/tui/milestones/42-tui-dashboard/) | done |
-| [43-tui-agent-control](epics/tui/milestones/43-tui-agent-control/) | done |
-| [44-tui-swarm-visualization](epics/tui/milestones/44-tui-swarm-visualization/) | planned |
-| [45-tui-theme-system](epics/tui/milestones/45-tui-theme-system/) | in-progress |
-| [46-tui-pty-server](epics/tui/milestones/46-tui-pty-server/) | planned |
+| [41-terminal-ui-framework](epics/tui/milestones/41-terminal-ui-framework/) | done |
+| [42-terminal-dashboard](epics/tui/milestones/42-terminal-dashboard/) | done |
+| [43-terminal-agent-control](epics/tui/milestones/43-terminal-agent-control/) | done |
+| [44-swarm-monitoring](epics/tui/milestones/44-swarm-monitoring/) | planned |
+| [45-customizable-themes](epics/tui/milestones/45-customizable-themes/) | in-progress |
+| [46-terminal-server](epics/tui/milestones/46-terminal-server/) | planned |
 
 ### [web-ui](epics/web-ui/) (active) - 5 milestones, 4 done
 
 | Milestone | Status |
 |-----------|--------|
-| [04-server-web-ui](epics/web-ui/milestones/04-server-web-ui/) | done |
-| [17-web-ui-modernization](epics/web-ui/milestones/17-web-ui-modernization/) | done |
-| [26-firehose-infinite-scroll](epics/web-ui/milestones/26-firehose-infinite-scroll/) | done |
-| [27-crt-design-system](epics/web-ui/milestones/27-crt-design-system/) | done |
-| [47-vision-expansion](epics/web-ui/milestones/47-vision-expansion/) | in-progress |
+| [04-web-dashboard](epics/web-ui/milestones/04-web-dashboard/) | done |
+| [17-modern-web-interface](epics/web-ui/milestones/17-modern-web-interface/) | done |
+| [26-infinite-event-stream](epics/web-ui/milestones/26-infinite-event-stream/) | done |
+| [27-crt-visual-design](epics/web-ui/milestones/27-crt-visual-design/) | done |
+| [47-image-understanding](epics/web-ui/milestones/47-image-understanding/) | in-progress |
 
 ## Done
 
@@ -103,77 +103,77 @@
 
 ### [agents](epics/agents/) (done)
 
-- [38-agent-core](epics/agents/milestones/38-agent-core/)
+- [38-autonomous-agents](epics/agents/milestones/38-autonomous-agents/)
 
 ### [cli](epics/cli/) - Completed Milestones
 
-- [02-cli](epics/cli/milestones/02-cli/)
-- [10-cli-web-mirroring](epics/cli/milestones/10-cli-web-mirroring/)
-- [20-event-cli](epics/cli/milestones/20-event-cli/)
-- [35-setup-wizards](epics/cli/milestones/35-setup-wizards/)
+- [02-command-line-control](epics/cli/milestones/02-command-line-control/)
+- [10-live-terminal-sync](epics/cli/milestones/10-live-terminal-sync/)
+- [20-event-management-commands](epics/cli/milestones/20-event-management-commands/)
+- [35-guided-setup](epics/cli/milestones/35-guided-setup/)
 
 ### [core](epics/core/) (done)
 
-- [01-core-proxy](epics/core/milestones/01-core-proxy/)
-- [08-chat-history](epics/core/milestones/08-chat-history/)
-- [09-multi-session](epics/core/milestones/09-multi-session/)
-- [11-test-coverage](epics/core/milestones/11-test-coverage/)
-- [12-pty-backend](epics/core/milestones/12-pty-backend/)
-- [13-scrollback-simplification](epics/core/milestones/13-scrollback-simplification/)
-- [14-kanban-board](epics/core/milestones/14-kanban-board/)
-- [16-iggy-bundling](epics/core/milestones/16-iggy-bundling/)
-- [18-iggy-sdk-integration](epics/core/milestones/18-iggy-sdk-integration/)
-- [19-eventlog-wiring](epics/core/milestones/19-eventlog-wiring/)
-- [28-board-restructure](epics/core/milestones/28-board-restructure/)
+- [01-remote-session-access](epics/core/milestones/01-remote-session-access/)
+- [08-persistent-conversations](epics/core/milestones/08-persistent-conversations/)
+- [09-parallel-workspaces](epics/core/milestones/09-parallel-workspaces/)
+- [11-reliable-test-suite](epics/core/milestones/11-reliable-test-suite/)
+- [12-full-terminal-emulation](epics/core/milestones/12-full-terminal-emulation/)
+- [13-efficient-scrollback](epics/core/milestones/13-efficient-scrollback/)
+- [14-visual-project-planning](epics/core/milestones/14-visual-project-planning/)
+- [16-bundled-event-store](epics/core/milestones/16-bundled-event-store/)
+- [18-native-event-storage](epics/core/milestones/18-native-event-storage/)
+- [19-event-driven-architecture](epics/core/milestones/19-event-driven-architecture/)
+- [28-organized-project-tracking](epics/core/milestones/28-organized-project-tracking/)
 
 ### [groove](epics/groove/) (done)
 
-- [15-harness-introspection](epics/groove/milestones/15-harness-introspection/)
-- [21-storage-foundation](epics/groove/milestones/21-storage-foundation/)
-- [22-security-foundation](epics/groove/milestones/22-security-foundation/)
-- [24-capture-inject](epics/groove/milestones/24-capture-inject/)
-- [25-assessment-types](epics/groove/milestones/25-assessment-types/)
-- [29-assessment-framework](epics/groove/milestones/29-assessment-framework/)
-- [30-learning-extraction](epics/groove/milestones/30-learning-extraction/)
-- [31-attribution-engine](epics/groove/milestones/31-attribution-engine/)
-- [32-adaptive-strategies](epics/groove/milestones/32-adaptive-strategies/)
-- [33-groove-dashboard](epics/groove/milestones/33-groove-dashboard/)
-- [34-open-world-adaptation](epics/groove/milestones/34-open-world-adaptation/)
-- [36-openworld-dashboard](epics/groove/milestones/36-openworld-dashboard/)
+- [15-ai-harness-discovery](epics/groove/milestones/15-ai-harness-discovery/)
+- [21-persistent-learning-storage](epics/groove/milestones/21-persistent-learning-storage/)
+- [22-secure-data-handling](epics/groove/milestones/22-secure-data-handling/)
+- [24-context-injection](epics/groove/milestones/24-context-injection/)
+- [25-structured-assessments](epics/groove/milestones/25-structured-assessments/)
+- [29-assessment-pipeline](epics/groove/milestones/29-assessment-pipeline/)
+- [30-automatic-learning-capture](epics/groove/milestones/30-automatic-learning-capture/)
+- [31-learning-impact-tracking](epics/groove/milestones/31-learning-impact-tracking/)
+- [32-smart-recommendations](epics/groove/milestones/32-smart-recommendations/)
+- [33-learning-insights-dashboard](epics/groove/milestones/33-learning-insights-dashboard/)
+- [34-handling-new-situations](epics/groove/milestones/34-handling-new-situations/)
+- [36-novelty-monitoring](epics/groove/milestones/36-novelty-monitoring/)
 
 ### [mobile](epics/mobile/) - Completed Milestones
 
-- [07-push-notifications](epics/mobile/milestones/07-push-notifications/)
+- [07-mobile-alerts](epics/mobile/milestones/07-mobile-alerts/)
 
 ### [models](epics/models/) (done)
 
-- [37-models-registry-auth](epics/models/milestones/37-models-registry-auth/)
+- [37-model-management](epics/models/milestones/37-model-management/)
 
 ### [networking](epics/networking/) (done)
 
-- [05-cloudflare-tunnel](epics/networking/milestones/05-cloudflare-tunnel/)
-- [06-cloudflare-access](epics/networking/milestones/06-cloudflare-access/)
+- [05-secure-remote-access](epics/networking/milestones/05-secure-remote-access/)
+- [06-team-authentication](epics/networking/milestones/06-team-authentication/)
 
 ### [observability](epics/observability/) (done)
 
-- [40-observability-tracing](epics/observability/milestones/40-observability-tracing/)
+- [40-distributed-tracing](epics/observability/milestones/40-distributed-tracing/)
 
 ### [plugin-system](epics/plugin-system/) - Completed Milestones
 
-- [03-plugin-foundation](epics/plugin-system/milestones/03-plugin-foundation/)
-- [23-plugin-api-extension](epics/plugin-system/milestones/23-plugin-api-extension/)
+- [03-extensible-plugin-system](epics/plugin-system/milestones/03-extensible-plugin-system/)
+- [23-rich-plugin-apis](epics/plugin-system/milestones/23-rich-plugin-apis/)
 
 ### [tui](epics/tui/) - Completed Milestones
 
-- [41-tui-core](epics/tui/milestones/41-tui-core/)
-- [42-tui-dashboard](epics/tui/milestones/42-tui-dashboard/)
-- [43-tui-agent-control](epics/tui/milestones/43-tui-agent-control/)
+- [41-terminal-ui-framework](epics/tui/milestones/41-terminal-ui-framework/)
+- [42-terminal-dashboard](epics/tui/milestones/42-terminal-dashboard/)
+- [43-terminal-agent-control](epics/tui/milestones/43-terminal-agent-control/)
 
 ### [web-ui](epics/web-ui/) - Completed Milestones
 
-- [04-server-web-ui](epics/web-ui/milestones/04-server-web-ui/)
-- [17-web-ui-modernization](epics/web-ui/milestones/17-web-ui-modernization/)
-- [26-firehose-infinite-scroll](epics/web-ui/milestones/26-firehose-infinite-scroll/)
-- [27-crt-design-system](epics/web-ui/milestones/27-crt-design-system/)
+- [04-web-dashboard](epics/web-ui/milestones/04-web-dashboard/)
+- [17-modern-web-interface](epics/web-ui/milestones/17-modern-web-interface/)
+- [26-infinite-event-stream](epics/web-ui/milestones/26-infinite-event-stream/)
+- [27-crt-visual-design](epics/web-ui/milestones/27-crt-visual-design/)
 
 </details>
