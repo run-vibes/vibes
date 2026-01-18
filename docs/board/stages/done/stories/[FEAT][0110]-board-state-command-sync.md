@@ -2,7 +2,7 @@
 id: FEAT0110
 title: Board state command sync
 type: feat
-status: backlog
+status: done
 priority: high
 epics: [coherence-verification]
 depends: [FEAT0109]

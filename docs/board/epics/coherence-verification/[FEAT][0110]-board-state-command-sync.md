@@ -1,1 +1,1 @@
-../../stages/backlog/stories/[FEAT][0110]-board-state-command-sync.md
+../../stages/done/stories/[FEAT][0110]-board-state-command-sync.md

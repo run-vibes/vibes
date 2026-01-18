@@ -20,7 +20,6 @@
 | [[DOCS][0004]-event-schema-versioning-strategy](stages/backlog/stories/[DOCS][0004]-event-schema-versioning-strategy.md) | docs | low | core,plugin-system |
 | [[FEAT][0013]-windows-daemon-support](stages/backlog/stories/[FEAT][0013]-windows-daemon-support.md) | feat | low | cli,cross-platform |
 | [[FEAT][0101]-header-identity-display](stages/backlog/stories/[FEAT][0101]-header-identity-display.md) | feat | low | web-ui,design-system |
-| [[FEAT][0110]-board-state-command-sync](stages/backlog/stories/[FEAT][0110]-board-state-command-sync.md) | feat | high | coherence-verification |
 | [[FEAT][0115]-eval-web-ui](stages/backlog/stories/[FEAT][0115]-eval-web-ui.md) | feat | medium | evals |
 | [[FEAT][0116]-pty-server-core](stages/backlog/stories/[FEAT][0116]-pty-server-core.md) | feat | medium | tui |
 | [[FEAT][0117]-session-management](stages/backlog/stories/[FEAT][0117]-session-management.md) | feat | medium | tui |

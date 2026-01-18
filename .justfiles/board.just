@@ -32,6 +32,7 @@ default:
     echo "                              Set milestone to in-progress"
     echo "  just board done-milestone <id>"
     echo "                              Set milestone to done"
+    echo "  just board done-epic <id>       Set epic to done"
     echo "  just board link <story> <epic>   Add story to epic"
     echo "  just board unlink <story> <epic> Remove story from epic"
     echo "  just board link-epic <epic> <milestone>  Add epic to milestone"
@@ -776,6 +777,51 @@ done ID SUMMARY="__PROMPT__":
         done
     fi
 
+    # Sync milestone implementation.md if story has milestone field
+    milestone=$(grep -m1 "^milestone:" "$dest" 2>/dev/null | sed 's/^milestone: *//' || echo "")
+    if [[ -n "$milestone" ]]; then
+        # Get story ID from frontmatter
+        story_id=$(grep -m1 "^id:" "$dest" 2>/dev/null | sed 's/^id: *//' || echo "")
+        if [[ -n "$story_id" ]]; then
+            # Find the milestone implementation.md
+            impl_file=""
+            for epic_dir in epics/*/; do
+                [[ -d "${epic_dir}milestones" ]] || continue
+                for ms_dir in "${epic_dir}milestones"/*/; do
+                    [[ -d "$ms_dir" ]] || continue
+                    ms_name=$(basename "$ms_dir")
+                    # Match milestone by ID or partial match
+                    if [[ "$ms_name" == "$milestone"* ]] || [[ "$ms_name" == *"$milestone"* ]]; then
+                        if [[ -f "${ms_dir}implementation.md" ]]; then
+                            impl_file="${ms_dir}implementation.md"
+                            break 2
+                        fi
+                    fi
+                done
+            done
+
+            if [[ -n "$impl_file" ]]; then
+                # Update checkbox for this story (handle both [TYPE][NNNN] and TYPENNNN formats)
+                # Match patterns like: - [ ] [FEAT][0110] or - [ ] FEAT0110
+                if grep -qE "^\s*- \[ \] .*${story_id}" "$impl_file" 2>/dev/null; then
+                    sed -i -E "s/^(\s*- )\[ \]( .*${story_id})/\1[x]\2/" "$impl_file"
+                    echo "Updated milestone implementation.md: checked $story_id"
+                fi
+
+                # Check if all stories in the Stories section are complete
+                # Count unchecked boxes in Stories section
+                stories_section=$(sed -n '/^## Stories/,/^## /p' "$impl_file" | head -n -1)
+                unchecked=$(echo "$stories_section" | grep -cE "^\s*- \[ \]" 2>/dev/null || echo "0")
+                if [[ "$unchecked" == "0" ]]; then
+                    # Get milestone ID from path
+                    ms_id=$(basename "$(dirname "$impl_file")")
+                    echo ""
+                    echo "All stories complete. Run \`just board done-milestone $ms_id\` to complete the milestone."
+                fi
+            fi
+        fi
+    fi
+
     # Add to changelog if summary provided
     if [[ -n "$summary" ]]; then
         date=$(date +%Y-%m-%d)
@@ -961,20 +1007,39 @@ done-milestone ID:
 
     milestone="{{ID}}"
 
-    # Find milestone directory (allow partial match)
+    # Find milestone directory in epics (allow partial match)
     ms_dir=""
-    for d in milestones/*/; do
-        if [[ "$(basename "$d")" == *"$milestone"* ]]; then
-            ms_dir="$d"
-            break
-        fi
+    ms_epic=""
+    for epic_dir in epics/*/; do
+        [[ -d "${epic_dir}milestones" ]] || continue
+        for d in "${epic_dir}milestones"/*/; do
+            [[ -d "$d" ]] || continue
+            if [[ "$(basename "$d")" == *"$milestone"* ]]; then
+                ms_dir="$d"
+                ms_epic=$(basename "$epic_dir")
+                break 2
+            fi
+        done
     done
+
+    # Also check top-level milestones for backwards compatibility
+    if [[ -z "$ms_dir" ]] && [[ -d milestones ]]; then
+        for d in milestones/*/; do
+            if [[ "$(basename "$d")" == *"$milestone"* ]]; then
+                ms_dir="$d"
+                break
+            fi
+        done
+    fi
 
     if [[ -z "$ms_dir" ]] || [[ ! -d "$ms_dir" ]]; then
         echo "Error: Milestone '$milestone' not found"
         echo "Available milestones:"
-        for m in milestones/*/; do
-            [[ -d "$m" ]] && echo "  - $(basename "$m")"
+        for epic_dir in epics/*/; do
+            [[ -d "${epic_dir}milestones" ]] || continue
+            for m in "${epic_dir}milestones"/*/; do
+                [[ -d "$m" ]] && echo "  - $(basename "$m") ($(basename "$epic_dir"))"
+            done
         done
         exit 1
     fi
@@ -996,7 +1061,95 @@ done-milestone ID:
 
     # Update status
     sed -i 's/^status: .*/status: done/' "$ms_readme"
+
+    # Add completed date if not already present
+    date=$(date +%Y-%m-%d)
+    if ! grep -q "^completed:" "$ms_readme"; then
+        # Insert after status line
+        sed -i "/^status: done$/a completed: $date" "$ms_readme"
+    fi
+
     echo "Completed milestone: $ms_name"
+
+    # Check if all milestones in epic are done
+    if [[ -n "$ms_epic" ]]; then
+        epic_dir="epics/$ms_epic"
+        if [[ -d "${epic_dir}/milestones" ]]; then
+            all_done=true
+            total_ms=0
+            for m in "${epic_dir}/milestones"/*/; do
+                [[ -d "$m" ]] || continue
+                [[ -f "${m}README.md" ]] || continue
+                total_ms=$((total_ms + 1))
+                m_status=$(grep -m1 "^status:" "${m}README.md" 2>/dev/null | sed 's/^status: *//' || echo "")
+                if [[ "$m_status" != "done" ]]; then
+                    all_done=false
+                fi
+            done
+            if [[ "$all_done" == "true" ]] && [[ $total_ms -gt 0 ]]; then
+                echo ""
+                echo "All milestones complete. Run \`just board done-epic $ms_epic\` to complete the epic."
+            fi
+        fi
+    fi
+
+    # Regenerate README
+    just board generate
+    echo "Board updated"
+
+# Complete an epic (set status to done)
+done-epic ID:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd "{{board_dir}}"
+
+    epic="{{ID}}"
+
+    # Find epic directory (allow partial match)
+    epic_dir=""
+    for d in epics/*/; do
+        [[ -d "$d" ]] || continue
+        if [[ "$(basename "$d")" == *"$epic"* ]]; then
+            epic_dir="$d"
+            break
+        fi
+    done
+
+    if [[ -z "$epic_dir" ]] || [[ ! -d "$epic_dir" ]]; then
+        echo "Error: Epic '$epic' not found"
+        echo "Available epics:"
+        for e in epics/*/; do
+            [[ -d "$e" ]] && echo "  - $(basename "$e")"
+        done
+        exit 1
+    fi
+
+    epic_name=$(basename "$epic_dir")
+    epic_readme="${epic_dir}README.md"
+
+    if [[ ! -f "$epic_readme" ]]; then
+        echo "Error: Epic README not found at $epic_readme"
+        exit 1
+    fi
+
+    # Check current status
+    current_status=$(grep -m1 "^status:" "$epic_readme" 2>/dev/null | sed 's/^status: *//' || echo "")
+    if [[ "$current_status" == "done" ]]; then
+        echo "Epic '$epic_name' is already done"
+        exit 0
+    fi
+
+    # Update status
+    sed -i 's/^status: .*/status: done/' "$epic_readme"
+
+    # Add completed date if not already present
+    date=$(date +%Y-%m-%d)
+    if ! grep -q "^completed:" "$epic_readme"; then
+        # Insert after status line
+        sed -i "/^status: done$/a completed: $date" "$epic_readme"
+    fi
+
+    echo "Completed epic: $epic_name"
 
     # Regenerate README
     just board generate
