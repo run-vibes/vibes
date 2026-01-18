@@ -16,12 +16,12 @@ Developers can run `just verify all` to capture screenshots, interaction sequenc
 
 ## Done Criteria
 
-- [ ] `just verify snapshots` captures key screen PNGs
-- [ ] `just verify checkpoints` captures interaction sequence PNGs
-- [ ] `just verify videos` records CLI (VHS) + Web (Playwright) and stitches with ffmpeg
-- [ ] `just verify report` generates `verification/report.md`
-- [ ] `just pre-commit` includes `verify all` step
-- [ ] Report links artifacts to story acceptance criteria
+- [x] `just verify snapshots` captures key screen PNGs
+- [x] `just verify checkpoints` captures interaction sequence PNGs
+- [x] `just verify videos` records CLI (VHS) + Web (Playwright) and stitches with ffmpeg
+- [x] `just verify report` generates `verification/report.md`
+- [ ] `just pre-commit` includes `verify all` step (deferred - adds 7+ min to commits)
+- [ ] Report links artifacts to story acceptance criteria (planned for phase 2)
 
 ## Design
 
@@ -31,9 +31,9 @@ See [design.md](design.md) for architecture and implementation details.
 
 | ID | Story | Status |
 |----|-------|--------|
-| FEAT0191 | Create verification definition files | planned |
-| FEAT0192 | Implement snapshots.spec.ts | planned |
-| FEAT0193 | Implement checkpoints.spec.ts | planned |
-| FEAT0194 | Implement videos.spec.ts | planned |
-| CHORE0195 | Add pre-commit integration | planned |
-| DOCS0196 | Document verification commands | planned |
+| FEAT0191 | Create verification definition files | done |
+| FEAT0192 | Implement snapshots.spec.ts | done |
+| FEAT0193 | Implement checkpoints.spec.ts | done |
+| FEAT0194 | Implement videos.spec.ts | done |
+| CHORE0195 | Add pre-commit integration | deferred |
+| DOCS0196 | Document verification commands | done |

@@ -35,9 +35,9 @@
 
 ## Completion Criteria
 
-- [ ] `just verify snapshots` captures PNGs from snapshots.json
-- [ ] `just verify checkpoints` captures interaction sequences
-- [ ] `just verify videos` records web videos via Playwright
-- [ ] `just verify all` runs all tiers and generates report
-- [ ] `just pre-commit` includes verification step
-- [ ] CLAUDE.md documents verification commands
+- [x] `just verify snapshots` captures PNGs from snapshots.json
+- [x] `just verify checkpoints` captures interaction sequences
+- [x] `just verify videos` records web videos via Playwright
+- [x] `just verify all` runs all tiers and generates report
+- [ ] `just pre-commit` includes verification step (deferred - adds 7+ min)
+- [x] CLAUDE.md documents verification commands
