@@ -1,0 +1,1 @@
+../../stages/done/stories/[FEAT][0124]-processor-wiring.md

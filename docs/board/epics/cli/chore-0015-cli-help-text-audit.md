@@ -1,1 +1,0 @@
-../../stages/done/stories/chore-0015-cli-help-text-audit.md

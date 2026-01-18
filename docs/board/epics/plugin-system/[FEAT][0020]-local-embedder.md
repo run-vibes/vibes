@@ -1,0 +1,1 @@
+../../stages/done/stories/[FEAT][0020]-local-embedder.md

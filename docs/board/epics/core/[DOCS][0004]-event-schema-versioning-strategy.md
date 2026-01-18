@@ -1,0 +1,1 @@
+../../stages/backlog/stories/[DOCS][0004]-event-schema-versioning-strategy.md

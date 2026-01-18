@@ -1,1 +1,0 @@
-../../../stages/done/stories/chore-0001-nav-cleanup.md

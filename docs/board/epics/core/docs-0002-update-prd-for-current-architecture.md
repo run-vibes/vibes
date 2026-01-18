@@ -1,1 +1,0 @@
-../../stages/done/stories/docs-0002-update-prd-for-current-architecture.md

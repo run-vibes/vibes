@@ -1,1 +1,0 @@
-../../stages/done/stories/feat-0019-learning-types-storage.md

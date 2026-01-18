@@ -1,1 +1,0 @@
-../../stages/done/stories/m14-chore-01-design.md

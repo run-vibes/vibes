@@ -1,1 +1,0 @@
-../../stages/done/stories/m37-feat-07-firehose.md

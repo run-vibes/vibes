@@ -1,1 +1,0 @@
-../../stages/done/stories/feat-0020-local-embedder.md

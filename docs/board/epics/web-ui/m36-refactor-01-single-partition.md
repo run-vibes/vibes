@@ -1,1 +1,0 @@
-../../stages/done/stories/m36-refactor-01-single-partition.md

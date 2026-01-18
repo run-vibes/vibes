@@ -1,1 +1,0 @@
-../../stages/done/stories/feat-0022-correction-detector.md
