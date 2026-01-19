@@ -25,7 +25,8 @@ Build a verification system that captures system behavior as visual artifacts (s
 |----|-----------|--------|
 | 01 | [Artifact Pipeline](milestones/01-verification-artifact-pipeline/) | done |
 | 02 | [Board Restructure](milestones/02-epic-based-project-hierarchy/) | done |
-| 03 | AI-Assisted Verification | planned |
+| 03 | [Formal Planning Process](milestones/03-formal-planning-process/) | backlog |
+| 04 | AI-Assisted Verification | planned |
 
 ## Success Criteria
 
@@ -36,3 +37,6 @@ Build a verification system that captures system behavior as visual artifacts (s
 - [x] Story frontmatter uses single `scope` field (epic/milestone format)
 - [x] `just verify story <ID>` links artifacts to story acceptance criteria
 - [x] Story-specific reports at `verification/reports/<scope>/<id>.md`
+- [ ] Formal document hierarchy: VISION → PRD → SRS → DESIGN → Stories
+- [ ] Epic PRDs define requirements, milestones have SRS + DESIGN
+- [ ] Just tasks auto-update README progress and status
