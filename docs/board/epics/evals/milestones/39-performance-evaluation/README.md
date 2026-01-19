@@ -39,6 +39,7 @@ First milestone of the Evals epic. Establishes the foundation for evaluation: me
 
 ## Progress
 
-**Requirements:** 0/0 verified
+**Requirements:** 0/0
+0 verified
 **Stories:** 4/6 complete
 

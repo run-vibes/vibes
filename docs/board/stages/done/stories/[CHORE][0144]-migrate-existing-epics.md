@@ -2,7 +2,7 @@
 id: CHORE0144
 title: Migrate existing epics
 type: chore
-status: backlog
+status: done
 priority: low
 scope: coherence-verification/03-formal-planning-process
 depends: [FEAT0191, FEAT0192]
@@ -18,11 +18,11 @@ Migrate all existing epics to the new document structure by creating PRD.md file
 
 ## Acceptance Criteria
 
-- [ ] All epics have PRD.md files
-- [ ] PRD.md contains requirements extracted from README
-- [ ] README.md updated to navigation format
-- [ ] Git history preserved where possible
-- [ ] Epic list: core, web-ui, cli, tui, coherence-verification, groove, etc.
+- [x] All epics have PRD.md files
+- [x] PRD.md contains requirements extracted from README
+- [x] README.md updated to navigation format
+- [x] Git history preserved where possible
+- [x] Epic list: core, web-ui, cli, tui, coherence-verification, groove, etc.
 
 ## Implementation Notes
 

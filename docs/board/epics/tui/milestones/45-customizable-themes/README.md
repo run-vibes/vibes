@@ -69,6 +69,7 @@ pub struct Theme {
 
 ## Progress
 
-**Requirements:** 0/0 verified
+**Requirements:** 0/0
+0 verified
 **Stories:** 4/4 complete
 

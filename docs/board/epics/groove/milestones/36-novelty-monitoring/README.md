@@ -45,6 +45,7 @@ See [implementation.md](implementation.md) for stories and execution plan.
 
 ## Progress
 
-**Requirements:** 0/0 verified
+**Requirements:** 0/0
+0 verified
 **Stories:** 7/7 complete
 
