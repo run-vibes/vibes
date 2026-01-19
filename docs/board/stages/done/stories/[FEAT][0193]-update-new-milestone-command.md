@@ -8,6 +8,7 @@ scope: coherence-verification/03-formal-planning-process
 depends: [FEAT0191]
 estimate: 2h
 created: 2026-01-18
+updated: 2026-01-19
 ---
 
 # Update New Milestone Command
@@ -18,12 +19,12 @@ Update `just board new milestone` to create the formal document structure: READM
 
 ## Acceptance Criteria
 
-- [ ] `just board new milestone "name" <epic>` creates directory with README.md
-- [ ] Command creates SRS.md from template
-- [ ] Command creates DESIGN.md from template
-- [ ] All files have correct frontmatter
-- [ ] README.md links to SRS.md and DESIGN.md
-- [ ] Command outputs created file paths
+- [x] `just board new milestone "name" <epic>` creates directory with README.md
+- [x] Command creates SRS.md from template
+- [x] Command creates DESIGN.md from template
+- [x] All files have correct frontmatter
+- [x] README.md links to SRS.md and DESIGN.md
+- [x] Command outputs created file paths
 
 ## Implementation Notes
 
