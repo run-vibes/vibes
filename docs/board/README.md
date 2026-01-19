@@ -13,20 +13,19 @@
 
 | Story | Type | Priority | Epic |
 |-------|------|----------|------|
-| [[CHORE][0143]-rename-prd-to-vision](stages/backlog/stories/[CHORE][0143]-rename-prd-to-vision.md) | chore | medium | coherence-verification |
-| [[CHORE][0144]-migrate-existing-epics](stages/backlog/stories/[CHORE][0144]-migrate-existing-epics.md) | chore | medium | coherence-verification |
-| [[CHORE][0145]-migrate-existing-milestones](stages/backlog/stories/[CHORE][0145]-migrate-existing-milestones.md) | chore | medium | coherence-verification |
+| [[CHORE][0143]-rename-prd-to-vision](stages/backlog/stories/[CHORE][0143]-rename-prd-to-vision.md) | chore | high |  |
+| [[CHORE][0144]-migrate-existing-epics](stages/backlog/stories/[CHORE][0144]-migrate-existing-epics.md) | chore | low |  |
+| [[CHORE][0145]-migrate-existing-milestones](stages/backlog/stories/[CHORE][0145]-migrate-existing-milestones.md) | chore | low |  |
 | [[FEAT][0115]-eval-web-ui](stages/backlog/stories/[FEAT][0115]-eval-web-ui.md) | feat | medium |  |
 | [[FEAT][0116]-pty-server-core](stages/backlog/stories/[FEAT][0116]-pty-server-core.md) | feat | medium |  |
 | [[FEAT][0117]-session-management](stages/backlog/stories/[FEAT][0117]-session-management.md) | feat | medium |  |
 | [[FEAT][0118]-websocket-pty-endpoint](stages/backlog/stories/[FEAT][0118]-websocket-pty-endpoint.md) | feat | medium |  |
 | [[FEAT][0119]-xtermjs-web-integration](stages/backlog/stories/[FEAT][0119]-xtermjs-web-integration.md) | feat | medium |  |
-| [[FEAT][0191]-create-document-templates](stages/backlog/stories/[FEAT][0191]-create-document-templates.md) | feat | medium | coherence-verification |
-| [[FEAT][0192]-update-new-epic-command](stages/backlog/stories/[FEAT][0192]-update-new-epic-command.md) | feat | medium | coherence-verification |
-| [[FEAT][0193]-update-new-milestone-command](stages/backlog/stories/[FEAT][0193]-update-new-milestone-command.md) | feat | medium | coherence-verification |
-| [[FEAT][0194]-update-generate-for-epic-readme](stages/backlog/stories/[FEAT][0194]-update-generate-for-epic-readme.md) | feat | medium | coherence-verification |
-| [[FEAT][0195]-update-generate-for-milestone-readme](stages/backlog/stories/[FEAT][0195]-update-generate-for-milestone-readme.md) | feat | medium | coherence-verification |
-| [[FEAT][0196]-update-story-commands-for-milestone-sync](stages/backlog/stories/[FEAT][0196]-update-story-commands-for-milestone-sync.md) | feat | medium | coherence-verification |
+| [[FEAT][0192]-update-new-epic-command](stages/backlog/stories/[FEAT][0192]-update-new-epic-command.md) | feat | high |  |
+| [[FEAT][0193]-update-new-milestone-command](stages/backlog/stories/[FEAT][0193]-update-new-milestone-command.md) | feat | high |  |
+| [[FEAT][0194]-update-generate-for-epic-readme](stages/backlog/stories/[FEAT][0194]-update-generate-for-epic-readme.md) | feat | medium |  |
+| [[FEAT][0195]-update-generate-for-milestone-readme](stages/backlog/stories/[FEAT][0195]-update-generate-for-milestone-readme.md) | feat | medium |  |
+| [[FEAT][0196]-update-story-commands-for-milestone-sync](stages/backlog/stories/[FEAT][0196]-update-story-commands-for-milestone-sync.md) | feat | medium |  |
 
 ## Icebox
 
