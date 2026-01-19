@@ -1,8 +1,10 @@
-# Ignore all artifacts except reports and definitions
+# Ignore all artifacts except reports, definitions, and templates
 *
 !.gitignore
 !report.md
 !reports/
 !reports/**
+!templates/
+!templates/**
 !snapshots.json
 !checkpoints.json
