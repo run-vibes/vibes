@@ -20,7 +20,6 @@ Developers can run `just verify all` to capture screenshots, interaction sequenc
 - [x] `just verify checkpoints` captures interaction sequence PNGs
 - [x] `just verify videos` records CLI (VHS) + Web (Playwright) and stitches with ffmpeg
 - [x] `just verify report` generates `verification/report.md`
-- [ ] `just pre-commit` includes `verify all` step (deferred - adds 7+ min to commits)
 - [ ] Report links artifacts to story acceptance criteria (planned for phase 2)
 
 ## Design
@@ -37,5 +36,4 @@ See [design.md](design.md) for architecture and implementation details.
 | Implement snapshots.spec.ts | done |
 | Implement checkpoints.spec.ts | done |
 | Implement videos.spec.ts with CLI+Web stitching | done |
-| Add pre-commit integration | deferred |
 | Document verification commands in CLAUDE.md | done |

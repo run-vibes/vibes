@@ -4,7 +4,7 @@
 
 ## Overview
 
-The artifact pipeline generates verification artifacts at three tiers of fidelity, runs as part of `just pre-commit`, and produces a report linking artifacts to story acceptance criteria.
+The artifact pipeline generates verification artifacts at three tiers of fidelity and produces a report linking artifacts to story acceptance criteria.
 
 ### Key Decisions
 
@@ -50,7 +50,7 @@ The artifact pipeline generates verification artifacts at three tiers of fidelit
 |-----------|----------|----------------|
 | Snapshot capture | `.justfiles/verify.just` | Playwright screenshots of key screens |
 | Checkpoint capture | `.justfiles/verify.just` | Playwright sequences with screenshots at key moments |
-| Video capture (CLI) | `cli/recordings/` | VHS tape recordings of CLI workflows |
+| Video capture (CLI) | `verification/tapes/` | VHS tape recordings of CLI workflows |
 | Video capture (Web) | `e2e-tests/` | Playwright video recordings |
 | Video stitcher | `.justfiles/verify.just` | ffmpeg combining CLI + Web videos |
 | Report generator | `.justfiles/verify.just` | Markdown report linking artifacts to stories |
@@ -72,12 +72,12 @@ verification/                    # .gitignored except report.md
 │   ├── 02-create-session.png
 │   └── ...
 └── videos/                      # Tier 3: Full flow recordings
-    ├── cli/                     # VHS recordings
-    │   └── session-create.mp4
-    ├── web/                     # Playwright recordings
-    │   └── session-flow.webm
-    └── stitched/                # Combined CLI + Web
-        └── full-session-flow.mp4
+    ├── cli/                     # VHS recordings (webm)
+    │   └── help.webm
+    ├── web/                     # Playwright recordings (webm)
+    │   └── dashboard-walkthrough.webm
+    └── stitched/                # Combined CLI + Web (side-by-side)
+        └── combined.webm
 ```
 
 ---
@@ -97,20 +97,6 @@ New module: `.justfiles/verify.just`
 | `just verify all` | Run all tiers |
 | `just verify report` | Generate report.md from captured artifacts |
 | `just verify clean` | Remove all artifacts |
-
-### Pre-commit Integration
-
-Update `just pre-commit` to include verification:
-
-```bash
-# Current
-fmt-check → clippy → tests → typecheck
-
-# New
-fmt-check → clippy → tests → typecheck → verify all
-```
-
----
 
 ## Snapshot Definitions
 
@@ -160,11 +146,14 @@ Define interaction sequences in `verification/checkpoints.json`:
 
 ### CLI Recording (VHS)
 
-Existing VHS tapes in `cli/recordings/tapes/` produce GIFs. Modify to also produce MP4:
+VHS tapes in `verification/tapes/` output webm directly at 1280x720:
 
 ```tape
-Output session-create.mp4
-...
+Output verification/videos/cli/help.webm
+Set FontSize 18
+Set Width 1280
+Set Height 720
+Set Theme "Catppuccin Mocha"
 ```
 
 ### Web Recording (Playwright)
@@ -181,16 +170,13 @@ use: {
 
 ### Stitching with ffmpeg
 
-Combine side-by-side or sequentially:
+Both CLI and Web videos are 1280x720 webm. Stitch side-by-side for 2560x720 output:
 
 ```bash
 # Side-by-side (CLI left, Web right)
-ffmpeg -i cli/session-create.mp4 -i web/session-flow.webm \
+ffmpeg -i cli/help.webm -i web/dashboard-walkthrough.webm \
   -filter_complex "[0:v][1:v]hstack=inputs=2" \
-  stitched/full-session-flow.mp4
-
-# Sequential (CLI first, then Web)
-ffmpeg -f concat -i videos.txt -c copy stitched/full-session-flow.mp4
+  -c:v libvpx-vp9 stitched/combined.webm
 ```
 
 ---
@@ -265,7 +251,7 @@ See [verification/report.md](verification/report.md) for full details.
 - [ ] CSV download works (manual verification needed)
 
 ## Test Plan
-- [x] `just pre-commit` passes
+- [x] `just verify all` completes
 - [x] Verification artifacts reviewed locally
 ```
 
@@ -300,10 +286,9 @@ See [verification/report.md](verification/report.md) for full details.
 
 ## Deliverables
 
-- [ ] `verification/` directory structure with `.gitignore`
-- [ ] `.justfiles/verify.just` module with all commands
-- [ ] `verification/snapshots.json` definition file
-- [ ] `verification/checkpoints.json` definition file
-- [ ] Pre-commit integration
-- [ ] Report generation script
-- [ ] Documentation in CLAUDE.md
+- [x] `verification/` directory structure with `.gitignore`
+- [x] `.justfiles/verify.just` module with all commands
+- [x] `verification/snapshots.json` definition file
+- [x] `verification/checkpoints.json` definition file
+- [x] Report generation script
+- [x] Documentation in CLAUDE.md
