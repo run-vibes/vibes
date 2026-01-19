@@ -5,30 +5,30 @@
 
 ## In Progress
 
-| Story | Type | Priority | Epic |
-|-------|------|----------|------|
-| [[FEAT][0190]-eval-cli](stages/in-progress/stories/[FEAT][0190]-eval-cli.md) | feat | medium |  |
+| Story | Type | Priority | Scope |
+|-------|------|----------|-------|
+| [[FEAT][0190]-eval-cli](stages/in-progress/stories/[FEAT][0190]-eval-cli.md) | feat | medium | evals/39-performance-evaluation |
 
 ## Backlog
 
-| Story | Type | Priority | Epic |
-|-------|------|----------|------|
-| [[FEAT][0115]-eval-web-ui](stages/backlog/stories/[FEAT][0115]-eval-web-ui.md) | feat | medium |  |
-| [[FEAT][0116]-pty-server-core](stages/backlog/stories/[FEAT][0116]-pty-server-core.md) | feat | medium |  |
-| [[FEAT][0117]-session-management](stages/backlog/stories/[FEAT][0117]-session-management.md) | feat | medium |  |
-| [[FEAT][0118]-websocket-pty-endpoint](stages/backlog/stories/[FEAT][0118]-websocket-pty-endpoint.md) | feat | medium |  |
-| [[FEAT][0119]-xtermjs-web-integration](stages/backlog/stories/[FEAT][0119]-xtermjs-web-integration.md) | feat | medium |  |
+| Story | Type | Priority | Scope |
+|-------|------|----------|-------|
+| [[FEAT][0115]-eval-web-ui](stages/backlog/stories/[FEAT][0115]-eval-web-ui.md) | feat | medium | evals/39-performance-evaluation |
+| [[FEAT][0116]-pty-server-core](stages/backlog/stories/[FEAT][0116]-pty-server-core.md) | feat | medium | tui/46-terminal-server |
+| [[FEAT][0117]-session-management](stages/backlog/stories/[FEAT][0117]-session-management.md) | feat | medium | tui/46-terminal-server |
+| [[FEAT][0118]-websocket-pty-endpoint](stages/backlog/stories/[FEAT][0118]-websocket-pty-endpoint.md) | feat | medium | tui/46-terminal-server |
+| [[FEAT][0119]-xtermjs-web-integration](stages/backlog/stories/[FEAT][0119]-xtermjs-web-integration.md) | feat | medium | tui/46-terminal-server |
 
 ## Icebox
 
-| Story | Type | Priority | Blocked By |
-|-------|------|----------|------------|
-| [[CHORE][0087]-use-cranelift-for-builds](stages/icebox/stories/[CHORE][0087]-use-cranelift-for-builds.md) | chore | low |  |
+| Story | Type | Priority | Scope |
+|-------|------|----------|-------|
+| [[CHORE][0087]-use-cranelift-for-builds](stages/icebox/stories/[CHORE][0087]-use-cranelift-for-builds.md) | chore | low | dev-environment |
 | [[CHORE][0110]-add-scheduled-mutation-testing-workflow](stages/icebox/stories/[CHORE][0110]-add-scheduled-mutation-testing-workflow.md) | chore | medium |  |
-| [[DOCS][0003]-plugin-api-versioning-migration-plan](stages/icebox/stories/[DOCS][0003]-plugin-api-versioning-migration-plan.md) | docs | low |  |
-| [[DOCS][0004]-event-schema-versioning-strategy](stages/icebox/stories/[DOCS][0004]-event-schema-versioning-strategy.md) | docs | low |  |
-| [[FEAT][0013]-windows-daemon-support](stages/icebox/stories/[FEAT][0013]-windows-daemon-support.md) | feat | low |  |
-| [[FEAT][0101]-header-identity-display](stages/icebox/stories/[FEAT][0101]-header-identity-display.md) | feat | low | refactor-0100 |
+| [[DOCS][0003]-plugin-api-versioning-migration-plan](stages/icebox/stories/[DOCS][0003]-plugin-api-versioning-migration-plan.md) | docs | low | plugin-system |
+| [[DOCS][0004]-event-schema-versioning-strategy](stages/icebox/stories/[DOCS][0004]-event-schema-versioning-strategy.md) | docs | low | plugin-system |
+| [[FEAT][0013]-windows-daemon-support](stages/icebox/stories/[FEAT][0013]-windows-daemon-support.md) | feat | low | cli |
+| [[FEAT][0101]-header-identity-display](stages/icebox/stories/[FEAT][0101]-header-identity-display.md) | feat | low | design-system |
 
 ## Epics
 

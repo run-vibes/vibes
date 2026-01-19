@@ -78,15 +78,15 @@ generate:
     echo "## In Progress"
     echo ""
     if [[ -d stages/in-progress/stories ]] && ls stages/in-progress/stories/*.md &>/dev/null; then
-        echo "| Story | Type | Priority | Epic |"
-        echo "|-------|------|----------|------|"
+        echo "| Story | Type | Priority | Scope |"
+        echo "|-------|------|----------|-------|"
         for story in stages/in-progress/stories/*.md; do
             [[ -f "$story" ]] || continue
             name=$(basename "$story" .md)
             type=$(get_field "$story" "type")
             priority=$(get_field "$story" "priority")
-            epics=$(get_field "$story" "epics" | tr -d '[]')
-            echo "| [$name](stages/in-progress/stories/$name.md) | $type | $priority | $epics |"
+            scope=$(get_field "$story" "scope")
+            echo "| [$name](stages/in-progress/stories/$name.md) | $type | $priority | $scope |"
         done
     else
         echo "*No stories in progress*"
@@ -97,15 +97,15 @@ generate:
     echo "## Backlog"
     echo ""
     if [[ -d stages/backlog/stories ]] && ls stages/backlog/stories/*.md &>/dev/null; then
-        echo "| Story | Type | Priority | Epic |"
-        echo "|-------|------|----------|------|"
+        echo "| Story | Type | Priority | Scope |"
+        echo "|-------|------|----------|-------|"
         for story in stages/backlog/stories/*.md; do
             [[ -f "$story" ]] || continue
             name=$(basename "$story" .md)
             type=$(get_field "$story" "type")
             priority=$(get_field "$story" "priority")
-            epics=$(get_field "$story" "epics" | tr -d '[]')
-            echo "| [$name](stages/backlog/stories/$name.md) | $type | $priority | $epics |"
+            scope=$(get_field "$story" "scope")
+            echo "| [$name](stages/backlog/stories/$name.md) | $type | $priority | $scope |"
         done
     else
         echo "*Backlog empty*"
@@ -116,15 +116,15 @@ generate:
     echo "## Icebox"
     echo ""
     if [[ -d stages/icebox/stories ]] && ls stages/icebox/stories/*.md &>/dev/null 2>&1; then
-        echo "| Story | Type | Priority | Blocked By |"
-        echo "|-------|------|----------|------------|"
+        echo "| Story | Type | Priority | Scope |"
+        echo "|-------|------|----------|-------|"
         for story in stages/icebox/stories/*.md; do
             [[ -f "$story" ]] || continue
             name=$(basename "$story" .md)
             type=$(get_field "$story" "type")
             priority=$(get_field "$story" "priority")
-            depends=$(get_field "$story" "depends" | tr -d '[]')
-            echo "| [$name](stages/icebox/stories/$name.md) | $type | $priority | $depends |"
+            scope=$(get_field "$story" "scope")
+            echo "| [$name](stages/icebox/stories/$name.md) | $type | $priority | $scope |"
         done
     else
         echo "*No stories in icebox*"
