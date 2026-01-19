@@ -1,8 +1,6 @@
-# Ignore all artifacts except config, tapes, and report
+# Ignore all artifacts except the report
 *
 !.gitignore
 !report.md
 !snapshots.json
 !checkpoints.json
-!tapes/
-!tapes/*.tape

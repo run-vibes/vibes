@@ -118,17 +118,8 @@ videos: init
             [[ -f "$tape" ]] || continue
             name=$(basename "$tape" .tape)
             echo "  Recording: $name"
-
-            # Run VHS - outputs GIF to verification/output/
-            vhs "$tape" 2>/dev/null || true
-
-            # Convert GIF to MP4
-            gif_path="{{verify_dir}}/output/${name}.gif"
-            if [[ -f "$gif_path" ]]; then
-                ffmpeg -i "$gif_path" -movflags faststart -pix_fmt yuv420p -vf "fps=30" \
-                    "{{verify_dir}}/videos/cli/${name}.mp4" -y 2>/dev/null && \
-                    echo "    Converted: ${name}.mp4"
-            fi
+            # VHS outputs webm directly to verification/videos/cli/
+            vhs "$tape" 2>/dev/null && echo "    Created: ${name}.webm" || true
         done
     fi
 
@@ -159,18 +150,19 @@ videos: init
 
     # Stitch CLI + Web videos together if both exist
     echo "Stitching videos..."
-    cli_count=$(find {{verify_dir}}/videos/cli -name "*.mp4" 2>/dev/null | wc -l | tr -d ' ')
-    web_count=$(find {{verify_dir}}/videos/web \( -name "*.webm" -o -name "*.mp4" \) 2>/dev/null | wc -l | tr -d ' ')
+    cli_count=$(find {{verify_dir}}/videos/cli -name "*.webm" 2>/dev/null | wc -l | tr -d ' ')
+    web_count=$(find {{verify_dir}}/videos/web -name "*.webm" 2>/dev/null | wc -l | tr -d ' ')
 
     if [[ "$cli_count" -gt 0 ]] && [[ "$web_count" -gt 0 ]]; then
-        cli_video=$(find {{verify_dir}}/videos/cli -name "*.mp4" | head -1)
-        web_video=$(find {{verify_dir}}/videos/web \( -name "*.webm" -o -name "*.mp4" \) | head -1)
+        cli_video=$(find {{verify_dir}}/videos/cli -name "*.webm" | head -1)
+        web_video=$(find {{verify_dir}}/videos/web -name "*.webm" | head -1)
 
         if [[ -n "$cli_video" ]] && [[ -n "$web_video" ]]; then
+            # Scale both videos to same height (360p) with padding to maintain aspect ratio
             ffmpeg -i "$cli_video" -i "$web_video" \
-                -filter_complex "[0:v]scale=640:-1[left];[1:v]scale=640:-1[right];[left][right]hstack=inputs=2" \
-                {{verify_dir}}/videos/stitched/combined.mp4 -y 2>/dev/null && \
-                echo "✓ Created stitched video: verification/videos/stitched/combined.mp4"
+                -filter_complex "[0:v]scale=640:360:force_original_aspect_ratio=decrease,pad=640:360:(ow-iw)/2:(oh-ih)/2[left];[1:v]scale=640:360:force_original_aspect_ratio=decrease,pad=640:360:(ow-iw)/2:(oh-ih)/2[right];[left][right]hstack=inputs=2" \
+                -c:v libvpx-vp9 {{verify_dir}}/videos/stitched/combined.webm -y 2>/dev/null && \
+                echo "✓ Created stitched video: verification/videos/stitched/combined.webm"
         fi
     fi
 
@@ -195,9 +187,9 @@ report: init
 
     snapshot_count=$(find {{verify_dir}}/snapshots -name "*.png" 2>/dev/null | wc -l | tr -d ' ')
     checkpoint_count=$(find {{verify_dir}}/checkpoints -name "*.png" 2>/dev/null | wc -l | tr -d ' ')
-    cli_video_count=$(find {{verify_dir}}/videos/cli -name "*.mp4" 2>/dev/null | wc -l | tr -d ' ')
-    web_video_count=$(find {{verify_dir}}/videos/web \( -name "*.webm" -o -name "*.mp4" \) 2>/dev/null | wc -l | tr -d ' ')
-    stitched_count=$(find {{verify_dir}}/videos/stitched -name "*.mp4" 2>/dev/null | wc -l | tr -d ' ')
+    cli_video_count=$(find {{verify_dir}}/videos/cli -name "*.webm" 2>/dev/null | wc -l | tr -d ' ')
+    web_video_count=$(find {{verify_dir}}/videos/web -name "*.webm" 2>/dev/null | wc -l | tr -d ' ')
+    stitched_count=$(find {{verify_dir}}/videos/stitched -name "*.webm" 2>/dev/null | wc -l | tr -d ' ')
 
     # Find related stories
     stories=""
@@ -260,21 +252,21 @@ report: init
     if [[ "$total_videos" -gt 0 ]]; then
         if [[ "$cli_video_count" -gt 0 ]]; then
             echo "**CLI:**" >> {{verify_dir}}/report.md
-            find {{verify_dir}}/videos/cli -name "*.mp4" 2>/dev/null | while read -r f; do
+            find {{verify_dir}}/videos/cli -name "*.webm" 2>/dev/null | while read -r f; do
                 echo "- $(basename "$f")" >> {{verify_dir}}/report.md
             done
         fi
         if [[ "$web_video_count" -gt 0 ]]; then
             echo "" >> {{verify_dir}}/report.md
             echo "**Web:**" >> {{verify_dir}}/report.md
-            find {{verify_dir}}/videos/web \( -name "*.webm" -o -name "*.mp4" \) 2>/dev/null | while read -r f; do
+            find {{verify_dir}}/videos/web -name "*.webm" 2>/dev/null | while read -r f; do
                 echo "- $(basename "$f")" >> {{verify_dir}}/report.md
             done
         fi
         if [[ "$stitched_count" -gt 0 ]]; then
             echo "" >> {{verify_dir}}/report.md
             echo "**Stitched:**" >> {{verify_dir}}/report.md
-            find {{verify_dir}}/videos/stitched -name "*.mp4" 2>/dev/null | while read -r f; do
+            find {{verify_dir}}/videos/stitched -name "*.webm" 2>/dev/null | while read -r f; do
                 echo "- $(basename "$f")" >> {{verify_dir}}/report.md
             done
         fi
@@ -300,9 +292,9 @@ summary:
 
     snapshot_count=$(find {{verify_dir}}/snapshots -name "*.png" 2>/dev/null | wc -l | tr -d ' ')
     checkpoint_count=$(find {{verify_dir}}/checkpoints -name "*.png" 2>/dev/null | wc -l | tr -d ' ')
-    cli_video_count=$(find {{verify_dir}}/videos/cli -name "*.mp4" 2>/dev/null | wc -l | tr -d ' ')
-    web_video_count=$(find {{verify_dir}}/videos/web \( -name "*.webm" -o -name "*.mp4" \) 2>/dev/null | wc -l | tr -d ' ')
-    stitched_count=$(find {{verify_dir}}/videos/stitched -name "*.mp4" 2>/dev/null | wc -l | tr -d ' ')
+    cli_video_count=$(find {{verify_dir}}/videos/cli -name "*.webm" 2>/dev/null | wc -l | tr -d ' ')
+    web_video_count=$(find {{verify_dir}}/videos/web -name "*.webm" 2>/dev/null | wc -l | tr -d ' ')
+    stitched_count=$(find {{verify_dir}}/videos/stitched -name "*.webm" 2>/dev/null | wc -l | tr -d ' ')
 
     echo "Tier 1 - Snapshots:     $snapshot_count"
     echo "Tier 2 - Checkpoints:   $checkpoint_count"

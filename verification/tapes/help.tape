@@ -1,7 +1,7 @@
 # VHS tape for vibes --help command
 # https://github.com/charmbracelet/vhs
 
-Output verification/output/help.gif
+Output verification/videos/cli/help.webm
 
 Set FontSize 14
 Set Width 900

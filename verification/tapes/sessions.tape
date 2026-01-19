@@ -1,7 +1,7 @@
 # VHS tape for vibes sessions command
 # https://github.com/charmbracelet/vhs
 
-Output verification/output/sessions.gif
+Output verification/videos/cli/sessions.webm
 
 Set FontSize 14
 Set Width 900
