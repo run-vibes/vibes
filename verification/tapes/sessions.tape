@@ -3,9 +3,9 @@
 
 Output verification/videos/cli/sessions.webm
 
-Set FontSize 14
-Set Width 900
-Set Height 400
+Set FontSize 18
+Set Width 1280
+Set Height 720
 Set Theme "Catppuccin Mocha"
 
 Type "vibes sessions"

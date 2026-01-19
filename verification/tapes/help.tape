@@ -3,9 +3,9 @@
 
 Output verification/videos/cli/help.webm
 
-Set FontSize 14
-Set Width 900
-Set Height 500
+Set FontSize 18
+Set Width 1280
+Set Height 720
 Set Theme "Catppuccin Mocha"
 
 Type "vibes --help"

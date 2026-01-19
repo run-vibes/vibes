@@ -158,11 +158,11 @@ videos: init
         web_video=$(find {{verify_dir}}/videos/web -name "*.webm" | head -1)
 
         if [[ -n "$cli_video" ]] && [[ -n "$web_video" ]]; then
-            # Scale both videos to same height (360p) with padding to maintain aspect ratio
+            # Both videos are 1280x720, stitch side by side at full resolution
             ffmpeg -i "$cli_video" -i "$web_video" \
-                -filter_complex "[0:v]scale=640:360:force_original_aspect_ratio=decrease,pad=640:360:(ow-iw)/2:(oh-ih)/2[left];[1:v]scale=640:360:force_original_aspect_ratio=decrease,pad=640:360:(ow-iw)/2:(oh-ih)/2[right];[left][right]hstack=inputs=2" \
+                -filter_complex "[0:v][1:v]hstack=inputs=2" \
                 -c:v libvpx-vp9 {{verify_dir}}/videos/stitched/combined.webm -y 2>/dev/null && \
-                echo "✓ Created stitched video: verification/videos/stitched/combined.webm"
+                echo "✓ Created stitched video: verification/videos/stitched/combined.webm (2560x720)"
         fi
     fi
 
