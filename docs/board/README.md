@@ -13,7 +13,6 @@
 
 | Story | Type | Priority | Epic |
 |-------|------|----------|------|
-| [[CHORE][0145]-migrate-existing-milestones](stages/backlog/stories/[CHORE][0145]-migrate-existing-milestones.md) | chore | low |  |
 | [[FEAT][0115]-eval-web-ui](stages/backlog/stories/[FEAT][0115]-eval-web-ui.md) | feat | medium |  |
 | [[FEAT][0116]-pty-server-core](stages/backlog/stories/[FEAT][0116]-pty-server-core.md) | feat | medium |  |
 | [[FEAT][0117]-session-management](stages/backlog/stories/[FEAT][0117]-session-management.md) | feat | medium |  |

@@ -2,7 +2,7 @@
 id: CHORE0145
 title: Migrate existing milestones
 type: chore
-status: backlog
+status: done
 priority: low
 scope: coherence-verification/03-formal-planning-process
 depends: [FEAT0191, FEAT0193]

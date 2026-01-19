@@ -28,7 +28,7 @@ This milestone evolved from a home page redesign into a comprehensive product vi
 - [Command Modes System](command-modes-system.md) — Survey/Command/Deep Dive as vessel configurations
 - [Lakehouse Architecture](lakehouse-architecture.md) — Hybrid execution, object-first storage, multi-modal queries
 - [Spoke Brand](spoke-brand.md) — Brand positioning, messaging, logo concepts
-- [Design Document](design.md) — Original "Phosphor Command" vision
+- [Design Document](DESIGN.md) — Original "Phosphor Command" vision
 - Direction prototypes:
   - `12-spoke-direction-a-mechanical.html` — Blueprint/technical aesthetic
   - `12-spoke-direction-b-luxurious.html` — Warm Art Deco aesthetic
@@ -88,5 +88,5 @@ This milestone evolved from a home page redesign into a comprehensive product vi
 
 ## Design
 
-See [design.md](design.md) for the original "Phosphor Command" dashboard architecture.
+See [DESIGN.md](DESIGN.md) for the original "Phosphor Command" dashboard architecture.
 See [visual-depth-system.md](visual-depth-system.md) for the aesthetic hierarchy documentation.

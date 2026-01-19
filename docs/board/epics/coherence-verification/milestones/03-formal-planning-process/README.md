@@ -23,7 +23,7 @@ created: 2026-01-18
 |---|-------|-------------|--------|
 | 1 | [CHORE0143](../../../../stages/done/stories/[CHORE][0143]-rename-prd-to-vision.md) | Rename PRD to VISION | done |
 | 2 | [CHORE0144](../../../../stages/done/stories/[CHORE][0144]-migrate-existing-epics.md) | Migrate existing epics | done |
-| 3 | [CHORE0145](../../../../stages/backlog/stories/[CHORE][0145]-migrate-existing-milestones.md) | Migrate existing milestones | backlog |
+| 3 | [CHORE0145](../../../../stages/done/stories/[CHORE][0145]-migrate-existing-milestones.md) | Migrate existing milestones | done |
 | 4 | [FEAT0191](../../../../stages/done/stories/[FEAT][0191]-create-document-templates.md) | Create document templates | done |
 | 5 | [FEAT0192](../../../../stages/done/stories/[FEAT][0192]-update-new-epic-command.md) | Update new epic command | done |
 | 6 | [FEAT0193](../../../../stages/done/stories/[FEAT][0193]-update-new-milestone-command.md) | Update new milestone command | done |
@@ -34,5 +34,5 @@ created: 2026-01-18
 ## Progress
 
 **Requirements:** 0/19 verified
-**Stories:** 8/9 complete
+**Stories:** 9/9 complete
 

@@ -17,6 +17,6 @@ Milestone 09: Multi Session
 
 ## Design
 
-See [design.md](design.md) for architecture decisions.
+See [DESIGN.md](DESIGN.md) for architecture and implementation details.
 
-See [implementation.md](implementation.md) for implementation plan.
+See [SRS.md](SRS.md) for requirements and verification criteria.

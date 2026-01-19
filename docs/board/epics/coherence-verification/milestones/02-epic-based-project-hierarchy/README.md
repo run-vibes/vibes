@@ -26,7 +26,7 @@ The board hierarchy matches mental model (Epic > Milestone > Story), stories hav
 
 ## Design
 
-See [design.md](design.md) for architecture and implementation details.
+See [DESIGN.md](DESIGN.md) for architecture and implementation details.
 
 ## Stories
 

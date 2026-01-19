@@ -17,4 +17,4 @@ Milestone 32: Setup Wizards
 
 ## Design
 
-See [design.md](design.md) for architecture decisions.
+See [DESIGN.md](DESIGN.md) for architecture and implementation details.

@@ -34,7 +34,7 @@ Developers can run `just verify all` to capture screenshots, interaction sequenc
 
 ## Design
 
-See [design.md](design.md) for architecture and implementation details.
+See [DESIGN.md](DESIGN.md) for architecture and implementation details.
 
 ## Work Items
 

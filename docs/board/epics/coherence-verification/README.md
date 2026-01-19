@@ -22,12 +22,12 @@ Build a verification system that captures system behavior as visual artifacts (s
 <!-- BEGIN GENERATED -->
 ## Milestones
 
-**Progress:** 2/3 milestones complete, 14/15 stories done
+**Progress:** 2/3 milestones complete, 15/15 stories done
 **Active:** Formal Planning Process
 
 | ID | Milestone | Stories | Status |
 |----|-----------|---------|--------|
 | 01 | [Verification Artifact Pipeline](milestones/01-verification-artifact-pipeline/) | 0/0 | done |
 | 02 | [Epic-Based Project Hierarchy](milestones/02-epic-based-project-hierarchy/) | 6/6 | done |
-| 03 | [Formal Planning Process](milestones/03-formal-planning-process/) | 8/9 | in-progress |
+| 03 | [Formal Planning Process](milestones/03-formal-planning-process/) | 9/9 | in-progress |
 <!-- END GENERATED -->

@@ -23,8 +23,8 @@ Stores learnings with semantic embeddings for similarity search and deduplicatio
 
 ## Design
 
-See [design.md](design.md) for architecture decisions.
+See [DESIGN.md](DESIGN.md) for architecture and implementation details.
 
 ## Implementation
 
-See [implementation.md](implementation.md) for stories and execution plan.
+See [SRS.md](SRS.md) for stories and execution plan.
