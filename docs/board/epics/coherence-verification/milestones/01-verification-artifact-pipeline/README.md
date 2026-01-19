@@ -1,7 +1,8 @@
 ---
 id: 01-verification-artifact-pipeline
 title: Verification Artifact Pipeline
-status: in-progress
+status: done
+completed: 2026-01-18
 epic: coherence-verification
 created: 2026-01-17
 ---
