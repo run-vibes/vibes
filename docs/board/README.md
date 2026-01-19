@@ -13,11 +13,20 @@
 
 | Story | Type | Priority | Epic |
 |-------|------|----------|------|
+| [[CHORE][0143]-rename-prd-to-vision](stages/backlog/stories/[CHORE][0143]-rename-prd-to-vision.md) | chore | medium | coherence-verification |
+| [[CHORE][0144]-migrate-existing-epics](stages/backlog/stories/[CHORE][0144]-migrate-existing-epics.md) | chore | medium | coherence-verification |
+| [[CHORE][0145]-migrate-existing-milestones](stages/backlog/stories/[CHORE][0145]-migrate-existing-milestones.md) | chore | medium | coherence-verification |
 | [[FEAT][0115]-eval-web-ui](stages/backlog/stories/[FEAT][0115]-eval-web-ui.md) | feat | medium |  |
 | [[FEAT][0116]-pty-server-core](stages/backlog/stories/[FEAT][0116]-pty-server-core.md) | feat | medium |  |
 | [[FEAT][0117]-session-management](stages/backlog/stories/[FEAT][0117]-session-management.md) | feat | medium |  |
 | [[FEAT][0118]-websocket-pty-endpoint](stages/backlog/stories/[FEAT][0118]-websocket-pty-endpoint.md) | feat | medium |  |
 | [[FEAT][0119]-xtermjs-web-integration](stages/backlog/stories/[FEAT][0119]-xtermjs-web-integration.md) | feat | medium |  |
+| [[FEAT][0191]-create-document-templates](stages/backlog/stories/[FEAT][0191]-create-document-templates.md) | feat | medium | coherence-verification |
+| [[FEAT][0192]-update-new-epic-command](stages/backlog/stories/[FEAT][0192]-update-new-epic-command.md) | feat | medium | coherence-verification |
+| [[FEAT][0193]-update-new-milestone-command](stages/backlog/stories/[FEAT][0193]-update-new-milestone-command.md) | feat | medium | coherence-verification |
+| [[FEAT][0194]-update-generate-for-epic-readme](stages/backlog/stories/[FEAT][0194]-update-generate-for-epic-readme.md) | feat | medium | coherence-verification |
+| [[FEAT][0195]-update-generate-for-milestone-readme](stages/backlog/stories/[FEAT][0195]-update-generate-for-milestone-readme.md) | feat | medium | coherence-verification |
+| [[FEAT][0196]-update-story-commands-for-milestone-sync](stages/backlog/stories/[FEAT][0196]-update-story-commands-for-milestone-sync.md) | feat | medium | coherence-verification |
 
 ## Icebox
 
@@ -41,6 +50,14 @@
 | [20-event-management-commands](epics/cli/milestones/20-event-management-commands/) | done |
 | [35-guided-setup](epics/cli/milestones/35-guided-setup/) | done |
 | [54-enhanced-cli-experience](epics/cli/milestones/54-enhanced-cli-experience/) | planned |
+
+### [coherence-verification](epics/coherence-verification/) (active) - 3 milestones, 2 done
+
+| Milestone | Status |
+|-----------|--------|
+| [01-verification-artifact-pipeline](epics/coherence-verification/milestones/01-verification-artifact-pipeline/) | done |
+| [02-epic-based-project-hierarchy](epics/coherence-verification/milestones/02-epic-based-project-hierarchy/) | done |
+| [03-formal-planning-process](epics/coherence-verification/milestones/03-formal-planning-process/) | in-progress |
 
 ### [evals](epics/evals/) (planned) - 6 milestones, 0 done
 
@@ -105,7 +122,7 @@
 - [20-event-management-commands](epics/cli/milestones/20-event-management-commands/)
 - [35-guided-setup](epics/cli/milestones/35-guided-setup/)
 
-### [coherence-verification](epics/coherence-verification/) (done)
+### [coherence-verification](epics/coherence-verification/) - Completed Milestones
 
 - [01-verification-artifact-pipeline](epics/coherence-verification/milestones/01-verification-artifact-pipeline/)
 - [02-epic-based-project-hierarchy](epics/coherence-verification/milestones/02-epic-based-project-hierarchy/)

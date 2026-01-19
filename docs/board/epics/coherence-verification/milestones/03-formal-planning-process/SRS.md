@@ -2,8 +2,8 @@
 
 > Establish traceable document hierarchy: VISION → PRD → SRS → DESIGN → Stories → Verification
 
-**Epic:** [Coherence Verification](../../PRD.md)
-**Status:** backlog
+**Epic:** [Coherence Verification](../../README.md)
+**Status:** in-progress
 
 ## Scope
 
@@ -54,7 +54,15 @@ Refactor the planning documentation structure to follow formal software engineer
 
 | Story | Requirements | Status |
 |-------|--------------|--------|
-| — | To be created | — |
+| [CHORE0143](../../../../stages/backlog/stories/[CHORE][0143]-rename-prd-to-vision.md) | SRS-01, SRS-12 | backlog |
+| [FEAT0191](../../../../stages/backlog/stories/[FEAT][0191]-create-document-templates.md) | SRS-NFR-01 | backlog |
+| [FEAT0192](../../../../stages/backlog/stories/[FEAT][0192]-update-new-epic-command.md) | SRS-06 | backlog |
+| [FEAT0193](../../../../stages/backlog/stories/[FEAT][0193]-update-new-milestone-command.md) | SRS-07 | backlog |
+| [FEAT0194](../../../../stages/backlog/stories/[FEAT][0194]-update-generate-for-epic-readme.md) | SRS-08, SRS-NFR-02 | backlog |
+| [FEAT0195](../../../../stages/backlog/stories/[FEAT][0195]-update-generate-for-milestone-readme.md) | SRS-09, SRS-NFR-02 | backlog |
+| [FEAT0196](../../../../stages/backlog/stories/[FEAT][0196]-update-story-commands-for-milestone-sync.md) | SRS-10 | backlog |
+| [CHORE0144](../../../../stages/backlog/stories/[CHORE][0144]-migrate-existing-epics.md) | SRS-13, SRS-NFR-03 | backlog |
+| [CHORE0145](../../../../stages/backlog/stories/[CHORE][0145]-migrate-existing-milestones.md) | SRS-14, SRS-15, SRS-16, SRS-NFR-03 | backlog |
 
 ## Traceability
 
