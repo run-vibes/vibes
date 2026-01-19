@@ -1,13 +1,13 @@
-# VHS tape for vibes --help command
+# VHS tape for vibes sessions command
 # https://github.com/charmbracelet/vhs
 
-Output cli/recordings/output/help.gif
+Output verification/output/sessions.gif
 
 Set FontSize 14
 Set Width 900
-Set Height 500
+Set Height 400
 Set Theme "Catppuccin Mocha"
 
-Type "vibes --help"
+Type "vibes sessions"
 Enter
 Sleep 3s

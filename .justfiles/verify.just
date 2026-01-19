@@ -112,19 +112,18 @@ videos: init
     echo "Recording videos..."
 
     # Record CLI via VHS (if tapes exist)
-    if [[ -d cli/recordings/tapes ]]; then
+    if [[ -d {{verify_dir}}/tapes ]]; then
         echo "Recording CLI videos..."
-        for tape in cli/recordings/tapes/*.tape; do
+        for tape in {{verify_dir}}/tapes/*.tape; do
             [[ -f "$tape" ]] || continue
             name=$(basename "$tape" .tape)
             echo "  Recording: $name"
 
-            # VHS tapes have hardcoded Output paths, so run from project root
-            # and then convert the GIF output to MP4
+            # Run VHS - outputs GIF to verification/output/
             vhs "$tape" 2>/dev/null || true
 
-            # Convert GIF to MP4 if it exists
-            gif_path="cli/recordings/output/${name}.gif"
+            # Convert GIF to MP4
+            gif_path="{{verify_dir}}/output/${name}.gif"
             if [[ -f "$gif_path" ]]; then
                 ffmpeg -i "$gif_path" -movflags faststart -pix_fmt yuv420p -vf "fps=30" \
                     "{{verify_dir}}/videos/cli/${name}.mp4" -y 2>/dev/null && \
