@@ -5,15 +5,6 @@ status: planned
 description: Benchmark mode for industry evals, longitudinal mode for measuring real-world performance over time
 ---
 
-
-
-
-
-
-
-
-
-
 # Evaluation Framework
 
 Benchmarking system for validating vibes+groove against industry standards (SWE-Bench, Remote Labor Index) AND longitudinal measurement of performance over days/weeks of real work.

@@ -5,15 +5,6 @@ status: planned
 description: Interactive TUI for controlling agents, approving permissions, viewing output - embeddable in web via PTY
 ---
 
-
-
-
-
-
-
-
-
-
 # Terminal User Interface
 
 Interactive terminal interface (lazygit-style) for controlling agents, approving permissions, and viewing output. Embeddable in Web UI via PTY.

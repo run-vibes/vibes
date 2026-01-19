@@ -5,15 +5,6 @@ status: planned
 description: Agent lifecycle, swarms, local/remote execution, session-agent relationship
 ---
 
-
-
-
-
-
-
-
-
-
 # Agent Orchestration
 
 Orchestration layer where sessions contain agents. Supports ad-hoc, background, and subagents. Swarms coordinate multiple agents on same or different tasks. Local and remote execution.

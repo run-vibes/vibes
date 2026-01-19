@@ -5,15 +5,6 @@ status: active
 description: Groove plugin for assessment, learning extraction, attribution, and adaptive strategies
 ---
 
-
-
-
-
-
-
-
-
-
 # Continual Learning Plugin (Groove)
 
 The groove plugin provides continual learning capabilities:

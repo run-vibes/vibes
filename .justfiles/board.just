@@ -504,8 +504,8 @@ _generate-epic-readme EPIC:
         fi
     fi
 
-    # Clean up preserved content (remove trailing empty lines)
-    preserved_content=$(echo "$preserved_content" | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' 2>/dev/null || echo "$preserved_content")
+    # Clean up preserved content (remove leading and trailing empty lines)
+    preserved_content=$(echo "$preserved_content" | sed '/./,$!d' | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' 2>/dev/null || echo "$preserved_content")
 
     # Build new README
     {
