@@ -2,7 +2,7 @@
 id: FEAT0195
 title: Update generate for milestone README
 type: feat
-status: backlog
+status: done
 priority: medium
 scope: coherence-verification/03-formal-planning-process
 depends: [FEAT0191]

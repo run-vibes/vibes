@@ -20,9 +20,7 @@
 | [[FEAT][0117]-session-management](stages/backlog/stories/[FEAT][0117]-session-management.md) | feat | medium |  |
 | [[FEAT][0118]-websocket-pty-endpoint](stages/backlog/stories/[FEAT][0118]-websocket-pty-endpoint.md) | feat | medium |  |
 | [[FEAT][0119]-xtermjs-web-integration](stages/backlog/stories/[FEAT][0119]-xtermjs-web-integration.md) | feat | medium |  |
-| [[FEAT][0193]-update-new-milestone-command](stages/backlog/stories/[FEAT][0193]-update-new-milestone-command.md) | feat | high |  |
 | [[FEAT][0194]-update-generate-for-epic-readme](stages/backlog/stories/[FEAT][0194]-update-generate-for-epic-readme.md) | feat | medium |  |
-| [[FEAT][0195]-update-generate-for-milestone-readme](stages/backlog/stories/[FEAT][0195]-update-generate-for-milestone-readme.md) | feat | medium |  |
 | [[FEAT][0196]-update-story-commands-for-milestone-sync](stages/backlog/stories/[FEAT][0196]-update-story-commands-for-milestone-sync.md) | feat | medium |  |
 
 ## Icebox

@@ -8,6 +8,12 @@ description: Full observability - tracing, logging, metrics, analytics, cost tra
 
 
 
+
+
+
+
+
+
 # Observability Stack
 
 Full observability stack: debugging (traces, logs), monitoring (metrics, health), and analytics (insights, cost). OpenTelemetry-based for standardization.

@@ -2,7 +2,7 @@
 id: FEAT0193
 title: Update new milestone command
 type: feat
-status: backlog
+status: done
 priority: high
 scope: coherence-verification/03-formal-planning-process
 depends: [FEAT0191]
