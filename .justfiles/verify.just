@@ -114,32 +114,49 @@ videos: init
     # Record CLI via VHS (if tapes exist)
     if [[ -d cli/recordings/tapes ]]; then
         echo "Recording CLI videos..."
-        cd cli/recordings
-        for tape in tapes/*.tape; do
+        for tape in cli/recordings/tapes/*.tape; do
             [[ -f "$tape" ]] || continue
             name=$(basename "$tape" .tape)
             echo "  Recording: $name"
-            vhs "$tape" -o "../../{{verify_dir}}/videos/cli/${name}.mp4" 2>/dev/null || {
-                vhs "$tape" 2>/dev/null || true
-                if [[ -f "output/${name}.gif" ]]; then
-                    ffmpeg -i "output/${name}.gif" -movflags faststart -pix_fmt yuv420p \
-                        "../../{{verify_dir}}/videos/cli/${name}.mp4" -y 2>/dev/null || true
-                fi
-            }
+
+            # VHS tapes have hardcoded Output paths, so run from project root
+            # and then convert the GIF output to MP4
+            vhs "$tape" 2>/dev/null || true
+
+            # Convert GIF to MP4 if it exists
+            gif_path="cli/recordings/output/${name}.gif"
+            if [[ -f "$gif_path" ]]; then
+                ffmpeg -i "$gif_path" -movflags faststart -pix_fmt yuv420p -vf "fps=30" \
+                    "{{verify_dir}}/videos/cli/${name}.mp4" -y 2>/dev/null && \
+                    echo "    Converted: ${name}.mp4"
+            fi
         done
-        cd ../..
     fi
 
-    # Record Web via Playwright (if configured)
+    # Record Web via Playwright
     echo "Recording Web videos..."
-    npx playwright test e2e-tests/tests/videos.spec.ts --reporter=list 2>/dev/null || {
-        echo "Note: Video spec not found. Using existing Playwright recordings if available."
+    npx --prefix e2e-tests playwright test e2e-tests/tests/videos.spec.ts --reporter=list 2>/dev/null || {
+        echo "Note: Video spec not found or tests failed."
     }
 
-    # Copy any Playwright video recordings
-    if [[ -d e2e-tests/test-results ]]; then
-        find e2e-tests/test-results -name "*.webm" -exec cp {} {{verify_dir}}/videos/web/ \; 2>/dev/null || true
-    fi
+    # Copy Playwright video recordings with unique names based on parent directory
+    for results_dir in test-results e2e-tests/test-results; do
+        if [[ -d "$results_dir" ]]; then
+            find "$results_dir" -name "*.webm" 2>/dev/null | while read -r video; do
+                # Extract test name from parent directory
+                parent_dir=$(basename "$(dirname "$video")")
+                # Try to extract "walkthrough" style name, else use full parent dir
+                if echo "$parent_dir" | grep -q "walkthrough"; then
+                    test_name=$(echo "$parent_dir" | grep -oE '[a-z]+-walkthrough')
+                else
+                    test_name="$parent_dir"
+                fi
+                [[ -z "$test_name" ]] && test_name="$parent_dir"
+                dest="{{verify_dir}}/videos/web/${test_name}.webm"
+                cp "$video" "$dest" 2>/dev/null && echo "    Copied: ${test_name}.webm"
+            done
+        fi
+    done
 
     # Stitch CLI + Web videos together if both exist
     echo "Stitching videos..."
