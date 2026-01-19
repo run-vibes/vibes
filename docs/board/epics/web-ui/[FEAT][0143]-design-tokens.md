@@ -1,1 +1,0 @@
-../../stages/done/stories/[FEAT][0143]-design-tokens.md

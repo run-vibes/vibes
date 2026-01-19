@@ -1,1 +1,0 @@
-../../stages/done/stories/[FEAT][0109]-board-generator-grouped-layout.md

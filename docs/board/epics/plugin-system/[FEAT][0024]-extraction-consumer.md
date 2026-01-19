@@ -1,1 +1,0 @@
-../../stages/done/stories/[FEAT][0024]-extraction-consumer.md

@@ -1,1 +1,0 @@
-../../stages/done/stories/[CHORE][0010]-align-sessions-page-layout-with-firehose.md

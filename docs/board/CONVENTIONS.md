@@ -263,8 +263,8 @@ Use `just board start-milestone <id>` and `just board done-milestone <id>` to ma
 | `just board start-milestone <id>` | Set milestone to in-progress |
 | `just board done-milestone <id>` | Set milestone to done |
 | `just board done-epic <id>` | Set epic to done |
-| `just board link <story> <epic>` | Link story to epic |
-| `just board unlink <story> <epic>` | Remove story from epic |
+| `just board link <story> <milestone>` | Link story to milestone |
+| `just board unlink <story> <milestone>` | Remove story from milestone |
 
 ### Board Operations
 
@@ -308,13 +308,13 @@ just board new story "Add session export"
 
 This creates a story in `stages/backlog/stories/` using the template.
 
-### 2. Link to Epic (Optional)
+### 2. Link to Milestone (Optional)
 
 ```bash
-just board link feat-0004-session-export core
+just board link feat-0004-session-export 01-artifact-pipeline
 ```
 
-This creates a symlink in `epics/core/` pointing to the story.
+This creates a symlink in the milestone directory pointing to the story, and sets the story's `milestone` frontmatter field.
 
 ### 3. Start Work
 
@@ -322,7 +322,7 @@ This creates a symlink in `epics/core/` pointing to the story.
 just board start feat-0004-session-export
 ```
 
-This moves the story file from `stages/backlog/stories/` to `stages/in-progress/stories/`. Symlinks in epics automatically point to the new location (relative paths).
+This moves the story file from `stages/backlog/stories/` to `stages/in-progress/stories/`.
 
 ### 4. Complete Work
 

@@ -1,1 +1,0 @@
-../../stages/done/stories/[CHORE][0113]-rename-stories-new-format.md

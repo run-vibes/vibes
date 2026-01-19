@@ -1,1 +1,0 @@
-../../stages/done/stories/[CHORE][0011]-align-groove-pages-layout-with-firehose.md

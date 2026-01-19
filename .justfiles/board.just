@@ -33,13 +33,14 @@ default:
     echo "  just board done-milestone <id>"
     echo "                              Set milestone to done"
     echo "  just board done-epic <id>       Set epic to done"
-    echo "  just board link <story> <epic>   Add story to epic"
-    echo "  just board unlink <story> <epic> Remove story from epic"
-    echo "  just board link-epic <epic> <milestone>  Add epic to milestone"
+    echo "  just board link <story> <milestone>"
+    echo "                              Link story to milestone"
+    echo "  just board unlink <story> <milestone>"
+    echo "                              Remove story from milestone"
     echo ""
     echo "Utility:"
-    echo "  just board list epics      Show all epics with story counts"
-    echo "  just board list milestones Show all milestones with progress"
+    echo "  just board list epics      Show all epics with milestone counts"
+    echo "  just board list milestones Show all milestones with story counts"
     echo "  just board show <id>       Display story details"
     echo ""
     echo "Examples:"
@@ -457,20 +458,6 @@ _new-story TITLE TYPE="" EPICS="" MILESTONE="":
     echo ""
     echo "Created: $filename"
 
-    # Create symlinks in selected epics
-    if [[ -n "$selected_epics" ]]; then
-        story_name=$(basename "$filename")
-        IFS=', ' read -ra epic_list <<< "$selected_epics"
-        for epic in "${epic_list[@]}"; do
-            epic=$(echo "$epic" | tr -d ' ')
-            if [[ -d "epics/$epic" ]]; then
-                rel_path="../../stages/backlog/stories/$story_name"
-                ln -sf "$rel_path" "epics/$epic/$story_name"
-                echo "Linked to epic: $epic"
-            fi
-        done
-    fi
-
 # Internal: create a new epic
 # Usage: just board _new-epic "name" [description]
 _new-epic NAME DESCRIPTION="":
@@ -507,9 +494,9 @@ _new-epic NAME DESCRIPTION="":
         echo ""
         echo "${description}"
         echo ""
-        echo "## Stories"
+        echo "## Milestones"
         echo ""
-        echo '> Stories are linked via `just board link <story> <epic>`.'
+        echo '> Milestones live in `milestones/` subdirectory.'
     } > "$dir/README.md"
 
     echo "Created: $dir/README.md"
@@ -547,9 +534,9 @@ _new-milestone NAME:
         echo ""
         echo "[Description of the milestone]"
         echo ""
-        echo "## Epics"
+        echo "## Stories"
         echo ""
-        echo '> Epics linked to this milestone via `just board link-epic <epic> <milestone>`.'
+        echo '> Stories linked via `just board link <story> <milestone>`.'
         echo ""
         echo "## Design"
         echo ""
@@ -692,20 +679,6 @@ start ID:
 
     echo "Started: $name"
 
-    # Update symlinks in epics
-    if [[ -n "$epics" ]]; then
-        IFS=', ' read -ra epic_list <<< "$epics"
-        for epic in "${epic_list[@]}"; do
-            epic=$(echo "$epic" | tr -d ' ')
-            link="epics/$epic/$name"
-            if [[ -L "$link" ]]; then
-                rm "$link"
-                ln -sf "../../stages/in-progress/stories/$name" "$link"
-                echo "Updated symlink in epic: $epic"
-            fi
-        done
-    fi
-
     # Regenerate README
     just board generate
     echo "Board updated"
@@ -762,20 +735,6 @@ done ID SUMMARY="__PROMPT__":
     sed -i "s/^updated: .*/updated: $(date +%Y-%m-%d)/" "$dest"
 
     echo "Completed: $name"
-
-    # Update symlinks in epics
-    if [[ -n "$epics" ]]; then
-        IFS=', ' read -ra epic_list <<< "$epics"
-        for epic in "${epic_list[@]}"; do
-            epic=$(echo "$epic" | tr -d ' ')
-            link="epics/$epic/$name"
-            if [[ -L "$link" ]]; then
-                rm "$link"
-                ln -sf "../../stages/done/stories/$name" "$link"
-                echo "Updated symlink in epic: $epic"
-            fi
-        done
-    fi
 
     # Sync milestone implementation.md if story has milestone field
     milestone=$(grep -m1 "^milestone:" "$dest" 2>/dev/null | sed 's/^milestone: *//' || echo "")
@@ -876,20 +835,6 @@ ice ID:
 
     echo "Iced: $name"
 
-    # Update symlinks in epics
-    if [[ -n "$epics" ]]; then
-        IFS=', ' read -ra epic_list <<< "$epics"
-        for epic in "${epic_list[@]}"; do
-            epic=$(echo "$epic" | tr -d ' ')
-            link="epics/$epic/$name"
-            if [[ -L "$link" ]]; then
-                rm "$link"
-                ln -sf "../../stages/icebox/stories/$name" "$link"
-                echo "Updated symlink in epic: $epic"
-            fi
-        done
-    fi
-
     # Regenerate README
     just board generate
     echo "Board updated"
@@ -927,20 +872,6 @@ thaw ID:
     sed -i "s/^updated: .*/updated: $(date +%Y-%m-%d)/" "$dest"
 
     echo "Thawed: $name"
-
-    # Update symlinks in epics
-    if [[ -n "$epics" ]]; then
-        IFS=', ' read -ra epic_list <<< "$epics"
-        for epic in "${epic_list[@]}"; do
-            epic=$(echo "$epic" | tr -d ' ')
-            link="epics/$epic/$name"
-            if [[ -L "$link" ]]; then
-                rm "$link"
-                ln -sf "../../stages/backlog/stories/$name" "$link"
-                echo "Updated symlink in epic: $epic"
-            fi
-        done
-    fi
 
     # Regenerate README
     just board generate
@@ -1155,158 +1086,146 @@ done-epic ID:
     just board generate
     echo "Board updated"
 
-# Link a story to an epic
-link STORY EPIC:
+# Link a story to a milestone
+link STORY MILESTONE:
     #!/usr/bin/env bash
     set -euo pipefail
     cd "{{board_dir}}"
 
     story_pattern="{{STORY}}"
-    epic="{{EPIC}}"
-
-    # Find the story
-    story_path=$(just board _find-story "$story_pattern")
-    if [[ -z "$story_path" ]]; then
-        echo "Error: Story '$story_pattern' not found"
-        exit 1
-    fi
-
-    # Check epic exists
-    if [[ ! -d "epics/$epic" ]]; then
-        echo "Error: Epic '$epic' not found"
-        echo "Available epics:"
-        for e in epics/*/; do
-            [[ -d "$e" ]] && echo "  - $(basename "$e")"
-        done
-        exit 1
-    fi
-
-    story_name=$(basename "$story_path")
-
-    # Determine relative path based on story location
-    if [[ "$story_path" == *"backlog"* ]]; then
-        rel_path="../../stages/backlog/stories/$story_name"
-    elif [[ "$story_path" == *"in-progress"* ]]; then
-        rel_path="../../stages/in-progress/stories/$story_name"
-    else
-        rel_path="../../stages/done/stories/$story_name"
-    fi
-
-    # Create symlink
-    link_path="epics/$epic/$story_name"
-    if [[ -L "$link_path" ]]; then
-        echo "Story already linked to epic"
-    else
-        ln -sf "$rel_path" "$link_path"
-        echo "Linked $story_name to epic $epic"
-    fi
-
-    # Update frontmatter epics field
-    current_epics=$(grep -m1 "^epics:" "$story_path" 2>/dev/null | sed 's/^epics: *//' | tr -d '[]' || echo "")
-    if [[ -z "$current_epics" ]]; then
-        new_epics="[$epic]"
-    # Use word boundary matching to avoid substring matches (e.g., 'cli' matching 'cli-tools')
-    elif ! echo ", $current_epics," | grep -q ", *$epic *,"; then
-        new_epics="[$current_epics, $epic]"
-    else
-        new_epics="[$current_epics]"
-    fi
-    sed -i "s/^epics: .*/epics: $new_epics/" "$story_path"
-    echo "Updated story frontmatter"
-
-# Unlink a story from an epic
-unlink STORY EPIC:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    cd "{{board_dir}}"
-
-    story_pattern="{{STORY}}"
-    epic="{{EPIC}}"
-
-    # Find the story
-    story_path=$(just board _find-story "$story_pattern")
-    if [[ -z "$story_path" ]]; then
-        echo "Error: Story '$story_pattern' not found"
-        exit 1
-    fi
-
-    story_name=$(basename "$story_path")
-    link_path="epics/$epic/$story_name"
-
-    # Remove symlink
-    if [[ -L "$link_path" ]]; then
-        rm "$link_path"
-        echo "Unlinked $story_name from epic $epic"
-    else
-        echo "Story was not linked to epic $epic"
-    fi
-
-    # Update frontmatter epics field
-    current_epics=$(grep -m1 "^epics:" "$story_path" 2>/dev/null | sed 's/^epics: *//' | tr -d '[]' || echo "")
-    # Remove the epic from the list using word boundary matching
-    # Convert to comma-separated with padding, remove exact match, clean up
-    new_epics=$(echo ", $current_epics," | sed "s/, *$epic *,/,/g" | sed 's/^, *//;s/, *$//' | sed 's/  */ /g')
-    sed -i "s/^epics: .*/epics: [$new_epics]/" "$story_path"
-    echo "Updated story frontmatter"
-
-# Link an epic to a milestone
-link-epic EPIC MILESTONE:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    cd "{{board_dir}}"
-
-    epic="{{EPIC}}"
     milestone="{{MILESTONE}}"
 
-    # Check epic exists
-    if [[ ! -d "epics/$epic" ]]; then
-        echo "Error: Epic '$epic' not found"
+    # Find the story
+    story_path=$(just board _find-story "$story_pattern")
+    if [[ -z "$story_path" ]]; then
+        echo "Error: Story '$story_pattern' not found"
         exit 1
     fi
 
-    # Find milestone directory (allow partial match)
+    # Find milestone directory (allow partial match, search in epics)
     ms_dir=""
-    for d in milestones/*/; do
-        if [[ "$(basename "$d")" == *"$milestone"* ]]; then
-            ms_dir="$d"
-            break
-        fi
+    for epic_dir in epics/*/; do
+        [[ -d "${epic_dir}milestones" ]] || continue
+        for d in "${epic_dir}milestones"/*/; do
+            [[ -d "$d" ]] || continue
+            if [[ "$(basename "$d")" == *"$milestone"* ]]; then
+                ms_dir="$d"
+                break 2
+            fi
+        done
     done
+
+    # Also check top-level milestones for backwards compatibility
+    if [[ -z "$ms_dir" ]] && [[ -d milestones ]]; then
+        for d in milestones/*/; do
+            if [[ "$(basename "$d")" == *"$milestone"* ]]; then
+                ms_dir="$d"
+                break
+            fi
+        done
+    fi
 
     if [[ -z "$ms_dir" ]] || [[ ! -d "$ms_dir" ]]; then
         echo "Error: Milestone '$milestone' not found"
         echo "Available milestones:"
-        for m in milestones/*/; do
-            [[ -d "$m" ]] && echo "  - $(basename "$m")"
+        for epic_dir in epics/*/; do
+            [[ -d "${epic_dir}milestones" ]] || continue
+            for m in "${epic_dir}milestones"/*/; do
+                [[ -d "$m" ]] && echo "  - $(basename "$m") ($(basename "$epic_dir"))"
+            done
         done
         exit 1
     fi
 
+    story_name=$(basename "$story_path")
     ms_name=$(basename "$ms_dir")
 
-    # Create symlink to epic in milestone directory
-    link_path="${ms_dir}${epic}"
-    if [[ -L "$link_path" ]]; then
-        echo "Epic already linked to milestone"
+    # Calculate relative path depth based on milestone location
+    # If ms_dir is like epics/foo/milestones/01-bar/, we need ../../../../stages/...
+    depth=$(echo "$ms_dir" | tr -cd '/' | wc -c)
+    rel_prefix=""
+    for ((i=0; i<depth; i++)); do
+        rel_prefix="../$rel_prefix"
+    done
+
+    # Determine relative path based on story location
+    if [[ "$story_path" == *"backlog"* ]]; then
+        rel_path="${rel_prefix}stages/backlog/stories/$story_name"
+    elif [[ "$story_path" == *"in-progress"* ]]; then
+        rel_path="${rel_prefix}stages/in-progress/stories/$story_name"
+    elif [[ "$story_path" == *"icebox"* ]]; then
+        rel_path="${rel_prefix}stages/icebox/stories/$story_name"
     else
-        ln -sf "../../epics/$epic" "$link_path"
-        echo "Linked epic $epic to milestone $ms_name"
+        rel_path="${rel_prefix}stages/done/stories/$story_name"
     fi
 
-    # Update milestone README frontmatter
-    ms_readme="${ms_dir}README.md"
-    if [[ -f "$ms_readme" ]]; then
-        current_epics=$(grep -m1 "^epics:" "$ms_readme" 2>/dev/null | sed 's/^epics: *//' | tr -d '[]' || echo "")
-        if [[ -z "$current_epics" ]]; then
-            new_epics="[$epic]"
-        elif [[ "$current_epics" != *"$epic"* ]]; then
-            new_epics="[$current_epics, $epic]"
-        else
-            new_epics="[$current_epics]"
-        fi
-        sed -i "s/^epics: .*/epics: $new_epics/" "$ms_readme"
-        echo "Updated milestone frontmatter"
+    # Create symlink in milestone directory
+    link_path="${ms_dir}${story_name}"
+    if [[ -L "$link_path" ]]; then
+        echo "Story already linked to milestone"
+    else
+        ln -sf "$rel_path" "$link_path"
+        echo "Linked $story_name to milestone $ms_name"
     fi
+
+    # Update frontmatter milestone field
+    current_milestone=$(grep -m1 "^milestone:" "$story_path" 2>/dev/null | sed 's/^milestone: *//' || echo "")
+    if [[ -z "$current_milestone" ]]; then
+        # Add milestone field after epics field
+        sed -i "/^epics:/a milestone: $ms_name" "$story_path"
+    else
+        sed -i "s/^milestone: .*/milestone: $ms_name/" "$story_path"
+    fi
+    echo "Updated story frontmatter"
+
+# Unlink a story from a milestone
+unlink STORY MILESTONE:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd "{{board_dir}}"
+
+    story_pattern="{{STORY}}"
+    milestone="{{MILESTONE}}"
+
+    # Find the story
+    story_path=$(just board _find-story "$story_pattern")
+    if [[ -z "$story_path" ]]; then
+        echo "Error: Story '$story_pattern' not found"
+        exit 1
+    fi
+
+    # Find milestone directory
+    ms_dir=""
+    for epic_dir in epics/*/; do
+        [[ -d "${epic_dir}milestones" ]] || continue
+        for d in "${epic_dir}milestones"/*/; do
+            [[ -d "$d" ]] || continue
+            if [[ "$(basename "$d")" == *"$milestone"* ]]; then
+                ms_dir="$d"
+                break 2
+            fi
+        done
+    done
+
+    if [[ -z "$ms_dir" ]]; then
+        echo "Error: Milestone '$milestone' not found"
+        exit 1
+    fi
+
+    story_name=$(basename "$story_path")
+    link_path="${ms_dir}${story_name}"
+
+    # Remove symlink
+    if [[ -L "$link_path" ]]; then
+        rm "$link_path"
+        echo "Unlinked $story_name from milestone $(basename "$ms_dir")"
+    else
+        echo "Story was not linked to milestone $milestone"
+    fi
+
+    # Clear frontmatter milestone field
+    sed -i '/^milestone: .*/d' "$story_path"
+    echo "Updated story frontmatter"
 
 # Internal: list epics
 _list-epics:
@@ -1330,27 +1249,26 @@ _list-epics:
         status=""
         [[ -f "${epic_dir}README.md" ]] && status=$(grep -m1 "^status:" "${epic_dir}README.md" 2>/dev/null | sed 's/^status: *//' || echo "")
 
-        # Count symlinks
-        count=$(find "$epic_dir" -maxdepth 1 -type l -name "*.md" 2>/dev/null | wc -l | tr -d ' ')
-
-        # Count by status
-        backlog=0
-        in_prog=0
-        done_cnt=0
-        for link in "$epic_dir"*.md; do
-            [[ -L "$link" ]] || continue
-            target=$(readlink "$link")
-            if [[ "$target" == *"backlog"* ]]; then
-                backlog=$((backlog + 1))
-            elif [[ "$target" == *"in-progress"* ]]; then
-                in_prog=$((in_prog + 1))
-            elif [[ "$target" == *"done"* ]]; then
-                done_cnt=$((done_cnt + 1))
-            fi
-        done
+        # Count milestones and their status
+        total_ms=0
+        done_ms=0
+        in_progress_ms=0
+        if [[ -d "${epic_dir}milestones" ]]; then
+            for ms_dir in "${epic_dir}milestones"/*/; do
+                [[ -d "$ms_dir" ]] || continue
+                [[ -f "${ms_dir}README.md" ]] || continue
+                total_ms=$((total_ms + 1))
+                ms_status=$(grep -m1 "^status:" "${ms_dir}README.md" 2>/dev/null | sed 's/^status: *//' || echo "")
+                if [[ "$ms_status" == "done" ]]; then
+                    done_ms=$((done_ms + 1))
+                elif [[ "$ms_status" == "in-progress" ]]; then
+                    in_progress_ms=$((in_progress_ms + 1))
+                fi
+            done
+        fi
 
         echo "$name ($status)"
-        echo "  Stories: $count (backlog: $backlog, in-progress: $in_prog, done: $done_cnt)"
+        echo "  Milestones: $total_ms (in-progress: $in_progress_ms, done: $done_ms)"
     done
 
 # Internal: list milestones
@@ -1362,30 +1280,31 @@ _list-milestones:
     echo "=========="
     echo ""
 
-    if [[ ! -d milestones ]]; then
-        echo "No milestones directory found"
-        exit 0
-    fi
+    found=false
+    for epic_dir in epics/*/; do
+        [[ -d "${epic_dir}milestones" ]] || continue
+        epic_name=$(basename "$epic_dir")
 
-    for ms_dir in milestones/*/; do
-        [[ -d "$ms_dir" ]] || continue
-        name=$(basename "$ms_dir")
+        for ms_dir in "${epic_dir}milestones"/*/; do
+            [[ -d "$ms_dir" ]] || continue
+            found=true
+            name=$(basename "$ms_dir")
 
-        # Get status from README
-        status=""
-        [[ -f "${ms_dir}README.md" ]] && status=$(grep -m1 "^status:" "${ms_dir}README.md" 2>/dev/null | sed 's/^status: *//' || echo "")
+            # Get status from README
+            status=""
+            [[ -f "${ms_dir}README.md" ]] && status=$(grep -m1 "^status:" "${ms_dir}README.md" 2>/dev/null | sed 's/^status: *//' || echo "")
 
-        # Get linked epics
-        epics=""
-        [[ -f "${ms_dir}README.md" ]] && epics=$(grep -m1 "^epics:" "${ms_dir}README.md" 2>/dev/null | sed 's/^epics: *//' | tr -d '[]' || echo "")
+            # Count story symlinks
+            story_count=$(find "$ms_dir" -maxdepth 1 -type l -name "*.md" 2>/dev/null | wc -l | tr -d ' ')
 
-        # Count epic symlinks
-        epic_count=$(find "$ms_dir" -maxdepth 1 -type l -not -name "*.md" 2>/dev/null | wc -l | tr -d ' ')
-
-        echo "$name ($status)"
-        [[ -n "$epics" ]] && echo "  Epics: $epics"
-        echo "  Epic links: $epic_count"
+            echo "$name ($status) - epic: $epic_name"
+            echo "  Stories: $story_count"
+        done
     done
+
+    if [[ "$found" == "false" ]]; then
+        echo "No milestones found"
+    fi
 
 # Router for list command
 list TYPE:

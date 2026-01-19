@@ -1,7 +1,7 @@
 ---
 id: 01-verification-artifact-pipeline
 title: Verification Artifact Pipeline
-status: planned
+status: in-progress
 epic: coherence-verification
 created: 2026-01-17
 ---
@@ -27,13 +27,15 @@ Developers can run `just verify all` to capture screenshots, interaction sequenc
 
 See [design.md](design.md) for architecture and implementation details.
 
-## Stories
+## Work Items
 
-| ID | Story | Status |
-|----|-------|--------|
-| FEAT0191 | Create verification definition files | done |
-| FEAT0192 | Implement snapshots.spec.ts | done |
-| FEAT0193 | Implement checkpoints.spec.ts | done |
-| FEAT0194 | Implement videos.spec.ts | done |
-| CHORE0195 | Add pre-commit integration | deferred |
-| DOCS0196 | Document verification commands | done |
+> Work tracked inline during implementation (no separate story files).
+
+| Item | Status |
+|------|--------|
+| Create verification definition files (snapshots.json, checkpoints.json) | done |
+| Implement snapshots.spec.ts | done |
+| Implement checkpoints.spec.ts | done |
+| Implement videos.spec.ts with CLI+Web stitching | done |
+| Add pre-commit integration | deferred |
+| Document verification commands in CLAUDE.md | done |

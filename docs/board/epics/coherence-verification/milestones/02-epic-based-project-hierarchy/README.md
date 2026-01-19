@@ -32,9 +32,9 @@ See [design.md](design.md) for architecture and implementation details.
 
 | ID | Story | Status |
 |----|-------|--------|
-| CHORE0111 | Create design-system epic | done |
-| CHORE0112 | Migrate milestones to epics | done |
-| CHORE0113 | Rename stories to new format | done |
-| FEAT0109 | Board generator grouped layout | done |
-| FEAT0110 | Board state command sync | done |
-| CHORE0114 | Update board documentation | done |
+| FEAT0109 | [Board generator grouped layout](../../../../stages/done/stories/[FEAT][0109]-board-generator-grouped-layout.md) | done |
+| FEAT0110 | [Board state command sync](../../../../stages/done/stories/[FEAT][0110]-board-state-command-sync.md) | done |
+| CHORE0111 | [Create design-system epic](../../../../stages/done/stories/[CHORE][0111]-create-design-system-epic.md) | done |
+| CHORE0112 | [Migrate milestones to epics](../../../../stages/done/stories/[CHORE][0112]-migrate-milestones-to-epics.md) | done |
+| CHORE0113 | [Rename stories to new format](../../../../stages/done/stories/[CHORE][0113]-rename-stories-new-format.md) | done |
+| CHORE0114 | [Update board documentation](../../../../stages/done/stories/[CHORE][0114]-update-board-documentation.md) | done |

@@ -1,1 +1,0 @@
-../../stages/done/stories/[CHORE][0120]-design.md

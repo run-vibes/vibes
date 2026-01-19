@@ -1,1 +1,0 @@
-../../stages/done/stories/[CHORE][0132]-align-settings-page-with-crt-design-system.md

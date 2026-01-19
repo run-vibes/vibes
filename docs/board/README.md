@@ -46,7 +46,7 @@
 
 | Milestone | Status |
 |-----------|--------|
-| [01-verification-artifact-pipeline](epics/coherence-verification/milestones/01-verification-artifact-pipeline/) | planned |
+| [01-verification-artifact-pipeline](epics/coherence-verification/milestones/01-verification-artifact-pipeline/) | in-progress |
 | [02-epic-based-project-hierarchy](epics/coherence-verification/milestones/02-epic-based-project-hierarchy/) | done |
 
 ### [evals](epics/evals/) (planned) - 6 milestones, 0 done
