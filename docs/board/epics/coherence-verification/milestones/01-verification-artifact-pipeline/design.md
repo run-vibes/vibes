@@ -183,77 +183,19 @@ ffmpeg -i cli/help.webm -i web/dashboard-walkthrough.webm \
 
 ## Report Format
 
-`verification/report.md`:
+See [`verification/templates/report.md`](../../../../../verification/templates/report.md) for the global report template.
 
-```markdown
-# Verification Report
-
-Generated: 2026-01-17T14:30:00Z
-Branch: feat/0042-session-export
-Stories: [FEAT][0042]-add-session-export
-
-## Summary
-
-| Tier | Count | Status |
-|------|-------|--------|
-| Snapshots | 5 | ✅ |
-| Checkpoints | 3 | ✅ |
-| Videos | 2 | ✅ |
-
-## Artifacts
-
-### Snapshots (Tier 1)
-- dashboard.png
-- session-list.png
-- session-detail.png
-
-### Checkpoints (Tier 2)
-- create-session (3 steps)
-- export-session (4 steps)
-
-### Videos (Tier 3)
-- full-session-flow.mp4 (CLI + Web stitched)
-
-## Story Coverage
-
-### [FEAT][0042]-add-session-export
-
-| Criterion | Artifact | Status |
-|-----------|----------|--------|
-| User can navigate to session list | 01-sessions-page.png | ✅ |
-| Export button visible | 02-after-click.png | ✅ |
-| CSV download works | *manual verification* | ⚠️ |
-
-Coverage: 2/3 (67%)
-```
+Generated at `verification/report.md`.
 
 ---
 
 ## PR Integration
 
-### PR Description Template
+### PR Template
 
-When creating a PR, include verification summary:
+See [`.github/PULL_REQUEST_TEMPLATE.md`](../../../../../.github/PULL_REQUEST_TEMPLATE.md) for the GitHub PR template.
 
-```markdown
-## Summary
-- Added session export feature
-
-## Verification Report
-See [verification/report.md](verification/report.md) for full details.
-
-### Coverage
-- ✅ 3/4 acceptance criteria verified
-- 📸 12 snapshots captured
-- 🎬 2 flow videos recorded
-
-### Uncovered
-- [ ] CSV download works (manual verification needed)
-
-## Test Plan
-- [x] `just verify all` completes
-- [x] Verification artifacts reviewed locally
-```
+GitHub auto-populates this template when creating PRs.
 
 ---
 
@@ -400,30 +342,9 @@ verification/
 
 ## Story Report Format
 
-`verification/reports/<scope>/<id>.md`:
+See [`verification/templates/story-report.md`](../../../../../verification/templates/story-report.md) for the report template.
 
-```markdown
-# Verification: FEAT0109
-
-**Story:** Board generator grouped layout
-**Scope:** coherence-verification/01-artifact-pipeline
-**Generated:** 2026-01-18T10:30:00Z
-**Branch:** feat/0109-board-generator
-
-## Coverage
-
-| Criterion | Artifact | Status |
-|-----------|----------|--------|
-| Sessions page displays list | sessions.png | ✅ |
-| Clicking row opens detail | view-session-detail/ | ✅ |
-| CLI help shows commands | cli/help.webm | ✅ |
-
-**Coverage: 3/3 (100%)**
-
-## Uncovered Criteria
-
-(none)
-```
+Reports are generated at `verification/reports/<scope>/<id>.md`.
 
 ---
 
