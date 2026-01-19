@@ -55,13 +55,15 @@ Third milestone of the TUI epic. Implements the agent detail view with permissio
 
 ## Stories
 
-| ID | Title | Status |
-|----|-------|--------|
-| m43-feat-01 | Agent detail view layout | backlog |
-| m43-feat-02 | Output stream panel | backlog |
-| m43-feat-03 | Permission approval widget | backlog |
-| m43-feat-04 | Agent control actions | backlog |
+| # | Story | Description | Status |
+|---|-------|-------------|--------|
+| 1 | [FEAT0178](../../../../stages/done/stories/[FEAT][0178]-agent-detail-view-layout.md) | Agent detail view layout | done |
+| 2 | [FEAT0179](../../../../stages/done/stories/[FEAT][0179]-output-stream-panel.md) | Output stream panel | done |
+| 3 | [FEAT0180](../../../../stages/done/stories/[FEAT][0180]-permission-approval-widget.md) | Permission approval widget | done |
+| 4 | [FEAT0181](../../../../stages/done/stories/[FEAT][0181]-agent-control-actions.md) | Agent control actions | done |
 
-## Design
+## Progress
 
-See [../../epics/tui/README.md](../../epics/tui/README.md) for architecture.
+**Requirements:** 0/0 verified
+**Stories:** 4/4 complete
+

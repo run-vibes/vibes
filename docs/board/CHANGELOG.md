@@ -2,6 +2,7 @@
 
 > Updated when items move to done. Most recent first.
 
+| 2026-01-19 | Update new epic command | Updated new epic command to create README.md + PRD.md from templates |
 | 2026-01-18 | Create document templates | Add formal document templates for VISION, PRD, SRS, DESIGN, and README files |
 | 2026-01-17 | Update board documentation | Updated CONVENTIONS.md and CLAUDE.md for new board hierarchy |
 | 2026-01-17 | Board generator grouped layout | Implemented grouped layout for board generator with milestones nested under epics |

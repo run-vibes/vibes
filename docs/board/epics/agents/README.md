@@ -5,6 +5,9 @@ status: planned
 description: Agent lifecycle, swarms, local/remote execution, session-agent relationship
 ---
 
+
+
+
 # Agent Orchestration
 
 Orchestration layer where sessions contain agents. Supports ad-hoc, background, and subagents. Swarms coordinate multiple agents on same or different tasks. Local and remote execution.
@@ -190,12 +193,12 @@ vibes swarm run <swarm> <task>       # Run task on swarm
 vibes swarm status <swarm>           # Swarm status
 ```
 
+<!-- BEGIN GENERATED -->
 ## Milestones
 
-| # | Milestone | Description |
-|---|-----------|-------------|
-| 1 | Agent Core | Agent trait, types, lifecycle |
-| 2 | Session Integration | Session-agent relationship |
-| 3 | Swarm Framework | Swarm strategies and coordination |
-| 4 | Remote Execution | Execute agents on remote instances |
-| 5 | Plugin API | Expose agents to plugins |
+**Progress:** 1/1 milestones complete, 7/7 stories done
+
+| ID | Milestone | Stories | Status |
+|----|-----------|---------|--------|
+| 38 | [Autonomous Agents](milestones/38-autonomous-agents/) | 7/7 | done |
+<!-- END GENERATED -->

@@ -52,13 +52,15 @@ Second milestone of the TUI epic. Implements the main dashboard view showing an 
 
 ## Stories
 
-| ID | Title | Status |
-|----|-------|--------|
-| m42-feat-01 | Session list widget | backlog |
-| m42-feat-02 | Stats summary bar | backlog |
-| m42-feat-03 | Activity feed widget | backlog |
-| m42-feat-04 | WebSocket real-time updates | backlog |
+| # | Story | Description | Status |
+|---|-------|-------------|--------|
+| 1 | [FEAT0174](../../../../stages/done/stories/[FEAT][0174]-session-list-widget.md) | Session list widget | done |
+| 2 | [FEAT0175](../../../../stages/done/stories/[FEAT][0175]-stats-summary-bar.md) | Stats summary bar | done |
+| 3 | [FEAT0176](../../../../stages/done/stories/[FEAT][0176]-activity-feed-widget.md) | Activity feed widget | done |
+| 4 | [FEAT0177](../../../../stages/done/stories/[FEAT][0177]-websocket-real-time-updates.md) | WebSocket real-time updates | done |
 
-## Design
+## Progress
 
-See [../../epics/tui/README.md](../../epics/tui/README.md) for architecture.
+**Requirements:** 0/0 verified
+**Stories:** 4/4 complete
+

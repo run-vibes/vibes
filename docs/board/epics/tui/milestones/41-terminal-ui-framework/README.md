@@ -34,14 +34,16 @@ First milestone of the TUI epic. Establishes the foundation for the terminal use
 
 ## Stories
 
-| ID | Title | Status |
-|----|-------|--------|
-| m41-feat-01 | vibes-tui crate scaffold and theme system | backlog |
-| m41-feat-02 | App struct and event loop | backlog |
-| m41-feat-03 | Views and ViewStack navigation | backlog |
-| m41-feat-04 | KeyBindings system | backlog |
-| m41-feat-05 | CLI command and WebSocket integration | backlog |
+| # | Story | Description | Status |
+|---|-------|-------------|--------|
+| 1 | [FEAT0169](../../../../stages/done/stories/[FEAT][0169]-crate-theme.md) | vibes-tui crate scaffold and theme system | done |
+| 2 | [FEAT0170](../../../../stages/done/stories/[FEAT][0170]-app-event-loop.md) | App struct and event loop | done |
+| 3 | [FEAT0171](../../../../stages/done/stories/[FEAT][0171]-views-viewstack.md) | Views and ViewStack navigation | done |
+| 4 | [FEAT0172](../../../../stages/done/stories/[FEAT][0172]-keybindings.md) | KeyBindings system | done |
+| 5 | [FEAT0173](../../../../stages/done/stories/[FEAT][0173]-cli-integration.md) | CLI command and WebSocket integration | done |
 
-## Design
+## Progress
 
-See [../../epics/tui/README.md](../../epics/tui/README.md) for architecture.
+**Requirements:** 0/0 verified
+**Stories:** 5/5 complete
+

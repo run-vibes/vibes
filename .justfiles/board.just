@@ -26,8 +26,8 @@ default:
     echo "Epic/Milestone management:"
     echo "  just board new epic \"name\" [description]"
     echo "                              Create epic directory"
-    echo "  just board new milestone \"name\""
-    echo "                              Create milestone directory"
+    echo "  just board new milestone \"name\" [epic]"
+    echo "                              Create milestone with README, SRS, DESIGN"
     echo "  just board start-milestone <id>"
     echo "                              Set milestone to in-progress"
     echo "  just board done-milestone <id>"
@@ -248,6 +248,308 @@ generate:
     } > README.md
 
     echo "Generated README.md"
+
+    # Update milestone READMEs with story progress
+    for epic_dir in epics/*/; do
+        [[ -d "${epic_dir}milestones" ]] || continue
+        epic_id=$(basename "$epic_dir")
+
+        for ms_dir in "${epic_dir}milestones"/*/; do
+            [[ -d "$ms_dir" ]] || continue
+            ms_id=$(basename "$ms_dir")
+            ms_readme="${ms_dir}README.md"
+            [[ -f "$ms_readme" ]] || continue
+
+            # Build the scope path to match stories
+            scope_path="${epic_id}/${ms_id}"
+
+            # Collect stories matching this scope from all stages
+            declare -a story_files=()
+            for stage in backlog in-progress done icebox; do
+                stage_dir="stages/${stage}/stories"
+                [[ -d "$stage_dir" ]] || continue
+                while IFS= read -r -d '' story_file; do
+                    story_scope=$(get_field "$story_file" "scope")
+                    if [[ "$story_scope" == "$scope_path" ]]; then
+                        story_files+=("$story_file")
+                    fi
+                done < <(find "$stage_dir" -maxdepth 1 -name "*.md" -print0 2>/dev/null)
+            done
+
+            # Skip if no stories found
+            [[ ${#story_files[@]} -eq 0 ]] && continue
+
+            # Sort stories by ID number
+            IFS=$'\n' sorted_stories=($(for f in "${story_files[@]}"; do
+                story_id=$(get_field "$f" "id")
+                echo "$story_id|$f"
+            done | sort -t'|' -k1 -V | cut -d'|' -f2))
+            unset IFS
+
+            # Count stats
+            total_stories=${#sorted_stories[@]}
+            done_stories=0
+            for story_file in "${sorted_stories[@]}"; do
+                story_status=$(get_field "$story_file" "status")
+                if [[ "$story_status" == "done" ]]; then
+                    done_stories=$((done_stories + 1))
+                fi
+            done
+
+            # Count requirements from SRS.md if it exists
+            srs_file="${ms_dir}SRS.md"
+            total_reqs=0
+            verified_reqs=0
+            if [[ -f "$srs_file" ]]; then
+                # Count lines matching | SRS-* | pattern (requirement rows)
+                total_reqs=$(grep -cE '^\| *SRS-' "$srs_file" 2>/dev/null || echo "0")
+            fi
+
+            # Generate new Stories section content
+            stories_content=""
+            stories_content+="## Stories"$'\n'
+            stories_content+=""$'\n'
+            stories_content+="| # | Story | Description | Status |"$'\n'
+            stories_content+="|---|-------|-------------|--------|"$'\n'
+
+            story_num=1
+            for story_file in "${sorted_stories[@]}"; do
+                story_id=$(get_field "$story_file" "id")
+                story_title=$(grep -m1 "^title:" "$story_file" 2>/dev/null | sed 's/^title: *//' || echo "")
+                story_status=$(get_field "$story_file" "status")
+
+                # Build relative path from milestone dir to story
+                story_basename=$(basename "$story_file")
+                # Determine stage from path
+                if [[ "$story_file" == *"/backlog/"* ]]; then
+                    rel_path="../../../../stages/backlog/stories/${story_basename}"
+                elif [[ "$story_file" == *"/in-progress/"* ]]; then
+                    rel_path="../../../../stages/in-progress/stories/${story_basename}"
+                elif [[ "$story_file" == *"/done/"* ]]; then
+                    rel_path="../../../../stages/done/stories/${story_basename}"
+                elif [[ "$story_file" == *"/icebox/"* ]]; then
+                    rel_path="../../../../stages/icebox/stories/${story_basename}"
+                else
+                    rel_path="$story_basename"
+                fi
+
+                stories_content+="| ${story_num} | [${story_id}](${rel_path}) | ${story_title} | ${story_status} |"$'\n'
+                story_num=$((story_num + 1))
+            done
+
+            stories_content+=""$'\n'
+            stories_content+="## Progress"$'\n'
+            stories_content+=""$'\n'
+            stories_content+="**Requirements:** ${verified_reqs}/${total_reqs} verified"$'\n'
+            stories_content+="**Stories:** ${done_stories}/${total_stories} complete"$'\n'
+
+            # Update milestone README: replace from ## Stories to end of file
+            # First check if ## Stories section exists
+            if grep -q "^## Stories" "$ms_readme"; then
+                # Extract content before ## Stories, trim trailing blank lines
+                head_content=$(sed -n '1,/^## Stories/{ /^## Stories/!p }' "$ms_readme" | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}')
+                # Write new content with proper spacing
+                {
+                    echo "$head_content"
+                    echo ""
+                    echo "$stories_content"
+                } > "$ms_readme"
+            else
+                # Append Stories section if it doesn't exist
+                echo "" >> "$ms_readme"
+                echo "$stories_content" >> "$ms_readme"
+            fi
+
+            echo "Updated ${ms_dir}README.md (${done_stories}/${total_stories} stories complete)"
+        done
+    done
+
+    # Generate epic READMEs with milestone progress
+    for epic_dir in epics/*/; do
+        [[ -d "$epic_dir" ]] || continue
+        just board _generate-epic-readme "$(basename "$epic_dir")"
+    done
+
+# Generate a single epic README with milestone progress
+_generate-epic-readme EPIC:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd "{{board_dir}}"
+
+    epic="{{EPIC}}"
+    epic_dir="epics/$epic"
+    epic_readme="${epic_dir}/README.md"
+
+    if [[ ! -f "$epic_readme" ]]; then
+        # No README, skip
+        exit 0
+    fi
+
+    # Check if epic has milestones directory
+    if [[ ! -d "${epic_dir}/milestones" ]]; then
+        # No milestones, nothing to generate
+        exit 0
+    fi
+
+    # Count milestones
+    ms_count=$(find "${epic_dir}/milestones" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l | tr -d ' ')
+    if [[ "$ms_count" == "0" ]]; then
+        exit 0
+    fi
+
+    # Helper to get frontmatter field
+    get_field() {
+        local file="$1"
+        local field="$2"
+        grep -m1 "^${field}:" "$file" 2>/dev/null | sed "s/^${field}: *//" || echo ""
+    }
+
+    # Collect milestone data
+    declare -A ms_status
+    declare -A ms_title
+    declare -a ms_list=()
+
+    for ms_dir in $(ls -d "${epic_dir}/milestones"/*/ 2>/dev/null | sort -t'/' -k5 -V); do
+        [[ -d "$ms_dir" ]] || continue
+        ms_name=$(basename "$ms_dir")
+        ms_readme="${ms_dir}README.md"
+        [[ -f "$ms_readme" ]] || continue
+
+        ms_list+=("$ms_name")
+        ms_status["$ms_name"]=$(get_field "$ms_readme" "status" | tr -d ' ')
+        ms_title["$ms_name"]=$(get_field "$ms_readme" "title")
+    done
+
+    # No milestones with READMEs found
+    [[ ${#ms_list[@]} -eq 0 ]] && exit 0
+
+    # Count stories per milestone and totals
+    total_stories=0
+    done_stories=0
+    in_progress_stories=0
+    active_milestone=""
+
+    declare -A ms_story_total
+    declare -A ms_story_done
+
+    for ms_name in "${ms_list[@]}"; do
+        ms_story_total["$ms_name"]=0
+        ms_story_done["$ms_name"]=0
+
+        # Track active milestone (first in-progress one)
+        if [[ "${ms_status[$ms_name]}" == "in-progress" ]] && [[ -z "$active_milestone" ]]; then
+            active_milestone="${ms_title[$ms_name]:-$ms_name}"
+        fi
+
+        # Count stories with scope matching this milestone
+        scope_pattern="^scope: *${epic}/${ms_name}$"
+        for stage in backlog in-progress done icebox; do
+            stage_dir="stages/${stage}/stories"
+            [[ -d "$stage_dir" ]] || continue
+
+            for story in "$stage_dir"/*.md; do
+                [[ -f "$story" ]] || continue
+                if grep -qE "$scope_pattern" "$story" 2>/dev/null; then
+                    ms_story_total["$ms_name"]=$((ms_story_total["$ms_name"] + 1))
+                    total_stories=$((total_stories + 1))
+
+                    if [[ "$stage" == "done" ]]; then
+                        ms_story_done["$ms_name"]=$((ms_story_done["$ms_name"] + 1))
+                        done_stories=$((done_stories + 1))
+                    elif [[ "$stage" == "in-progress" ]]; then
+                        in_progress_stories=$((in_progress_stories + 1))
+                    fi
+                fi
+            done
+        done
+    done
+
+    # Count milestone progress
+    done_milestones=0
+    total_milestones=${#ms_list[@]}
+    for ms_name in "${ms_list[@]}"; do
+        if [[ "${ms_status[$ms_name]}" == "done" ]]; then
+            done_milestones=$((done_milestones + 1))
+        fi
+    done
+
+    # Read existing README content
+    existing_content=$(cat "$epic_readme")
+
+    # Find line numbers of frontmatter delimiters
+    first_delim=$(echo "$existing_content" | grep -n "^---$" | head -1 | cut -d: -f1)
+    second_delim=$(echo "$existing_content" | grep -n "^---$" | head -2 | tail -1 | cut -d: -f1)
+
+    # Extract frontmatter
+    frontmatter=$(echo "$existing_content" | head -n "$second_delim")
+
+    # Check for existing generated markers
+    if echo "$existing_content" | grep -q "<!-- BEGIN GENERATED -->"; then
+        # Has markers - extract content between frontmatter end and BEGIN marker
+        begin_line=$(echo "$existing_content" | grep -n "<!-- BEGIN GENERATED -->" | head -1 | cut -d: -f1)
+        preserved_content=$(echo "$existing_content" | sed -n "$((second_delim + 1)),$((begin_line - 1))p")
+    else
+        # No markers - preserve everything except ## Milestones section
+        after_fm=$(echo "$existing_content" | tail -n +$((second_delim + 1)))
+
+        # Check if there's a ## Milestones section to remove
+        if echo "$after_fm" | grep -q "^## Milestones"; then
+            # Get line number of ## Milestones in after_fm
+            ms_line=$(echo "$after_fm" | grep -n "^## Milestones" | head -1 | cut -d: -f1)
+            # Preserve content before Milestones
+            preserved_content=$(echo "$after_fm" | head -n $((ms_line - 1)))
+        else
+            # No Milestones section, preserve everything
+            preserved_content="$after_fm"
+        fi
+    fi
+
+    # Clean up preserved content (remove trailing empty lines)
+    preserved_content=$(echo "$preserved_content" | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' 2>/dev/null || echo "$preserved_content")
+
+    # Build new README
+    {
+        echo "$frontmatter"
+        echo ""
+
+        # Preserved content (Vision, Goals, etc.)
+        if [[ -n "$preserved_content" ]]; then
+            echo "$preserved_content"
+            echo ""
+        fi
+
+        # Generated section
+        echo "<!-- BEGIN GENERATED -->"
+        echo "## Milestones"
+        echo ""
+
+        # Progress summary
+        echo "**Progress:** ${done_milestones}/${total_milestones} milestones complete, ${done_stories}/${total_stories} stories done"
+        if [[ -n "$active_milestone" ]]; then
+            echo "**Active:** ${active_milestone}"
+        fi
+        if [[ $in_progress_stories -gt 0 ]]; then
+            echo "**In Progress:** ${in_progress_stories} stories"
+        fi
+        echo ""
+
+        # Milestone table
+        echo "| ID | Milestone | Stories | Status |"
+        echo "|----|-----------|---------|--------|"
+
+        for ms_name in "${ms_list[@]}"; do
+            ms_id=$(echo "$ms_name" | grep -oE '^[0-9]+' || echo "")
+            title="${ms_title[$ms_name]:-$ms_name}"
+            status="${ms_status[$ms_name]:-planned}"
+            story_count="${ms_story_done[$ms_name]}/${ms_story_total[$ms_name]}"
+
+            echo "| ${ms_id} | [${title}](milestones/${ms_name}/) | ${story_count} | ${status} |"
+        done
+
+        echo "<!-- END GENERATED -->"
+    } > "$epic_readme"
+
+    echo "Updated ${epic_readme}"
 
 # Show board status summary
 status:
@@ -475,134 +777,316 @@ _new-epic NAME DESCRIPTION="":
         exit 1
     fi
 
-    mkdir -p "$dir"
+    mkdir -p "$dir/milestones"
 
     # If description not provided and we have a terminal, prompt for it
     if [[ -z "$description" ]] && [[ -t 0 ]]; then
         read -p "Description (one line): " description
     fi
 
-    {
-        echo '---'
-        echo "id: ${slug}"
-        echo "title: ${name}"
-        echo "status: active"
-        echo "description: ${description}"
-        echo '---'
-        echo ""
-        echo "# ${name}"
-        echo ""
-        echo "${description}"
-        echo ""
-        echo "## Milestones"
-        echo ""
-        echo '> Milestones live in `milestones/` subdirectory.'
-    } > "$dir/README.md"
+    # Use templates if available, otherwise use inline defaults
+    readme_template="templates/epic-README.md"
+    prd_template="templates/PRD.md"
+
+    if [[ -f "$readme_template" ]]; then
+        # Read template and substitute variables
+        sed -e "s/\${EPIC_ID}/$slug/g" \
+            -e "s/\${EPIC_TITLE}/$name/g" \
+            -e "s/\${EPIC_SUMMARY}/$description/g" \
+            -e "s/\${EPIC_NAME}/$slug/g" \
+            "$readme_template" > "$dir/README.md"
+    else
+        # Fallback inline template
+        {
+            echo '---'
+            echo "id: ${slug}"
+            echo "title: ${name}"
+            echo "status: backlog"
+            echo '---'
+            echo ""
+            echo "# ${name}"
+            echo ""
+            echo "> ${description}"
+            echo ""
+            echo "## Documents"
+            echo ""
+            echo "| Document | Description |"
+            echo "|----------|-------------|"
+            echo "| [PRD.md](PRD.md) | Product requirements and success criteria |"
+            echo ""
+            echo "## Milestones"
+            echo ""
+            echo "| ID | Milestone | Status | Progress |"
+            echo "|----|-----------|--------|----------|"
+            echo ""
+            echo "## Status"
+            echo ""
+            echo "**Active Milestone:** None"
+            echo "**Stories In Progress:** 0"
+            echo "**Completion:** 0/0 milestones done"
+        } > "$dir/README.md"
+    fi
+
+    if [[ -f "$prd_template" ]]; then
+        # Read template and substitute variables
+        sed -e "s/\${EPIC_ID}/$slug/g" \
+            -e "s/\${EPIC_TITLE}/$name/g" \
+            -e "s/\${VALUE_PROPOSITION}/$description/g" \
+            -e "s/\${EPIC_NAME}/$slug/g" \
+            "$prd_template" > "$dir/PRD.md"
+    else
+        # Fallback inline template
+        {
+            echo "# ${name} — Product Requirements"
+            echo ""
+            echo "> ${description}"
+            echo ""
+            echo "## Problem Statement"
+            echo ""
+            echo "<!-- What user problem does this solve? -->"
+            echo ""
+            echo "## Users"
+            echo ""
+            echo "<!-- Who benefits from this? Primary and secondary users -->"
+            echo ""
+            echo "## Requirements"
+            echo ""
+            echo "### Functional Requirements"
+            echo ""
+            echo "| ID | Requirement | Priority |"
+            echo "|----|-------------|----------|"
+            echo ""
+            echo "### Non-Functional Requirements"
+            echo ""
+            echo "| ID | Requirement | Priority |"
+            echo "|----|-------------|----------|"
+            echo ""
+            echo "## Success Criteria"
+            echo ""
+            echo "- [ ] TBD"
+            echo ""
+            echo "## Milestones"
+            echo ""
+            echo "| ID | Milestone | Status |"
+            echo "|----|-----------|--------|"
+        } > "$dir/PRD.md"
+    fi
 
     echo "Created: $dir/README.md"
+    echo "Created: $dir/PRD.md"
 
 # Internal: create a new milestone
-_new-milestone NAME:
+# Usage: just board _new-milestone "name" [epic]
+_new-milestone NAME EPIC="":
     #!/usr/bin/env bash
     set -euo pipefail
     cd "{{board_dir}}"
 
     name="{{NAME}}"
+    epic="{{EPIC}}"
+    templates_dir="templates"
     id=$(just board _next-milestone)
     slug=$(echo "$name" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd 'a-z0-9-')
-    dir="milestones/${id}-${slug}"
+    milestone_id="${id}-${slug}"
+    date=$(date +%Y-%m-%d)
 
-    if [[ -d "$dir" ]]; then
-        echo "Error: Milestone directory already exists"
+    # Determine milestone location
+    if [[ -n "$epic" ]]; then
+        # Find epic directory (allow partial match)
+        epic_dir=""
+        for d in epics/*/; do
+            [[ -d "$d" ]] || continue
+            if [[ "$(basename "$d")" == *"$epic"* ]]; then
+                epic_dir="$d"
+                break
+            fi
+        done
+
+        if [[ -z "$epic_dir" ]]; then
+            echo "Error: Epic '$epic' not found"
+            echo "Available epics:"
+            for e in epics/*/; do
+                [[ -d "$e" ]] && echo "  - $(basename "$e")"
+            done
+            exit 1
+        fi
+
+        epic_name=$(basename "$epic_dir")
+        dir="${epic_dir}milestones/${milestone_id}"
+        mkdir -p "$dir"
+    else
+        # No epic specified - create in top-level milestones (backwards compat)
+        dir="milestones/${milestone_id}"
+        epic_name=""
+        mkdir -p "$dir"
+    fi
+
+    if [[ -d "$dir" ]] && [[ -f "$dir/README.md" ]]; then
+        echo "Error: Milestone already exists"
         exit 1
     fi
 
-    mkdir -p "$dir"
+    # Helper: substitute template variables in content
+    substitute_vars() {
+        local content="$1"
+        # Use sed for substitution to handle multi-line content
+        echo "$content" | sed \
+            -e "s|\\\${MILESTONE_ID}|${milestone_id}|g" \
+            -e "s|\\\${MILESTONE_TITLE}|${name}|g" \
+            -e "s|\\\${MILESTONE_SUMMARY}|[One-line summary of the milestone]|g" \
+            -e "s|\\\${MILESTONE_GOAL}|[Goal of the milestone]|g" \
+            -e "s|\\\${EPIC_ID}|${epic_name:-none}|g" \
+            -e "s|\\\${EPIC_NAME}|${epic_name:-none}|g" \
+            -e "s|\\\${EPIC_TITLE}|${epic_name:-none}|g" \
+            -e "s|\\\${DATE}|${date}|g" \
+            -e "s|\\\${DESIGN_SUMMARY}|[Design approach summary]|g" \
+            -e "s|\\\${STORY_ID}|STORY0001|g" \
+            -e "s|\\\${STORY_LINK}|../../stages/backlog/stories/STORY0001.md|g" \
+            -e "s|\\\${STORY_DESCRIPTION}|[Story description]|g" \
+            -e "s|\\\${REQUIREMENT_1}|[Requirement]|g" \
+            -e "s|\\\${VERIFICATION_1}|[Verification method]|g" \
+            -e "s|\\\${REQUIREMENT_2}|[Requirement]|g" \
+            -e "s|\\\${VERIFICATION_2}|[Verification method]|g" \
+            -e "s|\\\${NFR_REQUIREMENT_1}|[Non-functional requirement]|g" \
+            -e "s|\\\${NFR_VERIFICATION_1}|[Verification method]|g" \
+            -e "s|\\\${DECISION_1}|[Decision]|g" \
+            -e "s|\\\${CHOICE_1}|[Choice]|g" \
+            -e "s|\\\${RATIONALE_1}|[Rationale]|g" \
+            -e "s|\\\${COMPONENT_1}|Component|g"
+    }
 
-    # Create README.md
-    {
-        echo '---'
-        echo "id: ${id}-${slug}"
-        echo "title: ${name}"
-        echo "status: planned"
-        echo "epics: []"
-        echo '---'
-        echo ""
-        echo "# ${name}"
-        echo ""
-        echo "## Overview"
-        echo ""
-        echo "[Description of the milestone]"
-        echo ""
-        echo "## Stories"
-        echo ""
-        echo '> Stories linked via `just board link <story> <milestone>`.'
-        echo ""
-        echo "## Design"
-        echo ""
-        echo "See [design.md](design.md) for architecture decisions."
-    } > "$dir/README.md"
+    # Create README.md from template
+    if [[ -f "$templates_dir/milestone-README.md" ]]; then
+        template_content=$(cat "$templates_dir/milestone-README.md")
+        # Remove template comment block (lines between <!-- and -->)
+        template_content=$(echo "$template_content" | sed '/^<!--$/,/^-->$/d')
+        substitute_vars "$template_content" > "$dir/README.md"
+    else
+        # Fallback if template doesn't exist
+        {
+            echo '---'
+            echo "id: ${milestone_id}"
+            echo "title: ${name}"
+            echo "status: backlog"
+            echo "epic: ${epic_name:-none}"
+            echo '---'
+            echo ""
+            echo "# ${name}"
+            echo ""
+            echo "> [One-line summary of the milestone]"
+            echo ""
+            echo "## Documents"
+            echo ""
+            echo "| Document | Description |"
+            echo "|----------|-------------|"
+            echo "| [SRS.md](SRS.md) | Requirements and verification criteria |"
+            echo "| [DESIGN.md](DESIGN.md) | Architecture and implementation details |"
+            echo ""
+            echo "## Stories"
+            echo ""
+            echo '> Stories linked via `just board link <story> <milestone>`.'
+            echo ""
+            echo "## Progress"
+            echo ""
+            echo "**Requirements:** 0/0 verified"
+            echo "**Stories:** 0/0 complete"
+        } > "$dir/README.md"
+    fi
 
-    # Create design.md template
-    date=$(date +%Y-%m-%d)
-    {
-        echo '---'
-        echo "created: ${date}"
-        echo '---'
-        echo ""
-        echo "# Milestone ${id}: ${name} - Design"
-        echo ""
-        echo "> [One-line summary]"
-        echo ""
-        echo "## Overview"
-        echo ""
-        echo "[Description of the milestone]"
-        echo ""
-        echo "## Key Decisions"
-        echo ""
-        echo "| Decision | Choice | Rationale |"
-        echo "|----------|--------|-----------|"
-        echo "| | | |"
-        echo ""
-        echo "## Architecture"
-        echo ""
-        echo "[Technical approach]"
-        echo ""
-        echo "## Deliverables"
-        echo ""
-        echo "- [ ] Item 1"
-        echo "- [ ] Item 2"
-    } > "$dir/design.md"
+    # Create SRS.md from template
+    if [[ -f "$templates_dir/SRS.md" ]]; then
+        template_content=$(cat "$templates_dir/SRS.md")
+        # Remove template comment block
+        template_content=$(echo "$template_content" | sed '/^<!--$/,/^-->$/d')
+        substitute_vars "$template_content" > "$dir/SRS.md"
+    else
+        # Fallback if template doesn't exist
+        {
+            echo "# ${name} — Software Requirements Specification"
+            echo ""
+            echo "> [Goal of the milestone]"
+            echo ""
+            echo "**Epic:** ${epic_name:-none}"
+            echo "**Status:** backlog"
+            echo ""
+            echo "## Scope"
+            echo ""
+            echo "## Requirements"
+            echo ""
+            echo "### Functional Requirements"
+            echo ""
+            echo "| ID | Requirement | Source | Verification |"
+            echo "|----|-------------|--------|--------------|"
+            echo "| SRS-01 | [Requirement] | FR-01 | [Verification method] |"
+            echo ""
+            echo "## Stories"
+            echo ""
+            echo "| Story | Requirements | Status |"
+            echo "|-------|--------------|--------|"
+        } > "$dir/SRS.md"
+    fi
 
-    echo "Created: $dir/README.md"
-    echo "Created: $dir/design.md"
+    # Create DESIGN.md from template
+    if [[ -f "$templates_dir/DESIGN.md" ]]; then
+        template_content=$(cat "$templates_dir/DESIGN.md")
+        # Remove template comment block
+        template_content=$(echo "$template_content" | sed '/^<!--$/,/^-->$/d')
+        substitute_vars "$template_content" > "$dir/DESIGN.md"
+    else
+        # Fallback if template doesn't exist
+        {
+            echo "# ${name} — Design Document"
+            echo ""
+            echo "> [Design approach summary]"
+            echo ""
+            echo "**SRS:** [SRS.md](SRS.md)"
+            echo ""
+            echo "## Overview"
+            echo ""
+            echo "## Architecture"
+            echo ""
+            echo "## Key Decisions"
+            echo ""
+            echo "| Decision | Choice | Rationale |"
+            echo "|----------|--------|-----------|"
+        } > "$dir/DESIGN.md"
+    fi
+
+    echo ""
+    echo "Created milestone: ${milestone_id}"
+    echo ""
+    echo "Files created:"
+    echo "  $dir/README.md"
+    echo "  $dir/SRS.md"
+    echo "  $dir/DESIGN.md"
 
 # Router for new command
 # Usage:
 #   just board new story "title" [type] [epics] [milestone]
 #   just board new epic "name" [description]
-#   just board new milestone "name"
+#   just board new milestone "name" [epic]
 new TYPE NAME *ARGS:
     #!/usr/bin/env bash
     type="{{TYPE}}"
     name="{{NAME}}"
+    args="{{ARGS}}"
 
     case "$type" in
         story)
-            just board _new-story "$name" {{ARGS}}
+            just board _new-story "$name" $args
             ;;
         epic)
-            just board _new-epic "$name" {{ARGS}}
+            just board _new-epic "$name" "$args"
             ;;
         milestone)
-            just board _new-milestone "$name"
+            just board _new-milestone "$name" "$args"
             ;;
         *)
             echo "Error: Unknown type '$type'"
             echo "Usage:"
             echo "  just board new story \"title\" [type] [epics] [milestone]"
             echo "  just board new epic \"name\" [description]"
-            echo "  just board new milestone \"name\""
+            echo "  just board new milestone \"name\" [epic]"
             exit 1
             ;;
     esac

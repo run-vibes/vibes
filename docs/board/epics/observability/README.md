@@ -5,6 +5,9 @@ status: planned
 description: Full observability - tracing, logging, metrics, analytics, cost tracking, alerts
 ---
 
+
+
+
 # Observability Stack
 
 Full observability stack: debugging (traces, logs), monitoring (metrics, health), and analytics (insights, cost). OpenTelemetry-based for standardization.
@@ -325,13 +328,12 @@ vibes observe export logs <file>      # Export logs
 vibes observe export metrics <file>   # Export metrics
 ```
 
+<!-- BEGIN GENERATED -->
 ## Milestones
 
-| # | Milestone | Description |
-|---|-----------|-------------|
-| 1 | Tracing Core | OpenTelemetry tracing, spans |
-| 2 | Structured Logging | Context-aware logging |
-| 3 | Built-in Metrics | Model, agent, session metrics |
-| 4 | Cost Tracking | Token counting, cost aggregation |
-| 5 | Alerts | Rule engine, notifications |
-| 6 | TUI Dashboard | Real-time observability TUI |
+**Progress:** 1/1 milestones complete, 7/7 stories done
+
+| ID | Milestone | Stories | Status |
+|----|-----------|---------|--------|
+| 40 | [Distributed Tracing](milestones/40-distributed-tracing/) | 7/7 | done |
+<!-- END GENERATED -->

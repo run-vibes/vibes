@@ -30,11 +30,17 @@ See [design.md](design.md) for architecture and implementation details.
 
 ## Stories
 
-| ID | Story | Status |
-|----|-------|--------|
-| FEAT0109 | [Board generator grouped layout](../../../../stages/done/stories/[FEAT][0109]-board-generator-grouped-layout.md) | done |
-| FEAT0110 | [Board state command sync](../../../../stages/done/stories/[FEAT][0110]-board-state-command-sync.md) | done |
-| CHORE0111 | [Create design-system epic](../../../../stages/done/stories/[CHORE][0111]-create-design-system-epic.md) | done |
-| CHORE0112 | [Migrate milestones to epics](../../../../stages/done/stories/[CHORE][0112]-migrate-milestones-to-epics.md) | done |
-| CHORE0113 | [Rename stories to new format](../../../../stages/done/stories/[CHORE][0113]-rename-stories-new-format.md) | done |
-| CHORE0114 | [Update board documentation](../../../../stages/done/stories/[CHORE][0114]-update-board-documentation.md) | done |
+| # | Story | Description | Status |
+|---|-------|-------------|--------|
+| 1 | [CHORE0111](../../../../stages/done/stories/[CHORE][0111]-create-design-system-epic.md) | Create design-system epic | done |
+| 2 | [CHORE0112](../../../../stages/done/stories/[CHORE][0112]-migrate-milestones-to-epics.md) | Migrate milestones to epics | done |
+| 3 | [CHORE0113](../../../../stages/done/stories/[CHORE][0113]-rename-stories-new-format.md) | Rename stories to new format | done |
+| 4 | [CHORE0114](../../../../stages/done/stories/[CHORE][0114]-update-board-documentation.md) | Update board documentation | done |
+| 5 | [FEAT0109](../../../../stages/done/stories/[FEAT][0109]-board-generator-grouped-layout.md) | Board generator grouped layout | done |
+| 6 | [FEAT0110](../../../../stages/done/stories/[FEAT][0110]-board-state-command-sync.md) | Board state command sync | done |
+
+## Progress
+
+**Requirements:** 0/0 verified
+**Stories:** 6/6 complete
+

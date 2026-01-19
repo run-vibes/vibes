@@ -5,6 +5,9 @@ status: planned
 description: Unified model management - cloud providers, local models, registry, caching, routing
 ---
 
+
+
+
 # Model Management Platform
 
 Full platform for model management: cloud providers (Anthropic, OpenAI, Google, Groq), local models (Ollama, llama.cpp), with registry, auth, downloads, caching, and smart routing.
@@ -232,12 +235,12 @@ vibes models cache status            # Show cache stats
 vibes models cache clear             # Clear response cache
 ```
 
+<!-- BEGIN GENERATED -->
 ## Milestones
 
-| # | Milestone | Description |
-|---|-----------|-------------|
-| 1 | Registry & Auth | Model catalog, credential management |
-| 2 | Cloud Providers | Anthropic, OpenAI integration |
-| 3 | Local Models | Ollama, llama.cpp support |
-| 4 | Routing & Cache | Smart selection, response caching |
-| 5 | Plugin API | Expose to plugins |
+**Progress:** 1/1 milestones complete, 9/9 stories done
+
+| ID | Milestone | Stories | Status |
+|----|-----------|---------|--------|
+| 37 | [Model Management](milestones/37-model-management/) | 9/9 | done |
+<!-- END GENERATED -->

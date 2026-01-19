@@ -61,13 +61,15 @@ Fourth milestone of the TUI epic. Implements swarm visualization showing paralle
 
 ## Stories
 
-| ID | Title | Status |
-|----|-------|--------|
-| m44-feat-01 | Swarm view layout | backlog |
-| m44-feat-02 | Agent progress bars | backlog |
-| m44-feat-03 | Result merge interface | backlog |
-| m44-feat-04 | Swarm coordination status | backlog |
+| # | Story | Description | Status |
+|---|-------|-------------|--------|
+| 1 | [FEAT0182](../../../../stages/done/stories/[FEAT][0182]-swarm-view-layout.md) | Swarm view layout | done |
+| 2 | [FEAT0183](../../../../stages/done/stories/[FEAT][0183]-agent-progress-bars.md) | Agent progress bars | done |
+| 3 | [FEAT0184](../../../../stages/done/stories/[FEAT][0184]-result-merge-interface.md) | Result merge interface | done |
+| 4 | [FEAT0185](../../../../stages/done/stories/[FEAT][0185]-swarm-coordination-status.md) | Swarm coordination status | done |
 
-## Design
+## Progress
 
-See [../../epics/tui/README.md](../../epics/tui/README.md) for architecture.
+**Requirements:** 0/0 verified
+**Stories:** 4/4 complete
+

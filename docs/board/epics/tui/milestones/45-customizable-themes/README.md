@@ -60,13 +60,15 @@ pub struct Theme {
 
 ## Stories
 
-| ID | Title | Status |
-|----|-------|--------|
-| m45-feat-01 | Theme config file loader | backlog |
-| m45-feat-02 | Built-in theme variants | backlog |
-| m45-feat-03 | Runtime theme switching | backlog |
-| m45-feat-04 | Theme preview in settings | backlog |
+| # | Story | Description | Status |
+|---|-------|-------------|--------|
+| 1 | [FEAT0186](../../../../stages/done/stories/[FEAT][0186]-theme-config-loader.md) | Theme config file loader | done |
+| 2 | [FEAT0187](../../../../stages/done/stories/[FEAT][0187]-builtin-theme-variants.md) | Built-in theme variants | done |
+| 3 | [FEAT0188](../../../../stages/done/stories/[FEAT][0188]-runtime-theme-switching.md) | Runtime theme switching | done |
+| 4 | [FEAT0189](../../../../stages/done/stories/[FEAT][0189]-theme-preview-settings.md) | Theme preview in settings | done |
 
-## Design
+## Progress
 
-See [../../epics/tui/README.md](../../epics/tui/README.md) for architecture.
+**Requirements:** 0/0 verified
+**Stories:** 4/4 complete
+

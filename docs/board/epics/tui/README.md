@@ -5,6 +5,8 @@ status: planned
 description: Interactive TUI for controlling agents, approving permissions, viewing output - embeddable in web via PTY
 ---
 
+
+
 # Terminal User Interface
 
 Interactive terminal interface (lazygit-style) for controlling agents, approving permissions, and viewing output. Embeddable in Web UI via PTY.
@@ -297,13 +299,18 @@ vibes tui serve                       # Start PTY server
 vibes tui serve --port 8081           # Custom port
 ```
 
+<!-- BEGIN GENERATED -->
 ## Milestones
 
-| # | Milestone | Description |
-|---|-----------|-------------|
-| 1 | TUI Core | App structure, views, navigation |
-| 2 | Dashboard | Overview, session list |
-| 3 | Agent Control | Agent detail, permissions, control |
-| 4 | Swarm Visualization | Swarm progress, coordination |
-| 5 | Theme System | CRT theme, customization |
-| 6 | PTY Server | Web embedding via xterm.js |
+**Progress:** 3/6 milestones complete, 21/25 stories done
+**Active:** Customizable Themes
+
+| ID | Milestone | Stories | Status |
+|----|-----------|---------|--------|
+| 41 | [Terminal UI Framework](milestones/41-terminal-ui-framework/) | 5/5 | done |
+| 42 | [Terminal Dashboard](milestones/42-terminal-dashboard/) | 4/4 | done |
+| 43 | [Terminal Agent Control](milestones/43-terminal-agent-control/) | 4/4 | done |
+| 44 | [Swarm Monitoring](milestones/44-swarm-monitoring/) | 4/4 | planned |
+| 45 | [Customizable Themes](milestones/45-customizable-themes/) | 4/4 | in-progress |
+| 46 | [Terminal Server](milestones/46-terminal-server/) | 0/4 | planned |
+<!-- END GENERATED -->

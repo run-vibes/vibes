@@ -71,13 +71,15 @@ terminal.onData((data) => {
 
 ## Stories
 
-| ID | Title | Status |
-|----|-------|--------|
-| m46-feat-01 | PTY server core | backlog |
-| m46-feat-02 | Session management | backlog |
-| m46-feat-03 | WebSocket PTY endpoint | backlog |
-| m46-feat-04 | xterm.js web integration | backlog |
+| # | Story | Description | Status |
+|---|-------|-------------|--------|
+| 1 | [FEAT0116](../../../../stages/backlog/stories/[FEAT][0116]-pty-server-core.md) | PTY server core | backlog |
+| 2 | [FEAT0117](../../../../stages/backlog/stories/[FEAT][0117]-session-management.md) | Session management | backlog |
+| 3 | [FEAT0118](../../../../stages/backlog/stories/[FEAT][0118]-websocket-pty-endpoint.md) | WebSocket PTY endpoint | backlog |
+| 4 | [FEAT0119](../../../../stages/backlog/stories/[FEAT][0119]-xtermjs-web-integration.md) | xterm.js web integration | backlog |
 
-## Design
+## Progress
 
-See [../../epics/tui/README.md](../../epics/tui/README.md) for architecture.
+**Requirements:** 0/0 verified
+**Stories:** 0/4 complete
+

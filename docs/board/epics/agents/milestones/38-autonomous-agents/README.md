@@ -28,20 +28,18 @@ First milestone of the Agents epic. Establishes the foundation for agent orchest
 
 ## Stories
 
-| ID | Title | Priority | Estimate |
-|----|-------|----------|----------|
-| m38-feat-01 | Agent module skeleton in vibes-core | high | 2h |
-| m38-feat-02 | Agent trait definition | high | 3h |
-| m38-feat-03 | AgentStatus and AgentContext types | high | 2h |
-| m38-feat-04 | Task and TaskResult types | high | 3h |
-| m38-feat-05 | Agent lifecycle management | high | 4h |
-| m38-feat-06 | Agent CLI commands | medium | 3h |
-| m38-feat-07 | Agent Web UI | medium | 4h |
+| # | Story | Description | Status |
+|---|-------|-------------|--------|
+| 1 | [FEAT0151](../../../../stages/done/stories/[FEAT][0151]-agent-module-skeleton.md) | Agent module skeleton in vibes-core | done |
+| 2 | [FEAT0152](../../../../stages/done/stories/[FEAT][0152]-agent-trait.md) | Agent trait definition | done |
+| 3 | [FEAT0153](../../../../stages/done/stories/[FEAT][0153]-agent-status.md) | AgentStatus and AgentContext types | done |
+| 4 | [FEAT0154](../../../../stages/done/stories/[FEAT][0154]-task-types.md) | Task and TaskResult types | done |
+| 5 | [FEAT0155](../../../../stages/done/stories/[FEAT][0155]-agent-lifecycle.md) | Agent lifecycle management | done |
+| 6 | [FEAT0156](../../../../stages/done/stories/[FEAT][0156]-agent-cli.md) | Agent CLI commands | done |
+| 7 | [FEAT0157](../../../../stages/done/stories/[FEAT][0157]-agent-web-ui.md) | Agent Web UI | done |
 
-## Epics
+## Progress
 
-- [agents](../../epics/agents)
+**Requirements:** 0/0 verified
+**Stories:** 7/7 complete
 
-## Design
-
-See [../../epics/agents/README.md](../../epics/agents/README.md) for architecture.

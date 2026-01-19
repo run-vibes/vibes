@@ -5,6 +5,9 @@ status: planned
 description: Benchmark mode for industry evals, longitudinal mode for measuring real-world performance over time
 ---
 
+
+
+
 # Evaluation Framework
 
 Benchmarking system for validating vibes+groove against industry standards (SWE-Bench, Remote Labor Index) AND longitudinal measurement of performance over days/weeks of real work.
@@ -272,15 +275,19 @@ pub struct Insight {
 }
 ```
 
+<!-- BEGIN GENERATED -->
 ## Milestones
 
-| ID | Milestone | Description | Status |
-|----|-----------|-------------|--------|
-| 39 | [Eval Core](../../milestones/39-eval-core/) | Metrics definitions, study lifecycle, storage | in-progress |
-| 50 | [Longitudinal Mode](../../milestones/50-longitudinal-mode/) | Continuous measurement over real work | planned |
-| 51 | [Eval Reports](../../milestones/51-eval-reports/) | Export, visualization, summaries | planned |
-| 52 | [Trend Analysis](../../milestones/52-trend-analysis/) | Forecasting, anomaly detection, patterns | planned |
-| 53 | [Benchmark Harness](../../milestones/53-benchmark-harness/) | SWE-Bench + extensible TaskRunner infrastructure | planned |
-| 54 | [Additional Benchmarks](../../milestones/54-additional-benchmarks/) | HumanEval, Remote Labor Index, Custom | planned |
+**Progress:** 0/6 milestones complete, 4/6 stories done
+**Active:** Performance Evaluation
+**In Progress:** 1 stories
 
-**Sequencing:** M39 → M50 → M51 → M52 → M53 → M54
+| ID | Milestone | Stories | Status |
+|----|-----------|---------|--------|
+| 39 | [Performance Evaluation](milestones/39-performance-evaluation/) | 4/6 | in-progress |
+| 48 | [Long-term Studies](milestones/48-long-term-studies/) | 0/0 | planned |
+| 49 | [Performance Reports](milestones/49-performance-reports/) | 0/0 | planned |
+| 50 | [Performance Trends](milestones/50-performance-trends/) | 0/0 | planned |
+| 51 | [Benchmark Suite](milestones/51-benchmark-suite/) | 0/0 | planned |
+| 52 | [Extended Benchmarks](milestones/52-extended-benchmarks/) | 0/0 | planned |
+<!-- END GENERATED -->

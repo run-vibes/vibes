@@ -20,3 +20,15 @@ Milestone 37: Crt Design System
 See [design.md](design.md) for architecture decisions.
 
 See [implementation.md](implementation.md) for implementation plan.
+
+## Stories
+
+| # | Story | Description | Status |
+|---|-------|-------------|--------|
+| 1 | [CHORE0132](../../../../stages/done/stories/[CHORE][0132]-align-settings-page-with-crt-design-system.md) | Align Settings page with CRT design system | done |
+
+## Progress
+
+**Requirements:** 0/0 verified
+**Stories:** 1/1 complete
+

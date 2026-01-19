@@ -6,6 +6,9 @@ description: Reduce spec-to-implementation drift through visual artifacts and tr
 created: 2026-01-17
 ---
 
+
+
+
 # Coherence Verification System
 
 ## Vision
@@ -19,24 +22,15 @@ Build a verification system that captures system behavior as visual artifacts (s
 3. **Autonomous Operation** — Clear enough rules that Claude can manage the board correctly
 4. **Reduced Feedback Latency** — Catch coherence issues before PR, not after deploy
 
+<!-- BEGIN GENERATED -->
 ## Milestones
 
-| ID | Milestone | Status |
-|----|-----------|--------|
-| 01 | [Artifact Pipeline](milestones/01-verification-artifact-pipeline/) | done |
-| 02 | [Board Restructure](milestones/02-epic-based-project-hierarchy/) | done |
-| 03 | [Formal Planning Process](milestones/03-formal-planning-process/) | in-progress |
-| 04 | AI-Assisted Verification | planned |
+**Progress:** 2/3 milestones complete, 9/15 stories done
+**Active:** Formal Planning Process
 
-## Success Criteria
-
-- [x] `just verify all` captures snapshots, checkpoints, and stitched videos
-- [x] Board hierarchy is Epic > Milestone > Story with clear lifecycles
-- [x] Icebox stage exists for blocked/deferred work
-- [x] Story naming follows `[TYPE][NNNN]-verb-phrase` convention
-- [x] Story frontmatter uses single `scope` field (epic/milestone format)
-- [x] `just verify story <ID>` links artifacts to story acceptance criteria
-- [x] Story-specific reports at `verification/reports/<scope>/<id>.md`
-- [ ] Formal document hierarchy: VISION → PRD → SRS → DESIGN → Stories
-- [ ] Epic PRDs define requirements, milestones have SRS + DESIGN
-- [ ] Just tasks auto-update README progress and status
+| ID | Milestone | Stories | Status |
+|----|-----------|---------|--------|
+| 01 | [Verification Artifact Pipeline](milestones/01-verification-artifact-pipeline/) | 0/0 | done |
+| 02 | [Epic-Based Project Hierarchy](milestones/02-epic-based-project-hierarchy/) | 6/6 | done |
+| 03 | [Formal Planning Process](milestones/03-formal-planning-process/) | 3/9 | in-progress |
+<!-- END GENERATED -->

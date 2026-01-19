@@ -28,20 +28,17 @@ First milestone of the Evals epic. Establishes the foundation for evaluation: me
 
 ## Stories
 
-| ID | Title | Priority | Estimate |
-|----|-------|----------|----------|
-| m39-feat-01 | vibes-evals crate skeleton | high | 2h |
-| m39-feat-02 | LongitudinalMetrics types | high | 3h |
-| m39-feat-03 | EvalStorage schema and implementation | high | 4h |
-| m39-feat-04 | Study lifecycle management | high | 4h |
-| m39-feat-05 | vibes eval study CLI commands | medium | 3h |
-| m39-feat-06 | Eval Web UI | medium | 4h |
+| # | Story | Description | Status |
+|---|-------|-------------|--------|
+| 1 | [FEAT0115](../../../../stages/backlog/stories/[FEAT][0115]-eval-web-ui.md) | Eval Web UI | backlog |
+| 2 | [FEAT0158](../../../../stages/done/stories/[FEAT][0158]-evals-crate-skeleton.md) | vibes-evals crate skeleton | done |
+| 3 | [FEAT0159](../../../../stages/done/stories/[FEAT][0159]-longitudinal-metrics.md) | LongitudinalMetrics types | done |
+| 4 | [FEAT0160](../../../../stages/done/stories/[FEAT][0160]-eval-storage.md) | EvalStorage schema and implementation | done |
+| 5 | [FEAT0161](../../../../stages/done/stories/[FEAT][0161]-study-lifecycle.md) | Study lifecycle management | done |
+| 6 | [FEAT0190](../../../../stages/in-progress/stories/[FEAT][0190]-eval-cli.md) | vibes eval study CLI commands | in-progress |
 
-## Epics
+## Progress
 
-- [evals](../../epics/evals)
+**Requirements:** 0/0 verified
+**Stories:** 4/6 complete
 
-## Design
-
-- [design.md](./design.md) - Event-sourced eval storage architecture
-- [../../epics/evals/README.md](../../epics/evals/README.md) - Evals epic overview

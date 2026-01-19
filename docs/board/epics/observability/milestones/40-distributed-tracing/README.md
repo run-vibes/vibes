@@ -29,20 +29,18 @@ First milestone of the Observability epic. Establishes OpenTelemetry-based distr
 
 ## Stories
 
-| ID | Title | Priority | Estimate |
-|----|-------|----------|----------|
-| m40-feat-01 | vibes-observe crate skeleton | high | 2h |
-| m40-feat-02 | OpenTelemetry tracer setup | high | 4h |
-| m40-feat-03 | TraceContext with vibes-specific attributes | high | 3h |
-| m40-feat-04 | Instrument key functions with spans | high | 4h |
-| m40-feat-05 | Export targets configuration | high | 3h |
-| m40-feat-06 | vibes observe traces CLI command | medium | 3h |
-| m40-feat-07 | Observe Web UI | medium | 4h |
+| # | Story | Description | Status |
+|---|-------|-------------|--------|
+| 1 | [FEAT0162](../../../../stages/done/stories/[FEAT][0162]-observe-crate-skeleton.md) | vibes-observe crate skeleton | done |
+| 2 | [FEAT0163](../../../../stages/done/stories/[FEAT][0163]-opentelemetry-setup.md) | OpenTelemetry tracer setup | done |
+| 3 | [FEAT0164](../../../../stages/done/stories/[FEAT][0164]-trace-context.md) | TraceContext with vibes-specific attributes | done |
+| 4 | [FEAT0165](../../../../stages/done/stories/[FEAT][0165]-instrument-key-functions.md) | Instrument key functions with spans | done |
+| 5 | [FEAT0166](../../../../stages/done/stories/[FEAT][0166]-export-targets.md) | Export targets configuration | done |
+| 6 | [FEAT0167](../../../../stages/done/stories/[FEAT][0167]-observe-cli.md) | vibes observe traces CLI command | done |
+| 7 | [FEAT0168](../../../../stages/done/stories/[FEAT][0168]-observe-web-ui.md) | Observe Web UI | done |
 
-## Epics
+## Progress
 
-- [observability](../../epics/observability)
+**Requirements:** 0/0 verified
+**Stories:** 7/7 complete
 
-## Design
-
-See [../../epics/observability/README.md](../../epics/observability/README.md) for architecture.

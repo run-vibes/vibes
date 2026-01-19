@@ -21,28 +21,20 @@ First milestone of the Models epic. Establishes the foundation for model managem
 
 ## Stories
 
-| ID | Title | Status |
-|----|-------|--------|
-| FEAT0090 | [vibes-models crate skeleton](../../stages/backlog/stories/feat-0090-vibes-models-crate-skeleton.md) | pending |
-| FEAT0091 | [ModelProvider trait definition](../../stages/backlog/stories/feat-0091-model-provider-trait.md) | pending |
-| FEAT0092 | [ModelRegistry for model discovery](../../stages/backlog/stories/feat-0092-model-registry.md) | pending |
-| FEAT0093 | [CredentialStore for API key management](../../stages/backlog/stories/feat-0093-credential-store.md) | pending |
-| FEAT0094 | [vibes models CLI commands](../../stages/backlog/stories/feat-0094-models-cli-commands.md) | pending |
-| FEAT0095 | [Models view in web UI](../../stages/backlog/stories/feat-0095-models-web-ui.md) | pending |
+| # | Story | Description | Status |
+|---|-------|-------------|--------|
+| 1 | [CHORE0142](../../../../stages/done/stories/[CHORE][0142]-cleanup.md) | "Chore: Remove Old Styles and Document Tokens" | done |
+| 2 | [FEAT0143](../../../../stages/done/stories/[FEAT][0143]-design-tokens.md) | "Feature: Create Design Token CSS Custom Properties" | done |
+| 3 | [FEAT0144](../../../../stages/done/stories/[FEAT][0144]-theme-toggle.md) | "Feature: Add Theme Toggle with Persistence" | done |
+| 4 | [FEAT0145](../../../../stages/done/stories/[FEAT][0145]-crt-effects.md) | "Feature: Implement CRT Visual Effects" | done |
+| 5 | [FEAT0146](../../../../stages/done/stories/[FEAT][0146]-typography.md) | "Feature: Apply CRT Typography System" | done |
+| 6 | [FEAT0147](../../../../stages/done/stories/[FEAT][0147]-core-components.md) | "Feature: Restyle Core UI Components" | done |
+| 7 | [FEAT0148](../../../../stages/done/stories/[FEAT][0148]-navigation.md) | "Feature: Restyle Navigation with Phosphor Glow" | done |
+| 8 | [FEAT0149](../../../../stages/done/stories/[FEAT][0149]-firehose.md) | "Feature: Apply CRT Styling to Event Firehose" | done |
+| 9 | [FEAT0150](../../../../stages/done/stories/[FEAT][0150]-session-cards.md) | "Feature: Restyle Session Cards with Glow Effects" | done |
 
-## Key Deliverables
+## Progress
 
-- `vibes-models` crate skeleton
-- `ModelRegistry` with model discovery
-- `CredentialStore` for API key management
-- `ModelProvider` trait definition
-- `vibes models list` and `vibes models auth` commands
-- Models page in web UI with credentials management
+**Requirements:** 0/0 verified
+**Stories:** 9/9 complete
 
-## Epics
-
-- [models](../../epics/models)
-
-## Design
-
-See [../../epics/models/README.md](../../epics/models/README.md) for architecture.
