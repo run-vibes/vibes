@@ -4,10 +4,9 @@ title: Study lifecycle management
 type: feat
 status: done
 priority: high
-epics: [evals]
+scope: evals/39-performance-evaluation
 depends: [m39-feat-03]
 estimate: 4h
-milestone: 39
 ---
 
 # Study lifecycle management

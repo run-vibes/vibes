@@ -4,10 +4,9 @@ title: Swarm coordination status
 type: feat
 status: done
 priority: medium
-epics: [tui]
+scope: tui/44-swarm-monitoring
 depends: [m44-feat-01]
 estimate: 2h
-milestone: 44
 ---
 
 # Swarm Coordination Status

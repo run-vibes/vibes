@@ -4,12 +4,10 @@ title: Extraction consumer
 type: feat
 status: done
 priority: high
-epics: [plugin-system]
+scope: plugin-system
 depends: [FEAT0019, FEAT0021]
 estimate: 3h
 created: 2026-01-08
-updated: 2026-01-09
-milestone: 30-learning-extraction
 ---
 
 # Extraction consumer

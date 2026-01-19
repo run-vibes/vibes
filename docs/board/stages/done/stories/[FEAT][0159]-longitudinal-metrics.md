@@ -4,10 +4,9 @@ title: LongitudinalMetrics types
 type: feat
 status: done
 priority: high
-epics: [evals]
+scope: evals/39-performance-evaluation
 depends: [m39-feat-01]
 estimate: 3h
-milestone: 39
 ---
 
 # LongitudinalMetrics types

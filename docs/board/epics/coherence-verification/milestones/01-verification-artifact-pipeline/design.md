@@ -292,3 +292,158 @@ See [verification/report.md](verification/report.md) for full details.
 - [x] `verification/checkpoints.json` definition file
 - [x] Report generation script
 - [x] Documentation in CLAUDE.md
+
+---
+
+# Phase 2: Story-Scoped Verification
+
+> Link artifacts to story acceptance criteria to complete the coherence loop.
+
+## Overview
+
+Phase 1 captures artifacts globally. Phase 2 adds story-scoped verification where each story's acceptance criteria can reference specific artifacts, and the report shows coverage.
+
+### Key Decisions
+
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| **Verification location** | Story file (inline) | Single source of truth; criteria and verification together |
+| **Scope field** | Single `scope` replacing `epics` + `milestone` | Simpler hierarchy; one field for report path |
+| **Report per story** | `reports/<scope>/<id>.md` | Organized by epic/milestone; matches board hierarchy |
+
+---
+
+## Story Frontmatter Schema
+
+Replace `epics` array and `milestone` field with single `scope` field:
+
+```yaml
+---
+id: FEAT0109
+title: Board generator grouped layout
+type: feat
+status: done
+priority: high
+scope: coherence-verification/01-artifact-pipeline  # epic/milestone or just epic
+depends: []
+estimate: 2h
+created: 2026-01-17
+---
+```
+
+**Scope values:**
+| Value | Meaning |
+|-------|---------|
+| `epic/milestone` | Story belongs to epic and milestone |
+| `epic` | Story belongs to epic (no milestone) |
+| (empty) | Ad-hoc story |
+
+---
+
+## Verification Annotations
+
+Add HTML comments to acceptance criteria referencing artifacts:
+
+```markdown
+## Acceptance Criteria
+
+- [ ] Sessions page displays list <!-- verify: snapshot:sessions -->
+- [ ] Clicking row opens detail <!-- verify: checkpoint:view-session-detail -->
+- [ ] CLI help shows commands <!-- verify: video:cli/help -->
+```
+
+**Annotation format:** `<!-- verify: <type>:<name> -->`
+
+| Type | Lookup |
+|------|--------|
+| `snapshot:<name>` | `snapshots.json` by name |
+| `checkpoint:<name>` | `checkpoints.json` by name |
+| `video:<path>` | Video file at path |
+
+---
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `just verify story <ID>` | Capture artifacts for story, generate report |
+| `just verify story-report <ID>` | Generate report only (artifacts exist) |
+
+**Story command flow:**
+1. Find story file by ID
+2. Parse `scope` from frontmatter
+3. Extract criteria with `<!-- verify: -->` annotations
+4. Capture only referenced artifacts
+5. Generate report at `verification/reports/<scope>/<id>.md`
+
+---
+
+## Directory Structure (Updated)
+
+```
+verification/
+├── snapshots.json
+├── checkpoints.json
+├── report.md                           # Global report
+├── reports/                            # Story-specific reports (COMMITTED)
+│   ├── coherence-verification/
+│   │   └── 01-artifact-pipeline/
+│   │       └── FEAT0109.md
+│   └── core/
+│       └── BUG0001.md
+├── snapshots/
+├── checkpoints/
+└── videos/
+```
+
+---
+
+## Story Report Format
+
+`verification/reports/<scope>/<id>.md`:
+
+```markdown
+# Verification: FEAT0109
+
+**Story:** Board generator grouped layout
+**Scope:** coherence-verification/01-artifact-pipeline
+**Generated:** 2026-01-18T10:30:00Z
+**Branch:** feat/0109-board-generator
+
+## Coverage
+
+| Criterion | Artifact | Status |
+|-----------|----------|--------|
+| Sessions page displays list | sessions.png | ✅ |
+| Clicking row opens detail | view-session-detail/ | ✅ |
+| CLI help shows commands | cli/help.webm | ✅ |
+
+**Coverage: 3/3 (100%)**
+
+## Uncovered Criteria
+
+(none)
+```
+
+---
+
+## Error Handling
+
+| Scenario | Behavior |
+|----------|----------|
+| Artifact not in definitions | Report shows `❌ (not defined)` |
+| Artifact capture fails | Report shows `❌ (capture failed)` |
+| No verify annotations | Report shows "No verification annotations found" |
+| Story file not found | Command fails with clear error |
+
+---
+
+## Deliverables (Phase 2)
+
+- [ ] Update story frontmatter schema (`scope` replaces `epics` + `milestone`)
+- [ ] Migrate all existing stories to new schema
+- [ ] Add verification annotation parsing
+- [ ] Implement `just verify story <ID>` command
+- [ ] Implement `just verify story-report <ID>` command
+- [ ] Update `.gitignore` to commit `reports/**/*.md`
+- [ ] Update CONVENTIONS.md with new schema

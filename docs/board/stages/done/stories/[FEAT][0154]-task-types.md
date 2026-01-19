@@ -4,10 +4,9 @@ title: Task and TaskResult types
 type: feat
 status: done
 priority: high
-epics: [agents]
+scope: agents/38-autonomous-agents
 depends: [m38-feat-01]
 estimate: 3h
-milestone: 38
 ---
 
 # Task and TaskResult types

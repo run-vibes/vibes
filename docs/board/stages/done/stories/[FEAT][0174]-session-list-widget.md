@@ -4,10 +4,9 @@ title: Session list widget
 type: feat
 status: done
 priority: high
-epics: [tui]
+scope: tui/42-terminal-dashboard
 depends: [m41-feat-05]
 estimate: 3h
-milestone: 42
 ---
 
 # Session List Widget

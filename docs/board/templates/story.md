@@ -4,11 +4,10 @@ title: ${TITLE}
 type: ${TYPE}
 status: backlog
 priority: medium
-epics: []
+scope:
 depends: []
 estimate:
 created: ${DATE}
-updated: ${DATE}
 ---
 
 # ${TITLE}

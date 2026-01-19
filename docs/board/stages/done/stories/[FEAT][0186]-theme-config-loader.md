@@ -4,10 +4,9 @@ title: Theme config file loader
 type: feat
 status: done
 priority: high
-epics: [tui]
+scope: tui/45-customizable-themes
 depends: []
 estimate: 3h
-milestone: 45
 ---
 
 # Theme Config File Loader

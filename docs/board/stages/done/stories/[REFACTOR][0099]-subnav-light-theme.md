@@ -4,7 +4,7 @@ title: Improve SubnavBar Light Theme Readability
 type: refactor
 status: done
 priority: medium
-epics: [web-ui, design-system]
+scope: design-system
 ---
 
 # Improve SubnavBar Light Theme Readability

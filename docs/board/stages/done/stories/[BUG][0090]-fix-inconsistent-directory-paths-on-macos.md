@@ -4,11 +4,10 @@ title: Fix inconsistent directory paths on macOS
 type: bug
 status: done
 priority: medium
-epics: [cross-platform]
+scope: cross-platform
 depends: []
 estimate:
 created: 2026-01-12
-updated: 2026-01-12
 ---
 
 # Fix inconsistent directory paths on macOS

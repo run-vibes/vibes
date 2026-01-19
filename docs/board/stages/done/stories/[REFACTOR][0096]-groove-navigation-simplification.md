@@ -4,7 +4,7 @@ title: Simplify Groove Navigation Hierarchy
 type: refactor
 status: done
 priority: high
-epics: [web-ui, groove]
+scope: groove
 ---
 
 # Simplify Groove Navigation Hierarchy

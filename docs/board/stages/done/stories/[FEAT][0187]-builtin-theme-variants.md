@@ -4,10 +4,9 @@ title: Built-in theme variants
 type: feat
 status: done
 priority: high
-epics: [tui]
+scope: tui/45-customizable-themes
 depends: [m45-feat-01]
 estimate: 2h
-milestone: 45
 ---
 
 # Built-in Theme Variants

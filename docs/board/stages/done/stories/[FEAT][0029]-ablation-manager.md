@@ -4,11 +4,10 @@ title: Ablation manager (Layer 3)
 type: feat
 status: done
 priority: high
-epics: [plugin-system]
+scope: plugin-system
 depends: [FEAT0026]
 estimate: 3h
 created: 2026-01-09
-milestone: 31-attribution-engine
 ---
 
 # Ablation manager (Layer 3)

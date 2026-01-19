@@ -4,7 +4,7 @@ title: Documentation review
 type: docs
 status: done
 priority: low
-epics: [verification]
+scope: verification
 depends: []
 estimate: 2h
 created: 2026-01-09

@@ -4,11 +4,10 @@ title: Align Sessions page layout with Firehose
 type: chore
 status: done
 priority: medium
-epics: [web-ui]
+scope: web-ui
 depends: []
 estimate:
 created: 2026-01-07
-updated: 2026-01-07
 ---
 
 # Align Sessions page layout with Firehose

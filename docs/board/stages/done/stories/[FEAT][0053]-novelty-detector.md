@@ -4,11 +4,10 @@ title: NoveltyDetector with embedding reuse
 type: feat
 status: done
 priority: high
-epics: [plugin-system]
+scope: plugin-system
 depends: [FEAT0052]
 estimate: 4h
 created: 2026-01-09
-milestone: 34-open-world-adaptation
 ---
 
 # NoveltyDetector with embedding reuse

@@ -4,8 +4,7 @@ title: Cloudflared State Detection
 type: feat
 status: done
 priority: medium
-epics: [cli, networking]
-milestone: 35-setup-wizards
+scope: networking
 ---
 
 # Cloudflared State Detection

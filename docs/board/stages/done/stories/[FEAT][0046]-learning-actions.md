@@ -4,11 +4,10 @@ title: Learning actions (enable/disable/delete)
 type: feat
 status: done
 priority: medium
-epics: [plugin-system]
+scope: plugin-system
 depends: [FEAT0045]
 estimate: 2h
 created: 2026-01-09
-milestone: 33-groove-dashboard
 ---
 
 # Learning actions (enable/disable/delete)

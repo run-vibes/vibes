@@ -4,11 +4,10 @@ title: Gaps tab with split view
 type: feat
 status: done
 priority: medium
-epics: [plugin-system]
+scope: plugin-system
 depends: [FEAT0080]
 estimate: 3h
 created: 2026-01-11
-milestone: 36-openworld-dashboard
 ---
 
 # Gaps tab with split view

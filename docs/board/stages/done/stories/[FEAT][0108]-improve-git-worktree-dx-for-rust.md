@@ -3,12 +3,11 @@ id: FEAT0108
 title: Improve Git Worktree DX for Rust
 type: feat
 status: done
+scope:
 priority: medium
-epics: []
 depends: []
 estimate: S
 created: 2026-01-14
-updated: 2026-01-14
 ---
 
 # Improve Git Worktree DX for Rust

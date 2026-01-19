@@ -4,11 +4,10 @@ title: Show Ollama models in web UI
 type: feat
 status: done
 priority: medium
-epics: [web-ui]
+scope: web-ui
 depends: []
 estimate:
 created: 2026-01-13
-updated: 2026-01-13
 ---
 
 # Show Ollama models in web UI

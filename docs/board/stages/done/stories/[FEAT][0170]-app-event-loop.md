@@ -4,10 +4,9 @@ title: App struct and event loop
 type: feat
 status: done
 priority: high
-epics: [tui]
+scope: tui/41-terminal-ui-framework
 depends: [m41-feat-01]
 estimate: 4h
-milestone: 41
 ---
 
 # App Struct and Event Loop

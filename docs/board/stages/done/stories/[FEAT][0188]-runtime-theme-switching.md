@@ -4,10 +4,9 @@ title: Runtime theme switching
 type: feat
 status: done
 priority: medium
-epics: [tui]
+scope: tui/45-customizable-themes
 depends: [m45-feat-01, m45-feat-02]
 estimate: 2h
-milestone: 45
 ---
 
 # Runtime Theme Switching

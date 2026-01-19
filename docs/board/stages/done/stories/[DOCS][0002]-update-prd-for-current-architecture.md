@@ -4,11 +4,10 @@ title: Update PRD for current architecture
 type: docs
 status: done
 priority: medium
-epics: [core]
+scope: core
 depends: []
 estimate: 1h
 created: 2026-01-08
-updated: 2026-01-08
 ---
 
 # Update PRD for current architecture

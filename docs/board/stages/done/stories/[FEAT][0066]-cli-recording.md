@@ -4,7 +4,7 @@ title: CLI recording with VHS
 type: feat
 status: done
 priority: medium
-epics: [verification]
+scope: verification
 depends: []
 estimate: 3h
 created: 2026-01-09

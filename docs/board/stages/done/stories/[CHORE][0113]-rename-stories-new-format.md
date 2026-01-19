@@ -4,12 +4,10 @@ title: Rename stories to new format
 type: chore
 status: done
 priority: high
-epics: [coherence-verification]
+scope: coherence-verification/02-epic-based-project-hierarchy
 depends: [CHORE0112]
-milestone: 02-board-restructure
 estimate: 1h
 created: 2026-01-17
-updated: 2026-01-17
 ---
 
 # Rename stories to new format

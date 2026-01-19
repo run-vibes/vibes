@@ -4,12 +4,10 @@ title: Kanban Planning Board - Design Document
 type: chore
 status: done
 priority: medium
-epics: [core]
+scope: core/14-visual-project-planning
 depends: []
 estimate:
 created: 2026-01-07
-updated: 2026-01-07
-milestone: 14
 ---
 # Kanban Planning Board - Design Document
 

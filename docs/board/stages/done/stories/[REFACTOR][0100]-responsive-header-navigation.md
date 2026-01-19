@@ -4,7 +4,7 @@ title: Responsive Header Navigation
 type: refactor
 status: done
 priority: high
-epics: [web-ui, design-system]
+scope: design-system
 ---
 
 # Responsive Header Navigation

@@ -4,11 +4,10 @@ title: Resolve remaining code TODOs
 type: chore
 status: done
 priority: medium
-epics: [core,cli]
+scope: cli
 depends: [m29-feat-0012-wire-circuit-breaker-intervention]
 estimate: 4h
 created: 2026-01-08
-updated: 2026-01-08
 ---
 
 # Resolve remaining code TODOs

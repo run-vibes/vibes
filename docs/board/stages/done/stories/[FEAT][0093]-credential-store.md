@@ -4,11 +4,10 @@ title: CredentialStore for API key management
 type: feat
 status: done
 priority: high
-epics: [models]
+scope: models
 depends: [FEAT0090]
 estimate: 3h
 created: 2026-01-13
-milestone: 37-models-registry-auth
 ---
 
 # CredentialStore for API key management

@@ -4,12 +4,10 @@ title: Board generator grouped layout
 type: feat
 status: done
 priority: high
-epics: [coherence-verification]
+scope: coherence-verification/02-epic-based-project-hierarchy
 depends: []
-milestone: 02-board-restructure
 estimate: 2h
 created: 2026-01-17
-updated: 2026-01-17
 ---
 
 # Board generator grouped layout

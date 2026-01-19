@@ -4,7 +4,7 @@ title: Fix web UI chunk size warnings
 type: chore
 status: done
 priority: low
-epics: [dev-environment, web-ui]
+scope: web-ui
 depends: []
 estimate: 1h
 created: 2026-01-12

@@ -4,11 +4,10 @@ title: vibes-models crate skeleton
 type: feat
 status: done
 priority: high
-epics: [models]
+scope: models
 depends: []
 estimate: 2h
 created: 2026-01-13
-milestone: 37-models-registry-auth
 ---
 
 # vibes-models crate skeleton

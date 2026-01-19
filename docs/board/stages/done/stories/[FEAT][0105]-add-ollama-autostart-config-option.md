@@ -3,12 +3,11 @@ id: FEAT0105
 title: Add Ollama autostart config option
 type: feat
 status: done
+scope:
 priority: medium
-epics: []
 depends: []
 estimate:
 created: 2026-01-13
-updated: 2026-01-13
 ---
 
 # Add Ollama autostart config option

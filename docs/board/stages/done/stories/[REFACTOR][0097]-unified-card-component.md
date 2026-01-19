@@ -4,7 +4,7 @@ title: Unified Card Component with Visual Regression Testing
 type: refactor
 status: done
 priority: high
-epics: [web-ui, design-system]
+scope: design-system
 ---
 
 # Unified Card Component with Visual Regression Testing

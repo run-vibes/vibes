@@ -4,12 +4,10 @@ title: Link +more text to assessment history page
 type: feat
 status: done
 priority: low
-epics: [plugin-system]
+scope: plugin-system
 depends: []
 estimate: 15m
 created: 2026-01-08
-updated: 2026-01-08
-milestone: 29-assessment-framework
 ---
 
 # Link +more text to assessment history page

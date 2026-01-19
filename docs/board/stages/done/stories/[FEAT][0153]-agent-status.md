@@ -4,10 +4,9 @@ title: AgentStatus and AgentContext types
 type: feat
 status: done
 priority: high
-epics: [agents]
+scope: agents/38-autonomous-agents
 depends: [m38-feat-02]
 estimate: 2h
-milestone: 38
 ---
 
 # AgentStatus and AgentContext types

@@ -4,11 +4,10 @@ title: Models view in web UI
 type: feat
 status: done
 priority: medium
-epics: [models]
+scope: models
 depends: [FEAT0092, FEAT0093]
 estimate: 4h
 created: 2026-01-13
-milestone: 37-models-registry-auth
 ---
 
 # Models view in web UI

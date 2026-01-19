@@ -4,10 +4,9 @@ title: Result merge interface
 type: feat
 status: done
 priority: medium
-epics: [tui]
+scope: tui/44-swarm-monitoring
 depends: [m44-feat-02]
 estimate: 3h
-milestone: 44
 ---
 
 # Result Merge Interface

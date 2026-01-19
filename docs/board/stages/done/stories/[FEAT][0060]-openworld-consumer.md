@@ -4,11 +4,10 @@ title: Iggy consumer and events
 type: feat
 status: done
 priority: high
-epics: [plugin-system]
+scope: plugin-system
 depends: [FEAT0058, FEAT0059]
 estimate: 2h
 created: 2026-01-09
-milestone: 34-open-world-adaptation
 ---
 
 # Iggy consumer and events

@@ -4,7 +4,7 @@ title: Dashboard visual consistency with CRT theme
 type: refactor
 status: done
 priority: medium
-epics: [web-ui]
+scope: web-ui
 depends: []
 estimate: 3h
 created: 2026-01-09

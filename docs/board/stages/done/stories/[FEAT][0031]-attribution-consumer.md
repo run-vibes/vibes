@@ -4,11 +4,10 @@ title: Attribution consumer
 type: feat
 status: done
 priority: high
-epics: [plugin-system]
+scope: plugin-system
 depends: [FEAT0027, FEAT0028, FEAT0030]
 estimate: 3h
 created: 2026-01-09
-milestone: 31-attribution-engine
 ---
 
 # Attribution consumer

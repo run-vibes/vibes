@@ -4,12 +4,10 @@ title: "feat: UI Polish and Cleanup"
 type: feat
 status: done
 priority: medium
-epics: [web-ui]
+scope: groove/36-novelty-monitoring
 depends: []
 estimate:
 created: 2026-01-02
-updated: 2026-01-07
-milestone: 36
 ---
 
 # feat: UI Polish and Cleanup

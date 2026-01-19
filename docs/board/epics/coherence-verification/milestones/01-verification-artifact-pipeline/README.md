@@ -16,11 +16,20 @@ Developers can run `just verify all` to capture screenshots, interaction sequenc
 
 ## Done Criteria
 
+### Phase 1: Artifact Capture
 - [x] `just verify snapshots` captures key screen PNGs
 - [x] `just verify checkpoints` captures interaction sequence PNGs
 - [x] `just verify videos` records CLI (VHS) + Web (Playwright) and stitches with ffmpeg
 - [x] `just verify report` generates `verification/report.md`
-- [ ] Report links artifacts to story acceptance criteria (planned for phase 2)
+
+### Phase 2: Story-Scoped Verification
+- [x] Story frontmatter uses `scope` field (replaces `epics` + `milestone`)
+- [x] All stories migrated to new schema
+- [x] CONVENTIONS.md documents new schema
+- [ ] Verification annotations in acceptance criteria (`<!-- verify: type:name -->`)
+- [ ] `just verify story <ID>` captures artifacts for a story
+- [ ] `just verify story-report <ID>` generates story-specific report
+- [ ] Reports committed at `verification/reports/<scope>/<id>.md`
 
 ## Design
 
@@ -28,7 +37,7 @@ See [design.md](design.md) for architecture and implementation details.
 
 ## Work Items
 
-> Work tracked inline during implementation (no separate story files).
+### Phase 1 (Complete)
 
 | Item | Status |
 |------|--------|
@@ -37,3 +46,15 @@ See [design.md](design.md) for architecture and implementation details.
 | Implement checkpoints.spec.ts | done |
 | Implement videos.spec.ts with CLI+Web stitching | done |
 | Document verification commands in CLAUDE.md | done |
+
+### Phase 2 (In Progress)
+
+| Item | Status |
+|------|--------|
+| Design story-scoped verification | done |
+| Update story frontmatter schema (scope field) | done |
+| Migrate all stories to new schema | done |
+| Update CONVENTIONS.md | done |
+| Implement verification annotation parsing | pending |
+| Implement `just verify story` command | pending |
+| Update .gitignore for reports directory | pending |

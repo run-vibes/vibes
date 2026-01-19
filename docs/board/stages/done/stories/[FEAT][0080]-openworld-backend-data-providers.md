@@ -4,11 +4,10 @@ title: OpenWorld backend data providers
 type: feat
 status: done
 priority: high
-epics: [plugin-system]
+scope: plugin-system
 depends: [FEAT0079]
 estimate: 3h
 created: 2026-01-11
-milestone: 36-openworld-dashboard
 ---
 
 # OpenWorld backend data providers

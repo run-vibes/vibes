@@ -4,8 +4,7 @@ title: Config Save/Load for Wizards
 type: feat
 status: done
 priority: medium
-epics: [cli, networking]
-milestone: 35-setup-wizards
+scope: networking
 ---
 
 # Config Save/Load for Wizards

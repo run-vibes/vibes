@@ -4,11 +4,10 @@ title: Consolidate assessment types module
 type: refactor
 status: done
 priority: low
-epics: [plugin-system]
+scope: plugin-system
 depends: []
 estimate: 2h
 created: 2026-01-08
-updated: 2026-01-08
 ---
 
 # Consolidate assessment types module

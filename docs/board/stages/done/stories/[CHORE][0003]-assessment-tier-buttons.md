@@ -4,11 +4,10 @@ title: "Chore: Style Assessment Tier Filter Buttons"
 type: chore
 status: done
 priority: low
-epics: [web-ui]
+scope: web-ui
 depends: []
 estimate:
 created: 2026-01-07
-updated: 2026-01-07
 ---
 
 # Chore: Style Assessment Tier Filter Buttons

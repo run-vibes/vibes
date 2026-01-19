@@ -4,11 +4,10 @@ title: Plugin API versioning migration plan
 type: docs
 status: icebox
 priority: low
-epics: [plugin-system]
+scope: plugin-system
 depends: []
 estimate: 2h
 created: 2026-01-08
-updated: 2026-01-18
 ---
 
 # Plugin API versioning migration plan

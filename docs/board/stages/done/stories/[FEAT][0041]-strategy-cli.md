@@ -4,11 +4,10 @@ title: Strategy CLI commands
 type: feat
 status: done
 priority: high
-epics: [plugin-system]
+scope: plugin-system
 depends: [FEAT0039]
 estimate: 2h
 created: 2026-01-09
-milestone: 32-adaptive-strategies
 ---
 
 # Strategy CLI commands

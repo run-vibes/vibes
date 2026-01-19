@@ -4,11 +4,10 @@ title: CLI commands (novelty)
 type: feat
 status: done
 priority: medium
-epics: [plugin-system]
+scope: plugin-system
 depends: [FEAT0053]
 estimate: 2h
 created: 2026-01-09
-milestone: 34-open-world-adaptation
 ---
 
 # CLI commands (novelty)

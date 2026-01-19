@@ -4,12 +4,10 @@ title: "Chore: Remove Old Styles and Document Tokens"
 type: chore
 status: done
 priority: medium
-epics: [web-ui]
+scope: models/37-model-management
 depends: []
 estimate:
 created: 2026-01-04
-updated: 2026-01-07
-milestone: 37
 ---
 
 # Chore: Remove Old Styles and Document Tokens

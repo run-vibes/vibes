@@ -4,10 +4,9 @@ title: vibes eval study CLI commands
 type: feat
 status: in-progress
 priority: medium
-epics: [evals]
+scope: evals/39-performance-evaluation
 depends: [m39-feat-04]
 estimate: 3h
-milestone: 39
 ---
 
 # vibes eval study CLI commands

@@ -4,11 +4,10 @@ title: CLI help text audit
 type: chore
 status: done
 priority: low
-epics: [cli]
+scope: cli
 depends: []
 estimate: 1h
 created: 2026-01-08
-updated: 2026-01-08
 ---
 
 # CLI help text audit

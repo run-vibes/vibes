@@ -4,11 +4,10 @@ title: Add Ollama as a model provider
 type: feat
 status: done
 priority: medium
-epics: [models]
+scope: models
 depends: []
 estimate: M
 created: 2026-01-13
-updated: 2026-01-13
 ---
 
 # Add Ollama as a model provider

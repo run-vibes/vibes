@@ -4,11 +4,10 @@ title: Attribution CLI commands
 type: feat
 status: done
 priority: high
-epics: [plugin-system]
+scope: plugin-system
 depends: [FEAT0031]
 estimate: 2h
 created: 2026-01-09
-milestone: 31-attribution-engine
 ---
 
 # Attribution CLI commands

@@ -4,7 +4,7 @@ title: Fix Nix dev shell on Mac
 type: chore
 status: done
 priority: medium
-epics: [dev-environment]
+scope: dev-environment
 depends: []
 estimate: 2h
 created: 2026-01-12

@@ -4,10 +4,9 @@ title: Views and ViewStack navigation
 type: feat
 status: done
 priority: high
-epics: [tui]
+scope: tui/41-terminal-ui-framework
 depends: [m41-feat-02]
 estimate: 4h
-milestone: 41
 ---
 
 # Views and ViewStack Navigation

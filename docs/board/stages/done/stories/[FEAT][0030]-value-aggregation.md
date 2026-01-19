@@ -4,11 +4,10 @@ title: Value aggregation (Layer 4)
 type: feat
 status: done
 priority: high
-epics: [plugin-system]
+scope: plugin-system
 depends: [FEAT0026, FEAT0028, FEAT0029]
 estimate: 2h
 created: 2026-01-09
-milestone: 31-attribution-engine
 ---
 
 # Value aggregation (Layer 4)

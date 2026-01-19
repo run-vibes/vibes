@@ -4,11 +4,10 @@ title: PTY created with hardcoded dimensions ignoring client size
 type: bug
 status: done
 priority: high
-epics: [core]
+scope: core
 depends: []
 estimate: M
 created: 2026-01-08
-updated: 2026-01-08
 ---
 
 # PTY created with hardcoded dimensions ignoring client size

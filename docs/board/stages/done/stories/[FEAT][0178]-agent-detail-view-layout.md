@@ -4,10 +4,9 @@ title: Agent detail view layout
 type: feat
 status: done
 priority: high
-epics: [tui]
+scope: tui/43-terminal-agent-control
 depends: [m41-feat-03]
 estimate: 3h
-milestone: 43
 ---
 
 # Agent Detail View Layout

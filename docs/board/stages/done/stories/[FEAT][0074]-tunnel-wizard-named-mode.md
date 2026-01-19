@@ -4,8 +4,7 @@ title: Tunnel Wizard - Named Mode
 type: feat
 status: done
 priority: medium
-epics: [cli, networking]
-milestone: 35-setup-wizards
+scope: networking
 ---
 
 # Tunnel Wizard - Named Mode

@@ -4,11 +4,10 @@ title: "Chore: Remove Unused Firehose Filters"
 type: chore
 status: done
 priority: low
-epics: [web-ui]
+scope: web-ui
 depends: []
 estimate:
 created: 2026-01-07
-updated: 2026-01-07
 ---
 
 # Chore: Remove Unused Firehose Filters

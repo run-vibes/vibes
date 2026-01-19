@@ -4,11 +4,10 @@ title: ModelProvider trait definition
 type: feat
 status: done
 priority: high
-epics: [models]
+scope: models
 depends: [FEAT0090]
 estimate: 2h
 created: 2026-01-13
-milestone: 37-models-registry-auth
 ---
 
 # ModelProvider trait definition

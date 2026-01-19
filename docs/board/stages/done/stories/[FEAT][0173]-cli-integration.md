@@ -4,10 +4,9 @@ title: CLI command and WebSocket integration
 type: feat
 status: done
 priority: high
-epics: [tui]
+scope: tui/41-terminal-ui-framework
 depends: [m41-feat-04]
 estimate: 4h
-milestone: 41
 ---
 
 # CLI Command and WebSocket Integration

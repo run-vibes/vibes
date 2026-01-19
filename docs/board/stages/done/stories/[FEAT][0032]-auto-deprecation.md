@@ -4,11 +4,10 @@ title: Auto-deprecation
 type: feat
 status: done
 priority: high
-epics: [plugin-system]
+scope: plugin-system
 depends: [FEAT0030]
 estimate: 1h
 created: 2026-01-09
-milestone: 31-attribution-engine
 ---
 
 # Auto-deprecation

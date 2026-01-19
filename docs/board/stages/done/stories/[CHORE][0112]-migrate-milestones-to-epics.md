@@ -4,12 +4,10 @@ title: Migrate milestones to epics
 type: chore
 status: done
 priority: high
-epics: [coherence-verification]
+scope: coherence-verification/02-epic-based-project-hierarchy
 depends: [CHORE0111]
-milestone: 02-board-restructure
 estimate: 1h
 created: 2026-01-17
-updated: 2026-01-17
 ---
 
 # Migrate milestones to epics

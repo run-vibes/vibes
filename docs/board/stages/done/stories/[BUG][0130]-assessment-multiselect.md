@@ -4,12 +4,10 @@ title: "Fix: Assessment Page Multi-Select Bug"
 type: fix
 status: done
 priority: medium
-epics: [core, cli, plugin-system]
+scope: web-ui/26-infinite-event-stream
 depends: []
 estimate:
 created: 2026-01-03
-updated: 2026-01-07
-milestone: 26
 ---
 
 # Fix: Assessment Page Multi-Select Bug

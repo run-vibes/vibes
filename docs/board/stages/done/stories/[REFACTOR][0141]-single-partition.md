@@ -4,12 +4,10 @@ title: "Refactor: Single Partition with Event ID Seeking"
 type: refactor
 status: done
 priority: medium
-epics: [web-ui]
+scope: groove/36-novelty-monitoring
 depends: []
 estimate:
 created: 2026-01-02
-updated: 2026-01-07
-milestone: 36
 ---
 
 # Refactor: Single Partition with Event ID Seeking

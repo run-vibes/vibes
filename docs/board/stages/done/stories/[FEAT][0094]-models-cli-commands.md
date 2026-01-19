@@ -4,11 +4,10 @@ title: vibes models CLI commands
 type: feat
 status: done
 priority: high
-epics: [models]
+scope: models
 depends: [FEAT0092, FEAT0093]
 estimate: 3h
 created: 2026-01-13
-milestone: 37-models-registry-auth
 ---
 
 # vibes models CLI commands

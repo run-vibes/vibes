@@ -105,31 +105,37 @@ Stories use YAML frontmatter for metadata:
 
 ```yaml
 ---
-id: m26-feat-01-eventlog
-title: EventLog Assessment Storage
+id: FEAT0109
+title: Board generator grouped layout
 type: feat
 status: in-progress
 priority: high
-epics: [core]
+scope: coherence-verification/01-artifact-pipeline
 depends: []
 estimate: 2h
-created: 2025-01-07
-updated: 2025-01-07
+created: 2026-01-17
 ---
 ```
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| `id` | Yes | Unique identifier (prefix with milestone: `m26-feat-01`) |
+| `id` | Yes | Unique identifier (`TYPE` + 4-digit number: `FEAT0109`, `BUG0001`) |
 | `title` | Yes | Human-readable title |
 | `type` | Yes | `feat`, `bug`, `chore`, `refactor` |
 | `status` | Yes | `backlog`, `in-progress`, `done`, `icebox` |
 | `priority` | No | `low`, `medium`, `high`, `critical` |
-| `epics` | No | List of epic IDs this story belongs to |
+| `scope` | No | Epic and milestone path: `epic-name/milestone-id` or just `epic-name` |
 | `depends` | No | List of story IDs that must complete first |
 | `estimate` | No | Time estimate (e.g., `2h`, `1d`) |
 | `created` | Yes | Creation date |
-| `updated` | Yes | Last update date |
+
+**Scope values:**
+
+| Value | Meaning |
+|-------|---------|
+| `epic/milestone` | Story belongs to epic and milestone (e.g., `coherence-verification/01-artifact-pipeline`) |
+| `epic` | Story belongs to epic only, no milestone (e.g., `core`) |
+| (empty) | Ad-hoc story, not associated with any epic |
 
 ### Story Naming
 
@@ -493,16 +499,15 @@ The `implementation.md` serves as the entry point and index for the milestone's 
 
 ```markdown
 ---
-id: m26-feat-01-types
+id: FEAT0042
 title: Core Type Definitions
 type: feat
 status: backlog
 priority: high
-epics: [core]
+scope: core/01-event-sourcing
 depends: []
 estimate: 2h
-created: 2024-01-15
-updated: 2024-01-15
+created: 2026-01-15
 ---
 
 # Core Type Definitions

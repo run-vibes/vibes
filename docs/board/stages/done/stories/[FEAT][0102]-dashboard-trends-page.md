@@ -4,11 +4,10 @@ title: Dashboard Trends Page
 type: feat
 status: done
 priority: medium
-epics: [groove]
+scope: groove
 depends: []
 estimate:
 created: 2026-01-13
-updated: 2026-01-13
 ---
 
 # Dashboard Trends Page

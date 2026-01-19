@@ -4,10 +4,9 @@ title: EvalStorage schema and implementation
 type: feat
 status: done
 priority: high
-epics: [evals]
+scope: evals/39-performance-evaluation
 depends: [m39-feat-02]
 estimate: 4h
-milestone: 39
 ---
 
 # EvalStorage schema and implementation

@@ -4,7 +4,7 @@ title: Iggy doesn't return events on macOS
 type: bug
 status: done
 priority: high
-epics: [cross-platform]
+scope: cross-platform
 depends: []
 estimate: 4h
 created: 2026-01-12

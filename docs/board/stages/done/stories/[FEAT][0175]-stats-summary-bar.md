@@ -4,10 +4,9 @@ title: Stats summary bar
 type: feat
 status: done
 priority: high
-epics: [tui]
+scope: tui/42-terminal-dashboard
 depends: [m41-feat-05]
 estimate: 2h
-milestone: 42
 ---
 
 # Stats Summary Bar

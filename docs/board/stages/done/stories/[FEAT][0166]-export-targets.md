@@ -4,10 +4,9 @@ title: Export targets configuration
 type: feat
 status: done
 priority: high
-epics: [observability]
+scope: observability/40-distributed-tracing
 depends: [m40-feat-02]
 estimate: 3h
-milestone: 40
 ---
 
 # Export targets configuration

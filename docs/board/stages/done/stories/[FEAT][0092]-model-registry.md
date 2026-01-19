@@ -4,11 +4,10 @@ title: ModelRegistry for model discovery
 type: feat
 status: done
 priority: high
-epics: [models]
+scope: models
 depends: [FEAT0091]
 estimate: 3h
 created: 2026-01-13
-milestone: 37-models-registry-auth
 ---
 
 # ModelRegistry for model discovery

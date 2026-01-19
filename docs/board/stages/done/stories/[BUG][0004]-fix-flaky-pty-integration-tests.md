@@ -3,12 +3,11 @@ id: BUG0004
 title: Fix flaky PTY integration tests
 type: bug
 status: done
+scope:
 priority: medium
-epics: []
 depends: []
 estimate: 2h
 created: 2026-01-08
-updated: 2026-01-08
 ---
 
 # Fix flaky PTY integration tests

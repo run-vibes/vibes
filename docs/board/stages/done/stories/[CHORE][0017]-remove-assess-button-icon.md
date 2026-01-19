@@ -4,12 +4,10 @@ title: Remove icon from ASSESS button in stream view
 type: chore
 status: done
 priority: low
-epics: [plugin-system]
+scope: plugin-system
 depends: []
 estimate: 10m
 created: 2026-01-08
-updated: 2026-01-08
-milestone: 29-assessment-framework
 ---
 
 # Remove icon from ASSESS button in stream view

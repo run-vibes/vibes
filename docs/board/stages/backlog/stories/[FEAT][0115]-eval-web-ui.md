@@ -4,10 +4,9 @@ title: Eval Web UI
 type: feat
 status: backlog
 priority: medium
-epics: [evals]
+scope: evals/39-performance-evaluation
 depends: [m39-feat-05]
 estimate: 4h
-milestone: 39
 ---
 
 # Eval Web UI

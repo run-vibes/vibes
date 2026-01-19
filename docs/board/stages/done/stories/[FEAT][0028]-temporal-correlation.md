@@ -4,11 +4,10 @@ title: Temporal correlation (Layer 2)
 type: feat
 status: done
 priority: high
-epics: [plugin-system]
+scope: plugin-system
 depends: [FEAT0026]
 estimate: 2h
 created: 2026-01-09
-milestone: 31-attribution-engine
 ---
 
 # Temporal correlation (Layer 2)

@@ -4,11 +4,10 @@ title: Add test coverage metrics
 type: chore
 status: done
 priority: medium
-epics: [core]
+scope: core
 depends: []
 estimate: 2h
 created: 2026-01-08
-updated: 2026-01-08
 ---
 
 # Add test coverage metrics

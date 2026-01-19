@@ -4,12 +4,10 @@ title: Learning extraction CLI commands
 type: feat
 status: done
 priority: medium
-epics: [plugin-system]
+scope: plugin-system
 depends: [FEAT0024]
 estimate: 2h
 created: 2026-01-08
-updated: 2026-01-09
-milestone: 30-learning-extraction
 ---
 
 # Learning extraction CLI commands

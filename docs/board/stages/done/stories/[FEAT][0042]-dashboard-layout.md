@@ -4,11 +4,10 @@ title: Dashboard layout and routing
 type: feat
 status: done
 priority: high
-epics: [plugin-system]
+scope: plugin-system
 depends: []
 estimate: 2h
 created: 2026-01-09
-milestone: 33-groove-dashboard
 ---
 
 # Dashboard layout and routing

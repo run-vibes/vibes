@@ -4,11 +4,10 @@ title: OpenWorldHook (M32 integration)
 type: feat
 status: done
 priority: high
-epics: [plugin-system]
+scope: plugin-system
 depends: [FEAT0056, FEAT0057]
 estimate: 3h
 created: 2026-01-09
-milestone: 34-open-world-adaptation
 ---
 
 # OpenWorldHook (M32 integration)

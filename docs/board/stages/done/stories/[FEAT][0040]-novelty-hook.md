@@ -4,11 +4,10 @@ title: Novelty hook extension point
 type: feat
 status: done
 priority: medium
-epics: [plugin-system]
+scope: plugin-system
 depends: [FEAT0039]
 estimate: 1h
 created: 2026-01-09
-milestone: 32-adaptive-strategies
 ---
 
 # Novelty hook extension point

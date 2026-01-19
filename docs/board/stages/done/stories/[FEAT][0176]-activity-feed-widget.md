@@ -4,10 +4,9 @@ title: Activity feed widget
 type: feat
 status: done
 priority: medium
-epics: [tui]
+scope: tui/42-terminal-dashboard
 depends: [m42-feat-01]
 estimate: 3h
-milestone: 42
 ---
 
 # Activity Feed Widget

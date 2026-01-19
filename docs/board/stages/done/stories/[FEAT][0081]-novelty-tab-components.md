@@ -4,11 +4,10 @@ title: Novelty tab components
 type: feat
 status: done
 priority: medium
-epics: [plugin-system]
+scope: plugin-system
 depends: [FEAT0080]
 estimate: 2h
 created: 2026-01-11
-milestone: 36-openworld-dashboard
 ---
 
 # Novelty tab components

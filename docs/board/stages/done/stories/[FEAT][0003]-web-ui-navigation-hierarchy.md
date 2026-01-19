@@ -4,12 +4,10 @@ title: "feat-0003: Web UI Navigation Hierarchy"
 type: feat
 status: done
 priority: medium
-epics: [core]
+scope: core
 depends: []
 estimate:
 created: 2026-01-02
-updated: 2026-01-07
-milestone: 
 ---
 
 # feat-0003: Web UI Navigation Hierarchy

@@ -4,11 +4,10 @@ title: Thompson sampling learner
 type: feat
 status: done
 priority: high
-epics: [plugin-system]
+scope: plugin-system
 depends: [FEAT0035]
 estimate: 3h
 created: 2026-01-09
-milestone: 32-adaptive-strategies
 ---
 
 # Thompson sampling learner

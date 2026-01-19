@@ -4,11 +4,10 @@ title: Add gzip and brotli compression for HTTP responses
 type: feat
 status: done
 priority: medium
-epics: [web-ui]
+scope: web-ui
 depends: []
 estimate: small
 created: 2026-01-13
-updated: 2026-01-13
 ---
 
 # Add gzip and brotli compression for HTTP responses

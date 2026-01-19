@@ -4,8 +4,7 @@ title: Connectivity Validation
 type: feat
 status: done
 priority: medium
-epics: [cli, networking]
-milestone: 35-setup-wizards
+scope: networking
 ---
 
 # Connectivity Validation

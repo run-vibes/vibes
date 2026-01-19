@@ -4,11 +4,10 @@ title: SolutionGenerator
 type: feat
 status: done
 priority: medium
-epics: [plugin-system]
+scope: plugin-system
 depends: [FEAT0055]
 estimate: 2h
 created: 2026-01-09
-milestone: 34-open-world-adaptation
 ---
 
 # SolutionGenerator

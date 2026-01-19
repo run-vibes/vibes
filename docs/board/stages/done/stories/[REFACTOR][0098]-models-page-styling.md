@@ -4,7 +4,7 @@ title: Models Page Styling Alignment
 type: refactor
 status: done
 priority: medium
-epics: [web-ui]
+scope: web-ui
 depends: [refactor-0097]
 ---
 

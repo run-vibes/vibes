@@ -4,12 +4,10 @@ title: Align Settings page with CRT design system
 type: chore
 status: done
 priority: medium
-epics: [web-ui]
+scope: web-ui/27-crt-visual-design
 depends: []
 estimate:
 created: 2026-01-08
-updated: 2026-01-08
-milestone: 27
 ---
 
 # Align Settings page with CRT design system

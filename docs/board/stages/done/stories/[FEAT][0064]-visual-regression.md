@@ -4,7 +4,7 @@ title: Visual regression testing
 type: feat
 status: done
 priority: medium
-epics: [verification]
+scope: verification
 depends: []
 estimate: 4h
 created: 2026-01-09

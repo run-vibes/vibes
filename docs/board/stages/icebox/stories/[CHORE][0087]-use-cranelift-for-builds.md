@@ -4,7 +4,7 @@ title: Use Cranelift for faster builds
 type: chore
 status: icebox
 priority: low
-epics: [dev-environment]
+scope: dev-environment
 depends: []
 estimate: 4h
 created: 2026-01-12

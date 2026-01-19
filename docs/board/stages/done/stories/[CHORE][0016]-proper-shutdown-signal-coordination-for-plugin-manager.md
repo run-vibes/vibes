@@ -4,11 +4,10 @@ title: proper shutdown signal coordination for plugin manager
 type: chore
 status: done
 priority: low
-epics: [core]
+scope: core
 depends: []
 estimate: S
 created: 2026-01-08
-updated: 2026-01-08
 ---
 
 # Proper shutdown signal coordination for plugin manager

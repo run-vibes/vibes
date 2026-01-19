@@ -4,10 +4,9 @@ title: Agent Web UI
 type: feat
 status: done
 priority: medium
-epics: [agents]
+scope: agents/38-autonomous-agents
 depends: [m38-feat-06]
 estimate: 4h
-milestone: 38
 ---
 
 # Agent Web UI

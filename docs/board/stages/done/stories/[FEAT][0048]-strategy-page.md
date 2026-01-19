@@ -4,11 +4,10 @@ title: Strategy page (distributions + overrides)
 type: feat
 status: done
 priority: high
-epics: [plugin-system]
+scope: plugin-system
 depends: [FEAT0043]
 estimate: 3h
 created: 2026-01-09
-milestone: 33-groove-dashboard
 ---
 
 # Strategy page (distributions + overrides)

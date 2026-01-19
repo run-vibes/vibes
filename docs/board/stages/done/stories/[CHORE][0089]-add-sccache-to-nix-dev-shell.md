@@ -4,11 +4,10 @@ title: Add sccache to Nix dev shell
 type: chore
 status: done
 priority: medium
-epics: [dev-environment]
+scope: dev-environment
 depends: []
 estimate: 2h
 created: 2026-01-13
-updated: 2026-01-13
 ---
 
 # Add sccache to Nix dev shell

@@ -4,11 +4,10 @@ title: Strategy consumer
 type: feat
 status: done
 priority: high
-epics: [plugin-system]
+scope: plugin-system
 depends: [FEAT0036, FEAT0038]
 estimate: 3h
 created: 2026-01-09
-milestone: 32-adaptive-strategies
 ---
 
 # Strategy consumer

@@ -4,11 +4,10 @@ title: Fix broken documentation links
 type: docs
 status: done
 priority: medium
-epics: [core]
+scope: core
 depends: []
 estimate: 30m
 created: 2026-01-08
-updated: 2026-01-08
 ---
 
 # Fix broken documentation links

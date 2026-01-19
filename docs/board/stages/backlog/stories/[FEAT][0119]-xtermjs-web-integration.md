@@ -4,12 +4,10 @@ title: xterm.js web integration
 type: feat
 status: backlog
 priority: medium
-epics: [tui]
+scope: tui/46-terminal-server
 depends: []
 estimate:
 created: 2026-01-14
-updated: 2026-01-14
-milestone: 46
 ---
 
 # xterm.js web integration

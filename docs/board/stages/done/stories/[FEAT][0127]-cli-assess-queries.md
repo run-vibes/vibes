@@ -4,12 +4,10 @@ title: "Feature: Wire CLI Assess Commands to Query Real Data"
 type: feat
 status: done
 priority: medium
-epics: [core, cli, plugin-system]
+scope: web-ui/26-infinite-event-stream
 depends: []
 estimate:
 created: 2026-01-04
-updated: 2026-01-08
-milestone: 26
 ---
 
 # Feature: Wire CLI Assess Commands to Query Real Data

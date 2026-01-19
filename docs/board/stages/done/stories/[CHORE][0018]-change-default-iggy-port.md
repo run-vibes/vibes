@@ -4,12 +4,10 @@ title: Change default Iggy port to 7431
 type: chore
 status: done
 priority: high
-epics: [core]
+scope: core
 depends: []
 estimate: 30m
 created: 2026-01-08
-updated: 2026-01-08
-milestone: 29-assessment-framework
 ---
 
 # Change default Iggy port to 7431

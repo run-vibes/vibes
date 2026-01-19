@@ -4,12 +4,10 @@ title: "Feature: Add Assessment Query UI to Web Dashboard"
 type: feat
 status: done
 priority: medium
-epics: [web-ui, plugin-system]
+scope: groove/29-assessment-pipeline
 depends: [m26-feat-10-cli-assess-queries]
 estimate:
 created: 2026-01-07
-updated: 2026-01-08
-milestone: 29
 ---
 
 # Feature: Add Assessment Query UI to Web Dashboard

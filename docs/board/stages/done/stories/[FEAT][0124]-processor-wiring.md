@@ -4,12 +4,10 @@ title: "Feature: Wire Assessment Processor Pipeline"
 type: feat
 status: done
 priority: medium
-epics: [core, cli, plugin-system]
+scope: web-ui/26-infinite-event-stream
 depends: []
 estimate:
 created: 2026-01-01
-updated: 2026-01-07
-milestone: 26
 ---
 
 # Feature: Wire Assessment Processor Pipeline

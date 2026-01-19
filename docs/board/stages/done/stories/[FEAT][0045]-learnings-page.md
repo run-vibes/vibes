@@ -4,11 +4,10 @@ title: Learnings page (split view)
 type: feat
 status: done
 priority: high
-epics: [plugin-system]
+scope: plugin-system
 depends: [FEAT0043]
 estimate: 4h
 created: 2026-01-09
-milestone: 33-groove-dashboard
 ---
 
 # Learnings page (split view)

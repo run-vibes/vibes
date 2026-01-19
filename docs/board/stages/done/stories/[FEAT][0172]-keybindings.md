@@ -4,10 +4,9 @@ title: KeyBindings system
 type: feat
 status: done
 priority: high
-epics: [tui]
+scope: tui/41-terminal-ui-framework
 depends: [m41-feat-03]
 estimate: 3h
-milestone: 41
 ---
 
 # KeyBindings System

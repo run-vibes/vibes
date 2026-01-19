@@ -4,7 +4,7 @@ title: Test organization cleanup
 type: chore
 status: done
 priority: low
-epics: [verification]
+scope: verification
 depends: []
 estimate: 3h
 created: 2026-01-09

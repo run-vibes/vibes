@@ -4,12 +4,10 @@ title: Local embedder
 type: feat
 status: done
 priority: high
-epics: [plugin-system]
+scope: plugin-system
 depends: []
 estimate: 3h
 created: 2026-01-08
-updated: 2026-01-09
-milestone: 30-learning-extraction
 ---
 
 # Local embedder

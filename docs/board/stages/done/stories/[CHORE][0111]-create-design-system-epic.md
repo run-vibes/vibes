@@ -4,12 +4,10 @@ title: Create design-system epic
 type: chore
 status: done
 priority: high
-epics: [coherence-verification]
+scope: coherence-verification/02-epic-based-project-hierarchy
 depends: []
-milestone: 02-board-restructure
 estimate: 15m
 created: 2026-01-17
-updated: 2026-01-17
 ---
 
 # Create design-system epic

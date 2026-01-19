@@ -4,11 +4,10 @@ title: Core types and traits
 type: feat
 status: done
 priority: high
-epics: [plugin-system]
+scope: plugin-system
 depends: []
 estimate: 2h
 created: 2026-01-09
-milestone: 34-open-world-adaptation
 ---
 
 # Core types and traits

@@ -4,12 +4,10 @@ title: Paginate assessment history endpoint
 type: feat
 status: done
 priority: medium
-epics: [core,plugin-system]
+scope: plugin-system
 depends: []
 estimate: 2h
 created: 2026-01-08
-updated: 2026-01-08
-milestone: 29-assessment-framework
 ---
 
 # Paginate assessment history endpoint

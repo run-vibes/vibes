@@ -4,11 +4,10 @@ title: Attribution types and storage
 type: feat
 status: done
 priority: high
-epics: [plugin-system]
+scope: plugin-system
 depends: []
 estimate: 2h
 created: 2026-01-09
-milestone: 31-attribution-engine
 ---
 
 # Attribution types and storage

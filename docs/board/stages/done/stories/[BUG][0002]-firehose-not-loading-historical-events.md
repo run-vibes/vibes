@@ -4,12 +4,10 @@ title: "bug-0002: Firehose Not Loading Historical Events"
 type: bug
 status: done
 priority: medium
-epics: [core]
+scope: core
 depends: []
 estimate:
 created: 2026-01-01
-updated: 2026-01-07
-milestone: 
 ---
 
 # bug-0002: Firehose Not Loading Historical Events

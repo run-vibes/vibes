@@ -4,7 +4,7 @@ title: Header Identity Display
 type: feat
 status: icebox
 priority: low
-epics: [web-ui, design-system]
+scope: design-system
 depends: [refactor-0100]
 ---
 

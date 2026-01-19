@@ -4,11 +4,10 @@ title: fix sccache for worktrees and cross-project use
 type: chore
 status: done
 priority: high
-epics: [dev-environment]
+scope: dev-environment
 depends: []
 estimate: 2h
 created: 2026-01-13
-updated: 2026-01-13
 ---
 
 # fix sccache for worktrees and cross-project use

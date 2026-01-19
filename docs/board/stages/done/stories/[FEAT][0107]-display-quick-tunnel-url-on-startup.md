@@ -4,11 +4,10 @@ title: Display quick tunnel URL on startup
 type: feat
 status: done
 priority: high
-epics: [networking]
+scope: networking
 depends: []
 estimate: S
 created: 2026-01-13
-updated: 2026-01-14
 ---
 
 # Display quick tunnel URL on startup

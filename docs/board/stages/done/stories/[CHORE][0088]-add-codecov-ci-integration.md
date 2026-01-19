@@ -4,7 +4,7 @@ title: Add Codecov coverage reporting to CI
 type: chore
 status: done
 priority: medium
-epics: [dev-environment]
+scope: dev-environment
 depends: []
 estimate: 1h
 created: 2026-01-12

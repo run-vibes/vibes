@@ -4,11 +4,10 @@ title: Sparkline and chart components
 type: feat
 status: done
 priority: medium
-epics: [plugin-system]
+scope: plugin-system
 depends: [FEAT0044]
 estimate: 3h
 created: 2026-01-09
-milestone: 33-groove-dashboard
 ---
 
 # Sparkline and chart components

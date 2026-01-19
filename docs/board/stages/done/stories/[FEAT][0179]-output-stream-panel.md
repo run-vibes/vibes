@@ -4,10 +4,9 @@ title: Output stream panel
 type: feat
 status: done
 priority: high
-epics: [tui]
+scope: tui/43-terminal-agent-control
 depends: [m43-feat-01]
 estimate: 4h
-milestone: 43
 ---
 
 # Output Stream Panel

@@ -2,6 +2,7 @@
 title: Fix flaky iggy_client token cache tests
 type: bug
 status: done
+scope:
 created: 2026-01-13
 ---
 
