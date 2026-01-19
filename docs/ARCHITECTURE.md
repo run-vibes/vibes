@@ -203,6 +203,6 @@ When using Cloudflare Tunnel, all requests are authenticated via Cloudflare Acce
 
 ## Related Documentation
 
-- [Product Requirements Document](PRD.md) — Full design and specifications
+- [Product Vision](VISION.md) — Full design and specifications
 - [Plugins](PLUGINS.md) — Plugin system and in-tree plugins
 - [Planning Board](board/README.md) — Implementation status and roadmap

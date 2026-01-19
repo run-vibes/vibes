@@ -260,4 +260,4 @@ groove uses the ◉ icon in gold for all status indicators and messages.
 - [Visual System](../design/VISUAL-SYSTEM.md) - Complete vibes design system (colors, typography, components)
 - [Continual Learning Design](../plans/14-continual-learning/design.md) - Technical architecture
 - [Harness Introspection Design](../plans/15-harness-introspection/design.md) - Level 0 foundation
-- [PRD](../PRD.md) - Overall vibes product requirements
+- [Product Vision](../VISION.md) - Overall vibes product requirements

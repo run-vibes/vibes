@@ -985,4 +985,4 @@ Same warm feeling, just inverted. Cream instead of charcoal.
 
 - [groove Branding Guide](../groove/BRANDING.md) - Voice, personality, messaging
 - [Continual Learning Design](../plans/14-continual-learning/design.md) - Technical architecture
-- [PRD](../PRD.md) - Overall product requirements
+- [Product Vision](../VISION.md) - Overall product requirements

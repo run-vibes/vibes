@@ -29,7 +29,7 @@ This milestone adds Web Push notifications to vibes, completing Phase 2 (Remote 
 
 ### ADR-013: Push Notification Architecture
 
-See [PRD.md](../../PRD.md#adr-013-push-notification-architecture) for the full ADR.
+See [VISION.md](../../../../VISION.md#adr-013-push-notification-architecture) for the full ADR.
 
 ### Push Flow
 

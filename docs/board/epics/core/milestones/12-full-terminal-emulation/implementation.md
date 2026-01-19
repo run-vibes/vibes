@@ -1160,7 +1160,7 @@ git commit -m "feat(web-ui): replace chat UI with terminal"
 
 **Files:**
 - Modify: `README.md`
-- Modify: `docs/PRD.md`
+- Modify: `docs/VISION.md`
 - Modify: `CLAUDE.md`
 
 *Update docs to reflect PTY architecture*

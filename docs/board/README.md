@@ -13,7 +13,6 @@
 
 | Story | Type | Priority | Epic |
 |-------|------|----------|------|
-| [[CHORE][0143]-rename-prd-to-vision](stages/backlog/stories/[CHORE][0143]-rename-prd-to-vision.md) | chore | high |  |
 | [[CHORE][0144]-migrate-existing-epics](stages/backlog/stories/[CHORE][0144]-migrate-existing-epics.md) | chore | low |  |
 | [[CHORE][0145]-migrate-existing-milestones](stages/backlog/stories/[CHORE][0145]-migrate-existing-milestones.md) | chore | low |  |
 | [[FEAT][0115]-eval-web-ui](stages/backlog/stories/[FEAT][0115]-eval-web-ui.md) | feat | medium |  |

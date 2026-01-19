@@ -389,7 +389,7 @@
 ### Task 7.1: Update PRD with ADR-010
 
 **Files:**
-- Modify: `docs/PRD.md`
+- Modify: `docs/VISION.md`
 
 **Steps:**
 1. Add ADR-010: Daemon Architecture section

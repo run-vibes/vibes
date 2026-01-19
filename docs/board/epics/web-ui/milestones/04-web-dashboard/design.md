@@ -568,7 +568,7 @@ uuid = { version = "1", features = ["v4"] }
 
 | Document | Updates Needed |
 |----------|----------------|
-| `docs/PRD.md` | Update architecture diagram, clarify daemon model vs embedded server, add ADR-010 |
+| `docs/VISION.md` | Update architecture diagram, clarify daemon model vs embedded server, add ADR-010 |
 | `docs/PROGRESS.md` | Mark Milestone 1.4 items as complete when done |
 | `README.md` | Add web UI usage section, update quick start |
 | `CLAUDE.md` | Add `just build-web` command, note about Node.js requirement |

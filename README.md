@@ -122,7 +122,7 @@ just pre-commit
 - [Architecture](docs/ARCHITECTURE.md) — System design, event flow, and component overview
 - [Plugins](docs/PLUGINS.md) — Plugin system and in-tree plugins (including groove)
 - [Roadmap](docs/ROADMAP.md) — Development phases and milestone tracking
-- [Product Requirements](docs/PRD.md) — Full design specifications
+- [Product Vision](docs/VISION.md) — Full design specifications
 - [Planning Board](docs/board/README.md) — Kanban board tracking implementation status
 - [Planning Conventions](docs/board/CONVENTIONS.md) — How to create design and implementation plans
 - [CLAUDE.md](CLAUDE.md) — Development guidance for contributors

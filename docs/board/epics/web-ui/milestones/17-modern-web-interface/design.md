@@ -379,4 +379,4 @@ Performance:
 
 - [VISUAL-SYSTEM.md](../../design/VISUAL-SYSTEM.md) - Design tokens and visual language
 - [groove BRANDING.md](../../groove/BRANDING.md) - groove plugin branding
-- [PRD.md](../../PRD.md) - Product requirements
+- [VISION.md](../../../../VISION.md) - Product vision

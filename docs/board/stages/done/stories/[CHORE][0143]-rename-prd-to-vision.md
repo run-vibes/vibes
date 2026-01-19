@@ -2,7 +2,7 @@
 id: CHORE0143
 title: Rename PRD to VISION
 type: chore
-status: backlog
+status: done
 priority: high
 scope: coherence-verification/03-formal-planning-process
 depends: []

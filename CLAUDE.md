@@ -21,7 +21,7 @@ vibes augments *you*—the human developer—with AI-powered superpowers: remote
 | **vibes-groove** | Continual learning plugin (under `plugins/`) |
 | **web-ui** | TanStack frontend embedded via rust-embed |
 
-See [docs/PRD.md](docs/PRD.md) for product requirements and [docs/board/README.md](docs/board/README.md) for project status.
+See [docs/VISION.md](docs/VISION.md) for product vision and [docs/board/README.md](docs/board/README.md) for project status.
 
 ### Event Sourcing (CRITICAL)
 

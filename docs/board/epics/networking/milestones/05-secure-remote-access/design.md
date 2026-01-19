@@ -582,7 +582,7 @@ None required - using existing React Query for state.
 
 | Document | Changes |
 |----------|---------|
-| docs/PRD.md | Mark milestone 2.1 decisions |
+| docs/VISION.md | Mark milestone 2.1 decisions |
 | docs/PROGRESS.md | Update milestone 2.1 checkboxes |
 | README.md | Add tunnel setup section |
 
