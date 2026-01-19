@@ -1,6 +1,28 @@
 # Planning Conventions
 
-This document describes how to use the kanban planning board at `docs/board/`.
+This document describes the formal planning process and kanban board at `docs/board/`.
+
+## Document Hierarchy
+
+vibes follows a formal software engineering document hierarchy with full traceability:
+
+```
+VISION (product)
+└── PRD (epic)
+    └── SRS + DESIGN (milestone)
+        └── Stories
+            └── Verification
+```
+
+| Level | Document | Purpose | Location |
+|-------|----------|---------|----------|
+| Product | VISION.md | Product goals and roadmap | `docs/VISION.md` |
+| Epic | PRD.md | User needs, business value | `epics/<name>/PRD.md` |
+| Milestone | SRS.md | Requirements with verification criteria | `milestones/<id>/SRS.md` |
+| Milestone | DESIGN.md | Architecture and implementation | `milestones/<id>/DESIGN.md` |
+| Story | `[TYPE][NNNN]-name.md` | Implementable unit of work | `stages/<stage>/stories/` |
+
+---
 
 ## Index
 
@@ -9,29 +31,30 @@ This document describes how to use the kanban planning board at `docs/board/`.
 |---------|-------------|
 | [Board Structure](#board-structure) | Directory layout and organization |
 | [Stages](#stages) | Story lifecycle: backlog, in-progress, done |
-| [Epics](#epics) | Grouping related stories |
-| [Milestones](#milestones) | Large deliverables with design docs |
+| [Epics](#epics) | Large initiatives with PRD |
+| [Milestones](#milestones) | Deliverables with SRS and DESIGN |
 | [Commands](#commands) | `just board` command reference |
 
 ### Planning
 | Section | Description |
 |---------|-------------|
-| [When to Create a Plan](#when-to-create-a-plan) | Planning vs just doing |
-| [Story Lifecycle](#story-lifecycle) | Moving stories through stages |
-| [Phase 1: Design Document](#phase-1-design-document) | Architecture and design decisions |
-| [Phase 2: Implementation Plan](#phase-2-implementation-plan) | Stories and task breakdown |
+| [Creating an Epic](#creating-an-epic) | Starting a new initiative |
+| [Creating a Milestone](#creating-a-milestone) | Planning a deliverable |
+| [Creating Stories](#creating-stories) | Breaking down into work units |
+| [Traceability](#traceability) | Linking requirements to verification |
 
 ### Execution
 | Section | Description |
 |---------|-------------|
-| [Using Plans with Claude Code](#using-plans-with-claude-code) | Superpowers skills for execution |
+| [Story Lifecycle](#story-lifecycle) | Moving stories through stages |
+| [Completing Work](#completing-work) | Final steps before PR |
+| [Using Superpowers](#using-superpowers) | Skills for planning and execution |
 
 ### Standards
 | Section | Description |
 |---------|-------------|
-| [Architectural Decision: Plugin vs Built-in](#architectural-decision-plugin-vs-built-in) | Where new features belong |
+| [Plugin vs Built-in](#architectural-decision-plugin-vs-built-in) | Where new features belong |
 | [Best Practices](#best-practices) | Do's and don'ts |
-| [Plan Review Checklist](#plan-review-checklist) | Pre-implementation verification |
 
 ---
 
@@ -45,41 +68,42 @@ docs/board/
 ├── CHANGELOG.md           # Updated when items complete
 ├── CONVENTIONS.md         # This file
 ├── stages/                # Story files organized by status
-│   ├── backlog/stories/   # Future work
-│   ├── in-progress/stories/ # Currently being worked on
-│   ├── done/stories/      # Completed work
-│   └── icebox/stories/    # Blocked or deferred work
-├── epics/                 # Large initiatives containing milestones
-│   ├── coherence-verification/
-│   │   ├── README.md
-│   │   └── milestones/    # Milestones within this epic
-│   └── ...
+│   ├── backlog/stories/
+│   ├── in-progress/stories/
+│   ├── done/stories/
+│   └── icebox/stories/
+├── epics/                 # Large initiatives
+│   └── <epic-name>/
+│       ├── README.md      # Navigation and status
+│       ├── PRD.md         # Product requirements
+│       └── milestones/
+│           └── <id>/
+│               ├── README.md   # Navigation and status
+│               ├── SRS.md      # Software requirements
+│               └── DESIGN.md   # Architecture
 └── templates/             # Templates for new items
     ├── story.md
-    ├── epic.md
-    └── milestone.md
+    ├── VISION.md
+    ├── PRD.md
+    ├── SRS.md
+    ├── DESIGN.md
+    ├── epic-README.md
+    └── milestone-README.md
 ```
 
 ### Hierarchy
 
-The board follows a three-level hierarchy (like Linear):
-
 ```
-Epic (large initiative)
-└── Milestone (deliverable with design doc)
+Epic (large initiative with PRD)
+└── Milestone (deliverable with SRS + DESIGN)
     └── Story (implementable unit of work)
 ```
 
-| Level | Scope | Example |
-|-------|-------|---------|
-| **Epic** | Large initiative spanning multiple milestones | "Coherence Verification" |
-| **Milestone** | Deliverable with design doc, multiple stories | "Artifact Pipeline" |
-| **Story** | Single implementable unit, ends with a commit | "Add snapshot capture" |
-
-**Key principles:**
-- Epics contain milestones (not the reverse)
-- Epics have status (`active`, `done`) and can be closed when complete
-- All milestones live within epics (`epics/<name>/milestones/`)
+| Level | Scope | Documents | Example |
+|-------|-------|-----------|---------|
+| **Epic** | Large initiative | PRD.md + README.md | "Coherence Verification" |
+| **Milestone** | Deliverable with requirements | SRS.md + DESIGN.md + README.md | "Artifact Pipeline" |
+| **Story** | Single implementable unit | Story file | "Add snapshot capture" |
 
 ## Stages
 
@@ -91,13 +115,6 @@ Stories live in `stages/<stage>/stories/` and move between stages as work progre
 | **in-progress** | `stages/in-progress/stories/` | Currently being worked on |
 | **done** | `stages/done/stories/` | Completed work |
 | **icebox** | `stages/icebox/stories/` | Blocked or deferred work |
-
-The **icebox** stage is for stories that are:
-- Blocked by external dependencies
-- Deferred to a future milestone
-- Paused pending decisions or clarification
-
-Use `just board ice <id>` to move a story to icebox and `just board thaw <id>` to bring it back to backlog.
 
 ### Story File Format
 
@@ -119,27 +136,17 @@ created: 2026-01-17
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| `id` | Yes | Unique identifier (`TYPE` + 4-digit number: `FEAT0109`, `BUG0001`) |
+| `id` | Yes | Unique identifier (`TYPE` + 4-digit number) |
 | `title` | Yes | Human-readable title |
 | `type` | Yes | `feat`, `bug`, `chore`, `refactor` |
 | `status` | Yes | `backlog`, `in-progress`, `done`, `icebox` |
 | `priority` | No | `low`, `medium`, `high`, `critical` |
-| `scope` | No | Epic and milestone path: `epic-name/milestone-id` or just `epic-name` |
+| `scope` | No | `epic-name/milestone-id` or just `epic-name` |
 | `depends` | No | List of story IDs that must complete first |
 | `estimate` | No | Time estimate (e.g., `2h`, `1d`) |
 | `created` | Yes | Creation date |
 
-**Scope values:**
-
-| Value | Meaning |
-|-------|---------|
-| `epic/milestone` | Story belongs to epic and milestone (e.g., `coherence-verification/01-artifact-pipeline`) |
-| `epic` | Story belongs to epic only, no milestone (e.g., `core`) |
-| (empty) | Ad-hoc story, not associated with any epic |
-
 ### Story Naming
-
-Stories use a bracketed format for type and ID:
 
 ```
 [TYPE][NNNN]-verb-phrase.md
@@ -151,39 +158,20 @@ Stories use a bracketed format for type and ID:
 | `[NNNN]` | Zero-padded 4-digit ID (auto-generated) |
 | `verb-phrase` | Imperative description with hyphens |
 
-**Examples:**
-
-| Pattern | Example | Description |
-|---------|---------|-------------|
-| Feature | `[FEAT][0042]-add-session-export.md` | New functionality |
-| Bug fix | `[BUG][0015]-fix-cwd-propagation.md` | Bug fix |
-| Chore | `[CHORE][0008]-update-dependencies.md` | Maintenance task |
-| Refactor | `[REFACTOR][0003]-simplify-auth-flow.md` | Code restructuring |
-
-**Legacy naming:** The board commands also recognize older patterns (`feat-NNNN-name.md`, `m26-feat-01-name.md`) for backwards compatibility, but new stories use the bracketed format.
-
 ## Epics
 
-Epics are large initiatives that contain one or more milestones. Each epic is a directory in `epics/` containing:
+Epics are large initiatives containing milestones. Each epic has:
 
-- `README.md` with epic metadata and overview
-- `milestones/` subdirectory with milestone design documents
+- `README.md` — Navigation and status summary
+- `PRD.md` — Product requirements document
 
 ```
-epics/
-├── coherence-verification/
-│   ├── README.md                    # Epic overview
-│   └── milestones/
-│       ├── 01-artifact-pipeline/
-│       │   ├── design.md
-│       │   └── implementation.md
-│       └── 02-board-restructure/
-│           └── design.md
-└── core/
-    ├── README.md
-    └── milestones/
-        └── 01-event-sourcing/
-            └── design.md
+epics/coherence-verification/
+├── README.md      # Status, milestones list
+├── PRD.md         # Requirements, success criteria
+└── milestones/
+    ├── 01-artifact-pipeline/
+    └── 02-ai-assisted-verification/
 ```
 
 ### Epic README Format
@@ -193,58 +181,126 @@ epics/
 id: coherence-verification
 title: Coherence Verification
 status: active
-description: Reduce spec-to-implementation drift through visual verification
-milestones:
-  - 01-artifact-pipeline
-  - 02-board-restructure
 ---
-
-# Coherence Verification
-
-[Epic overview and goals...]
 ```
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `id` | Yes | URL-safe identifier |
-| `title` | Yes | Human-readable title |
-| `status` | Yes | `active` or `done` |
-| `description` | Yes | One-line summary |
-| `milestones` | No | List of milestone IDs within this epic |
+| Field | Values | Description |
+|-------|--------|-------------|
+| `status` | `backlog`, `active`, `done` | Epic lifecycle state |
 
-### Key Properties
+### Epic PRD Format
 
-- Epics contain milestones (not the reverse)
-- Epics have status and can be closed when all milestones complete
-- Epics provide a high-level view of large initiatives
+The PRD defines user needs and requirements:
+
+```markdown
+# Epic Title — Product Requirements
+
+> Value proposition
+
+## Problem Statement
+## Users
+## Requirements
+### Functional Requirements
+| ID | Requirement | Priority |
+|----|-------------|----------|
+| FR-01 | ... | must |
+
+### Non-Functional Requirements
+| ID | Requirement | Priority |
+|----|-------------|----------|
+| NFR-01 | ... | must |
+
+## Success Criteria
+## Milestones
+```
+
+Requirements use IDs (FR-01, NFR-01) that milestones reference in their SRS documents.
 
 ## Milestones
 
-Milestones are large deliverables with design documents and multiple stories. All milestones live within an epic at `epics/<epic-name>/milestones/<milestone-id>/`.
+Milestones are deliverables with requirements and design. Each milestone has:
 
-Each milestone directory contains:
-
-- `design.md` for architecture decisions (required)
-- `implementation.md` for story index (optional)
+- `README.md` — Navigation and progress tracking
+- `SRS.md` — Software requirements specification
+- `DESIGN.md` — Architecture and implementation approach
 
 ```
-epics/coherence-verification/milestones/
-├── 01-artifact-pipeline/
-│   ├── design.md
-│   └── implementation.md
-└── 02-board-restructure/
-    └── design.md
+milestones/01-artifact-pipeline/
+├── README.md      # Story list, progress
+├── SRS.md         # Requirements, verification
+└── DESIGN.md      # Architecture, decisions
 ```
 
-### Milestone Status
+### Milestone README Format
 
-| Status | Description |
-|--------|-------------|
-| `backlog` | Planned but not started |
-| `in-progress` | Active development |
-| `done` | All stories complete |
+```yaml
+---
+id: 01-artifact-pipeline
+title: Artifact Pipeline
+status: in-progress
+epic: coherence-verification
+---
+```
 
-Use `just board start-milestone <id>` and `just board done-milestone <id>` to manage status.
+| Field | Values | Description |
+|-------|--------|-------------|
+| `status` | `backlog`, `in-progress`, `done` | Milestone lifecycle state |
+
+The README includes auto-generated story tables updated by `just board generate`.
+
+### Milestone SRS Format
+
+The SRS defines requirements with verification criteria:
+
+```markdown
+# Milestone Title — Software Requirements Specification
+
+> Goal
+
+**Epic:** [Epic Title](../../PRD.md)
+**Status:** in-progress
+
+## Scope
+## Requirements
+### Functional Requirements
+| ID | Requirement | Source | Verification |
+|----|-------------|--------|--------------|
+| SRS-01 | ... | FR-01 | test: ... |
+
+## Stories
+| Story | Requirements | Status |
+|-------|--------------|--------|
+| FEAT0042 | SRS-01 | backlog |
+
+## Traceability
+```
+
+Key elements:
+- **Source** — Links to PRD requirement (FR-01, NFR-01)
+- **Verification** — How to verify (test, manual, file exists, glob check)
+- **Stories** — Which stories implement which requirements
+
+### Milestone DESIGN Format
+
+The DESIGN documents architecture decisions:
+
+```markdown
+# Milestone Title — Design Document
+
+> Summary
+
+**SRS:** [SRS.md](SRS.md)
+
+## Overview
+## Architecture
+## Key Decisions
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+
+## Components
+## Data Flow
+## Error Handling
+```
 
 ## Commands
 
@@ -252,20 +308,20 @@ Use `just board start-milestone <id>` and `just board done-milestone <id>` to ma
 
 | Command | Action |
 |---------|--------|
-| `just board new story "title"` | Create story in backlog (interactive type selection) |
-| `just board new story feat "title"` | Create feature story in backlog |
-| `just board new story bug "title"` | Create bug story in backlog |
+| `just board new story "title"` | Create story in backlog (interactive type) |
+| `just board new story feat "title"` | Create feature story |
+| `just board new story bug "title"` | Create bug story |
 | `just board start <id>` | Move story to in-progress |
 | `just board done <id>` | Move story to done + changelog |
-| `just board ice <id>` | Move story to icebox (blocked/deferred) |
+| `just board ice <id>` | Move story to icebox |
 | `just board thaw <id>` | Move story from icebox to backlog |
 
 ### Epic and Milestone Management
 
 | Command | Action |
 |---------|--------|
-| `just board new epic "name"` | Create new epic |
-| `just board new milestone "name"` | Create new milestone (within current epic) |
+| `just board new epic "name"` | Create epic with README.md + PRD.md |
+| `just board new milestone "name"` | Create milestone with README.md + SRS.md + DESIGN.md |
 | `just board start-milestone <id>` | Set milestone to in-progress |
 | `just board done-milestone <id>` | Set milestone to done |
 | `just board done-epic <id>` | Set epic to done |
@@ -277,365 +333,175 @@ Use `just board start-milestone <id>` and `just board done-milestone <id>` to ma
 | Command | Action |
 |---------|--------|
 | `just board` | Show available commands |
-| `just board generate` | Regenerate README.md |
-| `just board status` | Show counts per stage (backlog, in-progress, done, icebox) |
+| `just board generate` | Regenerate README files with progress |
+| `just board status` | Show counts per stage |
+
+### Verification
+
+| Command | Action |
+|---------|--------|
+| `just verify story <id>` | Run verification for a story |
+| `just verify all` | Run all verification |
 
 ---
 
 # Planning
 
-## When to Create a Plan
+## Creating an Epic
 
-Create a plan when:
+1. Run `just board new epic "Epic Name"`
+   - Creates `epics/<name>/README.md` from template
+   - Creates `epics/<name>/PRD.md` from template
 
-- Adding a new feature or milestone
-- Making architectural changes (new crates, trait refactoring)
-- Refactoring significant code areas
-- Adding new dependencies or external integrations
-- Changing the interaction model with Claude Code
+2. Fill in the PRD:
+   - Problem statement
+   - Users
+   - Functional requirements (FR-01, FR-02, ...)
+   - Non-functional requirements (NFR-01, ...)
+   - Success criteria
 
-Skip planning for:
+3. Run `just board generate` to update the board README
 
-- Bug fixes with obvious solutions
-- Small API additions to existing types
-- Documentation updates
-- Single-file changes
-- Test additions for existing code
+## Creating a Milestone
 
-## Story Lifecycle
+1. Run `just board new milestone "Milestone Name"`
+   - Creates `milestones/<id>/README.md` from template
+   - Creates `milestones/<id>/SRS.md` from template
+   - Creates `milestones/<id>/DESIGN.md` from template
+   - Updates epic README with new milestone
 
-> **⚠️ IMPORTANT:** Always use `just board` commands to change story state. Never manually move files or update symlinks—the commands handle this automatically.
+2. Fill in the SRS:
+   - Scope
+   - Requirements with verification criteria
+   - Link requirements to PRD (Source column)
+   - Define how each requirement is verified
 
-### 1. Create Story
+3. Fill in the DESIGN:
+   - Architecture overview
+   - Key decisions with rationale
+   - Components and data flow
 
-```bash
-just board new story "Add session export"
-```
+## Creating Stories
 
-This creates a story in `stages/backlog/stories/` using the template.
+1. Run `just board new story "Story Title"` or `just board new story feat "title"`
 
-### 2. Link to Milestone (Optional)
+2. Link to milestone: `just board link <story-id> <milestone-id>`
+   - Sets story's `scope` field
+   - Creates symlink in milestone directory
 
-```bash
-just board link feat-0004-session-export 01-artifact-pipeline
-```
+3. Fill in the story:
+   - Summary
+   - Acceptance criteria
+   - Implementation notes
+   - Link to SRS requirements in story body
 
-This creates a symlink in the milestone directory pointing to the story, and sets the story's `milestone` frontmatter field.
+## Traceability
 
-### 3. Start Work
-
-```bash
-just board start feat-0004-session-export
-```
-
-This moves the story file from `stages/backlog/stories/` to `stages/in-progress/stories/`.
-
-### 4. Complete Work
-
-```bash
-just board done feat-0004-session-export
-```
-
-This moves the story to `stages/done/stories/` and updates the changelog.
-
-## Phase 1: Design Document
-
-Before implementation, create a `design.md` that captures architectural decisions.
-
-### Design Document Template
-
-````markdown
-# Milestone NN: [Feature Name] - Design Document
-
-> [One-line summary of what this enables]
-
-## Overview
-
-[1-2 paragraphs describing what this feature does and why we're building it]
-
-### Key Decisions
-
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| **Plugin vs Built-in** | [Plugin / Built-in] | [See decision framework] |
-| [Decision Area] | [Choice Made] | [Why] |
-
-> **Required:** Every design document must explicitly address the Plugin vs Built-in decision. See [Architectural Decision: Plugin vs Built-in](#architectural-decision-plugin-vs-built-in).
-
----
-
-## Architecture
-
-[Diagrams using ASCII art or Mermaid]
+The document hierarchy creates full traceability:
 
 ```
-┌──────────────┐     ┌──────────────┐
-│  Component A │────▶│  Component B │
-└──────────────┘     └──────────────┘
+VISION.md
+    └── Epics roadmap
+PRD.md (FR-01, FR-02, NFR-01)
+    └── Milestones list
+SRS.md (SRS-01 → FR-01, SRS-02 → FR-02)
+    └── Stories list (Story X → SRS-01)
+Story
+    └── Verification annotations
+verification/report.md
+    └── Results
 ```
 
-### Component Overview
-
-| Component | Location | Responsibility |
-|-----------|----------|----------------|
-| [Name] | vibes-core | [What it does] |
-
----
-
-## Types and Interfaces
-
-```rust
-/// Description of the type
-pub struct MyType {
-    pub field: String,
-}
-```
-
----
-
-## API Changes
-
-### HTTP Endpoints (if applicable)
-
-```
-GET  /api/resource           # Description
-POST /api/resource           # Description
-```
-
----
-
-## Dependencies
-
-```toml
-[dependencies]
-new-crate = "1.0"            # Purpose
-```
-
----
-
-## Testing Strategy
-
-| Component | Test Coverage |
-|-----------|---------------|
-| [Name] | [What to test] |
-
----
-
-## Deliverables
-
-- [ ] Backend implementation
-- [ ] Server integration
-- [ ] Tests passing
-- [ ] Documentation updated
-````
-
-### Key Elements
-
-1. **Decisions Table** - Quick reference for all major choices
-2. **Rationale** - Explain *why* not just *what*
-3. **Trade-offs** - Document what was considered and rejected
-
-### Example: Decision Documentation
-
-```markdown
-### Storage Approach
-
-**Choice:** File-backed SQLite
-
-**Considered:**
-- Pure in-memory (fast but no persistence)
-- File-backed JSON (simple but no queries)
-- SQLite (queries + persistence + single file)
-
-**Rationale:** SQLite provides structured queries for history search while maintaining single-file simplicity.
-```
-
-## Phase 2: Implementation Plan
-
-After design approval, create an `implementation.md` that breaks the milestone into **stories** - focused deliverables that can be implemented and merged independently.
-
-### Source of Truth
-
-**Story frontmatter is the single source of truth for status.** The `implementation.md` is a navigation index only - it links to stories but does not track their status. Run `just board status` to see current status.
-
-### Implementation Plan Template
-
-The `implementation.md` serves as the entry point and index for the milestone's stories:
-
-```markdown
-# Milestone NN: [Name] - Implementation Plan
-
-> **For Claude:** Work through stories in order. Use superpowers:executing-plans for each story.
-
-**Goal:** [One sentence describing the milestone outcome]
-
-**Design:** See [design.md](design.md) for architecture decisions.
-
----
-
-## Stories
-
-| # | Story | Description |
-|---|-------|-------------|
-| 1 | [m26-feat-01-types](../../stages/backlog/stories/m26-feat-01-types.md) | Core type definitions |
-| 2 | [m26-feat-02-storage](../../stages/backlog/stories/m26-feat-02-storage.md) | Persistence layer |
-| 3 | [m26-feat-03-api](../../stages/backlog/stories/m26-feat-03-api.md) | HTTP endpoints |
-
-> **Status:** Check story frontmatter or run `just board status` for current status.
-
-## Dependencies
-
-- Story 2 depends on Story 1 (types must exist before storage)
-- Story 3 can run in parallel with Story 2
-
-## Completion Criteria
-
-- [ ] All stories merged
-- [ ] Integration tests passing
-- [ ] Documentation updated
-```
-
-### Story Template
-
-```markdown
----
-id: FEAT0042
-title: Core Type Definitions
-type: feat
-status: backlog
-priority: high
-scope: core/01-event-sourcing
-depends: []
-estimate: 2h
-created: 2026-01-15
----
-
-# Core Type Definitions
-
-> **For Claude:** Use superpowers:executing-plans to implement this story.
-
-## Summary
-
-[One sentence: what this story delivers]
-
-## Context
-
-[Reference design.md section, key decisions that apply]
-
-## Tasks
-
-Each task ends with a commit:
-
-### Task 1: [Name]
-
-**Files:**
-- Create: `path/to/new/file.rs`
-- Modify: `path/to/existing.rs`
-
-**Steps:**
-1. [Action with expected outcome]
-2. [Action with expected outcome]
-3. Run tests: `cargo test -p vibes-core module_name`
-4. Commit: `feat(module): description`
-
-### Task 2: [Name]
-
-...
-
-## Acceptance Criteria
-
-- [ ] All tests pass
-- [ ] Code reviewed and merged
-- [ ] [Feature-specific criterion]
-
-## Completion
-
-> **IMPORTANT:** After all acceptance criteria are met:
-
-1. Update this file's frontmatter: `status: done`
-2. Move story: `just board done <story-id>`
-3. Commit, push, and create PR
-```
-
-### Key Principles
-
-#### 1. Test-Driven Development
-
-For new modules and utilities, follow TDD:
-
-1. Write the failing test first
-2. Run test to verify it fails
-3. Write the implementation
-4. Run test to verify it passes
-5. Commit
-
-#### 2. Small, Focused Tasks
-
-Each task should:
-- Have a single clear purpose
-- Be completable in one sitting
-- End with a commit
-- Be independently verifiable
-
-#### 3. Explicit Verification
-
-Include expected outcomes for each step:
-
-```markdown
-Run: `cargo test -p vibes-core`
-Expected: All tests pass
-```
-
-#### 4. Commit After Each Task
-
-Every task ends with a commit using conventional commit format.
+### Example Traceability Chain
+
+1. **VISION.md** states goal: "Reduce spec-to-implementation drift"
+2. **PRD.md** defines: `FR-01: System captures verification artifacts`
+3. **SRS.md** specifies: `SRS-01: Capture screenshots during verification | Source: FR-01 | Verification: test`
+4. **Story** implements: `FEAT0042` with `Requirements: SRS-01`
+5. **Verification** confirms: `@verify screenshot` annotation runs and passes
 
 ---
 
 # Execution
 
-## Using Plans with Claude Code
+## Story Lifecycle
 
-### Creating a Plan
+> **IMPORTANT:** Always use `just board` commands. Never manually move files.
 
-1. Use the brainstorming skill first:
-   ```
-   /superpowers:brainstorm
-   ```
+### 1. Create Story
 
-2. Explore the codebase to understand existing patterns
-
-3. Write the design document discussing options
-
-4. Create the implementation plan with stories
-
-### Executing a Plan
-
-Reference the skill at the top of the implementation plan:
-
-```markdown
-> **For Claude:** Use superpowers:executing-plans to implement this plan.
+```bash
+just board new story feat "Add session export"
 ```
 
-Then invoke:
-```
-/superpowers:execute-plan
+### 2. Link to Milestone
+
+```bash
+just board link FEAT0042 01-artifact-pipeline
 ```
 
-### Completing a Story
+### 3. Start Work
 
-After implementing all tasks:
+```bash
+just board start FEAT0042
+```
+
+When starting the first story of a milestone:
+```bash
+just board start-milestone 01-artifact-pipeline
+```
+
+### 4. Implement
+
+Follow the acceptance criteria. Reference SRS requirements.
+
+### 5. Complete Work
+
+```bash
+just board done FEAT0042
+```
+
+When completing the last story of a milestone:
+```bash
+just board done-milestone 01-artifact-pipeline
+```
+
+## Completing Work
+
+Before marking a story done:
 
 1. **Verify:** Run `just pre-commit` (fmt + clippy + test)
-2. **Refactor:** Run `code-simplicity-reviewer` agent on changes
-   - Reviews for unnecessary complexity, over-engineering, YAGNI violations
-   - Simplify any flagged code before proceeding
-3. **Update story:** Set frontmatter `status: done`
-4. **Move story:** Run `just board done <story-id>`
-5. **Commit:** Include story status change in commit
-6. **Push and PR:** Create PR with conventional commit title
 
-> **Claude must always update the story status and move the story before creating a PR.**
+2. **Refactor:** Run `code-simplifier:code-simplifier` agent
+   - Reviews for unnecessary complexity, over-engineering, YAGNI violations
+   - Simplify any flagged code
+
+3. **Verify story:** Run `just verify story <id>` if verification annotations exist
+
+4. **Update story:** Ensure frontmatter `status: done`
+
+5. **Move story:** Run `just board done <story-id>`
+
+6. **Commit, push, create PR**
+
+## Using Superpowers
+
+| Skill | When to Use |
+|-------|-------------|
+| `superpowers:brainstorming` | Before any new feature or architecture decision |
+| `superpowers:executing-plans` | When implementing a milestone plan |
+| `superpowers:test-driven-development` | Before writing any implementation code |
+| `superpowers:systematic-debugging` | When encountering bugs or unexpected behavior |
+
+### Workflow
+
+1. Use `superpowers:brainstorming` to explore options
+2. Write PRD for new epic or SRS/DESIGN for new milestone
+3. Create stories linked to requirements
+4. Use `superpowers:executing-plans` for each story
+5. Use `superpowers:test-driven-development` for implementation
+6. Run `just pre-commit` and address issues
+7. Complete: update story, move via commands, commit, push, PR
 
 ---
 
@@ -643,65 +509,57 @@ After implementing all tasks:
 
 ## Architectural Decision: Plugin vs Built-in
 
-When adding new functionality that could be a separate feature, **always evaluate whether it should be a plugin** before implementing it directly in vibes-cli or vibes-server.
-
-### Decision Framework
+When adding new functionality, evaluate whether it should be a plugin.
 
 | Question | Plugin | Built-in |
 |----------|--------|----------|
 | Is this a first-party core feature? | Maybe | Yes |
 | Should users be able to disable it? | Yes | No |
-| Does it need CLI subcommands? | Yes (plugins can register) | No preference |
-| Does it need HTTP routes? | Yes (plugins can register) | No preference |
 | Is it specific to certain use cases? | Yes | No |
 | Would third parties want similar features? | Yes | No |
 
 ### Plugin API Capabilities
 
-The `vibes-plugin-api` (v2) supports:
-
-- **Session lifecycle hooks** - `on_session_created`, `on_turn_complete`, `on_hook`, etc.
-- **CLI command registration** - `ctx.register_command(CommandSpec { ... })` -> `vibes <plugin> <command>`
-- **HTTP route registration** - `ctx.register_route(RouteSpec { ... })` -> `/api/plugins/<plugin>/...`
-- **Configuration** - Persistent key-value store with TOML serialization
-- **Logging** - Plugin-prefixed logging via tracing
-
-### Example: groove
-
-The **groove** continual learning plugin demonstrates proper plugin architecture:
-
-- **CLI commands** registered via `register_command()` -> `vibes groove init`, `vibes groove status`
-- **HTTP routes** registered via `register_route()` -> `/api/plugins/groove/...`
-- **Event hooks** - `on_hook()` captures Claude Code events for learning extraction
-- **Configuration** - Stores scope and injection preferences
+- **Session lifecycle hooks** - `on_session_created`, `on_turn_complete`, etc.
+- **CLI command registration** - `vibes <plugin> <command>`
+- **HTTP route registration** - `/api/plugins/<plugin>/...`
+- **Configuration** - Persistent key-value store
 
 ## Best Practices
 
 ### Do
 
-- Break large features into multiple stories
+- Define requirements before implementation
+- Link stories to SRS requirements
+- Include verification criteria in SRS
+- Break large features into focused stories
 - Document the "why" alongside the "what"
-- Specify exact file paths
-- Include verification steps
 - Follow TDD for testable code
+- Use `just board` commands for state changes
 
 ### Don't
 
-- Skip the design phase for significant work
+- Skip PRD/SRS for significant work
+- Create stories without linking to requirements
+- Leave verification criteria vague
 - Create tasks that are too large
-- Leave decisions implicit
-- Forget commit instructions
+- Manually move story files
 - Skip verification steps
 
-## Plan Review Checklist
+## Review Checklist
 
-Before implementing, verify:
+Before implementing:
 
-- [ ] Design document captures all major decisions
-- [ ] Trade-offs are documented
-- [ ] Stories are small and focused
-- [ ] Each task ends with a commit
-- [ ] TDD pattern used for testable code
-- [ ] Verification steps are explicit
-- [ ] File paths are complete and accurate
-- [ ] Board item updated when complete
+- [ ] PRD captures user needs and success criteria
+- [ ] SRS defines requirements with verification methods
+- [ ] DESIGN documents architecture decisions
+- [ ] Stories are linked to SRS requirements
+- [ ] Each story has clear acceptance criteria
+
+Before completing:
+
+- [ ] `just pre-commit` passes
+- [ ] Code reviewed for simplicity
+- [ ] Verification annotations present (if applicable)
+- [ ] `just verify story <id>` passes (if applicable)
+- [ ] Story moved via `just board done`
