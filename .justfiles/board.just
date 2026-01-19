@@ -885,20 +885,39 @@ start-milestone ID:
 
     milestone="{{ID}}"
 
-    # Find milestone directory (allow partial match)
+    # Find milestone directory in epics (allow partial match)
     ms_dir=""
-    for d in milestones/*/; do
-        if [[ "$(basename "$d")" == *"$milestone"* ]]; then
-            ms_dir="$d"
-            break
-        fi
+    ms_epic=""
+    for epic_dir in epics/*/; do
+        [[ -d "${epic_dir}milestones" ]] || continue
+        for d in "${epic_dir}milestones"/*/; do
+            [[ -d "$d" ]] || continue
+            if [[ "$(basename "$d")" == *"$milestone"* ]]; then
+                ms_dir="$d"
+                ms_epic=$(basename "$epic_dir")
+                break 2
+            fi
+        done
     done
+
+    # Also check top-level milestones for backwards compatibility
+    if [[ -z "$ms_dir" ]] && [[ -d milestones ]]; then
+        for d in milestones/*/; do
+            if [[ "$(basename "$d")" == *"$milestone"* ]]; then
+                ms_dir="$d"
+                break
+            fi
+        done
+    fi
 
     if [[ -z "$ms_dir" ]] || [[ ! -d "$ms_dir" ]]; then
         echo "Error: Milestone '$milestone' not found"
         echo "Available milestones:"
-        for m in milestones/*/; do
-            [[ -d "$m" ]] && echo "  - $(basename "$m")"
+        for epic_dir in epics/*/; do
+            [[ -d "${epic_dir}milestones" ]] || continue
+            for m in "${epic_dir}milestones"/*/; do
+                [[ -d "$m" ]] && echo "  - $(basename "$m") ($(basename "$epic_dir"))"
+            done
         done
         exit 1
     fi
@@ -925,6 +944,20 @@ start-milestone ID:
     # Update status
     sed -i 's/^status: .*/status: in-progress/' "$ms_readme"
     echo "Started milestone: $ms_name"
+
+    # Update epic README milestone table
+    if [[ -n "$ms_epic" ]]; then
+        epic_readme="epics/$ms_epic/README.md"
+        if [[ -f "$epic_readme" ]]; then
+            # Extract milestone ID (e.g., "01" from "01-verification-artifact-pipeline")
+            ms_id=$(echo "$ms_name" | grep -oE '^[0-9]+')
+            if [[ -n "$ms_id" ]]; then
+                # Update the milestone row status to in-progress
+                sed -i -E "s/^(\| *${ms_id} *\|[^|]+\|)[^|]+\|$/\1 in-progress |/" "$epic_readme"
+                echo "Updated $epic_readme milestone table"
+            fi
+        fi
+    fi
 
     # Regenerate README
     just board generate
@@ -985,22 +1018,36 @@ done-milestone ID:
 
     # Check current status
     current_status=$(grep -m1 "^status:" "$ms_readme" 2>/dev/null | sed 's/^status: *//' || echo "")
+    already_done=false
     if [[ "$current_status" == "done" ]]; then
-        echo "Milestone '$ms_name' is already done"
-        exit 0
-    fi
+        already_done=true
+    else
+        # Update status
+        sed -i 's/^status: .*/status: done/' "$ms_readme"
 
-    # Update status
-    sed -i 's/^status: .*/status: done/' "$ms_readme"
-
-    # Add completed date if not already present
-    date=$(date +%Y-%m-%d)
-    if ! grep -q "^completed:" "$ms_readme"; then
-        # Insert after status line
-        sed -i "/^status: done$/a completed: $date" "$ms_readme"
+        # Add completed date if not already present
+        date=$(date +%Y-%m-%d)
+        if ! grep -q "^completed:" "$ms_readme"; then
+            # Insert after status line
+            sed -i "/^status: done$/a completed: $date" "$ms_readme"
+        fi
     fi
 
     echo "Completed milestone: $ms_name"
+
+    # Update epic README milestone table (always, in case it's out of sync)
+    if [[ -n "$ms_epic" ]]; then
+        epic_readme="epics/$ms_epic/README.md"
+        if [[ -f "$epic_readme" ]]; then
+            # Extract milestone ID (e.g., "01" from "01-verification-artifact-pipeline")
+            ms_id=$(echo "$ms_name" | grep -oE '^[0-9]+')
+            if [[ -n "$ms_id" ]]; then
+                # Update the milestone row: | 01 | ... | in-progress | -> | 01 | ... | done |
+                sed -i -E "s/^(\| *${ms_id} *\|[^|]+\|)[^|]+\|$/\1 done |/" "$epic_readme"
+                echo "Updated $epic_readme milestone table"
+            fi
+        fi
+    fi
 
     # Check if all milestones in epic are done
     if [[ -n "$ms_epic" ]]; then

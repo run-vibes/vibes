@@ -23,7 +23,7 @@ Build a verification system that captures system behavior as visual artifacts (s
 
 | ID | Milestone | Status |
 |----|-----------|--------|
-| 01 | [Artifact Pipeline](milestones/01-verification-artifact-pipeline/) | in-progress |
+| 01 | [Artifact Pipeline](milestones/01-verification-artifact-pipeline/) | done |
 | 02 | [Board Restructure](milestones/02-epic-based-project-hierarchy/) | done |
 | 03 | AI-Assisted Verification | planned |
 
