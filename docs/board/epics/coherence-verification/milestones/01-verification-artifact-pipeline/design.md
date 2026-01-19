@@ -440,10 +440,10 @@ verification/
 
 ## Deliverables (Phase 2)
 
-- [ ] Update story frontmatter schema (`scope` replaces `epics` + `milestone`)
-- [ ] Migrate all existing stories to new schema
-- [ ] Add verification annotation parsing
-- [ ] Implement `just verify story <ID>` command
-- [ ] Implement `just verify story-report <ID>` command
-- [ ] Update `.gitignore` to commit `reports/**/*.md`
-- [ ] Update CONVENTIONS.md with new schema
+- [x] Update story frontmatter schema (`scope` replaces `epics` + `milestone`)
+- [x] Migrate all existing stories to new schema
+- [x] Update CONVENTIONS.md with new schema
+- [x] Add verification annotation parsing
+- [x] Implement `just verify story <ID>` command
+- [x] Implement `just verify story-report <ID>` command
+- [x] Update `.gitignore` to commit `reports/**/*.md`

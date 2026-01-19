@@ -29,8 +29,10 @@ Build a verification system that captures system behavior as visual artifacts (s
 
 ## Success Criteria
 
-- [ ] `just verify all` captures snapshots, checkpoints, and stitched videos
-- [ ] `verification/report.md` links artifacts to story acceptance criteria
+- [x] `just verify all` captures snapshots, checkpoints, and stitched videos
 - [x] Board hierarchy is Epic > Milestone > Story with clear lifecycles
 - [x] Icebox stage exists for blocked/deferred work
 - [x] Story naming follows `[TYPE][NNNN]-verb-phrase` convention
+- [x] Story frontmatter uses single `scope` field (epic/milestone format)
+- [x] `just verify story <ID>` links artifacts to story acceptance criteria
+- [x] Story-specific reports at `verification/reports/<scope>/<id>.md`

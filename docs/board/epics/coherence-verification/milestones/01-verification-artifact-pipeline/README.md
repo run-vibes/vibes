@@ -26,10 +26,10 @@ Developers can run `just verify all` to capture screenshots, interaction sequenc
 - [x] Story frontmatter uses `scope` field (replaces `epics` + `milestone`)
 - [x] All stories migrated to new schema
 - [x] CONVENTIONS.md documents new schema
-- [ ] Verification annotations in acceptance criteria (`<!-- verify: type:name -->`)
-- [ ] `just verify story <ID>` captures artifacts for a story
-- [ ] `just verify story-report <ID>` generates story-specific report
-- [ ] Reports committed at `verification/reports/<scope>/<id>.md`
+- [x] Verification annotations parsing (`<!-- verify: type:name -->`)
+- [x] `just verify story <ID>` captures artifacts for a story
+- [x] `just verify story-report <ID>` generates story-specific report
+- [x] Reports committed at `verification/reports/<scope>/<id>.md`
 
 ## Design
 
@@ -47,7 +47,7 @@ See [design.md](design.md) for architecture and implementation details.
 | Implement videos.spec.ts with CLI+Web stitching | done |
 | Document verification commands in CLAUDE.md | done |
 
-### Phase 2 (In Progress)
+### Phase 2 (Complete)
 
 | Item | Status |
 |------|--------|
@@ -55,6 +55,6 @@ See [design.md](design.md) for architecture and implementation details.
 | Update story frontmatter schema (scope field) | done |
 | Migrate all stories to new schema | done |
 | Update CONVENTIONS.md | done |
-| Implement verification annotation parsing | pending |
-| Implement `just verify story` command | pending |
-| Update .gitignore for reports directory | pending |
+| Implement verification annotation parsing | done |
+| Implement `just verify story` command | done |
+| Update .gitignore for reports directory | done |

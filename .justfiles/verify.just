@@ -17,8 +17,12 @@ default:
     @echo "  just verify videos       Tier 3: Record CLI + Web videos (~5min)"
     @echo "  just verify all          Run all tiers"
     @echo ""
+    @echo "Story verification:"
+    @echo "  just verify story <ID>        Capture artifacts for story, generate report"
+    @echo "  just verify story-report <ID> Generate report only (artifacts exist)"
+    @echo ""
     @echo "Reporting:"
-    @echo "  just verify report       Generate verification/report.md"
+    @echo "  just verify report       Generate verification/report.md (global)"
     @echo "  just verify summary      Show artifact counts"
     @echo ""
     @echo "Utility:"
@@ -319,3 +323,197 @@ clean:
     rm -rf {{verify_dir}}/videos/web/*
     rm -rf {{verify_dir}}/videos/stitched/*
     echo "✓ Artifacts cleaned (report.md preserved if present)"
+
+# ============================================================================
+# Story-Scoped Verification
+# ============================================================================
+
+# Generate verification report for a specific story (artifacts must exist)
+story-report STORY_ID:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    story_id="{{STORY_ID}}"
+    echo "Generating verification report for story: $story_id"
+
+    # Find the story file by ID
+    # Story IDs are like FEAT0109, which appear in filenames as [FEAT][0109]
+    # Extract type and number from ID (e.g., FEAT0109 -> FEAT, 0109)
+    if [[ "$story_id" =~ ^([A-Z]+)([0-9]+)$ ]]; then
+        id_type="${BASH_REMATCH[1]}"
+        id_num="${BASH_REMATCH[2]}"
+        # Search for [TYPE][NUM] pattern in filename
+        story_file=$(find docs/board/stages -type f -name "*.md" | grep -E "\[${id_type}\]\[${id_num}\]" | head -1)
+    else
+        # Fallback: search for ID literally
+        story_file=$(find docs/board/stages -type f -name "*.md" | grep -i "${story_id}" | head -1)
+    fi
+
+    if [[ -z "$story_file" ]]; then
+        echo "Error: Story file not found for ID: $story_id"
+        echo "Hint: Use format like FEAT0109 or BUG0001"
+        exit 1
+    fi
+    echo "Found story: $story_file"
+
+    # Extract frontmatter fields
+    title=$(grep "^title:" "$story_file" | sed 's/title: //' | head -1)
+    scope=$(grep "^scope:" "$story_file" | sed 's/scope: //' | head -1)
+    id=$(grep "^id:" "$story_file" | sed 's/id: //' | head -1)
+
+    # Determine report directory based on scope
+    if [[ -n "$scope" ]]; then
+        report_dir="{{verify_dir}}/reports/${scope}"
+    else
+        report_dir="{{verify_dir}}/reports"
+    fi
+    mkdir -p "$report_dir"
+    report_file="${report_dir}/${id}.md"
+
+    # Extract acceptance criteria with verify annotations
+    # Format: - [ ] Criterion text <!-- verify: type:name -->
+    echo "Extracting acceptance criteria..."
+
+    # Parse criteria and annotations
+    criteria=()
+    annotations=()
+    in_criteria=false
+
+    while IFS= read -r line; do
+        # Check if we're in the Acceptance Criteria section
+        if [[ "$line" =~ ^##.*[Aa]cceptance.*[Cc]riteria ]]; then
+            in_criteria=true
+            continue
+        fi
+        # Exit criteria section on next header
+        if [[ "$in_criteria" == true ]] && [[ "$line" =~ ^## ]]; then
+            break
+        fi
+        # Parse criterion lines
+        if [[ "$in_criteria" == true ]] && [[ "$line" =~ ^-\ \[.\]\ (.*)$ ]]; then
+            criterion="${BASH_REMATCH[1]}"
+            # Extract verify annotation if present
+            if [[ "$criterion" =~ \<!--\ verify:\ ([^-]+)\ --\> ]]; then
+                annotation="${BASH_REMATCH[1]}"
+                # Remove annotation from criterion text
+                criterion=$(echo "$criterion" | sed 's/ *<!-- verify:[^>]*-->//')
+            else
+                annotation=""
+            fi
+            criteria+=("$criterion")
+            annotations+=("$annotation")
+        fi
+    done < "$story_file"
+
+    # Generate report
+    branch=$(git branch --show-current 2>/dev/null || echo "unknown")
+    report_date=$(date -Iseconds)
+
+    echo "# Verification: ${id}" > "$report_file"
+    echo "" >> "$report_file"
+    echo "**Story:** ${title}" >> "$report_file"
+    echo "**Scope:** ${scope:-_(none)_}" >> "$report_file"
+    echo "**Generated:** ${report_date}" >> "$report_file"
+    echo "**Branch:** ${branch}" >> "$report_file"
+    echo "" >> "$report_file"
+
+    if [[ ${#criteria[@]} -eq 0 ]]; then
+        echo "## Coverage" >> "$report_file"
+        echo "" >> "$report_file"
+        echo "_No acceptance criteria found in story file._" >> "$report_file"
+        echo "" >> "$report_file"
+        echo "✓ Generated $report_file (no criteria)"
+        exit 0
+    fi
+
+    # Check artifact existence and build coverage table
+    echo "## Coverage" >> "$report_file"
+    echo "" >> "$report_file"
+    echo "| Criterion | Artifact | Status |" >> "$report_file"
+    echo "|-----------|----------|--------|" >> "$report_file"
+
+    covered=0
+    uncovered=()
+
+    for i in "${!criteria[@]}"; do
+        criterion="${criteria[$i]}"
+        annotation="${annotations[$i]}"
+
+        if [[ -z "$annotation" ]]; then
+            echo "| ${criterion} | _(no annotation)_ | ⚠️ |" >> "$report_file"
+            uncovered+=("$criterion (no verify annotation)")
+        else
+            # Parse annotation: type:name
+            ann_type=$(echo "$annotation" | cut -d: -f1 | tr -d ' ')
+            ann_name=$(echo "$annotation" | cut -d: -f2 | tr -d ' ')
+
+            # Check if artifact exists based on type
+            artifact_exists=false
+            artifact_path=""
+
+            case "$ann_type" in
+                snapshot)
+                    artifact_path="{{verify_dir}}/snapshots/${ann_name}.png"
+                    [[ -f "$artifact_path" ]] && artifact_exists=true
+                    ;;
+                checkpoint)
+                    # Checkpoints are directories with multiple PNGs
+                    if find "{{verify_dir}}/checkpoints" -name "${ann_name}*.png" 2>/dev/null | grep -q .; then
+                        artifact_exists=true
+                        artifact_path="{{verify_dir}}/checkpoints/${ann_name}*"
+                    fi
+                    ;;
+                video)
+                    # Videos can be in cli/, web/, or direct path
+                    for vdir in "{{verify_dir}}/videos/cli" "{{verify_dir}}/videos/web" "{{verify_dir}}/videos"; do
+                        if [[ -f "${vdir}/${ann_name}.webm" ]] || [[ -f "${vdir}/${ann_name}.mp4" ]]; then
+                            artifact_exists=true
+                            artifact_path="${vdir}/${ann_name}.*"
+                            break
+                        fi
+                    done
+                    ;;
+                *)
+                    echo "| ${criterion} | ${annotation} | ❌ (unknown type) |" >> "$report_file"
+                    uncovered+=("$criterion (unknown type: $ann_type)")
+                    continue
+                    ;;
+            esac
+
+            if [[ "$artifact_exists" == true ]]; then
+                echo "| ${criterion} | ${ann_type}:${ann_name} | ✅ |" >> "$report_file"
+                ((covered++))
+            else
+                echo "| ${criterion} | ${ann_type}:${ann_name} | ❌ (missing) |" >> "$report_file"
+                uncovered+=("$criterion (artifact not found: ${ann_type}:${ann_name})")
+            fi
+        fi
+    done
+
+    total=${#criteria[@]}
+    pct=$((covered * 100 / total))
+
+    echo "" >> "$report_file"
+    echo "**Coverage: ${covered}/${total} (${pct}%)**" >> "$report_file"
+
+    # Uncovered section
+    if [[ ${#uncovered[@]} -gt 0 ]]; then
+        echo "" >> "$report_file"
+        echo "## Uncovered Criteria" >> "$report_file"
+        echo "" >> "$report_file"
+        for item in "${uncovered[@]}"; do
+            echo "- ${item}" >> "$report_file"
+        done
+    fi
+
+    echo ""
+    echo "✓ Generated $report_file"
+    echo "  Coverage: ${covered}/${total} (${pct}%)"
+
+# Capture artifacts for a story and generate report
+story STORY_ID: (story-report STORY_ID)
+    @echo ""
+    @echo "Note: 'just verify story' currently generates the report only."
+    @echo "To capture artifacts, run 'just verify all' first, then 'just verify story-report <ID>'."
+    @echo ""
+    @echo "Future: Will selectively capture only artifacts referenced in story."
