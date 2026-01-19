@@ -2,6 +2,7 @@
 
 > Updated when items move to done. Most recent first.
 
+| 2026-01-19 | Update story commands for milestone sync | Story commands now trigger milestone README sync via generate |
 | 2026-01-19 | Update generate for epic README | Auto-generate epic README with milestone progress |
 | 2026-01-19 | Update generate for milestone README | Auto-update milestone README progress on generate |
 | 2026-01-19 | Update new epic command | Updated new epic command to create README.md + PRD.md from templates |

@@ -29,10 +29,10 @@ created: 2026-01-18
 | 6 | [FEAT0193](../../../../stages/done/stories/[FEAT][0193]-update-new-milestone-command.md) | Update new milestone command | done |
 | 7 | [FEAT0194](../../../../stages/done/stories/[FEAT][0194]-update-generate-for-epic-readme.md) | Update generate for epic README | done |
 | 8 | [FEAT0195](../../../../stages/done/stories/[FEAT][0195]-update-generate-for-milestone-readme.md) | Update generate for milestone README | done |
-| 9 | [FEAT0196](../../../../stages/backlog/stories/[FEAT][0196]-update-story-commands-for-milestone-sync.md) | Update story commands for milestone sync | backlog |
+| 9 | [FEAT0196](../../../../stages/done/stories/[FEAT][0196]-update-story-commands-for-milestone-sync.md) | Update story commands for milestone sync | done |
 
 ## Progress
 
 **Requirements:** 0/19 verified
-**Stories:** 6/9 complete
+**Stories:** 7/9 complete
 
