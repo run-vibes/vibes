@@ -206,6 +206,7 @@ async function scanStoryLearnings(baseDir: string): Promise<Learning[]> {
 
 /**
  * Scan milestone LEARNINGS.md files.
+ * Only scans the "## Synthesis" section to avoid duplicating story learnings.
  */
 async function scanMilestoneLearnings(baseDir: string): Promise<Learning[]> {
   const learnings: Learning[] = [];
@@ -229,8 +230,15 @@ async function scanMilestoneLearnings(baseDir: string): Promise<Learning[]> {
 
           try {
             const content = await fs.readFile(learningsFile, 'utf-8');
-            const milestoneLearnings = parseLearningsFromContent(content, learningsFile, 'milestone');
-            learnings.push(...milestoneLearnings);
+
+            // Only extract learnings from the "## Synthesis" section
+            // The "## Story Learnings" section contains copies that would duplicate story learnings
+            const synthesisMatch = content.match(/## Synthesis\s*\n([\s\S]*?)(?=\n## |\n---\s|$)/i);
+            if (synthesisMatch) {
+              const synthesisContent = synthesisMatch[1];
+              const milestoneLearnings = parseLearningsFromContent(synthesisContent, learningsFile, 'milestone');
+              learnings.push(...milestoneLearnings);
+            }
           } catch {
             // LEARNINGS.md doesn't exist for this milestone
           }
