@@ -1,5 +1,5 @@
 {
-  "name": "vibes-verification-scripts",
+  "name": "@vibes/verification-ai",
   "private": true,
   "type": "module",
   "scripts": {

@@ -528,4 +528,4 @@ story STORY_ID: (story-report STORY_ID)
 
 # Run AI verification for a story
 ai STORY_ID *ARGS:
-    npx tsx verification/scripts/ai-verify.ts {{STORY_ID}} {{ARGS}}
+    npx tsx verification/ai/ai-verify.ts {{STORY_ID}} {{ARGS}}

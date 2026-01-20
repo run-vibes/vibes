@@ -10,8 +10,8 @@
 !checkpoints.json
 !config.toml
 
-# Include scripts directory
-!scripts/
-!scripts/**
-scripts/node_modules/
-scripts/dist/
+# Include AI verification module
+!ai/
+!ai/**
+ai/node_modules/
+ai/dist/

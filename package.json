@@ -7,7 +7,8 @@
   "workspaces": [
     "design-system",
     "web-ui",
-    "e2e-tests"
+    "e2e-tests",
+    "verification/ai"
   ],
   "scripts": {
     "dev": "turbo run dev --filter=web-ui",
