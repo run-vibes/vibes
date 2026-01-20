@@ -1,4 +1,4 @@
-# Ignore all artifacts except reports, definitions, and templates
+# Ignore all artifacts except reports, definitions, templates, and config
 *
 !.gitignore
 !report.md
@@ -8,3 +8,10 @@
 !templates/**
 !snapshots.json
 !checkpoints.json
+!config.toml
+
+# Include scripts directory
+!scripts/
+!scripts/**
+scripts/node_modules/
+scripts/dist/

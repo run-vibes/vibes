@@ -21,6 +21,10 @@ default:
     @echo "  just verify story <ID>        Capture artifacts for story, generate report"
     @echo "  just verify story-report <ID> Generate report only (artifacts exist)"
     @echo ""
+    @echo "AI verification:"
+    @echo "  just verify ai <ID>                       Run AI verification for a story"
+    @echo "  just verify ai <ID> --model \"provider:model\" Override model"
+    @echo ""
     @echo "Reporting:"
     @echo "  just verify report       Generate verification/report.md (global)"
     @echo "  just verify summary      Show artifact counts"
@@ -517,3 +521,11 @@ story STORY_ID: (story-report STORY_ID)
     @echo "To capture artifacts, run 'just verify all' first, then 'just verify story-report <ID>'."
     @echo ""
     @echo "Future: Will selectively capture only artifacts referenced in story."
+
+# ============================================================================
+# AI-Assisted Verification
+# ============================================================================
+
+# Run AI verification for a story
+ai STORY_ID *ARGS:
+    npx tsx verification/scripts/ai-verify.ts {{STORY_ID}} {{ARGS}}

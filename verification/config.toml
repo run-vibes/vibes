@@ -1,0 +1,24 @@
+# AI-Assisted Verification Configuration
+#
+# This config controls how AI models analyze verification artifacts
+# against acceptance criteria.
+
+[ai]
+# Default model for all artifacts
+# Format: "provider:model" where provider is "ollama" or "claude"
+#
+# Examples:
+#   "ollama:qwen3-vl:32b"        - Local multimodal model (default)
+#   "ollama:llava:34b"           - Alternative local model
+#   "claude:claude-sonnet-4-20250514"  - Anthropic Claude Sonnet
+#   "claude:claude-opus-4-20250514"    - Anthropic Claude Opus
+default_model = "ollama:qwen3-vl:32b"
+
+# Timeout for model responses (in seconds)
+timeout = 120
+
+# Confidence thresholds determine how results are categorized
+[ai.confidence]
+high = 80    # >=80% = trust result (Pass/Fail)
+medium = 50  # 50-79% = review recommended (Needs Review)
+# <50% = human review required (Low Confidence)

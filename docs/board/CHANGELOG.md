@@ -2,6 +2,8 @@
 
 > Updated when items move to done. Most recent first.
 
+| 2026-01-19 | Implement artifact collector | Implement artifact collector for snapshots, checkpoints, and videos |
+| 2026-01-19 | Implement story parser for AI verification | Story parser for AI verification |
 | 2026-01-19 | Migrate existing epics | Migrate all existing epics to formal structure with PRD.md files |
 | 2026-01-19 | Update story commands for milestone sync | Story commands now trigger milestone README sync via generate |
 | 2026-01-19 | Update generate for epic README | Auto-generate epic README with milestone progress |

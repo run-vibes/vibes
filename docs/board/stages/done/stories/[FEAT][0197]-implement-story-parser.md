@@ -2,7 +2,7 @@
 id: FEAT0197
 title: Implement story parser for AI verification
 type: feat
-status: backlog
+status: done
 priority: high
 scope: coherence-verification/04-ai-assisted-verification
 depends: [CHORE0146]
@@ -18,10 +18,10 @@ Create TypeScript module to parse acceptance criteria and verify annotations fro
 
 ## Acceptance Criteria
 
-- [ ] Parser extracts acceptance criteria from story markdown
-- [ ] Parser extracts `<!-- verify: type:name -->` annotations
-- [ ] Parser extracts optional hints from annotations `<!-- verify: snapshot:foo | should show X -->`
-- [ ] Unit tests cover parsing logic
+- [x] Parser extracts acceptance criteria from story markdown
+- [x] Parser extracts `<!-- verify: type:name -->` annotations
+- [x] Parser extracts optional hints from annotations `<!-- verify: snapshot:foo | should show X -->`
+- [x] Unit tests cover parsing logic
 
 ## Implementation Notes
 

@@ -134,6 +134,8 @@ Visual verification captures screenshots and videos to document system behavior.
 | `just verify report` | Generate verification/report.md |
 | `just verify summary` | Show artifact counts |
 | `just verify clean` | Remove all artifacts |
+| `just verify ai <story-id>` | Run AI verification for a story |
+| `just verify ai <story-id> --model "ollama:model"` | AI verification with model override |
 
 **Run `just verify all` before creating PRs** to capture visual documentation.
 

@@ -20,8 +20,6 @@
 | [[FEAT][0117]-session-management](stages/backlog/stories/[FEAT][0117]-session-management.md) | feat | medium | tui/06-terminal-server |
 | [[FEAT][0118]-websocket-pty-endpoint](stages/backlog/stories/[FEAT][0118]-websocket-pty-endpoint.md) | feat | medium | tui/06-terminal-server |
 | [[FEAT][0119]-xtermjs-web-integration](stages/backlog/stories/[FEAT][0119]-xtermjs-web-integration.md) | feat | medium | tui/06-terminal-server |
-| [[FEAT][0197]-implement-story-parser](stages/backlog/stories/[FEAT][0197]-implement-story-parser.md) | feat | high | coherence-verification/04-ai-assisted-verification |
-| [[FEAT][0198]-implement-artifact-collector](stages/backlog/stories/[FEAT][0198]-implement-artifact-collector.md) | feat | high | coherence-verification/04-ai-assisted-verification |
 | [[FEAT][0199]-implement-model-router](stages/backlog/stories/[FEAT][0199]-implement-model-router.md) | feat | high | coherence-verification/04-ai-assisted-verification |
 | [[FEAT][0200]-implement-ai-report-generator](stages/backlog/stories/[FEAT][0200]-implement-ai-report-generator.md) | feat | high | coherence-verification/04-ai-assisted-verification |
 | [[FEAT][0201]-add-verify-ai-command](stages/backlog/stories/[FEAT][0201]-add-verify-ai-command.md) | feat | high | coherence-verification/04-ai-assisted-verification |

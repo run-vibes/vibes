@@ -1,0 +1,16 @@
+{
+  "name": "vibes-verification-scripts",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@anthropic-ai/sdk": "^0.71.2",
+    "ollama": "^0.6.3",
+    "toml": "^3.0.0",
+    "typescript": "^5",
+    "vitest": "^1"
+  }
+}
