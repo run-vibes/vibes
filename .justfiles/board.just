@@ -1608,6 +1608,173 @@ done-milestone ID:
         exit 1
     fi
 
+    # === Learnings Aggregation ===
+    # Find all done stories matching this milestone's scope
+    scope_path="${ms_epic}/${ms_name}"
+    learnings_file="${ms_dir}LEARNINGS.md"
+    learnings_temp=$(mktemp)
+    story_count=0
+
+    # Helper to extract learnings section from a story file
+    extract_learnings() {
+        local story_file="$1"
+        local output_file="$2"
+        local story_id story_title learnings_content
+
+        story_id=$(grep -m1 "^id:" "$story_file" 2>/dev/null | sed 's/^id: *//' || echo "")
+        story_title=$(grep -m1 "^title:" "$story_file" 2>/dev/null | sed 's/^title: *//' || echo "")
+
+        # Extract content from ## Learnings to next ## or end of file
+        if grep -q "^## Learnings" "$story_file"; then
+            learnings_content=$(sed -n '/^## Learnings/,/^## [^L]/{ /^## Learnings/d; /^## [^L]/d; p; }' "$story_file")
+            # If no next section, get to end of file
+            if [[ -z "$learnings_content" ]]; then
+                learnings_content=$(sed -n '/^## Learnings/,${ /^## Learnings/d; p; }' "$story_file")
+            fi
+            # Trim leading/trailing whitespace
+            learnings_content=$(echo "$learnings_content" | sed '/./,$!d' | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' 2>/dev/null || echo "$learnings_content")
+
+            if [[ -n "$learnings_content" ]]; then
+                {
+                    echo "### From ${story_id}: ${story_title}"
+                    echo ""
+                    echo "$learnings_content"
+                    echo ""
+                } >> "$output_file"
+                return 0
+            fi
+        fi
+        return 1
+    }
+
+    # Scan done stories for matching scope
+    if [[ -d "stages/done/stories" ]]; then
+        for story_file in stages/done/stories/*.md; do
+            [[ -f "$story_file" ]] || continue
+            story_scope=$(grep -m1 "^scope:" "$story_file" 2>/dev/null | sed 's/^scope: *//' | tr -d ' ' || echo "")
+            if [[ "$story_scope" == "$scope_path" ]]; then
+                if extract_learnings "$story_file" "$learnings_temp"; then
+                    story_count=$((story_count + 1))
+                fi
+            fi
+        done
+    fi
+
+    # Create LEARNINGS.md if we have story learnings
+    if [[ -s "$learnings_temp" ]]; then
+        {
+            echo "# Milestone Learnings: ${ms_name}"
+            echo ""
+            echo "> Aggregated learnings from completed stories."
+            echo ""
+            echo "## Story Learnings"
+            echo ""
+            cat "$learnings_temp"
+        } > "$learnings_file"
+        echo "Aggregated learnings from ${story_count} stories to ${learnings_file}"
+    fi
+    rm -f "$learnings_temp"
+
+    # === Milestone Synthesis Prompt (optional) ===
+    synthesis_insight=""
+    synthesis_action=""
+    synthesis_applies=""
+    if [[ -t 0 ]]; then
+        echo ""
+        echo "=== Milestone Synthesis (optional) ==="
+        echo "Looking back at this milestone, what's the key insight? (Enter to skip)"
+        read -r synthesis_insight
+        if [[ -n "$synthesis_insight" ]]; then
+            echo "What action should we take based on this? (Enter to skip)"
+            read -r synthesis_action
+            echo "What files/conventions should this apply to? (Enter to skip)"
+            read -r synthesis_applies
+        fi
+    fi
+
+    # Add synthesis to LEARNINGS.md if provided
+    if [[ -n "$synthesis_insight" ]]; then
+        # Count existing ML entries to get next ID
+        existing_ml_count=0
+        if [[ -f "$learnings_file" ]]; then
+            existing_ml_count=$(grep -cE "^### ML[0-9]+" "$learnings_file" 2>/dev/null || echo "0")
+        fi
+        next_ml_num=$((existing_ml_count + 1))
+        ml_id=$(printf "ML%03d" "$next_ml_num")
+
+        # Generate title from first sentence or first 60 chars
+        synthesis_title=$(echo "$synthesis_insight" | head -c 60 | sed 's/\..*//')
+
+        # Build suggested action
+        suggested_action="${synthesis_action:-"(none suggested)"}"
+
+        # Build applies to
+        applies_to="${synthesis_applies:-"(to be determined)"}"
+
+        # Create or append synthesis section
+        if [[ -f "$learnings_file" ]]; then
+            # Check if ## Synthesis section exists
+            if grep -q "^## Synthesis" "$learnings_file"; then
+                # Append to existing synthesis section
+                {
+                    echo ""
+                    echo "### ${ml_id}: ${synthesis_title}"
+                    echo ""
+                    echo "| Field | Value |"
+                    echo "|-------|-------|"
+                    echo "| **Category** | process |"
+                    echo "| **Context** | Completing the ${ms_name} milestone |"
+                    echo "| **Insight** | ${synthesis_insight} |"
+                    echo "| **Suggested Action** | ${suggested_action} |"
+                    echo "| **Applies To** | ${applies_to} |"
+                    echo "| **Applied** | |"
+                } >> "$learnings_file"
+            else
+                # Add new synthesis section
+                {
+                    echo ""
+                    echo "## Synthesis"
+                    echo ""
+                    echo "### ${ml_id}: ${synthesis_title}"
+                    echo ""
+                    echo "| Field | Value |"
+                    echo "|-------|-------|"
+                    echo "| **Category** | process |"
+                    echo "| **Context** | Completing the ${ms_name} milestone |"
+                    echo "| **Insight** | ${synthesis_insight} |"
+                    echo "| **Suggested Action** | ${suggested_action} |"
+                    echo "| **Applies To** | ${applies_to} |"
+                    echo "| **Applied** | |"
+                } >> "$learnings_file"
+            fi
+        else
+            # Create new file with synthesis
+            {
+                echo "# Milestone Learnings: ${ms_name}"
+                echo ""
+                echo "> Aggregated learnings from completed stories."
+                echo ""
+                echo "## Story Learnings"
+                echo ""
+                echo "*No story learnings captured.*"
+                echo ""
+                echo "## Synthesis"
+                echo ""
+                echo "### ${ml_id}: ${synthesis_title}"
+                echo ""
+                echo "| Field | Value |"
+                echo "|-------|-------|"
+                echo "| **Category** | process |"
+                echo "| **Context** | Completing the ${ms_name} milestone |"
+                echo "| **Insight** | ${synthesis_insight} |"
+                echo "| **Suggested Action** | ${suggested_action} |"
+                echo "| **Applies To** | ${applies_to} |"
+                echo "| **Applied** | |"
+            } > "$learnings_file"
+        fi
+        echo "Added synthesis ${ml_id} to ${learnings_file}"
+    fi
+
     # Check current status
     current_status=$(grep -m1 "^status:" "$ms_readme" 2>/dev/null | sed 's/^status: *//' || echo "")
     already_done=false

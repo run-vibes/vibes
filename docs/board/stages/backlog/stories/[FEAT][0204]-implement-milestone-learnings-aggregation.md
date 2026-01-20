@@ -18,12 +18,12 @@ Modify `just board done-milestone` to aggregate story learnings and prompt for s
 
 ## Acceptance Criteria
 
-- [ ] `just board done-milestone <id>` collects learnings from all stories in milestone
-- [ ] Creates `LEARNINGS.md` in milestone directory
-- [ ] Aggregates story learnings under "## Story Learnings"
-- [ ] Prompts for milestone-level synthesis insights
-- [ ] Synthesis uses ML001, ML002 format
-- [ ] Milestone still completes if synthesis skipped
+- [x] `just board done-milestone <id>` collects learnings from all stories in milestone
+- [x] Creates `LEARNINGS.md` in milestone directory
+- [x] Aggregates story learnings under "## Story Learnings"
+- [x] Prompts for milestone-level synthesis insights
+- [x] Synthesis uses ML001, ML002 format
+- [x] Milestone still completes if synthesis skipped
 
 ## Implementation Notes
 
