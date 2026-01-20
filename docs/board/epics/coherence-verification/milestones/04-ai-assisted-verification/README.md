@@ -1,7 +1,8 @@
 ---
 id: 04-ai-assisted-verification
 title: AI-Assisted Verification
-status: backlog
+status: done
+completed: 2026-01-20
 epic: coherence-verification
 created: 2026-01-19
 ---

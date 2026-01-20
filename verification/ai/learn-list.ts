@@ -95,7 +95,7 @@ function extractStoryId(sourcePath: string): string {
 }
 
 /**
- * Extract source identifier (story ID, milestone path, or filename)
+ * Extract source identifier (story ID, milestone name, or filename)
  */
 function extractSourceId(learning: Learning): string {
   if (learning.sourceType === 'story') {
@@ -103,13 +103,11 @@ function extractSourceId(learning: Learning): string {
   }
 
   if (learning.sourceType === 'milestone') {
-    // Extract epic/milestone from path like .../epics/epic-name/milestones/01-name/LEARNINGS.md
+    // Extract just milestone name from path like .../epics/epic-name/milestones/01-name/LEARNINGS.md
     const parts = learning.source.split(path.sep);
     const epicsIndex = parts.indexOf('epics');
     if (epicsIndex >= 0 && parts.length > epicsIndex + 3) {
-      const epic = parts[epicsIndex + 1];
-      const milestone = parts[epicsIndex + 3];
-      return `${epic}/${milestone}`;
+      return parts[epicsIndex + 3]; // milestone name
     }
     return path.basename(path.dirname(learning.source));
   }
@@ -122,9 +120,19 @@ function extractSourceId(learning: Learning): string {
 }
 
 /**
- * Extract scope (epic/milestone) from learning
+ * Extract scope (epic for milestones, epic/milestone for stories)
  */
 function extractScope(learning: Learning): string {
+  if (learning.sourceType === 'milestone') {
+    // Extract epic name from path for milestone learnings
+    const parts = learning.source.split(path.sep);
+    const epicsIndex = parts.indexOf('epics');
+    if (epicsIndex >= 0 && parts.length > epicsIndex + 1) {
+      return parts[epicsIndex + 1]; // epic name
+    }
+    return '-';
+  }
+
   if (learning.scope) {
     // Return full scope (e.g., "coherence-verification/04-ai-assisted-verification")
     return learning.scope;
@@ -144,20 +152,27 @@ function printTable(learnings: Learning[], title: string): void {
 
   console.log(`\n--- ${title} (${learnings.length}) ---`);
 
-  // Determine column widths based on content
-  const isAdhoc = learnings[0]?.sourceType === 'adhoc';
+  // Determine column widths and headers based on source type
+  const sourceType = learnings[0]?.sourceType;
+  const isAdhoc = sourceType === 'adhoc';
+  const isMilestone = sourceType === 'milestone';
+
   const idColWidth = isAdhoc ? 20 : 6;
-  const sourceColWidth = 12;
-  const scopeColWidth = 48;
+  const sourceColWidth = isMilestone ? 28 : 12;
+  const scopeColWidth = isMilestone ? 24 : 48;
   const titleColWidth = 26;
   const categoryColWidth = 10;
   const statusColWidth = 8;
 
+  // Column header varies by source type
+  const sourceHeader = isMilestone ? 'Milestone' : (isAdhoc ? 'File' : 'Story');
+  const scopeHeader = isMilestone ? 'Epic' : 'Scope';
+
   // Header
   const header = [
     padEnd('ID', idColWidth),
-    padEnd('Story', sourceColWidth),
-    padEnd('Scope', scopeColWidth),
+    padEnd(sourceHeader, sourceColWidth),
+    padEnd(scopeHeader, scopeColWidth),
     padEnd('Title', titleColWidth),
     padEnd('Category', categoryColWidth),
     padEnd('Status', statusColWidth),

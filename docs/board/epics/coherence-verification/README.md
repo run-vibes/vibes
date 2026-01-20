@@ -1,7 +1,8 @@
 ---
 id: coherence-verification
 title: Coherence Verification System
-status: active
+status: done
+completed: 2026-01-20
 description: Reduce spec-to-implementation drift through visual artifacts and traceable history
 created: 2026-01-17
 ---
@@ -22,13 +23,13 @@ Build a verification system that captures system behavior as visual artifacts (s
 <!-- BEGIN GENERATED -->
 ## Milestones
 
-**Progress:** 3/5 milestones complete, 28/28 stories done
+**Progress:** 5/5 milestones complete, 28/28 stories done
 
 | ID | Milestone | Stories | Status |
 |----|-----------|---------|--------|
 | 01 | [Verification Artifact Pipeline](milestones/01-verification-artifact-pipeline/) | 0/0 | done |
 | 02 | [Epic-Based Project Hierarchy](milestones/02-epic-based-project-hierarchy/) | 6/6 | done |
 | 03 | [Formal Planning Process](milestones/03-formal-planning-process/) | 9/9 | done |
-| 04 | [AI-Assisted Verification](milestones/04-ai-assisted-verification/) | 6/6 | backlog |
-| 05 | [Learnings Capture](milestones/05-learnings-capture/) | 7/7 | backlog |
+| 04 | [AI-Assisted Verification](milestones/04-ai-assisted-verification/) | 6/6 | done |
+| 05 | [Learnings Capture](milestones/05-learnings-capture/) | 7/7 | done |
 <!-- END GENERATED -->

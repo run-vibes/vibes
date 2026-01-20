@@ -1389,7 +1389,8 @@ done ID SUMMARY="__PROMPT__":
                     # Get milestone ID from path
                     ms_id=$(basename "$(dirname "$impl_file")")
                     echo ""
-                    echo "All stories complete. Run \`just board done-milestone $ms_id\` to complete the milestone."
+                    echo "All stories complete. Auto-completing milestone..."
+                    just board done-milestone "$ms_id"
                 fi
             fi
         fi
@@ -1847,7 +1848,8 @@ done-milestone ID:
             done
             if [[ "$all_done" == "true" ]] && [[ $total_ms -gt 0 ]]; then
                 echo ""
-                echo "All milestones complete. Run \`just board done-epic $ms_epic\` to complete the epic."
+                echo "All milestones complete. Auto-completing epic..."
+                just board done-epic "$ms_epic"
             fi
         fi
     fi
