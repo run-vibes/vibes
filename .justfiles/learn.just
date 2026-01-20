@@ -11,9 +11,15 @@ learnings_dir := "docs/learnings"
 default:
     @echo "Learning Commands"
     @echo ""
-    @echo "  just learn reflect    Interactive ad-hoc learning capture"
-    @echo "  just learn list       Show all learnings with status"
-    @echo "  just learn apply      Suggest and apply pending learnings"
+    @echo "  just learn reflect       Interactive ad-hoc learning capture"
+    @echo "  just learn list          Show all learnings with status"
+    @echo "  just learn show <path>   Show full details of a specific learning"
+    @echo "  just learn apply         Suggest and apply pending learnings"
+    @echo ""
+    @echo "Path format for 'show':"
+    @echo "  scope/story/id  - e.g., coherence-verification/05-learnings-capture/CHORE0202/L001"
+    @echo "  story/id        - e.g., FEAT0199/L001"
+    @echo "  id              - e.g., L001 (shows all with that ID)"
 
 # Interactive ad-hoc learning capture
 reflect:
@@ -93,6 +99,10 @@ reflect:
 # Show all learnings with status
 list *ARGS:
     npx tsx verification/ai/learn-list.ts {{ARGS}}
+
+# Show full details of a specific learning
+show PATH:
+    npx tsx verification/ai/learn-show.ts {{PATH}}
 
 # Suggest and apply pending learnings using AI
 apply *ARGS:
