@@ -290,6 +290,11 @@ Milestone files live in `docs/board/epics/<epic>/milestones/<id>/`.
 
 4. Commit, push, create PR
 
+**When delegating to subagents:** Each subagent completes implementation only.
+You must still run pre-commit, commit, and update the board after each returns.
+Alternatively, include commit instructions in the subagent prompt and verify
+the commit hash before proceeding.
+
 ## Git Conventions
 
 Follow [Conventional Commits](https://www.conventionalcommits.org/):
