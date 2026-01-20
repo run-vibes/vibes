@@ -28,6 +28,9 @@ mod plugin '.justfiles/plugin.just'
 # Verification commands
 mod verify '.justfiles/verify.just'
 
+# Learning capture commands
+mod learn '.justfiles/learn.just'
+
 # ─── Top-Level Commands ──────────────────────────────────────────────────────
 
 # Show available commands
