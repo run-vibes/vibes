@@ -95,22 +95,11 @@ function extractStoryId(sourcePath: string): string {
 }
 
 /**
- * Extract source context from learning
- * Stories: "STORY_ID in epic/milestone" or just STORY_ID if no scope
- * Milestones: epic/milestone from path
- * Ad-hoc: filename
+ * Extract source identifier (story ID, milestone path, or filename)
  */
-function extractSourceContext(learning: Learning): string {
+function extractSourceId(learning: Learning): string {
   if (learning.sourceType === 'story') {
-    const storyId = extractStoryId(learning.source);
-    if (learning.scope) {
-      // Format: "FEAT0208 (04-ai-assisted-verification)"
-      // Show milestone name, which is more descriptive than epic
-      const scopeParts = learning.scope.split('/');
-      const milestone = scopeParts.length === 2 ? scopeParts[1] : learning.scope;
-      return `${storyId} (${milestone})`;
-    }
-    return storyId;
+    return extractStoryId(learning.source);
   }
 
   if (learning.sourceType === 'milestone') {
@@ -133,6 +122,18 @@ function extractSourceContext(learning: Learning): string {
 }
 
 /**
+ * Extract scope (milestone name) from learning
+ */
+function extractScope(learning: Learning): string {
+  if (learning.scope) {
+    // Return just the milestone part (e.g., "04-ai-assisted-verification")
+    const scopeParts = learning.scope.split('/');
+    return scopeParts.length === 2 ? scopeParts[1] : learning.scope;
+  }
+  return '-';
+}
+
+/**
  * Print a table of learnings
  */
 function printTable(learnings: Learning[], title: string): void {
@@ -147,7 +148,8 @@ function printTable(learnings: Learning[], title: string): void {
   // Determine column widths based on content
   const isAdhoc = learnings[0]?.sourceType === 'adhoc';
   const idColWidth = isAdhoc ? 20 : 6;
-  const sourceColWidth = 42;
+  const sourceColWidth = 12;
+  const scopeColWidth = 28;
   const titleColWidth = 26;
   const categoryColWidth = 10;
   const statusColWidth = 8;
@@ -155,7 +157,8 @@ function printTable(learnings: Learning[], title: string): void {
   // Header
   const header = [
     padEnd('ID', idColWidth),
-    padEnd('Source', sourceColWidth),
+    padEnd('Story', sourceColWidth),
+    padEnd('Scope', scopeColWidth),
     padEnd('Title', titleColWidth),
     padEnd('Category', categoryColWidth),
     padEnd('Status', statusColWidth),
@@ -164,6 +167,7 @@ function printTable(learnings: Learning[], title: string): void {
   const separator = [
     '-'.repeat(idColWidth),
     '-'.repeat(sourceColWidth),
+    '-'.repeat(scopeColWidth),
     '-'.repeat(titleColWidth),
     '-'.repeat(categoryColWidth),
     '-'.repeat(statusColWidth),
@@ -175,7 +179,8 @@ function printTable(learnings: Learning[], title: string): void {
   // Rows
   for (const learning of learnings) {
     const id = truncate(formatId(learning), idColWidth);
-    const source = truncate(extractSourceContext(learning), sourceColWidth);
+    const source = truncate(extractSourceId(learning), sourceColWidth);
+    const scope = truncate(extractScope(learning), scopeColWidth);
     const titleText = truncate(learning.title || '(untitled)', titleColWidth);
     const category = truncate(learning.category, categoryColWidth);
     const status = getStatus(learning);
@@ -183,6 +188,7 @@ function printTable(learnings: Learning[], title: string): void {
     const row = [
       padEnd(id, idColWidth),
       padEnd(source, sourceColWidth),
+      padEnd(scope, scopeColWidth),
       padEnd(titleText, titleColWidth),
       padEnd(category, categoryColWidth),
       padEnd(status, statusColWidth),
