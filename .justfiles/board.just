@@ -626,11 +626,20 @@ _next-id TYPE:
 
     printf "%04d" $((max + 1))
 
-# Get next milestone number
+# Get next milestone number (searches all epics)
 _next-milestone:
     #!/usr/bin/env bash
     cd "{{board_dir}}"
     max=0
+    # Search milestones within all epics
+    for ms_dir in epics/*/milestones/[0-9]*/; do
+        [[ -d "$ms_dir" ]] || continue
+        num=$(basename "$ms_dir" | sed -n 's/^\([0-9]*\).*/\1/p')
+        if [[ -n "$num" ]] && [[ "$num" -gt "$max" ]]; then
+            max=$num
+        fi
+    done
+    # Also check top-level milestones for backwards compatibility
     for d in milestones/[0-9]*/; do
         [[ -d "$d" ]] || continue
         num=$(basename "$d" | sed -n 's/^\([0-9]*\).*/\1/p')

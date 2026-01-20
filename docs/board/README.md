@@ -13,11 +13,17 @@
 
 | Story | Type | Priority | Scope |
 |-------|------|----------|-------|
+| [[CHORE][0146]-create-ai-verification-config](stages/backlog/stories/[CHORE][0146]-create-ai-verification-config.md) | chore | high | coherence-verification/04-ai-assisted-verification |
 | [[FEAT][0115]-eval-web-ui](stages/backlog/stories/[FEAT][0115]-eval-web-ui.md) | feat | medium | evals/39-performance-evaluation |
 | [[FEAT][0116]-pty-server-core](stages/backlog/stories/[FEAT][0116]-pty-server-core.md) | feat | medium | tui/46-terminal-server |
 | [[FEAT][0117]-session-management](stages/backlog/stories/[FEAT][0117]-session-management.md) | feat | medium | tui/46-terminal-server |
 | [[FEAT][0118]-websocket-pty-endpoint](stages/backlog/stories/[FEAT][0118]-websocket-pty-endpoint.md) | feat | medium | tui/46-terminal-server |
 | [[FEAT][0119]-xtermjs-web-integration](stages/backlog/stories/[FEAT][0119]-xtermjs-web-integration.md) | feat | medium | tui/46-terminal-server |
+| [[FEAT][0197]-implement-story-parser](stages/backlog/stories/[FEAT][0197]-implement-story-parser.md) | feat | high | coherence-verification/04-ai-assisted-verification |
+| [[FEAT][0198]-implement-artifact-collector](stages/backlog/stories/[FEAT][0198]-implement-artifact-collector.md) | feat | high | coherence-verification/04-ai-assisted-verification |
+| [[FEAT][0199]-implement-model-router](stages/backlog/stories/[FEAT][0199]-implement-model-router.md) | feat | high | coherence-verification/04-ai-assisted-verification |
+| [[FEAT][0200]-implement-ai-report-generator](stages/backlog/stories/[FEAT][0200]-implement-ai-report-generator.md) | feat | high | coherence-verification/04-ai-assisted-verification |
+| [[FEAT][0201]-add-verify-ai-command](stages/backlog/stories/[FEAT][0201]-add-verify-ai-command.md) | feat | high | coherence-verification/04-ai-assisted-verification |
 
 ## Icebox
 
@@ -42,13 +48,14 @@
 | [35-guided-setup](epics/cli/milestones/35-guided-setup/) | done |
 | [54-enhanced-cli-experience](epics/cli/milestones/54-enhanced-cli-experience/) | planned |
 
-### [coherence-verification](epics/coherence-verification/) (active) - 3 milestones, 2 done
+### [coherence-verification](epics/coherence-verification/) (active) - 4 milestones, 2 done
 
 | Milestone | Status |
 |-----------|--------|
 | [01-verification-artifact-pipeline](epics/coherence-verification/milestones/01-verification-artifact-pipeline/) | done |
 | [02-epic-based-project-hierarchy](epics/coherence-verification/milestones/02-epic-based-project-hierarchy/) | done |
 | [03-formal-planning-process](epics/coherence-verification/milestones/03-formal-planning-process/) | in-progress |
+| [04-ai-assisted-verification](epics/coherence-verification/milestones/04-ai-assisted-verification/) | backlog |
 
 ### [evals](epics/evals/) (planned) - 6 milestones, 0 done
 
