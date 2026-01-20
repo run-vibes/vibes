@@ -2,7 +2,7 @@
 id: CHORE0202
 title: Add learnings template to story template
 type: chore
-status: backlog
+status: done
 priority: high
 scope: coherence-verification/05-learnings-capture
 depends: []
@@ -31,3 +31,16 @@ Update the story template to include a `## Learnings` section with the structure
 - Modify: `docs/board/templates/story.md`
 - Modify: `docs/board/CONVENTIONS.md`
 
+
+## Learnings
+
+### L001: Template provides structured format for learnings
+
+| Field | Value |
+|-------|-------|
+| **Category** | process |
+| **Context** | Story completion reflection |
+| **Insight** | **What went well:** Template provides structured format for learnings | **Harder than expected:** Deciding which fields to include in the template |
+| **Suggested Action** | (none suggested) |
+| **Applies To** | (to be determined) |
+| **Applied** | |

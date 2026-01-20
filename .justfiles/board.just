@@ -1183,14 +1183,36 @@ start ID:
 
 # Complete a story (move to done)
 # Usage: just board done <id> [summary]
+#
+# Learning capture options (via environment variables):
+#   WELL="text"      What went well
+#   HARD="text"      What was harder than expected
+#   DIFFERENT="text" What would you do differently
+#   NO_LEARNINGS=1   Skip learning capture entirely
+#
 # Examples:
-#   just board done feat-01                    # Prompts for changelog summary
-#   just board done feat-01 "Added login"      # Uses provided summary
+#   just board done feat-01                    # Prompts for changelog summary + learnings
+#   just board done feat-01 "Added login"      # Uses provided summary, prompts for learnings
 #   just board done feat-01 ""                 # Skips changelog (empty string)
+#   WELL="It worked" HARD="Edge cases" just board done feat-01
+#   NO_LEARNINGS=1 just board done feat-01     # Skip learning capture entirely
 done ID SUMMARY="__PROMPT__":
     #!/usr/bin/env bash
     set -euo pipefail
     cd "{{board_dir}}"
+
+    # Learning capture via environment variables (preserves spaces in values)
+    well="${WELL:-}"
+    hard="${HARD:-}"
+    different="${DIFFERENT:-}"
+    no_learnings="${NO_LEARNINGS:-}"
+    summary="{{SUMMARY}}"
+
+    # Track if learnings were provided via CLI
+    cli_learnings=false
+    if [[ -n "$well" || -n "$hard" || -n "$different" ]]; then
+        cli_learnings=true
+    fi
 
     path=$(just board _find-story "{{ID}}")
 
@@ -1215,10 +1237,9 @@ done ID SUMMARY="__PROMPT__":
     title=$(grep -m1 "^title:" "$path" 2>/dev/null | sed 's/^title: *//' || basename "$path" .md)
 
     # === Learning Capture (optional) ===
-    well=""
-    hard=""
-    different=""
-    if [[ -t 0 ]]; then
+    # Skip if NO_LEARNINGS is set (any non-empty value)
+    # Use CLI values if provided, otherwise prompt interactively
+    if [[ -z "$no_learnings" && "$cli_learnings" == false && -t 0 ]]; then
         echo ""
         echo "=== Learning Capture (optional) ==="
         echo "What went well with this story? (Enter to skip)"
@@ -1232,7 +1253,8 @@ done ID SUMMARY="__PROMPT__":
     # If any input provided, generate and append learning
     if [[ -n "$well" || -n "$hard" || -n "$different" ]]; then
         # Count existing learnings to get next ID
-        existing_count=$(grep -cE "^### L[0-9]+" "$path" 2>/dev/null || echo "0")
+        existing_count=$(grep -cE "^### L[0-9]+" "$path" 2>/dev/null | tr -d '[:space:]' || echo "0")
+        [[ -z "$existing_count" ]] && existing_count=0
         next_num=$((existing_count + 1))
         learning_id=$(printf "L%03d" "$next_num")
 
@@ -1247,17 +1269,17 @@ done ID SUMMARY="__PROMPT__":
             learning_title=$(echo "$different" | head -c 60 | sed 's/\..*//')
         fi
 
-        # Build insight from all non-empty responses
+        # Build insight from all non-empty responses (use bullet separator, not pipe)
         insight=""
         if [[ -n "$well" ]]; then
             insight="**What went well:** $well"
         fi
         if [[ -n "$hard" ]]; then
-            [[ -n "$insight" ]] && insight="$insight | "
+            [[ -n "$insight" ]] && insight="$insight • "
             insight="${insight}**Harder than expected:** $hard"
         fi
         if [[ -n "$different" ]]; then
-            [[ -n "$insight" ]] && insight="$insight | "
+            [[ -n "$insight" ]] && insight="$insight • "
             insight="${insight}**Would do differently:** $different"
         fi
 
@@ -1309,7 +1331,7 @@ done ID SUMMARY="__PROMPT__":
     fi
 
     # Handle summary - prompt only if set to __PROMPT__ and we have a terminal
-    summary="{{SUMMARY}}"
+    # (summary was parsed from ARGS earlier, defaults to __PROMPT__)
     if [[ "$summary" == "__PROMPT__" ]]; then
         if [[ -t 0 ]]; then
             echo "Enter changelog summary for '$title' (or Enter to skip):"

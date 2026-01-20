@@ -2,7 +2,7 @@
 id: FEAT0204
 title: Implement milestone learnings aggregation
 type: feat
-status: backlog
+status: done
 priority: high
 scope: coherence-verification/05-learnings-capture
 depends: [FEAT0203]
@@ -34,3 +34,16 @@ Modify `just board done-milestone` to aggregate story learnings and prompt for s
 
 See [DESIGN.md](../../epics/coherence-verification/milestones/05-learnings-capture/DESIGN.md) for LEARNINGS.md format.
 
+
+## Learnings
+
+### L001: Aggregation extracts and combines learnings from multiple st
+
+| Field | Value |
+|-------|-------|
+| **Category** | process |
+| **Context** | Story completion reflection |
+| **Insight** | **What went well:** Aggregation extracts and combines learnings from multiple stories | **Harder than expected:** Finding the right sed patterns for extraction | **Would do differently:** Consider using a dedicated parsing library |
+| **Suggested Action** | Consider using a dedicated parsing library |
+| **Applies To** | (to be determined) |
+| **Applied** | |

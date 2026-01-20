@@ -39,5 +39,16 @@ See [DESIGN.md](../../epics/coherence-verification/milestones/05-learnings-captu
 
 ## Learnings
 
+### L001: Apply command provides a clean interface for propagating lea
+
+| Field | Value |
+|-------|-------|
+| **Category** | process |
+| **Context** | Story completion reflection |
+| **Insight** | **What went well:** Apply command provides a clean interface for propagating learnings | **Harder than expected:** Matching learning IDs with their target files | **Would do differently:** Add a preview mode to see what would change |
+| **Suggested Action** | Add a preview mode to see what would change |
+| **Applies To** | (to be determined) |
+| **Applied** | |
+
 <!-- No learnings captured for this story -->
 

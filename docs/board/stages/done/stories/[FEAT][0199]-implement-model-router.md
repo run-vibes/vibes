@@ -2,7 +2,7 @@
 id: FEAT0199
 title: Implement model router for Ollama and Claude
 type: feat
-status: backlog
+status: done
 priority: high
 scope: coherence-verification/04-ai-assisted-verification
 depends: [FEAT0198]
@@ -34,3 +34,16 @@ Create TypeScript module to route artifacts to configured multimodal models (Oll
 - Update: `package.json` with `ollama`, `@anthropic-ai/sdk`, `toml` dependencies
 
 See [DESIGN.md](../../epics/coherence-verification/milestones/04-ai-assisted-verification/DESIGN.md) for prompt structure.
+
+## Learnings
+
+### L001: Model
+
+| Field | Value |
+|-------|-------|
+| **Category** | process |
+| **Context** | Story completion reflection |
+| **Insight** | **What went well:** Model | **Harder than expected:** Handling | **Would do differently:** Add |
+| **Suggested Action** | Add |
+| **Applies To** | (to be determined) |
+| **Applied** | |

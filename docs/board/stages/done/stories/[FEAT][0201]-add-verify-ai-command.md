@@ -2,7 +2,7 @@
 id: FEAT0201
 title: Add just verify ai command
 type: feat
-status: backlog
+status: done
 priority: high
 scope: coherence-verification/04-ai-assisted-verification
 depends: [FEAT0200]
@@ -36,3 +36,16 @@ Create the main entry point script and add the `just verify ai` command to run A
 - Modify: `CLAUDE.md` (document new command)
 
 See [DESIGN.md](../../epics/coherence-verification/milestones/04-ai-assisted-verification/DESIGN.md) for error handling table.
+
+## Learnings
+
+### L001: Just command integrates cleanly with existing verify workflo
+
+| Field | Value |
+|-------|-------|
+| **Category** | process |
+| **Context** | Story completion reflection |
+| **Insight** | **What went well:** Just command integrates cleanly with existing verify workflow | **Harder than expected:** Ensuring proper error handling for missing config | **Would do differently:** Add a --dry-run flag to preview what would be verified |
+| **Suggested Action** | Add a --dry-run flag to preview what would be verified |
+| **Applies To** | (to be determined) |
+| **Applied** | |

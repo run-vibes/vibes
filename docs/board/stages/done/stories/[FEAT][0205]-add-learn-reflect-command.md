@@ -2,7 +2,7 @@
 id: FEAT0205
 title: Add just learn reflect command
 type: feat
-status: backlog
+status: done
 priority: medium
 scope: coherence-verification/05-learnings-capture
 depends: [CHORE0202]
@@ -33,3 +33,16 @@ Create `just learn reflect` command for ad-hoc learning capture outside of story
 - Modify: `justfile` (import learn.just)
 - Create: `docs/learnings/` directory
 
+
+## Learnings
+
+### L001: Reflect command provides a clean way to review learnings
+
+| Field | Value |
+|-------|-------|
+| **Category** | process |
+| **Context** | Story completion reflection |
+| **Insight** | **What went well:** Reflect command provides a clean way to review learnings | **Harder than expected:** Formatting output for terminal readability |
+| **Suggested Action** | (none suggested) |
+| **Applies To** | (to be determined) |
+| **Applied** | |

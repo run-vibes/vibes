@@ -13,20 +13,11 @@
 
 | Story | Type | Priority | Scope |
 |-------|------|----------|-------|
-| [[CHORE][0146]-create-ai-verification-config](stages/backlog/stories/[CHORE][0146]-create-ai-verification-config.md) | chore | high | coherence-verification/04-ai-assisted-verification |
-| [[CHORE][0202]-add-learnings-template](stages/backlog/stories/[CHORE][0202]-add-learnings-template.md) | chore | high | coherence-verification/05-learnings-capture |
 | [[FEAT][0115]-eval-web-ui](stages/backlog/stories/[FEAT][0115]-eval-web-ui.md) | feat | medium | evals/01-performance-evaluation |
 | [[FEAT][0116]-pty-server-core](stages/backlog/stories/[FEAT][0116]-pty-server-core.md) | feat | medium | tui/06-terminal-server |
 | [[FEAT][0117]-session-management](stages/backlog/stories/[FEAT][0117]-session-management.md) | feat | medium | tui/06-terminal-server |
 | [[FEAT][0118]-websocket-pty-endpoint](stages/backlog/stories/[FEAT][0118]-websocket-pty-endpoint.md) | feat | medium | tui/06-terminal-server |
 | [[FEAT][0119]-xtermjs-web-integration](stages/backlog/stories/[FEAT][0119]-xtermjs-web-integration.md) | feat | medium | tui/06-terminal-server |
-| [[FEAT][0199]-implement-model-router](stages/backlog/stories/[FEAT][0199]-implement-model-router.md) | feat | high | coherence-verification/04-ai-assisted-verification |
-| [[FEAT][0200]-implement-ai-report-generator](stages/backlog/stories/[FEAT][0200]-implement-ai-report-generator.md) | feat | high | coherence-verification/04-ai-assisted-verification |
-| [[FEAT][0201]-add-verify-ai-command](stages/backlog/stories/[FEAT][0201]-add-verify-ai-command.md) | feat | high | coherence-verification/04-ai-assisted-verification |
-| [[FEAT][0203]-implement-story-learning-capture](stages/backlog/stories/[FEAT][0203]-implement-story-learning-capture.md) | feat | high | coherence-verification/05-learnings-capture |
-| [[FEAT][0204]-implement-milestone-learnings-aggregation](stages/backlog/stories/[FEAT][0204]-implement-milestone-learnings-aggregation.md) | feat | high | coherence-verification/05-learnings-capture |
-| [[FEAT][0205]-add-learn-reflect-command](stages/backlog/stories/[FEAT][0205]-add-learn-reflect-command.md) | feat | medium | coherence-verification/05-learnings-capture |
-| [[FEAT][0206]-add-learn-apply-command](stages/backlog/stories/[FEAT][0206]-add-learn-apply-command.md) | feat | medium | coherence-verification/05-learnings-capture |
 
 <details>
 <summary><h2>Icebox</h2></summary>

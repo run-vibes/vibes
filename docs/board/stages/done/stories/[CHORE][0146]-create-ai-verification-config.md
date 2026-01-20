@@ -2,7 +2,7 @@
 id: CHORE0146
 title: Create AI verification config and templates
 type: chore
-status: backlog
+status: done
 priority: high
 scope: coherence-verification/04-ai-assisted-verification
 depends: []

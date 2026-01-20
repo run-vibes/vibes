@@ -2,6 +2,8 @@
 
 > Updated when items move to done. Most recent first.
 
+| 2026-01-20 | Implement model router for Ollama and Claude | design |
+| 2026-01-20 | Add CLI options for non-interactive learning capture | parsing |
 | 2026-01-19 | Implement artifact collector | Implement artifact collector for snapshots, checkpoints, and videos |
 | 2026-01-19 | Implement story parser for AI verification | Story parser for AI verification |
 | 2026-01-19 | Migrate existing epics | Migrate all existing epics to formal structure with PRD.md files |
