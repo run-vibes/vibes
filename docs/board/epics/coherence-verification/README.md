@@ -22,7 +22,7 @@ Build a verification system that captures system behavior as visual artifacts (s
 <!-- BEGIN GENERATED -->
 ## Milestones
 
-**Progress:** 3/5 milestones complete, 17/27 stories done
+**Progress:** 3/5 milestones complete, 18/27 stories done
 
 | ID | Milestone | Stories | Status |
 |----|-----------|---------|--------|
@@ -30,5 +30,5 @@ Build a verification system that captures system behavior as visual artifacts (s
 | 02 | [Epic-Based Project Hierarchy](milestones/02-epic-based-project-hierarchy/) | 6/6 | done |
 | 03 | [Formal Planning Process](milestones/03-formal-planning-process/) | 9/9 | done |
 | 04 | [AI-Assisted Verification](milestones/04-ai-assisted-verification/) | 2/6 | backlog |
-| 05 | [Learnings Capture](milestones/05-learnings-capture/) | 0/6 | backlog |
+| 05 | [Learnings Capture](milestones/05-learnings-capture/) | 1/6 | backlog |
 <!-- END GENERATED -->

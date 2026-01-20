@@ -25,11 +25,11 @@ created: 2026-01-19
 | 2 | [FEAT0203](../../../../stages/backlog/stories/[FEAT][0203]-implement-story-learning-capture.md) | Implement learning capture on story completion | backlog |
 | 3 | [FEAT0204](../../../../stages/backlog/stories/[FEAT][0204]-implement-milestone-learnings-aggregation.md) | Implement milestone learnings aggregation | backlog |
 | 4 | [FEAT0205](../../../../stages/backlog/stories/[FEAT][0205]-add-learn-reflect-command.md) | Add just learn reflect command | backlog |
-| 5 | [FEAT0206](../../../../stages/backlog/stories/[FEAT][0206]-add-learn-apply-command.md) | Add just learn apply propagation engine | backlog |
-| 6 | [FEAT0207](../../../../stages/backlog/stories/[FEAT][0207]-add-learn-list-command.md) | Add just learn list command | backlog |
+| 5 | [FEAT0206](../../../../stages/backlog/stories/[FEAT][0206]-add-learn-apply-command.md) | Add just learn apply propagation engine | done |
+| 6 | [FEAT0207](../../../../stages/done/stories/[FEAT][0207]-add-learn-list-command.md) | Add just learn list command | done |
 
 ## Progress
 
 **Requirements:** 0/13 verified
-**Stories:** 0/6 complete
+**Stories:** 2/6 complete
 

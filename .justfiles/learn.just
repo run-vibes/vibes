@@ -91,63 +91,8 @@ reflect:
     echo "Created: $file"
 
 # Show all learnings with status
-list:
-    #!/usr/bin/env bash
-    set -euo pipefail
-
-    echo "Learnings"
-    echo "========="
-    echo ""
-
-    if [[ ! -d "{{learnings_dir}}" ]]; then
-        echo "No learnings directory found"
-        exit 0
-    fi
-
-    files=$(find "{{learnings_dir}}" -name "*.md" ! -name ".gitkeep" 2>/dev/null | sort -r)
-
-    if [[ -z "$files" ]]; then
-        echo "No learnings captured yet."
-        echo ""
-        echo "Use 'just learn reflect' to capture a learning."
-        exit 0
-    fi
-
-    echo "| Date | Topic | Applied |"
-    echo "|------|-------|---------|"
-
-    for file in $files; do
-        name=$(basename "$file" .md)
-        # Extract date (first 10 chars YYYY-MM-DD)
-        file_date="${name:0:10}"
-        # Extract topic (rest after date and hyphen)
-        topic="${name:11}"
-
-        # Count total learnings (L### headers)
-        total_count=$(grep -cE "^### L[0-9]+" "$file" 2>/dev/null || echo "0")
-        total_count=$(echo "$total_count" | tr -d '[:space:]')
-
-        # Count applied learnings (Applied field with content after the empty space)
-        # Lines look like: | **Applied** | | (empty) or | **Applied** | some text |
-        applied_count=0
-        while IFS= read -r line; do
-            # Check if the Applied value (between last two |) has content
-            value=$(echo "$line" | sed 's/.*\*\*Applied\*\* | *//' | sed 's/ *|$//')
-            if [[ -n "$value" ]]; then
-                applied_count=$((applied_count + 1))
-            fi
-        done < <(grep -F "| **Applied**" "$file" 2>/dev/null || true)
-
-        if [[ "$total_count" == "0" ]]; then
-            applied_status="-"
-        elif [[ "$applied_count" -gt 0 ]]; then
-            applied_status="${applied_count}/${total_count}"
-        else
-            applied_status="0/${total_count}"
-        fi
-
-        echo "| $file_date | $topic | $applied_status |"
-    done
+list *ARGS:
+    npx tsx verification/ai/learn-list.ts {{ARGS}}
 
 # Suggest and apply pending learnings using AI
 apply *ARGS:

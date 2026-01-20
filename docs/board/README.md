@@ -27,7 +27,6 @@
 | [[FEAT][0204]-implement-milestone-learnings-aggregation](stages/backlog/stories/[FEAT][0204]-implement-milestone-learnings-aggregation.md) | feat | high | coherence-verification/05-learnings-capture |
 | [[FEAT][0205]-add-learn-reflect-command](stages/backlog/stories/[FEAT][0205]-add-learn-reflect-command.md) | feat | medium | coherence-verification/05-learnings-capture |
 | [[FEAT][0206]-add-learn-apply-command](stages/backlog/stories/[FEAT][0206]-add-learn-apply-command.md) | feat | medium | coherence-verification/05-learnings-capture |
-| [[FEAT][0207]-add-learn-list-command](stages/backlog/stories/[FEAT][0207]-add-learn-list-command.md) | feat | low | coherence-verification/05-learnings-capture |
 
 <details>
 <summary><h2>Icebox</h2></summary>
