@@ -55,6 +55,7 @@ VISION (product)
 |---------|-------------|
 | [Plugin vs Built-in](#architectural-decision-plugin-vs-built-in) | Where new features belong |
 | [Best Practices](#best-practices) | Do's and don'ts |
+| [Learnings Capture](#learnings-capture) | Documenting insights for continuous improvement |
 
 ---
 
@@ -545,6 +546,59 @@ When adding new functionality, evaluate whether it should be a plugin.
 - Create tasks that are too large
 - Manually move story files
 - Skip verification steps
+
+## Learnings Capture
+
+Stories include a `## Learnings` section for capturing insights gained during implementation. This enables continuous improvement by documenting what worked, what didn't, and how processes can evolve.
+
+### Learning Format
+
+Each learning uses a structured table format:
+
+```markdown
+### L001: [Brief title]
+
+| Field | Value |
+|-------|-------|
+| **Category** | process / architecture / verification / code |
+| **Context** | What triggered this learning |
+| **Insight** | What we learned |
+| **Suggested Action** | Concrete next step |
+| **Applies To** | Where this should propagate |
+| **Applied** | (empty until propagated) |
+```
+
+### Learning ID Format
+
+| Scope | Format | Example |
+|-------|--------|---------|
+| Story | `L001`, `L002`, ... | Sequential within story |
+| Milestone | `ML001`, `ML002`, ... | Sequential within milestone |
+
+### Categories
+
+| Category | Use For |
+|----------|---------|
+| `process` | Workflow improvements, planning conventions, communication |
+| `architecture` | Design decisions, patterns, technical direction |
+| `verification` | Testing approaches, validation methods, quality assurance |
+| `code` | Implementation patterns, libraries, coding practices |
+
+### When to Capture Learnings
+
+| Trigger | Description |
+|---------|-------------|
+| Story completion | Insights from implementing the story |
+| Milestone completion | Cross-cutting patterns observed across stories |
+| Ad-hoc | Important realizations that shouldn't wait |
+
+### Applied Status
+
+When a learning is propagated to other files:
+
+```markdown
+| **Applied** | CLAUDE.md (2026-01-20), CONVENTIONS.md (2026-01-20) |
+```
 
 ## Review Checklist
 
