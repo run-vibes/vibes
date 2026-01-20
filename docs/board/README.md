@@ -14,6 +14,7 @@
 | Story | Type | Priority | Scope |
 |-------|------|----------|-------|
 | [[CHORE][0146]-create-ai-verification-config](stages/backlog/stories/[CHORE][0146]-create-ai-verification-config.md) | chore | high | coherence-verification/04-ai-assisted-verification |
+| [[CHORE][0202]-add-learnings-template](stages/backlog/stories/[CHORE][0202]-add-learnings-template.md) | chore | high | coherence-verification/05-learnings-capture |
 | [[FEAT][0115]-eval-web-ui](stages/backlog/stories/[FEAT][0115]-eval-web-ui.md) | feat | medium | evals/39-performance-evaluation |
 | [[FEAT][0116]-pty-server-core](stages/backlog/stories/[FEAT][0116]-pty-server-core.md) | feat | medium | tui/46-terminal-server |
 | [[FEAT][0117]-session-management](stages/backlog/stories/[FEAT][0117]-session-management.md) | feat | medium | tui/46-terminal-server |
@@ -24,6 +25,11 @@
 | [[FEAT][0199]-implement-model-router](stages/backlog/stories/[FEAT][0199]-implement-model-router.md) | feat | high | coherence-verification/04-ai-assisted-verification |
 | [[FEAT][0200]-implement-ai-report-generator](stages/backlog/stories/[FEAT][0200]-implement-ai-report-generator.md) | feat | high | coherence-verification/04-ai-assisted-verification |
 | [[FEAT][0201]-add-verify-ai-command](stages/backlog/stories/[FEAT][0201]-add-verify-ai-command.md) | feat | high | coherence-verification/04-ai-assisted-verification |
+| [[FEAT][0203]-implement-story-learning-capture](stages/backlog/stories/[FEAT][0203]-implement-story-learning-capture.md) | feat | high | coherence-verification/05-learnings-capture |
+| [[FEAT][0204]-implement-milestone-learnings-aggregation](stages/backlog/stories/[FEAT][0204]-implement-milestone-learnings-aggregation.md) | feat | high | coherence-verification/05-learnings-capture |
+| [[FEAT][0205]-add-learn-reflect-command](stages/backlog/stories/[FEAT][0205]-add-learn-reflect-command.md) | feat | medium | coherence-verification/05-learnings-capture |
+| [[FEAT][0206]-add-learn-apply-command](stages/backlog/stories/[FEAT][0206]-add-learn-apply-command.md) | feat | medium | coherence-verification/05-learnings-capture |
+| [[FEAT][0207]-add-learn-list-command](stages/backlog/stories/[FEAT][0207]-add-learn-list-command.md) | feat | low | coherence-verification/05-learnings-capture |
 
 ## Icebox
 
@@ -48,7 +54,7 @@
 | [35-guided-setup](epics/cli/milestones/35-guided-setup/) | done |
 | [54-enhanced-cli-experience](epics/cli/milestones/54-enhanced-cli-experience/) | planned |
 
-### [coherence-verification](epics/coherence-verification/) (active) - 4 milestones, 3 done
+### [coherence-verification](epics/coherence-verification/) (active) - 5 milestones, 3 done
 
 | Milestone | Status |
 |-----------|--------|
@@ -56,6 +62,7 @@
 | [02-epic-based-project-hierarchy](epics/coherence-verification/milestones/02-epic-based-project-hierarchy/) | done |
 | [03-formal-planning-process](epics/coherence-verification/milestones/03-formal-planning-process/) | done |
 | [04-ai-assisted-verification](epics/coherence-verification/milestones/04-ai-assisted-verification/) | backlog |
+| [05-learnings-capture](epics/coherence-verification/milestones/05-learnings-capture/) | backlog |
 
 ### [evals](epics/evals/) (planned) - 6 milestones, 0 done
 

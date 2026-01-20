@@ -635,16 +635,18 @@ _next-milestone:
     for ms_dir in epics/*/milestones/[0-9]*/; do
         [[ -d "$ms_dir" ]] || continue
         num=$(basename "$ms_dir" | sed -n 's/^\([0-9]*\).*/\1/p')
-        if [[ -n "$num" ]] && [[ "$num" -gt "$max" ]]; then
-            max=$num
+        # Use 10# to force decimal interpretation (avoid octal issues with 08, 09)
+        if [[ -n "$num" ]] && [[ 10#$num -gt $max ]]; then
+            max=$((10#$num))
         fi
     done
     # Also check top-level milestones for backwards compatibility
     for d in milestones/[0-9]*/; do
         [[ -d "$d" ]] || continue
         num=$(basename "$d" | sed -n 's/^\([0-9]*\).*/\1/p')
-        if [[ -n "$num" ]] && [[ "$num" -gt "$max" ]]; then
-            max=$num
+        # Use 10# to force decimal interpretation (avoid octal issues with 08, 09)
+        if [[ -n "$num" ]] && [[ 10#$num -gt $max ]]; then
+            max=$((10#$num))
         fi
     done
     printf "%02d" $((max + 1))
