@@ -149,12 +149,6 @@ list:
         echo "| $file_date | $topic | $applied_status |"
     done
 
-# Suggest and apply pending learnings (placeholder)
-apply:
-    @echo "Apply learnings (not yet implemented)"
-    @echo ""
-    @echo "This command will:"
-    @echo "  1. Find learnings with empty 'Applied' fields"
-    @echo "  2. Suggest where/how to apply them"
-    @echo "  3. Update CLAUDE.md or other conventions"
-    @echo "  4. Mark learnings as applied"
+# Suggest and apply pending learnings using AI
+apply *ARGS:
+    npx tsx verification/ai/learn-apply.ts {{ARGS}}

@@ -2,7 +2,7 @@
 id: FEAT0206
 title: Add just learn apply propagation engine
 type: feat
-status: backlog
+status: done
 priority: medium
 scope: coherence-verification/05-learnings-capture
 depends: [FEAT0203, FEAT0204, FEAT0205]
@@ -18,13 +18,13 @@ Create `just learn apply` command that uses AI to suggest where learnings should
 
 ## Acceptance Criteria
 
-- [ ] `just learn apply` scans all learnings (stories, milestones, ad-hoc)
-- [ ] Filters to unapplied learnings only
-- [ ] For each learning, AI suggests concrete changes to "Applies To" targets
-- [ ] Shows diff-style preview of suggested changes
-- [ ] User can accept/reject/edit each suggestion
-- [ ] Accepted changes applied to target files
-- [ ] Learning marked as applied with date and targets
+- [x] `just learn apply` scans all learnings (stories, milestones, ad-hoc)
+- [x] Filters to unapplied learnings only
+- [x] For each learning, AI suggests concrete changes to "Applies To" targets
+- [x] Shows diff-style preview of suggested changes
+- [x] User can accept/reject/edit each suggestion
+- [x] Accepted changes applied to target files
+- [x] Learning marked as applied with date and targets
 
 ## Implementation Notes
 
@@ -32,6 +32,12 @@ Create `just learn apply` command that uses AI to suggest where learnings should
 
 **Files:**
 - Modify: `.justfiles/learn.just`
+- Create: `verification/ai/lib/learnings.ts` - Learning scanner and parser
+- Create: `verification/ai/learn-apply.ts` - Main entry point script
 
 See [DESIGN.md](../../epics/coherence-verification/milestones/05-learnings-capture/DESIGN.md) for propagation workflow.
+
+## Learnings
+
+<!-- No learnings captured for this story -->
 
