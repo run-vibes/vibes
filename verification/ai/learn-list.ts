@@ -122,13 +122,12 @@ function extractSourceId(learning: Learning): string {
 }
 
 /**
- * Extract scope (milestone name) from learning
+ * Extract scope (epic/milestone) from learning
  */
 function extractScope(learning: Learning): string {
   if (learning.scope) {
-    // Return just the milestone part (e.g., "04-ai-assisted-verification")
-    const scopeParts = learning.scope.split('/');
-    return scopeParts.length === 2 ? scopeParts[1] : learning.scope;
+    // Return full scope (e.g., "coherence-verification/04-ai-assisted-verification")
+    return learning.scope;
   }
   return '-';
 }
@@ -149,7 +148,7 @@ function printTable(learnings: Learning[], title: string): void {
   const isAdhoc = learnings[0]?.sourceType === 'adhoc';
   const idColWidth = isAdhoc ? 20 : 6;
   const sourceColWidth = 12;
-  const scopeColWidth = 28;
+  const scopeColWidth = 48;
   const titleColWidth = 26;
   const categoryColWidth = 10;
   const statusColWidth = 8;
