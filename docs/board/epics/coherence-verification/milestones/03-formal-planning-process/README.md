@@ -1,7 +1,8 @@
 ---
 id: 03-formal-planning-process
 title: Formal Planning Process
-status: in-progress
+status: done
+completed: 2026-01-19
 epic: coherence-verification
 created: 2026-01-18
 ---

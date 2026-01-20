@@ -48,13 +48,13 @@
 | [35-guided-setup](epics/cli/milestones/35-guided-setup/) | done |
 | [54-enhanced-cli-experience](epics/cli/milestones/54-enhanced-cli-experience/) | planned |
 
-### [coherence-verification](epics/coherence-verification/) (active) - 4 milestones, 2 done
+### [coherence-verification](epics/coherence-verification/) (active) - 4 milestones, 3 done
 
 | Milestone | Status |
 |-----------|--------|
 | [01-verification-artifact-pipeline](epics/coherence-verification/milestones/01-verification-artifact-pipeline/) | done |
 | [02-epic-based-project-hierarchy](epics/coherence-verification/milestones/02-epic-based-project-hierarchy/) | done |
-| [03-formal-planning-process](epics/coherence-verification/milestones/03-formal-planning-process/) | in-progress |
+| [03-formal-planning-process](epics/coherence-verification/milestones/03-formal-planning-process/) | done |
 | [04-ai-assisted-verification](epics/coherence-verification/milestones/04-ai-assisted-verification/) | backlog |
 
 ### [evals](epics/evals/) (planned) - 6 milestones, 0 done
@@ -124,6 +124,7 @@
 
 - [01-verification-artifact-pipeline](epics/coherence-verification/milestones/01-verification-artifact-pipeline/)
 - [02-epic-based-project-hierarchy](epics/coherence-verification/milestones/02-epic-based-project-hierarchy/)
+- [03-formal-planning-process](epics/coherence-verification/milestones/03-formal-planning-process/)
 
 ### [core](epics/core/) (done)
 
