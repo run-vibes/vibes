@@ -1214,6 +1214,100 @@ done ID SUMMARY="__PROMPT__":
     # Get title for changelog
     title=$(grep -m1 "^title:" "$path" 2>/dev/null | sed 's/^title: *//' || basename "$path" .md)
 
+    # === Learning Capture (optional) ===
+    well=""
+    hard=""
+    different=""
+    if [[ -t 0 ]]; then
+        echo ""
+        echo "=== Learning Capture (optional) ==="
+        echo "What went well with this story? (Enter to skip)"
+        read -r well
+        echo "What was harder than expected? (Enter to skip)"
+        read -r hard
+        echo "What would you do differently? (Enter to skip)"
+        read -r different
+    fi
+
+    # If any input provided, generate and append learning
+    if [[ -n "$well" || -n "$hard" || -n "$different" ]]; then
+        # Count existing learnings to get next ID
+        existing_count=$(grep -cE "^### L[0-9]+" "$path" 2>/dev/null || echo "0")
+        next_num=$((existing_count + 1))
+        learning_id=$(printf "L%03d" "$next_num")
+
+        # Determine title from first non-empty response
+        learning_title=""
+        if [[ -n "$well" ]]; then
+            # Take first sentence or first 60 chars
+            learning_title=$(echo "$well" | head -c 60 | sed 's/\..*//')
+        elif [[ -n "$hard" ]]; then
+            learning_title=$(echo "$hard" | head -c 60 | sed 's/\..*//')
+        elif [[ -n "$different" ]]; then
+            learning_title=$(echo "$different" | head -c 60 | sed 's/\..*//')
+        fi
+
+        # Build insight from all non-empty responses
+        insight=""
+        if [[ -n "$well" ]]; then
+            insight="**What went well:** $well"
+        fi
+        if [[ -n "$hard" ]]; then
+            [[ -n "$insight" ]] && insight="$insight | "
+            insight="${insight}**Harder than expected:** $hard"
+        fi
+        if [[ -n "$different" ]]; then
+            [[ -n "$insight" ]] && insight="$insight | "
+            insight="${insight}**Would do differently:** $different"
+        fi
+
+        # Build suggested action from "what would you do differently" if provided
+        suggested_action=""
+        if [[ -n "$different" ]]; then
+            suggested_action="$different"
+        else
+            suggested_action="(none suggested)"
+        fi
+
+        # Generate learning entry using printf to avoid just parsing issues with pipes
+        learning_entry=$(printf '%s\n\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s' \
+            "### ${learning_id}: ${learning_title}" \
+            "| Field | Value |" \
+            "|-------|-------|" \
+            "| **Category** | process |" \
+            "| **Context** | Story completion reflection |" \
+            "| **Insight** | ${insight} |" \
+            "| **Suggested Action** | ${suggested_action} |" \
+            "| **Applies To** | (to be determined) |" \
+            "| **Applied** | |")
+
+        # Check if ## Learnings section exists
+        if grep -q "^## Learnings" "$path"; then
+            # Append learning entry after ## Learnings line
+            # Find line number of ## Learnings
+            learnings_line=$(grep -n "^## Learnings" "$path" | head -1 | cut -d: -f1)
+
+            # Create temp file with learning appended after ## Learnings section
+            {
+                head -n "$learnings_line" "$path"
+                echo ""
+                echo "$learning_entry"
+                tail -n +$((learnings_line + 1)) "$path"
+            } > "${path}.tmp"
+            mv "${path}.tmp" "$path"
+        else
+            # Add ## Learnings section at end of file
+            {
+                echo ""
+                echo "## Learnings"
+                echo ""
+                echo "$learning_entry"
+            } >> "$path"
+        fi
+
+        echo "Added learning ${learning_id} to story"
+    fi
+
     # Handle summary - prompt only if set to __PROMPT__ and we have a terminal
     summary="{{SUMMARY}}"
     if [[ "$summary" == "__PROMPT__" ]]; then
