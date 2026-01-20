@@ -4,7 +4,7 @@ title: Swarm view layout
 type: feat
 status: done
 priority: high
-scope: tui/44-swarm-monitoring
+scope: tui/04-swarm-monitoring
 depends: [m41-feat-03]
 estimate: 3h
 ---

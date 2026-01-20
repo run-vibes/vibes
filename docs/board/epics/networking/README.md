@@ -16,6 +16,6 @@ Network layer: Cloudflare tunnels, authentication, access control, security.
 
 | ID | Milestone | Stories | Status |
 |----|-----------|---------|--------|
-| 05 | [Secure Remote Access](milestones/05-secure-remote-access/) | 0/0 | done |
-| 06 | [Team Authentication](milestones/06-team-authentication/) | 0/0 | done |
+| 01 | [Secure Remote Access](milestones/01-secure-remote-access/) | 0/0 | done |
+| 02 | [Team Authentication](milestones/02-team-authentication/) | 0/0 | done |
 <!-- END GENERATED -->

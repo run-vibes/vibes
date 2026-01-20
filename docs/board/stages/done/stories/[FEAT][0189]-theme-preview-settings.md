@@ -4,7 +4,7 @@ title: Theme preview in settings
 type: feat
 status: done
 priority: medium
-scope: tui/45-customizable-themes
+scope: tui/05-customizable-themes
 depends: [m45-feat-01, m45-feat-02]
 estimate: 3h
 ---

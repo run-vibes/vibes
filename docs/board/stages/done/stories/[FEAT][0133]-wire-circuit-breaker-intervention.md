@@ -4,7 +4,7 @@ title: Wire circuit breaker intervention
 type: feat
 status: done
 priority: high
-scope: groove/29-assessment-pipeline
+scope: groove/06-assessment-pipeline
 depends: []
 estimate: 2h
 created: 2026-01-08

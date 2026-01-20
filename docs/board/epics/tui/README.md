@@ -305,10 +305,10 @@ vibes tui serve --port 8081           # Custom port
 
 | ID | Milestone | Stories | Status |
 |----|-----------|---------|--------|
-| 41 | [Terminal UI Framework](milestones/41-terminal-ui-framework/) | 5/5 | done |
-| 42 | [Terminal Dashboard](milestones/42-terminal-dashboard/) | 4/4 | done |
-| 43 | [Terminal Agent Control](milestones/43-terminal-agent-control/) | 4/4 | done |
-| 44 | [Swarm Monitoring](milestones/44-swarm-monitoring/) | 4/4 | planned |
-| 45 | [Customizable Themes](milestones/45-customizable-themes/) | 4/4 | in-progress |
-| 46 | [Terminal Server](milestones/46-terminal-server/) | 0/4 | planned |
+| 01 | [Terminal UI Framework](milestones/01-terminal-ui-framework/) | 5/5 | done |
+| 02 | [Terminal Dashboard](milestones/02-terminal-dashboard/) | 4/4 | done |
+| 03 | [Terminal Agent Control](milestones/03-terminal-agent-control/) | 4/4 | done |
+| 04 | [Swarm Monitoring](milestones/04-swarm-monitoring/) | 4/4 | planned |
+| 05 | [Customizable Themes](milestones/05-customizable-themes/) | 4/4 | in-progress |
+| 06 | [Terminal Server](milestones/06-terminal-server/) | 0/4 | planned |
 <!-- END GENERATED -->

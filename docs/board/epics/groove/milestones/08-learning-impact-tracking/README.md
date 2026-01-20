@@ -1,0 +1,32 @@
+---
+id: 08-learning-impact-tracking
+title: Learning Impact Tracking
+status: done
+epics: [groove]
+---
+
+# Learning Impact Tracking
+
+## Overview
+
+Milestone 31: Attribution Engine - Determine which learnings help or hurt sessions.
+
+Uses a 4-layer architecture:
+- **Layer 1**: Activation detection (did the learning influence behavior?)
+- **Layer 2**: Temporal correlation (positive/negative signals near activation)
+- **Layer 3**: Ablation testing (A/B experiments for uncertain learnings)
+- **Layer 4**: Value aggregation (combine signals, auto-deprecate harmful learnings)
+
+Each layer is trait-based for future extensibility.
+
+## Epics
+
+- [plugin-system](epics/plugin-system)
+
+## Design
+
+See [DESIGN.md](DESIGN.md) for architecture and implementation details.
+
+## Implementation
+
+See [SRS.md](SRS.md) for stories and execution plan.

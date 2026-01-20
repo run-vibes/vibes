@@ -4,7 +4,7 @@ title: Agent module skeleton in vibes-core
 type: feat
 status: done
 priority: high
-scope: agents/38-autonomous-agents
+scope: agents/01-autonomous-agents
 depends: []
 estimate: 2h
 ---

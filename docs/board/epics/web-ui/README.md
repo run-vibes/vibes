@@ -17,9 +17,9 @@ Web dashboard: session views, firehose, navigation, CRT visual design.
 
 | ID | Milestone | Stories | Status |
 |----|-----------|---------|--------|
-| 04 | [Web Dashboard](milestones/04-web-dashboard/) | 0/0 | done |
-| 17 | [Modern Web Interface](milestones/17-modern-web-interface/) | 0/0 | done |
-| 26 | [Infinite Event Stream](milestones/26-infinite-event-stream/) | 10/10 | done |
-| 27 | [CRT Visual Design](milestones/27-crt-visual-design/) | 1/1 | done |
-| 47 | [Image Understanding](milestones/47-image-understanding/) | 0/0 | in-progress |
+| 01 | [Web Dashboard](milestones/01-web-dashboard/) | 0/0 | done |
+| 02 | [Modern Web Interface](milestones/02-modern-web-interface/) | 0/0 | done |
+| 03 | [Infinite Event Stream](milestones/03-infinite-event-stream/) | 10/10 | done |
+| 04 | [CRT Visual Design](milestones/04-crt-visual-design/) | 1/1 | done |
+| 05 | [Image Understanding](milestones/05-image-understanding/) | 0/0 | in-progress |
 <!-- END GENERATED -->

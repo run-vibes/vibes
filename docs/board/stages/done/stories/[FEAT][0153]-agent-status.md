@@ -4,7 +4,7 @@ title: AgentStatus and AgentContext types
 type: feat
 status: done
 priority: high
-scope: agents/38-autonomous-agents
+scope: agents/01-autonomous-agents
 depends: [m38-feat-02]
 estimate: 2h
 ---

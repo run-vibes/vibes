@@ -4,7 +4,7 @@ title: Agent lifecycle management
 type: feat
 status: done
 priority: high
-scope: agents/38-autonomous-agents
+scope: agents/01-autonomous-agents
 depends: [m38-feat-03, m38-feat-04]
 estimate: 4h
 ---

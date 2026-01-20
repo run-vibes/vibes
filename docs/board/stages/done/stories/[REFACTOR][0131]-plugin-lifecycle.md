@@ -4,7 +4,7 @@ title: "Refactor: Add Plugin `on_ready()` Lifecycle Method"
 type: refactor
 status: done
 priority: medium
-scope: web-ui/26-infinite-event-stream
+scope: web-ui/03-infinite-event-stream
 depends: []
 estimate:
 created: 2026-01-03

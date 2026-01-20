@@ -4,7 +4,7 @@ title: Task and TaskResult types
 type: feat
 status: done
 priority: high
-scope: agents/38-autonomous-agents
+scope: agents/01-autonomous-agents
 depends: [m38-feat-01]
 estimate: 3h
 ---

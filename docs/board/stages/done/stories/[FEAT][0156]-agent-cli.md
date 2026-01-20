@@ -4,7 +4,7 @@ title: Agent CLI commands
 type: feat
 status: done
 priority: medium
-scope: agents/38-autonomous-agents
+scope: agents/01-autonomous-agents
 depends: [m38-feat-05]
 estimate: 3h
 ---

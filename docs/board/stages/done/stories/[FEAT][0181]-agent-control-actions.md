@@ -4,7 +4,7 @@ title: Agent control actions
 type: feat
 status: done
 priority: high
-scope: tui/43-terminal-agent-control
+scope: tui/03-terminal-agent-control
 depends: [m43-feat-01]
 estimate: 3h
 ---

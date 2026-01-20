@@ -4,7 +4,7 @@ title: vibes-evals crate skeleton
 type: feat
 status: done
 priority: high
-scope: evals/39-performance-evaluation
+scope: evals/01-performance-evaluation
 depends: []
 estimate: 2h
 ---

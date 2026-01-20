@@ -332,5 +332,5 @@ vibes observe export metrics <file>   # Export metrics
 
 | ID | Milestone | Stories | Status |
 |----|-----------|---------|--------|
-| 40 | [Distributed Tracing](milestones/40-distributed-tracing/) | 7/7 | done |
+| 01 | [Distributed Tracing](milestones/01-distributed-tracing/) | 7/7 | done |
 <!-- END GENERATED -->

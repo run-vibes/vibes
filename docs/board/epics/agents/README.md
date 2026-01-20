@@ -197,5 +197,5 @@ vibes swarm status <swarm>           # Swarm status
 
 | ID | Milestone | Stories | Status |
 |----|-----------|---------|--------|
-| 38 | [Autonomous Agents](milestones/38-autonomous-agents/) | 7/7 | done |
+| 01 | [Autonomous Agents](milestones/01-autonomous-agents/) | 7/7 | done |
 <!-- END GENERATED -->

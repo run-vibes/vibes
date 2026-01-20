@@ -4,7 +4,7 @@ title: Kanban Planning Board - Design Document
 type: chore
 status: done
 priority: medium
-scope: core/14-visual-project-planning
+scope: core/07-visual-project-planning
 depends: []
 estimate:
 created: 2026-01-07

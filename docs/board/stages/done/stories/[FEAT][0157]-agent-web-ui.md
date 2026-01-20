@@ -4,7 +4,7 @@ title: Agent Web UI
 type: feat
 status: done
 priority: medium
-scope: agents/38-autonomous-agents
+scope: agents/01-autonomous-agents
 depends: [m38-feat-06]
 estimate: 4h
 ---

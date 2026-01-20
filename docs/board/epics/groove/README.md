@@ -21,16 +21,16 @@ The groove plugin provides continual learning capabilities:
 
 | ID | Milestone | Stories | Status |
 |----|-----------|---------|--------|
-| 15 | [AI Harness Discovery](milestones/15-ai-harness-discovery/) | 0/0 | done |
-| 21 | [Persistent Learning Storage](milestones/21-persistent-learning-storage/) | 0/0 | done |
-| 22 | [Secure Data Handling](milestones/22-secure-data-handling/) | 0/0 | done |
-| 24 | [Context Injection](milestones/24-context-injection/) | 0/0 | done |
-| 25 | [Structured Assessments](milestones/25-structured-assessments/) | 0/0 | done |
-| 29 | [Assessment Pipeline](milestones/29-assessment-pipeline/) | 2/2 | done |
-| 30 | [Automatic Learning Capture](milestones/30-automatic-learning-capture/) | 0/0 | done |
-| 31 | [Learning Impact Tracking](milestones/31-learning-impact-tracking/) | 0/0 | done |
-| 32 | [Smart Recommendations](milestones/32-smart-recommendations/) | 0/0 | done |
-| 33 | [Learning Insights Dashboard](milestones/33-learning-insights-dashboard/) | 0/0 | done |
-| 34 | [Handling New Situations](milestones/34-handling-new-situations/) | 0/0 | done |
-| 36 | [Novelty Monitoring](milestones/36-novelty-monitoring/) | 7/7 | done |
+| 01 | [AI Harness Discovery](milestones/01-ai-harness-discovery/) | 0/0 | done |
+| 02 | [Persistent Learning Storage](milestones/02-persistent-learning-storage/) | 0/0 | done |
+| 03 | [Secure Data Handling](milestones/03-secure-data-handling/) | 0/0 | done |
+| 04 | [Context Injection](milestones/04-context-injection/) | 0/0 | done |
+| 05 | [Structured Assessments](milestones/05-structured-assessments/) | 0/0 | done |
+| 06 | [Assessment Pipeline](milestones/06-assessment-pipeline/) | 2/2 | done |
+| 07 | [Automatic Learning Capture](milestones/07-automatic-learning-capture/) | 0/0 | done |
+| 08 | [Learning Impact Tracking](milestones/08-learning-impact-tracking/) | 0/0 | done |
+| 09 | [Smart Recommendations](milestones/09-smart-recommendations/) | 0/0 | done |
+| 10 | [Learning Insights Dashboard](milestones/10-learning-insights-dashboard/) | 0/0 | done |
+| 11 | [Handling New Situations](milestones/11-handling-new-situations/) | 0/0 | done |
+| 12 | [Novelty Monitoring](milestones/12-novelty-monitoring/) | 7/7 | done |
 <!-- END GENERATED -->

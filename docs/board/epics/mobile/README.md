@@ -16,6 +16,6 @@ Mobile applications: iOS app, push notifications, mobile-specific features.
 
 | ID | Milestone | Stories | Status |
 |----|-----------|---------|--------|
-| 07 | [Mobile Alerts](milestones/07-mobile-alerts/) | 0/0 | done |
-| 55 | [iOS Mobile App](milestones/55-ios-mobile-app/) | 0/0 | planned |
+| 01 | [Mobile Alerts](milestones/01-mobile-alerts/) | 0/0 | done |
+| 02 | [iOS Mobile App](milestones/02-ios-mobile-app/) | 0/0 | planned |
 <!-- END GENERATED -->

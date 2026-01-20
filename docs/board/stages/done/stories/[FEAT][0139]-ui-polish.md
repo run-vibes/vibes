@@ -4,7 +4,7 @@ title: "feat: UI Polish and Cleanup"
 type: feat
 status: done
 priority: medium
-scope: groove/36-novelty-monitoring
+scope: groove/12-novelty-monitoring
 depends: []
 estimate:
 created: 2026-01-02

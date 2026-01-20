@@ -16,7 +16,7 @@ Plugin architecture: API contracts, lifecycle management, dynamic loading.
 
 | ID | Milestone | Stories | Status |
 |----|-----------|---------|--------|
-| 03 | [Extensible Plugin System](milestones/03-extensible-plugin-system/) | 0/0 | done |
-| 23 | [Rich Plugin APIs](milestones/23-rich-plugin-apis/) | 0/0 | done |
-| 53 | [Out-of-Box Plugins](milestones/53-out-of-box-plugins/) | 0/0 | planned |
+| 01 | [Extensible Plugin System](milestones/01-extensible-plugin-system/) | 0/0 | done |
+| 02 | [Rich Plugin APIs](milestones/02-rich-plugin-apis/) | 0/0 | done |
+| 03 | [Out-of-Box Plugins](milestones/03-out-of-box-plugins/) | 0/0 | planned |
 <!-- END GENERATED -->

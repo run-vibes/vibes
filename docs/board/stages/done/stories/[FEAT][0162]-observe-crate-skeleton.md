@@ -4,7 +4,7 @@ title: vibes-observe crate skeleton
 type: feat
 status: done
 priority: high
-scope: observability/40-distributed-tracing
+scope: observability/01-distributed-tracing
 depends: []
 estimate: 2h
 ---

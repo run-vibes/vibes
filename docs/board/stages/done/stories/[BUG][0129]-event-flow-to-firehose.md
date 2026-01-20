@@ -4,7 +4,7 @@ title: "Fix: Events Don't Flow from Claude Hooks to Firehose"
 type: fix
 status: done
 priority: medium
-scope: web-ui/26-infinite-event-stream
+scope: web-ui/03-infinite-event-stream
 depends: []
 estimate:
 created: 2026-01-03

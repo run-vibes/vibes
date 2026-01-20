@@ -4,7 +4,7 @@ title: WebSocket real-time updates
 type: feat
 status: done
 priority: high
-scope: tui/42-terminal-dashboard
+scope: tui/02-terminal-dashboard
 depends: [m42-feat-01, m42-feat-02, m42-feat-03]
 estimate: 4h
 ---

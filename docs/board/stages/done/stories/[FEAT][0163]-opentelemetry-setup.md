@@ -4,7 +4,7 @@ title: OpenTelemetry tracer setup
 type: feat
 status: done
 priority: high
-scope: observability/40-distributed-tracing
+scope: observability/01-distributed-tracing
 depends: [m40-feat-01]
 estimate: 4h
 ---

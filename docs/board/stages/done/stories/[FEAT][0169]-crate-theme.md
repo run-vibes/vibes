@@ -4,7 +4,7 @@ title: vibes-tui crate scaffold and theme system
 type: feat
 status: done
 priority: high
-scope: tui/41-terminal-ui-framework
+scope: tui/01-terminal-ui-framework
 depends: []
 estimate: 3h
 ---

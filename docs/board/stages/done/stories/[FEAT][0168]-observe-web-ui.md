@@ -4,7 +4,7 @@ title: Observe Web UI
 type: feat
 status: done
 priority: medium
-scope: observability/40-distributed-tracing
+scope: observability/01-distributed-tracing
 depends: [m40-feat-06]
 estimate: 4h
 ---

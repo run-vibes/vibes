@@ -112,8 +112,9 @@ generate:
     fi
     echo ""
 
-    # Icebox stories
-    echo "## Icebox"
+    # Icebox stories (collapsed by default)
+    echo "<details>"
+    echo "<summary><h2>Icebox</h2></summary>"
     echo ""
     if [[ -d stages/icebox/stories ]] && ls stages/icebox/stories/*.md &>/dev/null 2>&1; then
         echo "| Story | Type | Priority | Scope |"
@@ -129,6 +130,8 @@ generate:
     else
         echo "*No stories in icebox*"
     fi
+    echo ""
+    echo "</details>"
     echo ""
 
     # Epics section - group milestones under each epic

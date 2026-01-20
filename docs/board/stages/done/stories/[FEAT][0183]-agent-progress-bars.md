@@ -4,7 +4,7 @@ title: Agent progress bars
 type: feat
 status: done
 priority: high
-scope: tui/44-swarm-monitoring
+scope: tui/04-swarm-monitoring
 depends: [m44-feat-01]
 estimate: 2h
 ---

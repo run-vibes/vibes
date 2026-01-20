@@ -4,7 +4,7 @@ title: PTY server core
 type: feat
 status: backlog
 priority: medium
-scope: tui/46-terminal-server
+scope: tui/06-terminal-server
 depends: []
 estimate:
 created: 2026-01-14

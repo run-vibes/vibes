@@ -4,7 +4,7 @@ title: vibes observe traces CLI command
 type: feat
 status: done
 priority: medium
-scope: observability/40-distributed-tracing
+scope: observability/01-distributed-tracing
 depends: [m40-feat-05]
 estimate: 3h
 ---

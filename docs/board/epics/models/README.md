@@ -239,5 +239,5 @@ vibes models cache clear             # Clear response cache
 
 | ID | Milestone | Stories | Status |
 |----|-----------|---------|--------|
-| 37 | [Model Management](milestones/37-model-management/) | 9/9 | done |
+| 01 | [Model Management](milestones/01-model-management/) | 9/9 | done |
 <!-- END GENERATED -->

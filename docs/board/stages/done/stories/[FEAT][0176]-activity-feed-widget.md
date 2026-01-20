@@ -4,7 +4,7 @@ title: Activity feed widget
 type: feat
 status: done
 priority: medium
-scope: tui/42-terminal-dashboard
+scope: tui/02-terminal-dashboard
 depends: [m42-feat-01]
 estimate: 3h
 ---

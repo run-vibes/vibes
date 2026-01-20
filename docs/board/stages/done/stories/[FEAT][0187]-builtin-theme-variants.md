@@ -4,7 +4,7 @@ title: Built-in theme variants
 type: feat
 status: done
 priority: high
-scope: tui/45-customizable-themes
+scope: tui/05-customizable-themes
 depends: [m45-feat-01]
 estimate: 2h
 ---

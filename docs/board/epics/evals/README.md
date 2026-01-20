@@ -281,10 +281,10 @@ pub struct Insight {
 
 | ID | Milestone | Stories | Status |
 |----|-----------|---------|--------|
-| 39 | [Performance Evaluation](milestones/39-performance-evaluation/) | 4/6 | in-progress |
-| 48 | [Long-term Studies](milestones/48-long-term-studies/) | 0/0 | planned |
-| 49 | [Performance Reports](milestones/49-performance-reports/) | 0/0 | planned |
-| 50 | [Performance Trends](milestones/50-performance-trends/) | 0/0 | planned |
-| 51 | [Benchmark Suite](milestones/51-benchmark-suite/) | 0/0 | planned |
-| 52 | [Extended Benchmarks](milestones/52-extended-benchmarks/) | 0/0 | planned |
+| 01 | [Performance Evaluation](milestones/01-performance-evaluation/) | 4/6 | in-progress |
+| 02 | [Long-term Studies](milestones/02-long-term-studies/) | 0/0 | planned |
+| 03 | [Performance Reports](milestones/03-performance-reports/) | 0/0 | planned |
+| 04 | [Performance Trends](milestones/04-performance-trends/) | 0/0 | planned |
+| 05 | [Benchmark Suite](milestones/05-benchmark-suite/) | 0/0 | planned |
+| 06 | [Extended Benchmarks](milestones/06-extended-benchmarks/) | 0/0 | planned |
 <!-- END GENERATED -->

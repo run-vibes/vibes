@@ -4,7 +4,7 @@ title: Theme config file loader
 type: feat
 status: done
 priority: high
-scope: tui/45-customizable-themes
+scope: tui/05-customizable-themes
 depends: []
 estimate: 3h
 ---

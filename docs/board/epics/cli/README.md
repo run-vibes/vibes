@@ -16,9 +16,9 @@ Command-line interface: commands, flags, output formatting, interactive features
 
 | ID | Milestone | Stories | Status |
 |----|-----------|---------|--------|
-| 02 | [Command Line Control](milestones/02-command-line-control/) | 0/0 | done |
-| 10 | [Live Terminal Sync](milestones/10-live-terminal-sync/) | 0/0 | done |
-| 20 | [Event Management Commands](milestones/20-event-management-commands/) | 0/0 | done |
-| 35 | [Guided Setup](milestones/35-guided-setup/) | 0/0 | done |
-| 54 | [Enhanced CLI Experience](milestones/54-enhanced-cli-experience/) | 0/0 | planned |
+| 01 | [Command Line Control](milestones/01-command-line-control/) | 0/0 | done |
+| 02 | [Live Terminal Sync](milestones/02-live-terminal-sync/) | 0/0 | done |
+| 03 | [Event Management Commands](milestones/03-event-management-commands/) | 0/0 | done |
+| 04 | [Guided Setup](milestones/04-guided-setup/) | 0/0 | done |
+| 05 | [Enhanced CLI Experience](milestones/05-enhanced-cli-experience/) | 0/0 | planned |
 <!-- END GENERATED -->

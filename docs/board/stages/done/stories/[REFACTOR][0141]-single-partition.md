@@ -4,7 +4,7 @@ title: "Refactor: Single Partition with Event ID Seeking"
 type: refactor
 status: done
 priority: medium
-scope: groove/36-novelty-monitoring
+scope: groove/12-novelty-monitoring
 depends: []
 estimate:
 created: 2026-01-02

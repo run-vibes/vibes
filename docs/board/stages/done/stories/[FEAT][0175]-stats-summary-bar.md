@@ -4,7 +4,7 @@ title: Stats summary bar
 type: feat
 status: done
 priority: high
-scope: tui/42-terminal-dashboard
+scope: tui/02-terminal-dashboard
 depends: [m41-feat-05]
 estimate: 2h
 ---

@@ -4,7 +4,7 @@ title: Instrument key functions with spans
 type: feat
 status: done
 priority: high
-scope: observability/40-distributed-tracing
+scope: observability/01-distributed-tracing
 depends: [m40-feat-03]
 estimate: 4h
 ---

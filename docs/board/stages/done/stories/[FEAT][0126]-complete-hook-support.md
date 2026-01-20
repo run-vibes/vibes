@@ -4,7 +4,7 @@ title: "Feature: Support All Claude Code Hooks"
 type: feat
 status: done
 priority: medium
-scope: web-ui/26-infinite-event-stream
+scope: web-ui/03-infinite-event-stream
 depends: []
 estimate:
 created: 2026-01-03

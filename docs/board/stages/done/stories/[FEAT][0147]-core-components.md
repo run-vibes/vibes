@@ -4,7 +4,7 @@ title: "Feature: Restyle Core UI Components"
 type: feat
 status: done
 priority: medium
-scope: models/37-model-management
+scope: models/01-model-management
 depends: []
 estimate:
 created: 2026-01-04
