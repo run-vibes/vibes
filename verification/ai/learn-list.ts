@@ -82,6 +82,57 @@ function formatId(learning: Learning): string {
 }
 
 /**
+ * Extract story ID from filename
+ * [FEAT][0208]-name.md -> "FEAT0208"
+ */
+function extractStoryId(sourcePath: string): string {
+  const filename = path.basename(sourcePath, '.md');
+  const match = filename.match(/\[(\w+)\]\[(\d+)\]/);
+  if (match) {
+    return `${match[1]}${match[2]}`;
+  }
+  return filename;
+}
+
+/**
+ * Extract source context from learning
+ * Stories: "STORY_ID in epic/milestone" or just STORY_ID if no scope
+ * Milestones: epic/milestone from path
+ * Ad-hoc: filename
+ */
+function extractSourceContext(learning: Learning): string {
+  if (learning.sourceType === 'story') {
+    const storyId = extractStoryId(learning.source);
+    if (learning.scope) {
+      // Format: "FEAT0208 (04-ai-assisted-verification)"
+      // Show milestone name, which is more descriptive than epic
+      const scopeParts = learning.scope.split('/');
+      const milestone = scopeParts.length === 2 ? scopeParts[1] : learning.scope;
+      return `${storyId} (${milestone})`;
+    }
+    return storyId;
+  }
+
+  if (learning.sourceType === 'milestone') {
+    // Extract epic/milestone from path like .../epics/epic-name/milestones/01-name/LEARNINGS.md
+    const parts = learning.source.split(path.sep);
+    const epicsIndex = parts.indexOf('epics');
+    if (epicsIndex >= 0 && parts.length > epicsIndex + 3) {
+      const epic = parts[epicsIndex + 1];
+      const milestone = parts[epicsIndex + 3];
+      return `${epic}/${milestone}`;
+    }
+    return path.basename(path.dirname(learning.source));
+  }
+
+  if (learning.sourceType === 'adhoc') {
+    return path.basename(learning.source, '.md');
+  }
+
+  return path.basename(learning.source, '.md');
+}
+
+/**
  * Print a table of learnings
  */
 function printTable(learnings: Learning[], title: string): void {
@@ -95,27 +146,27 @@ function printTable(learnings: Learning[], title: string): void {
 
   // Determine column widths based on content
   const isAdhoc = learnings[0]?.sourceType === 'adhoc';
-  const idColWidth = isAdhoc ? 28 : 6;
-  const titleColWidth = 30;
+  const idColWidth = isAdhoc ? 20 : 6;
+  const sourceColWidth = 42;
+  const titleColWidth = 26;
   const categoryColWidth = 10;
   const statusColWidth = 8;
-  const appliesToColWidth = 25;
 
   // Header
   const header = [
     padEnd('ID', idColWidth),
+    padEnd('Source', sourceColWidth),
     padEnd('Title', titleColWidth),
     padEnd('Category', categoryColWidth),
     padEnd('Status', statusColWidth),
-    padEnd('Applies To', appliesToColWidth),
   ].join(' | ');
 
   const separator = [
     '-'.repeat(idColWidth),
+    '-'.repeat(sourceColWidth),
     '-'.repeat(titleColWidth),
     '-'.repeat(categoryColWidth),
     '-'.repeat(statusColWidth),
-    '-'.repeat(appliesToColWidth),
   ].join('-+-');
 
   console.log(`| ${header} |`);
@@ -124,17 +175,17 @@ function printTable(learnings: Learning[], title: string): void {
   // Rows
   for (const learning of learnings) {
     const id = truncate(formatId(learning), idColWidth);
-    const title = truncate(learning.title || '(untitled)', titleColWidth);
+    const source = truncate(extractSourceContext(learning), sourceColWidth);
+    const titleText = truncate(learning.title || '(untitled)', titleColWidth);
     const category = truncate(learning.category, categoryColWidth);
     const status = getStatus(learning);
-    const appliesTo = truncate(learning.appliesTo || '-', appliesToColWidth);
 
     const row = [
       padEnd(id, idColWidth),
-      padEnd(title, titleColWidth),
+      padEnd(source, sourceColWidth),
+      padEnd(titleText, titleColWidth),
       padEnd(category, categoryColWidth),
       padEnd(status, statusColWidth),
-      padEnd(appliesTo, appliesToColWidth),
     ].join(' | ');
 
     console.log(`| ${row} |`);

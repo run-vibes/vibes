@@ -19,6 +19,7 @@ export interface Learning {
   id: string;                    // L001, ML001, or filename slug
   source: string;                // File path where learning lives
   sourceType: LearningSourceType;
+  scope?: string;                // For stories: epic/milestone scope from frontmatter
   title: string;
   category: string;
   context: string;
@@ -161,6 +162,14 @@ function parseLearningsFromContent(
 }
 
 /**
+ * Extract scope from story frontmatter
+ */
+function extractScopeFromFrontmatter(content: string): string | undefined {
+  const scopeMatch = content.match(/^scope:\s*(.+)$/m);
+  return scopeMatch ? scopeMatch[1].trim() : undefined;
+}
+
+/**
  * Scan story files in done stage for learnings.
  */
 async function scanStoryLearnings(baseDir: string): Promise<Learning[]> {
@@ -178,6 +187,13 @@ async function scanStoryLearnings(baseDir: string): Promise<Learning[]> {
       if (learningSectionMatch) {
         const sectionContent = learningSectionMatch[1];
         const storyLearnings = parseLearningsFromContent(sectionContent, file, 'story');
+
+        // Extract scope from frontmatter and attach to learnings
+        const scope = extractScopeFromFrontmatter(content);
+        for (const learning of storyLearnings) {
+          learning.scope = scope;
+        }
+
         learnings.push(...storyLearnings);
       }
     } catch {
