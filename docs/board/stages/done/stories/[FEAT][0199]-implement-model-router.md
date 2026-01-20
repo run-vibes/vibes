@@ -37,13 +37,13 @@ See [DESIGN.md](../../epics/coherence-verification/milestones/04-ai-assisted-ver
 
 ## Learnings
 
-### L001: Model
+### L001: Model router abstracts provider differences cleanly
 
 | Field | Value |
 |-------|-------|
-| **Category** | process |
-| **Context** | Story completion reflection |
-| **Insight** | **What went well:** Model | **Harder than expected:** Handling | **Would do differently:** Add |
-| **Suggested Action** | Add |
-| **Applies To** | (to be determined) |
+| **Category** | architecture |
+| **Context** | Implementing router to support both Ollama and Claude APIs |
+| **Insight** | **What went well:** A unified interface for different model providers makes it easy to switch between local (Ollama) and cloud (Claude) models • **Harder than expected:** Error handling differs significantly between providers - Ollama fails silently while Claude throws detailed errors • **Would do differently:** Add retry logic with exponential backoff from the start |
+| **Suggested Action** | When building multi-provider abstractions, standardize error handling and add retry logic early |
+| **Applies To** | Any code that wraps multiple AI/LLM providers |
 | **Applied** | |
